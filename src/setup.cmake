@@ -40,6 +40,7 @@ foreach (src ${srcs})
     endif()
 
     file(GLOB src-files ${TSSSNI_SRC_DIR}/${src}/*.cpp)
+    message(...${src-files})
     list(APPEND files ${src-files})
     list(APPEND targets ${src-target})
   endif()
