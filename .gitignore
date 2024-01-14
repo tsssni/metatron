@@ -1,3 +1,6 @@
+*
 !CMakeLists.txt
-!source/*
-!library/*
+!src/*
+!lib/*
+!LICENSE
+!README
