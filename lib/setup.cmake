@@ -6,6 +6,7 @@ foreach (lib ${libs})
   if (IS_DIRECTORY "${TSSSNI_LIB_DIR}/${lib}")
     set(lib-target tsssni.lib.${lib})
     add_library(${lib-target} INTERFACE)
+    set_property(TARGET ${lib-target} PROPERTY RUNTIME_OUTPUT_DIRECTORY ${TSSSNI_LIB_BUILD_DIR})
 
     set(setup ${TSSSNI_LIB_DIR}/${lib}/setup.cmake)
 

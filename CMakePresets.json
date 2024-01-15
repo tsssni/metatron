@@ -1,0 +1,35 @@
+{
+  "cmakeMinimumRequired" : 
+  {
+    "major" : 3,
+    "minor" : 28
+  },
+  "configurePresets" : 
+  [
+    {
+      "binaryDir" : "${sourceDir}/build/${presetName}",
+      "cacheVariables" : 
+      {
+        "CMAKE_BUILD_TYPE" : "Debug"
+      },
+      "cmakeExecutable" : "cmake",
+      "description" : "linux native development build",
+      "displayName" : "linux-native-dev",
+      "name" : "linux-native-dev",
+      "generator" : "Ninja"
+    },
+    {
+      "binaryDir" : "${sourceDir}/build/${presetName}",
+      "cacheVariables" : 
+      {
+        "CMAKE_BUILD_TYPE" : "Release"
+      },
+      "cmakeExecutable" : "cmake",
+      "description" : "linux native release build",
+      "displayName" : "linux-native-rel",
+      "name" : "linux-native-rel",
+      "generator" : "Ninja"
+    }
+  ],
+  "version" : 8
+}

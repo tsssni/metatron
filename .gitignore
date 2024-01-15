@@ -1,6 +1,8 @@
-*
-!CMakeLists.txt
-!src/*
-!lib/*
-!LICENSE
-!README
+/*
+!/exe/
+!/lib/
+!/src/
+!/CMakeLists.txt
+!/CMakePresets.json
+!/LICENSE
+!/README.md

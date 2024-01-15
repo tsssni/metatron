@@ -1,9 +1,8 @@
-#include <vulkan/vulkan.hpp>
-#include <iostream>
+#pragma once
 #include <vulkan/vulkan_hpp_macros.hpp>
+#include <iostream>
 
-auto main() -> int
+auto print_vulkan_version() -> void
 {
   std::cout << VULKAN_HPP_CPP_VERSION << std::endl;
-  return 0;
 }

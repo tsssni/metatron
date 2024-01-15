@@ -1,50 +1,57 @@
-message("processing sources ...")
+message(processing sources ...)
 
 file(GLOB srcs RELATIVE ${TSSSNI_SRC_DIR} ${TSSSNI_SRC_DIR}/*)
-set(files "")
-set(targets "")
 
 foreach (src ${srcs})
   if (IS_DIRECTORY "${TSSSNI_SRC_DIR}/${src}")
+    message(build ${src}...)
     set(src-target tsssni.src.${src})
-    add_library(${src-target} INTERFACE)
+
+    file(GLOB files ${TSSSNI_SRC_DIR}/${src}/*.cpp)
+    if (files)
+      add_library(${src-target} SHARED EXECLUDE_FROM_ALL files)
+    else()
+      set(gen-file ${TSSSNI_GEN_BUILD_DIR}/src-${src}.cpp)
+      file(GENERATE OUTPUT ${gen-file} CONTENT "")
+      add_library(${src-target} SHARED EXCLUDE_FROM_ALL ${gen-file})
+    endif()
+    set_property(TARGET ${src-target} PROPERTY LIBRARY_OUTPUT_DIRECTORY ${TSSSNI_LIB_BUILD_DIR})
+
+    add_library(${src-target}.inc INTERFACE)
+    target_link_libraries(${src-target} PUBLIC ${src-target}.inc)
+    target_include_directories(${src-target}.inc SYSTEM INTERFACE ${TSSSNI_SRC_DIR})
 
     set(setup ${TSSSNI_SRC_DIR}/${src}/setup.cmake)
-
     if (EXISTS ${setup})
       include(${setup})
     endif()
 
     get_property(link-libs TARGET ${src-target} PROPERTY tsssni-link-libs)
     if (link-libs)
+      add_library(${src-target}.lib INTERFACE)
+      target_link_libraries(${src-target} PUBLIC ${src-target}.lib)
+
       foreach (lib ${link-libs})
-        target_link_libraries(${src-target} INTERFACE tsssni.lib.${lib})
+        target_link_libraries(${src-target}.lib INTERFACE tsssni.lib.${lib})
         message("${src-target} link lib ${lib}")
       endforeach()
     endif()
-
-    target_include_directories(${src-target} SYSTEM INTERFACE ${TSSNI_SRC_DIR}/${src})
   endif()
 endforeach()
 
 foreach (src ${srcs})
-  if (IS_DIRECTORY "${TSSSNI_SRC_DIR}/${src}")
+  if (IS_DIRECTORY ${TSSSNI_SRC_DIR}/${src})
     set(src-target tsssni.src.${src})
 
     get_property(link-srcs TARGET ${src-target} PROPERTY tsssni-link-srcs)
     if (link-srcs)
+      add_library(${src-target}.src INTERFACE)
+      target_link_libraries(${src-target} PUBLIC ${src-target}.src)
+
       foreach (src ${link-srcs})
-        target_link_libraries(${src-target} INTERFACE tsssni.src.${src})
-        message("${src-target} link src ${src}")
+        target_link_libraries(${src-target}.src INTERFACE tsssni.src.${src})
+        message(${src-target} link src ${src})
       endforeach()
     endif()
-
-    file(GLOB src-files ${TSSSNI_SRC_DIR}/${src}/*.cpp)
-    message(...${src-files})
-    list(APPEND files ${src-files})
-    list(APPEND targets ${src-target})
   endif()
 endforeach()
-
-add_executable(tsssni-engine ${files})
-target_link_libraries(tsssni-engine ${targets})
