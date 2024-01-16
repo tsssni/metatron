@@ -9,15 +9,14 @@ foreach (lib ${libs})
     set_property(TARGET ${lib-target} PROPERTY RUNTIME_OUTPUT_DIRECTORY ${TSSSNI_LIB_BUILD_DIR})
 
     set(setup ${TSSSNI_LIB_DIR}/${lib}/setup.cmake)
-
     if (EXISTS ${setup})
       include(${setup})
     endif()
 
     get_property(found-libs TARGET ${lib-target} PROPERTY tsssni-found-libs)
     if (found-libs)
-      target_link_libraries(${lib-target} INTERFACE ${found-libs})
       message("${lib-target} link lib ${found-libs}")
+      target_link_libraries(${lib-target} INTERFACE ${found-libs})
     endif()
   endif()
 endforeach()

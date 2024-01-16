@@ -1,1 +1,1 @@
-set_property(TARGET tsssni.src.test APPEND PROPERTY tsssni-link-libs vulkan)
+set_property(TARGET tsssni.src.test APPEND PROPERTY tsssni-link-libs vulkan glfw)
