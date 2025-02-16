@@ -1,8 +1,11 @@
 /*
+!/cmake/
 !/exe/
 !/lib/
 !/src/
-!/CMakeLists.txt
-!/CMakePresets.json
+!/.git*
+!/.clang*
+!/flake*
+!/CMake*
 !/LICENSE
 !/README.md

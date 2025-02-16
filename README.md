@@ -1,3 +1,3 @@
-# haruyoru-engine
+# metatron-renderer
 
-cross-platform rendering engine
+physically-based path-tracing renderer
