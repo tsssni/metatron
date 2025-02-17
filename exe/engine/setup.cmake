@@ -1,1 +1,1 @@
-list(APPEND metatron-deps test-header test-src)
+list(APPEND metatron-deps)
