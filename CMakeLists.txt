@@ -6,13 +6,26 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/lib)
 
 set(metatron-root ${CMAKE_CURRENT_LIST_DIR})
-set(metatron-src ${metatron-root}/src)
 set(metatron-bin ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-set(metatron-lib ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-set(metatron-gen ${CMAKE_BINARY_DIR}/gen)
+set(metatron-lib ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lib)
 
+define_property(TARGET PROPERTY metatron-units)
+define_property(TARGET PROPERTY metatron-path)
+define_property(TARGET PROPERTY metatron-mode)
+define_property(TARGET PROPERTY metatron-access)
+
+include(cmake/classify.cmake)
 include(cmake/evaluate.cmake)
-include(lib/setup.cmake)
-include(src/setup.cmake)
-include(exe/setup.cmake)
+include(cmake/link.cmake)
 
+add_library(metatron-build INTERFACE)
+set_property(TARGET metatron-build PROPERTY metatron-units)
+
+metatron_classify(${metatron-root}/lib "lib")
+metatron_classify(${metatron-root}/src "src")
+metatron_classify(${metatron-root}/exe "exe")
+
+get_property(metatron-units TARGET metatron-build PROPERTY metatron-units)
+foreach(unit ${metatron-units})
+  metatron_link(${unit})
+endforeach()

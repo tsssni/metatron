@@ -1,1 +1,1 @@
-list(APPEND metatron-deps)
+list(APPEND metatron-deps test)
