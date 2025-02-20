@@ -1,33 +1,33 @@
 {
-  "cmakeMinimumRequired": {
-    "major": 3,
-    "minor": 30,
-    "patch": 5
-  },
-  "configurePresets": [
-    {
-      "name": "default",
-      "generator": "Ninja",
-      "cacheVariables": {
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
-    },
-    {
-      "name": "linux-native-dev",
-      "inherits": "default",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
-      }
-    },
-    {
-      "name": "linux-native-rel",
-      "inherits": "default",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    }
-  ],
-  "version": 8
+	"cmakeMinimumRequired": {
+		"major": 3,
+		"minor": 30,
+		"patch": 5
+	},
+	"configurePresets": [
+		{
+			"name": "default",
+			"generator": "Ninja",
+			"cacheVariables": {
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+			}
+		},
+		{
+			"name": "linux-native-dev",
+			"inherits": "default",
+			"binaryDir": "${sourceDir}/build/${presetName}",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug"
+			}
+		},
+		{
+			"name": "linux-native-rel",
+			"inherits": "default",
+			"binaryDir": "${sourceDir}/build/${presetName}",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release"
+			}
+		}
+	],
+	"version": 8
 }

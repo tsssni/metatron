@@ -4,8 +4,8 @@
 
 namespace metatron
 {
-  auto image_test() -> void
-  {
-    return;
-  }
+	auto image_test() -> void
+	{
+		return;
+	}
 }

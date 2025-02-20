@@ -27,5 +27,5 @@ metatron_classify(${metatron-root}/exe "exe")
 
 get_property(metatron-units TARGET metatron-build PROPERTY metatron-units)
 foreach(unit ${metatron-units})
-  metatron_link(${unit})
+	metatron_link(${unit})
 endforeach()
