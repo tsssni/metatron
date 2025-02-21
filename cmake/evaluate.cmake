@@ -1,5 +1,4 @@
 function(metatron_evaluate unit path mode)
-	message(STATUS "evaluate ${unit} ...")
 	set(target metatron-${unit})
 
 	# collect sources

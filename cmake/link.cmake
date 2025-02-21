@@ -27,10 +27,10 @@ function(metatron_link unit)
 		target_link_libraries(${target} ${access} ${linked-libs})
 	endif()
 
-	# add prelude for some global visible utilities
+	# link core for some global visible utilities
 	if(TRUE
 	AND NOT ${mode} STREQUAL "lib" 
-	AND NOT ${unit} STREQUAL "prelude")
-		target_link_libraries(${target} ${access} metatron-prelude)
+	AND NOT ${unit} STREQUAL "core")
+		target_link_libraries(${target} ${access} metatron-core)
 	endif()
 endfunction()
