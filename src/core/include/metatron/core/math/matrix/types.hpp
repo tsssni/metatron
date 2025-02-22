@@ -8,6 +8,7 @@
 #include <type_traits>
 
 namespace metatron::math {
+	// forward declaration to solve invalid Matrix<T, N>::Element
 	template<typename T, usize... dims>
 	struct Matrix;
 
@@ -24,13 +25,8 @@ namespace metatron::math {
 			if (initializer_list.size() > 1) {
 				std::copy(initializer_list.begin(), initializer_list.end(), data.begin());
 			} else {
-				if constexpr (dimensions.size() != 2) {
-					for (auto& line: data) {
-						line = initializer_list.size() == 1 ? *initializer_list.begin() : Element{};
-					}
-				} else {
-					// to make Matrix<T, N, N>{T{}} same as Matrix<T, N, N>(T{})
-					*this = (*initializer_list.begin())[0];
+				for (auto& line: data) {
+					line = initializer_list.size() == 1 ? *initializer_list.begin() : Element{};
 				}
 			}
 		}
@@ -48,18 +44,18 @@ namespace metatron::math {
 		}
 
 		auto operator=(T const& scalar) -> Matrix& {
-			if constexpr (dimensions.size() > 2) {
-				for (auto& line: data) {
-					line = scalar;
-				}
+			if constexpr (dimensions.size() == 1) {
+				data.fill(scalar);
 			} else if constexpr (dimensions.size() == 2) {
 				auto constexpr diagonal_size = std::min(dimensions[0], dimensions[1]);
 				for (auto i = 0; i < diagonal_size; i++) {
 					data[i][i] = scalar;
 				}
-			} else if constexpr (dimensions.size() == 1) {
-				data.fill(scalar);
-			}
+			} else {
+				for (auto& line: data) {
+					line = scalar;
+				}
+			}  
 			return *this;
 		}
 
