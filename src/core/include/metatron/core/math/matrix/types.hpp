@@ -17,7 +17,13 @@ namespace metatron::math {
 
 		Matrix(std::initializer_list<Element> initializer_list) {
 			assert(initializer_list.size() <= first_dim);
-			std::copy(initializer_list.begin(), initializer_list.end(), data.begin());
+			if (initializer_list.size() > 1) {
+				std::copy(initializer_list.begin(), initializer_list.end(), data.begin());
+			} else {
+				for (auto& line: data) {
+					line = initializer_list.size() == 1 ? *initializer_list.begin() : Element{};
+				}
+			}
 		}
 
 		Matrix(T const& scalar) {
@@ -59,7 +65,13 @@ namespace metatron::math {
 
 		Matrix(std::initializer_list<Element> initializer_list) {
 			assert(initializer_list.size() <= dim);
-			std::copy(initializer_list.begin(), initializer_list.end(), data.begin());
+			if (initializer_list.size() > 1) {
+				std::copy(initializer_list.begin(), initializer_list.end(), data.begin());
+			} else {
+				for (auto& line: data) {
+					line = initializer_list.size() == 1 ? *initializer_list.begin() : Element{};
+				}
+			}
 		}
 
 		Matrix(Element const& element) {

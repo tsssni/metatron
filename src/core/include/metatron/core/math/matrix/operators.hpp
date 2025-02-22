@@ -3,7 +3,7 @@
 
 namespace metatron::math {
 	namespace {
-	template<typename T>
+		template<typename T>
 		struct Matrix_Multiply_Impl final {
 			template<
 				usize first_dim,
