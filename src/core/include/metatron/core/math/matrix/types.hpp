@@ -1,14 +1,16 @@
 #pragma once
 #include <algorithm>
+#include <concepts>
 #include <initializer_list>
 #include <array>
 #include <cmath>
 #include <cassert>
 #include <cstdio>
 #include <type_traits>
+#include <utility>
 
 namespace metatron::math {
-	// forward declaration to solve invalid Matrix<T, N>::Element
+	// forward declaration to support the declaration of 0d matrix
 	template<typename T, usize... dims>
 	struct Matrix;
 
@@ -31,24 +33,12 @@ namespace metatron::math {
 			}
 		}
 
-		Matrix(T const& scalar) {
-			*this = scalar;
-		};
-
-		template<usize rhs_first_dim, usize... rhs_rest_dims>
-		requires (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
-			&& (rhs_first_dim <= first_dim)
-			&& (... && (rhs_rest_dims <= rest_dims))
-		Matrix(Matrix<T, rhs_first_dim, rhs_rest_dims...> const& rhs) {
-			*this = rhs;
-		}
-
-		auto operator=(T const& scalar) -> Matrix& {
+		explicit Matrix(T const& scalar) {
 			if constexpr (dimensions.size() == 1) {
 				data.fill(scalar);
 			} else if constexpr (dimensions.size() == 2) {
-				auto constexpr diagonal_size = std::min(dimensions[0], dimensions[1]);
-				for (auto i = 0; i < diagonal_size; i++) {
+				auto constexpr diagonal_n = std::min(dimensions[0], dimensions[1]);
+				for (auto i = 0; i < diagonal_n; i++) {
 					data[i][i] = scalar;
 				}
 			} else {
@@ -56,7 +46,39 @@ namespace metatron::math {
 					line = scalar;
 				}
 			}  
-			return *this;
+		};
+
+		template<typename... Args>
+		requires (true
+			&& (std::same_as<std::remove_reference_t<Args>, T> && ...)
+			&& ([]() -> bool {
+				if constexpr (dimensions.size() == 1) {
+					return sizeof...(Args) == first_dim;
+				} else {
+					auto n = dimensions.size();
+					return sizeof...(Args) == std::min(dimensions[n - 2], dimensions[n - 1]);
+				}
+			}())
+		)
+		explicit Matrix(Args&&... args) {
+			if constexpr (dimensions.size() > 2) {
+				for (auto& line: data) {
+					line = {args...};
+				}
+			} else if constexpr(dimensions.size() == 1) {
+				data.fill(args...);
+			} else {
+				auto constexpr n = dimensions.size();
+				auto constexpr diagonal_n = std::min(dimensions[n - 2], dimensions[n - 1]);
+				[this, args...]<usize... idxs>(std::index_sequence<idxs...>) {
+					((data[idxs][idxs] = args), ...);
+				}(std::make_index_sequence<diagonal_n>{});
+			}
+		}
+
+		template<usize rhs_first_dim, usize... rhs_rest_dims>
+		Matrix(Matrix<T, rhs_first_dim, rhs_rest_dims...> const& rhs) {
+			*this = rhs;
 		}
 
 		template<usize rhs_first_dim, usize... rhs_rest_dims>
