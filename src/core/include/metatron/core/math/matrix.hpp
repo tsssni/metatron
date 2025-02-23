@@ -1,14 +1,12 @@
 #pragma once
 #include <algorithm>
-#include <compare>
-#include <functional>
+#include <concepts>
 #include <initializer_list>
 #include <array>
-#include <cmath>
-#include <cassert>
-#include <cstdio>
 #include <type_traits>
 #include <utility>
+#include <cmath>
+#include <cassert>
 
 namespace metatron::math {
 	// forward declaration to support the declaration of 0d matrix
@@ -23,7 +21,8 @@ namespace metatron::math {
 
 		Matrix() = default;
 
-		Matrix(std::initializer_list<Element> initializer_list) {
+		Matrix(std::initializer_list<Element> initializer_list)
+		{
 			assert(initializer_list.size() <= first_dim);
 			if (initializer_list.size() > 1) {
 				std::copy(initializer_list.begin(), initializer_list.end(), data.begin());
@@ -169,7 +168,11 @@ namespace metatron::math {
 		}
 
 		auto operator+(Matrix const& rhs) const -> Matrix {
-			return operate([](Element const& a, Element const& b) { return a + b; }, rhs);
+			auto result = Matrix{};
+			for (auto i = 0; i < first_dim; i++) {
+				result[i] = data[i] + rhs[i];
+			}
+			return result;
 		}
 
 		auto operator+=(Matrix const& rhs) -> Matrix& {
@@ -178,7 +181,11 @@ namespace metatron::math {
 		}
 
 		auto operator+(T&& rhs) const -> Matrix {
-			return operate([](Element const& a, T&& b) { return a + std::forward<T>(b); }, std::forward<T>(rhs));
+			auto result = Matrix{};
+			for (auto i = 0; i < first_dim; i++) {
+				result[i] = data[i] + std::forward<T>(rhs);
+			}
+			return result;
 		}
 
 		auto operator+=(T&& rhs) -> Matrix& {
@@ -191,7 +198,11 @@ namespace metatron::math {
 		}
 
 		auto operator-(Matrix const& rhs) const -> Matrix {
-			return operate([](Element const& a, Element const& b) { return a - b; }, rhs);
+			auto result = Matrix{};
+			for (auto i = 0; i < first_dim; i++) {
+				result[i] = data[i] - rhs[i];
+			}
+			return result;
 		}
 
 		auto operator-=(Matrix const& rhs) -> Matrix& {
@@ -200,7 +211,11 @@ namespace metatron::math {
 		}
 
 		auto operator-(T&& rhs) const -> Matrix {
-			return operate([](Element const& a, T&& b) { return a - std::forward<T>(b); }, std::forward<T>(rhs));
+			auto result = Matrix{};
+			for (auto i = 0; i < first_dim; i++) {
+				result[i] = data[i] - std::forward<T>(rhs);
+			}
+			return result;
 		}
 
 		auto operator-=(T&& rhs) -> Matrix& {
@@ -209,11 +224,19 @@ namespace metatron::math {
 		}
 
 		auto operator-() const -> Matrix {
-			return operate([](Element const& a, Element const& b) { return -a; }, *this);
+			auto result = Matrix{};
+			for (auto i = 0; i < first_dim; i++) {
+				result[i] = -data[i];
+			}
+			return result;
 		}
 
 		auto operator*(T&& rhs) const -> Matrix {
-			return operate([](Element const& a, T&& b) { return a * std::forward<T>(b); }, std::forward<T>(rhs));
+			auto result = Matrix{};
+			for (auto i = 0; i < first_dim; i++) {
+				result[i] = data[i] * std::forward<T>(rhs);
+			}
+			return result;
 		}
 
 		auto operator*=(T&& rhs) -> Matrix& {
@@ -222,7 +245,11 @@ namespace metatron::math {
 		}
 
 		auto operator/(Matrix const& rhs) const -> Matrix {
-			return operate([](Element const& a, Element const& b) { return a / b; }, rhs);
+			auto result = Matrix{};
+			for (auto i = 0; i < first_dim; i++) {
+				result[i] = data[i] / rhs[i];
+			}
+			return result;
 		}
 
 		auto operator/=(Matrix const& rhs) -> Matrix& {
@@ -231,7 +258,11 @@ namespace metatron::math {
 		}
 
 		auto operator/(T&& rhs) const -> Matrix {
-			return operate([](Element const& a, T&& b) { return a / std::forward<T>(b); }, std::forward<T>(rhs));
+			auto result = Matrix{};
+			for (auto i = 0; i < first_dim; i++) {
+				result[i] = data[i] / std::forward<T>(rhs);
+			}
+			return result;
 		}
 
 		auto operator/=(T&& rhs) -> Matrix& {
@@ -242,22 +273,6 @@ namespace metatron::math {
 		auto operator<=>(Matrix const& rhs) const = default;
 
 	private:
-		auto operate(std::function<Element(Element const& a, Element const& b)> f, Matrix const& rhs) const -> Matrix {
-			auto result = Matrix{};
-			for (auto i = 0; i < first_dim; i++) {
-				result[i] = f(data[i], rhs[i]);
-			}
-			return result;
-		}
-
-		auto operate(std::function<Element(Element const& a, T&& b)> f, T&& rhs) const -> Matrix {
-			auto result = Matrix{};
-			for (auto i = 0; i < first_dim; i++) {
-				result[i] = f(data[i], std::forward<T>(rhs));
-			}
-			return result;
-		}
-
 		std::array<Element, first_dim> data{};
 
 		template<typename U, usize... dims>
@@ -268,18 +283,88 @@ namespace metatron::math {
 	using Matrix3 = Matrix<f32, 3, 3>;
 	using Matrix4 = Matrix<f32, 4, 4>;
 
-	template<typename T, metatron::usize... dims>
-	auto inline operator+(T&& lhs, metatron::math::Matrix<T, dims...> const& rhs) {
+	template<typename T, usize... dims>
+	auto inline operator+(T&& lhs, Matrix<T, dims...> const& rhs) {
 		return rhs + std::forward<T>(lhs);
 	}
 
-	template<typename T, metatron::usize... dims>
-	auto inline operator-(T&& lhs, metatron::math::Matrix<T, dims...> const& rhs) {
+	template<typename T, usize... dims>
+	auto inline operator-(T&& lhs, Matrix<T, dims...> const& rhs) {
 		return -rhs + std::forward<T>(lhs);
 	}
 
-	template<typename T, metatron::usize... dims>
-	auto inline operator*(T&& lhs, metatron::math::Matrix<T, dims...> const& rhs) {
+	template<typename T, usize... dims>
+	auto inline operator*(T&& lhs, Matrix<T, dims...> const& rhs) {
 		return rhs * std::forward<T>(lhs);
+	}
+
+	template<typename T, usize h, usize w>
+	auto inline transpose(Matrix<T, h, w> const& m) {
+		auto result = Matrix<T, w, h>{};
+		for (auto i = 0; i < w; i++) {
+			for (auto j = 0; j < h; j++) {
+				result[i][j] = m[j][i];
+			}
+		}
+		return result;
+	}
+
+	template<typename T, usize h>
+	requires std::floating_point<T>
+	auto inline inverse(Matrix<T, h, h> const& m) {
+		auto augmented = Matrix<T, h, h * 2>{};
+		for (usize i = 0; i < h; i++) {
+			for (usize j = 0; j < h; j++) {
+				augmented[i][j] = m[i][j];
+			}
+		}
+		for (usize i = 0; i < h; i++) {
+			augmented[i][h + i] = T(1);
+		}
+
+		// Gaussian-Jordan
+		for (usize i = 0; i < h; i++) {
+			auto max_row = i;
+			auto max_val = std::abs(augmented[i][i]);
+			
+			for (usize j = i + 1; j < h; j++) {
+				if (auto curr_val = std::abs(augmented[j][i]); curr_val > max_val) {
+					max_val = curr_val;
+					max_row = j;
+				}
+			}
+
+			if (max_val < std::numeric_limits<T>::epsilon()) {
+				assert("matrix is not invertible");
+			}
+
+			if (max_row != i) {
+				for (usize j = 0; j < h * 2; j++) {
+					std::swap(augmented[i][j], augmented[max_row][j]);
+				}
+			}
+
+			auto pivot = augmented[i][i];
+			for (usize j = 0; j < h * 2; j++) {
+				augmented[i][j] /= pivot;
+			}
+
+			for (usize j = 0; j < h; j++) {
+				if (j != i) {
+					auto factor = augmented[j][i];
+					for (usize k = 0; k < h * 2; k++) {
+						augmented[j][k] -= factor * augmented[i][k];
+					}
+				}
+			}
+		}
+
+		auto result = Matrix<T, h, h>{};
+		for (usize i = 0; i < h; i++) {
+			for (usize j = 0; j < h; j++) {
+				result[i][j] = augmented[i][h + j];
+			}
+		}
+		return result;
 	}
 }
