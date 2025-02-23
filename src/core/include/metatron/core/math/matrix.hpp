@@ -180,16 +180,16 @@ namespace metatron::math {
 			return *this;
 		}
 
-		auto operator+(T&& rhs) const -> Matrix {
+		auto operator+(T const& rhs) const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = data[i] + std::forward<T>(rhs);
+				result[i] = data[i] + rhs;
 			}
 			return result;
 		}
 
-		auto operator+=(T&& rhs) -> Matrix& {
-			*this = *this + std::forward<T>(rhs);
+		auto operator+=(T const& rhs) -> Matrix& {
+			*this = *this + rhs;
 			return *this;
 		}
 
@@ -210,16 +210,16 @@ namespace metatron::math {
 			return *this;
 		}
 
-		auto operator-(T&& rhs) const -> Matrix {
+		auto operator-(T const& rhs) const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = data[i] - std::forward<T>(rhs);
+				result[i] = data[i] - rhs;
 			}
 			return result;
 		}
 
-		auto operator-=(T&& rhs) -> Matrix& {
-			*this = *this - std::forward<T>(rhs);
+		auto operator-=(T const& rhs) -> Matrix& {
+			*this = *this - rhs;
 			return *this;
 		}
 
@@ -231,16 +231,16 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto operator*(T&& rhs) const -> Matrix {
+		auto operator*(T const& rhs) const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = data[i] * std::forward<T>(rhs);
+				result[i] = data[i] * rhs;
 			}
 			return result;
 		}
 
-		auto operator*=(T&& rhs) -> Matrix& {
-			*this = *this * std::forward<T>(rhs);
+		auto operator*=(T const& rhs) -> Matrix& {
+			*this = *this * rhs;
 			return *this;
 		}
 
@@ -257,16 +257,16 @@ namespace metatron::math {
 			return *this;
 		}
 
-		auto operator/(T&& rhs) const -> Matrix {
+		auto operator/(T const& rhs) const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = data[i] / std::forward<T>(rhs);
+				result[i] = data[i] / rhs;
 			}
 			return result;
 		}
 
-		auto operator/=(T&& rhs) -> Matrix& {
-			*this = *this / std::forward<T>(rhs);
+		auto operator/=(T const& rhs) -> Matrix& {
+			*this = *this / rhs;
 			return *this;
 		}
 
@@ -284,18 +284,18 @@ namespace metatron::math {
 	using Matrix4 = Matrix<f32, 4, 4>;
 
 	template<typename T, usize... dims>
-	auto inline operator+(T&& lhs, Matrix<T, dims...> const& rhs) {
-		return rhs + std::forward<T>(lhs);
+	auto inline operator+(T const& lhs, Matrix<T, dims...> const& rhs) {
+		return rhs + lhs;
 	}
 
 	template<typename T, usize... dims>
-	auto inline operator-(T&& lhs, Matrix<T, dims...> const& rhs) {
-		return -rhs + std::forward<T>(lhs);
+	auto inline operator-(T const& lhs, Matrix<T, dims...> const& rhs) {
+		return -rhs + lhs;
 	}
 
 	template<typename T, usize... dims>
-	auto inline operator*(T&& lhs, Matrix<T, dims...> const& rhs) {
-		return rhs * std::forward<T>(lhs);
+	auto inline operator*(T const& lhs, Matrix<T, dims...> const& rhs) {
+		return rhs * lhs;
 	}
 
 	template<typename T, usize h, usize w>
@@ -339,22 +339,16 @@ namespace metatron::math {
 			}
 
 			if (max_row != i) {
-				for (usize j = 0; j < h * 2; j++) {
-					std::swap(augmented[i][j], augmented[max_row][j]);
-				}
+				std::swap(augmented[i], augmented[max_row]);
 			}
 
 			auto pivot = augmented[i][i];
-			for (usize j = 0; j < h * 2; j++) {
-				augmented[i][j] /= pivot;
-			}
+			augmented[i] /= pivot;
 
 			for (usize j = 0; j < h; j++) {
 				if (j != i) {
 					auto factor = augmented[j][i];
-					for (usize k = 0; k < h * 2; k++) {
-						augmented[j][k] -= factor * augmented[i][k];
-					}
+					augmented[j] -= factor * augmented[i];
 				}
 			}
 		}
