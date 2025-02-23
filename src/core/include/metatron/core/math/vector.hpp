@@ -23,9 +23,9 @@ namespace metatron::math {
 		};
 	}
 
-	template<typename T>
+	template<typename T, usize size>
 	requires std::floating_point<T>
-	auto normalize(math::Vector<T, 3> const& x) {
+	auto normalize(math::Vector<T, size> const& x) {
 		return x / std::sqrt(dot(x, x));
 	}
 
@@ -42,5 +42,11 @@ namespace metatron::math {
 		auto cos_2_theta_t = T{1.0} - eta * eta * (T{1.0} - cos_theta_i * cos_theta_i); 
 		if (cos_2_theta_t < 0.0) return Vector<T, 3>{T{0.0}};
 		return eta * in - (eta * cos_theta_i + std::sqrt(cos_2_theta_t)) * n;
+	}
+
+	template<typename T, usize size>
+	requires std::floating_point<T>
+	auto lerp(math::Vector<T, size> const& x, math::Vector<T, size> const& y, T const& alpha) {
+		return (T{1.0} - alpha) * x + alpha * y;
 	}
 }
