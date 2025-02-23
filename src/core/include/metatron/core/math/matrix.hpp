@@ -279,10 +279,6 @@ namespace metatron::math {
 		friend struct Matrix;
 	};
 
-	using Matrix2 = Matrix<f32, 2, 2>;
-	using Matrix3 = Matrix<f32, 3, 3>;
-	using Matrix4 = Matrix<f32, 4, 4>;
-
 	template<typename T, usize... dims>
 	auto inline operator+(T const& lhs, Matrix<T, dims...> const& rhs) {
 		return rhs + lhs;
