@@ -3,7 +3,7 @@
 #include <tuple>
 
 namespace metatron::math {
-    template<typename T>
+    template<typename T = f32>
     requires std::floating_point<T>
     class Quaternion {
     public:
