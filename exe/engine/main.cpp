@@ -1,4 +1,5 @@
 #include <metatron/core/math/math.hpp>
+#include <metatron/rendering/camera.hpp>
 #include <cstdio>
 
 using namespace metatron;

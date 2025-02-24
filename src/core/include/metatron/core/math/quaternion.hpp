@@ -3,10 +3,11 @@
 #include <tuple>
 
 namespace metatron::math {
-    template<typename T = f32>
+    template<typename T>
     requires std::floating_point<T>
     class Quaternion {
     public:
+		Quaternion() = default;
         Quaternion(T x, T y, T z, T w) : data{x, y, z, w} {}
         explicit Quaternion(Vector<T, 4> const& v) : data{v} {}
 
