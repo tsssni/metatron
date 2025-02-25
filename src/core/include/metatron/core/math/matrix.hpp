@@ -1,11 +1,6 @@
 #pragma once
 #include <algorithm>
-#include <concepts>
-#include <initializer_list>
 #include <array>
-#include <type_traits>
-#include <utility>
-#include <cmath>
 #include <cassert>
 
 namespace metatron::math {
@@ -273,29 +268,29 @@ namespace metatron::math {
 		auto operator<=>(Matrix const& rhs) const = default;
 
 	private:
-		std::array<Element, first_dim> data{};
+		std::array<Element, first_dim> data;
 
 		template<typename U, usize... dims>
 		friend struct Matrix;
 	};
 
 	template<typename T, usize... dims>
-	auto inline operator+(T const& lhs, Matrix<T, dims...> const& rhs) {
+	auto inline operator+(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
 		return rhs + lhs;
 	}
 
 	template<typename T, usize... dims>
-	auto inline operator-(T const& lhs, Matrix<T, dims...> const& rhs) {
+	auto inline operator-(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
 		return -rhs + lhs;
 	}
 
 	template<typename T, usize... dims>
-	auto inline operator*(T const& lhs, Matrix<T, dims...> const& rhs) {
+	auto inline operator*(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
 		return rhs * lhs;
 	}
 
 	template<typename T, usize h, usize w>
-	auto inline transpose(Matrix<T, h, w> const& m) {
+	auto inline transpose(Matrix<T, h, w> const& m) -> Matrix<T, w, h> {
 		auto result = Matrix<T, w, h>{};
 		for (auto i = 0; i < w; i++) {
 			for (auto j = 0; j < h; j++) {
@@ -307,7 +302,7 @@ namespace metatron::math {
 
 	template<typename T, usize h>
 	requires std::floating_point<T>
-	auto inline inverse(Matrix<T, h, h> const& m) {
+	auto inline inverse(Matrix<T, h, h> const& m) -> Matrix<T, h, h> {
 		auto augmented = Matrix<T, h, h * 2>{};
 		for (usize i = 0; i < h; i++) {
 			for (usize j = 0; j < h; j++) {

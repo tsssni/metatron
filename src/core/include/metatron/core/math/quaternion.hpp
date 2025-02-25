@@ -11,6 +11,36 @@ namespace metatron::math {
         Quaternion(T x, T y, T z, T w) : data{x, y, z, w} {}
         explicit Quaternion(Vector<T, 4> const& v) : data{v} {}
 
+		auto static from_rotation_axis_angle(Vector<T, 3> const& axis, T const& angle) {
+			auto half_angle = angle * T{0.5};
+			auto sin_half = std::sin(half_angle);
+			auto cos_half = std::cos(half_angle);
+			auto normalized_axis = normalize(axis);
+			return Quaternion{
+				normalized_axis[0] * sin_half,
+				normalized_axis[1] * sin_half,
+				normalized_axis[2] * sin_half,
+				cos_half
+			};
+		}
+
+		auto static from_rotation_between(Vector<T, 3> const& from, Vector<T, 3> const& to) {
+			auto from_normalized = normalize(from);
+			auto to_normalized = normalize(to);
+			
+			auto cos_theta = dot(from_normalized, to_normalized);
+			
+			// if parallel
+			if (std::abs(cos_theta) > T{0.9999}) {
+				return Quaternion<T>{};
+			}
+			
+			auto rotation_axis = cross(from, to);
+			auto angle = std::acos(cos_theta);
+			
+			return from_axis_angle(rotation_axis, angle);
+		}
+
 		auto operator[](usize idx) -> T& {
 			return data[idx];
 		}
@@ -31,15 +61,15 @@ namespace metatron::math {
             };
         }
 
-        auto operator*(T const& scalar) const {
+        auto operator*(T const& scalar) const -> Quaternion<T> {
             return Quaternion{data * scalar};
         }
 
-        auto operator+(Quaternion const& rhs) const {
+        auto operator+(Quaternion const& rhs) const -> Quaternion<T> {
             return Quaternion{data + rhs.data};
         }
 
-        auto operator-() const {
+        auto operator-() const -> Quaternion<T> {
             return Quaternion{-data};
         }
 
@@ -60,40 +90,6 @@ namespace metatron::math {
     private:
         Vector<T, 4> data;
     };
-
-    template<typename T>
-    requires std::floating_point<T>
-	auto inline rotation_axis_angle(Vector<T, 3> const& axis, T const& angle) {
-		auto half_angle = angle * T{0.5};
-		auto sin_half = std::sin(half_angle);
-		auto cos_half = std::cos(half_angle);
-		auto normalized_axis = normalize(axis);
-		return Quaternion{
-			normalized_axis[0] * sin_half,
-			normalized_axis[1] * sin_half,
-			normalized_axis[2] * sin_half,
-			cos_half
-		};
-	}
-
-    template<typename T>
-    requires std::floating_point<T>
-	auto inline rotation_between(Vector<T, 3> const& from, Vector<T, 3> const& to) {
-		auto from_normalized = normalize(from);
-		auto to_normalized = normalize(to);
-		
-		auto cos_theta = dot(from_normalized, to_normalized);
-		
-		// if parallel
-		if (std::abs(cos_theta) > T{0.9999}) {
-			return Quaternion<T>{};
-		}
-		
-		auto rotation_axis = cross(from, to);
-		auto angle = std::acos(cos_theta);
-		
-		return from_axis_angle(rotation_axis, angle);
-	}
 
     template<typename T>
     requires std::floating_point<T>

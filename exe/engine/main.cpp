@@ -1,15 +1,11 @@
-#include <metatron/core/math/math.hpp>
-#include <metatron/rendering/camera.hpp>
-#include <cstdio>
+#include <metatron/asset/image.hpp>
 
 using namespace metatron;
 
 auto main() -> int {
-	auto q0 = math::rotation_axis_angle({0.f, 1.f, 0.f}, 0.f);
-	auto q1 = math::rotation_axis_angle({0.f, 1.f, 0.f}, 3.1415926535f);
-	auto q3 = q0 * q1;
-	for (auto i = 0; i < 4; i++) {
-		std::printf("%f ", q3[i]);
-	}
-	return 0;
+	auto img = asset::Image({1024, 1024, 4, sizeof(f32)});
+	img[512, 512] = {1.f, 2.f, 3.f, 4.f};
+	auto pixel = math::Vector<f32, 4>{img[512, 512]};
+	if (pixel == math::Vector<f32, 4>{1.f, 2.f, 3.f, 4.f}) return 0;
+	return 1;
 }
