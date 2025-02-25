@@ -1,14 +1,9 @@
-#include <metatron/asset/image.hpp>
+#include <metatron/asset/image/image.hpp>
 
 using namespace metatron;
 
 auto main() -> int {
-	auto img = asset::Image({1024, 1024, 4, sizeof(f32)});
-	for (auto j = 0; j < 1024; j++) {
-		for (auto i = 0; i < 1024; i++) {
-			img[i, j] = {1.f};
-		}
-	}
-	img.to_path("build/test.exr");
+	auto img = asset::Image::from_path("build/test.exr");
+	img->to_path("build/test1.exr");
 	return 0;
 }

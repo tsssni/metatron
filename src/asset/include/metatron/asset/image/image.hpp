@@ -1,3 +1,4 @@
+#pragma once
 #include <metatron/core/math/vector.hpp>
 #include <vector>
 #include <string_view>

@@ -1,60 +1,77 @@
-#include <metatron/asset/image.hpp>
+#include <metatron/asset/image/io.hpp>
 #include <tinyexr.h>
-#include <span>
 #include <cstring>
 
 namespace metatron::asset {
-	Image::Pixel::Pixel(Image const* image, byte* start)
-	: image(image), start(start) {}
-
-	Image::Pixel::operator math::Vector<f32, 4>() const {
-		auto pixel = math::Vector<f32, 4>{};
-		for (auto i = 0; i < image->size[2]; i++) {
-			switch (image->size[3]) {
-				case 1:
-					pixel[i] = *(start + i) / 255.f;
-					break;
-				case 4:
-					pixel[i] = *((f32*)(start) + i);
-					break;
-				default:
-					break;
+	auto exr_reader(std::string_view path) -> std::unique_ptr<Image> {
+		EXRHeader header;
+		InitEXRHeader(&header);
+		
+		EXRVersion version;
+		const char* err = nullptr;
+		
+		int ret = ParseEXRVersionFromFile(&version, path.data());
+		if (ret != TINYEXR_SUCCESS) {
+			std::printf("metatron: Failed to parse EXR version\n");
+			std::abort();
+		}
+		
+		ret = ParseEXRHeaderFromFile(&header, &version, path.data(), &err);
+		if (ret != TINYEXR_SUCCESS) {
+			std::printf("metatron: %s", err);
+			FreeEXRErrorMessage(err);
+			std::abort();
+		}
+		
+		EXRImage exr_image;
+		InitEXRImage(&exr_image);
+		
+		ret = LoadEXRImageFromFile(&exr_image, &header, path.data(), &err);
+		if (ret != TINYEXR_SUCCESS) {
+			std::printf("metatron: %s", err);
+			FreeEXRHeader(&header);
+			FreeEXRImage(&exr_image);
+			FreeEXRErrorMessage(err);
+			std::abort();
+		}
+		
+		auto size = math::Vector<usize, 4>{
+			usize(exr_image.width),
+			usize(exr_image.height),
+			usize(exr_image.num_channels),
+			usize((header.pixel_types[0] == TINYEXR_PIXELTYPE_HALF) ? 2 : 4)
+		};
+		auto image = std::make_unique<Image>(size);
+		
+		for (auto j = 0; j < exr_image.height; j++) {
+			for (auto i = 0; i < exr_image.width; i++) {
+				auto pixel = math::Vector<f32, 4>{0.0f, 0.0f, 0.0f, 1.0f};
+				
+				for (auto c = 0; c < exr_image.num_channels && c < 4; c++) {
+					const char* channel_names[4] = {"R", "G", "B", "A"};
+					
+					auto channel_index = -1;
+					for (auto k = 0; k < header.num_channels; k++) {
+						if (strcmp(header.channels[k].name, channel_names[c]) == 0) {
+							channel_index = k;
+							break;
+						}
+					}
+					
+					if (channel_index >= 0) {
+						auto channel_data = (float const*)(exr_image.images[channel_index]);
+						pixel[c] = channel_data[j * exr_image.width + i];
+					}
+				}
+				
+				(*image)[i, j] = pixel;
 			}
 		}
-		return pixel;
-	}
-
-	auto Image::Pixel::operator=(math::Vector<f32, 4> const& v) -> void{
-		for (auto i = 0; i < image->size[2]; i++) {
-			auto* pixel = start + image->size[3] * i; 
-			switch (image->size[3]) {
-				case 1:
-					*pixel = byte(v[i] * 255.f);
-					break;
-				case 4:
-					*((f32*)pixel) = v[i];
-					break;
-				default:
-					break;
-			}
-		}
-	}
-
-	Image::Image(math::Vector<usize, 4> const& size) 
-	: size(size), pixels(size[0] * size[1] * size[2] * size[3]) {}
-
-	auto Image::operator[](usize x, usize y) -> Pixel {
-		auto offset = (y * size[0] + x) * size[2] * size[3];
-		return Pixel{this, &pixels[offset]};
-	}
-
-	auto Image::operator[](usize x, usize y) const -> Pixel const {
-		auto offset = (y * size[0] + x) * size[2] * size[3];
-		return (Pixel const){this, const_cast<byte*>(&pixels[offset])};
-	}
-
-	auto Image::from_path(std::string_view path) -> std::unique_ptr<Image> {
-		return std::make_unique<Image>(math::Vector<usize, 4>{0});
+		
+		FreeEXRHeader(&header);
+		FreeEXRImage(&exr_image);
+		
+		return image;
 	}
 
 	auto exr_writer(std::string_view path, Image const& image) -> void {
@@ -108,12 +125,6 @@ namespace metatron::asset {
 		if (ret != TINYEXR_SUCCESS) {
 			std::printf("metatron: %s", err);
 			std::abort();
-		}
-	}
-
-	auto Image::to_path(std::string_view path) -> void {
-		if (path.ends_with(".exr")) {
-			exr_writer(path, *this);
 		}
 	}
 }
