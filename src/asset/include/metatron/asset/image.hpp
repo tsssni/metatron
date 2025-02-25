@@ -1,5 +1,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <vector>
+#include <string_view>
+#include <memory>
 
 namespace metatron::asset {
 	struct Image final {
@@ -12,12 +14,15 @@ namespace metatron::asset {
 			byte* start;
 		};
 
-		// 0: width, 1: height, 2: channel, 3: stride
+		// 0: width, 1: height, 2: channels, 3: stride
 		math::Vector<usize, 4> const size;
 		Image(math::Vector<usize, 4> const& size);
 
 		auto operator[](usize x, usize y) -> Pixel;
 		auto operator[](usize x, usize y) const -> Pixel const;
+
+		auto static from_path(std::string_view path) -> std::unique_ptr<Image>;
+		auto to_path(std::string_view path) -> void;
 
 	private:
 		std::vector<byte> pixels;

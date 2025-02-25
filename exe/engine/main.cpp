@@ -4,8 +4,11 @@ using namespace metatron;
 
 auto main() -> int {
 	auto img = asset::Image({1024, 1024, 4, sizeof(f32)});
-	img[512, 512] = {1.f, 2.f, 3.f, 4.f};
-	auto pixel = math::Vector<f32, 4>{img[512, 512]};
-	if (pixel == math::Vector<f32, 4>{1.f, 2.f, 3.f, 4.f}) return 0;
-	return 1;
+	for (auto j = 0; j < 1024; j++) {
+		for (auto i = 0; i < 1024; i++) {
+			img[i, j] = {1.f};
+		}
+	}
+	img.to_path("build/test.exr");
+	return 0;
 }
