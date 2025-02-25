@@ -53,14 +53,18 @@ namespace metatron::asset {
 
 	auto Image::from_path(std::string_view path) -> std::unique_ptr<Image> {
 		if (path.ends_with(".exr")) {
-			return exr_reader(path);
+			return Exr_Image::from_path(path);
+		} else if (false
+			|| path.ends_with(".png")
+			|| path.ends_with(".jpg")) {
+			return Stb_Image::from_path(path);
 		}
-		return std::make_unique<Image>(math::Vector<usize, 4>{0});
+		std::abort();
 	}
 
 	auto Image::to_path(std::string_view path) -> void {
 		if (path.ends_with(".exr")) {
-			exr_writer(path, *this);
+			Exr_Image::to_path(path, *this);
 		}
 	}
 }

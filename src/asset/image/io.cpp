@@ -1,9 +1,43 @@
 #include <metatron/asset/image/io.hpp>
 #include <tinyexr.h>
+#include <stb_image.h>
 #include <cstring>
 
 namespace metatron::asset {
-	auto exr_reader(std::string_view path) -> std::unique_ptr<Image> {
+	auto Stb_Image::from_path(std::string_view path) -> std::unique_ptr<Image> {
+		auto [width, height, channels] = std::tuple<i32, i32, i32>{0, 0, 0};
+		auto* data = stbi_load(path.data(), &width, &height, &channels, STBI_rgb_alpha);
+		
+		if (!data) {
+			std::printf("metatron: failed to load stb image %s: %s\n", path.data(), stbi_failure_reason());
+			std::abort();
+		}
+		
+		auto size = math::Vector<usize, 4>{
+			usize(width),
+			usize(height),
+			usize(channels),
+			1
+		};
+		auto image = std::make_unique<Image>(size);
+
+		for (int j = 0; j < height; j++) {
+			for (int i = 0; i < width; i++) {
+				auto pixel = math::Vector<f32, 4>{};
+				auto idx = (j * width + i) * 4;
+				for (int c = 0; c < channels; c++) {
+					pixel[c] = f32(data[idx + c]) / 255.0f;
+				}
+				
+				(*image)[i, j] = pixel;
+			}
+		}
+		
+		stbi_image_free(data);
+		return image;
+	}
+
+	auto Exr_Image::from_path(std::string_view path) -> std::unique_ptr<Image> {
 		EXRHeader header;
 		InitEXRHeader(&header);
 		
@@ -12,7 +46,7 @@ namespace metatron::asset {
 		
 		int ret = ParseEXRVersionFromFile(&version, path.data());
 		if (ret != TINYEXR_SUCCESS) {
-			std::printf("metatron: Failed to parse EXR version\n");
+			std::printf("metatron: failed to parse exr version\n");
 			std::abort();
 		}
 		
@@ -39,7 +73,7 @@ namespace metatron::asset {
 			usize(exr_image.width),
 			usize(exr_image.height),
 			usize(exr_image.num_channels),
-			usize((header.pixel_types[0] == TINYEXR_PIXELTYPE_HALF) ? 2 : 4)
+			usize(4)
 		};
 		auto image = std::make_unique<Image>(size);
 		
@@ -74,7 +108,7 @@ namespace metatron::asset {
 		return image;
 	}
 
-	auto exr_writer(std::string_view path, Image const& image) -> void {
+	auto Exr_Image::to_path(std::string_view path, Image const& image) -> void {
 		auto width = image.size[0];
 		auto height = image.size[1];
 		auto channels = image.size[2];
@@ -97,11 +131,11 @@ namespace metatron::asset {
 		auto channels_info = std::vector<EXRChannelInfo>(channels);
 		auto default_channel_names = std::array<char const*, 4>{"R", "G", "B", "A"};
 		for (auto c = 0; c < channels; c++) {
-			strncpy(channels_info[c].name, default_channel_names[c], 255);
+			strncpy(channels_info[c].name, default_channel_names[channels - 1 - c], 255);
 		}
 		header.channels = channels_info.data();
 
-		auto pixel_type = stride > 2 ? TINYEXR_PIXELTYPE_FLOAT : TINYEXR_PIXELTYPE_HALF;
+		auto pixel_type = TINYEXR_PIXELTYPE_FLOAT;
 		auto pixel_types = std::vector<i32>(channels, pixel_type);
 		auto requested_pixel_types = std::vector<i32>(channels, pixel_type);
 		header.pixel_types = pixel_types.data();
@@ -110,7 +144,7 @@ namespace metatron::asset {
 
 		auto image_ptr = std::vector<f32*>(channels);
 		for (auto c = 0; c < channels; c++) {
-			image_ptr[c] = channel_data[c].data();
+			image_ptr[c] = channel_data[channels - 1 - c].data();
 		}
 
 		EXRImage exr_image;
