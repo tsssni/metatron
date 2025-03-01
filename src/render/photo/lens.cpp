@@ -1,6 +1,8 @@
 #include <metatron/render/photo/lens.hpp>
 
 namespace metatron::photo {
+	Lens::~Lens() {}
+
 	Pinhole_Lens::Pinhole_Lens(f32 focal_length)
 		: focal_length(focal_length) {}
 
