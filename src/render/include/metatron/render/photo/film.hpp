@@ -7,6 +7,8 @@
 #include <memory>
 
 namespace metatron::photo {
+	struct Camera;
+
 	struct Film final {
 		struct Fixel final {
 			math::Vector<f32, 2> const position;
@@ -24,6 +26,7 @@ namespace metatron::photo {
 			std::unique_ptr<math::Filter> filter
 		);
 		auto sample(math::Vector<f32, 2> pixel_position) -> Fixel;
+		auto to_path(std::string_view path) -> void;
 
 	private:
 		friend Fixel;

@@ -139,7 +139,9 @@ namespace metatron::math {
 					product[i] = data[i] * rhs[i];
 				}
 			} else {
-				if constexpr (l_n == 1) {
+				if constexpr (l_n == 1 && r_n == 1) {
+					
+				} else if constexpr (l_n == 1) {
 					for (auto i = 0; i < pds[0]; i++) {
 						for (auto j = 0; j < lds[0]; j++) {
 							product[i] += data[j] * rhs[j][i];

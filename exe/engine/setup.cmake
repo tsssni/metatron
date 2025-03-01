@@ -1,1 +1,1 @@
-list(APPEND metatron-deps rendering asset)
+list(APPEND metatron-deps render)

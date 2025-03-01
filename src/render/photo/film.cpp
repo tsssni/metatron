@@ -5,12 +5,14 @@ namespace metatron::photo {
 		: film(film), position(position), weight(weight) {}
 
 	auto Film::Fixel::operator=(spectra::Spectrum const& spectrum) -> void {
-		auto uv = ((position / film->size) * 0.5 + 0.5);
+		auto uv = (position / film->size) + 0.5;
 		auto pixel = math::Vector<i32, 2>{
 			i32(uv[0] * film->image.size[0]),
 			i32(uv[1] * film->image.size[1])
 		};
-		film->image[pixel[0], pixel[1]] += weight * math::Vector<f32, 3>{spectrum};
+		auto rgba = math::Vector<f32, 4>{(*(film->sensor))(spectrum)};
+		rgba[3] = weight;
+		film->image[pixel[0], pixel[1]] += rgba;
 	}
 
 	Film::Film(
@@ -28,16 +30,27 @@ namespace metatron::photo {
 		auto uv = math::Vector<f32, 2>{
 			pixel_position[0] / image.size[0],
 			pixel_position[1] / image.size[1],
-		};
+		} - 0.5;
 		auto film_position = math::Vector<f32, 2>{
 			uv[0] * size[0],
 			uv[1] * size[1]
-		} * 2.0 - 1.0;
+		};
 
 		return Fixel{
 			this, 
 			film_position,
 			1.f
 		};
+	}
+
+	auto Film::to_path(std::string_view path) -> void {
+		for (auto j = 0; j < image.size[1]; j++) {
+			for (auto i = 0; i < image.size[1]; i++) {
+				auto pixel = math::Vector<f32, 4>{image[i, j]};
+				pixel /= pixel[3];
+				image[i, j] = pixel;
+			}
+		}
+		image.to_path(path);
 	}
 }

@@ -1,7 +1,24 @@
-#include <metatron/core/math/vector.hpp>
+#include <metatron/core/math/sampler.hpp>
+#include <vector>
+#include <cstdlib>
 
 namespace metatron::spectra {
 	struct Spectrum {
-		explicit virtual operator math::Vector<f32, 3>() const = 0;
+		virtual ~Spectrum();
+		auto virtual operator()(f32 lambda) -> f32& = 0;
+		auto virtual operator()(f32 lambda) const -> f32 const& = 0;
+		auto virtual operator*(Spectrum const& spectrum) const -> f32 = 0;
+	};
+
+	struct Stochastic_Spectrum final: Spectrum {
+		std::vector<f32> lambda;
+		std::vector<f32> pdf;
+		std::vector<f32> value;
+
+		Stochastic_Spectrum(usize n, math::Sampler const& sampler);
+
+		auto operator()(f32 lambda) -> f32&;
+		auto operator()(f32 lambda) const -> f32 const&;
+		auto operator*(Spectrum const& spectrum) const -> f32;
 	};
 }

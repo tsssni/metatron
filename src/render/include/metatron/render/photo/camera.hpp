@@ -17,12 +17,12 @@ namespace metatron::photo {
 			std::unique_ptr<Film> film,
 			std::unique_ptr<Lens> lens
 		);
-
 		auto sample(
 			math::Vector<usize, 2> pixel,
 			usize idx,
 			math::Sampler const& sampler
 		) -> Sample;
+		auto to_path(std::string_view path) -> void;
 
 	private:
 		std::unique_ptr<Film> film;
