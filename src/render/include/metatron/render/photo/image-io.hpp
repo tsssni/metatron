@@ -1,6 +1,7 @@
-#include <metatron/asset/image/image.hpp>
+#pragma once
+#include <metatron/render/photo/image.hpp>
 
-namespace metatron::asset {
+namespace metatron::photo {
 	struct Stb_Image final {
 		auto static from_path(std::string_view path) -> std::unique_ptr<Image>;
 	};

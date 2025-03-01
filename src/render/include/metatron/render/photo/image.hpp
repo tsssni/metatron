@@ -4,12 +4,13 @@
 #include <string_view>
 #include <memory>
 
-namespace metatron::asset {
+namespace metatron::photo {
 	struct Image final {
 		struct Pixel final {
 			Pixel(Image const* image, byte* start);
 			explicit operator math::Vector<f32, 4>() const;
 			auto operator=(math::Vector<f32, 4> const& v) -> void;
+			auto operator+=(math::Vector<f32, 4> const& v) -> void;
 		private:
 			Image const* image;
 			byte* start;

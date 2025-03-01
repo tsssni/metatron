@@ -1,9 +1,9 @@
-#include <metatron/asset/image/io.hpp>
+#include <metatron/render/photo/image-io.hpp>
 #include <tinyexr.h>
 #include <stb_image.h>
 #include <cstring>
 
-namespace metatron::asset {
+namespace metatron::photo {
 	auto Stb_Image::from_path(std::string_view path) -> std::unique_ptr<Image> {
 		auto [width, height, channels] = std::tuple<i32, i32, i32>{0, 0, 0};
 		auto* data = stbi_load(path.data(), &width, &height, &channels, STBI_rgb_alpha);

@@ -1,7 +1,7 @@
-#include <metatron/asset/image/image.hpp>
-#include <metatron/asset/image/io.hpp>
+#include <metatron/render/photo/image.hpp>
+#include <metatron/render/photo/image-io.hpp>
 
-namespace metatron::asset {
+namespace metatron::photo {
 	Image::Pixel::Pixel(Image const* image, byte* start)
 	: image(image), start(start) {}
 
@@ -22,7 +22,7 @@ namespace metatron::asset {
 		return pixel;
 	}
 
-	auto Image::Pixel::operator=(math::Vector<f32, 4> const& v) -> void{
+	auto Image::Pixel::operator=(math::Vector<f32, 4> const& v) -> void {
 		for (auto i = 0; i < image->size[2]; i++) {
 			auto* pixel = start + image->size[3] * i; 
 			switch (image->size[3]) {
@@ -36,6 +36,10 @@ namespace metatron::asset {
 					break;
 			}
 		}
+	}
+
+	auto Image::Pixel::operator+=(math::Vector<f32, 4> const& v) -> void {
+		*this = math::Vector<f32, 4>(*this) + v;
 	}
 
 	Image::Image(math::Vector<usize, 4> const& size) 

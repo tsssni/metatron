@@ -1,4 +1,4 @@
-#include <metatron/asset/image/image.hpp>
+#include <metatron/asset/image.hpp>
 
 using namespace metatron;
 
