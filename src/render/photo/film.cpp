@@ -35,7 +35,6 @@ namespace metatron::photo {
 			uv[0] * size[0],
 			uv[1] * size[1]
 		};
-
 		return Fixel{
 			this, 
 			film_position,

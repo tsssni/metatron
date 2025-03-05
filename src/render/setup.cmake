@@ -1,1 +1,1 @@
-list(APPEND metatron-deps hierarchy tinyexr stb)
+list(APPEND metatron-deps hierarchy geometry tinyexr stb)

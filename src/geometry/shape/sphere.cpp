@@ -26,7 +26,7 @@ namespace metatron::shape {
 	) const -> std::optional<intr::Interaction> {
 		auto a = math::dot(r.d, r.d);
 		auto b = math::dot(r.o, r.d) * 2.f;
-		auto c = math::dot(r.o, r.o);
+		auto c = math::dot(r.o, r.o) - radius * radius;
 
 		auto delta = b * b - 4.f * a * c;
 		if (delta < 0.f) return {};

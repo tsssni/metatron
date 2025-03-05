@@ -16,7 +16,7 @@ namespace metatron::photo {
 			pixel[1] + 0.5f
 		};
 		auto fixel = film->sample(pixel_position);
-		auto ray = lens->sample({pixel_position[0], pixel_position[1], 0.f}, {0.f, 0.f});
+		auto ray = lens->sample({fixel.position[0], fixel.position[1], 0.f}, {0.f, 0.f});
 		return {ray, fixel};
 	}
 
