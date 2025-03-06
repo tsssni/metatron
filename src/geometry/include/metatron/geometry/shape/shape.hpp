@@ -1,11 +1,11 @@
 #pragma once
-#include <metatron/geometry/intr/bounding-box.hpp>
 #include <metatron/geometry/intr/interaction.hpp>
+#include <metatron/core/math/bounding-box.hpp>
 #include <optional>
 
 namespace metatron::shape {
 	struct Shape {
-		auto virtual bounding_box(usize idx = 0uz) const -> intr::Bounding_Box = 0;
+		auto virtual bounding_box(usize idx = 0uz) const -> math::Bounding_Box = 0;
 
 		auto virtual sample(
 			intr::Context const& ctx,

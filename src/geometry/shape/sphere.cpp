@@ -5,7 +5,7 @@ namespace metatron::shape {
 	Sphere::Sphere(f32 radius, f32 theta_min, f32 theta_max, f32 phi_max)
 		: radius(radius), theta_min(theta_min), theta_max(theta_max), phi_max(phi_max) {}
 
-	auto Sphere::bounding_box(usize idx) const -> intr::Bounding_Box {
+	auto Sphere::bounding_box(usize idx) const -> math::Bounding_Box {
 		return {
 			{-radius},
 			{radius}

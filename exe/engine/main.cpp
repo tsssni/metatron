@@ -1,6 +1,6 @@
 #include <metatron/core/math/constant.hpp>
 #include <metatron/render/photo/camera.hpp>
-#include <metatron/render/divider/divider.hpp>
+#include <metatron/render/divider/bvh.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
 
 using namespace metatron;
@@ -47,12 +47,14 @@ auto main() -> int {
 	auto spectrum = spectra::Stochastic_Spectrum{4, sampler};
 
 	auto sphere = shape::Sphere{0.1f, 0.f, math::pi, 2.f * math::pi};
+	auto divider = divider::Divider{&sphere};
+	auto bvh = divider::LBVH{{&divider}};
 
 	for (auto j = 0uz; j < 1024uz; j++) {
 		for (auto i = 0uz; i < 1024uz; i++) {
 			auto sample = camera.sample(math::Vector<usize, 2>{i, j}, 0, sampler);
 			sample.r.o[2] -= 1.f;
-			auto intr = sphere.intersect(sample.r);
+			auto intr = bvh.intersect(sample.r);
 			if (intr) sample.fixel = spectrum;
 		}
 	}

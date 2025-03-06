@@ -1,3 +1,4 @@
+#pragma once
 #include <metatron/geometry/shape/shape.hpp>
 
 namespace metatron::divider {

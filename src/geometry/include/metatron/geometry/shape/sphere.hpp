@@ -5,7 +5,7 @@ namespace metatron::shape {
 	struct Sphere final: Shape {
 		Sphere(f32 radius, f32 theta_min, f32 theta_max, f32 phi_max);
 
-		auto bounding_box(usize idx = 0uz) const -> intr::Bounding_Box;
+		auto bounding_box(usize idx = 0uz) const -> math::Bounding_Box;
 
 		auto sample(
 			intr::Context const& ctx,
