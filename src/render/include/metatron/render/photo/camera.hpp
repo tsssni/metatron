@@ -7,12 +7,12 @@
 #include <memory>
 
 namespace metatron::photo {
-	struct Sample final {
-		math::Ray r;
-		Film::Fixel fixel;
-	};
-
 	struct Camera final {
+		struct Sample final {
+			math::Ray r;
+			Film::Fixel fixel;
+		};
+
 		Camera(
 			std::unique_ptr<Film> film,
 			std::unique_ptr<Lens> lens

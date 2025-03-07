@@ -26,8 +26,14 @@ namespace metatron::math {
 
 	template<typename T, usize size>
 	requires std::floating_point<T>
+	auto length(Vector<T, size> const& x) -> T {
+		return std::sqrt(dot(x, x));
+	}
+
+	template<typename T, usize size>
+	requires std::floating_point<T>
 	auto normalize(Vector<T, size> const& x) -> Vector<T, size> {
-		return x / std::sqrt(dot(x, x));
+		return x / length(x);
 	}
 
 	template<typename T>
@@ -47,7 +53,7 @@ namespace metatron::math {
 
 	template<typename T, usize size>
 	requires std::floating_point<T>
-	auto lerp(Vector<T, size> const& x, Vector<T, size> const& y, T const& alpha) -> Vector<T, 3> {
+	auto lerp(Vector<T, size> const& x, Vector<T, size> const& y, T const& alpha) -> Vector<T, size> {
 		return (T{1.0} - alpha) * x + alpha * y;
 	}
 }

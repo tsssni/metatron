@@ -35,10 +35,14 @@ namespace metatron::photo {
 			uv[0] * size[0],
 			uv[1] * size[1]
 		};
+		auto weight = (*filter)({
+			(pixel_position[0] - std::floor(pixel_position[0])) - 0.5f,
+			(pixel_position[1] - std::floor(pixel_position[1])) - 0.5f,
+		});
 		return Fixel{
 			this, 
 			film_position,
-			1.f
+			weight
 		};
 	}
 

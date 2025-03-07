@@ -1,5 +1,6 @@
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/sampler/independent.hpp>
+#include <metatron/core/math/filter/box.hpp>
 #include <metatron/render/photo/camera.hpp>
 #include <metatron/render/divider/bvh.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
@@ -37,7 +38,7 @@ auto main() -> int {
 		math::Vector<f32, 2>{0.1f, 0.1f},
 		math::Vector<usize, 2>{1024, 1024},
 		std::move(sensor),
-		std::make_unique<math::Filter>()
+		std::make_unique<math::Box_Filter>()
 	);
 
 	auto camera = photo::Camera{
