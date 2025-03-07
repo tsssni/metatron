@@ -28,17 +28,19 @@ namespace metatron::math {
 			}
 		}
 
-		explicit Matrix(T&& scalar) {
+		template<typename U>
+		requires std::is_convertible_v<U, T>
+		explicit Matrix(U&& scalar) {
 			if constexpr (dimensions.size() == 1) {
 				data.fill(scalar);
 			} else if constexpr (dimensions.size() == 2) {
 				auto constexpr diagonal_n = std::min(dimensions[0], dimensions[1]);
 				for (auto i = 0; i < diagonal_n; i++) {
-					data[i][i] = std::forward<T>(scalar);
+					data[i][i] = std::forward<U>(scalar);
 				}
 			} else {
 				for (auto& line: data) {
-					line = Element{std::forward<T>(scalar)};
+					line = Element{std::forward<U>(scalar)};
 				}
 			}  
 		};

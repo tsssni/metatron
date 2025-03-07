@@ -22,14 +22,14 @@ namespace metatron::photo {
 		std::unique_ptr<math::Filter> filter
 	):
 	size(film_size),
-	image({image_size[0], image_size[1], 4, 4}),
+	image({image_size[0], image_size[1], 4uz, 4uz}),
 	sensor(std::move(sensor)),
 	filter(std::move(filter)) {}
 
 	auto Film::sample(math::Vector<f32, 2> pixel_position) -> Fixel {
 		auto uv = math::Vector<f32, 2>{
-			pixel_position[0] / image.size[0],
-			pixel_position[1] / image.size[1],
+			1.f - pixel_position[0] / image.size[0],
+			1.f - pixel_position[1] / image.size[1],
 		} - 0.5;
 		auto film_position = math::Vector<f32, 2>{
 			uv[0] * size[0],

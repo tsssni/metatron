@@ -1,4 +1,5 @@
 #include <metatron/core/math/constant.hpp>
+#include <metatron/core/math/sampler/independent.hpp>
 #include <metatron/render/photo/camera.hpp>
 #include <metatron/render/divider/bvh.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
@@ -43,8 +44,8 @@ auto main() -> int {
 		std::move(film),
 		std::move(lens)
 	};
-	auto sampler = math::Sampler{};
-	auto spectrum = spectra::Stochastic_Spectrum{4, sampler};
+	auto sampler = math::Independent_Sampler{};
+	auto spectrum = spectra::Stochastic_Spectrum{4, 0.f};
 
 	auto sphere = shape::Sphere{0.1f, 0.f, math::pi, 2.f * math::pi};
 	auto divider = divider::Divider{&sphere};

@@ -9,12 +9,11 @@ namespace metatron::photo {
 	auto Camera::sample(
 		math::Vector<usize, 2> pixel,
 		usize idx,
-		math::Sampler const& sampler
+		math::Sampler& sampler
 	) -> Sample {
-		auto pixel_position = math::Vector<f32, 2>{
-			pixel[0] + 0.5f,
-			pixel[1] + 0.5f
-		};
+		sampler.start(pixel, idx);
+		auto sample = sampler.generate_pixel_2d();
+		auto pixel_position = math::Vector<f32, 2>{pixel} + sample;
 		auto fixel = film->sample(pixel_position);
 		auto ray = lens->sample({fixel.position[0], fixel.position[1], 0.f}, {0.f, 0.f});
 		return {ray, fixel};

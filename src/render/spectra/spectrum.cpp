@@ -3,7 +3,7 @@
 namespace metatron::spectra {
 	Spectrum::~Spectrum() {};
 
-	Stochastic_Spectrum::Stochastic_Spectrum(usize n, math::Sampler const& sampler) {
+	Stochastic_Spectrum::Stochastic_Spectrum(usize n, f32 u) {
 		lambda.resize(n, 1.f);
 		pdf.resize(n, 1.f);
 		value.resize(n, 1.f);
