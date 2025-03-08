@@ -2,36 +2,20 @@
 #include <metatron/core/math/sampler/independent.hpp>
 #include <metatron/core/math/filter/box.hpp>
 #include <metatron/render/photo/camera.hpp>
+#include <metatron/render/photo/lens/pinhole.hpp>
+#include <metatron/render/spectra/stochastic.hpp>
+#include <metatron/render/spectra/rgb.hpp>
+#include <metatron/render/spectra/test-rgb.hpp>
 #include <metatron/render/divider/bvh.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
 
 using namespace metatron;
 
-namespace metatron {
-	namespace spectra {
-		struct Test_Spectrum final: Spectrum {
-			f32 data = 1.f;
-
-			auto operator()(f32 lambda) -> f32& {
-				return data;
-			}
-
-			auto operator()(f32 lambda) const -> f32 const& {
-				return data;
-			}
-
-			auto operator*(Spectrum const& spectrum) const -> f32 {
-				return data;
-			}
-		};
-	}
-}
-
 auto main() -> int {
 	auto sensor = std::make_unique<photo::Sensor>(
-		std::make_unique<spectra::Test_Spectrum>(),
-		std::make_unique<spectra::Test_Spectrum>(),
-		std::make_unique<spectra::Test_Spectrum>()
+		std::make_unique<spectra::Test_Rgb_Spectrum>(380.f, 380.f + 400.f / 3.f),
+		std::make_unique<spectra::Test_Rgb_Spectrum>(380.f + 400.f / 3.f, 380.f + 400.f * 2.f / 3.f),
+		std::make_unique<spectra::Test_Rgb_Spectrum>(380.f + 400.f * 2.f / 3.f, 780.f)
 	);
 	auto lens = std::make_unique<photo::Pinhole_Lens>(0.1f);
 	auto film = std::make_unique<photo::Film>(
@@ -46,7 +30,7 @@ auto main() -> int {
 		std::move(lens)
 	};
 	auto sampler = math::Independent_Sampler{};
-	auto spectrum = spectra::Stochastic_Spectrum{4, 0.f};
+	auto spectrum = spectra::Rgb_Spectrum{{0.5f, 0.6f, 0.7f}};
 
 	auto sphere = shape::Sphere{0.1f, 0.f, math::pi, 2.f * math::pi};
 	auto divider = divider::Divider{&sphere};

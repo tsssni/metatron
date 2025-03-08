@@ -1,8 +1,9 @@
 #include <metatron/core/math/sampler/independent.hpp>
+#include <metatron/core/math/constant.hpp>
 
 namespace metatron::math {
 	Independent_Sampler::Independent_Sampler(usize seed)
-		: rng(seed), dist(0.f, 1.f) {}
+		: rng(seed), dist(1e-4, 1.f - 1e-4) {}
 
 	auto Independent_Sampler::start(math::Vector<usize, 2> const& pixel, usize idx) -> void {
 		this->pixel = pixel;

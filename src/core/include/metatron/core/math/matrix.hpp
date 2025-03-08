@@ -16,7 +16,7 @@ namespace metatron::math {
 
 		Matrix() = default;
 
-		Matrix(std::initializer_list<Element> initializer_list)
+		constexpr Matrix(std::initializer_list<Element> initializer_list)
 		{
 			assert(initializer_list.size() <= first_dim);
 			if (initializer_list.size() > 1) {
@@ -30,7 +30,7 @@ namespace metatron::math {
 
 		template<typename U>
 		requires std::is_convertible_v<U, T>
-		explicit Matrix(U&& scalar) {
+		explicit constexpr Matrix(U&& scalar) {
 			if constexpr (dimensions.size() == 1) {
 				data.fill(scalar);
 			} else if constexpr (dimensions.size() == 2) {
@@ -57,7 +57,7 @@ namespace metatron::math {
 				}
 			}())
 		)
-		explicit Matrix(Args&&... args) {
+		explicit constexpr Matrix(Args&&... args) {
 			if constexpr (dimensions.size() > 2) {
 				for (auto& line: data) {
 					line = {args...};

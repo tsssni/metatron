@@ -19,6 +19,7 @@ namespace metatron::divider {
 	};
 
 	struct Acceleration {
+		virtual ~Acceleration() {}
 		auto virtual intersect(math::Ray const& r) -> std::optional<Intersection> = 0;
 	};
 }

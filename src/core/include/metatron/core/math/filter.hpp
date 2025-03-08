@@ -7,6 +7,7 @@ namespace metatron::math {
 			math::Vector<f32, 2> p;
 			f32 pdf;
 		};
+		virtual ~Filter() {}
 		auto virtual operator()(math::Vector<f32, 2> const& p) const -> f32 = 0;
 		auto virtual sample(math::Vector<f32, 2> const& u) const -> math::Vector<f32, 2> = 0;
 	};
