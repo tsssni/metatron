@@ -7,6 +7,9 @@
 #include <metatron/render/spectra/rgb.hpp>
 #include <metatron/render/spectra/test-rgb.hpp>
 #include <metatron/render/divider/bvh.hpp>
+#include <metatron/render/material/spectrum.hpp>
+#include <metatron/render/light/environment.hpp>
+#include <metatron/render/light/emitter.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
 
 using namespace metatron;
@@ -36,12 +39,20 @@ auto main() -> int {
 	auto divider = divider::Divider{&sphere};
 	auto bvh = divider::LBVH{{&divider}};
 
+	auto env_map = photo::Image::from_path("/home/tsssni/Downloads/the_sky_is_on_fire_4k.exr");
+	auto env_tex = std::make_unique<material::Spectrum_Image_Texture>(std::move(env_map));
+	auto env_light = light::Environment_Light{std::move(env_tex)};
+	auto lights = std::vector<light::Light const*>{&env_light};
+	auto inf_lights = std::vector<light::Light const*>{&env_light};
+	auto emitter = light::Emitter{std::move(lights), std::move(inf_lights)};
+
 	for (auto j = 0uz; j < 1024uz; j++) {
 		for (auto i = 0uz; i < 1024uz; i++) {
 			auto sample = camera.sample(math::Vector<usize, 2>{i, j}, 0, sampler);
 			sample.r.o[2] -= 1.f;
 			auto intr = bvh.intersect(sample.r);
 			if (intr) sample.fixel = spectrum;
+			else sample.fixel = *emitter.emit(sample.r);
 		}
 	}
 	camera.to_path("build/test.exr");
