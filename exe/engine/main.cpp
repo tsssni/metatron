@@ -9,7 +9,7 @@
 #include <metatron/render/divider/bvh.hpp>
 #include <metatron/render/material/spectrum.hpp>
 #include <metatron/render/light/environment.hpp>
-#include <metatron/render/light/emitter.hpp>
+#include <metatron/render/light/test.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
 
 using namespace metatron;
@@ -44,7 +44,7 @@ auto main() -> int {
 	auto env_light = light::Environment_Light{std::move(env_tex)};
 	auto lights = std::vector<light::Light const*>{&env_light};
 	auto inf_lights = std::vector<light::Light const*>{&env_light};
-	auto emitter = light::Emitter{std::move(lights), std::move(inf_lights)};
+	auto emitter = light::Test_Emitter{std::move(lights), std::move(inf_lights)};
 
 	for (auto j = 0uz; j < 1024uz; j++) {
 		for (auto i = 0uz; i < 1024uz; i++) {
