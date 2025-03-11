@@ -30,6 +30,13 @@ namespace metatron::spectra {
 		return f / lambda.size();
 	}
 
+	auto Stochastic_Spectrum::operator*(f32 s) -> Spectrum& {
+		for (auto i = 0uz; i < lambda.size(); i++) {
+			value[i] *= s;
+		}
+		return *this;
+	};
+
 	auto Stochastic_Spectrum::operator*(Spectrum const& spectrum) const -> Spectrum const& {
 		for (auto i = 0uz; i < lambda.size(); i++) {
 			value[i] *= spectrum(lambda[i]);

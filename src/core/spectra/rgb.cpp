@@ -18,6 +18,11 @@ namespace metatron::spectra {
 		return f;
 	}
 
+	auto Rgb_Spectrum::operator*(f32 s) -> Spectrum& {
+		rgb *= s;
+		return *this;
+	}
+
 	auto Rgb_Spectrum::operator*(Spectrum const& spectrum) const -> Spectrum const& {
 		return *this;
 	}

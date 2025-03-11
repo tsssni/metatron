@@ -6,7 +6,7 @@ namespace metatron::media {
 		std::unique_ptr<spectra::Spectrum> sigma_s
 	): sigma_a(std::move(sigma_a)), sigma_s(std::move(sigma_s)) {}
 
-	auto Homogeneous_Medium::sample(Context const& ctx, f32 u) -> Interaction {
+	auto Homogeneous_Medium::sample(Context const& ctx, f32 u) const -> Interaction {
 		return {{}, sigma_a.get(), sigma_s.get()};
 	}
 }

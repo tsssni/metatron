@@ -15,6 +15,6 @@ namespace metatron::media {
 	};
 
 	struct Medium {
-		auto virtual sample(Context const& ctx, f32 u) -> Interaction = 0;
+		auto virtual sample(Context const& ctx, f32 u) const -> Interaction = 0;
 	};
 }

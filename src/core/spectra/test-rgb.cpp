@@ -12,6 +12,10 @@ namespace metatron::spectra {
 		return 0.f;
 	}
 
+	auto Test_Rgb_Spectrum::operator*(f32 s) -> Spectrum& {
+		return *this;
+	}
+
 	auto Test_Rgb_Spectrum::operator*(Spectrum const& spectrum) const -> Spectrum const& {
 		return *this;
 	}

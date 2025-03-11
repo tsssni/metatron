@@ -12,6 +12,7 @@ namespace metatron::spectra {
 
 		auto operator()(f32 lambda) const -> f32;
 		auto operator()(Spectrum const& spectrum) const -> f32;
+		auto operator*(f32 s) -> Spectrum&;
 		auto operator*(Spectrum const& spectrum) const -> Spectrum const&;
 	};
 }

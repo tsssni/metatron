@@ -11,6 +11,7 @@
 #include <metatron/render/light/environment.hpp>
 #include <metatron/render/light/test.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
+#include <metatron/volume/media/homogeneous.hpp>
 
 using namespace metatron;
 
@@ -35,8 +36,12 @@ auto main() -> int {
 	auto sampler = math::Independent_Sampler{};
 	auto spectrum = spectra::Rgb_Spectrum{{0.5f, 0.6f, 0.7f}};
 
-	auto sphere = shape::Sphere{0.1f, 0.f, math::pi, 2.f * math::pi};
-	auto divider = divider::Divider{&sphere};
+	auto sphere = shape::Sphere{1.f, 0.f, math::pi, 2.f * math::pi};
+	auto homo_medium = media::Homogeneous_Medium{
+		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f, 0.2f, 0.3f}),
+		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f, 0.2f, 0.3f})
+	};
+	auto divider = divider::Divider{&sphere, &homo_medium};
 	auto bvh = divider::LBVH{{&divider}};
 
 	auto env_map = image::Image::from_path("/home/tsssni/Downloads/the_sky_is_on_fire_4k.exr");
@@ -49,10 +54,29 @@ auto main() -> int {
 	for (auto j = 0uz; j < 1024uz; j++) {
 		for (auto i = 0uz; i < 1024uz; i++) {
 			auto sample = camera.sample(math::Vector<usize, 2>{i, j}, 0, sampler);
-			sample.r.o[2] -= 1.f;
+			sample.r.o[2] -= 3.f;
 			auto intr = bvh.intersect(sample.r);
-			if (intr) sample.fixel = spectrum;
-			else sample.fixel = *emitter.emit(sample.r);
+			auto env = emitter.emit(sample.r);
+			if (intr) {
+				auto& intrv = intr.value();
+				auto p0 = intrv.intr.p;
+				sample.r.o = p0 + sample.r.d * 0.001f;
+
+				auto intr = bvh.intersect(sample.r);
+				if (intr) {
+					auto& intrv = intr.value();
+					auto p1 = intrv.intr.p;
+					auto l = math::length(p1 - p0);
+					auto ms = intrv.divider->medium->sample({}, 0.f);
+					auto v = (*ms.sigma_a)(0.f) + (*ms.sigma_s)(0.f);
+					sample.fixel = (*env) * std::exp(-l * v);
+				} else {
+					sample.fixel = *env;
+				}
+			}
+			else {
+				sample.fixel = *env;
+			}
 		}
 	}
 	camera.to_path("build/test.exr");
