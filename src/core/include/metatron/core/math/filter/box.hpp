@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/core/math/filter.hpp>
+#include <metatron/core/math/filter/filter.hpp>
 
 namespace metatron::math {
 	struct Box_Filter final: Filter {

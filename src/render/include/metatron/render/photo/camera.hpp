@@ -1,9 +1,9 @@
 #pragma once
 #include <metatron/render/photo/film.hpp>
-#include <metatron/render/photo/lens.hpp>
+#include <metatron/render/photo/lens/lens.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/ray.hpp>
-#include <metatron/core/math/sampler.hpp>
+#include <metatron/core/math/sampler/sampler.hpp>
 #include <memory>
 
 namespace metatron::photo {

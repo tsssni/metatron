@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/core/math/sampler.hpp>
+#include <metatron/core/math/sampler/sampler.hpp>
 #include <random>
 
 namespace metatron::math {

@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/render/photo/sensor.hpp>
 #include <metatron/core/image/image.hpp>
-#include <metatron/core/math/filter.hpp>
+#include <metatron/core/math/filter/filter.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <memory>
 
