@@ -1,7 +1,7 @@
-#include <metatron/render/photo/image.hpp>
-#include <metatron/render/photo/image-io.hpp>
+#include <metatron/core/image/image.hpp>
+#include <metatron/core/image/io.hpp>
 
-namespace metatron::photo {
+namespace metatron::image {
 	Image::Pixel::Pixel(Image const* image, byte* start)
 	: image(image), start(start) {}
 

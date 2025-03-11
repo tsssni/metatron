@@ -1,4 +1,4 @@
-#include <metatron/render/spectra/test-rgb.hpp>
+#include <metatron/core/spectra/test-rgb.hpp>
 
 namespace metatron::spectra {
 	Test_Rgb_Spectrum::Test_Rgb_Spectrum(f32 min_lambda, f32 max_lambda) 

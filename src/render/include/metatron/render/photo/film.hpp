@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/render/photo/sensor.hpp>
-#include <metatron/render/photo/image.hpp>
+#include <metatron/core/image/image.hpp>
 #include <metatron/core/math/filter.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <memory>
@@ -30,7 +30,7 @@ namespace metatron::photo {
 	private:
 		friend Fixel;
 		math::Vector<f32, 2> size;
-		Image image;
+		image::Image image;
 		std::unique_ptr<Sensor> sensor;
 		std::unique_ptr<math::Filter> filter;
 	};

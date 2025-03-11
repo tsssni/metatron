@@ -1,8 +1,8 @@
+#include <metatron/core/spectra/rgb.hpp>
 #include <metatron/render/material/spectrum.hpp>
-#include <metatron/render/spectra/rgb.hpp>
 
 namespace metatron::material {
-	Spectrum_Image_Texture::Spectrum_Image_Texture(std::unique_ptr<photo::Image> image)
+	Spectrum_Image_Texture::Spectrum_Image_Texture(std::unique_ptr<image::Image> image)
 		: image(std::move(image)) {}
 
 	auto Spectrum_Image_Texture::operator[](math::Vector<f32, 2> const& uv)

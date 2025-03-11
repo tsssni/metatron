@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/core/math/ray.hpp>
-#include <metatron/render/spectra/spectrum.hpp>
+#include <metatron/core/spectra/spectrum.hpp>
 #include <memory>
 
 namespace metatron::light {

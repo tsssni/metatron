@@ -1,4 +1,4 @@
-#include <metatron/render/spectra/stochastic.hpp>
+#include <metatron/core/spectra/stochastic.hpp>
 #include <metatron/core/math/vector.hpp>
 
 namespace metatron::spectra {

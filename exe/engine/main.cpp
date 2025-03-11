@@ -1,11 +1,11 @@
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/sampler/independent.hpp>
 #include <metatron/core/math/filter/box.hpp>
+#include <metatron/core/spectra/stochastic.hpp>
+#include <metatron/core/spectra/rgb.hpp>
+#include <metatron/core/spectra/test-rgb.hpp>
 #include <metatron/render/photo/camera.hpp>
 #include <metatron/render/photo/lens/pinhole.hpp>
-#include <metatron/render/spectra/stochastic.hpp>
-#include <metatron/render/spectra/rgb.hpp>
-#include <metatron/render/spectra/test-rgb.hpp>
 #include <metatron/render/divider/bvh.hpp>
 #include <metatron/render/material/spectrum.hpp>
 #include <metatron/render/light/environment.hpp>
@@ -39,7 +39,7 @@ auto main() -> int {
 	auto divider = divider::Divider{&sphere};
 	auto bvh = divider::LBVH{{&divider}};
 
-	auto env_map = photo::Image::from_path("/home/tsssni/Downloads/the_sky_is_on_fire_4k.exr");
+	auto env_map = image::Image::from_path("/home/tsssni/Downloads/the_sky_is_on_fire_4k.exr");
 	auto env_tex = std::make_unique<material::Spectrum_Image_Texture>(std::move(env_map));
 	auto env_light = light::Environment_Light{std::move(env_tex)};
 	auto lights = std::vector<light::Light const*>{&env_light};

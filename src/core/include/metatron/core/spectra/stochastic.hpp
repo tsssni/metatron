@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/render/spectra/spectrum.hpp>
+#include <metatron/core/spectra/spectrum.hpp>
 #include <vector>
 
 namespace metatron::spectra {

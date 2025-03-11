@@ -1,4 +1,4 @@
-#include <metatron/render/spectra/rgb.hpp>
+#include <metatron/core/spectra/rgb.hpp>
 
 namespace metatron::spectra {
 	Rgb_Spectrum::Rgb_Spectrum(math::Vector<f32, 3> const& rgb) :rgb(rgb) {}
