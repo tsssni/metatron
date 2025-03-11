@@ -13,7 +13,7 @@ namespace metatron::material {
 		return rgb_spec;
 	}
 
-	auto Spectrum_Image_Texture::operator()(intr::Interaction const& intr)
+	auto Spectrum_Image_Texture::operator()(shape::Interaction const& intr)
 		-> std::unique_ptr<spectra::Spectrum> {
 		auto pos = math::Vector<f32, 2>{intr.uv[0] * image->size[0], intr.uv[1] * image->size[1]};
 		auto pixel = math::Vector<f32, 4>{(*image)[pos[0], pos[1]]};

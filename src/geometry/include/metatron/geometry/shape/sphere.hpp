@@ -8,15 +8,15 @@ namespace metatron::shape {
 		auto bounding_box(usize idx = 0uz) const -> math::Bounding_Box;
 
 		auto sample(
-			intr::Context const& ctx,
+			Context const& ctx,
 			math::Vector<f32, 2> const& u,
 			usize idx = 0uz
-		) const -> std::optional<intr::Interaction>;
+		) const -> std::optional<Interaction>;
 
 		auto intersect(
 			math::Ray const& ctx,
 			usize idx = 0uz
-		) const -> std::optional<intr::Interaction>;
+		) const -> std::optional<Interaction>;
 
 	private:
 		f32 radius;

@@ -10,7 +10,7 @@ namespace metatron::light {
 			return infinite_lights[0]->emit(r);
 		}
 
-		auto Test_Emitter::sample(intr::Interaction const& intr, math::Vector<f32, 2> const& u) const -> Light::Sample {
+		auto Test_Emitter::sample(Context const& ctx, math::Vector<f32, 2> const& u) const -> Interaction {
 			// TODO: not implemented
 			return {};
 		}

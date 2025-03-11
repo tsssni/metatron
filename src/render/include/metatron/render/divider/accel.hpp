@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/render/divider/divider.hpp>
-#include <metatron/geometry/intr/interaction.hpp>
+#include <metatron/geometry/shape/shape.hpp>
 #include <metatron/core/math/bounding-box.hpp>
 #include <metatron/core/math/ray.hpp>
 #include <memory>
@@ -8,7 +8,7 @@
 namespace metatron::divider {
 	struct Intersection final {
 		Divider const* divider;
-		intr::Interaction intr;
+		shape::Interaction intr;
 	};
 
 	struct Node final {

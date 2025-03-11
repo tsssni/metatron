@@ -13,7 +13,7 @@ namespace metatron::light {
 			return (*texture)[{u, v}];
 		}
 
-		auto Environment_Light::sample(intr::Interaction const& intr, math::Vector<f32, 2> const& u) const -> Sample {
+		auto Environment_Light::sample(Context const& ctx, math::Vector<f32, 2> const& u) const -> Interaction {
 			// TODO: not implemented
 			return {};
 		}

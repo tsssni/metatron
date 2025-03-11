@@ -14,17 +14,17 @@ namespace metatron::shape {
 	}
 
 	auto Sphere::sample(
-		intr::Context const& ctx,
+		Context const& ctx,
 		math::Vector<f32, 2> const& u,
 		usize idx
-	) const -> std::optional<intr::Interaction> {
+	) const -> std::optional<Interaction> {
 		return {};
 	}
 
 	auto Sphere::intersect(
 		math::Ray const& r,
 		usize idx
-	) const -> std::optional<intr::Interaction> {
+	) const -> std::optional<Interaction> {
 		auto a = math::dot(r.d, r.d);
 		auto b = math::dot(r.o, r.d) * 2.f;
 		auto c = math::dot(r.o, r.o) - radius * radius;
@@ -48,7 +48,7 @@ namespace metatron::shape {
 			(phi < 0.f ? 2.f * math::pi : phi) / 2.f * math::pi
 		};
 
-		return intr::Interaction{p, n, uv, 1.f};
+		return Interaction{p, n, uv, 1.f};
 	}
 
 }
