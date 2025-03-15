@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/core/math/constant.hpp>
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -332,7 +333,7 @@ namespace metatron::math {
 				}
 			}
 
-			if (max_val < std::numeric_limits<T>::epsilon()) {
+			if (max_val < math::epsilon<T>) {
 				assert("matrix is not invertible");
 			}
 

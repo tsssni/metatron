@@ -17,9 +17,9 @@ using namespace metatron;
 
 auto main() -> int {
 	auto sensor = std::make_unique<photo::Sensor>(
-		std::make_unique<spectra::Test_Rgb_Spectrum>(380.f, 380.f + 400.f / 3.f),
-		std::make_unique<spectra::Test_Rgb_Spectrum>(380.f + 400.f / 3.f, 380.f + 400.f * 2.f / 3.f),
-		std::make_unique<spectra::Test_Rgb_Spectrum>(380.f + 400.f * 2.f / 3.f, 780.f)
+		std::make_unique<spectra::Test_Rgb_Spectrum>(300.f, 450.f),
+		std::make_unique<spectra::Test_Rgb_Spectrum>(450.f, 600.f),
+		std::make_unique<spectra::Test_Rgb_Spectrum>(600.f, 800.f)
 	);
 	auto lens = std::make_unique<photo::Pinhole_Lens>(0.1f);
 	auto film = std::make_unique<photo::Film>(
@@ -35,6 +35,7 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto spectrum = spectra::Rgb_Spectrum{{0.5f, 0.6f, 0.7f}};
+	auto stochastic = spectra::Stochastic_Spectrum{3uz, 0.f};
 
 	auto sphere = shape::Sphere{1.f, 0.f, math::pi, 2.f * math::pi};
 	auto homo_medium = media::Homogeneous_Medium{
@@ -60,7 +61,7 @@ auto main() -> int {
 			auto env = emitter(s.r);
 			if (intr && env) {
 				auto& intrv = intr.value();
-				auto& L = *env.value().L;
+				auto L = stochastic & *env.value();
 				auto p0 = intrv.intr.p;
 				s.r.o = p0 + s.r.d * 0.001f;
 
@@ -82,7 +83,7 @@ auto main() -> int {
 				}
 			}
 			else if (env) {
-				auto& L = *env.value().L;
+				auto L = stochastic & *env.value();
 				s.fixel = L;
 			}
 		}

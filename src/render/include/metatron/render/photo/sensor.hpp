@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
-#include <metatron/core/spectra/spectrum.hpp>
+#include <metatron/core/spectra/stochastic.hpp>
 #include <memory>
 
 namespace metatron::photo {
@@ -11,7 +11,7 @@ namespace metatron::photo {
 			std::unique_ptr<spectra::Spectrum> b
 		);
 
-		auto operator()(spectra::Spectrum const& spectrum) -> math::Vector<f32, 3>;
+		auto operator()(spectra::Stochastic_Spectrum const& spectrum) -> math::Vector<f32, 3>;
 
 	private:
 		std::unique_ptr<spectra::Spectrum> r;

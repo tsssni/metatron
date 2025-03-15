@@ -14,10 +14,8 @@ namespace metatron::photo {
 		sampler.start(pixel, idx);
 		auto sample = sampler.generate_pixel_2d();
 		auto pixel_position = math::Vector<f32, 2>{pixel} + sample;
-		auto fintr = (*film)(pixel_position);
-		if (!fintr) return {};
+		auto fixel = (*film)(pixel_position);
 
-		auto& fixel = fintr.value().fixel;
 		auto lintr = lens->sample({fixel.position[0], fixel.position[1], 0.f}, {0.f, 0.f});
 		if (!lintr) return {};
 

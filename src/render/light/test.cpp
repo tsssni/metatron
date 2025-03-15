@@ -6,7 +6,7 @@ namespace metatron::light {
 		Test_Emitter::Test_Emitter(std::vector<Light const*>&& lights, std::vector<Light const*>&& infinite_lights)
 			: lights(std::move(lights)), infinite_lights(std::move(infinite_lights)) {}
 
-		auto Test_Emitter::operator()(math::Ray const& r) const -> std::optional<Interaction> {
+		auto Test_Emitter::operator()(math::Ray const& r) const -> std::optional<Spectrum> {
 			return (*infinite_lights[0])(r);
 		}
 

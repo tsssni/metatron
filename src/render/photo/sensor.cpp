@@ -7,10 +7,12 @@ namespace metatron::photo {
 		std::unique_ptr<spectra::Spectrum> b
 	) : r(std::move(r)), g(std::move(g)), b(std::move(b)) {}
 
-	auto Sensor::operator()(spectra::Spectrum const& spectrum) -> math::Vector<f32, 3> {
-		auto r = spectrum(*(this->r));
-		auto g = spectrum(*(this->g));
-		auto b = spectrum(*(this->b));
-		return {r, g, b};
+	auto Sensor::operator()(spectra::Stochastic_Spectrum const& spectrum) -> math::Vector<f32, 3> {
+		// TODO: just test rgb
+		return {spectrum.value[0], spectrum.value[1], spectrum.value[2]};
+		// auto r = spectrum(*(this->r));
+		// auto g = spectrum(*(this->g));
+		// auto b = spectrum(*(this->b));
+		// return {r, g, b};
 	}
 }

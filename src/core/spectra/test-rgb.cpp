@@ -7,16 +7,4 @@ namespace metatron::spectra {
 	auto Test_Rgb_Spectrum::operator()(f32 lambda) const -> f32 {
 		return f32(lambda >= min_lambda && lambda < max_lambda);
 	}
-
-	auto Test_Rgb_Spectrum::operator()(Spectrum const& spectrum) const -> f32 {
-		return 0.f;
-	}
-
-	auto Test_Rgb_Spectrum::operator*(f32 s) -> Spectrum& {
-		return *this;
-	}
-
-	auto Test_Rgb_Spectrum::operator*(Spectrum const& spectrum) const -> Spectrum const& {
-		return *this;
-	}
 }

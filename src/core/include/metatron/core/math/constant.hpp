@@ -1,7 +1,14 @@
 #pragma once
+#include <limits>
 
 namespace metatron::math {
 	auto constexpr pi = 3.14159265358979f;
 	auto constexpr e = 2.7182881828458f;
-	auto constexpr epsilon = 1e-6f;
+
+	template<typename T>
+	auto constexpr epsilon = std::numeric_limits<T>::epsilon();
+	template<typename T>
+	auto constexpr minv = std::numeric_limits<T>::min();
+	template<typename T>
+	auto constexpr maxv = std::numeric_limits<T>::max();
 }
