@@ -75,7 +75,6 @@ namespace metatron::math {
 		}
 
 		template<typename U, usize rhs_first_dim, usize... rhs_rest_dims>
-		requires std::is_convertible_v<U, T>
 		Matrix(Matrix<U, rhs_first_dim, rhs_rest_dims...> const& rhs) {
 			*this = rhs;
 		}
@@ -84,10 +83,8 @@ namespace metatron::math {
 		requires true
 			&& std::is_convertible_v<U, T>
 			&& (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
-			&& (rhs_first_dim <= first_dim)
-			&& (... && (rhs_rest_dims <= rest_dims))
 		auto operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...> const& rhs) -> Matrix& {
-			std::copy_n(rhs.data.begin(), rhs_first_dim, data.begin());
+			std::copy_n(rhs.data.begin(), std::min(first_dim, rhs_first_dim), data.begin());
 			return *this;
 		}
 

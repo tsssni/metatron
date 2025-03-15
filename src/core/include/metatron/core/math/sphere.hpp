@@ -8,7 +8,7 @@ namespace metatron::math {
 		return {theta, phi};
 	}
 
-	auto inline sphere_to_cartesion(math::Vector<f32, 2> const& s) -> math::Vector<f32, 2> {
+	auto inline sphere_to_cartesion(math::Vector<f32, 2> const& s) -> math::Vector<f32, 3> {
 		auto theta = s[0];
 		auto phi = s[1];
 		auto x = std::sin(theta) * std::cos(phi);

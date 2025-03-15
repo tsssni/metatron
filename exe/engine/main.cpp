@@ -1,4 +1,4 @@
-#include <metatron/core/math/constant.hpp>
+#include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/sampler/independent.hpp>
 #include <metatron/core/math/filter/box.hpp>
 #include <metatron/core/spectra/stochastic.hpp>
@@ -8,6 +8,7 @@
 #include <metatron/render/photo/lens/pinhole.hpp>
 #include <metatron/render/divider/bvh.hpp>
 #include <metatron/render/material/texture/spectrum.hpp>
+#include <metatron/render/material/bsdf/lambertian.hpp>
 #include <metatron/render/light/environment.hpp>
 #include <metatron/render/light/test.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
@@ -34,7 +35,6 @@ auto main() -> int {
 		std::move(lens)
 	};
 	auto sampler = math::Independent_Sampler{};
-	auto spectrum = spectra::Rgb_Spectrum{{0.5f, 0.6f, 0.7f}};
 	auto stochastic = spectra::Stochastic_Spectrum{3uz, 0.f};
 
 	auto sphere = shape::Sphere{1.f, 0.f, math::pi, 2.f * math::pi};
@@ -42,7 +42,11 @@ auto main() -> int {
 		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f, 0.2f, 0.3f}),
 		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f, 0.2f, 0.3f})
 	};
-	auto divider = divider::Divider{&sphere, &homo_medium};
+	auto lambertian = material::Lambertian_Bsdf{
+		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.5f, 0.6f, 0.7f}),
+		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.0f})
+	};
+	auto divider = divider::Divider{&sphere, &homo_medium, &lambertian};
 	auto bvh = divider::LBVH{{&divider}};
 
 	auto env_map = image::Image::from_path("/home/tsssni/Downloads/the_sky_is_on_fire_4k.exr");
@@ -54,37 +58,28 @@ auto main() -> int {
 
 	for (auto j = 0uz; j < 1024uz; j++) {
 		for (auto i = 0uz; i < 1024uz; i++) {
-			auto sample = camera.sample(math::Vector<usize, 2>{i, j}, 0, sampler);
-			auto& s = sample.value();
-			s.r.o[2] -= 3.f;
-			auto intr = bvh(s.r);
-			auto env = emitter(s.r);
-			if (intr && env) {
-				auto& intrv = intr.value();
-				auto L = stochastic & *env.value();
-				auto p0 = intrv.intr.p;
-				s.r.o = p0 + s.r.d * 0.001f;
-
+			for (auto n = 0uz; n < 1; n++) {
+				auto sample = camera.sample(math::Vector<usize, 2>{i, j}, 0, sampler);
+				auto& s = sample.value();
+				s.r.o[2] -= 3.f;
 				auto intr = bvh(s.r);
+
 				if (intr) {
 					auto& intrv = intr.value();
-					auto p1 = intrv.intr.p;
-					auto l = math::length(p1 - p0);
-					auto ms = intrv.divider->medium->sample({}, 0.f);
-					if (ms) {
-						auto& mv = ms.value();
-						auto v = (*mv.sigma_a)(0.f) + (*mv.sigma_s)(0.f);
-						s.fixel = L * std::exp(-l * v);
-					} else {
-						s.fixel = L;
-					}
+					auto rot = math::Matrix<f32, 4, 4>{math::Quaternion<f32>::from_rotation_between(intrv.intr.n, {0.f, 1.f, 0.f})};
+					auto inv_rot = math::inverse(rot);
+
+					auto wo = math::normalize(rot * math::Vector<f32, 4>{s.r.d});
+					auto intr = intrv.divider->bsdf->sample({&stochastic, wo}, {sampler.generate_1d(), sampler.generate_1d(), sampler.generate_1d()}).value();
+
+					auto rr = math::Ray{intrv.intr.p, inv_rot * math::Vector<f32, 4>{intr.wi}};
+					auto env = emitter(rr);
+					s.fixel = *intr.f & *env.value();
 				} else {
+					auto env = emitter(s.r);
+					auto L = stochastic & *env.value();
 					s.fixel = L;
 				}
-			}
-			else if (env) {
-				auto L = stochastic & *env.value();
-				s.fixel = L;
 			}
 		}
 	}

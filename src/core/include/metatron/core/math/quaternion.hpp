@@ -11,7 +11,7 @@ namespace metatron::math {
         Quaternion(T x, T y, T z, T w) : data{x, y, z, w} {}
         explicit Quaternion(Vector<T, 4> const& v) : data{v} {}
 
-		auto static from_rotation_axis_angle(Vector<T, 3> const& axis, T const& angle) {
+		auto static from_axis_angle(Vector<T, 3> const& axis, T const& angle) {
 			auto half_angle = angle * T{0.5};
 			auto sin_half = std::sin(half_angle);
 			auto cos_half = std::cos(half_angle);
