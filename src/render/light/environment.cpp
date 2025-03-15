@@ -6,14 +6,17 @@ namespace metatron::light {
 		Environment_Light::Environment_Light(std::unique_ptr<material::Spectrum_Image_Texture> texture)
 			: texture(std::move(texture)) {}
 
-		auto Environment_Light::emit(math::Ray const& r) const -> std::unique_ptr<spectra::Spectrum> {
+		auto Environment_Light::operator()(math::Ray const& r) const -> std::optional<Interaction> {
 			auto s_coord = math::cartesion_to_sphere(r.d);
 			auto u = s_coord[1] / (2.f * math::pi);
 			auto v = s_coord[0] / math::pi;
-			return (*texture)[{u, v}];
+
+			auto s = (*texture)({u, v});
+			if (!s) return {};
+			return Interaction{std::move(s.value().tv)};
 		}
 
-		auto Environment_Light::sample(Context const& ctx, math::Vector<f32, 2> const& u) const -> Interaction {
+		auto Environment_Light::sample(Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<Interaction> {
 			// TODO: not implemented
 			return {};
 		}

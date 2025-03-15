@@ -6,7 +6,7 @@
 #include <memory>
 
 namespace metatron::divider {
-	struct Intersection final {
+	struct Interaction final {
 		Divider const* divider;
 		shape::Interaction intr;
 	};
@@ -20,6 +20,6 @@ namespace metatron::divider {
 
 	struct Acceleration {
 		virtual ~Acceleration() {}
-		auto virtual intersect(math::Ray const& r) -> std::optional<Intersection> = 0;
+		auto virtual operator()(math::Ray const& r) -> std::optional<Interaction> = 0;
 	};
 }

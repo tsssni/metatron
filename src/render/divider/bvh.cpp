@@ -4,9 +4,9 @@ namespace metatron::divider {
 	LBVH::LBVH(std::vector<Divider const*>&& dividers)
 		: dividers(std::move(dividers)) {}
 
-	auto LBVH::intersect(math::Ray const& r) -> std::optional<Intersection> {
-		auto intr = dividers[0]->shape->intersect(r);
+	auto LBVH::operator()(math::Ray const& r) -> std::optional<Interaction> {
+		auto intr = (*dividers[0]->shape)(r);
 		if (!intr) return {};
-		else return Intersection{dividers[0], intr.value()};
+		else return Interaction{dividers[0], intr.value()};
 	}
 }

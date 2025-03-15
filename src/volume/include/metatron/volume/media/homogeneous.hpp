@@ -7,7 +7,7 @@ namespace metatron::media {
 			std::unique_ptr<spectra::Spectrum> sigma_a,
 			std::unique_ptr<spectra::Spectrum> sigma_s
 		);
-		auto virtual sample(Context const& ctx, f32 u) const -> Interaction;
+		auto virtual sample(Context const& ctx, f32 u) const -> std::optional<Interaction>;
 
 	private:
 		std::unique_ptr<spectra::Spectrum> sigma_a;

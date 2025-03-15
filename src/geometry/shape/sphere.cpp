@@ -13,15 +13,7 @@ namespace metatron::shape {
 		};
 	}
 
-	auto Sphere::sample(
-		Context const& ctx,
-		math::Vector<f32, 2> const& u,
-		usize idx
-	) const -> std::optional<Interaction> {
-		return {};
-	}
-
-	auto Sphere::intersect(
+	auto Sphere::operator()(
 		math::Ray const& r,
 		usize idx
 	) const -> std::optional<Interaction> {
@@ -49,6 +41,14 @@ namespace metatron::shape {
 		};
 
 		return Interaction{p, n, uv, 1.f};
+	}
+
+	auto Sphere::sample(
+		Context const& ctx,
+		math::Vector<f32, 2> const& u,
+		usize idx
+	) const -> std::optional<Interaction> {
+		return {};
 	}
 
 }

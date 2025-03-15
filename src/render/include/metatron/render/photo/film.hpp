@@ -7,24 +7,31 @@
 
 namespace metatron::photo {
 	struct Camera;
+	struct Film;
+
+	struct Fixel final {
+		math::Vector<f32, 2> const position;
+		f32 const weight;
+		Fixel(Film* film, math::Vector<f32, 2> const& position, f32 weight);
+		auto operator=(spectra::Spectrum const& spectrum) -> void;
+	private:
+		Film* film;
+	};
+
+	namespace film {
+		struct Interaction final {
+			Fixel fixel;
+		};
+	}
 
 	struct Film final {
-		struct Fixel final {
-			math::Vector<f32, 2> const position;
-			f32 const weight;
-			Fixel(Film* film, math::Vector<f32, 2> const& position, f32 weight);
-			auto operator=(spectra::Spectrum const& spectrum) -> void;
-		private:
-			Film* film;
-		};
-
 		Film(
 			math::Vector<f32, 2> const& film_size,
 			math::Vector<usize, 2> const& image_size,
 			std::unique_ptr<Sensor> sensor,
 			std::unique_ptr<math::Filter> filter
 		);
-		auto sample(math::Vector<f32, 2> pixel_position) -> Fixel;
+		auto operator()(math::Vector<f32, 2> pixel_position) -> std::optional<film::Interaction>;
 		auto to_path(std::string_view path) -> void;
 
 	private:

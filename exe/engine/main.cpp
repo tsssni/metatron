@@ -7,7 +7,7 @@
 #include <metatron/render/photo/camera.hpp>
 #include <metatron/render/photo/lens/pinhole.hpp>
 #include <metatron/render/divider/bvh.hpp>
-#include <metatron/render/material/spectrum.hpp>
+#include <metatron/render/material/texture/spectrum.hpp>
 #include <metatron/render/light/environment.hpp>
 #include <metatron/render/light/test.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
@@ -54,28 +54,36 @@ auto main() -> int {
 	for (auto j = 0uz; j < 1024uz; j++) {
 		for (auto i = 0uz; i < 1024uz; i++) {
 			auto sample = camera.sample(math::Vector<usize, 2>{i, j}, 0, sampler);
-			sample.r.o[2] -= 3.f;
-			auto intr = bvh.intersect(sample.r);
-			auto env = emitter.emit(sample.r);
-			if (intr) {
+			auto& s = sample.value();
+			s.r.o[2] -= 3.f;
+			auto intr = bvh(s.r);
+			auto env = emitter(s.r);
+			if (intr && env) {
 				auto& intrv = intr.value();
+				auto& L = *env.value().L;
 				auto p0 = intrv.intr.p;
-				sample.r.o = p0 + sample.r.d * 0.001f;
+				s.r.o = p0 + s.r.d * 0.001f;
 
-				auto intr = bvh.intersect(sample.r);
+				auto intr = bvh(s.r);
 				if (intr) {
 					auto& intrv = intr.value();
 					auto p1 = intrv.intr.p;
 					auto l = math::length(p1 - p0);
 					auto ms = intrv.divider->medium->sample({}, 0.f);
-					auto v = (*ms.sigma_a)(0.f) + (*ms.sigma_s)(0.f);
-					sample.fixel = (*env) * std::exp(-l * v);
+					if (ms) {
+						auto& mv = ms.value();
+						auto v = (*mv.sigma_a)(0.f) + (*mv.sigma_s)(0.f);
+						s.fixel = L * std::exp(-l * v);
+					} else {
+						s.fixel = L;
+					}
 				} else {
-					sample.fixel = *env;
+					s.fixel = L;
 				}
 			}
-			else {
-				sample.fixel = *env;
+			else if (env) {
+				auto& L = *env.value().L;
+				s.fixel = L;
 			}
 		}
 	}

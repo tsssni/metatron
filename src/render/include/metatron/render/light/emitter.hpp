@@ -3,7 +3,7 @@
 
 namespace metatron::light {
 	struct Emitter {
-		auto emit(math::Ray const& r) const -> std::unique_ptr<spectra::Spectrum>;
-		auto sample(Context const& ctx, math::Vector<f32, 2> const& u) const -> Interaction;
+		auto virtual operator()(math::Ray const& r) const -> std::optional<Interaction> = 0;
+		auto virtual sample(Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<Interaction> = 0;
 	};
 }

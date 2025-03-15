@@ -1,12 +1,12 @@
 #pragma once
 #include <metatron/render/light/light.hpp>
-#include <metatron/render/material/spectrum.hpp>
+#include <metatron/render/material/texture/spectrum.hpp>
 
 namespace metatron::light {
 	struct Environment_Light final: Light {
 		Environment_Light(std::unique_ptr<material::Spectrum_Image_Texture> texture);
-		auto virtual emit(math::Ray const& r) const -> std::unique_ptr<spectra::Spectrum>;
-		auto virtual sample(Context const& ctx, math::Vector<f32, 2> const& u) const -> Interaction;
+		auto virtual operator()(math::Ray const& r) const -> std::optional<Interaction>;
+		auto virtual sample(Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<Interaction>;
 	private:
 		std::unique_ptr<material::Spectrum_Image_Texture> texture;
 	};

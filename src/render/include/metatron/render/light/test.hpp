@@ -5,8 +5,8 @@
 namespace metatron::light {
 	struct Test_Emitter final: Emitter {
 		Test_Emitter(std::vector<Light const*>&& lights, std::vector<Light const*>&& infinite_lights);
-		auto emit(math::Ray const& r) const -> std::unique_ptr<spectra::Spectrum>;
-		auto sample(Context const& ctx, math::Vector<f32, 2> const& u) const -> Interaction;
+		auto operator()(math::Ray const& r) const -> std::optional<Interaction>;
+		auto sample(Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<Interaction>;
 
 	private:
 		std::vector<Light const*> lights;

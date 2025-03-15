@@ -7,12 +7,12 @@
 #include <memory>
 
 namespace metatron::photo {
-	struct Camera final {
-		struct Sample final {
-			math::Ray r;
-			Film::Fixel fixel;
-		};
+	struct Interaction final {
+		math::Ray r;
+		Fixel fixel;
+	};
 
+	struct Camera final {
 		Camera(
 			std::unique_ptr<Film> film,
 			std::unique_ptr<Lens> lens
@@ -21,7 +21,7 @@ namespace metatron::photo {
 			math::Vector<usize, 2> pixel,
 			usize idx,
 			math::Sampler& sampler
-		) -> Sample;
+		) -> std::optional<Interaction>;
 		auto to_path(std::string_view path) -> void;
 
 	private:
