@@ -5,8 +5,8 @@
 namespace metatron::hierarchy {
 	struct Transform final {
 		math::Vector<f32, 3> translation{};
-		math::Vector<f32, 3> scaling{};
-		math::Quaternion<f32> rotation{};
+		math::Vector<f32, 3> scaling{1.f};
+		math::Quaternion<f32> rotation{0.f, 0.f, 0.f, 1.f};
 
 		explicit operator math::Matrix<f32, 4, 4>() const;
 	};

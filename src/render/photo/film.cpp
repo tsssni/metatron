@@ -7,10 +7,7 @@ namespace metatron::photo {
 
 	auto Fixel::operator=(spectra::Stochastic_Spectrum const& spectrum) -> void {
 		auto uv = (position / film->size) + 0.5f;
-		auto pixel = math::Vector<i32, 2>{
-			i32(uv[0] * film->image.size[0]),
-			i32(uv[1] * film->image.size[1])
-		};
+		auto pixel = math::Vector<i32, 2>{uv * film->image.size};
 		auto rgba = math::Vector<f32, 4>{(*(film->sensor))(spectrum)};
 		rgba[3] = weight;
 		film->image[pixel[0], pixel[1]] += rgba;
@@ -23,24 +20,14 @@ namespace metatron::photo {
 		std::unique_ptr<math::Filter> filter
 	):
 	size(film_size),
-	image({image_size[0], image_size[1], 4uz, 4uz}),
+	image({image_size, 4uz, 4uz}),
 	sensor(std::move(sensor)),
 	filter(std::move(filter)) {}
 
 	auto Film::operator()(math::Vector<f32, 2> pixel_position) -> Fixel {
-		auto uv = math::Vector<f32, 2>{
-			pixel_position[0] / image.size[0],
-			pixel_position[1] / image.size[1],
-		};
-
-		auto film_position = math::Vector<f32, 2>{
-			(uv[0] - 0.5f) * size[0],
-			(uv[1] - 0.5f) * size[1]
-		};
-		auto weight = (*filter)({
-			std::fmod(pixel_position[0], 1.f) - 0.5f,
-			std::fmod(pixel_position[1], 1.f) - 0.5f,
-		});
+		auto uv = pixel_position / image.size;
+		auto film_position = (uv - 0.5f) * size;
+		auto weight = (*filter)(math::mod(pixel_position, 1.f) - 0.5f);
 
 		return {
 			this, 

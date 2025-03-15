@@ -13,6 +13,7 @@
 #include <metatron/render/light/test.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
 #include <metatron/volume/media/homogeneous.hpp>
+#include <metatron/hierarchy/transform.hpp>
 
 using namespace metatron;
 
@@ -36,6 +37,7 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto stochastic = spectra::Stochastic_Spectrum{3uz, 0.f};
+	auto transform = math::Matrix<f32, 4, 4>{hierarchy::Transform{{0.f, 0.f, -3.f}}};
 
 	auto sphere = shape::Sphere{1.f, 0.f, math::pi, 2.f * math::pi};
 	auto homo_medium = media::Homogeneous_Medium{
@@ -61,7 +63,8 @@ auto main() -> int {
 			for (auto n = 0uz; n < 1; n++) {
 				auto sample = camera.sample(math::Vector<usize, 2>{i, j}, 0, sampler);
 				auto& s = sample.value();
-				s.r.o[2] -= 3.f;
+				s.r.o = transform(math::Vector<f32, 4>{s.r.o, 1.f});
+				s.r.d = transform(math::Vector<f32, 4>{s.r.d});
 				auto intr = bvh(s.r);
 
 				if (intr) {
@@ -69,10 +72,10 @@ auto main() -> int {
 					auto rot = math::Matrix<f32, 4, 4>{math::Quaternion<f32>::from_rotation_between(intrv.intr.n, {0.f, 1.f, 0.f})};
 					auto inv_rot = math::inverse(rot);
 
-					auto wo = math::normalize(rot * math::Vector<f32, 4>{s.r.d});
+					auto wo = math::normalize(rot(math::Vector<f32, 4>{s.r.d}));
 					auto intr = intrv.divider->bsdf->sample({&stochastic, wo}, {sampler.generate_1d(), sampler.generate_1d(), sampler.generate_1d()}).value();
 
-					auto rr = math::Ray{intrv.intr.p, inv_rot * math::Vector<f32, 4>{intr.wi}};
+					auto rr = math::Ray{intrv.intr.p, inv_rot(math::Vector<f32, 4>{intr.wi})};
 					auto env = emitter(rr);
 					s.fixel = *intr.f & *env.value();
 				} else {

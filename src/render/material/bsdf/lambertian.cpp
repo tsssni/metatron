@@ -17,7 +17,7 @@ namespace metatron::material {
 
 	auto Lambertian_Bsdf::sample(bsdf::Context const& ctx, math::Vector<f32, 3> const& u) const -> std::optional<bsdf::Interaction> {
 		auto r = ((*ctx.Lo) & (*R)) / math::pi;
-		auto t = ((*ctx.Lo) & (*R)) / math::pi;
+		auto t = ((*ctx.Lo) & (*T)) / math::pi;
 		auto ru = spectra::max(r);
 		auto tu = spectra::max(t);
 		if (std::abs(ru + tu) < math::epsilon<f32>) return {};

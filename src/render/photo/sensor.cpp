@@ -9,7 +9,7 @@ namespace metatron::photo {
 
 	auto Sensor::operator()(spectra::Stochastic_Spectrum const& spectrum) -> math::Vector<f32, 3> {
 		// TODO: just test rgb
-		return {spectrum.value[0], spectrum.value[1], spectrum.value[2]};
+		return math::Vector<f32, 3>{spectrum.value};
 		// auto r = spectrum(*(this->r));
 		// auto g = spectrum(*(this->g));
 		// auto b = spectrum(*(this->b));

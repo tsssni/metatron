@@ -11,7 +11,7 @@ namespace metatron::math {
         Quaternion(T x, T y, T z, T w) : data{x, y, z, w} {}
         explicit Quaternion(Vector<T, 4> const& v) : data{v} {}
 
-		auto static from_axis_angle(Vector<T, 3> const& axis, T const& angle) {
+		auto static from_axis_angle(Vector<T, 3> const& axis, T const& angle) -> Quaternion<T> {
 			auto half_angle = angle * T{0.5};
 			auto sin_half = std::sin(half_angle);
 			auto cos_half = std::cos(half_angle);
@@ -24,7 +24,7 @@ namespace metatron::math {
 			};
 		}
 
-		auto static from_rotation_between(Vector<T, 3> const& from, Vector<T, 3> const& to) {
+		auto static from_rotation_between(Vector<T, 3> const& from, Vector<T, 3> const& to) -> Quaternion<T> {
 			auto from_normalized = normalize(from);
 			auto to_normalized = normalize(to);
 			
@@ -93,7 +93,7 @@ namespace metatron::math {
 
     template<typename T>
     requires std::floating_point<T>
-	auto slerp(Quaternion<T> const& q0, Quaternion<T> const& q1, T const& t) {
+	auto slerp(Quaternion<T> const& q0, Quaternion<T> const& q1, T const& t) -> Quaternion<T> {
 		auto q0v = Vector<T, 4>{q0};
 		auto q1v = Vector<T, 4>{q1};
 		auto cos_theta = dot(q0v, q1v);
@@ -116,20 +116,20 @@ namespace metatron::math {
 		auto scale1 = std::sin((T{1} - t) * theta) / sin_theta;
 		auto scale2 = std::sin(t * theta) / sin_theta;
 		
-		return Quaternion{normalize(scale1 * q0v + scale2 * q1v_adj)};
+		return {normalize(scale1 * q0v + scale2 * q1v_adj)};
 	}
 
     template<typename T>
     requires std::floating_point<T>
-	auto conjugate(Quaternion<T> const& q) {
-		return Quaternion{-q[0], -q[1], -q[2], q[3]};
+	auto conjugate(Quaternion<T> const& q) -> Quaternion<T> {
+		return {-q[0], -q[1], -q[2], q[3]};
 	}
 
     template<typename T>
     requires std::floating_point<T>
-	auto rotate(Vector<T, 4> const& x, Quaternion<T> const& q) {
+	auto rotate(Vector<T, 4> const& x, Quaternion<T> const& q) -> math::Vector<T, 4> {
 		auto p = Quaternion{x[0], x[1], x[2], T{0}};
 		auto r = q * p * conjugate(q);
-		return math::Vector<T, 4>{r[0], r[1], r[2], T{0}};
+		return {r[0], r[1], r[2], T{0}};
 	}
 }

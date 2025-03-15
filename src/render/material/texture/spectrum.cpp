@@ -6,16 +6,16 @@ namespace metatron::material {
 		: image(std::move(image)) {}
 
 	auto Spectrum_Image_Texture::operator()(math::Vector<f32, 2> const& uv) -> Element {
-		auto pos = math::Vector<f32, 2>{uv[0] * image->size[0], uv[1] * image->size[1]};
+		auto pos = uv * image->size;
 		auto pixel = math::Vector<f32, 4>{(*image)[pos[0], pos[1]]};
-		auto rgb_spec = std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{pixel[0], pixel[1], pixel[2]});
+		auto rgb_spec = std::make_unique<spectra::Rgb_Spectrum>(pixel);
 		return rgb_spec;
 	}
 
 	auto Spectrum_Image_Texture::sample(shape::Interaction const& intr) -> Element {
-		auto pos = math::Vector<f32, 2>{intr.uv[0] * image->size[0], intr.uv[1] * image->size[1]};
+		auto pos = intr.uv * image->size;
 		auto pixel = math::Vector<f32, 4>{(*image)[pos[0], pos[1]]};
-		auto rgb_spec = std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{pixel[0], pixel[1], pixel[2]});
+		auto rgb_spec = std::make_unique<spectra::Rgb_Spectrum>(pixel);
 		return rgb_spec;
 	}
 }

@@ -2,6 +2,7 @@
 #include <metatron/core/math/constant.hpp>
 #include <algorithm>
 #include <array>
+#include <span>
 #include <cassert>
 
 namespace metatron::math {
@@ -17,11 +18,22 @@ namespace metatron::math {
 
 		Matrix() = default;
 
-		constexpr Matrix(std::initializer_list<Element> initializer_list)
+		constexpr Matrix(std::initializer_list<Element const> initializer_list)
 		{
-			assert(initializer_list.size() <= first_dim);
 			if (initializer_list.size() > 1) {
+				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), data.begin());
 				std::copy(initializer_list.begin(), initializer_list.end(), data.begin());
+			} else {
+				for (auto& line: data) {
+					line = initializer_list.size() == 1 ? *initializer_list.begin() : Element{};
+				}
+			}
+		}
+
+		constexpr Matrix(std::span<Element const> initializer_list)
+		{
+			if (initializer_list.size() > 1) {
+				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), data.begin());
 			} else {
 				for (auto& line: data) {
 					line = initializer_list.size() == 1 ? *initializer_list.begin() : Element{};
@@ -49,50 +61,61 @@ namespace metatron::math {
 		template<typename... Args>
 		requires (true
 			&& (std::is_convertible_v<Args, T> && ...)
-			&& ([]() -> bool {
-				if constexpr (dimensions.size() == 1) {
-					return sizeof...(Args) == first_dim;
-				} else {
-					auto n = dimensions.size();
-					return sizeof...(Args) == std::min(dimensions[n - 2], dimensions[n - 1]);
-				}
-			}())
+			&& dimensions.size() > 1
+			&& sizeof...(Args) <= std::min(*(dimensions.end() - 2), *(dimensions.end() - 1))
 		)
 		explicit constexpr Matrix(Args&&... args) {
 			if constexpr (dimensions.size() > 2) {
 				for (auto& line: data) {
 					line = {args...};
 				}
-			} else if constexpr(dimensions.size() == 1) {
-				data.fill(args...);
 			} else {
-				auto constexpr n = dimensions.size();
-				auto constexpr diagonal_n = std::min(dimensions[n - 2], dimensions[n - 1]);
 				[this, args...]<usize... idxs>(std::index_sequence<idxs...>) {
 					((data[idxs][idxs] = args), ...);
-				}(std::make_index_sequence<diagonal_n>{});
+				}(std::make_index_sequence<sizeof...(Args)>{});
 			}
 		}
 
-		template<typename U, usize rhs_first_dim, usize... rhs_rest_dims>
-		Matrix(Matrix<U, rhs_first_dim, rhs_rest_dims...> const& rhs) {
+		template<typename U, typename... Args, usize rhs_first_dim>
+		requires (true
+			&& std::is_convertible_v<U, T>
+			&& (std::is_convertible_v<Args, Element> && ...)
+		)
+		constexpr Matrix(Matrix<U, rhs_first_dim, rest_dims...> const& rhs, Args&&... rest) {
 			*this = rhs;
+			if constexpr (first_dim > rhs_first_dim) {
+				[this, rest...]<usize... idxs>(std::index_sequence<idxs...>) {
+						((data[rhs_first_dim + idxs] = rest), ...);
+				}(std::make_index_sequence<std::min(sizeof...(rest), first_dim - rhs_first_dim)>{});
+			}
+
+		}
+
+		template<usize rhs_first_dim0, usize rhs_first_dim1>
+		constexpr Matrix(
+			Matrix<T, rhs_first_dim0, rest_dims...> const& rhs0,
+			Matrix<T, rhs_first_dim1, rest_dims...> const& rhs1
+		) {
+			*this = rhs0;
+			if constexpr (first_dim > rhs_first_dim0) {
+				std::copy_n(rhs1.data.begin(), std::min(first_dim, rhs_first_dim1) - rhs_first_dim0, data.begin() + rhs_first_dim0);
+			}
 		}
 
 		template<typename U, usize rhs_first_dim, usize... rhs_rest_dims>
 		requires true
 			&& std::is_convertible_v<U, T>
 			&& (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
-		auto operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...> const& rhs) -> Matrix& {
+		auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...> const& rhs) -> Matrix& {
 			std::copy_n(rhs.data.begin(), std::min(first_dim, rhs_first_dim), data.begin());
 			return *this;
 		}
 
-		auto operator[](usize idx) -> Element& {
+		auto constexpr operator[](usize idx) -> Element& {
 			return data[idx];
 		}
 
-		auto operator[](usize idx) const -> Element const& {
+		auto constexpr operator[](usize idx) const -> Element const& {
 			return data[idx];
 		}
 
@@ -121,7 +144,7 @@ namespace metatron::math {
 				return lds[higher_n + (l_n > 1 ? 1 : 0)] == rds[higher_n];
 			}()
 		)
-		auto operator*(
+		auto constexpr operator()(
 			Matrix<T, rhs_dims...> const& rhs
 		) {
 			using Product_Matrix = decltype([]<usize... dims>(std::index_sequence<dims...>) {
@@ -167,7 +190,7 @@ namespace metatron::math {
 			return product;
 		}
 
-		auto operator+(Matrix const& rhs) const -> Matrix {
+		auto constexpr operator+(Matrix const& rhs) const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = data[i] + rhs[i];
@@ -175,12 +198,12 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto operator+=(Matrix const& rhs) -> Matrix& {
+		auto constexpr operator+=(Matrix const& rhs) -> Matrix& {
 			*this = *this + rhs;
 			return *this;
 		}
 
-		auto operator+(T const& rhs) const -> Matrix {
+		auto constexpr operator+(T const& rhs) const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = data[i] + rhs;
@@ -188,16 +211,16 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto operator+=(T const& rhs) -> Matrix& {
+		auto constexpr operator+=(T const& rhs) -> Matrix& {
 			*this = *this + rhs;
 			return *this;
 		}
 
-		auto operator+() -> Matrix {
+		auto constexpr operator+() -> Matrix {
 			return *this;
 		}
 
-		auto operator-(Matrix const& rhs) const -> Matrix {
+		auto constexpr operator-(Matrix const& rhs) const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = data[i] - rhs[i];
@@ -205,12 +228,12 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto operator-=(Matrix const& rhs) -> Matrix& {
+		auto constexpr operator-=(Matrix const& rhs) -> Matrix& {
 			*this = *this - rhs;
 			return *this;
 		}
 
-		auto operator-(T const& rhs) const -> Matrix {
+		auto constexpr operator-(T const& rhs) const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = data[i] - rhs;
@@ -218,12 +241,12 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto operator-=(T const& rhs) -> Matrix& {
+		auto constexpr operator-=(T const& rhs) -> Matrix& {
 			*this = *this - rhs;
 			return *this;
 		}
 
-		auto operator-() const -> Matrix {
+		auto constexpr operator-() const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = -data[i];
@@ -231,7 +254,20 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto operator*(T const& rhs) const -> Matrix {
+		auto constexpr operator*(Matrix const& rhs) const -> Matrix {
+			auto result = Matrix{};
+			for (auto i = 0; i < first_dim; i++) {
+				result[i] = data[i] * rhs[i];
+			}
+			return result;
+		}
+
+		auto constexpr operator*=(Matrix const& rhs) -> Matrix& {
+			*this = *this * rhs;
+			return *this;
+		}
+
+		auto constexpr operator*(T const& rhs) const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = data[i] * rhs;
@@ -239,12 +275,12 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto operator*=(T const& rhs) -> Matrix& {
+		auto constexpr operator*=(T const& rhs) -> Matrix& {
 			*this = *this * rhs;
 			return *this;
 		}
 
-		auto operator/(Matrix const& rhs) const -> Matrix {
+		auto constexpr operator/(Matrix const& rhs) const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = data[i] / rhs[i];
@@ -252,12 +288,12 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto operator/=(Matrix const& rhs) -> Matrix& {
+		auto constexpr operator/=(Matrix const& rhs) -> Matrix& {
 			*this = *this / rhs;
 			return *this;
 		}
 
-		auto operator/(T const& rhs) const -> Matrix {
+		auto constexpr operator/(T const& rhs) const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = data[i] / rhs;
@@ -265,37 +301,37 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto operator/=(T const& rhs) -> Matrix& {
+		auto constexpr operator/=(T const& rhs) -> Matrix& {
 			*this = *this / rhs;
 			return *this;
 		}
 
-		auto operator<=>(Matrix const& rhs) const = default;
+		auto constexpr operator<=>(Matrix const& rhs) const = default;
 
 	private:
-		std::array<Element, first_dim> data;
+		std::array<Element, first_dim> data{};
 
 		template<typename U, usize... dims>
 		friend struct Matrix;
 	};
 
 	template<typename T, usize... dims>
-	auto inline operator+(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
+	auto inline constexpr operator+(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
 		return rhs + lhs;
 	}
 
 	template<typename T, usize... dims>
-	auto inline operator-(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
+	auto inline constexpr operator-(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
 		return -rhs + lhs;
 	}
 
 	template<typename T, usize... dims>
-	auto inline operator*(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
+	auto inline constexpr operator*(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
 		return rhs * lhs;
 	}
 
 	template<typename T, usize h, usize w>
-	auto inline transpose(Matrix<T, h, w> const& m) -> Matrix<T, w, h> {
+	auto inline constexpr transpose(Matrix<T, h, w> const& m) -> Matrix<T, w, h> {
 		auto result = Matrix<T, w, h>{};
 		for (auto i = 0; i < w; i++) {
 			for (auto j = 0; j < h; j++) {
@@ -307,7 +343,7 @@ namespace metatron::math {
 
 	template<typename T, usize h>
 	requires std::floating_point<T>
-	auto inline inverse(Matrix<T, h, h> const& m) -> Matrix<T, h, h> {
+	auto inline constexpr inverse(Matrix<T, h, h> const& m) -> Matrix<T, h, h> {
 		auto augmented = Matrix<T, h, h * 2>{};
 		for (usize i = 0; i < h; i++) {
 			for (usize j = 0; j < h; j++) {

@@ -13,10 +13,10 @@ namespace metatron::photo {
 	) -> std::optional<Interaction> {
 		sampler.start(pixel, idx);
 		auto sample = sampler.generate_pixel_2d();
-		auto pixel_position = math::Vector<f32, 2>{pixel} + sample;
+		auto pixel_position = sample + pixel;
 		auto fixel = (*film)(pixel_position);
 
-		auto lintr = lens->sample({fixel.position[0], fixel.position[1], 0.f}, {0.f, 0.f});
+		auto lintr = lens->sample({fixel.position, 0.f}, {0.f, 0.f});
 		if (!lintr) return {};
 
 		auto& ray = lintr.value().r;
