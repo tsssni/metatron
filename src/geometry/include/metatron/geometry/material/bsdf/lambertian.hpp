@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/render/material/bsdf/bsdf.hpp>
+#include <metatron/geometry/material/bsdf/bsdf.hpp>
 
 namespace metatron::material {
 	struct Lambertian_Bsdf final: Bsdf {

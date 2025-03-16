@@ -2,7 +2,6 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/spectra/stochastic.hpp>
 #include <memory>
-#include <span>
 
 namespace metatron::material {
 	using Spectrum = spectra::Stochastic_Spectrum;

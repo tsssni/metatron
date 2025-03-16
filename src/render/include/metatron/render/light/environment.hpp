@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/render/light/light.hpp>
-#include <metatron/render/material/texture/spectrum.hpp>
+#include <metatron/geometry/material/texture/spectrum.hpp>
 
 namespace metatron::light {
 	struct Environment_Light final: Light {

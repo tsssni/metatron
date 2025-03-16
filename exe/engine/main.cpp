@@ -6,11 +6,11 @@
 #include <metatron/core/spectra/test-rgb.hpp>
 #include <metatron/render/photo/camera.hpp>
 #include <metatron/render/photo/lens/pinhole.hpp>
-#include <metatron/render/divider/bvh.hpp>
-#include <metatron/render/material/texture/spectrum.hpp>
-#include <metatron/render/material/bsdf/lambertian.hpp>
 #include <metatron/render/light/environment.hpp>
 #include <metatron/render/light/test.hpp>
+#include <metatron/geometry/divider/bvh.hpp>
+#include <metatron/geometry/material/texture/spectrum.hpp>
+#include <metatron/geometry/material/bsdf/lambertian.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
 #include <metatron/volume/media/homogeneous.hpp>
 #include <metatron/hierarchy/transform.hpp>
@@ -40,15 +40,15 @@ auto main() -> int {
 	auto transform = math::Matrix<f32, 4, 4>{hierarchy::Transform{{0.f, 0.f, -3.f}}};
 
 	auto sphere = shape::Sphere{1.f, 0.f, math::pi, 2.f * math::pi};
-	auto homo_medium = media::Homogeneous_Medium{
-		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f, 0.2f, 0.3f}),
-		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f, 0.2f, 0.3f})
-	};
 	auto lambertian = material::Lambertian_Bsdf{
 		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.5f, 0.6f, 0.7f}),
 		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.0f})
 	};
-	auto divider = divider::Divider{&sphere, &homo_medium, &lambertian};
+	auto homo_medium = media::Homogeneous_Medium{
+		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f, 0.2f, 0.3f}),
+		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f, 0.2f, 0.3f})
+	};
+	auto divider = divider::Divider{&sphere, &lambertian, &homo_medium};
 	auto bvh = divider::LBVH{{&divider}};
 
 	auto env_map = image::Image::from_path("/home/tsssni/Downloads/the_sky_is_on_fire_4k.exr");

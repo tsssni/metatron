@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/core/image/image.hpp>
 #include <metatron/core/spectra/stochastic.hpp>
-#include <metatron/render/material/texture/texture.hpp>
+#include <metatron/geometry/material/texture/texture.hpp>
 #include <memory>
 
 namespace metatron::material {

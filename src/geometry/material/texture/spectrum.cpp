@@ -1,5 +1,5 @@
 #include <metatron/core/spectra/rgb.hpp>
-#include <metatron/render/material/texture/spectrum.hpp>
+#include <metatron/geometry/material/texture/spectrum.hpp>
 
 namespace metatron::material {
 	Spectrum_Image_Texture::Spectrum_Image_Texture(std::unique_ptr<image::Image> image)

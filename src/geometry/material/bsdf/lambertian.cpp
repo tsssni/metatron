@@ -1,4 +1,4 @@
-#include <metatron/render/material/bsdf/lambertian.hpp>
+#include <metatron/geometry/material/bsdf/lambertian.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/sphere.hpp>
 

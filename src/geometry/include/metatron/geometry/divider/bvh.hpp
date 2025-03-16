@@ -1,4 +1,4 @@
-#include <metatron/render/divider/accel.hpp>
+#include <metatron/geometry/divider/accel.hpp>
 #include <vector>
 
 namespace metatron::divider {
