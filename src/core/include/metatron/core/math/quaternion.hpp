@@ -8,8 +8,8 @@ namespace metatron::math {
     class Quaternion {
     public:
 		Quaternion() = default;
-        Quaternion(T x, T y, T z, T w) : data{x, y, z, w} {}
-        explicit Quaternion(Vector<T, 4> const& v) : data{v} {}
+        Quaternion(T x, T y, T z, T w): data{x, y, z, w} {}
+        explicit Quaternion(Vector<T, 4> const& v): data{v} {}
 
 		auto static from_axis_angle(Vector<T, 3> const& axis, T const& angle) -> Quaternion<T> {
 			auto half_angle = angle * T{0.5};

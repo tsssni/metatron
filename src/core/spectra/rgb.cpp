@@ -1,7 +1,7 @@
 #include <metatron/core/spectra/rgb.hpp>
 
 namespace metatron::spectra {
-	Rgb_Spectrum::Rgb_Spectrum(math::Vector<f32, 3> const& rgb) :rgb(rgb) {}
+	Rgb_Spectrum::Rgb_Spectrum(math::Vector<f32, 3> const& rgb): rgb(rgb) {}
 
 	auto Rgb_Spectrum::operator()(f32 lambda) const -> f32 {
 		// TODO: just test rgb

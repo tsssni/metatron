@@ -4,7 +4,7 @@ namespace metatron::photo {
 	Camera::Camera(
 		std::unique_ptr<Film> film,
 		std::unique_ptr<Lens> lens
-	) : film(std::move(film)), lens(std::move(lens)) {}
+	): film(std::move(film)), lens(std::move(lens)) {}
 
 	auto Camera::sample(
 		math::Vector<usize, 2> pixel,

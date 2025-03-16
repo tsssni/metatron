@@ -9,8 +9,9 @@
 #include <metatron/render/light/environment.hpp>
 #include <metatron/render/light/test.hpp>
 #include <metatron/geometry/divider/bvh.hpp>
-#include <metatron/geometry/material/texture/spectrum.hpp>
-#include <metatron/geometry/material/bsdf/lambertian.hpp>
+#include <metatron/geometry/material/texture/spectrum/image.hpp>
+#include <metatron/geometry/material/texture/spectrum/constant.hpp>
+#include <metatron/geometry/material/diffuse.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
 #include <metatron/volume/media/homogeneous.hpp>
 #include <metatron/hierarchy/transform.hpp>
@@ -40,20 +41,23 @@ auto main() -> int {
 	auto transform = math::Matrix<f32, 4, 4>{hierarchy::Transform{{0.f, 0.f, -3.f}}};
 
 	auto sphere = shape::Sphere{1.f, 0.f, math::pi, 2.f * math::pi};
-	auto lambertian = material::Lambertian_Bsdf{
-		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.5f, 0.6f, 0.7f}),
-		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.0f})
+	auto diffuse = material::Diffuse_Material{
+		std::make_unique<material::Spectrum_Constant_Texture>(
+			std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.5f, 0.6f, 0.7f})
+		),
+		std::make_unique<material::Spectrum_Constant_Texture>(
+			std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.f})
+		),
 	};
 	auto homo_medium = media::Homogeneous_Medium{
 		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f, 0.2f, 0.3f}),
 		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f, 0.2f, 0.3f})
 	};
-	auto divider = divider::Divider{&sphere, &lambertian, &homo_medium};
+	auto divider = divider::Divider{&sphere, &diffuse, &homo_medium};
 	auto bvh = divider::LBVH{{&divider}};
 
 	auto env_map = image::Image::from_path("/home/tsssni/Downloads/the_sky_is_on_fire_4k.exr");
-	auto env_tex = std::make_unique<material::Spectrum_Image_Texture>(std::move(env_map));
-	auto env_light = light::Environment_Light{std::move(env_tex)};
+	auto env_light = light::Environment_Light{std::move(env_map)};
 	auto lights = std::vector<light::Light const*>{&env_light};
 	auto inf_lights = std::vector<light::Light const*>{&env_light};
 	auto emitter = light::Test_Emitter{std::move(lights), std::move(inf_lights)};
@@ -63,19 +67,21 @@ auto main() -> int {
 			for (auto n = 0uz; n < 1; n++) {
 				auto sample = camera.sample(math::Vector<usize, 2>{i, j}, 0, sampler);
 				auto& s = sample.value();
-				s.r.o = transform(math::Vector<f32, 4>{s.r.o, 1.f});
-				s.r.d = transform(math::Vector<f32, 4>{s.r.d});
-				auto intr = bvh(s.r);
+				s.r.o = transform | math::Vector<f32, 4>{s.r.o, 1.f};
+				s.r.d = transform | math::Vector<f32, 4>{s.r.d};
+				auto divider = bvh(s.r).value();
+				auto intr = (*divider->shape)(s.r);
 
 				if (intr) {
-					auto& intrv = intr.value();
-					auto rot = math::Matrix<f32, 4, 4>{math::Quaternion<f32>::from_rotation_between(intrv.intr.n, {0.f, 1.f, 0.f})};
+					auto& shape_intr = intr.value();
+					auto rot = math::Matrix<f32, 4, 4>{math::Quaternion<f32>::from_rotation_between(shape_intr.n, {0.f, 1.f, 0.f})};
 					auto inv_rot = math::inverse(rot);
 
-					auto wo = math::normalize(rot(math::Vector<f32, 4>{s.r.d}));
-					auto intr = intrv.divider->bsdf->sample({&stochastic, wo}, {sampler.generate_1d(), sampler.generate_1d(), sampler.generate_1d()}).value();
+					auto wo = math::normalize(rot | math::Vector<f32, 4>{s.r.d});
+					auto bsdf = divider->material->sample({&shape_intr, &stochastic}).value();
+					auto intr = bsdf->sample({&stochastic, wo}, {sampler.generate_1d(), sampler.generate_1d(), sampler.generate_1d()}).value();
 
-					auto rr = math::Ray{intrv.intr.p, inv_rot(math::Vector<f32, 4>{intr.wi})};
+					auto rr = math::Ray{shape_intr.p, inv_rot | math::Vector<f32, 4>{intr.wi}};
 					auto env = emitter(rr);
 					s.fixel = *intr.f & *env.value();
 				} else {

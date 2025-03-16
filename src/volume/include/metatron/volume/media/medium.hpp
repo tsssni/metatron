@@ -1,17 +1,22 @@
 #pragma once
 #include <metatron/core/math/ray.hpp>
-#include <metatron/core/spectra/spectrum.hpp>
+#include <metatron/core/spectra/stochastic.hpp>
+#include <memory>
 
 namespace metatron::media {
 	struct Context final {
+		spectra::Stochastic_Spectrum const* Lo;
 		math::Ray r;
-		f32 lambda;
+		f32 t_max;
 	};
 
 	struct Interaction final {
 		math::Vector<f32, 3> p;
-		spectra::Spectrum const* sigma_a;
-		spectra::Spectrum const* sigma_s;
+		f32 pdf;
+		std::unique_ptr<spectra::Stochastic_Spectrum> transmittance;
+		std::unique_ptr<spectra::Stochastic_Spectrum> sigma_a;
+		std::unique_ptr<spectra::Stochastic_Spectrum> sigma_s;
+		std::unique_ptr<spectra::Stochastic_Spectrum> sigma_n;
 	};
 
 	struct Medium {

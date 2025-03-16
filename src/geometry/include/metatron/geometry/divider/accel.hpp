@@ -6,11 +6,6 @@
 #include <memory>
 
 namespace metatron::divider {
-	struct Interaction final {
-		Divider const* divider;
-		shape::Interaction intr;
-	};
-
 	struct Node final {
 		Divider const* divider{nullptr};
 		math::Bounding_Box bbox;
@@ -20,6 +15,6 @@ namespace metatron::divider {
 
 	struct Acceleration {
 		virtual ~Acceleration() {}
-		auto virtual operator()(math::Ray const& r) -> std::optional<Interaction> = 0;
+		auto virtual operator()(math::Ray const& r) -> std::optional<Divider const*> = 0;
 	};
 }

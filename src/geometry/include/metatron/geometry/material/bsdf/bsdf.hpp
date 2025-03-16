@@ -20,6 +20,7 @@ namespace metatron::material {
 	}
 
 	struct Bsdf {
+		virtual ~Bsdf() {}
 		auto virtual operator()(
 			math::Vector<f32, 3> const& wo,
 			math::Vector<f32, 3> const& wi,

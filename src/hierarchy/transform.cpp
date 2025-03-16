@@ -13,6 +13,6 @@ namespace metatron::hierarchy {
 			this->scaling[0], this->scaling[1], this->scaling[2], 1.f
 		};
 		auto rotation = math::Matrix<f32, 4, 4>{this->rotation};
-		return translation(rotation(scaling));
+		return translation | rotation | scaling;
 	}
 }

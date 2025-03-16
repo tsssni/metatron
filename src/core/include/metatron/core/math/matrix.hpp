@@ -144,7 +144,7 @@ namespace metatron::math {
 				return lds[higher_n + (l_n > 1 ? 1 : 0)] == rds[higher_n];
 			}()
 		)
-		auto constexpr operator()(
+		auto constexpr operator|(
 			Matrix<T, rhs_dims...> const& rhs
 		) {
 			using Product_Matrix = decltype([]<usize... dims>(std::index_sequence<dims...>) {
