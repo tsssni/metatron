@@ -1,6 +1,7 @@
 #include <metatron/geometry/material/bsdf/lambertian.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/sphere.hpp>
+#include <metatron/core/math/distribution/cosine-hemisphere.hpp>
 
 namespace metatron::material {
 	Lambertian_Bsdf::Lambertian_Bsdf(std::unique_ptr<spectra::Spectrum> R, std::unique_ptr<spectra::Spectrum> T)
@@ -22,22 +23,26 @@ namespace metatron::material {
 		auto tu = spectra::max(t);
 		if (std::abs(ru + tu) < math::epsilon<f32>) return {};
 
-		// TODO: use simple uniform sampling for testing
 		auto rtu = ru / (ru + tu);
-		auto theta = math::pi * u[1];
-		auto phi = math::pi * u[2];
-		auto wi = math::sphere_to_cartesion({theta, phi});
-		if (false
-		|| (wi[1] > 0.f && u[0] > rtu)
-		|| (wi[1] <= 0.f && u[0] <= rtu)
-		) {
-			wi[1] *= -1.f;
+		auto wi = math::Cosine_Hemisphere_Distribution::sample({u[1], u[2]});
+		auto pdf = math::Cosine_Hemisphere_Distribution::pdf(wi[1]);
+
+		if (u[0] < rtu) {
+			pdf *= rtu;
+			if (-ctx.wo[1] * wi[1] < 0.f) {
+				wi *= -1.f;
+			}
+		} else {
+			pdf *= 1.f - rtu;
+			if (-ctx.wo[1] * wi[1] >= 0.f) {
+				wi *= -1.f;
+			}
 		}
 		
 		auto f = std::make_unique<spectra::Stochastic_Spectrum>(*ctx.Lo);
 		for (auto i = 0uz; i < f->lambda.size(); i++) {
-			f->value[i] = (*this)(ctx.wo, wi, f->lambda[i]);
+			f->value[i] = (*this)(-ctx.wo, wi, f->lambda[i]);
 		}
-		return bsdf::Interaction{std::move(f), wi, 1.f / (4.f * math::pi * math::pi)};
+		return bsdf::Interaction{std::move(f), wi, pdf};
 	}
 }

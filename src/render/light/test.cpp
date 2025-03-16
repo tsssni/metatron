@@ -6,12 +6,14 @@ namespace metatron::light {
 		Test_Emitter::Test_Emitter(std::vector<Light const*>&& lights, std::vector<Light const*>&& infinite_lights)
 			: lights(std::move(lights)), infinite_lights(std::move(infinite_lights)) {}
 
-		auto Test_Emitter::operator()(math::Ray const& r) const -> std::optional<Spectrum> {
-			return (*infinite_lights[0])(r);
+		auto Test_Emitter::operator()(math::Ray const& r) const -> std::optional<Light const*> {
+			return infinite_lights.front();
 		}
 
-		auto Test_Emitter::sample(Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<Interaction> {
-			// TODO: not implemented
-			return {};
+		auto Test_Emitter::sample(Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<emitter::Interaction> {
+			return emitter::Interaction{
+				infinite_lights.front(),
+				1.f
+			};
 		}
 }

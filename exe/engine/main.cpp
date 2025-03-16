@@ -8,17 +8,22 @@
 #include <metatron/render/photo/lens/pinhole.hpp>
 #include <metatron/render/light/environment.hpp>
 #include <metatron/render/light/test.hpp>
+#include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/geometry/divider/bvh.hpp>
 #include <metatron/geometry/material/texture/spectrum/image.hpp>
 #include <metatron/geometry/material/texture/spectrum/constant.hpp>
 #include <metatron/geometry/material/diffuse.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
 #include <metatron/volume/media/homogeneous.hpp>
+#include <metatron/volume/phase/henyey-greenstein.hpp>
 #include <metatron/hierarchy/transform.hpp>
 
 using namespace metatron;
 
 auto main() -> int {
+	auto constexpr size = math::Vector<usize, 2>{128uz};
+	auto constexpr spp = 128uz;
+
 	auto sensor = std::make_unique<photo::Sensor>(
 		std::make_unique<spectra::Test_Rgb_Spectrum>(300.f, 450.f),
 		std::make_unique<spectra::Test_Rgb_Spectrum>(450.f, 600.f),
@@ -27,7 +32,7 @@ auto main() -> int {
 	auto lens = std::make_unique<photo::Pinhole_Lens>(0.1f);
 	auto film = std::make_unique<photo::Film>(
 		math::Vector<f32, 2>{0.1f, 0.1f},
-		math::Vector<usize, 2>{1024, 1024},
+		size,
 		std::move(sensor),
 		std::make_unique<math::Box_Filter>()
 	);
@@ -43,15 +48,17 @@ auto main() -> int {
 	auto sphere = shape::Sphere{1.f, 0.f, math::pi, 2.f * math::pi};
 	auto diffuse = material::Diffuse_Material{
 		std::make_unique<material::Spectrum_Constant_Texture>(
-			std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.5f, 0.6f, 0.7f})
+			std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f})
 		),
 		std::make_unique<material::Spectrum_Constant_Texture>(
-			std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.f})
+			std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.0f})
 		),
 	};
 	auto homo_medium = media::Homogeneous_Medium{
-		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f, 0.2f, 0.3f}),
-		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f, 0.2f, 0.3f})
+		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.5f),
+		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f}),
+		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.8f}),
+		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f})
 	};
 	auto divider = divider::Divider{&sphere, &diffuse, &homo_medium};
 	auto bvh = divider::LBVH{{&divider}};
@@ -61,35 +68,23 @@ auto main() -> int {
 	auto lights = std::vector<light::Light const*>{&env_light};
 	auto inf_lights = std::vector<light::Light const*>{&env_light};
 	auto emitter = light::Test_Emitter{std::move(lights), std::move(inf_lights)};
+	auto integrator = mc::Volume_Path_Integrator{};
 
-	for (auto j = 0uz; j < 1024uz; j++) {
-		for (auto i = 0uz; i < 1024uz; i++) {
-			for (auto n = 0uz; n < 1; n++) {
-				auto sample = camera.sample(math::Vector<usize, 2>{i, j}, 0, sampler);
+	for (auto j = 0uz; j < size[1]; j++) {
+		for (auto i = 0uz; i < size[0]; i++) {
+			for (auto n = 0uz; n < spp; n++) {
+				auto sample = camera.sample(math::Vector<usize, 2>{i, j}, n, sampler);
 				auto& s = sample.value();
 				s.r.o = transform | math::Vector<f32, 4>{s.r.o, 1.f};
 				s.r.d = transform | math::Vector<f32, 4>{s.r.d};
-				auto divider = bvh(s.r).value();
-				auto intr = (*divider->shape)(s.r);
 
-				if (intr) {
-					auto& shape_intr = intr.value();
-					auto rot = math::Matrix<f32, 4, 4>{math::Quaternion<f32>::from_rotation_between(shape_intr.n, {0.f, 1.f, 0.f})};
-					auto inv_rot = math::inverse(rot);
-
-					auto wo = math::normalize(rot | math::Vector<f32, 4>{s.r.d});
-					auto bsdf = divider->material->sample({&shape_intr, &stochastic}).value();
-					auto intr = bsdf->sample({&stochastic, wo}, {sampler.generate_1d(), sampler.generate_1d(), sampler.generate_1d()}).value();
-
-					auto rr = math::Ray{shape_intr.p, inv_rot | math::Vector<f32, 4>{intr.wi}};
-					auto env = emitter(rr);
-					s.fixel = *intr.f & *env.value();
-				} else {
-					auto env = emitter(s.r);
-					auto L = stochastic & *env.value();
-					s.fixel = L;
-				}
+				auto Li_opt = integrator.sample({s.r}, bvh, emitter, sampler);
+				auto& Li = Li_opt.value();
+				s.fixel = *Li;
 			}
+
+			std::printf("\r");
+			std::printf("%f", 1.f * (j * 128uz + i) / (128uz * 128uz));
 		}
 	}
 	camera.to_path("build/test.exr");

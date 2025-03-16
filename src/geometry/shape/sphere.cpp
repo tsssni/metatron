@@ -40,7 +40,7 @@ namespace metatron::shape {
 			(phi < 0.f ? 2.f * math::pi : phi) / 2.f * math::pi
 		};
 
-		return Interaction{p, n, uv, 1.f};
+		return Interaction{p, n, uv, t, 1.f};
 	}
 
 	auto Sphere::sample(

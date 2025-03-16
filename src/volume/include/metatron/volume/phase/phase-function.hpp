@@ -16,6 +16,7 @@ namespace metatron::phase {
 	};
 
 	struct Phase_Function {
+		virtual ~Phase_Function() {}
 		auto virtual operator()(
 			math::Vector<f32, 3> const& wo,
 			math::Vector<f32, 3> const& wi

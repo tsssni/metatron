@@ -4,17 +4,18 @@
 #include <optional>
 
 namespace metatron::shape {
-	struct Interaction final {
-		math::Vector<f32, 3> p;
-		math::Vector<f32, 3> n;
-		math::Vector<f32, 2> uv;
-		f32 pdf;
-	};
-
 	struct Context final {
 		math::Vector<f32, 3> p;
 		math::Vector<f32, 3> n;
 		math::Ray r;
+	};
+
+	struct Interaction final {
+		math::Vector<f32, 3> p;
+		math::Vector<f32, 3> n;
+		math::Vector<f32, 2> uv;
+		f32 t;
+		f32 pdf;
 	};
 
 	struct Shape {

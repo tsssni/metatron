@@ -9,7 +9,7 @@ namespace metatron::spectra {
 		for (auto i = 0; i < n; i++) {
 			auto ui = std::fmod(u + i / float(n), 1.f);
 			lambda.emplace_back(std::lerp(380.f, 780.f, ui));
-			value.emplace_back(1.f);
+			value.emplace_back(0.f);
 			pdf.emplace_back(1.f / (lambda_max - lambda_min));
 		}
 	}
@@ -142,6 +142,26 @@ namespace metatron::spectra {
 		}
 		return *this;
 	};
+
+	auto operator+(f32 s, Stochastic_Spectrum const& spectrum) -> Stochastic_Spectrum {
+		return spectrum + s;
+	}
+
+	auto operator-(f32 s, Stochastic_Spectrum const& spectrum) -> Stochastic_Spectrum {
+		return spectrum - s;
+	}
+
+	auto operator*(f32 s, Stochastic_Spectrum const& spectrum) -> Stochastic_Spectrum {
+		return spectrum * s;
+	}
+
+	auto operator/(f32 s, Stochastic_Spectrum const& spectrum) -> Stochastic_Spectrum {
+		auto spec = spectrum;
+		for (auto& v: spec.value) {
+			v = s / v;
+		}
+		return spec;
+	}
 
 	auto min(Stochastic_Spectrum const& spectrum) -> f32 {
 		auto minv = math::maxv<f32>;

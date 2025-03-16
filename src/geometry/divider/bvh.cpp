@@ -4,7 +4,8 @@ namespace metatron::divider {
 	LBVH::LBVH(std::vector<Divider const*>&& dividers)
 		: dividers(std::move(dividers)) {}
 
-	auto LBVH::operator()(math::Ray const& r) -> std::optional<Divider const*> {
+	auto LBVH::operator()(math::Ray const& r) const -> std::optional<Divider const*> {
+		// TODO: just test
 		return dividers.front();
 	}
 }

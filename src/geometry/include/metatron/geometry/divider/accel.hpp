@@ -15,6 +15,6 @@ namespace metatron::divider {
 
 	struct Acceleration {
 		virtual ~Acceleration() {}
-		auto virtual operator()(math::Ray const& r) -> std::optional<Divider const*> = 0;
+		auto virtual operator()(math::Ray const& r) const -> std::optional<Divider const*> = 0;
 	};
 }
