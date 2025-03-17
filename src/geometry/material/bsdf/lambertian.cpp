@@ -16,9 +16,9 @@ namespace metatron::material {
 		else return (*T)(lambda);
 	}
 
-	auto Lambertian_Bsdf::sample(bsdf::Context const& ctx, math::Vector<f32, 3> const& u) const -> std::optional<bsdf::Interaction> {
-		auto r = ((*ctx.Lo) & (*R)) / math::pi;
-		auto t = ((*ctx.Lo) & (*T)) / math::pi;
+	auto Lambertian_Bsdf::sample(eval::Context const& ctx, math::Vector<f32, 3> const& u) const -> std::optional<bsdf::Interaction> {
+		auto r = ((*ctx.L) & (*R)) / math::pi;
+		auto t = ((*ctx.L) & (*T)) / math::pi;
 		auto ru = spectra::max(r);
 		auto tu = spectra::max(t);
 		if (std::abs(ru + tu) < math::epsilon<f32>) return {};
@@ -29,19 +29,19 @@ namespace metatron::material {
 
 		if (u[0] < rtu) {
 			pdf *= rtu;
-			if (-ctx.wo[1] * wi[1] < 0.f) {
+			if (-ctx.r->d[1] * wi[1] < 0.f) {
 				wi *= -1.f;
 			}
 		} else {
 			pdf *= 1.f - rtu;
-			if (-ctx.wo[1] * wi[1] >= 0.f) {
+			if (-ctx.r->d[1] * wi[1] >= 0.f) {
 				wi *= -1.f;
 			}
 		}
 		
-		auto f = std::make_unique<spectra::Stochastic_Spectrum>(*ctx.Lo);
+		auto f = std::make_unique<spectra::Stochastic_Spectrum>(*ctx.L);
 		for (auto i = 0uz; i < f->lambda.size(); i++) {
-			f->value[i] = (*this)(-ctx.wo, wi, f->lambda[i]);
+			f->value[i] = (*this)(-ctx.r->d, wi, f->lambda[i]);
 		}
 		return bsdf::Interaction{std::move(f), wi, pdf};
 	}

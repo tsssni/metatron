@@ -4,7 +4,12 @@
 #include <metatron/geometry/material/bsdf/bsdf.hpp>
 
 namespace metatron::material {
+	struct Interaction final {
+		std::unique_ptr<Bsdf> bsdf;
+		std::unique_ptr<spectra::Stochastic_Spectrum> Le;
+	};
+
 	struct Material {
-		auto virtual sample(Context const& ctx) const -> std::optional<std::unique_ptr<Bsdf>> = 0;
+		auto virtual sample(eval::Context const& ctx) const -> std::optional<Interaction> = 0;
 	};
 }

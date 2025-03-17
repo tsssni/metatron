@@ -9,8 +9,6 @@ namespace metatron::mc {
 		light::Emitter const& emitter,
 		math::Sampler const& sampler
 	) const -> std::optional<std::unique_ptr<spectra::Stochastic_Spectrum>> {
-		// TODO: add direct lighting
-
 		auto Le = spectra::Stochastic_Spectrum{3uz, 0.f};
 		auto beta = spectra::Stochastic_Spectrum{3uz, 0.f};
 		beta.value = std::vector<f32>(3, 1.f);
@@ -50,7 +48,7 @@ namespace metatron::mc {
 				auto& intr = intr_opt.value();
 
 				if (ray.medium) {
-					auto m_intr_opt = ray.medium->sample({&Le, ray.r, intr.t}, sampler.generate_1d());
+					auto m_intr_opt = ray.medium->sample({{}, {}, {}, &ray.r, &Le}, intr.t, sampler.generate_1d());
 					if (!m_intr_opt) {
 						terminated = true;
 						continue;
@@ -73,7 +71,7 @@ namespace metatron::mc {
 							beta /= p_a;
 							terminated = true;
 						} else if (mode == 1uz) {
-							auto p_intr_opt = m_intr.phase->sample({&Le, -ray.r.d}, sampler.generate_2d());
+							auto p_intr_opt = m_intr.phase->sample({{}, {}, {}, &ray.r, &Le}, sampler.generate_2d());
 							if (!p_intr_opt) {
 								terminated = true;
 								continue;
@@ -95,18 +93,21 @@ namespace metatron::mc {
 					}
 				}
 
-				auto bsdf_opt = div->material->sample({&intr, &Le});
-				if (!bsdf_opt) {
+				auto mat_opt = div->material->sample({&intr.p, &intr.n, &intr.uv, &ray.r, &Le});
+				if (!mat_opt) {
 					terminated = true;
 					continue;
 				}
-				
-				auto& bsdf = bsdf_opt.value();
+
+				auto& mat_intr = mat_opt.value();
+				auto& bsdf = mat_intr.bsdf;
 				auto render_to_local = math::Matrix<f32, 4, 4>{math::Quaternion<f32>::from_rotation_between(intr.n, {0.f, 1.f, 0.f})};
 				auto local_to_render = math::inverse(render_to_local);
+
 				auto uc = sampler.generate_1d();
 				auto u = sampler.generate_2d();
-				auto b_intr_opt = bsdf->sample({&Le, render_to_local | math::Vector<f32, 4>{ray.r.d}}, {uc, u[0], u[1]});
+				ray.r.d = render_to_local | math::Vector<f32, 4>{ray.r.d};
+				auto b_intr_opt = bsdf->sample({{}, {}, {}, &ray.r, &Le}, {uc, u[0], u[1]});
 				if (!b_intr_opt) {
 					terminated = true;
 					continue;
@@ -135,7 +136,7 @@ namespace metatron::mc {
 				}
 
 				auto l = l_opt.value();
-				auto e_opt = (*l)(ray.r);
+				auto e_opt = (*l)(ray.r, Le);
 				if (!e_opt) {
 					continue;
 				}

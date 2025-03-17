@@ -1,15 +1,10 @@
 #pragma once
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/math/bounding-box.hpp>
+#include <metatron/core/eval/context.hpp>
 #include <optional>
 
 namespace metatron::shape {
-	struct Context final {
-		math::Vector<f32, 3> p;
-		math::Vector<f32, 3> n;
-		math::Ray r;
-	};
-
 	struct Interaction final {
 		math::Vector<f32, 3> p;
 		math::Vector<f32, 3> n;
@@ -26,7 +21,7 @@ namespace metatron::shape {
 			usize idx = 0uz
 		) const -> std::optional<Interaction> = 0;
 		auto virtual sample(
-			Context const& ctx,
+			eval::Context const& ctx,
 			math::Vector<f32, 2> const& u,
 			usize idx = 0uz
 		) const -> std::optional<Interaction> = 0;

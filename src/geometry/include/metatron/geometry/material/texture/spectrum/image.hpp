@@ -5,7 +5,7 @@
 namespace metatron::material {
 	struct Spectrum_Image_Texture final: Spectrum_Texture {
 		Spectrum_Image_Texture(std::unique_ptr<image::Image> image);
-		auto sample(Context const& ctx) -> Element;
+		auto sample(eval::Context const& ctx) -> Element;
 
 	private:
 		std::unique_ptr<image::Image> image;

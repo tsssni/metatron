@@ -10,7 +10,7 @@ namespace metatron::light {
 			return infinite_lights.front();
 		}
 
-		auto Test_Emitter::sample(Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<emitter::Interaction> {
+		auto Test_Emitter::sample(eval::Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<emitter::Interaction> {
 			return emitter::Interaction{
 				infinite_lights.front(),
 				1.f

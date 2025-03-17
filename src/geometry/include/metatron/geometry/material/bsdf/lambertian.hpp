@@ -9,7 +9,7 @@ namespace metatron::material {
 			math::Vector<f32, 3> const& wi,
 			f32 lambda
 		) const -> f32;
-		auto sample(bsdf::Context const& ctx, math::Vector<f32, 3> const& u) const -> std::optional<bsdf::Interaction>;
+		auto sample(eval::Context const& ctx, math::Vector<f32, 3> const& u) const -> std::optional<bsdf::Interaction>;
 
 	private:
 		std::unique_ptr<spectra::Spectrum> R;

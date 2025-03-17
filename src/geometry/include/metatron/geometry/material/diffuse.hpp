@@ -6,7 +6,7 @@
 namespace metatron::material {
 	struct Diffuse_Material final: Material {
 		Diffuse_Material(std::unique_ptr<Spectrum_Texture> R, std::unique_ptr<Spectrum_Texture> T);
-		auto sample(Context const& ctx) const -> std::optional<std::unique_ptr<Bsdf>>;
+		auto sample(eval::Context const& ctx) const -> std::optional<Interaction>;
 
 	private:
 		std::unique_ptr<Spectrum_Texture> R;

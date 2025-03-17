@@ -44,7 +44,7 @@ namespace metatron::shape {
 	}
 
 	auto Sphere::sample(
-		Context const& ctx,
+		eval::Context const& ctx,
 		math::Vector<f32, 2> const& u,
 		usize idx
 	) const -> std::optional<Interaction> {

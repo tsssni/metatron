@@ -10,7 +10,7 @@ namespace metatron::shape {
 			usize idx = 0uz
 		) const -> std::optional<Interaction>;
 		auto sample(
-			Context const& ctx,
+			eval::Context const& ctx,
 			math::Vector<f32, 2> const& u,
 			usize idx = 0uz
 		) const -> std::optional<Interaction>;

@@ -8,7 +8,7 @@ namespace metatron::phase {
 			math::Vector<f32, 3> const& wo,
 			math::Vector<f32, 3> const& wi
 		) const -> f32;
-		auto sample(Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<Interaction>;
+		auto sample(eval::Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<Interaction>;
 	
 	private:
 		f32 g;

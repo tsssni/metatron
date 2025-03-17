@@ -2,15 +2,10 @@
 #include <metatron/volume/phase/phase-function.hpp>
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/spectra/stochastic.hpp>
+#include <metatron/core/eval/context.hpp>
 #include <memory>
 
 namespace metatron::media {
-	struct Context final {
-		spectra::Stochastic_Spectrum const* Lo;
-		math::Ray r;
-		f32 t_max;
-	};
-
 	struct Interaction final {
 		math::Vector<f32, 3> p;
 		phase::Phase_Function const* phase;
@@ -24,6 +19,6 @@ namespace metatron::media {
 	};
 
 	struct Medium {
-		auto virtual sample(Context const& ctx, f32 u) const -> std::optional<Interaction> = 0;
+		auto virtual sample(eval::Context const& ctx, f32 t_max, f32 u) const -> std::optional<Interaction> = 0;
 	};
 }
