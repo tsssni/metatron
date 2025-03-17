@@ -8,7 +8,7 @@ namespace metatron::light {
 			std::unique_ptr<image::Image> env_map
 		): env_map(std::move(env_map)) {}
 
-		auto Environment_Light::operator()(math::Ray const& r, spectra::Stochastic_Spectrum const& L) const -> std::optional<std::unique_ptr<spectra::Stochastic_Spectrum>> {
+		auto Environment_Light::operator()(math::Ray const& r, spectra::Stochastic_Spectrum const& L) const -> std::optional<spectra::Stochastic_Spectrum> {
 			return (*this)(math::cartesion_to_sphere(r.d), L);
 		}
 
@@ -22,10 +22,10 @@ namespace metatron::light {
 			};
 		}
 
-		auto Environment_Light::operator()(math::Vector<f32, 2> const& s, spectra::Stochastic_Spectrum const& L) const -> std::optional<std::unique_ptr<spectra::Stochastic_Spectrum>> {
+		auto Environment_Light::operator()(math::Vector<f32, 2> const& s, spectra::Stochastic_Spectrum const& L) const -> std::optional<spectra::Stochastic_Spectrum> {
 			auto x = s[1] / (2.f * math::pi) * env_map->size[0];
 			auto y = s[0] / math::pi * env_map->size[1];
 			auto spec = spectra::Rgb_Spectrum{math::Vector<f32, 4>{(*env_map)[x, y]}};
-			return std::make_unique<spectra::Stochastic_Spectrum>(L & spec);
+			return L & spec;
 		}
 }

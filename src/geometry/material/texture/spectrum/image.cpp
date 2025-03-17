@@ -1,5 +1,5 @@
-#include <metatron/core/spectra/rgb.hpp>
 #include <metatron/geometry/material/texture/spectrum/image.hpp>
+#include <metatron/core/spectra/rgb.hpp>
 
 namespace metatron::material {
 	Spectrum_Image_Texture::Spectrum_Image_Texture(std::unique_ptr<image::Image> image)
@@ -8,7 +8,6 @@ namespace metatron::material {
 	auto Spectrum_Image_Texture::sample(eval::Context const& ctx) -> Element {
 		auto pos = *ctx.uv * image->size;
 		auto pixel = math::Vector<f32, 4>{(*image)[pos[0], pos[1]]};
-		auto rgb_spec = std::make_unique<spectra::Rgb_Spectrum>(pixel);
-		return rgb_spec;
+		return *ctx.L & spectra::Rgb_Spectrum{pixel};
 	}
 }

@@ -80,7 +80,7 @@ auto main() -> int {
 
 				auto Li_opt = integrator.sample({s.r}, bvh, emitter, sampler);
 				auto& Li = Li_opt.value();
-				s.fixel = *Li;
+				s.fixel = Li;
 			}
 
 			std::printf("\r");

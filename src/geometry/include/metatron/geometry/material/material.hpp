@@ -6,7 +6,7 @@
 namespace metatron::material {
 	struct Interaction final {
 		std::unique_ptr<Bsdf> bsdf;
-		std::unique_ptr<spectra::Stochastic_Spectrum> Le;
+		spectra::Stochastic_Spectrum Le;
 	};
 
 	struct Material {

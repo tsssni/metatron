@@ -6,11 +6,12 @@ namespace metatron::material {
 		: R(std::move(R)), T(std::move(T)) {}
 
 	auto Diffuse_Material::sample(eval::Context const& ctx) const -> std::optional<Interaction> {
-		auto R_spec = R->sample(ctx);
-		auto T_spec = T->sample(ctx);
 		return Interaction{
-			std::make_unique<Lambertian_Bsdf>(std::move(R_spec), std::move(T_spec)),
-			std::make_unique<spectra::Stochastic_Spectrum>((*ctx.L) & spectra::Constant_Spectrum{0.f}),
+			std::make_unique<Lambertian_Bsdf>(
+				std::make_unique<spectra::Stochastic_Spectrum>(R->sample(ctx)),
+				std::make_unique<spectra::Stochastic_Spectrum>(T->sample(ctx))
+			),
+			(*ctx.L) & spectra::Constant_Spectrum{0.f},
 		};
 	}
 }

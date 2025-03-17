@@ -6,7 +6,7 @@
 
 namespace metatron::phase {
 	struct Interaction final {
-		std::unique_ptr<spectra::Stochastic_Spectrum> f;
+		spectra::Stochastic_Spectrum f;
 		math::Vector<f32, 3> wi;
 		f32 pdf;
 	};

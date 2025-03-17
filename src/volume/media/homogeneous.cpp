@@ -36,11 +36,11 @@ namespace metatron::media {
 			phase.get(),
 			t_s,
 			pdf,
-			std::make_unique<spectra::Stochastic_Spectrum>(transmittance),
-			std::make_unique<spectra::Stochastic_Spectrum>(sigma_a),
-			std::make_unique<spectra::Stochastic_Spectrum>(sigma_s),
-			std::make_unique<spectra::Stochastic_Spectrum>(sigma_n),
-			std::make_unique<spectra::Stochastic_Spectrum>(Le),
+			transmittance,
+			sigma_a,
+			sigma_s,
+			sigma_n,
+			Le,
 		};
 	}
 }

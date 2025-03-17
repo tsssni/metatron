@@ -20,6 +20,6 @@ namespace metatron::mc {
 			divider::Acceleration const& accel,
 			light::Emitter const& emitter,
 			math::Sampler const& sampler
-		) const -> std::optional<std::unique_ptr<spectra::Stochastic_Spectrum>> = 0;
+		) const -> std::optional<spectra::Stochastic_Spectrum> = 0;
 	};
 }

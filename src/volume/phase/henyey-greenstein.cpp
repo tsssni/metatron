@@ -30,7 +30,7 @@ namespace metatron::phase {
 		auto f = (*ctx.L) & spectra::Constant_Spectrum{pdf};
 
 		return Interaction{
-			std::make_unique<spectra::Stochastic_Spectrum>(f),
+			f,
 			wi,
 			pdf
 		};

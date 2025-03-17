@@ -8,7 +8,7 @@ namespace metatron::mc {
 		divider::Acceleration const& accel,
 		light::Emitter const& emitter,
 		math::Sampler const& sampler
-	) const -> std::optional<std::unique_ptr<spectra::Stochastic_Spectrum>> {
+	) const -> std::optional<spectra::Stochastic_Spectrum> {
 		auto Le = spectra::Stochastic_Spectrum{3uz, 0.f};
 		auto beta = spectra::Stochastic_Spectrum{3uz, 0.f};
 		beta.value = std::vector<f32>(3, 1.f);
@@ -55,15 +55,15 @@ namespace metatron::mc {
 					}
 
 					auto& m_intr = m_intr_opt.value();
-					beta *= (*m_intr.transmittance) / m_intr.pdf;
+					beta *= m_intr.transmittance / m_intr.pdf;
 					if (m_intr.t != intr.t) {
 						// always add Le
-						Le += beta * (*m_intr.sigma_a) * (*m_intr.Le);
+						Le += beta * m_intr.sigma_a * m_intr.Le;
 
-						auto sigma_maj = *m_intr.sigma_a + *m_intr.sigma_s + *m_intr.sigma_n;
-						auto p_a = m_intr.sigma_a->value[0] / sigma_maj.value[0];
-						auto p_s = m_intr.sigma_s->value[0] / sigma_maj.value[0];
-						auto p_n = m_intr.sigma_n->value[0] / sigma_maj.value[0];
+						auto sigma_maj = m_intr.sigma_a + m_intr.sigma_s + m_intr.sigma_n;
+						auto p_a = m_intr.sigma_a.value[0] / sigma_maj.value[0];
+						auto p_s = m_intr.sigma_s.value[0] / sigma_maj.value[0];
+						auto p_n = m_intr.sigma_n.value[0] / sigma_maj.value[0];
 
 						auto u = sampler.generate_1d();
 						auto mode = math::Discrete_Distribution{std::array<f32, 3>{p_a, p_s, p_n}}.sample(u);
@@ -81,7 +81,7 @@ namespace metatron::mc {
 							ray.r.o = m_intr.p;
 							ray.r.d = p_intr.wi;
 							
-							beta *= (*p_intr.f) / (p_s * p_intr.pdf);
+							beta *= p_intr.f / (p_s * p_intr.pdf);
 							scattered = true;
 						} else {
 							intr.t -= m_intr.t;
@@ -141,10 +141,10 @@ namespace metatron::mc {
 					continue;
 				}
 
-				Le = beta * (Le & *e_opt.value());
+				Le = beta * (Le & e_opt.value());
 			}
 		}
 
-		return std::make_unique<spectra::Stochastic_Spectrum>(Le);
+		return Le;
 	}
 }
