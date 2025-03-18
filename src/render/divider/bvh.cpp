@@ -1,4 +1,4 @@
-#include <metatron/geometry/divider/bvh.hpp>
+#include <metatron/render/divider/bvh.hpp>
 
 namespace metatron::divider {
 	LBVH::LBVH(std::vector<Divider const*>&& dividers)

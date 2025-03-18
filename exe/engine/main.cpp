@@ -7,9 +7,9 @@
 #include <metatron/render/photo/camera.hpp>
 #include <metatron/render/photo/lens/pinhole.hpp>
 #include <metatron/render/light/environment.hpp>
-#include <metatron/render/light/test.hpp>
+#include <metatron/render/light/uniform.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
-#include <metatron/geometry/divider/bvh.hpp>
+#include <metatron/render/divider/bvh.hpp>
 #include <metatron/geometry/material/texture/spectrum/image.hpp>
 #include <metatron/geometry/material/texture/spectrum/constant.hpp>
 #include <metatron/geometry/material/diffuse.hpp>
@@ -60,14 +60,14 @@ auto main() -> int {
 		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.8f}),
 		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f})
 	};
-	auto divider = divider::Divider{&sphere, &diffuse, &homo_medium};
+	auto divider = divider::Divider{&sphere, 0uz, &diffuse, &homo_medium};
 	auto bvh = divider::LBVH{{&divider}};
 
 	auto env_map = image::Image::from_path("/home/tsssni/Downloads/the_sky_is_on_fire_4k.exr");
 	auto env_light = light::Environment_Light{std::move(env_map)};
 	auto lights = std::vector<light::Light const*>{&env_light};
 	auto inf_lights = std::vector<light::Light const*>{&env_light};
-	auto emitter = light::Test_Emitter{std::move(lights), std::move(inf_lights)};
+	auto emitter = light::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 	auto integrator = mc::Volume_Path_Integrator{};
 
 	for (auto j = 0uz; j < size[1]; j++) {
@@ -84,7 +84,7 @@ auto main() -> int {
 			}
 
 			std::printf("\r");
-			std::printf("%f", 1.f * (j * 128uz + i) / (128uz * 128uz));
+			std::printf("%f", 1.f * (j * size[1] + i) / (size[1] * size[0]));
 		}
 	}
 	camera.to_path("build/test.exr");

@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/render/light/emitter.hpp>
 #include <metatron/render/photo/camera.hpp>
-#include <metatron/geometry/divider/accel.hpp>
+#include <metatron/render/divider/accel.hpp>
 #include <metatron/volume/media/medium.hpp>
 #include <metatron/core/spectra/stochastic.hpp>
 #include <metatron/core/math/sampler/sampler.hpp>

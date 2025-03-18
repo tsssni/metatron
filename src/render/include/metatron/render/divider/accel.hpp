@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/geometry/divider/divider.hpp>
+#include <metatron/render/divider/divider.hpp>
 #include <metatron/geometry/shape/shape.hpp>
 #include <metatron/core/math/bounding-box.hpp>
 #include <metatron/core/math/ray.hpp>
