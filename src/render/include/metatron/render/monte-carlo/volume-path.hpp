@@ -5,8 +5,8 @@ namespace metatron::mc {
 	struct Volume_Path_Integrator final: Integrator {
 		auto sample(
 			Ray ray,
-			divider::Acceleration const& accel,
-			light::Emitter const& emitter,
+			accel::Acceleration const& accel,
+			emitter::Emitter const& emitter,
 			math::Sampler const& sampler
 		) const -> std::optional<spectra::Stochastic_Spectrum>;
 	};

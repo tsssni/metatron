@@ -7,8 +7,8 @@
 namespace metatron::mc {
 	auto Volume_Path_Integrator::sample(
 		Ray ray,
-		divider::Acceleration const& accel,
-		light::Emitter const& emitter,
+		accel::Acceleration const& accel,
+		emitter::Emitter const& emitter,
 		math::Sampler const& sampler
 	) const -> std::optional<spectra::Stochastic_Spectrum> {
 		auto Le = spectra::Stochastic_Spectrum{3uz, 0.f};
@@ -23,7 +23,7 @@ namespace metatron::mc {
 		auto scatter_pdf = 0.f;
 		auto scatter_ctx = eval::Context{&ray.r.o, {}, {}, &ray.r, &Le};
 
-		auto div_opt = std::optional<divider::Divider const*>{};
+		auto div_opt = std::optional<accel::Divider const*>{};
 		auto intr_opt = std::optional<shape::Interaction>{};
 		
 		while (true) {
@@ -46,7 +46,7 @@ namespace metatron::mc {
 			if (scattered) {
 				do {
 					OPTIONAL_BREAK(e_intr, emitter.sample(scatter_ctx, sampler.generate_2d()));
-					OPTIONAL_BREAK(l_intr, e_intr.light->sample(scatter_ctx, sampler.generate_2d()));
+					OPTIONAL_BREAK(l_intr, e_intr.divider->light->sample(scatter_ctx, sampler.generate_2d()));
 
 					auto pl = e_intr.pdf * l_intr.pdf;
 					auto pb = scatter_pdf;
@@ -58,17 +58,26 @@ namespace metatron::mc {
 
 			if (scattered || depth == 0uz) {
 				div_opt = accel(ray.r);
-				intr_opt = !div_opt
-					? std::optional<shape::Interaction>{}
-					: (*div_opt.value()->shape)(ray.r);
+				intr_opt = {};
+				if (div_opt) {
+					auto div = div_opt.value();
+					auto r = math::Ray{
+						*div->transform ^ math::Vector<f32, 4>{ray.r.o, 1.f},
+						*div->transform ^ math::Vector<f32, 4>{ray.r.d, 0.f}
+					};
+					intr_opt = (*div->shape)({r});
+				}
 			}
 
 			if (!intr_opt) {
 				terminated = true;
 
-				auto const& n = scattered && scatter_ctx.n ? *scatter_ctx.n : math::Vector<f32, 3>{0.f};
 				OPTIONAL_CONTINUE(e_intr, emitter.sample_infinite(scatter_ctx, sampler.generate_1d()));
-				OPTIONAL_CONTINUE(l_intr, (*e_intr.light)(ray.r.d, n, Le));
+				auto wo = *e_intr.divider->transform ^ ray.r.d;
+				auto n = scattered && scatter_ctx.n
+					? math::Vector<f32, 3>{*e_intr.divider->transform ^ *scatter_ctx.n} 
+					: math::Vector<f32, 3>{0.f};
+				OPTIONAL_CONTINUE(l_intr, (*e_intr.divider->light)(wo, n, Le));
 
 				auto pl = e_intr.pdf * l_intr.pdf;
 				auto mis_w = scattered ? math::guarded_div(scatter_pdf, scatter_pdf + pl) : 1.f;
@@ -79,16 +88,13 @@ namespace metatron::mc {
 
 			auto& div = div_opt.value();
 			auto& intr = intr_opt.value();
+			intr.p = *div->transform | math::Vector<f32, 4>{intr.p, 1.f};
+			intr.n = *div->transform | math::Vector<f32, 4>{intr.p, 0.f};
 
 			if (ray.medium) {
-				auto m_intr_opt = ray.medium->sample(scatter_ctx, intr.t, sampler.generate_1d());
-				if (!m_intr_opt) {
-					terminated = true;
-					continue;
-				}
-
-				auto& m_intr = m_intr_opt.value();
+				OPTIONAL_CONTINUE_CALLBACK(m_intr, ray.medium->sample(scatter_ctx, intr.t, sampler.generate_1d()), [&terminated]{terminated=true;});
 				beta *= m_intr.transmittance / m_intr.pdf;
+
 				if (m_intr.t != intr.t) {
 					// always add Le
 					Le += beta * m_intr.sigma_a * m_intr.Le;
@@ -132,7 +138,7 @@ namespace metatron::mc {
 				do {
 					auto const& n = scattered && scatter_ctx.n ? *scatter_ctx.n : math::Vector<f32, 3>{0.f};
 					OPTIONAL_CONTINUE(e_intr, emitter(*div->area_light));
-					OPTIONAL_CONTINUE(l_intr, (*e_intr.light)(ray.r.d, n, Le));
+					OPTIONAL_CONTINUE(l_intr, (*e_intr.divider->light)(ray.r.d, n, Le));
 
 					auto pl = e_intr.pdf * l_intr.pdf;
 					auto pb = scatter_pdf;
@@ -141,14 +147,14 @@ namespace metatron::mc {
 				} while (false);
 			}
 
-			auto render_to_local = math::Matrix<f32, 4, 4>{math::Quaternion<f32>::from_rotation_between(intr.n, {0.f, 1.f, 0.f})};
-			auto local_to_render = math::inverse(render_to_local);
+			auto to_normal = math::Matrix<f32, 4, 4>{math::Quaternion<f32>::from_rotation_between(intr.n, {0.f, 1.f, 0.f})};
+			auto from_normal = math::inverse(to_normal);
 			auto uc = sampler.generate_1d();
 			auto u = sampler.generate_2d();
 
 			OPTIONAL_CONTINUE_CALLBACK(b_intr, bsdf->sample(scatter_ctx, {uc, u[0], u[1]}), [&terminated]{terminated=true;});
-			ray.r.d = render_to_local | math::Vector<f32, 4>{ray.r.d};
-			b_intr.wi = local_to_render | math::Vector<f32, 4>{b_intr.wi};
+			ray.r.d = to_normal | math::Vector<f32, 4>{ray.r.d};
+			b_intr.wi = from_normal | math::Vector<f32, 4>{b_intr.wi};
 
 			if (math::dot(-ray.r.d, b_intr.wi) < 0.f) {
 				if (math::dot(b_intr.wi, intr.n) > 0.f) {

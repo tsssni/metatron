@@ -15,4 +15,11 @@ namespace metatron::hierarchy {
 		auto rotation = math::Matrix<f32, 4, 4>{this->rotation};
 		return translation | rotation | scaling;
 	}
+	auto Transform::operator|(math::Vector<f32, 4> const& rhs) const -> math::Vector<f32, 4> {
+		return math::Matrix<f32, 4, 4>{*this} | rhs;
+	}
+
+	auto Transform::operator^(math::Vector<f32, 4> const& rhs) const -> math::Vector<f32, 4> {
+		return math::inverse(math::Matrix<f32, 4, 4>{*this}) | rhs;
+	}
 }

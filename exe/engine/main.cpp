@@ -7,9 +7,9 @@
 #include <metatron/render/photo/camera.hpp>
 #include <metatron/render/photo/lens/pinhole.hpp>
 #include <metatron/render/light/environment.hpp>
-#include <metatron/render/light/uniform.hpp>
+#include <metatron/render/emitter/uniform.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
-#include <metatron/render/divider/bvh.hpp>
+#include <metatron/render/accel/bvh.hpp>
 #include <metatron/geometry/material/texture/spectrum/image.hpp>
 #include <metatron/geometry/material/texture/spectrum/constant.hpp>
 #include <metatron/geometry/material/diffuse.hpp>
@@ -22,7 +22,7 @@ using namespace metatron;
 
 auto main() -> int {
 	auto constexpr size = math::Vector<usize, 2>{128uz};
-	auto constexpr spp = 128uz;
+	auto constexpr spp = 16uz;
 
 	auto sensor = std::make_unique<photo::Sensor>(
 		std::make_unique<spectra::Test_Rgb_Spectrum>(300.f, 450.f),
@@ -43,6 +43,7 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto stochastic = spectra::Stochastic_Spectrum{3uz, 0.f};
+	auto identity = hierarchy::Transform{};
 	auto transform = math::Matrix<f32, 4, 4>{hierarchy::Transform{{0.f, 0.f, -3.f}}};
 
 	auto sphere = shape::Sphere{1.f, 0.f, math::pi, 2.f * math::pi};
@@ -60,14 +61,13 @@ auto main() -> int {
 		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.8f}),
 		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f})
 	};
-	auto divider = divider::Divider{&sphere, 0uz, &diffuse, &homo_medium};
-	auto bvh = divider::LBVH{{&divider}};
+	auto bvh = accel::LBVH{{accel::Divider{&identity, &sphere, 0uz, &diffuse, &homo_medium}}};
 
 	auto env_map = image::Image::from_path("/home/tsssni/Downloads/the_sky_is_on_fire_4k.exr");
 	auto env_light = light::Environment_Light{std::move(env_map)};
-	auto lights = std::vector<light::Light const*>{&env_light};
-	auto inf_lights = std::vector<light::Light const*>{&env_light};
-	auto emitter = light::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
+	auto lights = std::vector<emitter::Divider>{{&identity, &env_light}};
+	auto inf_lights = std::vector<emitter::Divider>{{&identity, &env_light}};
+	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 	auto integrator = mc::Volume_Path_Integrator{};
 
 	for (auto j = 0uz; j < size[1]; j++) {
