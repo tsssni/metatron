@@ -33,15 +33,16 @@ namespace metatron::light {
 
 		auto Environment_Light::sample(eval::Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<Interaction> {
 			auto wi = math::Cosine_Hemisphere_Distribution::sample(u);
-			if (ctx.n) {
-				auto local_to_render = math::Quaternion<f32>::from_rotation_between({0.f, 1.f, 0.f}, *ctx.n);
+			auto n = math::Vector<f32, 3>{0.f};
+			if (ctx.n != n) {
+				auto local_to_render = math::Quaternion<f32>::from_rotation_between({0.f, 1.f, 0.f}, ctx.n);
 				wi = math::Vector<f32, 3>{math::rotate(math::Vector<f32, 4>{wi}, local_to_render)};
+				n = ctx.n;
 			}
 			
-			auto& n = ctx.n ? *ctx.n : math::Vector<f32, 3>{0.f};
-			auto intr = (*this)(wi, n, *ctx.L).value();
+			auto intr = (*this)(wi, n, ctx.L).value();
 			intr.wi = wi;
-			intr.p = *ctx.p + 65536.f * wi;
+			intr.p = ctx.p + 65536.f * wi;
 			intr.t = 65536.f;
 			return intr;
 		}

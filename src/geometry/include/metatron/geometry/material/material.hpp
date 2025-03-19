@@ -2,6 +2,7 @@
 #include <metatron/geometry/shape/shape.hpp>
 #include <metatron/geometry/material/texture/texture.hpp>
 #include <metatron/geometry/material/bsdf/bsdf.hpp>
+#include <memory>
 
 namespace metatron::material {
 	struct Interaction final {

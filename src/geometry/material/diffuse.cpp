@@ -11,7 +11,7 @@ namespace metatron::material {
 				std::make_unique<spectra::Stochastic_Spectrum>(R->sample(ctx)),
 				std::make_unique<spectra::Stochastic_Spectrum>(T->sample(ctx))
 			),
-			(*ctx.L) & spectra::Constant_Spectrum{0.f},
+			ctx.L & spectra::Constant_Spectrum{0.f},
 		};
 	}
 }

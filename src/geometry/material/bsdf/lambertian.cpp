@@ -4,23 +4,38 @@
 #include <metatron/core/math/distribution/cosine-hemisphere.hpp>
 
 namespace metatron::material {
-	Lambertian_Bsdf::Lambertian_Bsdf(std::unique_ptr<spectra::Spectrum> R, std::unique_ptr<spectra::Spectrum> T)
-		: R(std::move(R)), T(std::move(T)) {}
+	Lambertian_Bsdf::Lambertian_Bsdf(
+		std::unique_ptr<spectra::Stochastic_Spectrum> R,
+		std::unique_ptr<spectra::Stochastic_Spectrum> T
+	) : R(std::move(R)), T(std::move(T)) {
+		*(this->R) /= math::pi;
+		*(this->T) /= math::pi;
+	}
 
 	auto Lambertian_Bsdf::operator()(
 		math::Vector<f32, 3> const& wo,
 		math::Vector<f32, 3> const& wi,
-		f32 lambda
-	) const -> f32 {
-		if (wo[1] * wi[1] >= 0.f) return (*R)(lambda);
-		else return (*T)(lambda);
+		spectra::Stochastic_Spectrum const& L
+	) const -> std::optional<bsdf::Interaction> {
+		auto ru = spectra::max(*R);
+		auto tu = spectra::max(*T);
+		if (std::abs(ru + tu) < math::epsilon<f32>) return {};
+
+		auto f = L;
+		for (auto i = 0uz; i < f.lambda.size(); i++) {
+			if (-wo[1] * wi[1] >= 0.f) f.value[i] = (*R)(f.lambda[i]);
+			else f.value[i] = (*T)(f.lambda[i]);
+		}
+
+		auto pdf = math::Cosine_Hemisphere_Distribution::pdf(std::abs(wi[1]));
+		pdf *= (-wo[1] * wi[1] < 0.f ? ru : tu) / (ru + tu);
+
+		return bsdf::Interaction{f, wi, pdf};
 	}
 
 	auto Lambertian_Bsdf::sample(eval::Context const& ctx, math::Vector<f32, 3> const& u) const -> std::optional<bsdf::Interaction> {
-		auto r = ((*ctx.L) & (*R)) / math::pi;
-		auto t = ((*ctx.L) & (*T)) / math::pi;
-		auto ru = spectra::max(r);
-		auto tu = spectra::max(t);
+		auto ru = spectra::max(*R);
+		auto tu = spectra::max(*T);
 		if (std::abs(ru + tu) < math::epsilon<f32>) return {};
 
 		auto rtu = ru / (ru + tu);
@@ -29,20 +44,21 @@ namespace metatron::material {
 
 		if (u[0] < rtu) {
 			pdf *= rtu;
-			if (-ctx.r->d[1] * wi[1] < 0.f) {
+			if (-ctx.r.d[1] * wi[1] < 0.f) {
 				wi *= -1.f;
 			}
 		} else {
 			pdf *= 1.f - rtu;
-			if (-ctx.r->d[1] * wi[1] >= 0.f) {
+			if (-ctx.r.d[1] * wi[1] >= 0.f) {
 				wi *= -1.f;
 			}
 		}
-		
-		auto f = std::make_unique<spectra::Stochastic_Spectrum>(*ctx.L);
-		for (auto i = 0uz; i < f->lambda.size(); i++) {
-			f->value[i] = (*this)(-ctx.r->d, wi, f->lambda[i]);
+
+		auto f = ctx.L;
+		for (auto i = 0uz; i < f.lambda.size(); i++) {
+			if (-ctx.r.d[1] * wi[1] >= 0.f) f.value[i] = (*R)(f.lambda[i]);
+			else f.value[i] = (*T)(f.lambda[i]);
 		}
-		return bsdf::Interaction{std::move(f), wi, pdf};
+		return bsdf::Interaction{f, wi, pdf};
 	}
 }

@@ -8,7 +8,7 @@
 namespace metatron::media {
 	struct Interaction final {
 		math::Vector<f32, 3> p;
-		phase::Phase_Function const* phase;
+		std::unique_ptr<phase::Phase_Function> phase;
 		f32 t;
 		f32 pdf;
 		spectra::Stochastic_Spectrum transmittance;

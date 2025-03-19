@@ -10,9 +10,15 @@ namespace metatron::phase {
 
 	auto Henyey_Greenstein_Phase_Function::operator()(
 		math::Vector<f32, 3> const& wo,
-		math::Vector<f32, 3> const& wi
-	) const -> f32 {
-		return 1.f / (4.f * math::pi) * (1.f - g * g) / std::pow(1.f + g * g + 2.f * g * math::dot(wo, wi), 1.5f);
+		math::Vector<f32, 3> const& wi,
+		spectra::Stochastic_Spectrum const& L
+	) const -> std::optional<Interaction> {
+		auto f = 1.f / (4.f * math::pi) * (1.f - g * g) / std::pow(1.f + g * g + 2.f * g * math::dot(wo, wi), 1.5f);
+		return Interaction{
+			L & spectra::Constant_Spectrum{f},
+			wi,
+			f
+		};
 	}
 
 	auto Henyey_Greenstein_Phase_Function::sample(eval::Context const& ctx, math::Vector<f32, 2> const& u)
@@ -23,16 +29,6 @@ namespace metatron::phase {
 		auto phi = 2.f * math::pi * u[1];
 
 		auto wi = math::sphere_to_cartesion(cos_theta, phi);
-		auto rot = math::Quaternion<f32>::from_rotation_between({0.f, 1.f, 0.f}, -ctx.r->d);
-		wi = math::rotate(math::Vector<f32, 4>{wi}, rot);
-
-		auto pdf = (*this)(-ctx.r->d, wi);
-		auto f = (*ctx.L) & spectra::Constant_Spectrum{pdf};
-
-		return Interaction{
-			f,
-			wi,
-			pdf
-		};
+		return (*this)({0.f, 1.f, 0.f}, wi, ctx.L);
 	}
 }

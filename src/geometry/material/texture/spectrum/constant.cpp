@@ -6,6 +6,6 @@ namespace metatron::material {
 		: x(std::move(x)) {}
 
 	auto Spectrum_Constant_Texture::sample(eval::Context const& ctx) -> Element {
-		return (*ctx.L) & (*x);
+		return ctx.L & (*x);
 	}
 }

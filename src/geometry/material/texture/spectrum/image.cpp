@@ -6,8 +6,8 @@ namespace metatron::material {
 		: image(std::move(image)) {}
 
 	auto Spectrum_Image_Texture::sample(eval::Context const& ctx) -> Element {
-		auto pos = *ctx.uv * image->size;
+		auto pos = ctx.uv * image->size;
 		auto pixel = math::Vector<f32, 4>{(*image)[pos[0], pos[1]]};
-		return *ctx.L & spectra::Rgb_Spectrum{pixel};
+		return ctx.L & spectra::Rgb_Spectrum{pixel};
 	}
 }
