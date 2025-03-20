@@ -12,6 +12,7 @@ namespace metatron::mc {
 		math::Ray rx;
 		math::Ray ry;
 		media::Medium const* medium;
+		hierarchy::Transform const* medium_transform;
 	};
 
 	struct Integrator {

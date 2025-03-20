@@ -58,7 +58,7 @@ auto main() -> int {
 			std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.5f})
 		),
 		std::make_unique<material::Spectrum_Constant_Texture>(
-			std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.0f})
+			std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.5f})
 		),
 	};
 	auto homo_medium = media::Homogeneous_Medium{
@@ -66,7 +66,19 @@ auto main() -> int {
 		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.5f}),
 		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.01f})
 	};
-	auto bvh = accel::LBVH{{accel::Divider{&identity, &sphere, 0uz, &diffuse, &homo_medium}}};
+	auto bvh = accel::LBVH{{
+		{
+			&sphere,
+			&homo_medium,
+			nullptr,
+			&diffuse,
+			nullptr,
+			&identity,
+			&identity,
+			&identity,
+			0uz
+		}
+	}};
 
 	auto env_map = image::Image::from_path("../Downloads/the_sky_is_on_fire_4k.exr");
 	auto env_light = light::Environment_Light{std::move(env_map)};

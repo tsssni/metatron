@@ -10,13 +10,15 @@
 
 namespace metatron::accel {
 	struct Divider final {
-		hierarchy::Transform const* transform{};
 		shape::Shape const* shape{};
-		usize primitive{0uz};
-		material::Material const* material{};
 		media::Medium const* interior_medium{};
 		media::Medium const* exterior_medium{};
-		light::Light const* area_light{};
+		material::Material const* material{};
+		light::Light const* Le{};
+		hierarchy::Transform const* transform{};
+		hierarchy::Transform const* interior_transform{};
+		hierarchy::Transform const* exterior_transform{};
+		usize primitive{0uz};
 	};
 
 	struct Node final {

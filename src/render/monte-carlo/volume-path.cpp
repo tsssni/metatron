@@ -134,9 +134,11 @@ namespace metatron::mc {
 			intr.n = *div->transform | math::Vector<f32, 4>{intr.p, 0.f};
 
 			if (ray.medium) {
-				auto m_ctx = scatter_ctx;
-				m_ctx.r = ray.r;
+				scatter_ctx.r.o = *ray.medium_transform ^ math::Vector<f32, 4>{scatter_ctx.r.o, 1.f};
+				scatter_ctx.r.d = *ray.medium_transform ^ math::Vector<f32, 4>{scatter_ctx.r.d, 0.f};
 				OPTIONAL_CONTINUE_CALLBACK(m_intr, ray.medium->sample(scatter_ctx, intr.t, sampler.generate_1d()), [&terminated]{terminated=true;});
+				scatter_ctx.r.o = *ray.medium_transform | math::Vector<f32, 4>{scatter_ctx.r.o, 1.f};
+				scatter_ctx.r.d = *ray.medium_transform | math::Vector<f32, 4>{scatter_ctx.r.d, 0.f};
 				beta *= m_intr.transmittance / m_intr.pdf;
 
 				if (m_intr.t != intr.t) {
@@ -183,7 +185,7 @@ namespace metatron::mc {
 					if (scatter_ctx.n != n) {
 						n = scatter_ctx.n;
 					}
-					OPTIONAL_CONTINUE(e_intr, emitter(*div->area_light));
+					OPTIONAL_CONTINUE(e_intr, emitter(*div->Le));
 					OPTIONAL_CONTINUE(l_intr, (*e_intr.divider->light)(ray.r.d, n, Le));
 
 					auto pl = e_intr.pdf * l_intr.pdf;
@@ -207,8 +209,10 @@ namespace metatron::mc {
 			if (math::dot(-ray.r.d, b_intr.wi) < 0.f) {
 				if (math::dot(b_intr.wi, intr.n) > 0.f) {
 					ray.medium = div->exterior_medium;
+					ray.medium_transform = div->exterior_transform;
 				} else {
 					ray.medium = div->interior_medium;
+					ray.medium_transform = div->interior_transform;
 					flip_n = -1.f;
 				}
 			}
