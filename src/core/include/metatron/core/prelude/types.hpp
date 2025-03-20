@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 #include <cstdint>
 
 namespace metatron::inline prelude {
@@ -14,7 +15,7 @@ namespace metatron::inline prelude {
 
 	using byte = u8;
 	using uptr = u64;
-	using usize = u64;
+	using usize = std::size_t;
 
 	using f32 = float;
 	using f64 = double;

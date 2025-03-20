@@ -4,6 +4,7 @@
 #include <array>
 #include <span>
 #include <cassert>
+#include <cmath>
 
 namespace metatron::math {
 	// forward declaration to support the declaration of 0d matrix

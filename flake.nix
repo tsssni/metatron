@@ -16,7 +16,7 @@
 			};
 		in pkgs.mkShell {
 			packages = with pkgs; [
-				clang
+				gcc
 				lldb
 				cmake
 				ninja
