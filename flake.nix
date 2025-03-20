@@ -10,24 +10,30 @@
 		, ...
 	}:
 	let
-		setupShell = shell: system: let
-			pkgs = import nixpkgs {
-				inherit system;
-			};
-		in pkgs.mkShell {
-			packages = with pkgs; [
-				gcc
-				lldb
-				cmake
-				ninja
-			];
+		lib = nixpkgs.lib;
 
-			shellHook = ''
-				${shell}
-			'';
-		};
-	in {
-		devShells."aarch64-darwin".default = setupShell "zsh" "aarch64-darwin";
-		devShells."x86_64-linux".default = setupShell "elvish" "x86_64-linux";
-	};
+		systems = [
+			"aarch64-darwin"
+			"x86_64-linux"
+		];
+
+		devShells = systems
+			|> lib.map (system:
+				let
+					pkgs = import nixpkgs {
+						inherit system;
+					};
+				in {
+					"${system}".default = pkgs.mkShellNoCC {
+						packages = with pkgs; [
+							gcc
+							lldb
+							cmake
+							ninja
+						];
+					};
+				}
+			)
+			|> lib.mergeAttrsList;
+	in { inherit devShells; };
 }

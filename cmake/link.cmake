@@ -18,7 +18,7 @@ function(metatron_link unit)
 			list(APPEND linked-libs ${dep})
 			# manually link for external libs
 			if(NOT ${dep} STREQUAL ${unit})
-				target_link_libraries(${unit} PUBLIC ${dep})
+				target_link_libraries(${unit} PRIVATE ${dep})
 			endif()
 		else()
 			list(APPEND linked-libs metatron-${dep})

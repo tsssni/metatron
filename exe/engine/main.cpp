@@ -68,7 +68,7 @@ auto main() -> int {
 	};
 	auto bvh = accel::LBVH{{accel::Divider{&identity, &sphere, 0uz, &diffuse, &homo_medium}}};
 
-	auto env_map = image::Image::from_path("/home/tsssni/Downloads/the_sky_is_on_fire_4k.exr");
+	auto env_map = image::Image::from_path("../Downloads/the_sky_is_on_fire_4k.exr");
 	auto env_light = light::Environment_Light{std::move(env_map)};
 	auto lights = std::vector<emitter::Divider>{{&identity, &env_light}};
 	auto inf_lights = std::vector<emitter::Divider>{{&identity, &env_light}};
