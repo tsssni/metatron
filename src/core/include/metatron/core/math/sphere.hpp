@@ -5,6 +5,9 @@ namespace metatron::math {
 	auto inline cartesion_to_sphere(math::Vector<f32, 3> const& d) -> math::Vector<f32, 2> {
 		auto theta = std::acos(d[1]);
 		auto phi = std::atan2(d[2], d[0]);
+		if (phi < 0.f) {
+			phi += 2.f * math::pi;
+		}
 		return {theta, phi};
 	}
 

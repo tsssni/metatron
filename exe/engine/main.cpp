@@ -107,7 +107,9 @@ auto main() -> int {
 			for (auto p = 0; p < blocks * blocks; p++) {
 				auto px = start + math::morton_decode(p);
 				if (px >= size) continue;
-
+				if (px == math::Vector<usize, 2>{32, 32}) {
+					int a = 0;
+				}
 				for (auto n = 0uz; n < spp; n++) {
 					auto sample = camera.sample(px, n, sampler);
 					auto& s = sample.value();

@@ -209,12 +209,12 @@ namespace metatron::mc {
 			auto uc = sampler.generate_1d();
 			auto u = sampler.generate_2d();
 
-			ray.r.d = bt | math::Vector<f32, 4>{scatter_ctx.r.d, 0.f};
+			scatter_ctx.r = ray.r;
+			scatter_ctx.r.d = bt | math::Vector<f32, 4>{scatter_ctx.r.d, 0.f};
 			OPTIONAL_OR_CALLBACK(b_intr, bsdf->sample(scatter_ctx, {uc, u[0], u[1]}), {
 				terminated = true;
 				continue;
 			});
-			ray.r.d = bt ^ math::Vector<f32, 4>{scatter_ctx.r.d, 0.f};
 			b_intr.wi = bt ^ math::Vector<f32, 4>{b_intr.wi};
 
 			auto flip_n = 1.f;

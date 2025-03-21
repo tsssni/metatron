@@ -23,12 +23,15 @@ namespace metatron::material {
 
 		auto f = L;
 		for (auto i = 0uz; i < f.lambda.size(); i++) {
-			if (-wo[1] * wi[1] >= 0.f) f.value[i] = (*R)(f.lambda[i]);
-			else f.value[i] = (*T)(f.lambda[i]);
+			if (-wo[1] * wi[1] >= 0.f) {
+				f.value[i] = (*R)(f.lambda[i]);
+			} else {
+				f.value[i] = (*T)(f.lambda[i]);
+			}
 		}
 
 		auto pdf = math::Cosine_Hemisphere_Distribution::pdf(std::abs(wi[1]));
-		pdf *= (-wo[1] * wi[1] < 0.f ? ru : tu) / (ru + tu);
+		pdf *= (-wo[1] * wi[1] >= 0.f ? ru : tu) / (ru + tu);
 
 		return bsdf::Interaction{f, wi, pdf};
 	}
@@ -56,8 +59,11 @@ namespace metatron::material {
 
 		auto f = ctx.L;
 		for (auto i = 0uz; i < f.lambda.size(); i++) {
-			if (-ctx.r.d[1] * wi[1] >= 0.f) f.value[i] = (*R)(f.lambda[i]);
-			else f.value[i] = (*T)(f.lambda[i]);
+			if (-ctx.r.d[1] * wi[1] >= 0.f) {
+				f.value[i] = (*R)(f.lambda[i]);
+			} else {
+				f.value[i] = (*T)(f.lambda[i]);
+			}
 		}
 		return bsdf::Interaction{f, wi, pdf};
 	}
