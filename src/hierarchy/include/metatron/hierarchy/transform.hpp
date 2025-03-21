@@ -2,6 +2,7 @@
 #include <metatron/core/math/matrix.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/quaternion.hpp>
+#include <metatron/core/math/ray.hpp>
 
 namespace metatron::hierarchy {
 	struct Transform final {

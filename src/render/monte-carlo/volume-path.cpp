@@ -49,12 +49,12 @@ namespace metatron::mc {
 
 			if (scattered) {
 				do {
-					OPTIONAL_BREAK(e_intr, emitter.sample(scatter_ctx, sampler.generate_2d()));
+					OPTIONAL_OR_BREAK(e_intr, emitter.sample(scatter_ctx, sampler.generate_2d()));
 					auto& t = *e_intr.divider->transform;
 					scatter_ctx.p = t ^ math::Vector<f32, 4>{scatter_ctx.p, 1.f};
 					scatter_ctx.n = t ^ math::Vector<f32, 4>{scatter_ctx.n, 0.f};
 
-					OPTIONAL_BREAK(l_intr, e_intr.divider->light->sample(scatter_ctx, sampler.generate_2d()));
+					OPTIONAL_OR_BREAK(l_intr, e_intr.divider->light->sample(scatter_ctx, sampler.generate_2d()));
 					scatter_ctx.p = t | math::Vector<f32, 4>{scatter_ctx.p, 1.f};
 					scatter_ctx.n = t | math::Vector<f32, 4>{scatter_ctx.n, 0.f};
 					l_intr.wi = t | l_intr.wi;
@@ -78,11 +78,11 @@ namespace metatron::mc {
 						t.rotation = math::Quaternion<f32>::from_rotation_between(scatter_ctx.n, {0.f, 1.f, 0.f});
 						auto wo = t | ray.r.d;
 						auto wi = t | l_intr.wi;
-						OPTIONAL_BREAK(b_intr, (*bsdf)(wo, wi, Le));
+						OPTIONAL_OR_BREAK(b_intr, (*bsdf)(wo, wi, Le));
 						f = b_intr.f;
 						pb = b_intr.pdf;
 					} else if (phase) {
-						OPTIONAL_BREAK(p_intr, (*phase)(ray.r.d, l_intr.wi, Le));
+						OPTIONAL_OR_BREAK(p_intr, (*phase)(ray.r.d, l_intr.wi, Le));
 						f = p_intr.f;
 						pb = p_intr.pdf;
 					} else {
@@ -113,14 +113,14 @@ namespace metatron::mc {
 			if (!intr_opt) {
 				terminated = true;
 
-				OPTIONAL_CONTINUE(e_intr, emitter.sample_infinite(scatter_ctx, sampler.generate_1d()));
+				OPTIONAL_OR_CONTINUE(e_intr, emitter.sample_infinite(scatter_ctx, sampler.generate_1d()));
 				auto wo = *e_intr.divider->transform ^ ray.r.d;
 				auto n = math::Vector<f32, 3>{0.f};
 				if (scattered && scatter_ctx.n != n) {
 					n = *e_intr.divider->transform ^ scatter_ctx.n;
 				}
 
-				OPTIONAL_CONTINUE(l_intr, (*e_intr.divider->light)(wo, n, Le));
+				OPTIONAL_OR_CONTINUE(l_intr, (*e_intr.divider->light)(wo, n, Le));
 				auto pl = e_intr.pdf * l_intr.pdf;
 
 				auto mis_w = depth == 0uz ? 1.f : math::guarded_div(scatter_pdf, scatter_pdf + pl);
@@ -136,7 +136,10 @@ namespace metatron::mc {
 			if (ray.medium) {
 				scatter_ctx.r.o = *ray.medium_transform ^ math::Vector<f32, 4>{scatter_ctx.r.o, 1.f};
 				scatter_ctx.r.d = *ray.medium_transform ^ math::Vector<f32, 4>{scatter_ctx.r.d, 0.f};
-				OPTIONAL_CONTINUE_CALLBACK(m_intr, ray.medium->sample(scatter_ctx, intr.t, sampler.generate_1d()), [&terminated]{terminated=true;});
+				OPTIONAL_OR_CALLBACK(m_intr, ray.medium->sample(scatter_ctx, intr.t, sampler.generate_1d()), {
+					terminated = true;
+					continue;
+				});
 				scatter_ctx.r.o = *ray.medium_transform | math::Vector<f32, 4>{scatter_ctx.r.o, 1.f};
 				scatter_ctx.r.d = *ray.medium_transform | math::Vector<f32, 4>{scatter_ctx.r.d, 0.f};
 				beta *= m_intr.transmittance / m_intr.pdf;
@@ -157,7 +160,10 @@ namespace metatron::mc {
 					} else if (mode == 1uz) {
 						phase = std::move(m_intr.phase);
 						bsdf.reset();
-						OPTIONAL_CONTINUE_CALLBACK(p_intr, phase->sample(scatter_ctx, sampler.generate_2d()), [&terminated]{terminated=true;});
+						OPTIONAL_OR_CALLBACK(p_intr, phase->sample(scatter_ctx, sampler.generate_2d()), {
+							terminated = true;
+							continue;
+						});
 
 						beta *= p_intr.f / (p_s * p_intr.pdf);
 						scattered = true;
@@ -175,7 +181,10 @@ namespace metatron::mc {
 			}
 			
 			scatter_ctx.uv = intr.uv;
-			OPTIONAL_CONTINUE_CALLBACK(mat_intr, div->material->sample(scatter_ctx), [&terminated]{terminated=true;});
+			OPTIONAL_OR_CALLBACK(mat_intr, div->material->sample(scatter_ctx), {
+				terminated = true;
+				continue;
+			});
 			bsdf = std::move(mat_intr.bsdf);
 			phase.reset();
 
@@ -185,8 +194,8 @@ namespace metatron::mc {
 					if (scatter_ctx.n != n) {
 						n = scatter_ctx.n;
 					}
-					OPTIONAL_CONTINUE(e_intr, emitter(*div->Le));
-					OPTIONAL_CONTINUE(l_intr, (*e_intr.divider->light)(ray.r.d, n, Le));
+					OPTIONAL_OR_CONTINUE(e_intr, emitter(*div->Le));
+					OPTIONAL_OR_CONTINUE(l_intr, (*e_intr.divider->light)(ray.r.d, n, Le));
 
 					auto pl = e_intr.pdf * l_intr.pdf;
 					auto pb = scatter_pdf;
@@ -201,7 +210,10 @@ namespace metatron::mc {
 			auto u = sampler.generate_2d();
 
 			ray.r.d = bt | math::Vector<f32, 4>{scatter_ctx.r.d, 0.f};
-			OPTIONAL_CONTINUE_CALLBACK(b_intr, bsdf->sample(scatter_ctx, {uc, u[0], u[1]}), [&terminated]{terminated=true;});
+			OPTIONAL_OR_CALLBACK(b_intr, bsdf->sample(scatter_ctx, {uc, u[0], u[1]}), {
+				terminated = true;
+				continue;
+			});
 			ray.r.d = bt ^ math::Vector<f32, 4>{scatter_ctx.r.d, 0.f};
 			b_intr.wi = bt ^ math::Vector<f32, 4>{b_intr.wi};
 

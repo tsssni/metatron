@@ -58,7 +58,7 @@ auto main() -> int {
 			std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.5f})
 		),
 		std::make_unique<material::Spectrum_Constant_Texture>(
-			std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.5f})
+			std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.0f})
 		),
 	};
 	auto homo_medium = media::Homogeneous_Medium{
