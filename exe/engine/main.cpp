@@ -25,8 +25,8 @@
 using namespace metatron;
 
 auto main() -> int {
-	auto constexpr size = math::Vector<usize, 2>{256uz};
-	auto constexpr spp = 16uz;
+	auto constexpr size = math::Vector<usize, 2>{1024uz};
+	auto constexpr spp = 128uz;
 	auto constexpr blocks = 8uz;
 	auto constexpr kernels = 12uz;
 

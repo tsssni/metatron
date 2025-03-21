@@ -13,7 +13,7 @@
 			}
 		},
 		{
-			"name": "linux-native-dev",
+			"name": "nixos-dev",
 			"inherits": "default",
 			"binaryDir": "${sourceDir}/build/${presetName}",
 			"cacheVariables": {
@@ -23,7 +23,25 @@
 			}
 		},
 		{
-			"name": "linux-native-rel",
+			"name": "nixos-rel",
+			"inherits": "default",
+			"binaryDir": "${sourceDir}/build/${presetName}",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release"
+			}
+		},
+		{
+			"name": "nix-darwin-dev",
+			"inherits": "default",
+			"binaryDir": "${sourceDir}/build/${presetName}",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"CMAKE_C_FLAGS_DEBUG": "-O0 -g3",
+				"CMAKE_CXX_FLAGS_DEBUG": "-O0 -g3"
+			}
+		},
+		{
+			"name": "nix-darwin-rel",
 			"inherits": "default",
 			"binaryDir": "${sourceDir}/build/${presetName}",
 			"cacheVariables": {
