@@ -1,11 +1,11 @@
 #pragma once
 #include <metatron/render/light/light.hpp>
-#include <metatron/hierarchy/transform.hpp>
 #include <metatron/geometry/shape/shape.hpp>
 #include <metatron/geometry/material/material.hpp>
 #include <metatron/volume/media/medium.hpp>
 #include <metatron/core/math/bounding-box.hpp>
 #include <metatron/core/math/ray.hpp>
+#include <metatron/core/math/transform.hpp>
 #include <memory>
 
 namespace metatron::accel {
@@ -15,9 +15,9 @@ namespace metatron::accel {
 		media::Medium const* exterior_medium{};
 		material::Material const* material{};
 		light::Light const* Le{};
-		hierarchy::Transform const* transform{};
-		hierarchy::Transform const* interior_transform{};
-		hierarchy::Transform const* exterior_transform{};
+		math::Transform const* transform{};
+		math::Transform const* interior_transform{};
+		math::Transform const* exterior_transform{};
 		usize primitive{0uz};
 	};
 

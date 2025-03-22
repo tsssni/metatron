@@ -4,7 +4,7 @@
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/ray.hpp>
 
-namespace metatron::hierarchy {
+namespace metatron::math {
 	struct Transform final {
 		math::Vector<f32, 3> translation{};
 		math::Vector<f32, 3> scaling{1.f};

@@ -1,10 +1,10 @@
 #pragma once
 #include <metatron/render/light/light.hpp>
-#include <metatron/hierarchy/transform.hpp>
+#include <metatron/core/math/transform.hpp>
 
 namespace metatron::emitter {
 	struct Divider final {
-		hierarchy::Transform const* transform;
+		math::Transform const* transform;
 		light::Light const* light;
 	};
 

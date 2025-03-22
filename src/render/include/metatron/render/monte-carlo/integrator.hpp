@@ -7,17 +7,15 @@
 #include <metatron/core/math/sampler/sampler.hpp>
 
 namespace metatron::mc {
-	struct Ray final {
-		math::Ray r;
-		math::Ray rx;
-		math::Ray ry;
-		media::Medium const* medium;
-		hierarchy::Transform const* medium_transform;
+	struct Context final {
+		math::Ray_Differential ray_differential;
+		media::Medium const* material;
+		math::Transform const* material_transform;
 	};
 
 	struct Integrator {
 		auto virtual sample(
-			Ray ray,
+			Context ctx,
 			accel::Acceleration const& accel,
 			emitter::Emitter const& emitter,
 			math::Sampler const& sampler

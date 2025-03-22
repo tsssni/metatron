@@ -6,12 +6,13 @@ namespace metatron::math {
 	struct Cosine_Hemisphere_Distribution final {
 		Cosine_Hemisphere_Distribution() = default;
 
-		auto static sample(math::Vector<f32, 2> const& u) -> math::Vector<f32, 3> {
-			auto d = Disk_Distribution::sample(u);
+		auto sample(math::Vector<f32, 2> const& u) -> math::Vector<f32, 3> {
+			auto dist = Disk_Distribution{};
+			auto d = dist.sample(u);
 			return {d[0], std::sqrt(1.f - d[0] * d[0] - d[1] * d[1]), d[1]};
 		}
 
-		auto static pdf(f32 cos_theta) {
+		auto pdf(f32 cos_theta) {
 			return cos_theta / math::pi;
 		}
 	};

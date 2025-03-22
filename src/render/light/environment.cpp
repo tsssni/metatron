@@ -20,19 +20,21 @@ namespace metatron::light {
 			auto x = s[1] / (2.f * math::pi) * env_map->size[0];
 			auto y = s[0] / math::pi * env_map->size[1];
 			auto spec = spectra::Rgb_Spectrum{math::Vector<f32, 4>{(*env_map)[x, y]}};
+			auto dist = math::Cosine_Hemisphere_Distribution{};
 			return Interaction{
 				L & spec,
 				{},
 				{},
 				{},
 				n != math::Vector<f32, 3>{0.f}
-				? math::Cosine_Hemisphere_Distribution::pdf(math::dot(n, wo))
+				? dist.pdf(math::dot(n, wo))
 				: 1.f / (4.f * math::pi)
 			};
 		}
 
 		auto Environment_Light::sample(eval::Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<Interaction> {
-			auto wi = math::Cosine_Hemisphere_Distribution::sample(u);
+			auto dist = math::Cosine_Hemisphere_Distribution{};
+			auto wi = dist.sample(u);
 			auto n = math::Vector<f32, 3>{0.f};
 			if (ctx.n != n) {
 				auto local_to_render = math::Quaternion<f32>::from_rotation_between({0.f, 1.f, 0.f}, ctx.n);

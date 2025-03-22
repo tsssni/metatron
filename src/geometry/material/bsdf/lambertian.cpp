@@ -30,7 +30,8 @@ namespace metatron::material {
 			}
 		}
 
-		auto pdf = math::Cosine_Hemisphere_Distribution::pdf(std::abs(wi[1]));
+		auto dist = math::Cosine_Hemisphere_Distribution{};
+		auto pdf = dist.pdf(std::abs(wi[1]));
 		pdf *= (-wo[1] * wi[1] >= 0.f ? ru : tu) / (ru + tu);
 
 		return bsdf::Interaction{f, wi, pdf};
@@ -42,8 +43,9 @@ namespace metatron::material {
 		if (std::abs(ru + tu) < math::epsilon<f32>) return {};
 
 		auto rtu = ru / (ru + tu);
-		auto wi = math::Cosine_Hemisphere_Distribution::sample({u[1], u[2]});
-		auto pdf = math::Cosine_Hemisphere_Distribution::pdf(wi[1]);
+		auto dist = math::Cosine_Hemisphere_Distribution{};
+		auto wi = dist.sample({u[1], u[2]});
+		auto pdf = dist.pdf(wi[1]);
 
 		if (u[0] < rtu) {
 			pdf *= rtu;

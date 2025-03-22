@@ -1,7 +1,7 @@
 #include "metatron/core/math/matrix.hpp"
-#include <metatron/hierarchy/transform.hpp>
+#include <metatron/core/math/transform.hpp>
 
-namespace metatron::hierarchy {
+namespace metatron::math {
 	Transform::operator math::Matrix<f32, 4, 4>() const {
 		auto translation = math::Matrix<f32, 4, 4>{
 			{1.f, 0.f, 0.f, this->translation[0]},

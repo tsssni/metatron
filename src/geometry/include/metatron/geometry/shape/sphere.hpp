@@ -3,10 +3,14 @@
 
 namespace metatron::shape {
 	struct Sphere final: Shape {
-		Sphere(f32 radius, f32 theta_min, f32 theta_max, f32 phi_max);
+		Sphere(f32 radius);
 		auto bounding_box(usize idx = 0uz) const -> math::Bounding_Box;
 		auto operator()(
-			math::Ray const& ctx,
+			math::Ray const& r,
+			usize idx = 0uz
+		) const -> std::optional<Interaction>;
+		auto operator()(
+			math::Ray_Differential const& rd,
 			usize idx = 0uz
 		) const -> std::optional<Interaction>;
 		auto sample(
@@ -16,9 +20,6 @@ namespace metatron::shape {
 		) const -> std::optional<Interaction>;
 
 	private:
-		f32 radius;
-		f32 theta_min;
-		f32 theta_max;
-		f32 phi_max;
+		f32 r;
 	};
 }

@@ -1,1 +1,1 @@
-list(APPEND metatron-deps hierarchy geometry volume)
+list(APPEND metatron-deps geometry volume)

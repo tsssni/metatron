@@ -17,7 +17,6 @@
 #include <metatron/geometry/shape/sphere.hpp>
 #include <metatron/volume/media/homogeneous.hpp>
 #include <metatron/volume/phase/henyey-greenstein.hpp>
-#include <metatron/hierarchy/transform.hpp>
 #include <atomic>
 #include <queue>
 #include <thread>
@@ -49,10 +48,10 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto stochastic = spectra::Stochastic_Spectrum{3uz, 0.f};
-	auto identity = hierarchy::Transform{};
-	auto transform = math::Matrix<f32, 4, 4>{hierarchy::Transform{{0.f, 0.f, -3.f}}};
+	auto identity = math::Transform{};
+	auto transform = math::Matrix<f32, 4, 4>{math::Transform{{0.f, 0.f, -3.f}}};
 
-	auto sphere = shape::Sphere{1.f, 0.f, math::pi, 2.f * math::pi};
+	auto sphere = shape::Sphere{1.f};
 	auto diffuse = material::Diffuse_Material{
 		std::make_unique<material::Spectrum_Constant_Texture>(
 			std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.5f})
@@ -116,7 +115,7 @@ auto main() -> int {
 					s.r.o = transform | math::Vector<f32, 4>{s.r.o, 1.f};
 					s.r.d = transform | math::Vector<f32, 4>{s.r.d};
 
-					auto Li_opt = integrator.sample({s.r}, bvh, emitter, sampler);
+					auto Li_opt = integrator.sample({{s.r},{},{}}, bvh, emitter, sampler);
 					auto& Li = Li_opt.value();
 					s.fixel = Li;
 					atomic_count.fetch_add(1);
