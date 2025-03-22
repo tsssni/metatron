@@ -1,5 +1,5 @@
 {
-	description = "metatron engine devenv";
+	description = "metatron renderer devenv";
 
 	inputs = {
 		nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
