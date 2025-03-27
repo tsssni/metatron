@@ -2,12 +2,13 @@ cmake_minimum_required(VERSION 3.30.5)
 
 project(metatron-renderer)
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin/lib)
 
 set(metatron-root ${CMAKE_CURRENT_LIST_DIR})
 set(metatron-bin ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 set(metatron-lib ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lib)
+set(metatron-gen ${CMAKE_CURRENT_BINARY_DIR}/gen)
 
 define_property(TARGET PROPERTY metatron-units)
 define_property(TARGET PROPERTY metatron-path)
