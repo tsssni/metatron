@@ -37,7 +37,7 @@ namespace metatron::math {
 				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), data.begin());
 			} else {
 				for (auto& line: data) {
-					line = initializer_list.size() == 1 ? *initializer_list.begin() : Element{};
+					line = *initializer_list.begin();
 				}
 			}
 		}

@@ -5,6 +5,7 @@
 #include <metatron/core/spectra/stochastic.hpp>
 #include <metatron/core/spectra/rgb.hpp>
 #include <metatron/core/spectra/test-rgb.hpp>
+#include <metatron/core/color/color-space.hpp>
 #include <metatron/render/photo/camera.hpp>
 #include <metatron/render/photo/lens/pinhole.hpp>
 #include <metatron/render/light/environment.hpp>
@@ -25,6 +26,7 @@ using namespace metatron;
 
 auto main() -> int {
 	spectra::Spectrum::initialize();
+	color::Color_Space::initialize();
 
 	auto constexpr size = math::Vector<usize, 2>{1024uz};
 	auto constexpr spp = 128uz;

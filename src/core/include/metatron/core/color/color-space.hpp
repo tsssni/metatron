@@ -4,6 +4,9 @@
 
 namespace metatron::color {
 	struct Color_Space final {
+		using Scale = f32[64];
+		using Table = f32[3][64][64][64][3];
+
 		math::Matrix<f32, 3, 3> from_XYZ;
 		math::Matrix<f32, 3, 3> to_XYZ;
 		spectra::Spectrum const* white_point;
@@ -12,7 +15,17 @@ namespace metatron::color {
 			math::Vector<f32, 2> const& r,
 			math::Vector<f32, 2> const& g,
 			math::Vector<f32, 2> const& b,
-			spectra::Spectrum const& white_point
+			spectra::Spectrum const* white_point,
+			Scale const* scale,
+			Table const* table
 		);
+
+		std::unique_ptr<Color_Space> static sRGB;
+
+		auto static initialize() -> void;
+
+	private:
+		Scale const* scale;
+		Table const* table;
 	};
 }
