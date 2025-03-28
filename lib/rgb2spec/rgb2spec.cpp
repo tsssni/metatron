@@ -880,13 +880,13 @@ int main(int argc, char **argv) {
     FILE *f = fopen(argv[2], "w");
     if (f == nullptr)
         throw std::runtime_error("Could not create file!");
-    fprintf(f, "namespace pbrt {\n");
-    fprintf(f, "extern const int %s_to_spectrum_table_res = %d;\n", argv[3], res);
-    fprintf(f, "extern const float %s_to_spectrum_table_scale[%d] = {\n", argv[3], res);
+    fprintf(f, "namespace metatron {\n");
+    fprintf(f, "extern const int %s_spectrum_res = %d;\n", argv[3], res);
+    fprintf(f, "extern const float %s_spectrum_z[%d] = {\n", argv[3], res);
     for (int i = 0; i < res; ++i)
         fprintf(f, "%.9g, ", scale[i]);
     fprintf(f, "};\n");
-    fprintf(f, "extern const float %s_to_spectrum_table_data[3][%d][%d][%d][3] = {\n",
+    fprintf(f, "extern const float %s_spectrum_table[3][%d][%d][%d][3] = {\n",
             argv[3], res, res, res);
     const float *ptr = out;
     for (int maxc = 0; maxc < 3; ++maxc) {
@@ -908,7 +908,7 @@ int main(int argc, char **argv) {
         fprintf(f, "}, ");
     }
     fprintf(f, "};\n");
-    fprintf(f, "} // namespace pbrt\n");
+    fprintf(f, "}\n");
     fclose(f);
 
     threadPool.reset();

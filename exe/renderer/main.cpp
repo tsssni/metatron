@@ -24,6 +24,8 @@
 using namespace metatron;
 
 auto main() -> int {
+	spectra::Spectrum::initialize();
+
 	auto constexpr size = math::Vector<usize, 2>{1024uz};
 	auto constexpr spp = 128uz;
 	auto constexpr blocks = 8uz;
