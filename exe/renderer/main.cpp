@@ -3,6 +3,7 @@
 #include <metatron/core/math/filter/box.hpp>
 #include <metatron/core/math/encode.hpp>
 #include <metatron/core/spectra/stochastic.hpp>
+#include <metatron/core/spectra/constant.hpp>
 #include <metatron/core/spectra/rgb.hpp>
 #include <metatron/core/spectra/test-rgb.hpp>
 #include <metatron/core/color/color-space.hpp>
@@ -58,16 +59,16 @@ auto main() -> int {
 	auto sphere = shape::Sphere{1.f};
 	auto diffuse = material::Diffuse_Material{
 		std::make_unique<material::Spectrum_Constant_Texture>(
-			std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.5f})
+			std::make_unique<spectra::Constant_Spectrum>(0.5f)
 		),
 		std::make_unique<material::Spectrum_Constant_Texture>(
-			std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.0f})
+			std::make_unique<spectra::Constant_Spectrum>(0.0f)
 		),
 	};
 	auto homo_medium = media::Homogeneous_Medium{
-		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.1f}),
-		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.5f}),
-		std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.01f})
+		std::make_unique<spectra::Constant_Spectrum>(0.1f),
+		std::make_unique<spectra::Constant_Spectrum>(0.5f),
+		std::make_unique<spectra::Constant_Spectrum>(0.01f),
 	};
 	auto bvh = accel::LBVH{{
 		{
@@ -83,7 +84,7 @@ auto main() -> int {
 		}
 	}};
 
-	auto env_map = image::Image::from_path("../Downloads/the_sky_is_on_fire_4k.exr");
+	auto env_map = std::make_unique<material::Spectrum_Image_Texture>(image::Image::from_path("../Downloads/the_sky_is_on_fire_4k.exr"), color::Color_Space::Spectrum_Type::illuminant);
 	auto env_light = light::Environment_Light{std::move(env_map)};
 	auto lights = std::vector<emitter::Divider>{{&identity, &env_light}};
 	auto inf_lights = std::vector<emitter::Divider>{{&identity, &env_light}};

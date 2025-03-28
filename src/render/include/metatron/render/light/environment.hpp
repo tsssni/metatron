@@ -5,7 +5,7 @@
 
 namespace metatron::light {
 	struct Environment_Light final: Light {
-		Environment_Light(std::unique_ptr<image::Image> env_map);
+		Environment_Light(std::unique_ptr<material::Spectrum_Image_Texture> env_map);
 		auto operator()(
 			math::Vector<f32, 3> const& wo,
 			math::Vector<f32, 3> const& n,
@@ -14,6 +14,6 @@ namespace metatron::light {
 		auto sample(eval::Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<Interaction>;
 
 	private:
-		std::unique_ptr<image::Image> env_map;
+		std::unique_ptr<material::Spectrum_Image_Texture> env_map;
 	};
 }

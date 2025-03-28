@@ -1,4 +1,5 @@
 #include <metatron/core/image/io.hpp>
+#include <metatron/core/color/color-space.hpp>
 #include <tinyexr.h>
 #include <stb_image.h>
 #include <cstring>
@@ -19,7 +20,7 @@ namespace metatron::image {
 			usize(channels),
 			1
 		};
-		auto image = std::make_unique<Image>(size);
+		auto image = std::make_unique<Image>(size, color::Color_Space::sRGB.get());
 
 		for (int j = 0; j < height; j++) {
 			for (int i = 0; i < width; i++) {
@@ -75,7 +76,7 @@ namespace metatron::image {
 			usize(exr_image.num_channels),
 			usize(4)
 		};
-		auto image = std::make_unique<Image>(size);
+		auto image = std::make_unique<Image>(size, color::Color_Space::sRGB.get());
 		
 		for (auto j = 0; j < exr_image.height; j++) {
 			for (auto i = 0; i < exr_image.width; i++) {

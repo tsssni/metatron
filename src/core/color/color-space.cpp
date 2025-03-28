@@ -1,4 +1,6 @@
 #include <metatron/core/color/color-space.hpp>
+#include <metatron/core/spectra/rgb.hpp>
+#include <metatron/core/math/arithmetic.hpp>
 
 namespace metatron::color {
 	extern color::Color_Space::Scale sRGB_spectrum_z;
@@ -28,6 +30,69 @@ namespace metatron::color {
 		auto c = inv_rgb | w;
 		to_XYZ = rgb * math::Matrix<f32, 3, 3>{c[0], c[1], c[2]};
 		from_XYZ = math::inverse(to_XYZ);
+	}
+
+	auto Color_Space::to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> std::unique_ptr<spectra::Spectrum> {
+		if (rgb < math::Vector<f32, 3>{0.0} || rgb > math::Vector<f32, 3>{1.0}) {
+			assert("RGB exceed [0.0, 1.0]");
+		}
+
+		auto s = 0.f;
+		auto w = type == Color_Space::Spectrum_Type::illuminant ? white_point : nullptr;
+		switch (type) {
+			case Spectrum_Type::albedo:
+				s = 1.f;
+				break;
+			case Spectrum_Type::unbounded:
+				s = 2.f;
+				break;
+			case Spectrum_Type::illuminant:
+				s = 2.f * std::max(rgb[0], std::max(rgb[1], rgb[2]));
+				break;
+		}
+		rgb = math::guarded_div(rgb, s);
+
+		if (rgb[0] == rgb[1] && rgb[1] == rgb[2]) {
+			return std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.f, 0.f, s * (rgb[0] - 0.5f) / std::sqrt(rgb[0] * (1.f - rgb[0]))}, w);
+		}
+
+		auto maxc = (rgb[0] > rgb[1]) ? ((rgb[0] > rgb[2]) ? 0 : 2) : ((rgb[1] > rgb[2]) ? 1 : 2);
+		auto z = rgb[maxc];
+		auto x = rgb[(maxc + 1) % 3] * (table_res - 1) / z;
+		auto y = rgb[(maxc + 2) % 3] * (table_res - 1) / z;
+
+		// compute integer indices and offsets for coefficient interpolation
+		auto xi = std::max(0, std::min((i32)x, table_res - 2));
+		auto yi = std::max(0, std::min((i32)y, table_res - 2));
+		auto zi = std::max(0, std::min(table_res - 2, i32(std::lower_bound(std::begin(*scale), std::end(*scale), z) - std::begin(*scale) - 1)));
+		auto dx = x - xi;
+		auto dy = y - yi;
+		auto dz = (z - (*scale)[zi]) / ((*scale)[zi + 1] - (*scale)[zi]);
+
+		// trilinearly interpolate sigmoid polynomial coefficients
+		auto c = math::Vector<f32, 3>{};
+		for (auto i = 0; i < 3; i++) {
+			// define co lambda for looking up sigmoid polynomial coefficients
+			auto co = [&](int dx, int dy, int dz) {
+				return (*table)[maxc][zi + dz][yi + dy][xi + dx][i];
+			};
+
+			c[i] = std::lerp(
+				std::lerp(
+					std::lerp(co(0, 0, 0), co(1, 0, 0), dx),
+					std::lerp(co(0, 1, 0), co(1, 1, 0), dx),
+					dy
+				),
+				std::lerp(
+					std::lerp(co(0, 0, 1), co(1, 0, 1), dx),
+					std::lerp(co(0, 1, 1), co(1, 1, 1), dx),
+					dy
+				),
+				dz
+			);
+		}
+
+		return std::make_unique<spectra::Rgb_Spectrum>(s * c, w);
 	}
 
 	auto Color_Space::initialize() -> void {

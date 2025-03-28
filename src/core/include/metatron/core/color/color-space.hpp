@@ -3,9 +3,16 @@
 #include <metatron/core/spectra/spectrum.hpp>
 
 namespace metatron::color {
+	auto constexpr table_res = 64;
 	struct Color_Space final {
-		using Scale = f32[64];
-		using Table = f32[3][64][64][64][3];
+		using Scale = f32[table_res];
+		using Table = f32[3][table_res][table_res][table_res][3];
+
+		enum struct Spectrum_Type: usize {
+			albedo,
+			unbounded,
+			illuminant,
+		};
 
 		math::Matrix<f32, 3, 3> from_XYZ;
 		math::Matrix<f32, 3, 3> to_XYZ;
@@ -19,6 +26,8 @@ namespace metatron::color {
 			Scale const* scale,
 			Table const* table
 		);
+
+		auto to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> std::unique_ptr<spectra::Spectrum>;
 
 		std::unique_ptr<Color_Space> static sRGB;
 

@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
+#include <metatron/core/color/color-space.hpp>
 #include <vector>
 #include <string_view>
 #include <memory>
@@ -18,7 +19,8 @@ namespace metatron::image {
 
 		// 0: width, 1: height, 2: channels, 3: stride
 		math::Vector<usize, 4> const size;
-		Image(math::Vector<usize, 4> const& size);
+		color::Color_Space const* color_space;
+		Image(math::Vector<usize, 4> const& size, color::Color_Space const* color_space);
 
 		auto operator[](usize x, usize y) -> Pixel;
 		auto operator[](usize x, usize y) const -> Pixel const;
@@ -27,6 +29,7 @@ namespace metatron::image {
 		auto to_path(std::string_view path) -> void;
 
 	private:
+		friend Pixel;
 		std::vector<byte> pixels;
 	};
 }

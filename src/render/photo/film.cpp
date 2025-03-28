@@ -20,7 +20,7 @@ namespace metatron::photo {
 		std::unique_ptr<math::Filter> filter
 	):
 	size(film_size),
-	image({image_size, 4uz, 4uz}),
+	image({image_size, 4uz, 4uz}, color::Color_Space::sRGB.get()),
 	sensor(std::move(sensor)),
 	filter(std::move(filter)) {}
 

@@ -8,7 +8,7 @@
 
 namespace metatron::light {
 		Environment_Light::Environment_Light(
-			std::unique_ptr<image::Image> env_map
+			std::unique_ptr<material::Spectrum_Image_Texture> env_map
 		): env_map(std::move(env_map)) {}
 
 		auto Environment_Light::operator()(
@@ -17,9 +17,9 @@ namespace metatron::light {
 				spectra::Stochastic_Spectrum const& L
 		) const -> std::optional<Interaction> {
 			auto s = math::cartesion_to_sphere(wo);
-			auto x = s[1] / (2.f * math::pi) * env_map->size[0];
-			auto y = s[0] / math::pi * env_map->size[1];
-			auto spec = spectra::Rgb_Spectrum{math::Vector<f32, 4>{(*env_map)[x, y]}};
+			auto u = s[1] / (2.f * math::pi);
+			auto v = s[0] / math::pi;
+			auto spec = env_map->sample({{}, {}, {u, v}, {}, L});
 			auto dist = math::Cosine_Hemisphere_Distribution{};
 			return Interaction{
 				L & spec,

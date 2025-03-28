@@ -42,8 +42,8 @@ namespace metatron::image {
 		*this = math::Vector<f32, 4>(*this) + v;
 	}
 
-	Image::Image(math::Vector<usize, 4> const& size) 
-	: size(size), pixels(size[0] * size[1] * size[2] * size[3]) {}
+	Image::Image(math::Vector<usize, 4> const& size, color::Color_Space const* color_space)
+	: size(size), pixels(size[0] * size[1] * size[2] * size[3]), color_space(color_space) {}
 
 	auto Image::operator[](usize x, usize y) -> Pixel {
 		auto offset = (y * size[0] + x) * size[2] * size[3];
