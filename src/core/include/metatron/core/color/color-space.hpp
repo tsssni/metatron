@@ -1,6 +1,7 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/spectra/spectrum.hpp>
+#include <functional>
 
 namespace metatron::color {
 	auto constexpr table_res = 64;
@@ -17,12 +18,16 @@ namespace metatron::color {
 		math::Matrix<f32, 3, 3> from_XYZ;
 		math::Matrix<f32, 3, 3> to_XYZ;
 		spectra::Spectrum const* white_point;
+		std::function<f32(f32)> encode;
+		std::function<f32(f32)> decode;
 
 		Color_Space(
 			math::Vector<f32, 2> const& r,
 			math::Vector<f32, 2> const& g,
 			math::Vector<f32, 2> const& b,
 			spectra::Spectrum const* white_point,
+			std::function<f32(f32)> encode,
+			std::function<f32(f32)> decode,
 			Scale const* scale,
 			Table const* table
 		);

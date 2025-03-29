@@ -10,7 +10,7 @@ namespace metatron::image {
 		for (auto i = 0; i < image->size[2]; i++) {
 			switch (image->size[3]) {
 				case 1:
-					pixel[i] = *(start + i) / 255.f;
+					pixel[i] = image->color_space->decode(*(start + i) / 255.f);
 					break;
 				case 4:
 					pixel[i] = *((f32*)(start) + i);
@@ -27,7 +27,7 @@ namespace metatron::image {
 			auto* pixel = start + image->size[3] * i; 
 			switch (image->size[3]) {
 				case 1:
-					*pixel = byte(v[i] * 255.f);
+					*pixel = byte(image->color_space->encode(v[i]) * 255.f);
 					break;
 				case 4:
 					*((f32*)pixel) = v[i];

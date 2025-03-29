@@ -27,7 +27,7 @@ namespace metatron::image {
 				auto pixel = math::Vector<f32, 4>{};
 				auto idx = (j * width + i) * 4;
 				for (int c = 0; c < channels; c++) {
-					pixel[c] = f32(data[idx + c]) / 255.0f;
+					pixel[c] = image->color_space->decode(f32(data[idx + c]) / 255.0f);
 				}
 				
 				(*image)[i, j] = pixel;
