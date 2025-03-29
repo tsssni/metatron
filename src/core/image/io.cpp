@@ -5,7 +5,7 @@
 #include <cstring>
 
 namespace metatron::image {
-	auto Stb_Image::from_path(std::string_view path) -> std::unique_ptr<Image> {
+	auto Stb_Image::from_path(std::string_view path, bool linear) -> std::unique_ptr<Image> {
 		auto [width, height, channels] = std::tuple<i32, i32, i32>{0, 0, 0};
 		auto* data = stbi_load(path.data(), &width, &height, &channels, STBI_rgb_alpha);
 		
@@ -27,7 +27,9 @@ namespace metatron::image {
 				auto pixel = math::Vector<f32, 4>{};
 				auto idx = (j * width + i) * 4;
 				for (int c = 0; c < channels; c++) {
-					pixel[c] = image->color_space->decode(f32(data[idx + c]) / 255.0f);
+					pixel[c] = linear
+						? f32(data[idx + c]) / 255.0f
+						: color::Color_Space::sRGB->decode(f32(data[idx + c]) / 255.0f);
 				}
 				
 				(*image)[i, j] = pixel;
@@ -38,7 +40,7 @@ namespace metatron::image {
 		return image;
 	}
 
-	auto Exr_Image::from_path(std::string_view path) -> std::unique_ptr<Image> {
+	auto Exr_Image::from_path(std::string_view path, bool linear) -> std::unique_ptr<Image> {
 		EXRHeader header;
 		InitEXRHeader(&header);
 		

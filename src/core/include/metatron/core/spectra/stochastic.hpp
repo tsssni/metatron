@@ -3,6 +3,8 @@
 #include <vector>
 
 namespace metatron::spectra {
+	auto constexpr stochastic_samples = 4uz;
+
 	struct Stochastic_Spectrum final: Spectrum {
 		std::vector<f32> lambda;
 		std::vector<f32> pdf;

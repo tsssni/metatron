@@ -18,11 +18,11 @@ namespace metatron::color {
 		Scale const* scale,
 		Table const* table
 	): 
-		white_point(white_point),
-		scale(scale),
-		table(table),
-		encode(encode), 
-		decode(decode) {
+	white_point(white_point),
+	scale(scale),
+	table(table),
+	encode(encode), 
+	decode(decode) {
 		auto w = &(*white_point);
 		auto r= math::Vector<f32, 3>{r_chroma, 1.f - r_chroma[0] - r_chroma[1]};
 		auto g= math::Vector<f32, 3>{g_chroma, 1.f - g_chroma[0] - g_chroma[1]};
@@ -60,7 +60,7 @@ namespace metatron::color {
 		rgb = math::guarded_div(rgb, s);
 
 		if (rgb[0] == rgb[1] && rgb[1] == rgb[2]) {
-			return std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.f, 0.f, (rgb[0] - 0.5f) / std::sqrt(rgb[0] * (1.f - rgb[0]))}, s, w);
+			return std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.f, 0.f, math::guarded_div((rgb[0] - 0.5f), std::sqrt(rgb[0] * (1.f - rgb[0])))}, s, w);
 		}
 
 		auto maxc = (rgb[0] > rgb[1]) ? ((rgb[0] > rgb[2]) ? 0 : 2) : ((rgb[1] > rgb[2]) ? 1 : 2);
@@ -116,7 +116,7 @@ namespace metatron::color {
 				}
 			},
 			[](f32 x) -> f32 {
-				if (x <= 0.04045) {
+				if (x <= 0.04045f) {
 					return x / 12.92f;
 				} else {
 					return pow((x + 0.055f) / 1.055f, 2.4f);

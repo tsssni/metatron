@@ -10,7 +10,9 @@ namespace metatron::image {
 		for (auto i = 0; i < image->size[2]; i++) {
 			switch (image->size[3]) {
 				case 1:
-					pixel[i] = image->color_space->decode(*(start + i) / 255.f);
+					pixel[i] = image->linear
+						? *(start + i) / 255.f
+						: image->color_space->decode(*(start + i) / 255.f);
 					break;
 				case 4:
 					pixel[i] = *((f32*)(start) + i);
@@ -27,7 +29,9 @@ namespace metatron::image {
 			auto* pixel = start + image->size[3] * i; 
 			switch (image->size[3]) {
 				case 1:
-					*pixel = byte(image->color_space->encode(v[i]) * 255.f);
+					*pixel = image->linear
+						? byte(v[i] * 255.f)
+						: byte(image->color_space->encode(v[i]) * 255.f);
 					break;
 				case 4:
 					*((f32*)pixel) = v[i];
@@ -42,8 +46,15 @@ namespace metatron::image {
 		*this = math::Vector<f32, 4>(*this) + v;
 	}
 
-	Image::Image(math::Vector<usize, 4> const& size, color::Color_Space const* color_space)
-	: size(size), pixels(size[0] * size[1] * size[2] * size[3]), color_space(color_space) {}
+	Image::Image(
+		math::Vector<usize, 4> const& size,
+		color::Color_Space const* color_space,
+		bool linear
+	):
+	size(size),
+	pixels(size[0] * size[1] * size[2] * size[3]),
+	color_space(color_space),
+	linear(linear) {}
 
 	auto Image::operator[](usize x, usize y) -> Pixel {
 		auto offset = (y * size[0] + x) * size[2] * size[3];
@@ -55,13 +66,13 @@ namespace metatron::image {
 		return (Pixel const){this, const_cast<byte*>(&pixels[offset])};
 	}
 
-	auto Image::from_path(std::string_view path) -> std::unique_ptr<Image> {
+	auto Image::from_path(std::string_view path, bool linear) -> std::unique_ptr<Image> {
 		if (path.ends_with(".exr")) {
-			return Exr_Image::from_path(path);
+			return Exr_Image::from_path(path, linear);
 		} else if (false
 			|| path.ends_with(".png")
 			|| path.ends_with(".jpg")) {
-			return Stb_Image::from_path(path);
+			return Stb_Image::from_path(path, linear);
 		}
 		std::abort();
 	}

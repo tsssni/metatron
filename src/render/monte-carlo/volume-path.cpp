@@ -12,9 +12,9 @@ namespace metatron::mc {
 		math::Sampler const& sampler
 	) const -> std::optional<spectra::Stochastic_Spectrum> {
 		auto lambda_u = sampler.generate_1d();
-		auto Le = spectra::Stochastic_Spectrum{3uz, lambda_u};
+		auto Le = spectra::Stochastic_Spectrum{spectra::stochastic_samples, lambda_u};
 		auto beta = Le;
-		beta.value = std::vector<f32>(3, 1.f);
+		beta.value = std::vector<f32>(spectra::stochastic_samples, 1.f);
 
 		auto constexpr max_depth = 11uz;
 		auto depth = 0uz;
