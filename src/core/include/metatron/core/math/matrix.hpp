@@ -23,7 +23,6 @@ namespace metatron::math {
 		{
 			if (initializer_list.size() > 1) {
 				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), data.begin());
-				std::copy(initializer_list.begin(), initializer_list.end(), data.begin());
 			} else {
 				for (auto& line: data) {
 					line = initializer_list.size() == 1 ? *initializer_list.begin() : Element{};
@@ -147,7 +146,7 @@ namespace metatron::math {
 		)
 		auto constexpr operator|(
 			Matrix<T, rhs_dims...> const& rhs
-		) {
+		) const {
 			using Product_Matrix = decltype([]<usize... dims>(std::index_sequence<dims...>) {
 				return Matrix<T, (
 					dims < higher_n ? lds[dims] : 

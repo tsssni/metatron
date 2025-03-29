@@ -28,7 +28,7 @@ namespace metatron::color {
 		};
 		auto inv_rgb = math::inverse(rgb);
 		auto c = inv_rgb | w;
-		to_XYZ = rgb * math::Matrix<f32, 3, 3>{c[0], c[1], c[2]};
+		to_XYZ = rgb | math::Matrix<f32, 3, 3>{c[0], c[1], c[2]};
 		from_XYZ = math::inverse(to_XYZ);
 	}
 
@@ -53,7 +53,7 @@ namespace metatron::color {
 		rgb = math::guarded_div(rgb, s);
 
 		if (rgb[0] == rgb[1] && rgb[1] == rgb[2]) {
-			return std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.f, 0.f, s * (rgb[0] - 0.5f) / std::sqrt(rgb[0] * (1.f - rgb[0]))}, w);
+			return std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.f, 0.f, (rgb[0] - 0.5f) / std::sqrt(rgb[0] * (1.f - rgb[0]))}, s, w);
 		}
 
 		auto maxc = (rgb[0] > rgb[1]) ? ((rgb[0] > rgb[2]) ? 0 : 2) : ((rgb[1] > rgb[2]) ? 1 : 2);
@@ -77,7 +77,7 @@ namespace metatron::color {
 				return (*table)[maxc][zi + dz][yi + dy][xi + dx][i];
 			};
 
-			c[i] = std::lerp(
+			c[2 - i] = std::lerp(
 				std::lerp(
 					std::lerp(co(0, 0, 0), co(1, 0, 0), dx),
 					std::lerp(co(0, 1, 0), co(1, 1, 0), dx),
@@ -92,7 +92,7 @@ namespace metatron::color {
 			);
 		}
 
-		return std::make_unique<spectra::Rgb_Spectrum>(s * c, w);
+		return std::make_unique<spectra::Rgb_Spectrum>(c, s, w);
 	}
 
 	auto Color_Space::initialize() -> void {

@@ -5,7 +5,6 @@
 #include <metatron/core/spectra/stochastic.hpp>
 #include <metatron/core/spectra/constant.hpp>
 #include <metatron/core/spectra/rgb.hpp>
-#include <metatron/core/spectra/test-rgb.hpp>
 #include <metatron/core/color/color-space.hpp>
 #include <metatron/render/photo/camera.hpp>
 #include <metatron/render/photo/lens/pinhole.hpp>
@@ -34,17 +33,14 @@ auto main() -> int {
 	auto constexpr blocks = 8uz;
 	auto constexpr kernels = 12uz;
 
-	auto sensor = std::make_unique<photo::Sensor>(
-		std::make_unique<spectra::Test_Rgb_Spectrum>(300.f, 450.f),
-		std::make_unique<spectra::Test_Rgb_Spectrum>(450.f, 600.f),
-		std::make_unique<spectra::Test_Rgb_Spectrum>(600.f, 800.f)
-	);
+	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
 	auto lens = std::make_unique<photo::Pinhole_Lens>(0.1f);
 	auto film = std::make_unique<photo::Film>(
 		math::Vector<f32, 2>{0.1f, 0.1f},
 		size,
 		std::move(sensor),
-		std::make_unique<math::Box_Filter>()
+		std::make_unique<math::Box_Filter>(),
+		color::Color_Space::sRGB.get()
 	);
 
 	auto camera = photo::Camera{
@@ -52,7 +48,6 @@ auto main() -> int {
 		std::move(lens)
 	};
 	auto sampler = math::Independent_Sampler{};
-	auto stochastic = spectra::Stochastic_Spectrum{3uz, 0.f};
 	auto identity = math::Transform{};
 	auto transform = math::Matrix<f32, 4, 4>{math::Transform{{0.f, 0.f, -3.f}}};
 

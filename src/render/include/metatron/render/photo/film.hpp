@@ -3,6 +3,7 @@
 #include <metatron/core/image/image.hpp>
 #include <metatron/core/math/filter/filter.hpp>
 #include <metatron/core/math/vector.hpp>
+#include <metatron/core/color/color-space.hpp>
 #include <memory>
 
 namespace metatron::photo {
@@ -14,6 +15,7 @@ namespace metatron::photo {
 		f32 const weight;
 		Fixel(Film* film, math::Vector<f32, 2> const& position, f32 weight);
 		auto operator=(spectra::Stochastic_Spectrum const& spectrum) -> void;
+		auto operator=(spectra::Spectrum const& spectrum) -> void;
 	private:
 		Film* film;
 	};
@@ -23,7 +25,8 @@ namespace metatron::photo {
 			math::Vector<f32, 2> const& film_size,
 			math::Vector<usize, 2> const& image_size,
 			std::unique_ptr<Sensor> sensor,
-			std::unique_ptr<math::Filter> filter
+			std::unique_ptr<math::Filter> filter,
+			color::Color_Space const* color_space
 		);
 		auto operator()(math::Vector<f32, 2> pixel_position) -> Fixel;
 		auto to_path(std::string_view path) -> void;

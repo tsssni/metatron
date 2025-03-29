@@ -8,19 +8,19 @@ namespace metatron::photo {
 	auto Fixel::operator=(spectra::Stochastic_Spectrum const& spectrum) -> void {
 		auto uv = (position / film->size) + 0.5f;
 		auto pixel = math::Vector<i32, 2>{uv * film->image.size};
-		auto rgba = math::Vector<f32, 4>{(*(film->sensor))(spectrum)};
-		rgba[3] = weight;
-		film->image[pixel[0], pixel[1]] += rgba;
+		auto rgb = (*(film->sensor))(spectrum);
+		film->image[pixel[0], pixel[1]] += {rgb, weight};
 	}
 
 	Film::Film(
 		math::Vector<f32, 2> const& film_size,
 		math::Vector<usize, 2> const& image_size,
 		std::unique_ptr<Sensor> sensor,
-		std::unique_ptr<math::Filter> filter
+		std::unique_ptr<math::Filter> filter,
+		color::Color_Space const* color_space
 	):
 	size(film_size),
-	image({image_size, 4uz, 4uz}, color::Color_Space::sRGB.get()),
+	image({image_size, 4uz, 4uz}, color_space),
 	sensor(std::move(sensor)),
 	filter(std::move(filter)) {}
 

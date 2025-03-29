@@ -11,8 +11,9 @@ namespace metatron::mc {
 		emitter::Emitter const& emitter,
 		math::Sampler const& sampler
 	) const -> std::optional<spectra::Stochastic_Spectrum> {
-		auto Le = spectra::Stochastic_Spectrum{3uz, 0.f};
-		auto beta = spectra::Stochastic_Spectrum{3uz, 0.f};
+		auto lambda_u = sampler.generate_1d();
+		auto Le = spectra::Stochastic_Spectrum{3uz, lambda_u};
+		auto beta = Le;
 		beta.value = std::vector<f32>(3, 1.f);
 
 		auto constexpr max_depth = 11uz;
@@ -21,7 +22,7 @@ namespace metatron::mc {
 
 		auto scattered = false;
 		auto scatter_pdf = 0.f;
-		auto scatter_f = spectra::Stochastic_Spectrum{3uz, 0.f};
+		auto scatter_f = Le;
 		auto scatter_ctx = eval::Context{};
 		scatter_ctx.L = Le;
 

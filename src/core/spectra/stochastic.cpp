@@ -4,13 +4,11 @@
 
 namespace metatron::spectra {
 	Stochastic_Spectrum::Stochastic_Spectrum(usize n, f32 u) {
-		auto constexpr lambda_min = 380.f;
-		auto constexpr lambda_max = 780.f;
 		for (auto i = 0; i < n; i++) {
 			auto ui = std::fmod(u + i / float(n), 1.f);
-			lambda.emplace_back(std::lerp(380.f, 780.f, ui));
+			lambda.emplace_back(std::lerp(visible_lambda[0], visible_lambda[1], ui));
 			value.emplace_back(0.f);
-			pdf.emplace_back(1.f / (lambda_max - lambda_min));
+			pdf.emplace_back(1.f / (visible_lambda[1] - visible_lambda[0]));
 		}
 	}
 
