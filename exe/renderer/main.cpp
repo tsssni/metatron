@@ -49,12 +49,12 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
-	auto transform = math::Matrix<f32, 4, 4>{math::Transform{{0.f, 0.f, -3.f}}};
+	auto transform = math::Transform{{0.f, 0.f, -3.f}};
 
 	auto sphere = shape::Sphere{1.f};
 	auto diffuse = material::Diffuse_Material{
-		std::make_unique<material::Spectrum_Constant_Texture>(
-			std::make_unique<spectra::Constant_Spectrum>(0.5f)
+		std::make_unique<material::Spectrum_Image_Texture>(
+			image::Image::from_path("../Downloads/lines.png", false), color::Color_Space::Spectrum_Type::albedo
 		),
 		std::make_unique<material::Spectrum_Constant_Texture>(
 			std::make_unique<spectra::Constant_Spectrum>(0.0f)
@@ -84,6 +84,7 @@ auto main() -> int {
 	auto lights = std::vector<emitter::Divider>{{&identity, &env_light}};
 	auto inf_lights = std::vector<emitter::Divider>{{&identity, &env_light}};
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
+
 	auto integrator = mc::Volume_Path_Integrator{};
 
 	auto block_queue = std::vector<std::queue<math::Vector<usize, 2>>>(kernels);
@@ -112,10 +113,9 @@ auto main() -> int {
 				for (auto n = 0uz; n < spp; n++) {
 					auto sample = camera.sample(px, n, sampler);
 					auto& s = sample.value();
-					s.r.o = transform | math::Vector<f32, 4>{s.r.o, 1.f};
-					s.r.d = transform | math::Vector<f32, 4>{s.r.d};
+					s.ray = transform | s.ray;
 
-					auto Li_opt = integrator.sample({{s.r},{},{}}, bvh, emitter, sampler);
+					auto Li_opt = integrator.sample({s.ray,{},{}}, bvh, emitter, sampler);
 					auto& Li = Li_opt.value();
 					s.fixel = Li;
 					atomic_count.fetch_add(1);

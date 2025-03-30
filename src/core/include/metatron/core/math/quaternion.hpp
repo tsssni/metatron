@@ -73,6 +73,8 @@ namespace metatron::math {
             return Quaternion{-data};
         }
 
+		auto operator<=>(Quaternion<T> const&) const = default;
+
 		explicit operator Vector<T, 4>() const {
 			return data;
 		}

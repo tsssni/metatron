@@ -76,7 +76,7 @@ namespace metatron::mc {
 					auto f = spectra::Stochastic_Spectrum{};
 					if (bsdf) {
 						auto t = math::Transform{};
-						t.rotation = math::Quaternion<f32>::from_rotation_between(scatter_ctx.n, {0.f, 1.f, 0.f});
+						t.config.rotation = math::Quaternion<f32>::from_rotation_between(scatter_ctx.n, {0.f, 1.f, 0.f});
 						auto wo = t | ctx.ray_differential.r.d;
 						auto wi = t | l_intr.wi;
 						OPTIONAL_OR_BREAK(b_intr, (*bsdf)(wo, wi, Le));
@@ -103,11 +103,8 @@ namespace metatron::mc {
 				intr_opt = {};
 				if (div_opt) {
 					auto div = div_opt.value();
-					auto r = math::Ray{
-						*div->transform ^ math::Vector<f32, 4>{ctx.ray_differential.r.o, 1.f},
-						*div->transform ^ math::Vector<f32, 4>{ctx.ray_differential.r.d, 0.f}
-					};
-					intr_opt = (*div->shape)(r, div->primitive);
+					auto ray = *div->transform ^ ctx.ray_differential;
+					intr_opt = (*div->shape)(ray.r, div->primitive);
 				}
 			}
 
@@ -134,15 +131,13 @@ namespace metatron::mc {
 			intr.p = *div->transform | math::Vector<f32, 4>{intr.p, 1.f};
 			intr.n = *div->transform | math::Vector<f32, 4>{intr.p, 0.f};
 
-			if (ctx.material) {
-				scatter_ctx.r.o = *ctx.material_transform ^ math::Vector<f32, 4>{scatter_ctx.r.o, 1.f};
-				scatter_ctx.r.d = *ctx.material_transform ^ math::Vector<f32, 4>{scatter_ctx.r.d, 0.f};
-				OPTIONAL_OR_CALLBACK(m_intr, ctx.material->sample(scatter_ctx, intr.t, sampler.generate_1d()), {
+			if (ctx.medium) {
+				scatter_ctx.r = *ctx.medium_transform ^ scatter_ctx.r;
+				OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(scatter_ctx, intr.t, sampler.generate_1d()), {
 					terminated = true;
 					continue;
 				});
-				scatter_ctx.r.o = *ctx.material_transform | math::Vector<f32, 4>{scatter_ctx.r.o, 1.f};
-				scatter_ctx.r.d = *ctx.material_transform | math::Vector<f32, 4>{scatter_ctx.r.d, 0.f};
+				scatter_ctx.r = *ctx.medium_transform | scatter_ctx.r;
 				beta *= m_intr.transmittance / m_intr.pdf;
 
 				if (m_intr.t != intr.t) {
@@ -206,7 +201,7 @@ namespace metatron::mc {
 			}
 
 			auto bt = math::Transform{};
-			bt.rotation = math::Quaternion<f32>::from_rotation_between(intr.n, {0.f, 1.f, 0.f});
+			bt.config.rotation = math::Quaternion<f32>::from_rotation_between(intr.n, {0.f, 1.f, 0.f});
 			auto uc = sampler.generate_1d();
 			auto u = sampler.generate_2d();
 
@@ -221,11 +216,11 @@ namespace metatron::mc {
 			auto flip_n = 1.f;
 			if (math::dot(-ctx.ray_differential.r.d, b_intr.wi) < 0.f) {
 				if (math::dot(b_intr.wi, intr.n) > 0.f) {
-					ctx.material = div->exterior_medium;
-					ctx.material_transform = div->exterior_transform;
+					ctx.medium = div->exterior_medium;
+					ctx.medium_transform = div->exterior_transform;
 				} else {
-					ctx.material = div->interior_medium;
-					ctx.material_transform = div->interior_transform;
+					ctx.medium = div->interior_medium;
+					ctx.medium_transform = div->interior_transform;
 					flip_n = -1.f;
 				}
 			}

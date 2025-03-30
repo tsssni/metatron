@@ -4,6 +4,7 @@
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>
 #include <metatron/core/math/distribution/cone.hpp>
+#include <metatron/core/stl/optional.hpp>
 
 namespace metatron::shape {
 	Sphere::Sphere(f32 r)
@@ -42,13 +43,6 @@ namespace metatron::shape {
 		};
 
 		return Interaction{p, n, uv, {}, {}, t, 1.f};
-	}
-
-	auto Sphere::operator()(
-		math::Ray_Differential const& rd,
-		usize idx
-	) const -> std::optional<Interaction> {
-		return {};
 	}
 
 	auto Sphere::sample(

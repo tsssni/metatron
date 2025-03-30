@@ -9,8 +9,8 @@
 namespace metatron::mc {
 	struct Context final {
 		math::Ray_Differential ray_differential;
-		media::Medium const* material;
-		math::Transform const* material_transform;
+		media::Medium const* medium;
+		math::Transform const* medium_transform;
 	};
 
 	struct Integrator {

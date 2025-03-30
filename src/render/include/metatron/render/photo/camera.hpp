@@ -8,7 +8,7 @@
 
 namespace metatron::photo {
 	struct Interaction final {
-		math::Ray r;
+		math::Ray_Differential ray;
 		Fixel fixel;
 	};
 

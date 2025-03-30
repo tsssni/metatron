@@ -9,10 +9,6 @@ namespace metatron::shape {
 			math::Ray const& r,
 			usize idx = 0uz
 		) const -> std::optional<Interaction>;
-		auto operator()(
-			math::Ray_Differential const& rd,
-			usize idx = 0uz
-		) const -> std::optional<Interaction>;
 		auto sample(
 			eval::Context const& ctx,
 			math::Vector<f32, 2> const& u,

@@ -22,10 +22,6 @@ namespace metatron::shape {
 			math::Ray const& r,
 			usize idx = 0uz
 		) const -> std::optional<Interaction> = 0;
-		auto virtual operator()(
-			math::Ray_Differential const& rd,
-			usize idx = 0uz
-		) const -> std::optional<Interaction> = 0;
 		auto virtual sample(
 			eval::Context const& ctx,
 			math::Vector<f32, 2> const& u,
