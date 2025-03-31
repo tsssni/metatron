@@ -30,6 +30,10 @@ namespace metatron::mc {
 		auto intr_opt = std::optional<shape::Interaction>{};
 		auto bsdf = std::unique_ptr<material::Bsdf>{};
 		auto phase = std::unique_ptr<phase::Phase_Function>{};
+
+
+		auto& rt = *ctx.world_to_render;
+		auto& ct = *ctx.render_to_camera;
 		
 		while (true) {
 			depth += usize(scattered);
@@ -51,14 +55,14 @@ namespace metatron::mc {
 			if (scattered) {
 				do {
 					OPTIONAL_OR_BREAK(e_intr, emitter.sample(scatter_ctx, sampler.generate_2d()));
-					auto& t = *e_intr.divider->transform;
-					scatter_ctx.p = t ^ math::Vector<f32, 4>{scatter_ctx.p, 1.f};
-					scatter_ctx.n = t ^ math::Vector<f32, 4>{scatter_ctx.n, 0.f};
+					auto& lt = *e_intr.divider->local_to_world;
+					scatter_ctx.p = lt ^ (rt ^ math::Vector<f32, 4>{scatter_ctx.p, 1.f});
+					scatter_ctx.n = lt ^ (rt ^ math::Vector<f32, 4>{scatter_ctx.n, 0.f});
 
 					OPTIONAL_OR_BREAK(l_intr, e_intr.divider->light->sample(scatter_ctx, sampler.generate_2d()));
-					scatter_ctx.p = t | math::Vector<f32, 4>{scatter_ctx.p, 1.f};
-					scatter_ctx.n = t | math::Vector<f32, 4>{scatter_ctx.n, 0.f};
-					l_intr.wi = t | l_intr.wi;
+					scatter_ctx.p = rt | (lt | math::Vector<f32, 4>{scatter_ctx.p, 1.f});
+					scatter_ctx.n = rt | (lt | math::Vector<f32, 4>{scatter_ctx.n, 0.f});
+					l_intr.wi = lt | l_intr.wi;
 					auto pl = e_intr.pdf * l_intr.pdf;
 
 					auto l_r = math::Ray{scatter_ctx.p + l_intr.wi * 0.001f, l_intr.wi};
@@ -66,7 +70,8 @@ namespace metatron::mc {
 					if (d_div_opt.has_value()) {
 						auto& d_div = d_div_opt.value();
 						auto s = d_div->shape;
-						auto s_intr_opt = (*s)(l_r);
+						auto& lt = *d_div->local_to_world;
+						auto s_intr_opt = (*s)(lt ^ l_r);
 						if (s_intr_opt.has_value() && d_div->material) {
 							break;
 						}
@@ -96,6 +101,7 @@ namespace metatron::mc {
 				
 				ctx.ray_differential.r = scatter_ctx.r;
 				ctx.ray_differential.r.o += ctx.ray_differential.r.d * 0.001f;
+				ctx.ray_differential.differentiable = false;
 			}
 
 			if (scattered || depth == 0uz) {
@@ -103,7 +109,8 @@ namespace metatron::mc {
 				intr_opt = {};
 				if (div_opt) {
 					auto div = div_opt.value();
-					auto ray = *div->transform ^ ctx.ray_differential;
+					auto& lt = *div->local_to_world;
+					auto ray = lt ^ (rt ^ ctx.ray_differential);
 					intr_opt = (*div->shape)(ray.r, div->primitive);
 				}
 			}
@@ -112,10 +119,11 @@ namespace metatron::mc {
 				terminated = true;
 
 				OPTIONAL_OR_CONTINUE(e_intr, emitter.sample_infinite(scatter_ctx, sampler.generate_1d()));
-				auto wo = *e_intr.divider->transform ^ ctx.ray_differential.r.d;
+				auto& lt = *e_intr.divider->local_to_world;
+				auto wo = lt ^ (rt ^ ctx.ray_differential.r.d);
 				auto n = math::Vector<f32, 3>{0.f};
 				if (scattered && scatter_ctx.n != n) {
-					n = *e_intr.divider->transform ^ scatter_ctx.n;
+					n = lt ^ (rt ^ scatter_ctx.n);
 				}
 
 				OPTIONAL_OR_CONTINUE(l_intr, (*e_intr.divider->light)(wo, n, Le));
@@ -128,16 +136,18 @@ namespace metatron::mc {
 
 			auto& div = div_opt.value();
 			auto& intr = intr_opt.value();
-			intr.p = *div->transform | math::Vector<f32, 4>{intr.p, 1.f};
-			intr.n = *div->transform | math::Vector<f32, 4>{intr.p, 0.f};
+			auto& lt = *div->local_to_world;
+			intr.p = rt | (lt | math::Vector<f32, 4>{intr.p, 1.f});
+			intr.n = rt | (lt | math::Vector<f32, 4>{intr.n, 0.f});
 
 			if (ctx.medium) {
-				scatter_ctx.r = *ctx.medium_transform ^ scatter_ctx.r;
+				auto& mt = *ctx.medium_to_world;
+				scatter_ctx.r = mt ^ (rt ^ scatter_ctx.r);
 				OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(scatter_ctx, intr.t, sampler.generate_1d()), {
 					terminated = true;
 					continue;
 				});
-				scatter_ctx.r = *ctx.medium_transform | scatter_ctx.r;
+				scatter_ctx.r = rt | (mt | scatter_ctx.r);
 				beta *= m_intr.transmittance / m_intr.pdf;
 
 				if (m_intr.t != intr.t) {
@@ -186,12 +196,16 @@ namespace metatron::mc {
 
 			if (spectra::max(mat_intr.Le) > math::epsilon<f32>) {
 				do {
+					OPTIONAL_OR_CONTINUE(e_intr, emitter(*div->Le));
+					auto& div = *e_intr.divider;
+					auto& lt = *div.local_to_world;
+
+					auto d = lt ^ (rt ^ ctx.ray_differential.r.d);
 					auto n = math::Vector<f32, 3>{0.f};
 					if (scatter_ctx.n != n) {
-						n = scatter_ctx.n;
+						n = lt ^ (rt ^ scatter_ctx.n);
 					}
-					OPTIONAL_OR_CONTINUE(e_intr, emitter(*div->Le));
-					OPTIONAL_OR_CONTINUE(l_intr, (*e_intr.divider->light)(ctx.ray_differential.r.d, n, Le));
+					OPTIONAL_OR_CONTINUE(l_intr, (*e_intr.divider->light)(d, n, Le));
 
 					auto pl = e_intr.pdf * l_intr.pdf;
 					auto pb = scatter_pdf;
@@ -211,16 +225,16 @@ namespace metatron::mc {
 				terminated = true;
 				continue;
 			});
-			b_intr.wi = bt ^ math::Vector<f32, 4>{b_intr.wi};
+			b_intr.wi = bt ^ math::Vector<f32, 4>{b_intr.wi, 0.f};
 
 			auto flip_n = 1.f;
 			if (math::dot(-ctx.ray_differential.r.d, b_intr.wi) < 0.f) {
 				if (math::dot(b_intr.wi, intr.n) > 0.f) {
 					ctx.medium = div->exterior_medium;
-					ctx.medium_transform = div->exterior_transform;
+					ctx.medium_to_world = div->exterior_transform;
 				} else {
 					ctx.medium = div->interior_medium;
-					ctx.medium_transform = div->interior_transform;
+					ctx.medium_to_world = div->interior_transform;
 					flip_n = -1.f;
 				}
 			}

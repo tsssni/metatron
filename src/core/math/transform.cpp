@@ -64,6 +64,8 @@ namespace metatron::math {
 				config.scaling[0], config.scaling[1], config.scaling[2], 1.f
 			};
 			auto rotation = math::Matrix<f32, 4, 4>{config.rotation};
+
+			old_config = config;
 			transform = translation | rotation | scaling;
 			inv_transform = math::inverse(transform);
 		}

@@ -14,14 +14,20 @@ namespace metatron::emitter {
 			};
 		}
 
-		auto Uniform_Emitter::sample(eval::Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<emitter::Interaction> {
+		auto Uniform_Emitter::sample(
+			eval::Context const& ctx,
+			math::Vector<f32, 2> const& u
+		) const -> std::optional<emitter::Interaction> {
 			return emitter::Interaction{
 				&infinite_dividers.front(),
 				1.f
 			};
 		}
 
-		auto Uniform_Emitter::sample_infinite(eval::Context const& ctx, f32 u) const -> std::optional<emitter::Interaction> {
+		auto Uniform_Emitter::sample_infinite(
+			eval::Context const& ctx,
+			f32 u
+		) const -> std::optional<emitter::Interaction> {
 			return emitter::Interaction{
 				&infinite_dividers.front(),
 				1.f

@@ -14,6 +14,9 @@ namespace metatron::math {
 			auto operator<=>(Config const& rhs) const = default;
 		} config;
 
+		mutable math::Matrix<f32, 4, 4> transform;
+		mutable math::Matrix<f32, 4, 4> inv_transform;
+
 		Transform(
 			math::Vector<f32, 3> translation = {},
 			math::Vector<f32, 3> scaling = {1.f},
@@ -32,7 +35,5 @@ namespace metatron::math {
 		auto update(bool force = false) const -> void;
 
 		mutable Config old_config{};
-		mutable math::Matrix<f32, 4, 4> transform;
-		mutable math::Matrix<f32, 4, 4> inv_transform;
 	};
 }

@@ -11,6 +11,6 @@ namespace metatron::math {
 		Ray r;
 		Ray rx;
 		Ray ry;
-		bool differentiable{false};
+		bool differentiable;
 	};
 }

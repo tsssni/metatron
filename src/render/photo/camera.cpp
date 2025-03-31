@@ -18,6 +18,7 @@ namespace metatron::photo {
 		auto fixel = (*film)(pixel_position);
 
 		auto ray = math::Ray_Differential{};
+		ray.differentiable = true;
 		OPTIONAL_OR_RETURN(r_intr, lens->sample({fixel.position, 0.f}, sampler.generate_2d()), {});
 		ray.r = r_intr.r;
 

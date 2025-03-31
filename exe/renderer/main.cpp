@@ -49,7 +49,8 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
-	auto transform = math::Transform{{0.f, 0.f, -3.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 3.f}};
+	auto render_to_camera = identity;
 
 	auto sphere = shape::Sphere{1.f};
 	auto diffuse = material::Diffuse_Material{
@@ -113,9 +114,13 @@ auto main() -> int {
 				for (auto n = 0uz; n < spp; n++) {
 					auto sample = camera.sample(px, n, sampler);
 					auto& s = sample.value();
-					s.ray = transform | s.ray;
 
-					auto Li_opt = integrator.sample({s.ray,{},{}}, bvh, emitter, sampler);
+					auto Li_opt = integrator.sample(
+						{s.ray, {}, &world_to_render, &render_to_camera, {}},
+						bvh,
+						emitter,
+						sampler
+					);
 					auto& Li = Li_opt.value();
 					s.fixel = Li;
 					atomic_count.fetch_add(1);

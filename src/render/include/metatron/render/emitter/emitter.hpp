@@ -4,7 +4,7 @@
 
 namespace metatron::emitter {
 	struct Divider final {
-		math::Transform const* transform;
+		math::Transform const* local_to_world;
 		light::Light const* light;
 	};
 
