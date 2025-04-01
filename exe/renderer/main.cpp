@@ -116,7 +116,14 @@ auto main() -> int {
 					auto& s = sample.value();
 
 					auto Li_opt = integrator.sample(
-						{s.ray, {}, &world_to_render, &render_to_camera, {}},
+						{
+							s.ray_differential,
+							s.default_differential,
+							{},
+							&world_to_render,
+							&render_to_camera,
+							{}
+						},
 						bvh,
 						emitter,
 						sampler

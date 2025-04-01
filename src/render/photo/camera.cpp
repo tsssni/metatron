@@ -5,7 +5,9 @@ namespace metatron::photo {
 	Camera::Camera(
 		std::unique_ptr<Film> film,
 		std::unique_ptr<Lens> lens
-	): film(std::move(film)), lens(std::move(lens)) {}
+	): film(std::move(film)), lens(std::move(lens)) {
+		auto ray = math::Ray_Differential{};
+	}
 
 	auto Camera::sample(
 		math::Vector<usize, 2> pixel,
@@ -18,31 +20,20 @@ namespace metatron::photo {
 		auto fixel = (*film)(pixel_position);
 
 		auto ray = math::Ray_Differential{};
+		auto r_pos = math::Vector<f32, 3>{fixel.position, 0.f};
+		auto rx_pos = r_pos + math::Vector<f32, 3>{fixel.dxdy[0], 0.f, 0.f};
+		auto ry_pos = r_pos + math::Vector<f32, 3>{0.f, fixel.dxdy[1], 0.f};
+
+		OPTIONAL_OR_RETURN(r_intr, lens->sample(r_pos, sampler.generate_2d()), {});
+		OPTIONAL_OR_RETURN(rx_intr, lens->sample(rx_pos, sampler.generate_2d()), {});
+		OPTIONAL_OR_RETURN(ry_intr, lens->sample(ry_pos, sampler.generate_2d()), {});
+
 		ray.differentiable = true;
-		OPTIONAL_OR_RETURN(r_intr, lens->sample({fixel.position, 0.f}, sampler.generate_2d()), {});
 		ray.r = r_intr.r;
+		ray.rx = rx_intr.r;
+		ray.ry = ry_intr.r;
 
-		for (auto dx: {1.f, -1.f}) {
-			auto fixel_dx = fixel.position;
-			fixel_dx[0] += dx;
-			if (fixel_dx < math::Vector<f32, 2>{0.f} || fixel_dx >= math::Vector<f32, 2>{1.f}) {
-				continue;
-			}
-			OPTIONAL_OR_RETURN(rx_intr, lens->sample({fixel_dx, 0.f}, sampler.generate_2d()), {});
-			ray.rx = rx_intr.r;
-		}
-
-		for (auto dy: {1.f, -1.f}) {
-			auto fixel_dy = fixel.position;
-			fixel_dy[1] += dy;
-			if (fixel_dy < math::Vector<f32, 2>{0.f} || fixel_dy >= math::Vector<f32, 2>{1.f}) {
-				continue;
-			}
-			OPTIONAL_OR_RETURN(ry_intr, lens->sample({fixel_dy, 0.f}, sampler.generate_2d()), {});
-			ray.ry = ry_intr.r;
-		}
-
-		return Interaction{ray, fixel};
+		return Interaction{ray, default_differential, fixel};
 	}
 
 	auto Camera::to_path(std::string_view path) -> void {

@@ -8,7 +8,8 @@
 
 namespace metatron::photo {
 	struct Interaction final {
-		math::Ray_Differential ray;
+		math::Ray_Differential ray_differential;
+		math::Ray_Differential default_differential;
 		Fixel fixel;
 	};
 
@@ -27,5 +28,6 @@ namespace metatron::photo {
 	private:
 		std::unique_ptr<Film> film;
 		std::unique_ptr<Lens> lens;
+		math::Ray_Differential default_differential;
 	};
 }

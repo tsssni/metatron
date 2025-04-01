@@ -9,6 +9,7 @@
 namespace metatron::mc {
 	struct Context final {
 		math::Ray_Differential ray_differential;
+		math::Ray_Differential default_differential;
 		media::Medium const* medium;
 		math::Transform const* world_to_render;
 		math::Transform const* render_to_camera;

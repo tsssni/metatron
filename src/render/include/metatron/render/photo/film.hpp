@@ -12,6 +12,7 @@ namespace metatron::photo {
 
 	struct Fixel final {
 		math::Vector<f32, 2> const position;
+		math::Vector<f32, 2> const dxdy;
 		f32 const weight;
 		Fixel(Film* film, math::Vector<f32, 2> const& position, f32 weight);
 		auto operator=(spectra::Stochastic_Spectrum const& spectrum) -> void;
@@ -34,6 +35,10 @@ namespace metatron::photo {
 	private:
 		friend Fixel;
 		math::Vector<f32, 2> size;
+		math::Vector<f32, 2> dxdy;
+		f32 dx;
+		f32 dy;
+
 		image::Image image;
 		std::unique_ptr<Sensor> sensor;
 		std::unique_ptr<math::Filter> filter;

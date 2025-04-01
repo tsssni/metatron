@@ -1,6 +1,7 @@
 #pragma once
 #include <metatron/core/math/matrix.hpp>
 #include <cmath>
+#include <functional>
 
 namespace metatron::math {
 	template<typename T, usize size>
@@ -89,6 +90,20 @@ namespace metatron::math {
 		auto r = Vector<T, size>{};
 		for (auto i = 0uz; i < size; i++) {
 			r[i] = std::fmod(x[i], m[i]);
+		}
+		return r;
+	}
+
+	template<
+		typename T,
+		typename Func,
+		typename Return_Type = decltype(std::declval<Func>()(std::declval<T>())),
+		usize size
+	>
+	auto foreach(Vector<T, size> const& x, Func f) -> Vector<Return_Type, size> {
+		auto r = Vector<Return_Type, size>{};
+		for (auto i = 0uz; i < size; i++) {
+			r[i] = f(x[i]);
 		}
 		return r;
 	}

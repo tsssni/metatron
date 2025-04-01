@@ -2,8 +2,14 @@
 #include <metatron/core/math/constant.hpp>
 
 namespace metatron::photo {
-	Fixel::Fixel(Film* film, math::Vector<f32, 2> const& position, f32 weight)
-		: film(film), position(position), weight(weight) {}
+	Fixel::Fixel(Film* film, math::Vector<f32, 2> const& position, f32 weight):
+		film(film),
+		dxdy(math::foreach(
+			position + film->dxdy - film->size / 2.f,
+			[](f32 x){return x < 0.f ? 1.f : -1.f;}
+		) * film->dxdy),
+		position(position),
+		weight(weight) {}
 
 	auto Fixel::operator=(spectra::Stochastic_Spectrum const& spectrum) -> void {
 		auto uv = (position / film->size) + 0.5f;
@@ -20,6 +26,7 @@ namespace metatron::photo {
 		color::Color_Space const* color_space
 	):
 	size(film_size),
+	dxdy(math::Vector<f32, 2>{1.f} / image_size / film_size),
 	image({image_size, 4uz, 4uz}, color_space),
 	sensor(std::move(sensor)),
 	filter(std::move(filter)) {}
@@ -30,7 +37,7 @@ namespace metatron::photo {
 		auto weight = (*filter)(math::mod(pixel_position, 1.f) - 0.5f);
 
 		return {
-			this, 
+			this,
 			film_position,
 			weight
 		};
