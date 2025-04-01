@@ -22,6 +22,9 @@ namespace metatron::photo {
 	};
 
 	struct Film final {
+		math::Vector<f32, 2> size;
+		math::Vector<f32, 2> dxdy;
+
 		Film(
 			math::Vector<f32, 2> const& film_size,
 			math::Vector<usize, 2> const& image_size,
@@ -34,11 +37,6 @@ namespace metatron::photo {
 
 	private:
 		friend Fixel;
-		math::Vector<f32, 2> size;
-		math::Vector<f32, 2> dxdy;
-		f32 dx;
-		f32 dy;
-
 		image::Image image;
 		std::unique_ptr<Sensor> sensor;
 		std::unique_ptr<math::Filter> filter;

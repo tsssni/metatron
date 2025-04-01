@@ -6,7 +6,19 @@ namespace metatron::photo {
 		std::unique_ptr<Film> film,
 		std::unique_ptr<Lens> lens
 	): film(std::move(film)), lens(std::move(lens)) {
-		auto ray = math::Ray_Differential{};
+		auto& ray = default_differential;
+		auto r_pos = math::Vector<f32, 3>{0.f};
+		auto rx_pos = r_pos + math::Vector<f32, 3>{this->film->dxdy[0], 0.f, 0.f};
+		auto ry_pos = r_pos + math::Vector<f32, 3>{0.f, this->film->dxdy[1], 0.f};
+
+		OPTIONAL_OR_RETURN(r_intr, this->lens->sample(r_pos, {0.f}));
+		OPTIONAL_OR_RETURN(rx_intr, this->lens->sample(rx_pos, {0.f}));
+		OPTIONAL_OR_RETURN(ry_intr, this->lens->sample(ry_pos, {0.f}));
+
+		ray.differentiable = false;
+		ray.r = r_intr.r;
+		ray.rx = rx_intr.r;
+		ray.ry = ry_intr.r;
 	}
 
 	auto Camera::sample(
