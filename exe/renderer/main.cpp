@@ -49,10 +49,11 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
+	auto local_to_world = math::Transform{{}, {1.f}};
 	auto world_to_render = math::Transform{{0.f, 0.f, 3.f}};
 	auto render_to_camera = identity;
 
-	auto sphere = shape::Sphere{1.f};
+	auto sphere = shape::Sphere{};
 	auto diffuse = material::Diffuse_Material{
 		std::make_unique<material::Spectrum_Image_Texture>(
 			image::Image::from_path("../Downloads/lines.png", false), color::Color_Space::Spectrum_Type::albedo
@@ -73,7 +74,7 @@ auto main() -> int {
 			nullptr,
 			&diffuse,
 			nullptr,
-			&identity,
+			&local_to_world,
 			&identity,
 			&identity,
 			0uz

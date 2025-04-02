@@ -7,14 +7,8 @@
 #include <metatron/core/stl/optional.hpp>
 
 namespace metatron::shape {
-	Sphere::Sphere(f32 r)
-		: r(r) {}
-
 	auto Sphere::bounding_box(usize idx) const -> math::Bounding_Box {
-		return {
-			{-r},
-			{r}
-		};
+		return {{-1.f}, {1.f}};
 	}
 
 	auto Sphere::operator()(
@@ -23,7 +17,7 @@ namespace metatron::shape {
 	) const -> std::optional<Interaction> {
 		auto a = math::dot(r.d, r.d);
 		auto b = math::dot(r.o, r.d) * 2.f;
-		auto c = math::dot(r.o, r.o) - this->r * this->r;
+		auto c = math::dot(r.o, r.o) - 1.f;
 
 		auto delta = b * b - 4.f * a * c;
 		if (delta < 0.f) return {};
@@ -37,12 +31,27 @@ namespace metatron::shape {
 		auto n = math::normalize(p);
 
 		auto s = math::cartesion_to_sphere(n);
+		auto& theta = s[0];
+		auto& phi = s[1];
 		auto uv = math::Vector<f32, 2>{
-			s[0] / math::pi,
-			s[1] / (2.f * math::pi)
+			theta / math::pi,
+			phi / (2.f * math::pi)
 		};
 
-		return Interaction{p, n, uv, {}, {}, t, 1.f};
+		auto dpdu = math::Vector<f32, 3>{
+			std::cos(theta) * std::cos(phi),
+			std::cos(theta) * std::sin(phi),
+			-std::cos(theta)
+		} / math::pi;
+		auto dpdv = math::Vector<f32, 3>{
+			-std::sin(theta) * std::sin(phi),
+			std::sin(theta) * std::cos(phi),
+			0.f
+		} / math::pi;
+		auto dndu = dpdu;
+		auto dndv = dpdv;
+
+		return Interaction{p, n, uv, t, dpdu, dpdv, dndu, dndv, 1.f};
 	}
 
 	auto Sphere::sample(
@@ -51,20 +60,16 @@ namespace metatron::shape {
 		usize idx
 	) const -> std::optional<Interaction> {
 		auto d = math::length(ctx.p);
-		if (d <= r) {
+		if (d <= 1.f) {
 			auto dist = math::Sphere_Distribution{};
 			auto p = dist.sample(u);
-			auto n  = p;
+			auto dir = math::normalize(p - ctx.p);
 
-			auto s = math::cartesion_to_sphere(n);
-			auto uv = math::Vector<f32, 2>{
-				s[0] / math::pi,
-				s[1] / (2.f * math::pi)
-			};
-
-			return Interaction{p, n, uv, {}, {}, 0.f, dist.pdf()};
+			OPTIONAL_OR_RETURN(intr, (*this)({ctx.p, dir}), {});
+			intr.pdf = dist.pdf();
+			return intr;
 		} else {
-			auto cos_theta_max = std::sqrt(1.f - (r * r) / (d * d));
+			auto cos_theta_max = std::sqrt(1.f - 1.f / (d * d));
 			auto dist = math::Cone_Distribution{cos_theta_max};
 			auto dir = math::normalize(-ctx.p);
 
@@ -72,7 +77,9 @@ namespace metatron::shape {
 			auto rot = math::Quaternion<f32>::from_rotation_between({0.f, 0.f, 1.f}, dir);
 			sdir = math::rotate(math::Vector<f32, 4>{sdir, 0.f}, rot);
 
-			return (*this)(math::Ray{ctx.p, sdir});
+			OPTIONAL_OR_RETURN(intr, (*this)({ctx.p, sdir}), {});
+			intr.pdf = dist.pdf();
+			return intr;
 		}
 	}
 

@@ -12,6 +12,10 @@ namespace metatron::math {
 			return math::sphere_to_cartesion(cos_theta, phi);
 		}
 
+		auto pdf() -> f32 {
+			return 1.f / (2.f * math::pi * (1.f - cos_theta_max));
+		};
+
 	private:
 		f32 cos_theta_max;
 	};

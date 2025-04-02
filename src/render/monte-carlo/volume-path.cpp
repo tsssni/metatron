@@ -185,6 +185,16 @@ namespace metatron::mc {
 					continue;
 				}
 			}
+
+			if (!ctx.ray_differential.differentiable) {
+				auto rd = ct ^ ctx.default_differential;
+				auto st = math::Transform{{}, {},
+					math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(intr.p))
+				}; 
+				ctx.ray_differential = st | rd;
+			} else {
+				ctx.ray_differential.differentiable = false;
+			}
 			
 			OPTIONAL_OR_CALLBACK(mat_intr, div->material->sample(scatter_ctx, {intr.uv}), {
 				terminated = true;

@@ -9,9 +9,13 @@ namespace metatron::shape {
 		math::Vector<f32, 3> p;
 		math::Vector<f32, 3> n;
 		math::Vector<f32, 2> uv;
-		math::Vector<math::Vector<f32, 3>, 2> dp;
-		math::Vector<math::Vector<f32, 3>, 2> dn;
 		f32 t;
+
+		math::Vector<f32, 3> dpdu;
+		math::Vector<f32, 3> dpdv;
+		math::Vector<f32, 3> dndu;
+		math::Vector<f32, 3> dndv;
+
 		f32 pdf;
 	};
 
