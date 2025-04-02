@@ -19,7 +19,7 @@ namespace metatron::light {
 			auto s = math::cartesion_to_sphere(wo);
 			auto u = s[1] / (2.f * math::pi);
 			auto v = s[0] / math::pi;
-			auto spec = env_map->sample({{}, {}, {u, v}, {}, L});
+			auto spec = env_map->sample({{}, {}, {}, L}, {{u, v}});
 			auto dist = math::Cosine_Hemisphere_Distribution{};
 			return Interaction{
 				L & spec,

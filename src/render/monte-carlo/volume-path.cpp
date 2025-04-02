@@ -175,7 +175,7 @@ namespace metatron::mc {
 						scattered = true;
 						scatter_f = p_intr.f;
 						scatter_pdf = p_intr.pdf;
-						scatter_ctx = {m_intr.p, {}, {}, {m_intr.p, p_intr.wi}, Le};
+						scatter_ctx = {m_intr.p, {}, {m_intr.p, p_intr.wi}, Le};
 					} else {
 						intr.t -= m_intr.t;
 						ctx.ray_differential.r.o = m_intr.p;
@@ -186,8 +186,7 @@ namespace metatron::mc {
 				}
 			}
 			
-			scatter_ctx.uv = intr.uv;
-			OPTIONAL_OR_CALLBACK(mat_intr, div->material->sample(scatter_ctx), {
+			OPTIONAL_OR_CALLBACK(mat_intr, div->material->sample(scatter_ctx, {intr.uv}), {
 				terminated = true;
 				continue;
 			});
@@ -243,7 +242,7 @@ namespace metatron::mc {
 			scattered = true;
 			scatter_f = b_intr.f;
 			scatter_pdf = b_intr.pdf;
-			scatter_ctx = {intr.p, flip_n * intr.n, intr.uv, {intr.p, b_intr.wi}, Le};
+			scatter_ctx = {intr.p, flip_n * intr.n, {intr.p, b_intr.wi}, Le};
 		}
 
 		return Le;

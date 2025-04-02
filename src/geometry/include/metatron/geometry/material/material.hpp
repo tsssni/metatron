@@ -11,6 +11,9 @@ namespace metatron::material {
 	};
 
 	struct Material {
-		auto virtual sample(eval::Context const& ctx) const -> std::optional<Interaction> = 0;
+		auto virtual sample(
+			eval::Context const& ctx,
+			Coordinate const& coord
+		) const -> std::optional<Interaction> = 0;
 	};
 }

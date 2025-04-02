@@ -5,7 +5,10 @@
 namespace metatron::material {
 	struct Spectrum_Constant_Texture final: Spectrum_Texture {
 		Spectrum_Constant_Texture(std::unique_ptr<spectra::Spectrum> x);
-		auto sample(eval::Context const& ctx) -> Element;
+		auto sample(
+			eval::Context const& ctx,
+			Coordinate const& coord
+		) -> Element;
 
 	private:
 		std::unique_ptr<spectra::Spectrum> x;
