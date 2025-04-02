@@ -190,8 +190,6 @@ namespace metatron::mc {
 				auto st = math::Transform{};
 				st.config.rotation = math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(intr.p));
 				ctx.ray_differential = st | rd;
-			} else {
-				ctx.ray_differential.differentiable = false;
 			}
 			
 			auto local_differential = lt ^ (rt ^ ctx.ray_differential);
