@@ -5,11 +5,11 @@
 
 namespace metatron::material {
 	struct Coordinate final {
-		math::Vector<f32, 2> uv;
-		f32 dudx;
-		f32 dudy;
-		f32 dvdx;
-		f32 dvdy;
+		math::Vector<f32, 2> uv{};
+		f32 dudx{0.f};
+		f32 dudy{0.f};
+		f32 dvdx{0.f};
+		f32 dvdy{0.f};
 	};
 
 	template<typename T>

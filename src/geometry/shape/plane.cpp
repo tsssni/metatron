@@ -17,7 +17,7 @@ namespace metatron::shape {
 
 	auto Plane::operator()(
 		math::Ray const& r,
-		usize idxuz
+		usize idx
 	) const -> std::optional<Interaction> {
 		auto n = math::Vector<f32, 3>{a, b, c};
 		auto no = math::dot(n, r.o) + d;

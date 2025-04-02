@@ -3,6 +3,7 @@
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/optional.hpp>
+#include <metatron/geometry/shape/plane.hpp>
 
 namespace metatron::mc {
 	auto Volume_Path_Integrator::sample(
@@ -137,8 +138,6 @@ namespace metatron::mc {
 			auto& div = div_opt.value();
 			auto& intr = intr_opt.value();
 			auto& lt = *div->local_to_world;
-			intr.p = rt | (lt | math::Vector<f32, 4>{intr.p, 1.f});
-			intr.n = rt | (lt | math::Vector<f32, 4>{intr.n, 0.f});
 
 			if (ctx.medium) {
 				auto& mt = *ctx.medium_to_world;
@@ -188,15 +187,27 @@ namespace metatron::mc {
 
 			if (!ctx.ray_differential.differentiable) {
 				auto rd = ct ^ ctx.default_differential;
-				auto st = math::Transform{{}, {},
-					math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(intr.p))
-				}; 
+				auto st = math::Transform{};
+				st.config.rotation = math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(intr.p));
 				ctx.ray_differential = st | rd;
 			} else {
 				ctx.ray_differential.differentiable = false;
 			}
 			
-			OPTIONAL_OR_CALLBACK(mat_intr, div->material->sample(scatter_ctx, {intr.uv}), {
+			auto local_differential = lt ^ (rt ^ ctx.ray_differential);
+			auto tangent = shape::Plane(intr.p, intr.n);
+			OPTIONAL_OR_CONTINUE(d_intr, tangent(local_differential.r));
+			OPTIONAL_OR_CONTINUE(dx_intr, tangent(local_differential.rx));
+			OPTIONAL_OR_CONTINUE(dy_intr, tangent(local_differential.ry));
+			
+			auto dpdx = dx_intr.p - d_intr.p;
+			auto dpdy = dy_intr.p - d_intr.p;
+			auto dpduv =  math::transpose(math::Matrix<f32, 2, 3>{intr.dpdu, intr.dpdv});
+			auto duvdx = math::least_squares(dpduv, dpdx);
+			auto duvdy = math::least_squares(dpduv, dpdy);
+
+			auto tcoord = material::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
+			OPTIONAL_OR_CALLBACK(mat_intr, div->material->sample(scatter_ctx, tcoord), {
 				terminated = true;
 				continue;
 			});
@@ -205,7 +216,7 @@ namespace metatron::mc {
 
 			if (spectra::max(mat_intr.Le) > math::epsilon<f32>) {
 				do {
-					OPTIONAL_OR_CONTINUE(e_intr, emitter(*div->Le));
+					OPTIONAL_OR_BREAK(e_intr, emitter(*div->Le));
 					auto& div = *e_intr.divider;
 					auto& lt = *div.local_to_world;
 
@@ -214,7 +225,7 @@ namespace metatron::mc {
 					if (scatter_ctx.n != n) {
 						n = lt ^ (rt ^ scatter_ctx.n);
 					}
-					OPTIONAL_OR_CONTINUE(l_intr, (*e_intr.divider->light)(d, n, Le));
+					OPTIONAL_OR_BREAK(l_intr, (*e_intr.divider->light)(d, n, Le));
 
 					auto pl = e_intr.pdf * l_intr.pdf;
 					auto pb = scatter_pdf;
@@ -223,6 +234,8 @@ namespace metatron::mc {
 				} while (false);
 			}
 
+			intr.p = rt | (lt | math::Vector<f32, 4>{intr.p, 1.f});
+			intr.n = rt | (lt | math::Vector<f32, 4>{intr.n, 0.f});
 			auto bt = math::Transform{};
 			bt.config.rotation = math::Quaternion<f32>::from_rotation_between(intr.n, {0.f, 1.f, 0.f});
 			auto uc = sampler.generate_1d();

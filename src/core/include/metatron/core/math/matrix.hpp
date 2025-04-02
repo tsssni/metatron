@@ -366,10 +366,6 @@ namespace metatron::math {
 				}
 			}
 
-			if (max_val < math::epsilon<T>) {
-				assert("matrix is not invertible");
-			}
-
 			if (max_row != i) {
 				std::swap(augmented[i], augmented[max_row]);
 			}
@@ -392,5 +388,12 @@ namespace metatron::math {
 			}
 		}
 		return result;
+	}
+
+	template<typename T, usize h, usize w>
+	requires std::floating_point<T>
+	auto inline constexpr least_squares(Matrix<T, h, w> const& a, Matrix<T, h> const& b) -> Matrix<T, w> {
+		auto a_t = math::transpose(a);
+		return math::inverse(a_t | a) | (a_t | b);
 	}
 }

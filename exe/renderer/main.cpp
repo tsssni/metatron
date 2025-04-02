@@ -29,7 +29,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto constexpr size = math::Vector<usize, 2>{1024uz};
-	auto constexpr spp = 128uz;
+	auto constexpr spp = 32uz;
 	auto constexpr blocks = 8uz;
 	auto constexpr kernels = 12uz;
 

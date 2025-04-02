@@ -8,7 +8,7 @@ namespace metatron::shape {
 		auto bounding_box(usize idxuz) const -> math::Bounding_Box;
 		auto operator()(
 			math::Ray const& r,
-			usize idxuz
+			usize idx = 0uz
 		) const -> std::optional<Interaction>;
 		auto sample(
 			eval::Context const& ctx,
