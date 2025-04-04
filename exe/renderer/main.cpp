@@ -28,10 +28,10 @@ auto main() -> int {
 	spectra::Spectrum::initialize();
 	color::Color_Space::initialize();
 
-	auto constexpr size = math::Vector<usize, 2>{1024uz};
-	auto constexpr spp = 32uz;
-	auto constexpr blocks = 8uz;
-	auto constexpr kernels = 12uz;
+	auto size = math::Vector<usize, 2>{256uz};
+	auto spp = 32uz;
+	auto blocks = 8uz;
+	auto kernels = std::max(1uz, usize(std::thread::hardware_concurrency()));
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
 	auto lens = std::make_unique<photo::Pinhole_Lens>(0.1f);
@@ -56,7 +56,9 @@ auto main() -> int {
 	auto sphere = shape::Sphere{};
 	auto diffuse = material::Diffuse_Material{
 		std::make_unique<material::Image_Texture<spectra::Stochastic_Spectrum>>(
-			image::Image::from_path("../Downloads/lines.png", false), color::Color_Space::Spectrum_Type::albedo
+			image::Image::from_path("../Downloads/lines.png", false),
+			color::Color_Space::Spectrum_Type::albedo,
+			0uz
 		),
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
 			std::make_unique<spectra::Constant_Spectrum>(0.0f)
@@ -146,7 +148,7 @@ auto main() -> int {
 	}
 
 	while (true) {
-		auto constexpr total = size[0] * size[1] * spp;
+		auto total = size[0] * size[1] * spp;
 		auto count = atomic_count.load();
 		if (count < total) {
 			std::printf("\r");

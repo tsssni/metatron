@@ -21,7 +21,7 @@ namespace metatron::material {
 		) const -> spectra::Stochastic_Spectrum;
 
 	private:
-		std::unique_ptr<image::Image> image;
+		std::vector<std::unique_ptr<image::Image>> images;
 		color::Color_Space::Spectrum_Type spectrum_type;
 	};
 }

@@ -53,6 +53,26 @@ namespace metatron::math {
 	}
 
 	template<typename T, usize size>
+	requires std::totally_ordered<T>
+	auto min(Vector<T, size> const& x) -> T {
+		auto y = x[0];
+		for (auto i = 1uz; i < size; i++) {
+			y = std::min(y, x[i]);
+		}
+		return y;
+	}
+
+	template<typename T, usize size>
+	requires std::totally_ordered<T>
+	auto max(Vector<T, size> const& x) -> T {
+		auto y = x[0];
+		for (auto i = 1uz; i < size; i++) {
+			y = std::max(y, x[i]);
+		}
+		return y;
+	}
+
+	template<typename T, usize size>
 	requires std::floating_point<T>
 	auto lerp(Vector<T, size> const& x, Vector<T, size> const& y, T const& alpha) -> Vector<T, size> {
 		return (T{1.0} - alpha) * x + alpha * y;
@@ -75,11 +95,15 @@ namespace metatron::math {
 	}
 
 	template<typename T, usize size>
-	requires std::floating_point<T>
+	requires std::floating_point<T> || std::integral<T>
 	auto mod(Vector<T, size> const& x, T const& m) -> Vector<T, size> {
 		auto r = Vector<T, size>{};
 		for (auto i = 0uz; i < size; i++) {
-			r[i] = std::fmod(x[i], m);
+			if constexpr (std::floating_point<T>) {
+				r[i] = std::fmod(x[i], m);
+			} else {
+				r[i] = x[i] % m;
+			}
 		}
 		return r;
 	}
@@ -89,7 +113,11 @@ namespace metatron::math {
 	auto mod(Vector<T, size> const& x, Vector<T, size> const& m) -> Vector<T, size> {
 		auto r = Vector<T, size>{};
 		for (auto i = 0uz; i < size; i++) {
-			r[i] = std::fmod(x[i], m[i]);
+			if constexpr (std::floating_point<T>) {
+				r[i] = std::fmod(x[i], m[i]);
+			} else {
+				r[i] = x[i] % m[i];
+			}
 		}
 		return r;
 	}
