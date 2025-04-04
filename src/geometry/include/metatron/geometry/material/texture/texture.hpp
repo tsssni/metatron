@@ -14,12 +14,10 @@ namespace metatron::material {
 
 	template<typename T>
 	struct Texture {
-		using Element = T;
-
 		virtual ~Texture() {}
 		auto virtual sample(
 			eval::Context const& ctx,
 			Coordinate const& coord
-		) -> Element = 0;
+		) const -> T = 0;
 	};
 }

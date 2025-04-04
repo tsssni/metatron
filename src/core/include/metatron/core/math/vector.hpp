@@ -65,7 +65,7 @@ namespace metatron::math {
 	}
 
 	template<typename T, usize size>
-	requires std::floating_point<T>
+	requires std::floating_point<T> || std::integral<T>
 	auto abs(Vector<T, size> const& x) -> Vector<T, size> {
 		auto r = Vector<T, size>{};
 		for (auto i = 0uz; i < size; i++) {

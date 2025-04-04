@@ -21,6 +21,7 @@ namespace metatron::image {
 		math::Vector<usize, 4> const size;
 		color::Color_Space const* color_space;
 		bool linear;
+
 		Image(
 			math::Vector<usize, 4> const& size,
 			color::Color_Space const* color_space,

@@ -12,8 +12,8 @@
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/render/accel/bvh.hpp>
-#include <metatron/geometry/material/texture/spectrum/image.hpp>
-#include <metatron/geometry/material/texture/spectrum/constant.hpp>
+#include <metatron/geometry/material/texture/image.hpp>
+#include <metatron/geometry/material/texture/constant.hpp>
 #include <metatron/geometry/material/diffuse.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
 #include <metatron/volume/media/homogeneous.hpp>
@@ -55,10 +55,10 @@ auto main() -> int {
 
 	auto sphere = shape::Sphere{};
 	auto diffuse = material::Diffuse_Material{
-		std::make_unique<material::Spectrum_Image_Texture>(
+		std::make_unique<material::Image_Texture<spectra::Stochastic_Spectrum>>(
 			image::Image::from_path("../Downloads/lines.png", false), color::Color_Space::Spectrum_Type::albedo
 		),
-		std::make_unique<material::Spectrum_Constant_Texture>(
+		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
 			std::make_unique<spectra::Constant_Spectrum>(0.0f)
 		),
 	};
@@ -81,7 +81,10 @@ auto main() -> int {
 		}
 	}};
 
-	auto env_map = std::make_unique<material::Spectrum_Image_Texture>(image::Image::from_path("../Downloads/the_sky_is_on_fire_4k.exr"), color::Color_Space::Spectrum_Type::illuminant);
+	auto env_map = std::make_unique<material::Image_Texture<spectra::Stochastic_Spectrum>>(
+		image::Image::from_path("../Downloads/the_sky_is_on_fire_4k.exr"),
+		color::Color_Space::Spectrum_Type::illuminant
+	);
 	auto env_light = light::Environment_Light{std::move(env_map)};
 	auto lights = std::vector<emitter::Divider>{{&identity, &env_light}};
 	auto inf_lights = std::vector<emitter::Divider>{{&identity, &env_light}};

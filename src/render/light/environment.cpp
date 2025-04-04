@@ -8,7 +8,7 @@
 
 namespace metatron::light {
 		Environment_Light::Environment_Light(
-			std::unique_ptr<material::Spectrum_Image_Texture> env_map
+			std::unique_ptr<material::Texture<spectra::Stochastic_Spectrum>> env_map
 		): env_map(std::move(env_map)) {}
 
 		auto Environment_Light::operator()(

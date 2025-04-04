@@ -2,8 +2,10 @@
 #include <metatron/core/spectra/constant.hpp>
 
 namespace metatron::material {
-	Diffuse_Material::Diffuse_Material(std::unique_ptr<Spectrum_Texture> R, std::unique_ptr<Spectrum_Texture> T)
-		: R(std::move(R)), T(std::move(T)) {}
+	Diffuse_Material::Diffuse_Material(
+		std::unique_ptr<material::Texture<spectra::Stochastic_Spectrum>> R,
+		std::unique_ptr<material::Texture<spectra::Stochastic_Spectrum>> T
+	): R(std::move(R)), T(std::move(T)) {}
 
 	auto Diffuse_Material::sample(
 		eval::Context const& ctx,
