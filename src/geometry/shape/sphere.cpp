@@ -40,14 +40,14 @@ namespace metatron::shape {
 
 		auto dpdu = math::Vector<f32, 3>{
 			std::cos(theta) * std::cos(phi),
+			-std::sin(theta),
 			std::cos(theta) * std::sin(phi),
-			-std::cos(theta)
 		} / math::pi;
 		auto dpdv = math::Vector<f32, 3>{
 			-std::sin(theta) * std::sin(phi),
+			0.f,
 			std::sin(theta) * std::cos(phi),
-			0.f
-		} / math::pi;
+		} / (2.f * math::pi);
 		auto dndu = dpdu;
 		auto dndv = dpdv;
 

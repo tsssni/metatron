@@ -28,8 +28,8 @@ auto main() -> int {
 	spectra::Spectrum::initialize();
 	color::Color_Space::initialize();
 
-	auto size = math::Vector<usize, 2>{256uz};
-	auto spp = 32uz;
+	auto size = math::Vector<usize, 2>{1024uz};
+	auto spp = 128uz;
 	auto blocks = 8uz;
 	auto kernels = std::max(1uz, usize(std::thread::hardware_concurrency()));
 
@@ -57,8 +57,7 @@ auto main() -> int {
 	auto diffuse = material::Diffuse_Material{
 		std::make_unique<material::Image_Texture<spectra::Stochastic_Spectrum>>(
 			image::Image::from_path("../Downloads/lines.png", false),
-			color::Color_Space::Spectrum_Type::albedo,
-			0uz
+			color::Color_Space::Spectrum_Type::albedo
 		),
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
 			std::make_unique<spectra::Constant_Spectrum>(0.0f)
@@ -114,9 +113,6 @@ auto main() -> int {
 			for (auto p = 0; p < blocks * blocks; p++) {
 				auto px = start + math::morton_decode(p);
 				if (px >= size) continue;
-				if (px == math::Vector<usize, 2>{32, 32}) {
-					int a = 0;
-				}
 				for (auto n = 0uz; n < spp; n++) {
 					auto sample = camera.sample(px, n, sampler);
 					auto& s = sample.value();

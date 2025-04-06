@@ -26,7 +26,7 @@ namespace metatron::photo {
 		color::Color_Space const* color_space
 	):
 	size(film_size),
-	dxdy(math::Vector<f32, 2>{1.f} / image_size / film_size),
+	dxdy(film_size / image_size),
 	image({image_size, 4uz, 4uz}, color_space),
 	sensor(std::move(sensor)),
 	filter(std::move(filter)) {}
