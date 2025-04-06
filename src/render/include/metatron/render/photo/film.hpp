@@ -32,7 +32,10 @@ namespace metatron::photo {
 			std::unique_ptr<math::Filter> filter,
 			color::Color_Space const* color_space
 		);
-		auto operator()(math::Vector<f32, 2> pixel_position) -> Fixel;
+		auto operator()(
+			math::Vector<usize, 2> pixel,
+			math::Vector<f32, 2> u
+		) -> Fixel;
 		auto to_path(std::string_view path) -> void;
 
 	private:

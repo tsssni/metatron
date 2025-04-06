@@ -7,7 +7,9 @@ namespace metatron::math {
 		return math::abs(p) < radius ? 1.f : 0.f;
 	}
 
-	auto Box_Filter::sample(math::Vector<f32, 2> const& u) const -> math::Vector<f32, 2> {
-		return math::lerp(-radius, radius, u);
+	auto Box_Filter::sample(math::Vector<f32, 2> const& u) const -> std::optional<filter::Interaction> {
+		auto p = math::lerp(-radius, radius, u);
+		auto w = (*this)(p);
+		return filter::Interaction{p, w, 1.f / (4.f * radius[0] * radius[1])};
 	}
 }

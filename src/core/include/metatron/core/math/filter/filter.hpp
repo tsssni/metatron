@@ -2,13 +2,17 @@
 #include <metatron/core/math/vector.hpp>
 
 namespace metatron::math {
-	struct Filter {
-		struct Sample final {
+	namespace filter {
+		struct Interaction final {
 			math::Vector<f32, 2> p;
+			f32 weight;
 			f32 pdf;
 		};
+	}
+
+	struct Filter {
 		virtual ~Filter() {}
 		auto virtual operator()(math::Vector<f32, 2> const& p) const -> f32 = 0;
-		auto virtual sample(math::Vector<f32, 2> const& u) const -> math::Vector<f32, 2> = 0;
+		auto virtual sample(math::Vector<f32, 2> const& u) const -> std::optional<filter::Interaction> = 0;
 	};
 }

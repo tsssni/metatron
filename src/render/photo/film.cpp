@@ -31,7 +31,12 @@ namespace metatron::photo {
 	sensor(std::move(sensor)),
 	filter(std::move(filter)) {}
 
-	auto Film::operator()(math::Vector<f32, 2> pixel_position) -> Fixel {
+	auto Film::operator()(
+		math::Vector<usize, 2> pixel,
+		math::Vector<f32, 2> u
+	) -> Fixel {
+		auto f_intr = filter->sample(u).value();
+		auto pixel_position = math::Vector<f32, 2>{pixel} + 0.5f + f_intr.p;
 		auto uv = pixel_position / image.size;
 		auto film_position = (uv - 0.5f) * size;
 		auto weight = (*filter)(math::mod(pixel_position, 1.f) - 0.5f);
@@ -39,7 +44,7 @@ namespace metatron::photo {
 		return {
 			this,
 			film_position,
-			weight
+			f_intr.weight
 		};
 	}
 
