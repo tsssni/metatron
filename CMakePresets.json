@@ -27,7 +27,7 @@
 			"inherits": "default",
 			"binaryDir": "${sourceDir}/build/${presetName}",
 			"cacheVariables": {
-				"CMAKE_BUILD_TYPE": "Release"
+				"CMAKE_BUILD_TYPE": "RelWithDebInfo"
 			}
 		},
 		{
@@ -45,7 +45,7 @@
 			"inherits": "default",
 			"binaryDir": "${sourceDir}/build/${presetName}",
 			"cacheVariables": {
-				"CMAKE_BUILD_TYPE": "Release"
+				"CMAKE_BUILD_TYPE": "RelWithDebInfo"
 			}
 		}
 	],

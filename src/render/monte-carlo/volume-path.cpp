@@ -194,9 +194,9 @@ namespace metatron::mc {
 			
 			auto local_differential = lt ^ (rt ^ ctx.ray_differential);
 			auto tangent = shape::Plane{intr.p, intr.n};
-			OPTIONAL_OR_CONTINUE(d_intr, tangent(local_differential.r));
-			OPTIONAL_OR_CONTINUE(dx_intr, tangent(local_differential.rx));
-			OPTIONAL_OR_CONTINUE(dy_intr, tangent(local_differential.ry));
+			OPTIONAL_OR_BREAK(d_intr, tangent(local_differential.r));
+			OPTIONAL_OR_BREAK(dx_intr, tangent(local_differential.rx));
+			OPTIONAL_OR_BREAK(dy_intr, tangent(local_differential.ry));
 			
 			auto dpdx = dx_intr.p - d_intr.p;
 			auto dpdy = dy_intr.p - d_intr.p;

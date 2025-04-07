@@ -29,9 +29,9 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{1024uz};
-	auto spp = 128uz;
+	auto spp = 32uz;
 	auto blocks = 8uz;
-	auto kernels = std::max(1uz, usize(std::thread::hardware_concurrency()));
+	auto kernels = usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
 	auto lens = std::make_unique<photo::Pinhole_Lens>(0.1f);
@@ -55,18 +55,17 @@ auto main() -> int {
 
 	auto sphere = shape::Sphere{};
 	auto diffuse = material::Diffuse_Material{
-		std::make_unique<material::Image_Texture<spectra::Stochastic_Spectrum>>(
-			image::Image::from_path("../Downloads/lines.png", false),
-			color::Color_Space::Spectrum_Type::albedo
+		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
+			std::make_unique<spectra::Constant_Spectrum>(0.1f)
 		),
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
-			std::make_unique<spectra::Constant_Spectrum>(0.0f)
+			std::make_unique<spectra::Constant_Spectrum>(0.5f)
 		),
 	};
 	auto homo_medium = media::Homogeneous_Medium{
-		std::make_unique<spectra::Constant_Spectrum>(0.1f),
+		std::make_unique<spectra::Constant_Spectrum>(0.0f),
 		std::make_unique<spectra::Constant_Spectrum>(0.5f),
-		std::make_unique<spectra::Constant_Spectrum>(0.01f),
+		std::make_unique<spectra::Constant_Spectrum>(0.0f),
 	};
 	auto bvh = accel::LBVH{{
 		{
