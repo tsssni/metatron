@@ -3,13 +3,13 @@
 #include <metatron/core/math/constant.hpp>
 
 namespace metatron::spectra {
-	Stochastic_Spectrum::Stochastic_Spectrum(usize n, f32 u) {
+	Stochastic_Spectrum::Stochastic_Spectrum(usize n, f32 u, f32 v) {
 		for (auto i = 0; i < n; i++) {
 			auto ui = std::fmod(u + i / float(n), 1.f);
 			lambda.emplace_back(std::lerp(visible_lambda[0], visible_lambda[1], ui));
-			value.emplace_back(0.f);
-			pdf.emplace_back(1.f / (visible_lambda[1] - visible_lambda[0]));
 		}
+		value.resize(n, v);
+		pdf.resize(n, 1.f / (visible_lambda[1] - visible_lambda[0]));
 	}
 
 	auto Stochastic_Spectrum::operator()(f32 lambda) const -> f32 {
@@ -175,5 +175,15 @@ namespace metatron::spectra {
 			maxv = std::max(maxv, v);
 		}
 		return maxv;
+	}
+
+
+	auto avg(Stochastic_Spectrum const& spectrum) -> f32 {
+		auto n = spectrum.lambda.size();
+		auto avgv = 0.f;
+		for (auto& v: spectrum.value) {
+			avgv += v / n;
+		}
+		return avgv;
 	}
 }

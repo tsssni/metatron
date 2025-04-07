@@ -8,11 +8,12 @@ namespace metatron::light {
 		Environment_Light(std::unique_ptr<material::Texture<spectra::Stochastic_Spectrum>> env_map);
 
 		auto operator()(
-			math::Vector<f32, 3> const& wo,
-			math::Vector<f32, 3> const& n,
-			spectra::Stochastic_Spectrum const& L
+			eval::Context const& ctx
 		) const -> std::optional<Interaction>;
-		auto sample(eval::Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<Interaction>;
+		auto sample(
+			eval::Context const& ctx,
+			math::Vector<f32, 2> const& u
+		) const -> std::optional<Interaction>;
 
 	private:
 		std::unique_ptr<material::Texture<spectra::Stochastic_Spectrum>> env_map;

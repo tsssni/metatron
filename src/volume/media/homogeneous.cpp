@@ -20,10 +20,10 @@ namespace metatron::media {
 		auto pdf = t < t_max ? distr(t_s) : distr(t_s) / sigma_t;
 
 		auto transmittance = ctx.L;
-		auto sigma_a = transmittance & (*this->sigma_a);
-		auto sigma_s = transmittance & (*this->sigma_s);
-		auto sigma_n = transmittance & spectra::Constant_Spectrum{0.f};
-		auto Le = transmittance & (*this->Le);
+		auto sigma_a = ctx.L & (*this->sigma_a);
+		auto sigma_s = ctx.L & (*this->sigma_s);
+		auto sigma_n = ctx.L & spectra::Constant_Spectrum{0.f};
+		auto Le = ctx.L & (*this->Le);
 
 		for (auto i = 0uz; i < transmittance.lambda.size(); i++) {
 			auto lambda = transmittance.lambda[i];
