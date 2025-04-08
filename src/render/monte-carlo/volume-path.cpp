@@ -68,6 +68,9 @@ namespace metatron::mc {
 
 					l_intr.wi = lt | l_intr.wi;
 					auto pe = e_intr.pdf * l_intr.pdf;
+					if (std::abs(pe) < math::epsilon<f32>) {
+						break;
+					}
 
 					auto ps = 0.f;
 					auto f = spectra::Stochastic_Spectrum{};
@@ -75,7 +78,7 @@ namespace metatron::mc {
 					if (bsdf) {
 						auto t = math::Transform{};
 						t.config.rotation = math::Quaternion<f32>::from_rotation_between(direct_ctx.n, {0.f, 1.f, 0.f});
-						auto wo = t | ctx.ray_differential.r.d;
+						auto wo = t | direct_ctx.r.d;
 						auto wi = t | l_intr.wi;
 						OPTIONAL_OR_BREAK(b_intr, (*bsdf)(wo, wi, Le));
 						f = b_intr.f;

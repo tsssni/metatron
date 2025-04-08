@@ -28,8 +28,8 @@ auto main() -> int {
 	spectra::Spectrum::initialize();
 	color::Color_Space::initialize();
 
-	auto size = math::Vector<usize, 2>{256uz};
-	auto spp = 32uz;
+	auto size = math::Vector<usize, 2>{1024uz};
+	auto spp = 128uz;
 	auto blocks = 8uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
@@ -59,13 +59,13 @@ auto main() -> int {
 			std::make_unique<spectra::Constant_Spectrum>(0.0f)
 		),
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
-			std::make_unique<spectra::Constant_Spectrum>(1.0f)
+			std::make_unique<spectra::Constant_Spectrum>(0.2f)
 		),
 	};
 	auto homo_medium = media::Homogeneous_Medium{
 		std::make_unique<spectra::Constant_Spectrum>(0.0f),
 		color::Color_Space::sRGB->to_spectrum(
-			{0.2f, 0.1f, 0.1f},
+			{0.8f, 0.01f, 0.01f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		std::make_unique<spectra::Constant_Spectrum>(0.0f),
@@ -75,7 +75,7 @@ auto main() -> int {
 			&sphere,
 			&homo_medium,
 			nullptr,
-			&diffuse,
+			nullptr,
 			nullptr,
 			&local_to_world,
 			&identity,
@@ -115,9 +115,6 @@ auto main() -> int {
 			for (auto p = 0; p < blocks * blocks; p++) {
 				auto px = start + math::morton_decode(p);
 				if (px >= size) continue;
-				if (px == math::Vector<usize, 2>{128uz}) {
-					int a = 1;
-				}
 				for (auto n = 0uz; n < spp; n++) {
 					auto sample = camera.sample(px, n, sampler);
 					auto& s = sample.value();
