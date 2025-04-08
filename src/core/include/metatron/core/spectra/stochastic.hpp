@@ -44,4 +44,5 @@ namespace metatron::spectra {
 	auto min(Stochastic_Spectrum const& spectrum) -> f32;
 	auto max(Stochastic_Spectrum const& spectrum) -> f32;
 	auto avg(Stochastic_Spectrum const& spectrum) -> f32;
+	auto clear(Stochastic_Spectrum& spectrum, f32 v = 0.f) -> void;
 }

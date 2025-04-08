@@ -59,7 +59,7 @@ auto main() -> int {
 			std::make_unique<spectra::Constant_Spectrum>(0.0f)
 		),
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
-			std::make_unique<spectra::Constant_Spectrum>(0.5f)
+			std::make_unique<spectra::Constant_Spectrum>(1.0f)
 		),
 	};
 	auto homo_medium = media::Homogeneous_Medium{
@@ -75,7 +75,7 @@ auto main() -> int {
 			&sphere,
 			&homo_medium,
 			nullptr,
-			&diffuse,
+			nullptr,
 			nullptr,
 			&local_to_world,
 			&identity,

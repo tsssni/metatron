@@ -186,4 +186,10 @@ namespace metatron::spectra {
 		}
 		return avgv;
 	}
+
+	auto clear(Stochastic_Spectrum& spectrum, f32 cv) -> void {
+		for (auto& v: spectrum.value) {
+			v = cv;
+		}
+	}
 }
