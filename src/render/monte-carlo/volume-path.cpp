@@ -121,7 +121,7 @@ namespace metatron::mc {
 						}
 						auto& div = div_opt.value();
 						auto& lt = *div->local_to_world;
-						intr_opt = (*div->shape)(lt ^ direct_ctx.r);
+						intr_opt = (*div->shape)(lt ^ (rt ^ direct_ctx.r));
 
 						if (!intr_opt.has_value()) {
 							terminated = true;
@@ -158,6 +158,9 @@ namespace metatron::mc {
 								mis_sd *= (m_intr.sigma_n / sigma_maj);
 								continue;
 							} else {
+								intr.p = rt | (lt | math::Vector<f32, 4>{intr.p, 1.f});
+								intr.n = rt | (lt | math::Vector<f32, 4>{intr.n, 0.f});
+
 								if (math::dot(-direct_ctx.r.d, intr.n) >= 0.f) {
 									medium = div->interior_medium;
 									medium_to_world = div->interior_transform;
@@ -165,6 +168,7 @@ namespace metatron::mc {
 									medium = div->exterior_medium;
 									medium_to_world = div->exterior_transform;
 								}
+
 								direct_ctx.r.o = intr.p + direct_ctx.r.d * 0.001f;
 								direct_ctx.p = direct_ctx.r.o;
 								break;
@@ -187,8 +191,8 @@ namespace metatron::mc {
 				if (div_opt) {
 					auto div = div_opt.value();
 					auto& lt = *div->local_to_world;
-					auto ray = lt ^ (rt ^ ctx.ray_differential);
-					intr_opt = (*div->shape)(ray.r, div->primitive);
+					auto r = lt ^ (rt ^ ctx.ray_differential.r);
+					intr_opt = (*div->shape)(r, div->primitive);
 				}
 			}
 
@@ -219,14 +223,13 @@ namespace metatron::mc {
 			if (ctx.medium) {
 				auto& mt = *ctx.medium_to_world;
 				auto m_ctx = eval::Context{ctx.ray_differential.r.o, {}, ctx.ray_differential.r, Le};
-				m_ctx.p = mt ^ (rt ^ m_ctx.p);
 				m_ctx.r = mt ^ (rt ^ m_ctx.r);
 				OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
 					terminated = true;
 					continue;
 				});
-				m_ctx.p = rt | (mt | m_ctx.p);
 				m_ctx.r = rt | (mt | m_ctx.r);
+				m_intr.p = rt | (mt | math::Vector<f32, 4>{m_intr.p, 1.f});
 
 				auto hit = m_intr.t == intr.t;
 				auto sigma_maj = m_intr.sigma_a + m_intr.sigma_s + m_intr.sigma_n;
@@ -236,9 +239,9 @@ namespace metatron::mc {
 				mis_s *= mis_t / m_intr.pdf;
 				mis_e *= mis_t / m_intr.pdf;
 
-				if (m_intr.t != intr.t) {
+				if (!hit) {
 					auto mis_a = math::guarded_div(1.f, spectra::avg(mis_s));
-					Le += beta * mis_a * m_intr.sigma_a * m_intr.Le;
+					Le += mis_a * beta * m_intr.sigma_a * m_intr.Le;
 
 					auto p_a = m_intr.sigma_a.value[0] / sigma_maj.value[0];
 					auto p_s = m_intr.sigma_s.value[0] / sigma_maj.value[0];
@@ -349,10 +352,11 @@ namespace metatron::mc {
 				terminated = true;
 				continue;
 			});
+			scatter_ctx.r = bt ^ scatter_ctx.r;
 			b_intr.wi = bt ^ math::Vector<f32, 4>{b_intr.wi, 0.f};
 
 			auto flip_n = 1.f;
-			if (math::dot(-ctx.ray_differential.r.d, b_intr.wi) < 0.f) {
+			if (math::dot(-scatter_ctx.r.d, b_intr.wi) < 0.f) {
 				if (math::dot(b_intr.wi, intr.n) <= 0.f) {
 					ctx.medium = div->interior_medium;
 					ctx.medium_to_world = div->interior_transform;

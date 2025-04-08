@@ -28,10 +28,10 @@ auto main() -> int {
 	spectra::Spectrum::initialize();
 	color::Color_Space::initialize();
 
-	auto size = math::Vector<usize, 2>{1024uz};
-	auto spp = 32uz;
+	auto size = math::Vector<usize, 2>{256uz};
+	auto spp = 1uz;
 	auto blocks = 8uz;
-	auto kernels = usize(std::thread::hardware_concurrency());
+	auto kernels = 1uz; // usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
 	auto lens = std::make_unique<photo::Pinhole_Lens>(0.1f);
@@ -65,7 +65,7 @@ auto main() -> int {
 	auto homo_medium = media::Homogeneous_Medium{
 		std::make_unique<spectra::Constant_Spectrum>(0.0f),
 		color::Color_Space::sRGB->to_spectrum(
-			{0.1f, 0.5f, 0.8f},
+			{0.8f, 0.1f, 0.1f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		std::make_unique<spectra::Constant_Spectrum>(0.0f),
@@ -75,7 +75,7 @@ auto main() -> int {
 			&sphere,
 			&homo_medium,
 			nullptr,
-			nullptr,
+			&diffuse,
 			nullptr,
 			&local_to_world,
 			&identity,
@@ -115,6 +115,9 @@ auto main() -> int {
 			for (auto p = 0; p < blocks * blocks; p++) {
 				auto px = start + math::morton_decode(p);
 				if (px >= size) continue;
+				if (px == math::Vector<usize, 2>{128uz}) {
+					int a = 1;
+				}
 				for (auto n = 0uz; n < spp; n++) {
 					auto sample = camera.sample(px, n, sampler);
 					auto& s = sample.value();

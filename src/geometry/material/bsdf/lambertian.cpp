@@ -43,11 +43,13 @@ namespace metatron::material {
 		if (std::abs(ru + tu) < math::epsilon<f32>) return {};
 
 		auto rtu = ru / (ru + tu);
+		auto reflected = u[0] < rtu;
+
 		auto dist = math::Cosine_Hemisphere_Distribution{};
 		auto wi = dist.sample({u[1], u[2]});
 		auto pdf = dist.pdf(wi[1]);
 
-		if (u[0] < rtu) {
+		if (reflected) {
 			pdf *= rtu;
 			if (-ctx.r.d[1] * wi[1] < 0.f) {
 				wi *= -1.f;
@@ -61,12 +63,13 @@ namespace metatron::material {
 
 		auto f = ctx.L;
 		for (auto i = 0uz; i < f.lambda.size(); i++) {
-			if (-ctx.r.d[1] * wi[1] >= 0.f) {
+			if (reflected) {
 				f.value[i] = (*R)(f.lambda[i]);
 			} else {
 				f.value[i] = (*T)(f.lambda[i]);
 			}
 		}
+
 		return bsdf::Interaction{f, wi, pdf};
 	}
 }
