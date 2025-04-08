@@ -29,9 +29,9 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{256uz};
-	auto spp = 1uz;
+	auto spp = 32uz;
 	auto blocks = 8uz;
-	auto kernels = 1uz; // usize(std::thread::hardware_concurrency());
+	auto kernels = usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
 	auto lens = std::make_unique<photo::Pinhole_Lens>(0.1f);
@@ -65,7 +65,7 @@ auto main() -> int {
 	auto homo_medium = media::Homogeneous_Medium{
 		std::make_unique<spectra::Constant_Spectrum>(0.0f),
 		color::Color_Space::sRGB->to_spectrum(
-			{0.8f, 0.1f, 0.1f},
+			{0.2f, 0.1f, 0.1f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		std::make_unique<spectra::Constant_Spectrum>(0.0f),

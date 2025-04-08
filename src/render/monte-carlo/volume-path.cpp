@@ -43,7 +43,7 @@ namespace metatron::mc {
 				break;
 			}
 
-			auto q = spectra::max(beta / spectra::avg(mis_s));
+			auto q = spectra::max(beta * math::guarded_div(1.f, spectra::avg(mis_s)));
 			if (q < 1.f && depth > 1uz) {
 				auto rr_u = sampler.generate_1d();
 				if (rr_u > q) {
@@ -181,7 +181,6 @@ namespace metatron::mc {
 				} while (false);
 				
 				ctx.ray_differential.r = scatter_ctx.r;
-				ctx.ray_differential.r.o += ctx.ray_differential.r.d * 0.001f;
 				ctx.ray_differential.differentiable = false;
 			}
 
@@ -212,7 +211,7 @@ namespace metatron::mc {
 				auto pl = e_intr.pdf * l_intr.pdf;
 				mis_e *= pl;
 				auto mis_w = depth == 0uz ? 1.f : math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
-				Le = beta * mis_w * l_intr.Le;
+				Le += beta * mis_w * l_intr.Le;
 				continue;
 			}
 
@@ -366,13 +365,15 @@ namespace metatron::mc {
 					ctx.medium_to_world = div->exterior_transform;
 				}
 			}
+			auto scatter_n = flip_n * intr.n;
+			auto scatter_p = intr.p + 0.001f * b_intr.wi;
 
 			beta *= b_intr.f / b_intr.pdf;
 			mis_e = mis_s / b_intr.pdf;
 			scattered = true;
 			scatter_f = b_intr.f;
 			scatter_pdf = b_intr.pdf;
-			scatter_ctx = {intr.p, flip_n * intr.n, {intr.p, b_intr.wi}, Le};
+			scatter_ctx = {scatter_p, scatter_n, {scatter_p, b_intr.wi}, Le};
 		}
 
 		return Le;
