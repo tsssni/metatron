@@ -14,43 +14,6 @@ namespace metatron::math {
 		update();
 		return transform;
 	}
-	auto Transform::operator|(math::Vector<f32, 4> const& rhs) const -> math::Vector<f32, 4> {
-		update();
-		return transform | rhs;
-	}
-
-	auto Transform::operator^(math::Vector<f32, 4> const& rhs) const -> math::Vector<f32, 4> {
-		update();
-		return inv_transform | rhs;
-	}
-
-	auto Transform::operator|(math::Ray const& rhs) const -> math::Ray {
-		auto r = rhs;
-		r.o = *this | math::Vector<f32, 4>{r.o, 1.f};
-		r.d = *this | math::Vector<f32, 4>{r.d, 0.f};
-		return r;
-	}
-	auto Transform::operator^(math::Ray const& rhs) const -> math::Ray {
-		auto r = rhs;
-		r.o = *this ^ math::Vector<f32, 4>{r.o, 1.f};
-		r.d = *this ^ math::Vector<f32, 4>{r.d, 0.f};
-		return r;
-
-	}
-	auto Transform::operator|(math::Ray_Differential const& rhs) const -> math::Ray_Differential {
-		auto ray = rhs;
-		ray.r = *this | rhs.r;
-		ray.rx = *this | rhs.rx;
-		ray.ry = *this | rhs.ry;
-		return ray;
-	}
-	auto Transform::operator^(math::Ray_Differential const& rhs) const -> math::Ray_Differential {
-		auto ray = rhs;
-		ray.r = *this ^ rhs.r;
-		ray.rx = *this ^ rhs.rx;
-		ray.ry = *this ^ rhs.ry;
-		return ray;
-	}
 
 	auto Transform::update(bool force) const -> void {
 		if (force || config != old_config) {

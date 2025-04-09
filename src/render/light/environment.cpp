@@ -39,7 +39,7 @@ namespace metatron::light {
 			auto n = math::Vector<f32, 3>{0.f};
 			if (ctx.n != n) {
 				auto local_to_render = math::Quaternion<f32>::from_rotation_between({0.f, 1.f, 0.f}, ctx.n);
-				wi = math::Vector<f32, 3>{math::rotate(math::Vector<f32, 4>{wi}, local_to_render)};
+				wi = math::Vector<f32, 3>{math::rotate(math::expand(wi, 0.f), local_to_render)};
 				n = ctx.n;
 			}
 			

@@ -5,6 +5,12 @@
 #include <metatron/core/math/ray.hpp>
 
 namespace metatron::math {
+	template<typename T>
+	concept Transformable = false
+	|| std::is_same_v<T, math::Vector<f32, 4>>
+	|| std::is_same_v<std::remove_cvref_t<T>, math::Ray>
+	|| std::is_same_v<std::remove_cvref_t<T>, math::Ray_Differential>;
+
 	struct Transform final {
 		struct Config {
 			math::Vector<f32, 3> translation{};
@@ -24,16 +30,69 @@ namespace metatron::math {
 		);
 
 		explicit operator math::Matrix<f32, 4, 4>() const;
-		auto operator|(math::Vector<f32, 4> const& rhs) const -> math::Vector<f32, 4>;
-		auto operator^(math::Vector<f32, 4> const& rhs) const -> math::Vector<f32, 4>;
-		auto operator|(math::Ray const& rhs) const -> math::Ray;
-		auto operator^(math::Ray const& rhs) const -> math::Ray;
-		auto operator|(math::Ray_Differential const& rhs) const -> math::Ray_Differential;
-		auto operator^(math::Ray_Differential const& rhs) const -> math::Ray_Differential;
+		template<Transformable T>
+		auto operator|(T&& rhs) const -> std::remove_cvref_t<T> {
+			if constexpr (std::is_convertible_v<T, math::Vector<f32, 4>>) {
+				update();
+				return transform | rhs;
+			} else if constexpr (std::is_convertible_v<T, math::Ray>) {
+				auto r = rhs;
+				r.o = *this | math::expand(r.o, 1.f);
+				r.d = *this | math::expand(r.d, 0.f);
+				return r;
+			} else if constexpr (std::is_convertible_v<T, math::Ray_Differential>) {
+				auto ray = rhs;
+				ray.r = *this | rhs.r;
+				ray.rx = *this | rhs.rx;
+				ray.ry = *this | rhs.ry;
+				return ray;
+			}
+		}
+
+		template<Transformable T>
+		auto operator^(T&& rhs) const -> std::remove_cvref_t<T> {
+			if constexpr (std::is_convertible_v<T, math::Vector<f32, 4>>) {
+				update();
+				return inv_transform | rhs;
+			} else if constexpr (std::is_convertible_v<T, math::Ray>) {
+				auto r = rhs;
+				r.o = *this ^ math::expand(r.o, 1.f);
+				r.d = *this ^ math::expand(r.d, 0.f);
+				return r;
+			} else if constexpr (std::is_convertible_v<T, math::Ray_Differential>) {
+				auto ray = rhs;
+				ray.r = *this ^ rhs.r;
+				ray.rx = *this ^ rhs.rx;
+				ray.ry = *this ^ rhs.ry;
+				return ray;
+			}
+		}
 
 	private:
 		auto update(bool force = false) const -> void;
 
 		mutable Config old_config{};
 	};
+
+	template<Transformable T>
+	auto inline tseq(T&& x, Transform const& t) -> std::remove_cvref_t<T> {
+		return t | std::forward<T>(x);
+	}
+
+	template<Transformable T>
+	auto inline trev(T&& x, Transform const& t) -> std::remove_cvref_t<T> {
+		return t ^ std::forward<T>(x);
+	}
+
+	template<Transformable T, typename... Transforms>
+	requires (std::is_convertible_v<Transform const&, Transforms> && ...)
+	auto inline tseq(T&& x, Transform const& t, Transform const& s, Transforms... seq) -> std::remove_cvref_t<T> {
+		return tseq(t | std::forward<T>(x), s, seq...);
+	}
+
+	template<Transformable T, typename... Transforms>
+	requires (std::is_convertible_v<Transform const&, Transforms> && ...)
+	auto inline trev(T&& x, Transform const& t, Transform const& s, Transforms... seq) -> std::remove_cvref_t<T> {
+		return trev(t ^ std::forward<T>(x), s, seq...);
+	}
 }

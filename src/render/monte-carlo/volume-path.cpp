@@ -61,13 +61,13 @@ namespace metatron::mc {
 					auto direct_ctx = scatter_ctx;
 					auto& lt = *e_intr.divider->local_to_world;
 
-					direct_ctx.p = lt ^ (rt ^ math::Vector<f32, 4>{direct_ctx.p, 1.f});
-					direct_ctx.n = lt ^ (rt ^ math::Vector<f32, 4>{direct_ctx.n, 0.f});
+					direct_ctx.p = math::trev(math::expand(direct_ctx.p, 1.f), rt, lt);
+					direct_ctx.n = math::trev(math::expand(direct_ctx.n, 0.f), rt, lt);
 					OPTIONAL_OR_BREAK(l_intr, e_intr.divider->light->sample(direct_ctx, sampler.generate_2d()));
-					direct_ctx.p = rt | (lt | math::Vector<f32, 4>{direct_ctx.p, 1.f});
-					direct_ctx.n = rt | (lt | math::Vector<f32, 4>{direct_ctx.n, 0.f});
+					direct_ctx.p = math::tseq(math::expand(direct_ctx.p, 1.f), lt, rt);
+					direct_ctx.n = math::tseq(math::expand(direct_ctx.n, 0.f), lt, rt);
 
-					l_intr.wi = lt | l_intr.wi;
+					l_intr.wi = lt | math::expand(l_intr.wi, 0.f);
 					auto pe = e_intr.pdf * l_intr.pdf;
 					if (std::abs(pe) < math::epsilon<f32>) {
 						break;
@@ -79,8 +79,8 @@ namespace metatron::mc {
 					if (bsdf) {
 						auto t = math::Transform{};
 						t.config.rotation = math::Quaternion<f32>::from_rotation_between(direct_ctx.n, {0.f, 1.f, 0.f});
-						auto wo = t | direct_ctx.r.d;
-						auto wi = t | l_intr.wi;
+						auto wo = t | math::expand(direct_ctx.r.d, 0.f);
+						auto wi = t | math::expand(l_intr.wi, 0.f);
 						OPTIONAL_OR_BREAK(b_intr, (*bsdf)(wo, wi, Le));
 						f = b_intr.f;
 						ps = b_intr.pdf;
@@ -125,7 +125,8 @@ namespace metatron::mc {
 						}
 						auto& div = div_opt.value();
 						auto& lt = *div->local_to_world;
-						intr_opt = (*div->shape)(lt ^ (rt ^ direct_ctx.r));
+						auto lr = math::trev(direct_ctx.r, rt, lt);
+						intr_opt = (*div->shape)(lr);
 
 						if (!intr_opt.has_value()) {
 							terminated = true;
@@ -136,16 +137,18 @@ namespace metatron::mc {
 							continue;
 						}
 						auto& intr = intr_opt.value();
+						intr.p = math::tseq(math::expand(intr.p, 1.f), lt, rt);
+						intr.n = math::tseq(math::expand(intr.p, 0.f), lt, rt);
 
 						while (ctx.medium) {
 							auto& mt = *medium_to_world;
-							direct_ctx.r = mt ^ (rt ^ direct_ctx.r);
+							direct_ctx.r = math::trev(direct_ctx.r, rt, mt);
 							OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(direct_ctx, intr.t, sampler.generate_1d()), {
 								terminated = true;
 								spectra::clear(betad);
 								break;
 							});
-							direct_ctx.r = rt | (mt | direct_ctx.r);
+							direct_ctx.r = math::tseq(direct_ctx.r, mt, rt);
 							l_intr.t -= m_intr.t;
 
 							auto hit = m_intr.t == intr.t;
@@ -160,9 +163,6 @@ namespace metatron::mc {
 								mis_sd *= (m_intr.sigma_n / m_intr.sigma_maj);
 								continue;
 							} else {
-								intr.p = rt | (lt | math::Vector<f32, 4>{intr.p, 1.f});
-								intr.n = rt | (lt | math::Vector<f32, 4>{intr.n, 0.f});
-
 								if (math::dot(-direct_ctx.r.d, intr.n) >= 0.f) {
 									medium = div->interior_medium;
 									medium_to_world = div->interior_transform;
@@ -204,11 +204,11 @@ namespace metatron::mc {
 				auto inf_ctx = scatter_ctx;
 				auto& lt = *e_intr.divider->local_to_world;
 
-				inf_ctx.r.d = lt ^ (rt ^ inf_ctx.r.d);
-				inf_ctx.n = lt ^ (rt ^ inf_ctx.n);
+				inf_ctx.r.d = math::trev(math::expand(inf_ctx.r.d, 0.f), rt, lt);
+				inf_ctx.n = math::trev(math::expand(inf_ctx.n, 0.f), rt, lt);
 				OPTIONAL_OR_CONTINUE(l_intr, (*e_intr.divider->light)(inf_ctx));
-				inf_ctx.r.d = rt | (lt | inf_ctx.r.d);
-				inf_ctx.n = rt | (lt | inf_ctx.n);
+				inf_ctx.r.d = math::tseq(math::expand(inf_ctx.r.d, 0.f), lt, rt);
+				inf_ctx.n = math::tseq(math::expand(inf_ctx.n, 0.f), lt, rt);
 
 				auto pl = e_intr.pdf * l_intr.pdf;
 				mis_e *= pl;
@@ -220,19 +220,19 @@ namespace metatron::mc {
 			auto& div = div_opt.value();
 			auto& intr = intr_opt.value();
 			auto& lt = *div->local_to_world;
-			intr.p = rt | (lt | math::Vector<f32, 4>{intr.p, 1.f});
-			intr.n = rt | (lt | math::Vector<f32, 4>{intr.n, 0.f});
+			intr.p = math::tseq(math::expand(intr.p, 1.f), lt, rt);
+			intr.n = math::tseq(math::expand(intr.n, 0.f), lt, rt);
 
 			if (ctx.medium) {
 				auto& mt = *ctx.medium_to_world;
 				auto m_ctx = eval::Context{ctx.ray_differential.r.o, {}, ctx.ray_differential.r, Le};
-				m_ctx.r = mt ^ (rt ^ m_ctx.r);
+				m_ctx.r = math::trev(m_ctx.r, rt, mt);
 				OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
 					terminated = true;
 					continue;
 				});
-				m_ctx.r = rt | (mt | m_ctx.r);
-				m_intr.p = rt | (mt | math::Vector<f32, 4>{m_intr.p, 1.f});
+				m_ctx.r = math::tseq(m_ctx.r, mt, rt);
+				m_intr.p = math::tseq(math::expand(m_intr.p, 1.f), mt, rt);
 
 				auto hit = m_intr.t == intr.t;
 
@@ -305,7 +305,7 @@ namespace metatron::mc {
 				ctx.ray_differential = st | rd;
 			}
 			
-			auto local_differential = lt ^ (rt ^ ctx.ray_differential);
+			auto local_differential = math::trev(ctx.ray_differential, rt, lt);
 			auto tangent = shape::Plane{intr.p, intr.n};
 			OPTIONAL_OR_BREAK(d_intr, tangent(local_differential.r));
 			OPTIONAL_OR_BREAK(dx_intr, tangent(local_differential.rx));
@@ -332,11 +332,11 @@ namespace metatron::mc {
 					auto& div = *e_intr.divider;
 					auto& lt = *div.local_to_world;
 
-					emit_ctx.r.d = lt ^ (rt ^ emit_ctx.r.d);
-					emit_ctx.n = lt ^ (rt ^ emit_ctx.n);
+					emit_ctx.r.d = math::trev(math::expand(emit_ctx.r.d, 0.f), rt, lt);
+					emit_ctx.n = math::trev(math::expand(emit_ctx.n, 0.f), rt, lt);
 					OPTIONAL_OR_BREAK(l_intr, (*e_intr.divider->light)(emit_ctx));
-					emit_ctx.r.d = rt | (lt | emit_ctx.r.d);
-					emit_ctx.n = rt | (lt | emit_ctx.n);
+					emit_ctx.r.d = math::tseq(math::expand(emit_ctx.r.d, 0.f), lt, rt);
+					emit_ctx.n = math::tseq(math::expand(emit_ctx.n, 0.f), lt, rt);
 
 					auto pe = e_intr.pdf * l_intr.pdf;
 					mis_e *= pe;
@@ -356,7 +356,7 @@ namespace metatron::mc {
 				continue;
 			});
 			scatter_ctx.r = bt ^ scatter_ctx.r;
-			b_intr.wi = bt ^ math::Vector<f32, 4>{b_intr.wi, 0.f};
+			b_intr.wi = bt ^ math::expand(b_intr.wi, 0.f);
 
 			auto flip_n = 1.f;
 			if (math::dot(-scatter_ctx.r.d, b_intr.wi) < 0.f) {

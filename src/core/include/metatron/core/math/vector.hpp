@@ -1,7 +1,6 @@
 #pragma once
 #include <metatron/core/math/matrix.hpp>
 #include <cmath>
-#include <functional>
 
 namespace metatron::math {
 	template<typename T, usize size>
@@ -50,6 +49,18 @@ namespace metatron::math {
 		auto cos_2_theta_t = T{1.0} - eta * eta * (T{1.0} - cos_theta_i * cos_theta_i); 
 		if (cos_2_theta_t < 0.0) return Vector<T, 3>{T{0.0}};
 		return eta * in - (eta * cos_theta_i + std::sqrt(cos_2_theta_t)) * n;
+	}
+
+	template<typename T, typename... Ts, usize n, usize tail = sizeof...(Ts)>
+	requires (std::is_convertible_v<T, Ts> && ...)
+	auto expand(Vector<T, n> const& x, Ts... v) -> Vector<T, n + tail> {
+		return Vector<T, n + sizeof...(v)>{x, v...};
+	}
+
+	template<typename T, usize n, usize tail = 1uz>
+	requires (n > tail)
+	auto shrink(Vector<T, n> const& x) -> Vector<T, n + 1> {
+		return Vector<T, n - tail>{x};
 	}
 
 	template<typename T, usize size>

@@ -75,7 +75,7 @@ namespace metatron::shape {
 
 			auto sdir = dist.sample(u);
 			auto rot = math::Quaternion<f32>::from_rotation_between({0.f, 0.f, 1.f}, dir);
-			sdir = math::rotate(math::Vector<f32, 4>{sdir, 0.f}, rot);
+			sdir = math::rotate(math::expand(sdir, 0.f), rot);
 
 			OPTIONAL_OR_RETURN(intr, (*this)({ctx.p, sdir}), {});
 			intr.pdf = dist.pdf();
