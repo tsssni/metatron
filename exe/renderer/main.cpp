@@ -28,8 +28,8 @@ auto main() -> int {
 	spectra::Spectrum::initialize();
 	color::Color_Space::initialize();
 
-	auto size = math::Vector<usize, 2>{256uz};
-	auto spp = 128uz;
+	auto size = math::Vector<usize, 2>{512uz};
+	auto spp = 512uz;
 	auto blocks = 8uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
@@ -49,8 +49,8 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
-	auto local_to_world = math::Transform{{}, {10.f}};
-	auto world_to_render = math::Transform{{0.f, 0.f, 30.f}};
+	auto local_to_world = math::Transform{{}, {1.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 3.f}};
 	auto render_to_camera = identity;
 
 	auto sphere = shape::Sphere{};
@@ -59,13 +59,13 @@ auto main() -> int {
 			std::make_unique<spectra::Constant_Spectrum>(0.0f)
 		),
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
-			std::make_unique<spectra::Constant_Spectrum>(1.0f)
+			std::make_unique<spectra::Constant_Spectrum>(0.5f)
 		),
 	};
 	auto homo_medium = media::Homogeneous_Medium{
 		std::make_unique<spectra::Constant_Spectrum>(0.0f),
 		color::Color_Space::sRGB->to_spectrum(
-			{1.0f, 0.0f, 0.0f},
+			{0.0f, 0.6f, 1.0f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		std::make_unique<spectra::Constant_Spectrum>(0.0f),
@@ -118,6 +118,10 @@ auto main() -> int {
 				for (auto n = 0uz; n < spp; n++) {
 					auto sample = camera.sample(px, n, sampler);
 					auto& s = sample.value();
+
+					if (px == math::Vector<usize, 2>{128}) {
+						int a = 1;
+					}
 
 					auto Li_opt = integrator.sample(
 						{

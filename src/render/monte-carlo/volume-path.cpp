@@ -220,6 +220,8 @@ namespace metatron::mc {
 			auto& div = div_opt.value();
 			auto& intr = intr_opt.value();
 			auto& lt = *div->local_to_world;
+			intr.p = rt | (lt | math::Vector<f32, 4>{intr.p, 1.f});
+			intr.n = rt | (lt | math::Vector<f32, 4>{intr.n, 0.f});
 
 			if (ctx.medium) {
 				auto& mt = *ctx.medium_to_world;
@@ -342,9 +344,6 @@ namespace metatron::mc {
 					Le += mis_w * beta * mat_intr.Le;
 				} while (false);
 			}
-
-			intr.p = rt | (lt | math::Vector<f32, 4>{intr.p, 1.f});
-			intr.n = rt | (lt | math::Vector<f32, 4>{intr.n, 0.f});
 
 			auto bt = math::Transform{};
 			bt.config.rotation = math::Quaternion<f32>::from_rotation_between(intr.n, {0.f, 1.f, 0.f});
