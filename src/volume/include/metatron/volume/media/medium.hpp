@@ -11,10 +11,12 @@ namespace metatron::media {
 		std::unique_ptr<phase::Phase_Function> phase;
 		f32 t;
 		f32 pdf;
+		spectra::Stochastic_Spectrum spectra_pdf;
 		spectra::Stochastic_Spectrum transmittance;
 		spectra::Stochastic_Spectrum sigma_a;
 		spectra::Stochastic_Spectrum sigma_s;
 		spectra::Stochastic_Spectrum sigma_n;
+		spectra::Stochastic_Spectrum sigma_maj;
 		spectra::Stochastic_Spectrum Le;
 	};
 

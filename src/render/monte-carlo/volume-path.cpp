@@ -20,6 +20,7 @@ namespace metatron::mc {
 
 		auto constexpr max_depth = 11uz;
 		auto depth = 0uz;
+		auto crossed = true;
 		auto terminated = false;
 
 		auto scattered = false;
@@ -148,17 +149,15 @@ namespace metatron::mc {
 							l_intr.t -= m_intr.t;
 
 							auto hit = m_intr.t == intr.t;
-							auto sigma_maj = m_intr.sigma_a + m_intr.sigma_s + m_intr.sigma_n;
-							auto mis_t = hit ? m_intr.transmittance : sigma_maj * m_intr.transmittance;
 
-							beta *= m_intr.transmittance / m_intr.pdf;
-							mis_sd *= mis_t / m_intr.pdf;
-							mis_ed *= mis_t / m_intr.pdf;
+							betad *= m_intr.sigma_n * m_intr.transmittance / m_intr.pdf;
+							mis_sd *= m_intr.spectra_pdf / m_intr.pdf;
+							mis_ed *= m_intr.spectra_pdf / m_intr.pdf;
 
 							if (!hit) {
 								intr.t -= m_intr.t;
 								direct_ctx.r.o = m_intr.p;
-								mis_sd *= (m_intr.sigma_n / sigma_maj);
+								mis_sd *= (m_intr.sigma_n / m_intr.sigma_maj);
 								continue;
 							} else {
 								intr.p = rt | (lt | math::Vector<f32, 4>{intr.p, 1.f});
@@ -187,7 +186,7 @@ namespace metatron::mc {
 				ctx.ray_differential.differentiable = false;
 			}
 
-			if (scattered || depth == 0uz) {
+			if (scattered || crossed) {
 				div_opt = accel(ctx.ray_differential.r);
 				intr_opt = {};
 				if (div_opt) {
@@ -234,20 +233,18 @@ namespace metatron::mc {
 				m_intr.p = rt | (mt | math::Vector<f32, 4>{m_intr.p, 1.f});
 
 				auto hit = m_intr.t == intr.t;
-				auto sigma_maj = m_intr.sigma_a + m_intr.sigma_s + m_intr.sigma_n;
-				auto mis_t = hit ? m_intr.transmittance : sigma_maj * m_intr.transmittance;
 
 				beta *= m_intr.transmittance / m_intr.pdf;
-				mis_s *= mis_t / m_intr.pdf;
-				mis_e *= mis_t / m_intr.pdf;
+				mis_s *= m_intr.spectra_pdf / m_intr.pdf;
+				mis_e *= m_intr.spectra_pdf / m_intr.pdf;
 
 				if (!hit) {
 					auto mis_a = math::guarded_div(1.f, spectra::avg(mis_s));
 					Le += mis_a * beta * m_intr.sigma_a * m_intr.Le;
 
-					auto p_a = m_intr.sigma_a.value[0] / sigma_maj.value[0];
-					auto p_s = m_intr.sigma_s.value[0] / sigma_maj.value[0];
-					auto p_n = m_intr.sigma_n.value[0] / sigma_maj.value[0];
+					auto p_a = m_intr.sigma_a.value.front() / m_intr.sigma_maj.value.front();
+					auto p_s = m_intr.sigma_s.value.front() / m_intr.sigma_maj.value.front();
+					auto p_n = m_intr.sigma_n.value.front() / m_intr.sigma_maj.value.front();
 
 					auto u = sampler.generate_1d();
 					auto mode = math::Discrete_Distribution{std::array<f32, 3>{p_a, p_s, p_n}}.sample(u);
@@ -263,10 +260,11 @@ namespace metatron::mc {
 						});
 
 						beta *= m_intr.sigma_s / p_s * p_intr.f / p_intr.pdf;
-						mis_s *= (m_intr.sigma_s / sigma_maj * p_intr.pdf) / (p_s * p_intr.pdf);
+						mis_s *= (m_intr.sigma_s / m_intr.sigma_maj * p_intr.pdf) / (p_s * p_intr.pdf);
 						mis_e = mis_s / p_intr.pdf;
 
 						scattered = true;
+						crossed = false;
 						scatter_f = p_intr.f;
 						scatter_pdf = p_intr.pdf;
 						scatter_ctx = {m_intr.p, {}, {m_intr.p, p_intr.wi}, Le};
@@ -274,9 +272,10 @@ namespace metatron::mc {
 						intr.t -= m_intr.t;
 						ctx.ray_differential.r.o = m_intr.p;
 						beta /= p_n;
-						mis_s *= (m_intr.sigma_n / sigma_maj) / p_n;
+						mis_s *= (m_intr.sigma_n / m_intr.sigma_maj) / p_n;
 						mis_e /= p_n;
 						scattered = false;
+						crossed = false;
 					}
 					continue;
 				}
@@ -291,6 +290,9 @@ namespace metatron::mc {
 					ctx.medium_to_world = div->exterior_transform;
 				}
 				ctx.ray_differential.r.o = intr.p + ctx.ray_differential.r.d * 0.001f;
+				spectra::clear(mis_e);
+				scattered = false;
+				crossed = true;
 				continue;
 			}
 
@@ -374,6 +376,7 @@ namespace metatron::mc {
 			beta *= b_intr.f / b_intr.pdf;
 			mis_e = mis_s / b_intr.pdf;
 			scattered = true;
+			crossed = false;
 			scatter_f = b_intr.f;
 			scatter_pdf = b_intr.pdf;
 			scatter_ctx = {scatter_p, scatter_n, {scatter_p, b_intr.wi}, Le};

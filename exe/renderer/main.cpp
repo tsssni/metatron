@@ -28,7 +28,7 @@ auto main() -> int {
 	spectra::Spectrum::initialize();
 	color::Color_Space::initialize();
 
-	auto size = math::Vector<usize, 2>{1024uz};
+	auto size = math::Vector<usize, 2>{256uz};
 	auto spp = 128uz;
 	auto blocks = 8uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
@@ -49,8 +49,8 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
-	auto local_to_world = math::Transform{{}, {1.f}};
-	auto world_to_render = math::Transform{{0.f, 0.f, 3.f}};
+	auto local_to_world = math::Transform{{}, {10.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 30.f}};
 	auto render_to_camera = identity;
 
 	auto sphere = shape::Sphere{};
@@ -59,13 +59,13 @@ auto main() -> int {
 			std::make_unique<spectra::Constant_Spectrum>(0.0f)
 		),
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
-			std::make_unique<spectra::Constant_Spectrum>(0.2f)
+			std::make_unique<spectra::Constant_Spectrum>(1.0f)
 		),
 	};
 	auto homo_medium = media::Homogeneous_Medium{
 		std::make_unique<spectra::Constant_Spectrum>(0.0f),
 		color::Color_Space::sRGB->to_spectrum(
-			{0.8f, 0.01f, 0.01f},
+			{1.0f, 0.0f, 0.0f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		std::make_unique<spectra::Constant_Spectrum>(0.0f),
