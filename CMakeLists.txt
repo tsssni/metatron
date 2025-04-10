@@ -22,7 +22,7 @@ include(cmake/link.cmake)
 add_library(metatron-build INTERFACE)
 set_property(TARGET metatron-build PROPERTY metatron-units)
 
-metatron_classify(${metatron-root}/lib "lib")
+metatron_classify(${metatron-root}/ext "ext")
 metatron_classify(${metatron-root}/src "src")
 metatron_classify(${metatron-root}/exe "exe")
 

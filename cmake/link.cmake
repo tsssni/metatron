@@ -14,7 +14,7 @@ function(metatron_link unit)
 	# solve dependencies
 	set(linked-libs)
 	foreach(dep ${metatron-deps})
-		if(${mode} STREQUAL "lib")
+		if(${mode} STREQUAL "ext")
 			list(APPEND linked-libs ${dep})
 			# manually link for external libs
 			if(NOT ${dep} STREQUAL ${unit})
@@ -33,7 +33,7 @@ function(metatron_link unit)
 
 	# link core for some global visible utilities
 	if(TRUE
-	AND NOT ${mode} STREQUAL "lib" 
+	AND NOT ${mode} STREQUAL "ext" 
 	AND NOT ${unit} STREQUAL "core")
 		target_link_libraries(${target} ${access} metatron-core)
 	endif()
