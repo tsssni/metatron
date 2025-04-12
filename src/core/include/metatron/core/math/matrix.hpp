@@ -125,11 +125,12 @@ namespace metatron::math {
 			usize r_n = sizeof...(rhs_dims),
 			usize shorter_n = std::min(l_n, r_n),
 			usize longer_n = std::max(l_n, r_n),
-			usize higher_n = std::max(usize(0), longer_n - (longer_n == 1 ? 1 : 2)),
+			usize higher_n = std::max(usize(0), longer_n - 2),
 			std::array<usize, l_n> lds = dimensions,
 			std::array<usize, r_n> rds = {rhs_dims...}
 		>
 		requires (true
+			&& longer_n > 1
 			&& (false
 				|| i32(l_n) - i32(r_n) < 2
 				|| i32(r_n) - i32(l_n) < 2

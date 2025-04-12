@@ -7,7 +7,7 @@
 namespace metatron::math {
 	template<typename T>
 	concept Transformable = false
-	|| std::is_same_v<T, math::Vector<f32, 4>>
+	|| std::is_same_v<std::remove_cvref_t<T>, math::Vector<f32, 4>>
 	|| std::is_same_v<std::remove_cvref_t<T>, math::Ray>
 	|| std::is_same_v<std::remove_cvref_t<T>, math::Ray_Differential>;
 
@@ -30,6 +30,7 @@ namespace metatron::math {
 		);
 
 		explicit operator math::Matrix<f32, 4, 4>() const;
+
 		template<Transformable T>
 		auto operator|(T&& rhs) const -> std::remove_cvref_t<T> {
 			if constexpr (std::is_convertible_v<T, math::Vector<f32, 4>>) {
@@ -73,26 +74,4 @@ namespace metatron::math {
 
 		mutable Config old_config{};
 	};
-
-	template<Transformable T>
-	auto inline tseq(T&& x, Transform const& t) -> std::remove_cvref_t<T> {
-		return t | std::forward<T>(x);
-	}
-
-	template<Transformable T>
-	auto inline trev(T&& x, Transform const& t) -> std::remove_cvref_t<T> {
-		return t ^ std::forward<T>(x);
-	}
-
-	template<Transformable T, typename... Transforms>
-	requires (std::is_convertible_v<Transform const&, Transforms> && ...)
-	auto inline tseq(T&& x, Transform const& t, Transform const& s, Transforms... seq) -> std::remove_cvref_t<T> {
-		return tseq(t | std::forward<T>(x), s, seq...);
-	}
-
-	template<Transformable T, typename... Transforms>
-	requires (std::is_convertible_v<Transform const&, Transforms> && ...)
-	auto inline trev(T&& x, Transform const& t, Transform const& s, Transforms... seq) -> std::remove_cvref_t<T> {
-		return trev(t ^ std::forward<T>(x), s, seq...);
-	}
 }
