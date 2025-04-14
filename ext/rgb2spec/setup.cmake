@@ -3,7 +3,7 @@ set(rgb2spec-color-spaces sRGB)
 set(rgb2spec-src)
 
 foreach(color-space ${rgb2spec-color-spaces})
-	set(file ${metatron-gen}/rgb2spec/${color-space}-spectrum.cpp)
+	set(file ${CMAKE_CURRENT_BINARY_DIR}/rgb2spec/${color-space}-spectrum.cpp)
 	list(APPEND rgb2spec-src ${file})
 	add_custom_command(
 		OUTPUT ${file}

@@ -2,13 +2,6 @@ cmake_minimum_required(VERSION 3.30.5)
 
 project(metatron-renderer)
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin/lib)
-
-set(metatron-root ${CMAKE_CURRENT_LIST_DIR})
-set(metatron-bin ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-set(metatron-lib ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lib)
-set(metatron-gen ${CMAKE_CURRENT_BINARY_DIR}/gen)
 
 define_property(TARGET PROPERTY metatron-units)
 define_property(TARGET PROPERTY metatron-path)
@@ -22,9 +15,9 @@ include(cmake/link.cmake)
 add_library(metatron-build INTERFACE)
 set_property(TARGET metatron-build PROPERTY metatron-units)
 
-metatron_classify(${metatron-root}/ext "ext")
-metatron_classify(${metatron-root}/src "src")
-metatron_classify(${metatron-root}/exe "exe")
+metatron_classify(${CMAKE_CURRENT_LIST_DIR}/ext "ext")
+metatron_classify(${CMAKE_CURRENT_LIST_DIR}/src "src")
+metatron_classify(${CMAKE_CURRENT_LIST_DIR}/exe "exe")
 
 get_property(metatron-units TARGET metatron-build PROPERTY metatron-units)
 foreach(unit ${metatron-units})
