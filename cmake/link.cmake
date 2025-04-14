@@ -6,6 +6,7 @@ function(metatron_link unit)
 
 	# execute setup file
 	set(metatron-deps)
+	set(metatron-ext)
 	set(setup-file ${path}/setup.cmake)
 	if(EXISTS ${setup-file})
 		include(${setup-file})
@@ -16,10 +17,6 @@ function(metatron_link unit)
 	foreach(dep ${metatron-deps})
 		if(${mode} STREQUAL "ext")
 			list(APPEND linked-libs ${dep})
-			# manually link for external libs
-			if(NOT ${dep} STREQUAL ${unit})
-				target_link_libraries(${unit} PRIVATE ${dep})
-			endif()
 		else()
 			list(APPEND linked-libs metatron-${dep})
 		endif()

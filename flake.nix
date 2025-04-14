@@ -1,5 +1,5 @@
 {
-	description = "metatron renderer devenv";
+	description = "metatron devenv";
 
 	inputs = {
 		nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -17,23 +17,34 @@
 			"x86_64-linux"
 		];
 
-		devShells = systems
-			|> lib.map (system:
-				let
-					pkgs = import nixpkgs {
-						inherit system;
-					};
-				in {
-					"${system}".default = pkgs.mkShellNoCC {
-						packages = with pkgs; [
-							gcc
-							lldb
-							cmake
-							ninja
-						];
-					};
-				}
-			)
+		mapSystems = f: systems
+			|> lib.map f
 			|> lib.mergeAttrsList;
+
+		devShells = mapSystems (system:
+			let
+				pkgs = import nixpkgs {
+					inherit system;
+				};
+			in {
+				"${system}".default = pkgs.mkShellNoCC {
+					packages = with pkgs; []
+					# toolchain
+					++ [
+						gcc
+						lldb
+						cmake
+						ninja
+					]
+					# external
+					++ [
+						mimalloc
+						openimageio
+						openvdb
+					];
+				};
+			}
+		);
+
 	in { inherit devShells; };
 }
