@@ -1,4 +1,4 @@
-function(metatron_evaluate unit path mode)
+function(evaluate unit path mode)
 	set(target metatron-${unit})
 
 	# collect sources
@@ -38,4 +38,29 @@ function(metatron_evaluate unit path mode)
 	else()
 		set_property(TARGET ${target} PROPERTY metatron-access PUBLIC)
 	endif()
+endfunction()
+
+function(solve path mode)
+	message(STATUS "processing ${mode}...")
+	if (IS_DIRECTORY ${path})
+		file(GLOB units RELATIVE ${path} ${path}/*)
+		set(build-units)
+
+		foreach(unit ${units})
+			if(IS_DIRECTORY ${path}/${unit})
+				list(APPEND build-units ${unit})
+				evaluate(${unit} ${path}/${unit} ${mode})
+			endif()
+		endforeach()
+
+		get_property(metatron-units TARGET metatron-build PROPERTY metatron-units)
+		list(APPEND metatron-units ${build-units})
+		set_property(TARGET metatron-build PROPERTY metatron-units ${metatron-units})
+	endif()
+endfunction()
+
+function(collect)
+	solve(${CMAKE_CURRENT_LIST_DIR}/ext "ext")
+	solve(${CMAKE_CURRENT_LIST_DIR}/src "src")
+	solve(${CMAKE_CURRENT_LIST_DIR}/exe "exe")
 endfunction()

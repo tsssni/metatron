@@ -3,6 +3,7 @@
 !/exe/
 !/ext/
 !/src/
+!/nix
 !/.git*
 !/.clang*
 !/flake*

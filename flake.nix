@@ -46,5 +46,17 @@
 			}
 		);
 
-	in { inherit devShells; };
+		packages = mapSystems (system:
+			let
+				pkgs = import nixpkgs {
+					inherit system;
+				};
+			in {
+				"${system}".default = pkgs.callPackage ./nix {};
+			}
+		);
+
+	in { 
+		inherit devShells packages;
+	};
 }

@@ -14,4 +14,3 @@ endforeach()
 
 add_library(rgb2spec SHARED ${rgb2spec-src})
 list(APPEND metatron-deps rgb2spec)
-
