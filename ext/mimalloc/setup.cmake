@@ -1,2 +1,2 @@
-find_package(mimalloc REQUIRED)
+extend(mimalloc)
 list(APPEND metatron-deps mimalloc)

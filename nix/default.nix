@@ -15,8 +15,8 @@ stdenv.mkDerivation {
 	src = fetchFromGitHub {
 		owner = "tsssni";
 		repo = "metatron";
-		rev = "ab973d3";
-		sha256 = "sha256-slDc/3jE3lepF59Cr0E9DG/OEVVHvC9bCQmKSvoHZqE=";
+		rev = "fdfabc6";
+		sha256 = "sha256-TdtEh1sOWcRy8ZG1LQcr/h7NqQ9wh8x4mOoCrMdqrKQ=";
 	};
 
 	nativeBuildInputs = [
@@ -40,8 +40,8 @@ stdenv.mkDerivation {
 	'';
 
 	installPhase = ''
-		mkdir -p $out
-		cp -r build/rel/* $out/
+		cd build/rel
+		cmake --install . --prefix $out
 	'';
 	
 	meta = with lib; {

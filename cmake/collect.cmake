@@ -1,3 +1,20 @@
+function(unite units)
+	get_property(metatron-units TARGET metatron-build PROPERTY metatron-units)
+	message(STATUS ${units})
+	list(APPEND metatron-units ${units})
+	set_property(TARGET metatron-build PROPERTY metatron-units ${metatron-units})
+endfunction()
+
+function(extend exts)
+	foreach(ext ${exts})
+		find_package(${ext} REQUIRED)
+	endforeach()
+
+	get_property(metatron-exts TARGET metatron-build PROPERTY metatron-exts)
+	list(APPEND metatron-exts ${exts})
+	set_property(TARGET metatron-build PROPERTY metatron-exts ${metatron-exts})
+endfunction()
+
 function(evaluate unit path mode)
 	set(target metatron-${unit})
 
@@ -17,20 +34,29 @@ function(evaluate unit path mode)
 		if(sources)
 			if(${mode} STREQUAL "exe")
 				message(STATUS "build executable ${target}")
-				add_executable(${target} ${sources})
+				add_executable(${target})
 			else()
 				message(STATUS "build library ${target}")
-				add_library(${target} SHARED EXCLUDE_FROM_ALL ${sources})
+				add_library(${target} SHARED EXCLUDE_FROM_ALL)
 			endif()
-			target_include_directories(${target} PUBLIC ${path}/include)
+			target_sources(${target} PRIVATE ${sources})
+			target_include_directories(
+				${target} PUBLIC
+				$<BUILD_INTERFACE:${path}/include>
+				$<INSTALL_INTERFACE:include/${target}>
+			)
 		elseif(${mode} STREQUAL "src")
 			if(headers)
 				message(STATUS "build header-only library ${target}")
+				target_include_directories(
+					${target} INTERFACE
+					$<BUILD_INTERFACE:${path}/include>
+					$<INSTALL_INTERFACE:include/${target}>
+				)
 			else()
 				message(STATUS "build interface library ${target}")
 			endif()
 			add_library(${target} INTERFACE)
-			target_include_directories(${target} INTERFACE ${path}/include)
 			set(mode "inc")
 		else()
 			message(FATAL_ERROR "sources not found")
@@ -58,10 +84,8 @@ function(solve path mode)
 				evaluate(${unit} ${path}/${unit} ${mode})
 			endif()
 		endforeach()
-
-		get_property(metatron-units TARGET metatron-build PROPERTY metatron-units)
-		list(APPEND metatron-units ${build-units})
-		set_property(TARGET metatron-build PROPERTY metatron-units ${metatron-units})
+		
+		unite("${build-units}")
 	endif()
 endfunction()
 
