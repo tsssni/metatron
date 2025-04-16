@@ -3,13 +3,22 @@ function(derive unit)
 	get_property(path TARGET ${target} PROPERTY metatron-path)
 	get_property(mode TARGET ${target} PROPERTY metatron-mode)
 
-	install(
-		TARGETS ${target}
-		EXPORT metatron-targets
-		RUNTIME DESTINATION bin
-		LIBRARY DESTINATION lib
-		INCLUDES DESTINATION include/${target}
-	)
+	if(EXISTS ${path}/include)
+		install(
+			TARGETS ${target}
+			EXPORT metatron-targets
+			RUNTIME DESTINATION bin
+			LIBRARY DESTINATION lib
+			INCLUDES DESTINATION include/${target}
+		)
+	else()
+		install(
+			TARGETS ${target}
+			EXPORT metatron-targets
+			RUNTIME DESTINATION bin
+			LIBRARY DESTINATION lib
+		)
+	endif()
 
 	if(${mode} STREQUAL "src" AND EXISTS ${path}/include)
 		install(
@@ -27,10 +36,16 @@ endfunction()
 function(release)
 	get_property(metatron-units TARGET metatron-build PROPERTY metatron-units)
 	get_property(metatron-exts TARGET metatron-build PROPERTY metatron-exts)
+	get_property(metatron-mods TARGET metatron-build PROPERTY metatron-mods)
 
 	install(
 		EXPORT metatron-targets
 		FILE metatron-targets.cmake
+		DESTINATION lib/cmake/metatron
+	)
+
+	install(
+		FILES ${metatron-mods}
 		DESTINATION lib/cmake/metatron
 	)
 

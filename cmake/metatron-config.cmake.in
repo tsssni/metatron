@@ -1,13 +1,12 @@
 @PACKAGE_INIT@
 
 include(CMakeFindDependencyMacro)
-
-foreach(ext "@metatron-exts@")
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
+foreach(ext @metatron-exts@)
 	find_dependency(${ext})
 endforeach()
 
-include("${CMAKE_CURRENT_LIST_DIR}/metatron-targets.cmake")
-
-foreach(unit "@metatron-units@")
+include(${CMAKE_CURRENT_LIST_DIR}/metatron-targets.cmake)
+foreach(unit @metatron-units@)
 	check_required_components(metatron-${unit})
 endforeach()

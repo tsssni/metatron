@@ -15,6 +15,16 @@ function(extend exts)
 	set_property(TARGET metatron-build PROPERTY metatron-exts ${metatron-exts})
 endfunction()
 
+function(modulo path)
+	list(APPEND CMAKE_MODULE_PATH ${path})
+	set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} PARENT_SCOPE)
+	file(GLOB mods ${path}/Find*.cmake)
+
+	get_property(metatron-mods TARGET metatron-build PROPERTY metatron-mods)
+	list(APPEND metatron-mods ${mods})
+	set_property(TARGET metatron-build PROPERTY metatron-mods ${metatron-mods})
+endfunction()
+
 function(evaluate unit path mode)
 	set(target metatron-${unit})
 
