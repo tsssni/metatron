@@ -40,7 +40,15 @@
 					++ [
 						mimalloc
 						openimageio
-						openvdb
+						(openvdb.overrideAttrs (old: rec {
+							version = "12.0.1";
+							src = fetchFromGitHub {
+								owner = "AcademySoftwareFoundation";
+								repo = "openvdb";
+								rev = "v${version}";
+								sha256 = "sha256-ofVhwULBDzjA+bfhkW12tgTMnFB/Mku2P2jDm74rutY=";
+							};
+						}))
 					];
 				};
 			}

@@ -30,6 +30,7 @@ function(link unit)
 
 	# link core for some global visible utilities
 	if(TRUE
+	AND NOT ${mode} STREQUAL "lib" 
 	AND NOT ${mode} STREQUAL "ext" 
 	AND NOT ${unit} STREQUAL "core")
 		target_link_libraries(${target} ${access} metatron-core)

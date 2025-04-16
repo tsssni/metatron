@@ -1,4 +1,4 @@
-add_executable(rgb2spec-run ${path}/rgb2spec.cpp)
+add_executable(metatron-rgb2spec-run ${path}/src/rgb2spec.cpp)
 set(rgb2spec-color-spaces sRGB)
 set(rgb2spec-src)
 
@@ -7,10 +7,9 @@ foreach(color-space ${rgb2spec-color-spaces})
 	list(APPEND rgb2spec-src ${file})
 	add_custom_command(
 		OUTPUT ${file}
-		COMMAND rgb2spec-run 64 ${file} ${color-space}
-		DEPENDS rgb2spec-run
+		COMMAND metatron-rgb2spec-run 64 ${file} ${color-space}
+		DEPENDS metatron-rgb2spec-run
 	)
 endforeach()
 
-add_library(rgb2spec SHARED ${rgb2spec-src})
-list(APPEND metatron-deps rgb2spec)
+target_sources(metatron-rgb2spec PUBLIC ${rgb2spec-src})
