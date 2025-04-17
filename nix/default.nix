@@ -16,8 +16,8 @@ stdenv.mkDerivation {
 	src = fetchFromGitHub {
 		owner = "tsssni";
 		repo = "metatron";
-		rev = "fdfabc6";
-		sha256 = "sha256-TdtEh1sOWcRy8ZG1LQcr/h7NqQ9wh8x4mOoCrMdqrKQ=";
+		rev = "3a38056";
+		sha256 = "sha256-CzkMkes+pJPQLFuuY3MMrR54ZSG3ZnEUBjx7qXB4Xp4=";
 	};
 
 	nativeBuildInputs = [
@@ -29,7 +29,15 @@ stdenv.mkDerivation {
 	buildInputs = [
 		mimalloc
 		openimageio
-		openvdb
+		(openvdb.overrideAttrs (old: rec {
+			version = "12.0.1";
+			src = fetchFromGitHub {
+				owner = "AcademySoftwareFoundation";
+				repo = "openvdb";
+				rev = "v${version}";
+				sha256 = "sha256-ofVhwULBDzjA+bfhkW12tgTMnFB/Mku2P2jDm74rutY=";
+			};
+		}))
 	];
 
 	cmakeFlags = [

@@ -21,39 +21,6 @@
 			|> lib.map f
 			|> lib.mergeAttrsList;
 
-		devShells = mapSystems (system:
-			let
-				pkgs = import nixpkgs {
-					inherit system;
-				};
-			in {
-				"${system}".default = pkgs.mkShell {
-					packages = with pkgs; []
-					# toolchain
-					++ [
-						clang-tools
-						lldb
-						cmake
-						ninja
-					]
-					# external
-					++ [
-						mimalloc
-						openimageio
-						(openvdb.overrideAttrs (old: rec {
-							version = "12.0.1";
-							src = fetchFromGitHub {
-								owner = "AcademySoftwareFoundation";
-								repo = "openvdb";
-								rev = "v${version}";
-								sha256 = "sha256-ofVhwULBDzjA+bfhkW12tgTMnFB/Mku2P2jDm74rutY=";
-							};
-						}))
-					];
-				};
-			}
-		);
-
 		packages = mapSystems (system:
 			let
 				pkgs = import nixpkgs {
@@ -65,6 +32,6 @@
 		);
 
 	in { 
-		inherit devShells packages;
+		inherit packages;
 	};
 }
