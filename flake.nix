@@ -27,11 +27,11 @@
 					inherit system;
 				};
 			in {
-				"${system}".default = pkgs.mkShellNoCC {
+				"${system}".default = pkgs.mkShell {
 					packages = with pkgs; []
 					# toolchain
 					++ [
-						gcc
+						clang-tools
 						lldb
 						cmake
 						ninja

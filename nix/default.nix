@@ -2,6 +2,7 @@
   lib
 , stdenv
 , fetchFromGitHub
+, clang-tools
 , cmake
 , ninja
 , mimalloc
@@ -20,6 +21,7 @@ stdenv.mkDerivation {
 	};
 
 	nativeBuildInputs = [
+		clang-tools
 		cmake
 		ninja
 	];

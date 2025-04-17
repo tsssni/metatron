@@ -9,7 +9,8 @@
 			"name": "default",
 			"generator": "Ninja",
 			"cacheVariables": {
-				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+				"CMAKE_CXX_FLAGS": "-fstack-protector-all -fwrapv"
 			}
 		},
 		{
