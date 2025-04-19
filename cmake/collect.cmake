@@ -1,6 +1,5 @@
 function(unite units)
 	get_property(metatron-units TARGET metatron-build PROPERTY metatron-units)
-	message(STATUS ${units})
 	list(APPEND metatron-units ${units})
 	set_property(TARGET metatron-build PROPERTY metatron-units ${metatron-units})
 endfunction()

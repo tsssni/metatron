@@ -49,8 +49,8 @@ namespace metatron::photo {
 	}
 
 	auto Film::to_path(std::string_view path) -> void {
-		for (auto j = 0; j < image.size[1]; j++) {
-			for (auto i = 0; i < image.size[0]; i++) {
+		for (auto j = 0; j < image.height; j++) {
+			for (auto i = 0; i < image.width; i++) {
 				auto pixel = math::Vector<f32, 4>{image[i, j]};
 				pixel = std::abs(pixel[3]) < math::epsilon<f32> ? math::Vector<f32, 4>{0.f} : pixel / pixel[3];
 				image[i, j] = pixel;

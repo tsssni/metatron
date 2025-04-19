@@ -1,5 +1,5 @@
 #include <metatron/core/image/image.hpp>
-#include <metatron/core/image/io.hpp>
+#include <OpenImageIO/imageio.h>
 
 namespace metatron::image {
 	Image::Pixel::Pixel(Image const* image, byte* start)
@@ -57,29 +57,71 @@ namespace metatron::image {
 	linear(linear) {}
 
 	auto Image::operator[](usize x, usize y) -> Pixel {
-		auto offset = (y * size[0] + x) * size[2] * size[3];
+		auto offset = (y * width + x) * channels * stride;
 		return Pixel{this, &pixels[offset]};
 	}
 
 	auto Image::operator[](usize x, usize y) const -> Pixel const {
-		auto offset = (y * size[0] + x) * size[2] * size[3];
+		auto offset = (y * width + x) * channels * stride;
 		return (Pixel const){this, const_cast<byte*>(&pixels[offset])};
 	}
 
+	namespace oiio {
+		
+	}
+
 	auto Image::from_path(std::string_view path, bool linear) -> std::unique_ptr<Image> {
-		if (path.ends_with(".exr")) {
-			return Exr_Image::from_path(path, linear);
-		} else if (false
-			|| path.ends_with(".png")
-			|| path.ends_with(".jpg")) {
-			return Stb_Image::from_path(path, linear);
+		auto in = OIIO::ImageInput::open(std::string{path});
+		if (!in) {
+			std::printf("can not find image %s\n", path.data());
+			std::abort();
 		}
-		std::abort();
+
+		auto& spec = in->spec();
+		auto image = std::make_unique<Image>(
+			math::Vector<usize, 4>{
+				usize(spec.width),
+				usize(spec.height),
+				usize(spec.nchannels),
+				spec.format.size()
+			},
+			color::Color_Space::sRGB.get()
+		);
+
+		auto success = in->read_image(0, 0, 0, spec.nchannels, spec.format, image->pixels.data());
+		if (!success) {
+			std::printf("can not read image %s\n", path.data());
+			std::abort();
+		}
+
+		in->close();
+		return image;
 	}
 
 	auto Image::to_path(std::string_view path) -> void {
-		if (path.ends_with(".exr")) {
-			Exr_Image::to_path(path, *this);
+		auto type = stride == 1 ? OIIO::TypeDesc::UINT8 : OIIO::TypeDesc::FLOAT;
+		auto spec = OIIO::ImageSpec{
+			i32(width),
+			i32(height),
+			i32(channels),
+			type
+		};
+
+		spec.attribute("planarconfig", "contig");
+		spec.attribute("oiio::ColorSpace", "sRGB");
+
+		auto out = OIIO::ImageOutput::create(std::string{path});
+		if (!out || !out->open(std::string{path}, spec)) {
+			std::printf("can not create image file %s\n", path.data());
+			std::abort();
 		}
+
+		auto success = out->write_image(type, pixels.data());
+		if (!success) {
+			std::printf("can not write image %s\n", path.data());
+			std::abort();
+		}
+
+		out->close();
 	}
 }

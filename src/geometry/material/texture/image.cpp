@@ -46,10 +46,10 @@ namespace metatron::material {
 		auto& image = *images[mip];
 
 		auto uv = coord.uv * math::Vector<usize, 2>{image.size} - 0.5f;
-		auto ux = coord.dudx * image.size[0];
-		auto uy = coord.dudy * image.size[1];
-		auto vx = coord.dvdx * image.size[0];
-		auto vy = coord.dvdy * image.size[1];
+		auto ux = coord.dudx * image.width;
+		auto uy = coord.dudy * image.height;
+		auto vx = coord.dvdx * image.width;
+		auto vy = coord.dvdy * image.height;
 
 		auto A = uy * uy + vy * vy;
 		auto B = -2.f * (ux * uy + vx * vy);

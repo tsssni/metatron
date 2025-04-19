@@ -18,7 +18,15 @@ namespace metatron::image {
 		};
 
 		// 0: width, 1: height, 2: channels, 3: stride
-		math::Vector<usize, 4> const size;
+		union {
+			struct {
+				usize width;
+				usize height;
+				usize channels;
+				usize stride;
+			};
+			math::Vector<usize, 4> size;
+		} const;
 		color::Color_Space const* color_space;
 		bool linear;
 
