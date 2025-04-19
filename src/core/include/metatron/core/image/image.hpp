@@ -33,13 +33,13 @@ namespace metatron::image {
 		Image(
 			math::Vector<usize, 4> const& size,
 			color::Color_Space const* color_space,
-			bool linear = true
+			bool linear = false
 		);
 
 		auto operator[](usize x, usize y) -> Pixel;
 		auto operator[](usize x, usize y) const -> Pixel const;
 
-		auto static from_path(std::string_view path, bool linear = true) -> std::unique_ptr<Image>;
+		auto static from_path(std::string_view path, bool linear = false) -> std::unique_ptr<Image>;
 		auto to_path(std::string_view path) -> void;
 
 	private:

@@ -67,7 +67,23 @@ namespace metatron::image {
 	}
 
 	namespace oiio {
-		
+		auto to_color_space(std::string_view cs) -> color::Color_Space const* {
+			if (cs == "sRGB") {
+				return color::Color_Space::sRGB.get();
+			} else {
+				// have not supported other color spaces yet
+				return color::Color_Space::sRGB.get();
+			}
+		}
+
+		auto from_color_space(color::Color_Space const* cs) -> std::string_view {
+			if (cs == color::Color_Space::sRGB.get()) {
+				return "sRGB";
+			} else {
+				// have not supported other color spaces yet
+				return "sRGB";
+			}
+		}
 	}
 
 	auto Image::from_path(std::string_view path, bool linear) -> std::unique_ptr<Image> {
@@ -78,6 +94,9 @@ namespace metatron::image {
 		}
 
 		auto& spec = in->spec();
+		auto cs_name = spec.get_string_attribute("oiio:ColorSpace");
+		auto color_space = (color::Color_Space*)nullptr;
+
 		auto image = std::make_unique<Image>(
 			math::Vector<usize, 4>{
 				usize(spec.width),
@@ -85,7 +104,8 @@ namespace metatron::image {
 				usize(spec.nchannels),
 				spec.format.size()
 			},
-			color::Color_Space::sRGB.get()
+			oiio::to_color_space(spec.get_string_attribute("oiio:ColorSpace")),
+			linear
 		);
 
 		auto success = in->read_image(0, 0, 0, spec.nchannels, spec.format, image->pixels.data());
@@ -108,7 +128,7 @@ namespace metatron::image {
 		};
 
 		spec.attribute("planarconfig", "contig");
-		spec.attribute("oiio::ColorSpace", "sRGB");
+		spec.attribute("oiio::ColorSpace", oiio::from_color_space(color_space));
 
 		auto out = OIIO::ImageOutput::create(std::string{path});
 		if (!out || !out->open(std::string{path}, spec)) {

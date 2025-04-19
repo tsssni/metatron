@@ -85,7 +85,7 @@ auto main() -> int {
 	}};
 
 	auto env_map = std::make_unique<material::Image_Texture<spectra::Stochastic_Spectrum>>(
-		image::Image::from_path("../Downloads/the_sky_is_on_fire_4k.exr"),
+		image::Image::from_path("../Pictures/sky-on-fire.exr", true),
 		color::Color_Space::Spectrum_Type::illuminant
 	);
 	auto env_light = light::Environment_Light{std::move(env_map)};
