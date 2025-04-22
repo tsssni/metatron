@@ -1,7 +1,6 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
-#include <stdfloat>
 
 namespace metatron::inline prelude {
 	using i8 = std::int8_t;

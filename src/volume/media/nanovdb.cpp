@@ -122,7 +122,7 @@ namespace metatron::media {
 				return Interaction{
 					cache.r.o,
 					phase.get(),
-					t_transmitted,
+					t_max,
 					transmittance.value.front(),
 					transmittance,
 					transmittance,
