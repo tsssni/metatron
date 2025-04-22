@@ -16,7 +16,7 @@
 #include <metatron/geometry/material/texture/constant.hpp>
 #include <metatron/geometry/material/diffuse.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
-#include <metatron/volume/media/homogeneous.hpp>
+#include <metatron/volume/media/nanovdb.hpp>
 #include <metatron/volume/phase/henyey-greenstein.hpp>
 #include <atomic>
 #include <queue>
@@ -62,7 +62,8 @@ auto main() -> int {
 			std::make_unique<spectra::Constant_Spectrum>(0.5f)
 		),
 	};
-	auto homo_medium = media::Homogeneous_Medium{
+	auto cloud_medium = media::Nanovdb_Medium{
+		"../Documents/metatron/disney-cloud.nvdb",
 		std::make_unique<spectra::Constant_Spectrum>(0.0f),
 		color::Color_Space::sRGB->to_spectrum(
 			{0.0f, 0.6f, 1.0f},
@@ -74,7 +75,7 @@ auto main() -> int {
 	auto bvh = accel::LBVH{{
 		{
 			&sphere,
-			&homo_medium,
+			&cloud_medium,
 			nullptr,
 			nullptr,
 			nullptr,

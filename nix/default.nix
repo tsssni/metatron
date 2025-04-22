@@ -7,6 +7,7 @@
 , ninja
 , mimalloc
 , openimageio
+, zlib
 , openvdb
 }:
 stdenv.mkDerivation {
@@ -29,6 +30,7 @@ stdenv.mkDerivation {
 	buildInputs = [
 		mimalloc
 		openimageio
+		zlib
 		(openvdb.overrideAttrs (old: rec {
 			version = "12.0.1";
 			src = fetchFromGitHub {
