@@ -9,10 +9,7 @@ namespace metatron::shape {
 		a(n[0]), b(n[1]), c(n[2]), d(-math::dot(n, p)) {}
 
 	auto Plane::bounding_box(usize idxuz) const -> math::Bounding_Box {
-		return {
-			math::Vector<f32, 3>{math::minv<f32>},
-			math::Vector<f32, 3>{math::maxv<f32>},
-		};
+		return {};
 	}
 
 	auto Plane::operator()(

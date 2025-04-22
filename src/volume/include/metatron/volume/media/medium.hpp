@@ -3,12 +3,11 @@
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/spectra/stochastic.hpp>
 #include <metatron/core/eval/context.hpp>
-#include <memory>
 
 namespace metatron::media {
 	struct Interaction final {
 		math::Vector<f32, 3> p;
-		std::unique_ptr<phase::Phase_Function> phase;
+		phase::Phase_Function const* phase;
 		f32 t;
 		f32 pdf;
 		spectra::Stochastic_Spectrum spectra_pdf;

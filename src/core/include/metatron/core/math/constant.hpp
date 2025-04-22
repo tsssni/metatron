@@ -11,4 +11,10 @@ namespace metatron::math {
 	auto constexpr minv = std::numeric_limits<T>::min();
 	template<typename T>
 	auto constexpr maxv = std::numeric_limits<T>::max();
+	template<typename T>
+	auto constexpr high = std::numeric_limits<T>::max();
+	template<typename T>
+	auto constexpr low = std::numeric_limits<T>::lowest();
+	template<typename T>
+	auto constexpr inf = std::numeric_limits<T>::infinity();
 }

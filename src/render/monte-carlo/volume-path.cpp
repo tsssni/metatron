@@ -33,7 +33,7 @@ namespace metatron::mc {
 		auto div_opt = std::optional<accel::Divider const*>{};
 		auto intr_opt = std::optional<shape::Interaction>{};
 		auto bsdf = std::unique_ptr<material::Bsdf>{};
-		auto phase = std::unique_ptr<phase::Phase_Function>{};
+		auto phase = (phase::Phase_Function const*)nullptr;
 
 		auto& rt = *ctx.world_to_render;
 		auto& ct = *ctx.render_to_camera;
@@ -151,7 +151,7 @@ namespace metatron::mc {
 							direct_ctx.r = rt | (mt | direct_ctx.r);
 							l_intr.t -= m_intr.t;
 
-							auto hit = m_intr.t == intr.t;
+							auto hit = m_intr.t >= intr.t;
 
 							betad *= m_intr.sigma_n * m_intr.transmittance / m_intr.pdf;
 							mis_sd *= m_intr.spectra_pdf / m_intr.pdf;
@@ -234,7 +234,7 @@ namespace metatron::mc {
 				m_ctx.r = rt | (mt | m_ctx.r);
 				m_intr.p = rt | (mt | math::expand(m_intr.p, 1.f));
 
-				auto hit = m_intr.t == intr.t;
+				auto hit = m_intr.t >= intr.t;
 
 				beta *= m_intr.transmittance / m_intr.pdf;
 				mis_s *= m_intr.spectra_pdf / m_intr.pdf;
@@ -254,7 +254,7 @@ namespace metatron::mc {
 						beta /= p_a;
 						terminated = true;
 					} else if (mode == 1uz) {
-						phase = std::move(m_intr.phase);
+						phase = m_intr.phase;
 						bsdf.reset();
 						OPTIONAL_OR_CALLBACK(p_intr, phase->sample(m_ctx, sampler.generate_2d()), {
 							terminated = true;
@@ -323,7 +323,7 @@ namespace metatron::mc {
 				continue;
 			});
 			bsdf = std::move(mat_intr.bsdf);
-			phase.reset();
+			phase = nullptr;
 
 			if (spectra::max(mat_intr.Le) > math::epsilon<f32>) {
 				do {

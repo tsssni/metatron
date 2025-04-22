@@ -9,7 +9,16 @@ namespace metatron::math {
 	};
 
 	template<usize n>
-	auto inline guarded_div(math::Vector<f32, n> x, f32 y) -> math::Vector<f32, n> {
-		return std::abs(y) < epsilon<f32> ? math::Vector<f32, n>{0.f} : x / y;
+	auto inline guarded_div(Vector<f32, n> const& x, f32 y) -> Vector<f32, n> {
+		return std::abs(y) < epsilon<f32> ? Vector<f32, n>{0.f} : x / y;
+	};
+
+	template<usize n>
+	auto inline guarded_div(Vector<f32, n> const& x, Vector<f32, n> const& y) -> Vector<f32, n> {
+		auto z = Vector<f32, n>{}; 
+		for (auto i = 0uz; i < n; i++) {
+			z[i] = guarded_div(x, y);
+		}
+		return z;
 	};
 }

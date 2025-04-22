@@ -66,7 +66,7 @@ namespace metatron::image {
 		return (Pixel const){this, const_cast<byte*>(&pixels[offset])};
 	}
 
-	namespace oiio {
+	namespace {
 		auto to_color_space(std::string_view cs) -> color::Color_Space const* {
 			if (cs == "sRGB") {
 				return color::Color_Space::sRGB.get();
@@ -89,7 +89,7 @@ namespace metatron::image {
 	auto Image::from_path(std::string_view path, bool linear) -> std::unique_ptr<Image> {
 		auto in = OIIO::ImageInput::open(std::string{path});
 		if (!in) {
-			std::printf("can not find image %s\n", path.data());
+			std::printf("cannot find image %s\n", path.data());
 			std::abort();
 		}
 
@@ -104,7 +104,7 @@ namespace metatron::image {
 				usize(spec.nchannels),
 				spec.format.size()
 			},
-			oiio::to_color_space(spec.get_string_attribute("oiio:ColorSpace")),
+			to_color_space(spec.get_string_attribute("oiio:ColorSpace")),
 			linear
 		);
 
@@ -128,7 +128,7 @@ namespace metatron::image {
 		};
 
 		spec.attribute("planarconfig", "contig");
-		spec.attribute("oiio::ColorSpace", oiio::from_color_space(color_space));
+		spec.attribute("oiio::ColorSpace", from_color_space(color_space));
 
 		auto out = OIIO::ImageOutput::create(std::string{path});
 		if (!out || !out->open(std::string{path}, spec)) {

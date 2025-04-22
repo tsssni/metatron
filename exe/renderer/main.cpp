@@ -69,6 +69,7 @@ auto main() -> int {
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		std::make_unique<spectra::Constant_Spectrum>(0.0f),
+		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.5f)
 	};
 	auto bvh = accel::LBVH{{
 		{

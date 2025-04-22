@@ -89,6 +89,13 @@ namespace metatron::spectra {
 		return *this;
 	}
 
+	auto Stochastic_Spectrum::operator=(f32 s) -> Stochastic_Spectrum& {
+		for (auto& v: value) {
+			v = s;
+		}
+		return *this;
+	}
+
 	auto Stochastic_Spectrum::operator+(f32 s) const -> Stochastic_Spectrum {
 		auto spec = *this;
 		spec += s;
