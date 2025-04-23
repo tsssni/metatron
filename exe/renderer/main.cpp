@@ -49,8 +49,8 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
-	auto local_to_world = math::Transform{{}, {1.f}};
-	auto world_to_render = math::Transform{{0.f, 0.f, 3.f}};
+	auto local_to_world = math::Transform{{}, {50.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 100.f}};
 	auto render_to_camera = identity;
 
 	auto sphere = shape::Sphere{};

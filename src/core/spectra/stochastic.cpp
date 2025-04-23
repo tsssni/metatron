@@ -18,6 +18,7 @@ namespace metatron::spectra {
 				return value[i];
 			}
 		}
+		std::printf("no matched lambda in stochastic spectrum\n");
 		std::abort();
 	}
 

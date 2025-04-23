@@ -153,16 +153,17 @@ namespace metatron::mc {
 
 							auto hit = m_intr.t >= intr.t;
 
-							betad *= m_intr.sigma_n * m_intr.transmittance / m_intr.pdf;
 							mis_sd *= m_intr.spectra_pdf / m_intr.pdf;
 							mis_ed *= m_intr.spectra_pdf / m_intr.pdf;
 
 							if (!hit) {
+								betad *= m_intr.sigma_n * m_intr.transmittance / m_intr.pdf;
 								intr.t -= m_intr.t;
 								direct_ctx.r.o = m_intr.p;
 								mis_sd *= (m_intr.sigma_n / m_intr.sigma_maj);
 								continue;
 							} else {
+								betad *= m_intr.transmittance / m_intr.pdf;
 								if (math::dot(-direct_ctx.r.d, intr.n) >= 0.f) {
 									medium = div->interior_medium;
 									medium_to_world = div->interior_transform;

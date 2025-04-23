@@ -38,6 +38,8 @@ namespace metatron::media {
 		}
 	}
 
+	std::unordered_map<Nanovdb_Medium const*, Nanovdb_Medium::Cache> thread_local Nanovdb_Medium::thread_caches;
+
     Nanovdb_Medium::Nanovdb_Medium(
         std::string_view path,
         std::unique_ptr<spectra::Spectrum> sigma_a,
@@ -53,6 +55,10 @@ namespace metatron::media {
 	density_scale(density_scale),
 	handle(nanovdb::io::readGrid(std::string{path})),
 	grid(handle.grid<f32>()) {}
+
+	Nanovdb_Medium::~Nanovdb_Medium() {
+		thread_caches.erase(this);
+	}
     
     auto Nanovdb_Medium::sample(
         eval::Context const& ctx, 
@@ -61,6 +67,7 @@ namespace metatron::media {
     ) const -> std::optional<Interaction> {
 		auto accessor = grid->getAccessor();
 		auto sampler = nanovdb::math::createSampler<1>(accessor);
+		auto& cache = thread_caches[this];
 
 		auto sigma_a = ctx.L & (*this->sigma_a);
 		auto sigma_s = ctx.L & (*this->sigma_s);
@@ -111,7 +118,7 @@ namespace metatron::media {
 		while (true) {
 			auto t_u = cache.distr.sample(u);
 			if (t_boundary <= cache.t_max && t_u >= t_boundary) {
-				update_transmittance(t_boundary);
+				update_transmittance(t_boundary + 0.001f);
 				return Interaction{
 					cache.r.o,
 					phase.get(),

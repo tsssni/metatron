@@ -8,9 +8,22 @@
 #include <nanovdb/util/IO.h>
 #include <memory>
 #include <string_view>
+#include <unordered_map>
 
 namespace metatron::media {
     struct Nanovdb_Medium final: Medium {
+		struct Cache final {
+			math::Ray r{
+				{math::maxv<f32>},
+				{0.f}
+			};
+			math::Bounding_Box bbox{};
+			f32 t_max{-1.f};
+			f32 density_maj{0.f};
+			spectra::Stochastic_Spectrum sigma_maj{};
+			math::Exponential_Distribution distr{0.f};
+		};
+
         Nanovdb_Medium(
             std::string_view path,
             std::unique_ptr<spectra::Spectrum> sigma_a,
@@ -19,6 +32,8 @@ namespace metatron::media {
 			std::unique_ptr<phase::Phase_Function> phase,
             f32 density_scale = 1.0f
         );
+
+		~Nanovdb_Medium();
         
         auto sample(eval::Context const& ctx, f32 t_max, f32 u) const -> std::optional<Interaction>;
         
@@ -32,16 +47,6 @@ namespace metatron::media {
         nanovdb::GridHandle<> handle;
         nanovdb::FloatGrid const* grid;
 
-		struct {
-			math::Ray r{
-				{math::maxv<f32>},
-				{0.f}
-			};
-			math::Bounding_Box bbox{};
-			f32 t_max{-1.f};
-			f32 density_maj{0.f};
-			spectra::Stochastic_Spectrum sigma_maj{};
-			math::Exponential_Distribution distr{0.f};
-		} mutable cache;
+		static thread_local std::unordered_map<Nanovdb_Medium const*, Cache> thread_caches;
     };
 }
