@@ -16,6 +16,7 @@
 #include <metatron/geometry/material/texture/constant.hpp>
 #include <metatron/geometry/material/diffuse.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
+#include <metatron/volume/media/homogeneous.hpp>
 #include <metatron/volume/media/nanovdb.hpp>
 #include <metatron/volume/phase/henyey-greenstein.hpp>
 #include <atomic>
@@ -29,7 +30,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{512uz};
-	auto spp = 128uz;
+	auto spp = 32uz;
 	auto blocks = 8uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
@@ -49,8 +50,9 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
-	auto local_to_world = math::Transform{{}, {50.f}};
-	auto world_to_render = math::Transform{{0.f, 0.f, 150.f}};
+	auto local_to_world = math::Transform{{}, {10.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 25.f}};
+	auto medium_to_world = math::Transform{{}, {1.f}};
 	auto render_to_camera = identity;
 
 	auto sphere = shape::Sphere{};
@@ -59,18 +61,18 @@ auto main() -> int {
 			std::make_unique<spectra::Constant_Spectrum>(0.0f)
 		),
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
-			std::make_unique<spectra::Constant_Spectrum>(0.5f)
+			std::make_unique<spectra::Constant_Spectrum>(1.0f)
 		),
 	};
-	auto cloud_medium = media::Nanovdb_Medium{
-		"../Documents/metatron/disney-cloud.nvdb",
+	auto cloud_medium = media::Homogeneous_Medium{
+		// "../Documents/metatron/disney-cloud.nvdb",
 		std::make_unique<spectra::Constant_Spectrum>(0.0f),
 		color::Color_Space::sRGB->to_spectrum(
 			{0.0f, 0.6f, 1.0f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		std::make_unique<spectra::Constant_Spectrum>(0.0f),
-		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.5f)
+		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.0f)
 	};
 	auto bvh = accel::LBVH{{
 		{
@@ -80,7 +82,7 @@ auto main() -> int {
 			nullptr,
 			nullptr,
 			&local_to_world,
-			&identity,
+			&medium_to_world,
 			&identity,
 			0uz
 		}
@@ -117,13 +119,13 @@ auto main() -> int {
 			for (auto p = 0; p < blocks * blocks; p++) {
 				auto px = start + math::morton_decode(p);
 				if (px >= size) continue;
+				// if (px != math::Vector<usize, 2>{159, 200}) {
+				// 	continue;
+				// }
+
 				for (auto n = 0uz; n < spp; n++) {
 					auto sample = camera.sample(px, n, sampler);
 					auto& s = sample.value();
-
-					if (px == math::Vector<usize, 2>{128}) {
-						int a = 1;
-					}
 
 					auto Li_opt = integrator.sample(
 						{

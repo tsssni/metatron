@@ -77,19 +77,19 @@ namespace metatron::media {
 			cache.r = ctx.r;
 			auto idx = grid->worldToIndex(to_nanovdb(cache.r.o));
 			auto coord = nanovdb::Coord{i32(idx[0]), i32(idx[1]), i32(idx[2])};
-			auto info = accessor.getNodeInfo(coord);
+			auto node = accessor.probeLeaf(coord);
 			
-			auto bbox = nanovdb::Vec3dBBox{info.bbox};
+			auto bbox = nanovdb::Vec3dBBox{node->bbox()};
 			bbox.min() = grid->indexToWorld(bbox.min());
 			bbox.max() = grid->indexToWorld(bbox.max() + nanovdb::Vec3d{1.0});
-			cache.bbox = from_nanovdb(info.bbox);
+			cache.bbox = from_nanovdb(bbox);
 			cache.t_max = math::hit(cache.r, cache.bbox).value_or(-1.f);
 
 			if (cache.t_max == -1.f) {
 				cache.t_max = t_max;
 				cache.density_maj = sampler(to_nanovdb(cache.r.o));
 			} else {
-				cache.density_maj = info.maximum;
+				cache.density_maj = node->maximum();
 			}
 			cache.sigma_maj = cache.density_maj * sigma_t;
 			cache.distr = math::Exponential_Distribution{cache.sigma_maj.value.front()};

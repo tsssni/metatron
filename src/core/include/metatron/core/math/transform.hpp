@@ -39,7 +39,7 @@ namespace metatron::math {
 			} else if constexpr (std::is_convertible_v<T, Ray>) {
 				auto r = rhs;
 				r.o = *this | expand(r.o, 1.f);
-				r.d = normalize(*this | expand(r.d, 0.f));
+				r.d = *this | expand(r.d, 0.f);
 				return r;
 			} else if constexpr (std::is_convertible_v<T, Ray_Differential>) {
 				auto ray = rhs;
@@ -58,7 +58,7 @@ namespace metatron::math {
 			} else if constexpr (std::is_convertible_v<T, Ray>) {
 				auto r = rhs;
 				r.o = *this ^ expand(r.o, 1.f);
-				r.d = normalize(*this ^ expand(r.d, 0.f));
+				r.d = *this ^ expand(r.d, 0.f);
 				return r;
 			} else if constexpr (std::is_convertible_v<T, Ray_Differential>) {
 				auto ray = rhs;
