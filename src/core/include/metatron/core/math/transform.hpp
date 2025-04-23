@@ -7,41 +7,41 @@
 namespace metatron::math {
 	template<typename T>
 	concept Transformable = false
-	|| std::is_same_v<std::remove_cvref_t<T>, math::Vector<f32, 4>>
-	|| std::is_same_v<std::remove_cvref_t<T>, math::Ray>
-	|| std::is_same_v<std::remove_cvref_t<T>, math::Ray_Differential>;
+	|| std::is_same_v<std::remove_cvref_t<T>, Vector<f32, 4>>
+	|| std::is_same_v<std::remove_cvref_t<T>, Ray>
+	|| std::is_same_v<std::remove_cvref_t<T>, Ray_Differential>;
 
 	struct Transform final {
 		struct Config {
-			math::Vector<f32, 3> translation{};
-			math::Vector<f32, 3> scaling{1.f};
-			math::Quaternion<f32> rotation{0.f, 0.f, 0.f, 1.f};
+			Vector<f32, 3> translation{};
+			Vector<f32, 3> scaling{1.f};
+			Quaternion<f32> rotation{0.f, 0.f, 0.f, 1.f};
 
 			auto operator<=>(Config const& rhs) const = default;
 		} config;
 
-		mutable math::Matrix<f32, 4, 4> transform;
-		mutable math::Matrix<f32, 4, 4> inv_transform;
+		mutable Matrix<f32, 4, 4> transform;
+		mutable Matrix<f32, 4, 4> inv_transform;
 
 		Transform(
-			math::Vector<f32, 3> translation = {},
-			math::Vector<f32, 3> scaling = {1.f},
-			math::Quaternion<f32> rotation = {0.f, 0.f, 0.f, 1.f}
+			Vector<f32, 3> translation = {},
+			Vector<f32, 3> scaling = {1.f},
+			Quaternion<f32> rotation = {0.f, 0.f, 0.f, 1.f}
 		);
 
-		explicit operator math::Matrix<f32, 4, 4>() const;
+		explicit operator Matrix<f32, 4, 4>() const;
 
 		template<Transformable T>
 		auto operator|(T&& rhs) const -> std::remove_cvref_t<T> {
-			if constexpr (std::is_convertible_v<T, math::Vector<f32, 4>>) {
+			if constexpr (std::is_convertible_v<T, Vector<f32, 4>>) {
 				update();
 				return transform | rhs;
-			} else if constexpr (std::is_convertible_v<T, math::Ray>) {
+			} else if constexpr (std::is_convertible_v<T, Ray>) {
 				auto r = rhs;
-				r.o = *this | math::expand(r.o, 1.f);
-				r.d = *this | math::expand(r.d, 0.f);
+				r.o = *this | expand(r.o, 1.f);
+				r.d = normalize(*this | expand(r.d, 0.f));
 				return r;
-			} else if constexpr (std::is_convertible_v<T, math::Ray_Differential>) {
+			} else if constexpr (std::is_convertible_v<T, Ray_Differential>) {
 				auto ray = rhs;
 				ray.r = *this | rhs.r;
 				ray.rx = *this | rhs.rx;
@@ -52,15 +52,15 @@ namespace metatron::math {
 
 		template<Transformable T>
 		auto operator^(T&& rhs) const -> std::remove_cvref_t<T> {
-			if constexpr (std::is_convertible_v<T, math::Vector<f32, 4>>) {
+			if constexpr (std::is_convertible_v<T, Vector<f32, 4>>) {
 				update();
 				return inv_transform | rhs;
-			} else if constexpr (std::is_convertible_v<T, math::Ray>) {
+			} else if constexpr (std::is_convertible_v<T, Ray>) {
 				auto r = rhs;
-				r.o = *this ^ math::expand(r.o, 1.f);
-				r.d = *this ^ math::expand(r.d, 0.f);
+				r.o = *this ^ expand(r.o, 1.f);
+				r.d = normalize(*this ^ expand(r.d, 0.f));
 				return r;
-			} else if constexpr (std::is_convertible_v<T, math::Ray_Differential>) {
+			} else if constexpr (std::is_convertible_v<T, Ray_Differential>) {
 				auto ray = rhs;
 				ray.r = *this ^ rhs.r;
 				ray.rx = *this ^ rhs.rx;

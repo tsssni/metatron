@@ -27,8 +27,7 @@ namespace metatron::photo {
 		math::Sampler& sampler
 	) -> std::optional<Interaction> {
 		sampler.start(pixel, idx);
-		auto sample = sampler.generate_pixel_2d();
-		auto fixel = (*film)(pixel, sample);
+		auto fixel = (*film)(pixel, sampler.generate_pixel_2d());
 
 		auto ray = math::Ray_Differential{};
 		auto r_pos = math::Vector<f32, 3>{fixel.position, 0.f};

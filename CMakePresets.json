@@ -9,8 +9,10 @@
 			"name": "default",
 			"generator": "Ninja",
 			"cacheVariables": {
-				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-				"CMAKE_CXX_FLAGS": "-fstack-protector-all -fwrapv"
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+			},
+			"environment": {
+				"METATRON_CXX_FLAGS": "-fstack-protector-all -fwrapv"
 			}
 		},
 		{
@@ -18,7 +20,8 @@
 			"inherits": "default",
 			"binaryDir": "${sourceDir}/build/${presetName}",
 			"cacheVariables": {
-				"CMAKE_BUILD_TYPE": "RelWithDebInfo"
+				"CMAKE_BUILD_TYPE": "Debug",
+				"CMAKE_CXX_FLAGS": "$env{METATRON_CXX_FLAGS} -g3 -O0"
 			}
 		},
 		{
@@ -26,7 +29,8 @@
 			"inherits": "default",
 			"binaryDir": "${sourceDir}/build/${presetName}",
 			"cacheVariables": {
-				"CMAKE_BUILD_TYPE": "Release"
+				"CMAKE_BUILD_TYPE": "Release",
+				"CMAKE_CXX_FLAGS": "$env{METATRON_CXX_FLAGS}"
 			}
 		}
 	],

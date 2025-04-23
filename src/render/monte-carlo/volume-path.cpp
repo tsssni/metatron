@@ -116,8 +116,8 @@ namespace metatron::mc {
 							}
 						}
 
-						div_opt = accel(direct_ctx.r);
-						intr_opt = {};
+						auto div_opt = accel(direct_ctx.r);
+						auto intr_opt = std::optional<shape::Interaction>{};
 
 						if (!div_opt.has_value()) {
 							terminated = true;
@@ -221,8 +221,10 @@ namespace metatron::mc {
 			auto& div = div_opt.value();
 			auto& intr = intr_opt.value();
 			auto& lt = *div->local_to_world;
-			intr.p = rt | (lt | math::expand(intr.p, 1.f));
-			intr.n = rt | (lt | math::expand(intr.n, 0.f));
+			if (scattered || crossed) {
+				intr.p = rt | (lt | math::expand(intr.p, 1.f));
+				intr.n = rt | (lt | math::expand(intr.n, 0.f));
+			}
 
 			if (ctx.medium) {
 				auto& mt = *ctx.medium_to_world;
@@ -293,6 +295,7 @@ namespace metatron::mc {
 					ctx.medium_to_world = div->exterior_transform;
 				}
 				ctx.ray_differential.r.o = intr.p + ctx.ray_differential.r.d * 0.001f;
+				
 				spectra::clear(mis_e);
 				scattered = false;
 				crossed = true;

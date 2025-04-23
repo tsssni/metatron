@@ -30,6 +30,12 @@ namespace metatron::shape {
 		auto p = r.o + t * r.d;
 		auto n = math::normalize(p);
 
+		for (auto i = 0; i < 3; i++) {
+			if (std::abs(p[i]) > 1.0) {
+				std::printf("\n123\n");
+				std::abort();
+			}
+		}
 		auto s = math::cartesion_to_sphere(n);
 		auto& theta = s[0];
 		auto& phi = s[1];

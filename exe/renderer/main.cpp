@@ -34,9 +34,9 @@ auto main() -> int {
 	auto kernels = usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
-	auto lens = std::make_unique<photo::Pinhole_Lens>(0.1f);
+	auto lens = std::make_unique<photo::Pinhole_Lens>(0.25f);
 	auto film = std::make_unique<photo::Film>(
-		math::Vector<f32, 2>{0.1f, 0.1f},
+		math::Vector<f32, 2>{0.25f, 0.25f},
 		size,
 		std::move(sensor),
 		std::make_unique<math::Box_Filter>(),
@@ -50,7 +50,7 @@ auto main() -> int {
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
 	auto local_to_world = math::Transform{{}, {50.f}};
-	auto world_to_render = math::Transform{{0.f, 0.f, 100.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 150.f}};
 	auto render_to_camera = identity;
 
 	auto sphere = shape::Sphere{};
