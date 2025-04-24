@@ -30,7 +30,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{512uz};
-	auto spp = 32uz;
+	auto spp = 1uz;
 	auto blocks = 8uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
@@ -50,8 +50,8 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
-	auto local_to_world = math::Transform{{}, {10.f}};
-	auto world_to_render = math::Transform{{0.f, 0.f, 25.f}};
+	auto local_to_world = math::Transform{{}, {500.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 1000.f}};
 	auto medium_to_world = math::Transform{{}, {1.f}};
 	auto render_to_camera = identity;
 
@@ -64,9 +64,9 @@ auto main() -> int {
 			std::make_unique<spectra::Constant_Spectrum>(1.0f)
 		),
 	};
-	auto cloud_medium = media::Homogeneous_Medium{
-		// "../Documents/metatron/disney-cloud.nvdb",
-		std::make_unique<spectra::Constant_Spectrum>(0.0f),
+	auto cloud_medium = media::Nanovdb_Medium{
+		"../Documents/metatron/disney-cloud.nvdb",
+		std::make_unique<spectra::Constant_Spectrum>(1.0f),
 		color::Color_Space::sRGB->to_spectrum(
 			{0.0f, 0.6f, 1.0f},
 			color::Color_Space::Spectrum_Type::albedo
@@ -119,7 +119,7 @@ auto main() -> int {
 			for (auto p = 0; p < blocks * blocks; p++) {
 				auto px = start + math::morton_decode(p);
 				if (px >= size) continue;
-				// if (px != math::Vector<usize, 2>{159, 200}) {
+				// if (px != math::Vector<usize, 2>{272, 175}) {
 				// 	continue;
 				// }
 

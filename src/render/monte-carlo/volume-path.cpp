@@ -116,8 +116,8 @@ namespace metatron::mc {
 							}
 						}
 
-						auto div_opt = accel(direct_ctx.r);
-						auto intr_opt = std::optional<shape::Interaction>{};
+						div_opt = accel(direct_ctx.r);
+						intr_opt = std::optional<shape::Interaction>{};
 
 						if (!div_opt.has_value()) {
 							terminated = true;
@@ -149,6 +149,7 @@ namespace metatron::mc {
 								break;
 							});
 							direct_ctx.r = rt | (mt | direct_ctx.r);
+							m_intr.p = rt | (mt | math::expand(direct_ctx.p, 1.f));
 							l_intr.t -= m_intr.t;
 
 							auto hit = m_intr.t >= intr.t;

@@ -66,30 +66,27 @@ namespace metatron::media {
         f32 u
     ) const -> std::optional<Interaction> {
 		auto accessor = grid->getAccessor();
-		auto sampler = nanovdb::math::createSampler<1>(accessor);
 		auto& cache = thread_caches[this];
-
+		
 		auto sigma_a = ctx.L & (*this->sigma_a);
 		auto sigma_s = ctx.L & (*this->sigma_s);
 		auto sigma_t = sigma_a + sigma_s;
 
 		auto update_majorant = [&]() -> void {
-			cache.r = ctx.r;
 			auto idx = grid->worldToIndex(to_nanovdb(cache.r.o));
 			auto coord = nanovdb::Coord{i32(idx[0]), i32(idx[1]), i32(idx[2])};
-			auto node = accessor.probeLeaf(coord);
+			auto node = accessor.getNodeInfo(coord);
 			
-			auto bbox = nanovdb::Vec3dBBox{node->bbox()};
-			bbox.min() = grid->indexToWorld(bbox.min());
-			bbox.max() = grid->indexToWorld(bbox.max() + nanovdb::Vec3d{1.0});
-			cache.bbox = from_nanovdb(bbox);
+			auto& bbox = node.bbox;
+			cache.bbox.p_min = from_nanovdb(grid->indexToWorld(nanovdb::Vec3f{bbox.min()} - nanovdb::Vec3f{0.5f}));
+			cache.bbox.p_max = from_nanovdb(grid->indexToWorld(nanovdb::Vec3f{bbox.max()} + nanovdb::Vec3f{0.5f}));
 			cache.t_max = math::hit(cache.r, cache.bbox).value_or(-1.f);
 
 			if (cache.t_max == -1.f) {
 				cache.t_max = t_max;
-				cache.density_maj = sampler(to_nanovdb(cache.r.o));
+				accessor.probeValue(coord, cache.density_maj);
 			} else {
-				cache.density_maj = node->maximum();
+				cache.density_maj = node.maximum;
 			}
 			cache.sigma_maj = cache.density_maj * sigma_t;
 			cache.distr = math::Exponential_Distribution{cache.sigma_maj.value.front()};
@@ -99,6 +96,7 @@ namespace metatron::media {
 		|| ctx.r.o != cache.r.o
 		|| ctx.r.d != cache.r.d 
 		|| cache.t_max < 0.f) {
+			cache.r = ctx.r;
 			update_majorant();
 		}
 
@@ -134,7 +132,11 @@ namespace metatron::media {
 			} else {
 				update_transmittance(t_u);
 				auto spectra_pdf = cache.sigma_maj * transmittance;
-				auto density = sampler(to_nanovdb(cache.r.o)) * density_scale;
+				auto density = 0.f;
+				auto idx = grid->worldToIndex(to_nanovdb(cache.r.o));
+				auto coord = nanovdb::Coord{i32(idx[0]), i32(idx[1]), i32(idx[2])};
+				accessor.probeValue(coord, density);
+				density *= density_scale;
 
 				return Interaction{
 					cache.r.o,
