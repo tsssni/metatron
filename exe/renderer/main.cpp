@@ -17,6 +17,7 @@
 #include <metatron/geometry/material/diffuse.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
 #include <metatron/volume/media/homogeneous.hpp>
+#include <metatron/volume/media/vaccum.hpp>
 #include <metatron/volume/media/nanovdb.hpp>
 #include <metatron/volume/phase/henyey-greenstein.hpp>
 #include <atomic>
@@ -30,7 +31,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{512uz};
-	auto spp = 1uz;
+	auto spp = 32uz;
 	auto blocks = 8uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
@@ -51,7 +52,7 @@ auto main() -> int {
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
 	auto local_to_world = math::Transform{{}, {500.f}};
-	auto world_to_render = math::Transform{{0.f, 0.f, 1000.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 1500.f}};
 	auto medium_to_world = math::Transform{{}, {1.f}};
 	auto render_to_camera = identity;
 
@@ -64,8 +65,9 @@ auto main() -> int {
 			std::make_unique<spectra::Constant_Spectrum>(1.0f)
 		),
 	};
-	auto cloud_medium = media::Nanovdb_Medium{
-		"../Documents/metatron/disney-cloud.nvdb",
+	auto vaccum_medium = media::Vaccum_Medium{};
+	auto cloud_medium = media::Homogeneous_Medium{
+		// "../Documents/metatron/disney-cloud.nvdb",
 		std::make_unique<spectra::Constant_Spectrum>(1.0f),
 		color::Color_Space::sRGB->to_spectrum(
 			{0.0f, 0.6f, 1.0f},
@@ -78,7 +80,7 @@ auto main() -> int {
 		{
 			&sphere,
 			&cloud_medium,
-			nullptr,
+			&vaccum_medium,
 			nullptr,
 			nullptr,
 			&local_to_world,
@@ -131,10 +133,10 @@ auto main() -> int {
 						{
 							s.ray_differential,
 							s.default_differential,
-							{},
+							&vaccum_medium,
 							&world_to_render,
 							&render_to_camera,
-							{}
+							&identity
 						},
 						bvh,
 						emitter,
