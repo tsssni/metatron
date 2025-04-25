@@ -5,7 +5,6 @@
 #include <metatron/core/stl/optional.hpp>
 #include <nanovdb/math/SampleFromVoxels.h>
 #include <nanovdb/math/Ray.h>
-#include <nanovdb/tools/GridBuilder.h>
 
 namespace metatron::media {
 	using Nanovdb_Grid = math::Uniform_Grid<f32, 64, 64, 64>;

@@ -31,10 +31,10 @@ auto main() -> int {
 	spectra::Spectrum::initialize();
 	color::Color_Space::initialize();
 
-	auto size = math::Vector<usize, 2>{64uz};
-	auto spp = 8uz;
+	auto size = math::Vector<usize, 2>{512uz};
+	auto spp = 32uz;
 	auto blocks = 8uz;
-	auto kernels = 1uz; // usize(std::thread::hardware_concurrency());
+	auto kernels = usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
 	auto lens = std::make_unique<photo::Pinhole_Lens>(0.25f);
@@ -52,7 +52,7 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
-	auto local_to_world = math::Transform{{}, {500.f}};
+	auto local_to_world = math::Transform{{}, {250.f}};
 	auto world_to_render = math::Transform{{0.f, 0.f, 1250.f}};
 	auto medium_to_world = math::Transform{{}, {1.f}};
 	auto render_to_camera = identity;

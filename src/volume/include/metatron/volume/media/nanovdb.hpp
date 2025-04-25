@@ -6,7 +6,7 @@
 #include <metatron/core/spectra/constant.hpp>
 #include <metatron/core/spectra/stochastic.hpp>
 #include <nanovdb/NanoVDB.h>
-#include <nanovdb/util/IO.h>
+#include <nanovdb/io/IO.h>
 #include <memory>
 #include <string_view>
 #include <unordered_map>

@@ -1,6 +1,6 @@
 modulo(${path})
 extend(OpenVDB)
 extend(ZLIB)
-target_include_directories(metatron-openvdb INTERFACE ${OPENVDB_INCLUDE_DIRS})
+target_include_directories(metatron-openvdb INTERFACE ${OPENVDB_INCLUDE_DIR})
 target_compile_definitions(metatron-openvdb INTERFACE "NANOVDB_USE_ZIP")
-list(APPEND metatron-deps ${OPENVDB_LIBRARIES} ZLIB::ZLIB)
+list(APPEND metatron-deps ${OPENVDB_LIBRARY} ZLIB::ZLIB)
