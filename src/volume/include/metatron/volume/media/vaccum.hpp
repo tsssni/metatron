@@ -1,3 +1,4 @@
+#pragma once
 #include <metatron/volume/media/medium.hpp>
 #include <metatron/volume/phase/phase-function.hpp>
 

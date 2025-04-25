@@ -15,6 +15,7 @@
 #include <metatron/geometry/material/texture/image.hpp>
 #include <metatron/geometry/material/texture/constant.hpp>
 #include <metatron/geometry/material/diffuse.hpp>
+#include <metatron/geometry/material/interface.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
 #include <metatron/volume/media/homogeneous.hpp>
 #include <metatron/volume/media/vaccum.hpp>
@@ -51,13 +52,13 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
-	auto local_to_world = math::Transform{{}, {500.f}};
-	auto world_to_render = math::Transform{{0.f, 0.f, 1500.f}};
+	auto local_to_world = math::Transform{{}, {10.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 25.f}};
 	auto medium_to_world = math::Transform{{}, {1.f}};
 	auto render_to_camera = identity;
 
 	auto sphere = shape::Sphere{};
-	auto diffuse = material::Diffuse_Material{
+	auto diffuse_material = material::Diffuse_Material{
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
 			std::make_unique<spectra::Constant_Spectrum>(0.0f)
 		),
@@ -65,6 +66,7 @@ auto main() -> int {
 			std::make_unique<spectra::Constant_Spectrum>(1.0f)
 		),
 	};
+	auto interface_material = material::Interface_Material{};
 	auto vaccum_medium = media::Vaccum_Medium{};
 	auto cloud_medium = media::Homogeneous_Medium{
 		// "../Documents/metatron/disney-cloud.nvdb",
@@ -81,7 +83,7 @@ auto main() -> int {
 			&sphere,
 			&cloud_medium,
 			&vaccum_medium,
-			nullptr,
+			&interface_material,
 			nullptr,
 			&local_to_world,
 			&medium_to_world,

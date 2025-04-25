@@ -26,9 +26,10 @@ namespace metatron::mc {
 		auto scattered = false;
 		auto scatter_pdf = 0.f;
 		auto scatter_f = Le;
-		auto scatter_ctx = eval::Context{};
-		scatter_ctx.r = ctx.ray_differential.r;
-		scatter_ctx.L = Le;
+
+		auto trace_ctx = eval::Context{};
+		trace_ctx.r = ctx.ray_differential.r;
+		trace_ctx.L = Le;
 
 		auto div_opt = std::optional<accel::Divider const*>{};
 		auto intr_opt = std::optional<shape::Interaction>{};
@@ -58,8 +59,8 @@ namespace metatron::mc {
 
 			if (scattered) {
 				do {
-					OPTIONAL_OR_BREAK(e_intr, emitter.sample(scatter_ctx, sampler.generate_2d()));
-					auto direct_ctx = scatter_ctx;
+					OPTIONAL_OR_BREAK(e_intr, emitter.sample(trace_ctx, sampler.generate_2d()));
+					auto direct_ctx = trace_ctx;
 					auto& lt = *e_intr.divider->local_to_world;
 
 					direct_ctx.p = lt ^ (rt ^ math::expand(direct_ctx.p, 1.f));
@@ -86,7 +87,7 @@ namespace metatron::mc {
 						f = b_intr.f;
 						ps = b_intr.pdf;
 					} else if (phase) {
-						OPTIONAL_OR_BREAK(p_intr, (*phase)(ctx.ray_differential.r.d, l_intr.wi, Le));
+						OPTIONAL_OR_BREAK(p_intr, (*phase)(direct_ctx.r.d, l_intr.wi, Le));
 						f = p_intr.f;
 						ps = p_intr.pdf;
 					} else {
@@ -182,18 +183,19 @@ namespace metatron::mc {
 					auto mis_w = math::guarded_div(1.f, spectra::avg(mis_sd + mis_ed));
 					Le += mis_w * betad * l_intr.Le;
 				} while (false);
-				
-				ctx.ray_differential.r = scatter_ctx.r;
-				ctx.ray_differential.differentiable = false;
+			}
+
+			if (crossed) {
+				spectra::clear(mis_e);
 			}
 
 			if (scattered || crossed) {
-				div_opt = accel(ctx.ray_differential.r);
+				div_opt = accel(trace_ctx.r);
 				intr_opt = {};
 				if (div_opt) {
 					auto div = div_opt.value();
 					auto& lt = *div->local_to_world;
-					auto r = lt ^ (rt ^ ctx.ray_differential.r);
+					auto r = lt ^ (rt ^ trace_ctx.r);
 					intr_opt = (*div->shape)(r, div->primitive);
 				}
 			}
@@ -201,8 +203,8 @@ namespace metatron::mc {
 			if (!intr_opt) {
 				terminated = true;
 
-				OPTIONAL_OR_CONTINUE(e_intr, emitter.sample_infinite(scatter_ctx, sampler.generate_1d()));
-				auto inf_ctx = scatter_ctx;
+				OPTIONAL_OR_CONTINUE(e_intr, emitter.sample_infinite(trace_ctx, sampler.generate_1d()));
+				auto inf_ctx = trace_ctx;
 				auto& lt = *e_intr.divider->local_to_world;
 
 				inf_ctx.r.d = lt ^ (rt ^ math::expand(inf_ctx.r.d, 0.f));
@@ -226,7 +228,7 @@ namespace metatron::mc {
 				intr.n = rt | (lt | math::expand(intr.n, 0.f));
 			}
 
-			auto m_ctx = eval::Context{ctx.ray_differential.r.o, {}, ctx.ray_differential.r, Le};
+			auto m_ctx = eval::Context{trace_ctx.r.o, {}, trace_ctx.r, Le};
 			m_ctx.r = mt ^ (rt ^ m_ctx.r);
 			OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
 				terminated = true;
@@ -270,32 +272,16 @@ namespace metatron::mc {
 					crossed = false;
 					scatter_f = p_intr.f;
 					scatter_pdf = p_intr.pdf;
-					scatter_ctx = {m_intr.p, {}, {m_intr.p, p_intr.wi}, Le};
+					trace_ctx = {m_intr.p, {}, {m_intr.p, p_intr.wi}, Le};
 				} else {
 					intr.t -= m_intr.t;
-					ctx.ray_differential.r.o = m_intr.p;
+					trace_ctx.r.o = m_intr.p;
 					beta /= p_n;
 					mis_s *= (m_intr.sigma_n / m_intr.sigma_maj) / p_n;
 					mis_e /= p_n;
 					scattered = false;
 					crossed = false;
 				}
-				continue;
-			}
-
-			if (!div->material) {
-				if (math::dot(-ctx.ray_differential.r.d, intr.n) >= 0.f) {
-					ctx.medium = div->interior_medium;
-					ctx.medium_to_world = div->interior_transform;
-				} else {
-					ctx.medium = div->exterior_medium;
-					ctx.medium_to_world = div->exterior_transform;
-				}
-				ctx.ray_differential.r.o = intr.p + ctx.ray_differential.r.d * 0.001f;
-				
-				spectra::clear(mis_e);
-				scattered = false;
-				crossed = true;
 				continue;
 			}
 
@@ -319,17 +305,18 @@ namespace metatron::mc {
 			auto duvdy = math::least_squares(dpduv, dpdy);
 
 			auto tcoord = material::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
-			OPTIONAL_OR_CALLBACK(mat_intr, div->material->sample(scatter_ctx, tcoord), {
+			OPTIONAL_OR_CALLBACK(mat_intr, div->material->sample(trace_ctx, tcoord), {
 				terminated = true;
 				continue;
 			});
+			ctx.ray_differential.differentiable = false;
 			bsdf = std::move(mat_intr.bsdf);
 			phase = nullptr;
 
 			if (spectra::max(mat_intr.Le) > math::epsilon<f32>) {
 				do {
-					OPTIONAL_OR_BREAK(e_intr, emitter(scatter_ctx, *div->Le));
-					auto emit_ctx = scatter_ctx;
+					OPTIONAL_OR_BREAK(e_intr, emitter(trace_ctx, *div->Le));
+					auto emit_ctx = trace_ctx;
 					auto& div = *e_intr.divider;
 					auto& lt = *div.local_to_world;
 
@@ -351,16 +338,16 @@ namespace metatron::mc {
 			auto uc = sampler.generate_1d();
 			auto u = sampler.generate_2d();
 
-			scatter_ctx.r = bt | scatter_ctx.r;
-			OPTIONAL_OR_CALLBACK(b_intr, bsdf->sample(scatter_ctx, {uc, u[0], u[1]}), {
+			auto b_ctx = trace_ctx;
+			b_ctx.r = bt | b_ctx.r;
+			OPTIONAL_OR_CALLBACK(b_intr, bsdf->sample(b_ctx, {uc, u[0], u[1]}), {
 				terminated = true;
 				continue;
 			});
-			scatter_ctx.r = bt ^ scatter_ctx.r;
 			b_intr.wi = bt ^ math::expand(b_intr.wi, 0.f);
 
 			auto flip_n = 1.f;
-			if (math::dot(-scatter_ctx.r.d, b_intr.wi) < 0.f) {
+			if (math::dot(-trace_ctx.r.d, b_intr.wi) < 0.f) {
 				if (math::dot(b_intr.wi, intr.n) <= 0.f) {
 					ctx.medium = div->interior_medium;
 					ctx.medium_to_world = div->interior_transform;
@@ -370,16 +357,18 @@ namespace metatron::mc {
 					ctx.medium_to_world = div->exterior_transform;
 				}
 			}
-			auto scatter_n = flip_n * intr.n;
-			auto scatter_p = intr.p + 0.001f * b_intr.wi;
+			auto trace_n = flip_n * intr.n;
+			auto trace_p = intr.p + 0.001f * b_intr.wi;
 
-			beta *= b_intr.f / b_intr.pdf;
-			mis_e = mis_s / b_intr.pdf;
-			scattered = true;
-			crossed = false;
-			scatter_f = b_intr.f;
-			scatter_pdf = b_intr.pdf;
-			scatter_ctx = {scatter_p, scatter_n, {scatter_p, b_intr.wi}, Le};
+			scattered = trace_ctx.r.d != b_intr.wi;
+			crossed = !scattered;
+			trace_ctx = {trace_p, trace_n, {trace_p, b_intr.wi}, Le};
+			if (scattered) {
+				beta *= b_intr.f / b_intr.pdf;
+				mis_e = mis_s / b_intr.pdf;
+				scatter_f = b_intr.f;
+				scatter_pdf = b_intr.pdf;
+			}
 		}
 
 		return Le;
