@@ -3,13 +3,15 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/ray.hpp>
+#include <metatron/core/eval/context.hpp>
 
 namespace metatron::math {
 	template<typename T>
 	concept Transformable = false
 	|| std::is_same_v<std::remove_cvref_t<T>, Vector<f32, 4>>
 	|| std::is_same_v<std::remove_cvref_t<T>, Ray>
-	|| std::is_same_v<std::remove_cvref_t<T>, Ray_Differential>;
+	|| std::is_same_v<std::remove_cvref_t<T>, Ray_Differential>
+	|| std::is_same_v<std::remove_cvref_t<T>, eval::Context>;
 
 	struct Transform final {
 		struct Config {
@@ -47,6 +49,11 @@ namespace metatron::math {
 				ray.rx = *this | rhs.rx;
 				ray.ry = *this | rhs.ry;
 				return ray;
+			} else if constexpr (std::is_convertible_v<T, eval::Context>) {
+				auto ctx = rhs;
+				ctx.r = *this | ctx.r;
+				ctx.n = *this | expand(ctx.n, 0.f);
+				return ctx;
 			}
 		}
 
@@ -66,6 +73,11 @@ namespace metatron::math {
 				ray.rx = *this ^ rhs.rx;
 				ray.ry = *this ^ rhs.ry;
 				return ray;
+			} else if constexpr (std::is_convertible_v<T, eval::Context>) {
+				auto ctx = rhs;
+				ctx.r = *this ^ ctx.r;
+				ctx.n = *this ^ expand(ctx.n, 0.f);
+				return ctx;
 			}
 		}
 

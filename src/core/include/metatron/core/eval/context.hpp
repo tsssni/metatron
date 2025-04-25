@@ -5,9 +5,8 @@
 
 namespace metatron::eval {
 	struct Context final {
-		math::Vector<f32, 3> p{};
-		math::Vector<f32, 3> n{};
 		math::Ray r{};
+		math::Vector<f32, 3> n{};
 		spectra::Stochastic_Spectrum L{};
 	};
 }

@@ -28,6 +28,7 @@ namespace metatron::mc {
 		auto scatter_f = Le;
 
 		auto trace_ctx = eval::Context{};
+		auto history_trace_ctx = eval::Context{};
 		trace_ctx.r = ctx.ray_differential.r;
 		trace_ctx.L = Le;
 
@@ -63,11 +64,9 @@ namespace metatron::mc {
 					auto direct_ctx = trace_ctx;
 					auto& lt = *e_intr.divider->local_to_world;
 
-					direct_ctx.p = lt ^ (rt ^ math::expand(direct_ctx.p, 1.f));
-					direct_ctx.n = lt ^ (rt ^ math::expand(direct_ctx.n, 0.f));
+					direct_ctx = lt ^ (rt ^ direct_ctx);
 					OPTIONAL_OR_BREAK(l_intr, e_intr.divider->light->sample(direct_ctx, sampler.generate_2d()));
-					direct_ctx.p = rt | (lt | math::expand(direct_ctx.p, 1.f));
-					direct_ctx.n = rt | (lt | math::expand(direct_ctx.n, 0.f));
+					direct_ctx = rt | (lt | direct_ctx);
 
 					l_intr.wi = rt | (lt | math::expand(l_intr.wi, 0.f));
 					auto pe = e_intr.pdf * l_intr.pdf;
@@ -81,13 +80,13 @@ namespace metatron::mc {
 					if (bsdf) {
 						auto t = math::Transform{};
 						t.config.rotation = math::Quaternion<f32>::from_rotation_between(direct_ctx.n, {0.f, 1.f, 0.f});
-						auto wo = t | math::expand(direct_ctx.r.d, 0.f);
+						auto wo = t | math::expand(history_trace_ctx.r.d, 0.f);
 						auto wi = t | math::expand(l_intr.wi, 0.f);
 						OPTIONAL_OR_BREAK(b_intr, (*bsdf)(wo, wi, Le));
 						f = b_intr.f;
 						ps = b_intr.pdf;
 					} else if (phase) {
-						OPTIONAL_OR_BREAK(p_intr, (*phase)(direct_ctx.r.d, l_intr.wi, Le));
+						OPTIONAL_OR_BREAK(p_intr, (*phase)(history_trace_ctx.r.d, l_intr.wi, Le));
 						f = p_intr.f;
 						ps = p_intr.pdf;
 					} else {
@@ -143,14 +142,14 @@ namespace metatron::mc {
 						intr.p = rt | (lt | math::expand(intr.p, 1.f));
 						intr.n = rt | (lt | math::expand(intr.n, 1.f));
 
-						direct_ctx.r = mt ^ (rt ^ direct_ctx.r);
+						direct_ctx = mt ^ (rt ^ direct_ctx);
 						OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(direct_ctx, intr.t, sampler.generate_1d()), {
 							terminated = true;
 							spectra::clear(betad);
 							break;
 						});
-						direct_ctx.r = rt | (mt | direct_ctx.r);
-						m_intr.p = rt | (mt | math::expand(direct_ctx.p, 1.f));
+						direct_ctx = rt | (mt | direct_ctx);
+						m_intr.p = rt | (mt | math::expand(direct_ctx.r.o, 1.f));
 						l_intr.t -= m_intr.t;
 
 						auto hit = m_intr.t >= intr.t;
@@ -175,7 +174,6 @@ namespace metatron::mc {
 							}
 
 							direct_ctx.r.o = intr.p + direct_ctx.r.d * 0.001f;
-							direct_ctx.p = direct_ctx.r.o;
 							break;
 						}
 					}
@@ -204,14 +202,11 @@ namespace metatron::mc {
 				terminated = true;
 
 				OPTIONAL_OR_CONTINUE(e_intr, emitter.sample_infinite(trace_ctx, sampler.generate_1d()));
-				auto inf_ctx = trace_ctx;
 				auto& lt = *e_intr.divider->local_to_world;
 
-				inf_ctx.r.d = lt ^ (rt ^ math::expand(inf_ctx.r.d, 0.f));
-				inf_ctx.n = lt ^ (rt ^ math::expand(inf_ctx.n, 0.f));
-				OPTIONAL_OR_CONTINUE(l_intr, (*e_intr.divider->light)(inf_ctx));
-				inf_ctx.r.d = rt | (lt | math::expand(inf_ctx.r.d, 0.f));
-				inf_ctx.n = rt | (lt | math::expand(inf_ctx.n, 0.f));
+				trace_ctx = lt ^ (rt ^ trace_ctx);
+				OPTIONAL_OR_CONTINUE(l_intr, (*e_intr.divider->light)(trace_ctx));
+				trace_ctx = rt | (lt | trace_ctx);
 
 				auto pl = e_intr.pdf * l_intr.pdf;
 				mis_e *= pl;
@@ -228,13 +223,12 @@ namespace metatron::mc {
 				intr.n = rt | (lt | math::expand(intr.n, 0.f));
 			}
 
-			auto m_ctx = eval::Context{trace_ctx.r.o, {}, trace_ctx.r, Le};
-			m_ctx.r = mt ^ (rt ^ m_ctx.r);
-			OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
+			trace_ctx = mt ^ (rt ^ trace_ctx);
+			OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(trace_ctx, intr.t, sampler.generate_1d()), {
 				terminated = true;
 				continue;
 			});
-			m_ctx.r = rt | (mt | m_ctx.r);
+			trace_ctx = rt | (mt | trace_ctx);
 			m_intr.p = rt | (mt | math::expand(m_intr.p, 1.f));
 
 			auto hit = m_intr.t >= intr.t;
@@ -259,7 +253,7 @@ namespace metatron::mc {
 				} else if (mode == 1uz) {
 					phase = m_intr.phase;
 					bsdf.reset();
-					OPTIONAL_OR_CALLBACK(p_intr, phase->sample(m_ctx, sampler.generate_2d()), {
+					OPTIONAL_OR_CALLBACK(p_intr, phase->sample(trace_ctx, sampler.generate_2d()), {
 						terminated = true;
 						continue;
 					});
@@ -272,7 +266,8 @@ namespace metatron::mc {
 					crossed = false;
 					scatter_f = p_intr.f;
 					scatter_pdf = p_intr.pdf;
-					trace_ctx = {m_intr.p, {}, {m_intr.p, p_intr.wi}, Le};
+					history_trace_ctx = trace_ctx;
+					trace_ctx = {{m_intr.p, p_intr.wi}, {}, Le};
 				} else {
 					intr.t -= m_intr.t;
 					trace_ctx.r.o = m_intr.p;
@@ -316,15 +311,12 @@ namespace metatron::mc {
 			if (spectra::max(mat_intr.Le) > math::epsilon<f32>) {
 				do {
 					OPTIONAL_OR_BREAK(e_intr, emitter(trace_ctx, *div->Le));
-					auto emit_ctx = trace_ctx;
 					auto& div = *e_intr.divider;
 					auto& lt = *div.local_to_world;
 
-					emit_ctx.r.d = lt ^ (rt ^ math::expand(emit_ctx.r.d, 0.f));
-					emit_ctx.n = lt ^ (rt ^ math::expand(emit_ctx.n, 0.f));
-					OPTIONAL_OR_BREAK(l_intr, (*e_intr.divider->light)(emit_ctx));
-					emit_ctx.r.d = rt | (lt | math::expand(emit_ctx.r.d, 0.f));
-					emit_ctx.n = rt | (lt | math::expand(emit_ctx.n, 0.f));
+					trace_ctx = lt ^ (rt ^ trace_ctx);
+					OPTIONAL_OR_BREAK(l_intr, (*e_intr.divider->light)(trace_ctx));
+					trace_ctx = rt | (lt | trace_ctx);
 
 					auto pe = e_intr.pdf * l_intr.pdf;
 					mis_e *= pe;
@@ -338,12 +330,12 @@ namespace metatron::mc {
 			auto uc = sampler.generate_1d();
 			auto u = sampler.generate_2d();
 
-			auto b_ctx = trace_ctx;
-			b_ctx.r = bt | b_ctx.r;
-			OPTIONAL_OR_CALLBACK(b_intr, bsdf->sample(b_ctx, {uc, u[0], u[1]}), {
+			trace_ctx = bt | trace_ctx;
+			OPTIONAL_OR_CALLBACK(b_intr, bsdf->sample(trace_ctx, {uc, u[0], u[1]}), {
 				terminated = true;
 				continue;
 			});
+			trace_ctx = bt ^ trace_ctx;
 			b_intr.wi = bt ^ math::expand(b_intr.wi, 0.f);
 
 			auto flip_n = 1.f;
@@ -362,7 +354,8 @@ namespace metatron::mc {
 
 			scattered = trace_ctx.r.d != b_intr.wi;
 			crossed = !scattered;
-			trace_ctx = {trace_p, trace_n, {trace_p, b_intr.wi}, Le};
+			history_trace_ctx = trace_ctx;
+			trace_ctx = {{trace_p, b_intr.wi}, trace_n, Le};
 			if (scattered) {
 				beta *= b_intr.f / b_intr.pdf;
 				mis_e = mis_s / b_intr.pdf;

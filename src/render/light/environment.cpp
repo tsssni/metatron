@@ -43,9 +43,9 @@ namespace metatron::light {
 				n = ctx.n;
 			}
 			
-			auto intr = (*this)({{}, n, {{}, wi}, ctx.L}).value();
+			auto intr = (*this)({{ctx.r.o, wi}, n, ctx.L}).value();
 			intr.wi = wi;
-			intr.p = ctx.p + 65536.f * wi;
+			intr.p = ctx.r.o + 65536.f * wi;
 			intr.t = 65536.f;
 			return intr;
 		}
