@@ -60,10 +60,10 @@ auto main() -> int {
 	auto sphere = shape::Sphere{};
 	auto diffuse_material = material::Diffuse_Material{
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
-			std::make_unique<spectra::Constant_Spectrum>(0.0f)
+			std::make_unique<spectra::Constant_Spectrum>(0.5f)
 		),
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
-			std::make_unique<spectra::Constant_Spectrum>(1.0f)
+			std::make_unique<spectra::Constant_Spectrum>(0.0f)
 		),
 	};
 	auto interface_material = material::Interface_Material{};
@@ -86,7 +86,7 @@ auto main() -> int {
 			&interface_material,
 			nullptr,
 			&local_to_world,
-			&medium_to_world,
+			&identity,
 			&identity,
 			0uz
 		}

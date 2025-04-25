@@ -140,7 +140,7 @@ namespace metatron::mc {
 						}
 						auto& intr = intr_opt.value();
 						intr.p = rt | (lt | math::expand(intr.p, 1.f));
-						intr.n = rt | (lt | math::expand(intr.n, 1.f));
+						intr.n = math::normalize(rt | (lt | math::expand(intr.n, 0.f)));
 
 						direct_ctx = mt ^ (rt ^ direct_ctx);
 						OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(direct_ctx, intr.t, sampler.generate_1d()), {
@@ -183,10 +183,6 @@ namespace metatron::mc {
 				} while (false);
 			}
 
-			if (crossed) {
-				spectra::clear(mis_e);
-			}
-
 			if (scattered || crossed) {
 				div_opt = accel(trace_ctx.r);
 				intr_opt = {};
@@ -220,7 +216,7 @@ namespace metatron::mc {
 			auto& lt = *div->local_to_world;
 			if (scattered || crossed) {
 				intr.p = rt | (lt | math::expand(intr.p, 1.f));
-				intr.n = rt | (lt | math::expand(intr.n, 0.f));
+				intr.n = math::normalize(rt | (lt | math::expand(intr.n, 0.f)));
 			}
 
 			trace_ctx = mt ^ (rt ^ trace_ctx);
@@ -361,7 +357,10 @@ namespace metatron::mc {
 				mis_e = mis_s / b_intr.pdf;
 				scatter_f = b_intr.f;
 				scatter_pdf = b_intr.pdf;
+			} else {
+				spectra::clear(mis_e);
 			}
+
 		}
 
 		return Le;

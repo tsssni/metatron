@@ -33,7 +33,8 @@ namespace metatron::math {
 	template<typename T, usize size>
 	requires std::floating_point<T>
 	auto normalize(Vector<T, size> const& x) -> Vector<T, size> {
-		return x / length(x);
+		auto d = length(x);
+		return d < epsilon<f32> ? Vector<T, size>{0.f} : x / d;
 	}
 
 	template<typename T>
