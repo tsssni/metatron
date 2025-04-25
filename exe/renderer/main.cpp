@@ -52,8 +52,8 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
-	auto local_to_world = math::Transform{{}, {10.f}};
-	auto world_to_render = math::Transform{{0.f, 0.f, 25.f}};
+	auto local_to_world = math::Transform{{}, {500.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 1250.f}};
 	auto medium_to_world = math::Transform{{}, {1.f}};
 	auto render_to_camera = identity;
 
@@ -68,8 +68,8 @@ auto main() -> int {
 	};
 	auto interface_material = material::Interface_Material{};
 	auto vaccum_medium = media::Vaccum_Medium{};
-	auto cloud_medium = media::Homogeneous_Medium{
-		// "../Documents/metatron/disney-cloud.nvdb",
+	auto cloud_medium = media::Nanovdb_Medium{
+		"../Documents/metatron/disney-cloud.nvdb",
 		std::make_unique<spectra::Constant_Spectrum>(1.0f),
 		color::Color_Space::sRGB->to_spectrum(
 			{0.0f, 0.6f, 1.0f},
@@ -86,7 +86,7 @@ auto main() -> int {
 			&interface_material,
 			nullptr,
 			&local_to_world,
-			&identity,
+			&medium_to_world,
 			&identity,
 			0uz
 		}

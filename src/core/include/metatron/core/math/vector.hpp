@@ -85,6 +85,16 @@ namespace metatron::math {
 	}
 
 	template<typename T, usize size>
+	requires std::totally_ordered<T>
+	auto clamp(Vector<T, size> const& x, Vector<T, size> const& l, Vector<T, size> const& r) -> Vector<T, size> {
+		auto y = x;
+		for (auto i = 1uz; i < size; i++) {
+			y[i] = std::clamp(x[i], l[i], r[i]);
+		}
+		return y;
+	}
+
+	template<typename T, usize size>
 	requires std::floating_point<T>
 	auto lerp(Vector<T, size> const& x, Vector<T, size> const& y, T const& alpha) -> Vector<T, size> {
 		return (T{1.0} - alpha) * x + alpha * y;

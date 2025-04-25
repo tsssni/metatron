@@ -2,6 +2,7 @@
 #include <metatron/volume/media/medium.hpp>
 #include <metatron/core/math/bounding-box.hpp>
 #include <metatron/core/math/distribution/exponential.hpp>
+#include <metatron/core/math/grid/grid.hpp>
 #include <metatron/core/spectra/constant.hpp>
 #include <metatron/core/spectra/stochastic.hpp>
 #include <nanovdb/NanoVDB.h>
@@ -19,6 +20,7 @@ namespace metatron::media {
 			};
 			math::Bounding_Box bbox{};
 			f32 t_max{-1.f};
+			f32 density_inactive{0.f};
 			f32 density_maj{0.f};
 			spectra::Stochastic_Spectrum sigma_maj{};
 			math::Exponential_Distribution distr{0.f};
@@ -42,10 +44,12 @@ namespace metatron::media {
         std::unique_ptr<spectra::Spectrum> sigma_s;
         std::unique_ptr<spectra::Spectrum> Le;
 		std::unique_ptr<phase::Phase_Function> phase;
+
+		std::unique_ptr<math::Grid<f32, 64, 64, 64>> grid;
         f32 density_scale;
         
         nanovdb::GridHandle<> handle;
-        nanovdb::FloatGrid const* grid;
+        nanovdb::FloatGrid const* nanovdb_grid;
 
 		static thread_local std::unordered_map<Nanovdb_Medium const*, Cache> thread_caches;
     };
