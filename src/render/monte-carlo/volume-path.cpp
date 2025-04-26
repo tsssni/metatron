@@ -22,6 +22,7 @@ namespace metatron::mc {
 		auto depth = 0uz;
 		auto crossed = true;
 		auto terminated = false;
+		auto transmitted = false;
 
 		auto scattered = false;
 		auto scatter_pdf = 0.f;
@@ -206,7 +207,7 @@ namespace metatron::mc {
 
 				auto pl = e_intr.pdf * l_intr.pdf;
 				mis_e *= pl;
-				auto mis_w = depth == 0uz ? 1.f : math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
+				auto mis_w = (depth == 0uz && !transmitted) ? 1.f : math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
 				Le += beta * mis_w * l_intr.Le;
 				continue;
 			}
@@ -270,6 +271,7 @@ namespace metatron::mc {
 					beta /= p_n;
 					mis_s *= (m_intr.sigma_n / m_intr.sigma_maj) / p_n;
 					mis_e /= p_n;
+					transmitted = true;
 					scattered = false;
 					crossed = false;
 				}
@@ -358,9 +360,9 @@ namespace metatron::mc {
 				scatter_f = b_intr.f;
 				scatter_pdf = b_intr.pdf;
 			} else {
+				transmitted = true;
 				spectra::clear(mis_e);
 			}
-
 		}
 
 		return Le;

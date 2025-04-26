@@ -109,10 +109,12 @@ namespace metatron::media {
 		auto sigma_t = sigma_a + sigma_s;
 
 		auto update_majorant = [&]() -> void {
-			cache.bbox = grid->bounding_box(ctx.r.o);
+			cache.bbox = grid->bounding_box(cache.r.o);
 			cache.t_max = math::hit(cache.r, cache.bbox).value_or(-1.f);
 			if (cache.t_max < 0.f) {
 				cache.t_max = t_max;
+				cache.density_maj = cache.density_inactive;
+			} else if (!inside(cache.r.o, grid->bounding_box())) {
 				cache.density_maj = cache.density_inactive;
 			} else {
 				cache.density_maj = (*grid)(cache.r.o);
@@ -122,9 +124,8 @@ namespace metatron::media {
 		};
 
 		if (false 
-		|| ctx.r.o != cache.r.o
-		|| ctx.r.d != cache.r.d 
-		|| cache.t_max < 0.f) {
+		|| math::length(ctx.r.o - cache.r.o) > 1e-3f
+		|| math::length(ctx.r.d - cache.r.d) > 1e-3f) {
 			cache.r = ctx.r;
 			update_majorant();
 		}
@@ -136,6 +137,7 @@ namespace metatron::media {
 		auto update_transmittance = [&](f32 t) -> void {
 			t_transmitted += t;
 			t_boundary -= t;
+			cache.t_max -= t;
 			cache.r.o += t * cache.r.d;
 			for (auto i = 0uz; i < transmittance.lambda.size(); i++) {
 				transmittance.value[i] *= std::exp(-cache.sigma_maj.value[i] * t);

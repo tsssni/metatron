@@ -31,10 +31,10 @@ auto main() -> int {
 	spectra::Spectrum::initialize();
 	color::Color_Space::initialize();
 
-	auto size = math::Vector<usize, 2>{512uz};
-	auto spp = 32uz;
+	auto size = math::Vector<usize, 2>{64uz};
+	auto spp = 8uz;
 	auto blocks = 8uz;
-	auto kernels = usize(std::thread::hardware_concurrency());
+	auto kernels = 1uz; // usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
 	auto lens = std::make_unique<photo::Pinhole_Lens>(0.25f);
@@ -70,12 +70,18 @@ auto main() -> int {
 	auto vaccum_medium = media::Vaccum_Medium{};
 	auto cloud_medium = media::Nanovdb_Medium{
 		"../Documents/metatron/disney-cloud.nvdb",
-		std::make_unique<spectra::Constant_Spectrum>(1.0f),
 		color::Color_Space::sRGB->to_spectrum(
-			{0.0f, 0.6f, 1.0f},
+			{0.5f, 0.5f, 0.5f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
-		std::make_unique<spectra::Constant_Spectrum>(0.0f),
+		color::Color_Space::sRGB->to_spectrum(
+			{0.0f, 0.0f, 0.0f},
+			color::Color_Space::Spectrum_Type::albedo
+		),
+		color::Color_Space::sRGB->to_spectrum(
+			{0.0f, 0.0f, 0.0f},
+			color::Color_Space::Spectrum_Type::illuminant
+		),
 		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.0f)
 	};
 	auto bvh = accel::LBVH{{
@@ -123,13 +129,14 @@ auto main() -> int {
 			for (auto p = 0; p < blocks * blocks; p++) {
 				auto px = start + math::morton_decode(p);
 				if (px >= size) continue;
-				// if (px != math::Vector<usize, 2>{272, 175}) {
-				// 	continue;
-				// }
 
 				for (auto n = 0uz; n < spp; n++) {
 					auto sample = camera.sample(px, n, sampler);
 					auto& s = sample.value();
+
+					if (px == math::Vector<usize, 2>{28, 30} && n == 3) {
+						int a = 1;
+					}
 
 					auto Li_opt = integrator.sample(
 						{
