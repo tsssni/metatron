@@ -40,7 +40,7 @@ namespace metatron::color {
 	}
 
 	auto Color_Space::to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> std::unique_ptr<spectra::Spectrum> {
-		if (rgb < math::Vector<f32, 3>{0.0} || rgb > math::Vector<f32, 3>{1.0}) {
+		if (rgb < math::Vector<f32, 3>{0.f} || rgb > math::Vector<f32, 3>{1.f}) {
 			assert("RGB exceed [0.0, 1.0]");
 		}
 
