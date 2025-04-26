@@ -65,7 +65,7 @@ namespace metatron::media {
 
 		grid = std::make_unique<Nanovdb_Grid>(from_nanovdb(nanovdb_grid->worldBBox()));
 		for (auto n = 0; n < grid->dimensions[0] * grid->dimensions[1] * grid->dimensions[2]; n++) {
-			auto ijk = math::Vector<usize, 3>{
+			auto ijk = math::Vector<i32, 3>{
 				n / (grid->dimensions[2] * grid->dimensions[1]),
 				(n / grid->dimensions[2]) % grid->dimensions[1],
 				n % grid->dimensions[2]

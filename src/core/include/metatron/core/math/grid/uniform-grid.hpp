@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/core/math/grid/grid.hpp>
-#include <array>
 
 namespace metatron::math {
 	template<typename T, usize x, usize y, usize z>
@@ -10,11 +9,11 @@ namespace metatron::math {
 		voxel_size((bbox.p_max - bbox.p_min) / math::Vector<f32, 3>{x, y, z})
 		{}
 
-		auto virtual to_local(math::Vector<usize, 3> const& ijk) const -> math::Vector<f32, 3> {
+		auto virtual to_local(math::Vector<i32, 3> const& ijk) const -> math::Vector<f32, 3> {
 			return bbox.p_min + ijk * voxel_size;
 		};
 
-		auto virtual to_index(math::Vector<f32, 3> const& pos) const -> math::Vector<usize, 3> {
+		auto virtual to_index(math::Vector<f32, 3> const& pos) const -> math::Vector<i32, 3> {
 			return (pos - bbox.p_min) / voxel_size;
 		};
 
@@ -26,12 +25,11 @@ namespace metatron::math {
 			return bounding_box(to_index(pos));
 		}
 
-		auto virtual bounding_box(Vector<usize, 3> const& ijk) const -> Bounding_Box {
-			if (ijk == clamp(ijk, Vector<usize, 3>{0}, Vector<usize, 3>{x - 1, y - 1, z - 1})) {
-				auto ijkf = math::Vector<f32, 3>{ijk};
+		auto virtual bounding_box(Vector<i32, 3> const& ijk) const -> Bounding_Box {
+			if (ijk == clamp(ijk, Vector<i32, 3>{0}, Vector<i32, 3>{x - 1, y - 1, z - 1})) {
 				return Bounding_Box{
-					bbox.p_min + ijkf * voxel_size,
-					bbox.p_min + (ijkf + 1.f) * voxel_size,
+					bbox.p_min + math::Vector<f32, 3>(ijk + 0) * voxel_size,
+					bbox.p_min + math::Vector<f32, 3>(ijk + 1) * voxel_size,
 				};
 			} else {
 				return bbox;
@@ -46,11 +44,11 @@ namespace metatron::math {
 			return const_cast<Uniform_Grid&>(*this)(pos);
 		}
 
-		auto virtual operator[](Vector<usize, 3> const& ijk) -> T& {
+		auto virtual operator[](Vector<i32, 3> const& ijk) -> T& {
 			return data[ijk[0]][ijk[1]][ijk[2]];
 		}
 
-		auto virtual operator[](Vector<usize, 3> const& ijk) const -> T const& {
+		auto virtual operator[](Vector<i32, 3> const& ijk) const -> T const& {
 			return const_cast<Uniform_Grid&>(*this)[ijk];
 		}
 

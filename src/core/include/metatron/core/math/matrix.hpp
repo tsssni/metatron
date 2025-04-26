@@ -19,8 +19,8 @@ namespace metatron::math {
 
 		Matrix() = default;
 
-		constexpr Matrix(std::initializer_list<Element const> initializer_list)
-		{
+		// directly use Element instead of template type to enable auto inference
+		constexpr Matrix(std::initializer_list<Element const> initializer_list) {
 			if (initializer_list.size() > 1) {
 				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), data.begin());
 			} else {
@@ -30,7 +30,22 @@ namespace metatron::math {
 			}
 		}
 
-		constexpr Matrix(std::span<Element const> initializer_list)
+		// make convertible elements accepatable by 1d matrix intialization
+		template<typename E>
+		requires (dimensions.size() == 1uz && std::is_convertible_v<E, Element>)
+		constexpr Matrix(std::initializer_list<E const> initializer_list) {
+			if (initializer_list.size() > 1) {
+				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), data.begin());
+			} else {
+				for (auto& line: data) {
+					line = initializer_list.size() == 1 ? *initializer_list.begin() : Element{};
+				}
+			}
+		}
+
+		template<typename E>
+		requires std::is_convertible_v<E, Element>
+		constexpr Matrix(std::span<E const> initializer_list)
 		{
 			if (initializer_list.size() > 1) {
 				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), data.begin());

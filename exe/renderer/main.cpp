@@ -52,7 +52,7 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
-	auto local_to_world = math::Transform{{}, {250.f}};
+	auto local_to_world = math::Transform{{}, {500.f}};
 	auto world_to_render = math::Transform{{0.f, 0.f, 1250.f}};
 	auto medium_to_world = math::Transform{{}, {1.f}};
 	auto render_to_camera = identity;
@@ -134,7 +134,7 @@ auto main() -> int {
 					auto sample = camera.sample(px, n, sampler);
 					auto& s = sample.value();
 
-					if (px == math::Vector<usize, 2>{28, 30} && n == 3) {
+					if (px == math::Vector<usize, 2>{30, 30} && n == 0) {
 						int a = 1;
 					}
 

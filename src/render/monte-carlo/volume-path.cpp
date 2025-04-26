@@ -245,7 +245,7 @@ namespace metatron::mc {
 				auto u = sampler.generate_1d();
 				auto mode = math::Discrete_Distribution{std::array<f32, 3>{p_a, p_s, p_n}}.sample(u);
 				if (mode == 0uz) {
-					beta /= p_a;
+					beta = m_intr.sigma_a / p_a;
 					terminated = true;
 				} else if (mode == 1uz) {
 					phase = m_intr.phase;
@@ -268,7 +268,7 @@ namespace metatron::mc {
 				} else {
 					intr.t -= m_intr.t;
 					trace_ctx.r.o = m_intr.p;
-					beta /= p_n;
+					beta = m_intr.sigma_n / p_n;
 					mis_s *= (m_intr.sigma_n / m_intr.sigma_maj) / p_n;
 					mis_e /= p_n;
 					transmitted = true;
