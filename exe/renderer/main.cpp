@@ -19,6 +19,7 @@
 #include <metatron/geometry/shape/sphere.hpp>
 #include <metatron/volume/media/homogeneous.hpp>
 #include <metatron/volume/media/vaccum.hpp>
+#include <metatron/volume/media/grid.hpp>
 #include <metatron/volume/media/nanovdb.hpp>
 #include <metatron/volume/phase/henyey-greenstein.hpp>
 #include <atomic>
@@ -70,7 +71,7 @@ auto main() -> int {
 
 	auto nanovdb_grid = media::Nanovdb_Grid<f32, 64, 64, 64>{"../Documents/metatron/disney-cloud.nvdb"};
 	auto vaccum_medium = media::Vaccum_Medium{};
-	auto cloud_medium = media::Nanovdb_Medium{
+	auto cloud_medium = media::Grid_Medium{
 		&nanovdb_grid,
 		color::Color_Space::sRGB->to_spectrum(
 			{0.1f, 0.1f, 0.1f},

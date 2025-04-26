@@ -1,13 +1,13 @@
-#include <metatron/volume/media/nanovdb.hpp>
+#include <metatron/volume/media/grid.hpp>
 #include <metatron/volume/phase/henyey-greenstein.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/optional.hpp>
 
 namespace metatron::media {
-	std::unordered_map<Nanovdb_Medium const*, Nanovdb_Medium::Cache> thread_local Nanovdb_Medium::thread_caches;
+	std::unordered_map<Grid_Medium const*, Grid_Medium::Cache> thread_local Grid_Medium::thread_caches;
 
-    Nanovdb_Medium::Nanovdb_Medium(
-        Nanovdb_Grid<f32, 64, 64, 64> const* grid,
+    Grid_Medium::Grid_Medium(
+        math::Grid<f32, 64, 64, 64> const* grid,
         std::unique_ptr<spectra::Spectrum> sigma_a,
         std::unique_ptr<spectra::Spectrum> sigma_s,
         std::unique_ptr<spectra::Spectrum> Le,
@@ -23,11 +23,11 @@ namespace metatron::media {
 		auto& cache = thread_caches[this];
 	}
 
-	Nanovdb_Medium::~Nanovdb_Medium() {
+	Grid_Medium::~Grid_Medium() {
 		thread_caches.erase(this);
 	}
     
-    auto Nanovdb_Medium::sample(
+    auto Grid_Medium::sample(
         eval::Context const& ctx, 
         f32 t_max, 
         f32 u
