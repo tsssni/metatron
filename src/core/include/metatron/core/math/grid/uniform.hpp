@@ -36,11 +36,7 @@ namespace metatron::math {
 			}
 		}
 
-		auto virtual operator()(math::Vector<f32, 3> const& pos) -> T& {
-			return (*this)[to_index(pos)];
-		}
-
-		auto virtual operator()(math::Vector<f32, 3> const& pos) const -> T const& {
+		auto virtual operator()(math::Vector<f32, 3> const& pos) const -> T {
 			return const_cast<Uniform_Grid&>(*this)(pos);
 		}
 

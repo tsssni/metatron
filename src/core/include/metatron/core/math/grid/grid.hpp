@@ -15,8 +15,7 @@ namespace metatron::math {
 		auto virtual bounding_box(math::Vector<f32, 3> const& pos) const -> math::Bounding_Box = 0;
 		auto virtual bounding_box(math::Vector<i32, 3> const& ijk) const -> math::Bounding_Box = 0;
 
-		auto virtual operator()(math::Vector<f32, 3> const& pos) -> T& = 0;
-		auto virtual operator()(math::Vector<f32, 3> const& pos) const -> T const& = 0;
+		auto virtual operator()(math::Vector<f32, 3> const& pos) const -> T = 0;
 		auto virtual operator[](math::Vector<i32, 3> const& ijk) -> T& = 0;
 		auto virtual operator[](math::Vector<i32, 3> const& ijk) const -> T const& = 0;
 	};

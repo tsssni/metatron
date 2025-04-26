@@ -67,19 +67,21 @@ auto main() -> int {
 		),
 	};
 	auto interface_material = material::Interface_Material{};
+
+	auto nanovdb_grid = media::Nanovdb_Grid<f32, 64, 64, 64>{"../Documents/metatron/disney-cloud.nvdb"};
 	auto vaccum_medium = media::Vaccum_Medium{};
 	auto cloud_medium = media::Nanovdb_Medium{
-		"../Documents/metatron/disney-cloud.nvdb",
+		&nanovdb_grid,
 		color::Color_Space::sRGB->to_spectrum(
-			{0.5f, 0.5f, 0.5f},
+			{0.1f, 0.1f, 0.1f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		color::Color_Space::sRGB->to_spectrum(
-			{0.0f, 0.0f, 0.0f},
+			{1.0f, 1.0f, 1.0f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		color::Color_Space::sRGB->to_spectrum(
-			{0.0f, 0.0f, 0.0f},
+			{0.0f, 0.6f, 1.0f},
 			color::Color_Space::Spectrum_Type::illuminant
 		),
 		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.0f)
