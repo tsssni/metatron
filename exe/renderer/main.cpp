@@ -33,7 +33,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{512uz};
-	auto spp = 128uz;
+	auto spp = 32uz;
 	auto blocks = 8uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
@@ -53,9 +53,9 @@ auto main() -> int {
 	};
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
-	auto local_to_world = math::Transform{{}, {500.f}};
-	auto world_to_render = math::Transform{{0.f, 0.f, 1250.f}};
-	auto medium_to_world = math::Transform{{}, {1.f}};
+	auto local_to_world = math::Transform{{}, {100.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 250.f}};
+	auto medium_to_world = math::Transform{{}, {0.4f}};
 	auto render_to_camera = identity;
 
 	auto sphere = shape::Sphere{};
@@ -74,11 +74,11 @@ auto main() -> int {
 	auto cloud_medium = media::Grid_Medium{
 		&nanovdb_grid,
 		color::Color_Space::sRGB->to_spectrum(
-			{0.1f, 0.1f, 0.1f},
+			{0.5f, 0.5f, 0.5f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		color::Color_Space::sRGB->to_spectrum(
-			{1.0f, 1.0f, 1.0f},
+			{0.5f, 0.5f, 0.5f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		color::Color_Space::sRGB->to_spectrum(

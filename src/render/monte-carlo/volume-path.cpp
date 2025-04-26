@@ -40,7 +40,6 @@ namespace metatron::mc {
 
 		auto& rt = *ctx.world_to_render;
 		auto& ct = *ctx.render_to_camera;
-		auto& mt = *ctx.medium_to_world;
 		
 		while (true) {
 			depth += usize(scattered);
@@ -96,7 +95,6 @@ namespace metatron::mc {
 
 					auto medium = ctx.medium;
 					auto medium_to_world = ctx.medium_to_world;
-					auto& mt = *medium_to_world;
 					auto terminated = false;
 
 					auto mis_sd = mis_s * ps / pe;
@@ -143,6 +141,7 @@ namespace metatron::mc {
 						intr.p = rt | (lt | math::expand(intr.p, 1.f));
 						intr.n = math::normalize(rt | (lt | math::expand(intr.n, 0.f)));
 
+						auto& mt = *medium_to_world;
 						direct_ctx = mt ^ (rt ^ direct_ctx);
 						OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(direct_ctx, intr.t, sampler.generate_1d()), {
 							terminated = true;
@@ -220,6 +219,7 @@ namespace metatron::mc {
 				intr.n = math::normalize(rt | (lt | math::expand(intr.n, 0.f)));
 			}
 
+			auto& mt = *ctx.medium_to_world;
 			trace_ctx = mt ^ (rt ^ trace_ctx);
 			OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(trace_ctx, intr.t, sampler.generate_1d()), {
 				terminated = true;
