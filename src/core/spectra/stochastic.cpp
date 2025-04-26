@@ -1,6 +1,7 @@
 #include <metatron/core/spectra/stochastic.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/constant.hpp>
+#include <metatron/core/math/arithmetic.hpp>
 
 namespace metatron::spectra {
 	Stochastic_Spectrum::Stochastic_Spectrum(usize n, f32 u, f32 v) {
@@ -144,7 +145,7 @@ namespace metatron::spectra {
 
 	auto Stochastic_Spectrum::operator/=(f32 s) -> Stochastic_Spectrum& {
 		for (auto& v: value) {
-			v /= s;
+			v = math::guarded_div(v, s);
 		}
 		return *this;
 	};
@@ -164,7 +165,7 @@ namespace metatron::spectra {
 	auto operator/(f32 s, Stochastic_Spectrum const& spectrum) -> Stochastic_Spectrum {
 		auto spec = spectrum;
 		for (auto& v: spec.value) {
-			v = s / v;
+			v = math::guarded_div(s, v);
 		}
 		return spec;
 	}
@@ -190,7 +191,7 @@ namespace metatron::spectra {
 		auto n = spectrum.lambda.size();
 		auto avgv = 0.f;
 		for (auto& v: spectrum.value) {
-			avgv += v / n;
+			avgv += math::guarded_div(v, n);
 		}
 		return avgv;
 	}

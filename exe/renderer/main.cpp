@@ -32,7 +32,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{512uz};
-	auto spp = 32uz;
+	auto spp = 128uz;
 	auto blocks = 8uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
@@ -134,7 +134,7 @@ auto main() -> int {
 					auto sample = camera.sample(px, n, sampler);
 					auto& s = sample.value();
 
-					if (px == math::Vector<usize, 2>{30, 30} && n == 0) {
+					if (px == math::Vector<usize, 2>{39, 24} && n == 0) {
 						int a = 1;
 					}
 
