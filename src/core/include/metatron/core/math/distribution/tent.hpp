@@ -1,0 +1,24 @@
+#pragma once
+#include <metatron/core/math/distribution/linear.hpp>
+#include <cmath>
+
+namespace metatron::math {
+	struct Tent_Distribution final {
+		Tent_Distribution(f32 r): r(r) {}
+
+		auto sample(f32 u) -> f32 {
+			if (u < 0.5) {
+				return Linear_Distribution(0.f, 1.f / r, -r, 0.f).sample(u / 0.5f);
+			} else {
+				return Linear_Distribution(1.f / r, 0.f, 0.f, r).sample((u - 0.5f) / 0.5f);
+			}
+		}
+
+		auto pdf(f32 x) -> f32 {
+			return 1.f / r - std::abs(x) / (r * r);
+		}
+
+	private:
+		f32 r;
+	};
+}
