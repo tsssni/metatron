@@ -2,6 +2,7 @@
 #include <metatron/core/math/sampler/independent.hpp>
 #include <metatron/core/math/filter/box.hpp>
 #include <metatron/core/math/encode.hpp>
+#include <metatron/core/math/distribution/piecewise.hpp>
 #include <metatron/core/spectra/stochastic.hpp>
 #include <metatron/core/spectra/constant.hpp>
 #include <metatron/core/spectra/rgb.hpp>
