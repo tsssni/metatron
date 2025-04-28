@@ -60,7 +60,7 @@ namespace metatron::math {
 
 	template<typename T, usize n, usize tail = 1uz>
 	requires (n > tail)
-	auto shrink(Vector<T, n> const& x) -> Vector<T, n + 1> {
+	auto shrink(Vector<T, n> const& x) -> Vector<T, n - tail> {
 		return Vector<T, n - tail>{x};
 	}
 
