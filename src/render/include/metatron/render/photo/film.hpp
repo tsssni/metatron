@@ -11,10 +11,16 @@ namespace metatron::photo {
 	struct Film;
 
 	struct Fixel final {
+		math::Vector<usize, 2> const pixel;
 		math::Vector<f32, 2> const position;
 		math::Vector<f32, 2> const dxdy;
 		f32 const weight;
-		Fixel(Film* film, math::Vector<f32, 2> const& position, f32 weight);
+		Fixel(
+			Film* film,
+			math::Vector<usize, 2> const& pixel,
+			math::Vector<f32, 2> const& position,
+			f32 weight
+		);
 		auto operator=(spectra::Stochastic_Spectrum const& spectrum) -> void;
 		auto operator=(spectra::Spectrum const& spectrum) -> void;
 	private:
