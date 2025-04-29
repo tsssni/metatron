@@ -1,6 +1,7 @@
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/sampler/independent.hpp>
 #include <metatron/core/math/filter/box.hpp>
+#include <metatron/core/math/filter/gaussian.hpp>
 #include <metatron/core/math/encode.hpp>
 #include <metatron/core/math/distribution/piecewise.hpp>
 #include <metatron/core/spectra/stochastic.hpp>
@@ -44,7 +45,7 @@ auto main() -> int {
 		math::Vector<f32, 2>{0.25f, 0.25f},
 		size,
 		std::move(sensor),
-		std::make_unique<math::Box_Filter>(),
+		std::make_unique<math::Gaussian_Filter>(math::Vector<f32, 2>{40.f}, 20.f),
 		color::Color_Space::sRGB.get()
 	);
 

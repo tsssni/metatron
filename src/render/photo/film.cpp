@@ -2,20 +2,24 @@
 #include <metatron/core/math/constant.hpp>
 
 namespace metatron::photo {
-	Fixel::Fixel(Film* film, math::Vector<f32, 2> const& position, f32 weight):
-		film(film),
-		dxdy(math::foreach(
-			position + film->dxdy - film->size / 2.f,
-			[](f32 x){return x < 0.f ? 1.f : -1.f;}
-		) * film->dxdy),
-		position(position),
-		weight(weight) {}
+	Fixel::Fixel(
+		Film* film,
+		math::Vector<usize, 2> const& pixel,
+		math::Vector<f32, 2> const& position,
+		f32 weight
+	):
+	film(film),
+	pixel(pixel),
+	position(position),
+	dxdy(math::foreach(
+		position + film->dxdy - film->size / 2.f,
+		[](f32 x){return x < 0.f ? 1.f : -1.f;}
+	) * film->dxdy),
+	weight(weight) {}
 
 	auto Fixel::operator=(spectra::Stochastic_Spectrum const& spectrum) -> void {
-		auto uv = (position / film->size) + 0.5f;
-		auto pixel = math::Vector<i32, 2>{uv * film->image.size};
 		auto rgb = (*(film->sensor))(spectrum);
-		film->image[pixel[0], pixel[1]] += {rgb, weight};
+		film->image[pixel[0], pixel[1]] += {rgb * weight, 1.f};
 	}
 
 	Film::Film(
@@ -39,12 +43,12 @@ namespace metatron::photo {
 		auto pixel_position = math::Vector<f32, 2>{pixel} + 0.5f + f_intr.p;
 		auto uv = pixel_position / image.size;
 		auto film_position = (uv - 0.5f) * size;
-		auto weight = (*filter)(math::mod(pixel_position, 1.f) - 0.5f);
 
 		return {
 			this,
+			pixel,
 			film_position,
-			f_intr.weight
+			f_intr.weight / f_intr.pdf
 		};
 	}
 
