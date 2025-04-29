@@ -1,5 +1,6 @@
 #include <metatron/render/photo/film.hpp>
 #include <metatron/core/math/constant.hpp>
+#include <metatron/core/math/arithmetic.hpp>
 
 namespace metatron::photo {
 	Fixel::Fixel(
@@ -48,7 +49,7 @@ namespace metatron::photo {
 			this,
 			pixel,
 			film_position,
-			f_intr.weight / f_intr.pdf
+			math::guarded_div(f_intr.weight, f_intr.pdf)
 		};
 	}
 

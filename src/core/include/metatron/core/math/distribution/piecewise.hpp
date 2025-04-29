@@ -2,7 +2,6 @@
 #include <metatron/core/math/matrix.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/arithmetic.hpp>
-#include <print>
 
 namespace metatron::math {
 	// forward declaration to support the declaration of 0d piecewise distribution
@@ -30,7 +29,7 @@ namespace metatron::math {
 
 			for (auto i = 0uz; i < first_dim; i++) {
 				if constexpr (n == 1uz) {
-					rows[i] = matrix[i];
+					rows[i] = std::abs(matrix[i]);
 					cdf[i + 1] = rows[i];
 				} else {
 					rows[i] = Element{std::move(matrix[i]), shrink(low), shrink(high)};
