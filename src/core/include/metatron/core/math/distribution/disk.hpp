@@ -22,5 +22,9 @@ namespace metatron::math {
 
 			return r * math::Vector<f32, 2>{std::cos(theta), std::sin(theta)};
 		}
+
+		auto pdf() -> f32 {
+			return 1.f / pi;
+		}
 	};
 }
