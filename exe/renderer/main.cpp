@@ -11,6 +11,7 @@
 #include <metatron/core/color/color-space.hpp>
 #include <metatron/render/photo/camera.hpp>
 #include <metatron/render/photo/lens/pinhole.hpp>
+#include <metatron/render/photo/lens/thin.hpp>
 #include <metatron/render/light/environment.hpp>
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
@@ -35,15 +36,15 @@ auto main() -> int {
 	spectra::Spectrum::initialize();
 	color::Color_Space::initialize();
 
-	auto size = math::Vector<usize, 2>{512uz};
-	auto spp = 32uz;
+	auto size = math::Vector<usize, 2>{600uz, 400uz};
+	auto spp = 128uz;
 	auto blocks = 8uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
-	auto lens = std::make_unique<photo::Pinhole_Lens>(0.25f);
+	auto lens = std::make_unique<photo::Thin_Lens>(1.2f, 0.05f, 1.f);
 	auto film = std::make_unique<photo::Film>(
-		math::Vector<f32, 2>{0.25f, 0.25f},
+		math::Vector<f32, 2>{0.036f, 0.024f},
 		size,
 		std::move(sensor),
 		std::make_unique<math::Lanczos_Filter>(),
@@ -57,7 +58,7 @@ auto main() -> int {
 	auto sampler = math::Independent_Sampler{};
 	auto identity = math::Transform{};
 	auto local_to_world = math::Transform{{}, {100.f}};
-	auto world_to_render = math::Transform{{0.f, 0.f, 250.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 500.f}};
 	auto medium_to_world = math::Transform{{}, {0.4f}};
 	auto render_to_camera = identity;
 
@@ -85,7 +86,7 @@ auto main() -> int {
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		color::Color_Space::sRGB->to_spectrum(
-			{0.0f, 0.6f, 1.0f},
+			{0.0f, 0.0f, 0.0f},
 			color::Color_Space::Spectrum_Type::illuminant
 		),
 		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.0f)
