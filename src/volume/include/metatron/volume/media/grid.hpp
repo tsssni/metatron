@@ -6,6 +6,9 @@
 #include <unordered_map>
 
 namespace metatron::media {
+	auto constexpr grid_size = 64uz;
+	using Medium_Grid = math::Grid<f32, grid_size, grid_size, grid_size>;
+
 	struct Grid_Medium final: Medium {
 		struct Cache final {
 			math::Ray r{
@@ -20,7 +23,7 @@ namespace metatron::media {
 		};
 
         Grid_Medium(
-            math::Grid<f32, 64, 64, 64> const* grid,
+            Medium_Grid const* grid,
             std::unique_ptr<spectra::Spectrum> sigma_a,
             std::unique_ptr<spectra::Spectrum> sigma_s,
             std::unique_ptr<spectra::Spectrum> Le,
@@ -38,7 +41,7 @@ namespace metatron::media {
         std::unique_ptr<spectra::Spectrum> Le;
 		std::unique_ptr<phase::Phase_Function> phase;
 
-		math::Grid<f32, 64, 64, 64> const* grid;
+		Medium_Grid const* grid;
         f32 density_scale;
 
 		static thread_local std::unordered_map<Grid_Medium const*, Cache> thread_caches;

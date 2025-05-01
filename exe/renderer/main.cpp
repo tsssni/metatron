@@ -38,7 +38,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 128uz;
+	auto spp = 32uz;
 	auto blocks = 8uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
@@ -58,10 +58,15 @@ auto main() -> int {
 	};
 	auto sampler = math::Halton_Sampler{};
 	auto identity = math::Transform{};
-	auto local_to_world = math::Transform{{}, {100.f}};
+	auto local_to_world = math::Transform{{}, {250.f}};
 	auto world_to_render = math::Transform{{0.f, 0.f, 500.f}};
-	auto medium_to_world = math::Transform{{}, {0.4f}};
 	auto render_to_camera = identity;
+	auto medium_to_world = math::Transform{{}, {0.5f},
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi / 2.f),
+	};
+	auto light_to_world = math::Transform{{}, {1.f},
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi / 1.f),
+	};
 
 	auto sphere = shape::Sphere{};
 	auto diffuse_material = material::Diffuse_Material{
@@ -74,23 +79,30 @@ auto main() -> int {
 	};
 	auto interface_material = material::Interface_Material{};
 
-	auto nanovdb_grid = media::Nanovdb_Grid<f32, 64, 64, 64>{"../Documents/metatron/disney-cloud.nvdb"};
+	auto nanovdb_grid = media::Nanovdb_Grid<
+		f32,
+		media::grid_size,
+		media::grid_size,
+		media::grid_size
+	>{
+		"../Documents/metatron/disney-cloud.nvdb"
+	};
 	auto vaccum_medium = media::Vaccum_Medium{};
 	auto cloud_medium = media::Grid_Medium{
 		&nanovdb_grid,
 		color::Color_Space::sRGB->to_spectrum(
-			{0.1f, 0.1f, 0.1f},
+			{0.0f, 0.0f, 0.0f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		color::Color_Space::sRGB->to_spectrum(
-			{1.0f, 1.0f, 1.0f},
+			{0.0f, 0.0f, 0.0f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		color::Color_Space::sRGB->to_spectrum(
 			{0.0f, 0.0f, 0.0f},
 			color::Color_Space::Spectrum_Type::illuminant
 		),
-		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.0f)
+		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.0f),
 	};
 	auto bvh = accel::LBVH{{
 		{
@@ -111,8 +123,8 @@ auto main() -> int {
 		color::Color_Space::Spectrum_Type::illuminant
 	);
 	auto env_light = light::Environment_Light{std::move(env_map)};
-	auto lights = std::vector<emitter::Divider>{{&identity, &env_light}};
-	auto inf_lights = std::vector<emitter::Divider>{{&identity, &env_light}};
+	auto lights = std::vector<emitter::Divider>{{&light_to_world, &env_light}};
+	auto inf_lights = std::vector<emitter::Divider>{{&light_to_world, &env_light}};
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
 	auto integrator = mc::Volume_Path_Integrator{};
@@ -140,11 +152,8 @@ auto main() -> int {
 
 				for (auto n = 0uz; n < spp; n++) {
 					auto sample = camera.sample(px, n, sampler);
+					sample->ray_differential = render_to_camera ^ sample->ray_differential;
 					auto& s = sample.value();
-
-					if (px == math::Vector<usize, 2>{39, 24} && n == 0) {
-						int a = 1;
-					}
 
 					auto Li_opt = integrator.sample(
 						{

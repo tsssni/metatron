@@ -9,9 +9,7 @@
 #include <nanovdb/io/IO.h>
 #include <nanovdb/math/SampleFromVoxels.h>
 #include <nanovdb/math/Ray.h>
-#include <memory>
 #include <string_view>
-#include <unordered_map>
 
 namespace metatron::media {
 	template<typename T, usize n>
@@ -54,7 +52,12 @@ namespace metatron::media {
 		handle(nanovdb::io::readGrid(std::string{path})),
 		nanovdb_grid(handle.grid<T>()),
 		sampler(nanovdb_grid->tree()),
-		majorant_grid(from_nanovdb(nanovdb_grid->worldBBox())) {
+		majorant_grid(from_nanovdb(nanovdb_grid->worldBBox())),
+		background(
+			sampler(nanovdb_grid->worldToIndex(
+				to_nanovdb(majorant_grid.bounding_box().p_min - 1.f)
+			))
+		) {
 			auto& root = nanovdb_grid->tree().root();
 			auto accessor = nanovdb_grid->getAccessor();
 			for (auto n = 0; n < majorant_grid.dimensions[0] * majorant_grid.dimensions[1] * majorant_grid.dimensions[2]; n++) {
@@ -93,13 +96,22 @@ namespace metatron::media {
 		auto virtual operator()(math::Vector<f32, 3> const& pos) const -> T {
 			return sampler(nanovdb_grid->worldToIndex(to_nanovdb(pos)));
 		};
-		auto virtual operator[](math::Vector<i32, 3> const& ijk) -> T& { return majorant_grid[ijk]; };
-		auto virtual operator[](math::Vector<i32, 3> const& ijk) const -> T const& { return majorant_grid[ijk]; };
+		auto virtual operator[](math::Vector<i32, 3> const& ijk) -> T& {
+			if (ijk == clamp(ijk, math::Vector<i32, 3>{0}, math::Vector<i32, 3>{x - 1, y - 1, z - 1})) {
+				return majorant_grid[ijk];
+			} else {
+				return background;
+			}
+		};
+		auto virtual operator[](math::Vector<i32, 3> const& ijk) const -> T const& {
+			return const_cast<Nanovdb_Grid&>(*this)[ijk];
+		};
 
 	private:
         nanovdb::GridHandle<> handle;
         nanovdb::Grid<nanovdb::NanoTree<T>> const* nanovdb_grid;
 		Nanovdb_Sampler<T> sampler;
 		math::Uniform_Grid<T, x, y, z> majorant_grid;
+		T background;
 	};
 }
