@@ -35,7 +35,7 @@ namespace metatron::math {
 
 		auto t_enter = max(hit_min);
 		auto t_exit = min(hit_max);
-		if (t_exit < epsilon<f32> || t_enter > t_exit) {
+		if (t_exit < -epsilon<f32> || t_enter > t_exit) {
 			return {};
 		} else {
 			return t_enter > 0.f ? t_enter : t_exit;

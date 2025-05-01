@@ -95,7 +95,7 @@ auto main() -> int {
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		color::Color_Space::sRGB->to_spectrum(
-			{0.0f, 0.0f, 0.0f},
+			{1.0f, 1.0f, 1.0f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		color::Color_Space::sRGB->to_spectrum(
