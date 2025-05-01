@@ -6,7 +6,7 @@ namespace metatron::math {
 	struct Tent_Distribution final {
 		Tent_Distribution(f32 r): r(r) {}
 
-		auto sample(f32 u) -> f32 {
+		auto sample(f32 u) const -> f32 {
 			if (u < 0.5) {
 				return Linear_Distribution(0.f, 1.f / r, -r, 0.f).sample(u / 0.5f);
 			} else {
