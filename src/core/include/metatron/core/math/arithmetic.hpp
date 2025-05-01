@@ -15,10 +15,20 @@ namespace metatron::math {
 
 	template<usize n>
 	auto inline guarded_div(Vector<f32, n> const& x, Vector<f32, n> const& y) -> Vector<f32, n> {
-		auto z = Vector<f32, n>{}; 
-		for (auto i = 0uz; i < n; i++) {
-			z[i] = guarded_div(x, y);
-		}
-		return z;
+		return foreach(x, [&y](f32 x, usize idx) -> f32 {
+			return guarded_div(x, y[idx]);
+		});
 	};
+
+	auto inline pow(usize x, usize n) -> usize {
+		auto y = 1uz;
+		while (n) {
+			if (n & 1) {
+				y = y * x;
+			}
+			x = x * x;
+			n >>= 1;
+		}
+		return y;
+	}
 }

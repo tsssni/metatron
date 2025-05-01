@@ -1,5 +1,6 @@
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/sampler/independent.hpp>
+#include <metatron/core/math/sampler/halton.hpp>
 #include <metatron/core/math/filter/box.hpp>
 #include <metatron/core/math/filter/gaussian.hpp>
 #include <metatron/core/math/filter/lanczos.hpp>
@@ -42,7 +43,7 @@ auto main() -> int {
 	auto kernels = usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
-	auto lens = std::make_unique<photo::Thin_Lens>(1.2f, 0.05f, 1.f);
+	auto lens = std::make_unique<photo::Thin_Lens>(5.6f, 0.05f, 10.f);
 	auto film = std::make_unique<photo::Film>(
 		math::Vector<f32, 2>{0.036f, 0.024f},
 		size,
@@ -55,7 +56,7 @@ auto main() -> int {
 		std::move(film),
 		std::move(lens)
 	};
-	auto sampler = math::Independent_Sampler{};
+	auto sampler = math::Halton_Sampler{};
 	auto identity = math::Transform{};
 	auto local_to_world = math::Transform{{}, {100.f}};
 	auto world_to_render = math::Transform{{0.f, 0.f, 500.f}};
@@ -78,11 +79,11 @@ auto main() -> int {
 	auto cloud_medium = media::Grid_Medium{
 		&nanovdb_grid,
 		color::Color_Space::sRGB->to_spectrum(
-			{0.5f, 0.5f, 0.5f},
+			{0.1f, 0.1f, 0.1f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		color::Color_Space::sRGB->to_spectrum(
-			{0.5f, 0.5f, 0.5f},
+			{1.0f, 1.0f, 1.0f},
 			color::Color_Space::Spectrum_Type::albedo
 		),
 		color::Color_Space::sRGB->to_spectrum(

@@ -117,6 +117,16 @@ namespace metatron::math {
 	}
 
 	template<typename T, usize size>
+	requires requires(T a, T b) { a + b; }
+	auto sum(Vector<T, size> const& x) -> T {
+		auto y = T{};
+		for (auto i = 0uz; i < size; i++) {
+			y += x[i];
+		}
+		return y;
+	}
+
+	template<typename T, usize size>
 	requires std::floating_point<T> || std::integral<T>
 	auto mod(Vector<T, size> const& x, T const& m) -> Vector<T, size> {
 		auto r = Vector<T, size>{};
@@ -131,7 +141,7 @@ namespace metatron::math {
 	}
 
 	template<typename T, usize size>
-	requires std::floating_point<T>
+	requires std::floating_point<T> || std::integral<T>
 	auto mod(Vector<T, size> const& x, Vector<T, size> const& m) -> Vector<T, size> {
 		auto r = Vector<T, size>{};
 		for (auto i = 0uz; i < size; i++) {
@@ -147,13 +157,13 @@ namespace metatron::math {
 	template<
 		typename T,
 		typename Func,
-		typename Return_Type = decltype(std::declval<Func>()(std::declval<T>())),
+		typename Return_Type = decltype(std::declval<Func>()(std::declval<T>(), std::declval<usize>())),
 		usize size
 	>
 	auto foreach(Vector<T, size> const& x, Func f) -> Vector<Return_Type, size> {
 		auto r = Vector<Return_Type, size>{};
 		for (auto i = 0uz; i < size; i++) {
-			r[i] = f(x[i]);
+			r[i] = f(x[i], i);
 		}
 		return r;
 	}
