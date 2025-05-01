@@ -18,9 +18,10 @@ namespace metatron::math {
 	}
 
 	auto Lanczos_Filter::operator()(Vector<f32, 2> const& p) const -> f32 {
-		auto vx = lanczos(p[0], radius[0], tau);
-		auto vy = lanczos(p[1], radius[1], tau);
-		return vx * vy;
+		auto v = foreach(p, [&](f32 x, usize i) -> f32 {
+			return std::abs(x) >= radius[i] ? 0.f : windowed_sinc(x, tau);
+		});
+		return prod(v);
 	}
 
 	auto Lanczos_Filter::sample(Vector<f32, 2> const& u) const -> std::optional<filter::Interaction> {

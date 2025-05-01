@@ -4,13 +4,6 @@
 #include <metatron/core/math/trigonometric.hpp>
 
 namespace metatron::math {
-	auto inline lanczos(f32 x, f32 r, f32 tau) -> f32 {
-		if (std::abs(x) >= r) {
-			return 0.f;
-		}
-		return sinc(x) * sinc(x / tau);
-	}
-
 	struct Lanczos_Filter final: Filter {
 		Lanczos_Filter(Vector<f32, 2> const& radius = {0.5f}, f32 tau = 3.f);
 

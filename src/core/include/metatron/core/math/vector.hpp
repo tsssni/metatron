@@ -127,6 +127,16 @@ namespace metatron::math {
 	}
 
 	template<typename T, usize size>
+	requires requires(T a, T b) { a * b; }
+	auto prod(Vector<T, size> const& x) -> T {
+		auto y = T{1};
+		for (auto i = 0uz; i < size; i++) {
+			y *= x[i];
+		}
+		return y;
+	}
+
+	template<typename T, usize size>
 	requires std::floating_point<T> || std::integral<T>
 	auto mod(Vector<T, size> const& x, T const& m) -> Vector<T, size> {
 		auto r = Vector<T, size>{};
