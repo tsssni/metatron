@@ -1,15 +1,16 @@
 #include <metatron/core/math/sampler/halton.hpp>
-#include <metatron/core/math/constant.hpp>
+#include <metatron/core/math/low-discrepancy.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/number-theory.hpp>
-#include <print>
 
 namespace metatron::math {
 	Halton_Sampler::Halton_Sampler(
+		usize seed,
 		Vector<usize, 2> const& scale_exponential
 	):
 	exponential(scale_exponential),
-	scale({1uz << scale_exponential[0], math::pow(3uz, scale_exponential[1])}) {
+	scale({1uz << scale_exponential[0], math::pow(3uz, scale_exponential[1])}),
+	seed(seed) {
 		stride = scale[0] * scale[1];
 		scale_mulinv = scale * math::Vector<usize, 2>{
 			multiplicative_inverse(scale[0], scale[1]),
@@ -41,7 +42,11 @@ namespace metatron::math {
 		if (dim >= primes.size()) {
 			dim = 2uz;
 		}
-		return halton(halton_idx, dim++);
+		auto scrambled = owen_scrambled_radical_inverse(
+			halton_idx, primes[dim], mix_bits(seed ^ dim)
+		);
+		dim++;
+		return scrambled;
 	}
 
 	auto Halton_Sampler::generate_2d() const -> math::Vector<f32, 2> {
@@ -50,11 +55,9 @@ namespace metatron::math {
 
 	auto Halton_Sampler::generate_pixel_2d() const -> math::Vector<f32, 2> {
 		// remove integer part by dividing scale
-		auto x = halton(halton_idx >> exponential[0], 0uz);
-		auto y = halton(halton_idx / scale[1], 1uz);
 		return {
-			halton(halton_idx >> exponential[0], 0uz),
-			halton(halton_idx / scale[1], 1uz)
+			radical_inverse(halton_idx >> exponential[0], primes[0]),
+			radical_inverse(halton_idx / scale[1], primes[1])
 		};
 	}
 }
