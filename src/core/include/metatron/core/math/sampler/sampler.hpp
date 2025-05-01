@@ -4,7 +4,7 @@
 namespace metatron::math {
 	struct Sampler {
 		virtual ~Sampler() {}
-		auto virtual start(math::Vector<usize, 2> const& pixel, usize idx) -> void = 0;
+		auto virtual start(math::Vector<usize, 2> const& pixel, usize idx, usize dim = 0uz) -> void = 0;
 		auto virtual generate_1d() const -> f32 = 0;
 		auto virtual generate_2d() const -> math::Vector<f32, 2> = 0;
 		auto virtual generate_pixel_2d() const -> math::Vector<f32, 2> = 0;
