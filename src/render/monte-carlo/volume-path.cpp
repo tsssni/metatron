@@ -361,7 +361,7 @@ namespace metatron::mc {
 				scatter_pdf = b_intr.pdf;
 			} else {
 				transmitted = true;
-				spectra::clear(mis_e);
+				mis_e = mis_s;
 			}
 		}
 
