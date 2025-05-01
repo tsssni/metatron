@@ -14,9 +14,9 @@ namespace metatron::mc {
 	) const -> std::optional<spectra::Stochastic_Spectrum> {
 		auto lambda_u = sampler.generate_1d();
 		auto Le = spectra::Stochastic_Spectrum{spectra::stochastic_samples, lambda_u};
-		auto beta = spectra::Stochastic_Spectrum{spectra::stochastic_samples, lambda_u, 1.f};
-		auto mis_s = beta;
-		auto mis_e = beta;
+		auto beta = Le; beta = 1.f;
+		auto mis_s = Le; mis_s = 1.f;
+		auto mis_e = Le; mis_e = 0.f;
 
 		auto constexpr max_depth = 11uz;
 		auto depth = 0uz;
@@ -245,7 +245,7 @@ namespace metatron::mc {
 				auto u = sampler.generate_1d();
 				auto mode = math::Discrete_Distribution{std::array<f32, 3>{p_a, p_s, p_n}}.sample(u);
 				if (mode == 0uz) {
-					beta = m_intr.sigma_a / p_a;
+					beta *= m_intr.sigma_a / p_a;
 					terminated = true;
 				} else if (mode == 1uz) {
 					phase = m_intr.phase;
@@ -268,7 +268,7 @@ namespace metatron::mc {
 				} else {
 					intr.t -= m_intr.t;
 					trace_ctx.r.o = m_intr.p;
-					beta = m_intr.sigma_n / p_n;
+					beta *= m_intr.sigma_n / p_n;
 					mis_s *= (m_intr.sigma_n / m_intr.sigma_maj) / p_n;
 					mis_e /= p_n;
 					transmitted = true;
@@ -361,7 +361,7 @@ namespace metatron::mc {
 				scatter_pdf = b_intr.pdf;
 			} else {
 				transmitted = true;
-				mis_e = mis_s;
+				mis_e = 0.f;
 			}
 		}
 
