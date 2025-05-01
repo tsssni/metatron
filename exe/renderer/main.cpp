@@ -38,7 +38,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 32uz;
+	auto spp = 1024uz;
 	auto blocks = 8uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
