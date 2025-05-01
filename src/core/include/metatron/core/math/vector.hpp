@@ -64,6 +64,20 @@ namespace metatron::math {
 		return Vector<T, n - tail>{x};
 	}
 
+	template<
+		typename T,
+		typename Func,
+		typename Return_Type = decltype(std::declval<Func>()(std::declval<T>(), std::declval<usize>())),
+		usize size
+	>
+	auto foreach(Vector<T, size> const& x, Func f) -> Vector<Return_Type, size> {
+		auto r = Vector<Return_Type, size>{};
+		for (auto i = 0uz; i < size; i++) {
+			r[i] = f(x[i], i);
+		}
+		return r;
+	}
+
 	template<typename T, usize size>
 	requires std::totally_ordered<T>
 	auto min(Vector<T, size> const& x) -> T {
@@ -87,11 +101,9 @@ namespace metatron::math {
 	template<typename T, usize size>
 	requires std::totally_ordered<T>
 	auto clamp(Vector<T, size> const& x, Vector<T, size> const& l, Vector<T, size> const& r) -> Vector<T, size> {
-		auto y = x;
-		for (auto i = 1uz; i < size; i++) {
-			y[i] = std::clamp(x[i], l[i], r[i]);
-		}
-		return y;
+		return foreach(x, [&](T const& v, usize i) -> T {
+			return std::clamp(v, l[i], r[i]);
+		});
 	}
 
 	template<typename T, usize size>
@@ -109,20 +121,19 @@ namespace metatron::math {
 	template<typename T, usize size>
 	requires std::floating_point<T> || std::integral<T>
 	auto abs(Vector<T, size> const& x) -> Vector<T, size> {
-		auto r = Vector<T, size>{};
-		for (auto i = 0uz; i < size; i++) {
-			r[i] = std::abs(x[i]);
-		}
-		return r;
+		return foreach(x, [](T const& v, usize) -> T {
+			return std::abs(v);
+		});
 	}
 
 	template<typename T, usize size>
 	requires requires(T a, T b) { a + b; }
 	auto sum(Vector<T, size> const& x) -> T {
 		auto y = T{};
-		for (auto i = 0uz; i < size; i++) {
-			y += x[i];
-		}
+		foreach(x, [&y](T const& v, usize) -> T {
+			y += v;
+			return y;
+		});
 		return y;
 	}
 
@@ -130,51 +141,34 @@ namespace metatron::math {
 	requires requires(T a, T b) { a * b; }
 	auto prod(Vector<T, size> const& x) -> T {
 		auto y = T{1};
-		for (auto i = 0uz; i < size; i++) {
-			y *= x[i];
-		}
+		foreach(x, [&y](T const& v, usize) -> T {
+			y *= v;
+			return y;
+		});
 		return y;
 	}
 
 	template<typename T, usize size>
 	requires std::floating_point<T> || std::integral<T>
 	auto mod(Vector<T, size> const& x, T const& m) -> Vector<T, size> {
-		auto r = Vector<T, size>{};
-		for (auto i = 0uz; i < size; i++) {
+		return foreach(x, [&](T const& v, usize i) -> T {
 			if constexpr (std::floating_point<T>) {
-				r[i] = std::fmod(x[i], m);
+				return std::fmod(v, m);
 			} else {
-				r[i] = x[i] % m;
+				return v % m;
 			}
-		}
-		return r;
+		});
 	}
 
 	template<typename T, usize size>
 	requires std::floating_point<T> || std::integral<T>
 	auto mod(Vector<T, size> const& x, Vector<T, size> const& m) -> Vector<T, size> {
-		auto r = Vector<T, size>{};
-		for (auto i = 0uz; i < size; i++) {
+		return foreach(x, [&](T const& v, usize i) -> T {
 			if constexpr (std::floating_point<T>) {
-				r[i] = std::fmod(x[i], m[i]);
+				return std::fmod(v, m[i]);
 			} else {
-				r[i] = x[i] % m[i];
+				return v % m[i];
 			}
-		}
-		return r;
-	}
-
-	template<
-		typename T,
-		typename Func,
-		typename Return_Type = decltype(std::declval<Func>()(std::declval<T>(), std::declval<usize>())),
-		usize size
-	>
-	auto foreach(Vector<T, size> const& x, Func f) -> Vector<Return_Type, size> {
-		auto r = Vector<Return_Type, size>{};
-		for (auto i = 0uz; i < size; i++) {
-			r[i] = f(x[i], i);
-		}
-		return r;
+		});
 	}
 }

@@ -7,7 +7,7 @@ namespace metatron::media {
 	std::unordered_map<Grid_Medium const*, Grid_Medium::Cache> thread_local Grid_Medium::thread_caches;
 
     Grid_Medium::Grid_Medium(
-        math::Grid<f32, 64, 64, 64> const* grid,
+        Medium_Grid const* grid,
         std::unique_ptr<spectra::Spectrum> sigma_a,
         std::unique_ptr<spectra::Spectrum> sigma_s,
         std::unique_ptr<spectra::Spectrum> Le,
@@ -41,7 +41,8 @@ namespace metatron::media {
 		auto update_majorant = [&](f32 t_max) -> void {
 			cache.bbox = grid->bounding_box(cache.r.o);
 			cache.t_max = math::hit(cache.r, cache.bbox).value_or(t_max);
-			cache.density_maj = (*grid)(cache.r.o);
+			// cache.density_maj = (*grid)(cache.r.o);
+			cache.density_maj = (*grid)[grid->to_index(cache.r.o)];
 			cache.sigma_maj = cache.density_maj * sigma_t;
 			cache.distr = math::Exponential_Distribution(cache.sigma_maj.value.front());
 		};

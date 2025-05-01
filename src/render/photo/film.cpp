@@ -21,6 +21,7 @@ namespace metatron::photo {
 	auto Fixel::operator=(spectra::Stochastic_Spectrum const& spectrum) -> void {
 		auto rgb = (*(film->sensor))(spectrum);
 		film->image[pixel[0], pixel[1]] += {rgb * weight, 1.f};
+		// film->image[pixel[0], pixel[1]] += {math::Vector<f32, 3>{spectrum.value[0]}, 1.f};
 	}
 
 	Film::Film(
