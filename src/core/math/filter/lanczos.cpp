@@ -1,17 +1,6 @@
 #include <metatron/core/math/filter/lanczos.hpp>
 
 namespace metatron::math {
-	auto sinc(f32 x) -> f32 {
-		return std::sin(pi * x) / (pi * x);
-	}
-
-	auto lanczos(f32 x, f32 r, f32 tau) -> f32 {
-		if (std::abs(x) >= r) {
-			return 0.f;
-		}
-		return sinc(x) * sinc(x / tau);
-	}
-
 	Lanczos_Filter::Lanczos_Filter(Vector<f32, 2> const& radius, f32 tau): radius(radius), tau(tau) {
 		auto matrix = math::Matrix<f32, 64, 64>{};
 		for (auto i = 0uz; i < 64; i++) {

@@ -6,7 +6,7 @@ namespace metatron::math {
 	struct Hemisphere_Distribution final {
 		Hemisphere_Distribution() = default;
 
-		auto sample(math::Vector<f32, 2> const& u) -> math::Vector<f32, 3> {
+		auto sample(math::Vector<f32, 2> const& u) const -> math::Vector<f32, 3> {
 			auto z = u[0];
 			auto r = std::sqrt(1 - z * z);
 			auto phi = 2.f * math::pi * u[1];

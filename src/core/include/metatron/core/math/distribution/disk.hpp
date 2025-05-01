@@ -5,7 +5,7 @@ namespace metatron::math {
 	struct Disk_Distribution final {
 		Disk_Distribution() = default;
 
-		auto sample(math::Vector<f32, 2> const& u) -> math::Vector<f32, 2> {
+		auto sample(math::Vector<f32, 2> const& u) const -> math::Vector<f32, 2> {
 			auto disk_u = u * 2.f - 1.f;
 			auto r = 0.f;
 			auto theta = 0.f;
@@ -23,7 +23,7 @@ namespace metatron::math {
 			return r * math::Vector<f32, 2>{std::cos(theta), std::sin(theta)};
 		}
 
-		auto pdf() -> f32 {
+		auto pdf() const -> f32 {
 			return 1.f / pi;
 		}
 	};

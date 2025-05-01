@@ -10,7 +10,7 @@ namespace metatron::math {
 			}
 		}
 
-		auto sample(f32 u) -> usize {
+		auto sample(f32 u) const -> usize {
 			u *= sum_w;
 			auto sum = 0.f;
 			auto i = 0uz;
