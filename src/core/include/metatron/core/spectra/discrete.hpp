@@ -20,7 +20,14 @@ namespace metatron::spectra {
 				return 0.f;
 			}
 
-			auto idx = std::max(0uz, std::min(n - 2, std::lower_bound(this->lambda.begin(), this->lambda.end(), lambda) - this->lambda.begin() - 1uz));
+			auto idx = std::max(0uz, std::min(
+				n - 2,
+				std::lower_bound(
+					this->lambda.begin(),
+					this->lambda.end(),
+					lambda
+				) - this->lambda.begin() - 1uz
+			));
 			auto alpha = (lambda - this->lambda[idx]) / (this->lambda[idx + 1] - this->lambda[idx]);
 			return std::lerp(data[idx], data[idx + 1], alpha);
 		}

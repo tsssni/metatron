@@ -60,7 +60,7 @@ namespace metatron::color {
 		rgb = math::guarded_div(rgb, s);
 
 		if (rgb[0] == rgb[1] && rgb[1] == rgb[2]) {
-			return std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.f, 0.f, math::guarded_div((rgb[0] - 0.5f), std::sqrt(rgb[0] * (1.f - rgb[0])))}, s, w);
+			return std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.f, 0.f, (rgb[0] - 0.5f) / std::sqrt(rgb[0] * (1.f - rgb[0]))}, s, w);
 		}
 
 		auto maxc = (rgb[0] > rgb[1]) ? ((rgb[0] > rgb[2]) ? 0 : 2) : ((rgb[1] > rgb[2]) ? 1 : 2);

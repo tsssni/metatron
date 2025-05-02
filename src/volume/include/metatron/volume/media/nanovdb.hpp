@@ -72,8 +72,6 @@ namespace metatron::media {
 				auto coord_bbox = from_nanovdb(nanovdb_grid->indexBBox());
 				auto coord_min = from_nanovdb(nanovdb_grid->worldToIndexF(to_nanovdb(voxel_bbox.p_min)));
 				auto coord_max = from_nanovdb(nanovdb_grid->worldToIndexF(to_nanovdb(voxel_bbox.p_max)));
-				coord_min = math::clamp(coord_min - 1, coord_bbox.p_min, coord_bbox.p_max);
-				coord_max = math::clamp(coord_max + 1, coord_bbox.p_min, coord_bbox.p_max);
 
 				auto pmin = math::Vector<i32, 3>{coord_min};
 				auto pmax = math::Vector<i32, 3>{coord_max};
