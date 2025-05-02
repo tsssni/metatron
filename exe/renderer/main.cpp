@@ -56,7 +56,8 @@ auto main() -> int {
 		std::move(film),
 		std::move(lens)
 	};
-	auto sampler = math::Halton_Sampler{};
+	auto rd = std::random_device{};
+	auto sampler = math::Halton_Sampler{rd()};
 
 	auto identity = math::Transform{};
 	auto world_to_render = math::Transform{{0.f, 0.f, 500.f}};
@@ -150,7 +151,9 @@ auto main() -> int {
 			auto start = blocks * block_idx;
 			for (auto p = 0; p < blocks * blocks; p++) {
 				auto px = start + math::morton_decode(p);
-				if (px >= size) continue;
+				if (px >= size) {
+					continue;
+				}
 
 				for (auto n = 0uz; n < spp; n++) {
 					auto sample = camera.sample(px, n, sampler);

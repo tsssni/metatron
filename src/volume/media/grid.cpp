@@ -54,7 +54,7 @@ namespace metatron::media {
 		}
 
 		auto t_boundary = t_max;
-		auto t_offset = 0.002f * math::length(cache.r.d);
+		auto t_offset = 0.005f / math::length(cache.r.d);
 		auto t_transmitted = 0.f;
 		auto transmittance = ctx.L;
 		transmittance.value = std::vector<f32>(transmittance.lambda.size(), 1.f);
