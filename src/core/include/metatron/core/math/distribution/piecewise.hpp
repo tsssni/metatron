@@ -18,7 +18,7 @@ namespace metatron::math {
 		Piecewise_Distribution() = default;
 
 		Piecewise_Distribution(
-			math::Matrix<f32, first_dim, rest_dims...>&& matrix, 
+			Matrix<f32, first_dim, rest_dims...>&& matrix, 
 			Vector<f32, n>&& low,
 			Vector<f32, n>&& high
 		) {
@@ -48,28 +48,28 @@ namespace metatron::math {
 			}
 		}
 
-		auto sample(math::Vector<f32, dimensions.size()> const& u) const -> math::Vector<f32, dimensions.size()> {
+		auto sample(Vector<f32, dimensions.size()> const& u) const -> Vector<f32, dimensions.size()> {
 			auto idx = 1uz;
 			for (; idx < first_dim && cdf[idx] <= u[n - 1]; idx++) {}
 			idx--;
 
-			auto t = math::guarded_div(u[n - 1] - cdf[idx], cdf[idx + 1uz] - cdf[idx]);
+			auto t = guarded_div(u[n - 1] - cdf[idx], cdf[idx + 1uz] - cdf[idx]);
 			auto p = std::lerp(low, high, (f32(idx) + t) / f32(first_dim));
 
 			if constexpr (n == 1uz) {
 				return {p};
 			} else {
-				return {rows[idx].sample(math::shrink(u)), p};
+				return {rows[idx].sample(shrink(u)), p};
 			}
 		}
 
-		auto pdf(math::Vector<f32, dimensions.size()> const& p) const -> f32 {
+		auto pdf(Vector<f32, dimensions.size()> const& p) const -> f32 {
 			auto idx = usize((p[n - 1] - low) / (high - low) * f32(first_dim));
 			auto prob = (cdf[idx + 1] - cdf[idx]) * f32(first_dim) / (high - low);
 			if constexpr (n == 1uz) {
 				return prob;
 			} else {
-				return rows[idx].pdf(math::shrink(p)) * prob;
+				return rows[idx].pdf(shrink(p)) * prob;
 			}
 		}
 

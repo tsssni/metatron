@@ -109,7 +109,7 @@ namespace metatron::mc {
 						if (spectra::max(betad * math::guarded_div(1.f, spectra::avg(mis_sd + mis_ed))) < 0.05f) {
 							auto q = 0.75f;
 							if (sampler.generate_1d() > q) {
-								spectra::clear(betad);
+								betad = 0.f;
 								terminated = true;
 								continue;
 							} else {
@@ -133,7 +133,7 @@ namespace metatron::mc {
 							terminated = true;
 							continue;
 						} else if (div->material) {
-							spectra::clear(betad);
+							betad = 0.f;
 							terminated = true;
 							continue;
 						}
@@ -145,7 +145,7 @@ namespace metatron::mc {
 						direct_ctx = mt ^ (rt ^ direct_ctx);
 						OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(direct_ctx, intr.t, sampler.generate_1d()), {
 							terminated = true;
-							spectra::clear(betad);
+							betad = 0.f;
 							break;
 						});
 						direct_ctx = rt | (mt | direct_ctx);
@@ -161,7 +161,7 @@ namespace metatron::mc {
 							betad *= m_intr.sigma_n * m_intr.transmittance / m_intr.pdf;
 							intr.t -= m_intr.t;
 							direct_ctx.r.o = m_intr.p;
-							mis_sd *= (m_intr.sigma_n / m_intr.sigma_maj);
+							mis_sd *= m_intr.sigma_n / m_intr.sigma_maj;
 							continue;
 						} else {
 							betad *= m_intr.transmittance / m_intr.pdf;
@@ -238,9 +238,9 @@ namespace metatron::mc {
 				auto mis_a = math::guarded_div(1.f, spectra::avg(mis_s));
 				Le += mis_a * beta * m_intr.sigma_a * m_intr.Le;
 
-				auto p_a = m_intr.sigma_a.value.front() / m_intr.sigma_maj.value.front();
-				auto p_s = m_intr.sigma_s.value.front() / m_intr.sigma_maj.value.front();
-				auto p_n = m_intr.sigma_n.value.front() / m_intr.sigma_maj.value.front();
+				auto p_a = math::guarded_div(m_intr.sigma_a.value.front(), m_intr.sigma_maj.value.front());
+				auto p_s = math::guarded_div(m_intr.sigma_s.value.front(), m_intr.sigma_maj.value.front());
+				auto p_n = math::guarded_div(m_intr.sigma_n.value.front(), m_intr.sigma_maj.value.front());
 
 				auto u = sampler.generate_1d();
 				auto mode = math::Discrete_Distribution{std::array<f32, 3>{p_a, p_s, p_n}}.sample(u);

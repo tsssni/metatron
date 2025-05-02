@@ -86,7 +86,7 @@ namespace metatron::spectra {
 	
 	auto Stochastic_Spectrum::operator/=(Spectrum const& spectrum) -> Stochastic_Spectrum& {
 		for (auto i = 0uz; i < lambda.size(); i++) {
-			value[i] /= spectrum(lambda[i]);
+			value[i] = math::guarded_div(value[i], spectrum(lambda[i]));
 		}
 		return *this;
 	}
