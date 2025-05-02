@@ -34,8 +34,8 @@ namespace metatron::media {
     ) const -> std::optional<Interaction> {
 		auto& cache = thread_caches[this];
 		
-		auto sigma_a = ctx.L & (*this->sigma_a);
-		auto sigma_s = ctx.L & (*this->sigma_s);
+		auto sigma_a = (ctx.L & (*this->sigma_a)) * density_scale;
+		auto sigma_s = (ctx.L & (*this->sigma_s)) * density_scale;
 		auto sigma_t = sigma_a + sigma_s;
 
 		auto update_majorant = [&](f32 t_max) -> void {
@@ -87,7 +87,7 @@ namespace metatron::media {
 			} else {
 				update_transmittance(t_u);
 				auto spectra_pdf = cache.sigma_maj * transmittance;
-				auto density = (*grid)(cache.r.o) * density_scale;
+				auto density = (*grid)(cache.r.o);
 
 				return Interaction{
 					cache.r.o,

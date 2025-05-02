@@ -57,10 +57,12 @@ auto main() -> int {
 		std::move(lens)
 	};
 	auto sampler = math::Halton_Sampler{};
+
 	auto identity = math::Transform{};
-	auto local_to_world = math::Transform{{}, {250.f}};
 	auto world_to_render = math::Transform{{0.f, 0.f, 500.f}};
 	auto render_to_camera = identity;
+
+	auto sphere_to_world = math::Transform{{}, {250.f}};
 	auto medium_to_world = math::Transform{{}, {0.5f},
 		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi / 2.f),
 	};
@@ -111,7 +113,7 @@ auto main() -> int {
 			&vaccum_medium,
 			&interface_material,
 			nullptr,
-			&local_to_world,
+			&sphere_to_world,
 			&medium_to_world,
 			&identity,
 			0uz

@@ -9,6 +9,9 @@ namespace metatron::spectra {
 
 	auto Rgb_Spectrum::operator()(f32 lambda) const -> f32 {
 		auto sigmoid = [](f32 x) -> f32 {
+			if (std::isinf(x)) {
+				return x < 0.f ? 0.f : 1.f;
+			}
 			return 0.5f + x / (2.f * std::sqrt(1.f + x * x));
 		};
 		return s * sigmoid(polynomial(lambda)) * (illuminant ? (*illuminant)(lambda) : 1.f);
