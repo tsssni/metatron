@@ -83,27 +83,27 @@ namespace metatron::media {
 					}
 				}
 			}
-		};
+		}
 
-		auto virtual to_local(math::Vector<i32, 3> const& ijk) const -> math::Vector<f32, 3> { return majorant_grid.to_local(ijk); };
-		auto virtual to_index(math::Vector<f32, 3> const& pos) const -> math::Vector<i32, 3> { return majorant_grid.to_index(pos); };
-		auto virtual bounding_box() const -> math::Bounding_Box { return majorant_grid.bounding_box(); };
-		auto virtual bounding_box(math::Vector<f32, 3> const& pos) const -> math::Bounding_Box { return majorant_grid.bounding_box(pos); };
-		auto virtual bounding_box(math::Vector<i32, 3> const& ijk) const -> math::Bounding_Box { return majorant_grid.bounding_box(ijk); };
+		auto virtual to_local(math::Vector<i32, 3> const& ijk) const -> math::Vector<f32, 3> { return majorant_grid.to_local(ijk); }
+		auto virtual to_index(math::Vector<f32, 3> const& pos) const -> math::Vector<i32, 3> { return majorant_grid.to_index(pos); }
+		auto virtual bounding_box() const -> math::Bounding_Box { return majorant_grid.bounding_box(); }
+		auto virtual bounding_box(math::Vector<f32, 3> const& pos) const -> math::Bounding_Box { return majorant_grid.bounding_box(pos); }
+		auto virtual bounding_box(math::Vector<i32, 3> const& ijk) const -> math::Bounding_Box { return majorant_grid.bounding_box(ijk); }
 
 		auto virtual operator()(math::Vector<f32, 3> const& pos) const -> T {
 			return sampler(nanovdb_grid->worldToIndex(to_nanovdb(pos)));
-		};
+		}
 		auto virtual operator[](math::Vector<i32, 3> const& ijk) -> T& {
 			if (ijk == clamp(ijk, math::Vector<i32, 3>{0}, math::Vector<i32, 3>{x - 1, y - 1, z - 1})) {
 				return majorant_grid[ijk];
 			} else {
 				return background;
 			}
-		};
+		}
 		auto virtual operator[](math::Vector<i32, 3> const& ijk) const -> T const& {
 			return const_cast<Nanovdb_Grid&>(*this)[ijk];
-		};
+		}
 
 	private:
         nanovdb::GridHandle<> handle;

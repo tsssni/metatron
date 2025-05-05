@@ -22,28 +22,28 @@ namespace metatron::media {
 			math::Exponential_Distribution distr{0.f};
 		};
 
-        Grid_Medium(
-            Medium_Grid const* grid,
-            std::unique_ptr<spectra::Spectrum> sigma_a,
-            std::unique_ptr<spectra::Spectrum> sigma_s,
-            std::unique_ptr<spectra::Spectrum> Le,
+		Grid_Medium(
+			Medium_Grid const* grid,
+			std::unique_ptr<spectra::Spectrum> sigma_a,
+			std::unique_ptr<spectra::Spectrum> sigma_s,
+			std::unique_ptr<spectra::Spectrum> L_e,
 			std::unique_ptr<phase::Phase_Function> phase,
-            f32 density_scale = 1.0f
-        );
+			f32 density_scale = 1.0f
+		);
 
 		~Grid_Medium();
-        
-        auto sample(eval::Context const& ctx, f32 t_max, f32 u) const -> std::optional<Interaction>;
-        
-    private:
-        std::unique_ptr<spectra::Spectrum> sigma_a;
-        std::unique_ptr<spectra::Spectrum> sigma_s;
-        std::unique_ptr<spectra::Spectrum> Le;
+		
+		auto sample(eval::Context const& ctx, f32 t_max, f32 u) const -> std::optional<Interaction>;
+		
+	private:
+		std::unique_ptr<spectra::Spectrum> sigma_a;
+		std::unique_ptr<spectra::Spectrum> sigma_s;
+		std::unique_ptr<spectra::Spectrum> L_e;
 		std::unique_ptr<phase::Phase_Function> phase;
 
 		Medium_Grid const* grid;
-        f32 density_scale;
+		f32 density_scale;
 
 		static thread_local std::unordered_map<Grid_Medium const*, Cache> thread_caches;
-    };
+	};
 }

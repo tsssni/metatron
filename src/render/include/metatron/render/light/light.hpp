@@ -5,7 +5,7 @@
 
 namespace metatron::light {
 	struct Interaction final {
-		spectra::Stochastic_Spectrum Le;
+		spectra::Stochastic_Spectrum L_e;
 		math::Vector<f32, 3> wi;
 		math::Vector<f32, 3> p;
 		f32 t;

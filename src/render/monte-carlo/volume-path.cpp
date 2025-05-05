@@ -13,25 +13,23 @@ namespace metatron::mc {
 		math::Sampler const& sampler
 	) const -> std::optional<spectra::Stochastic_Spectrum> {
 		auto lambda_u = sampler.generate_1d();
-		auto Le = spectra::Stochastic_Spectrum{spectra::stochastic_samples, lambda_u};
-		auto beta = Le; beta = 1.f;
-		auto mis_s = Le; mis_s = 1.f;
-		auto mis_e = Le; mis_e = 0.f;
+		auto L_e = spectra::Stochastic_Spectrum{spectra::stochastic_samples, lambda_u};
+		auto beta = L_e; beta = 1.f;
+		auto mis_s = L_e; mis_s = 1.f;
+		auto mis_e = L_e; mis_e = 0.f;
 
-		auto constexpr max_depth = 11uz;
 		auto depth = 0uz;
 		auto crossed = true;
 		auto terminated = false;
-		auto transmitted = false;
 
 		auto scattered = false;
 		auto scatter_pdf = 0.f;
-		auto scatter_f = Le;
+		auto scatter_f = L_e;
 
 		auto trace_ctx = eval::Context{};
 		auto history_trace_ctx = eval::Context{};
 		trace_ctx.r = ctx.ray_differential.r;
-		trace_ctx.L = Le;
+		trace_ctx.L = L_e;
 
 		auto div_opt = std::optional<accel::Divider const*>{};
 		auto intr_opt = std::optional<shape::Interaction>{};
@@ -43,7 +41,7 @@ namespace metatron::mc {
 		
 		while (true) {
 			depth += usize(scattered);
-			if (terminated || depth >= max_depth) {
+			if (terminated || depth >= ctx.max_depth) {
 				break;
 			}
 
@@ -58,130 +56,139 @@ namespace metatron::mc {
 				}
 			}
 
-			if (scattered) {
-				do {
-					OPTIONAL_OR_BREAK(e_intr, emitter.sample(trace_ctx, sampler.generate_2d()));
-					auto direct_ctx = trace_ctx;
-					auto& lt = *e_intr.divider->local_to_world;
+			do {
+				if (!scattered) {
+					break;
+				}
 
-					direct_ctx = lt ^ (rt ^ direct_ctx);
-					OPTIONAL_OR_BREAK(l_intr, e_intr.divider->light->sample(direct_ctx, sampler.generate_2d()));
-					direct_ctx = rt | (lt | direct_ctx);
+				auto direct_ctx = trace_ctx;
+				OPTIONAL_OR_BREAK(e_intr, emitter.sample(direct_ctx, sampler.generate_1d()));
+				auto& lt = *e_intr.divider->local_to_world;
 
-					l_intr.wi = rt | (lt | math::expand(l_intr.wi, 0.f));
-					auto pe = e_intr.pdf * l_intr.pdf;
-					if (std::abs(pe) < math::epsilon<f32>) {
+				direct_ctx = lt ^ (rt ^ direct_ctx);
+				OPTIONAL_OR_BREAK(l_intr, e_intr.divider->light->sample(direct_ctx, sampler.generate_2d()));
+				direct_ctx = rt | (lt | direct_ctx);
+
+				l_intr.wi = rt | (lt | math::expand(l_intr.wi, 0.f));
+				direct_ctx.r.d = l_intr.wi;
+				auto p_e = e_intr.pdf * l_intr.pdf;
+				if (std::abs(p_e) < math::epsilon<f32>) {
+					break;
+				}
+
+				auto p_s = 0.f;
+				auto f = spectra::Stochastic_Spectrum{};
+
+				if (bsdf) {
+					auto t = math::Transform{};
+					t.config.rotation = math::Quaternion<f32>::from_rotation_between(direct_ctx.n, {0.f, 1.f, 0.f});
+					auto wo = t | math::expand(history_trace_ctx.r.d, 0.f);
+					auto wi = t | math::expand(l_intr.wi, 0.f);
+					OPTIONAL_OR_BREAK(b_intr, (*bsdf)(wo, wi, L_e));
+					f = b_intr.f * std::abs(math::dot(l_intr.wi, direct_ctx.n));
+					p_s = b_intr.pdf;
+				} else if (phase) {
+					OPTIONAL_OR_BREAK(p_intr, (*phase)(history_trace_ctx.r.d, l_intr.wi, L_e));
+					f = p_intr.f;
+					p_s = p_intr.pdf;
+				} else {
+					break;
+				}
+
+				auto medium = ctx.medium;
+				auto medium_to_world = ctx.medium_to_world;
+
+				auto div_opt = std::optional<accel::Divider const*>{};
+				auto intr_opt = std::optional<shape::Interaction>{};
+				auto terminated = false;
+				auto crossed = true;
+
+				auto betad = beta * (f / p_e) / (scatter_f / scatter_pdf);
+				auto mis_sd = mis_s * p_s / p_e;
+				auto mis_ed = mis_s;
+				auto n_null = 0;
+
+				while (true) {
+					if (terminated) {
 						break;
 					}
 
-					auto ps = 0.f;
-					auto f = spectra::Stochastic_Spectrum{};
-
-					if (bsdf) {
-						auto t = math::Transform{};
-						t.config.rotation = math::Quaternion<f32>::from_rotation_between(direct_ctx.n, {0.f, 1.f, 0.f});
-						auto wo = t | math::expand(history_trace_ctx.r.d, 0.f);
-						auto wi = t | math::expand(l_intr.wi, 0.f);
-						OPTIONAL_OR_BREAK(b_intr, (*bsdf)(wo, wi, Le));
-						f = b_intr.f;
-						ps = b_intr.pdf;
-					} else if (phase) {
-						OPTIONAL_OR_BREAK(p_intr, (*phase)(history_trace_ctx.r.d, l_intr.wi, Le));
-						f = p_intr.f;
-						ps = p_intr.pdf;
-					} else {
-						break;
-					}
-
-					auto medium = ctx.medium;
-					auto medium_to_world = ctx.medium_to_world;
-					auto terminated = false;
-
-					auto mis_sd = mis_s * ps / pe;
-					auto mis_ed = mis_s;
-					auto betad = beta * (f / pe) / (scatter_f / scatter_pdf);
-
-					while (true) {
-						if (terminated || std::abs(l_intr.t) < math::epsilon<f32>) {
-							break;
-						}
-
-						if (spectra::max(betad * math::guarded_div(1.f, spectra::avg(mis_sd + mis_ed))) < 0.05f) {
-							auto q = 0.75f;
-							if (sampler.generate_1d() > q) {
-								betad = 0.f;
-								terminated = true;
-								continue;
-							} else {
-								betad /= q;
-							}
-						}
-
-						div_opt = accel(direct_ctx.r);
-						intr_opt = std::optional<shape::Interaction>{};
-
-						if (!div_opt.has_value()) {
-							terminated = true;
-							continue;
-						}
-						auto& div = div_opt.value();
-						auto& lt = *div->local_to_world;
-						auto lr = lt ^ (rt ^ direct_ctx.r);
-						intr_opt = (*div->shape)(lr);
-
-						if (!intr_opt.has_value()) {
-							terminated = true;
-							continue;
-						} else if (div->material) {
+					if (spectra::max(beta * math::guarded_div(1.f, spectra::avg(mis_s + mis_e))) < 0.05f) {
+						auto q = 0.25f;
+						if (sampler.generate_1d() > q) {
 							betad = 0.f;
+							terminated = true;
+							continue;
+						} else {
+							betad /= q;
+						}
+					}
+
+					if (crossed) {
+						div_opt = accel(direct_ctx.r);
+						if (!div_opt) {
+							terminated = true;
+							continue;
+						}
+						auto& div = *div_opt.value();
+
+						auto& lt = *div.local_to_world;
+						auto lr = lt ^ (rt ^ direct_ctx.r);
+						intr_opt = (*div.shape)(lr);
+						if (!intr_opt) {
 							terminated = true;
 							continue;
 						}
 						auto& intr = intr_opt.value();
+
 						intr.p = rt | (lt | math::expand(intr.p, 1.f));
 						intr.n = math::normalize(rt | (lt | math::expand(intr.n, 0.f)));
-
-						auto& mt = *medium_to_world;
-						direct_ctx = mt ^ (rt ^ direct_ctx);
-						OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(direct_ctx, intr.t, sampler.generate_1d()), {
+						if (div.material->sample(direct_ctx, {intr.uv})) {
 							terminated = true;
 							betad = 0.f;
-							break;
-						});
-						direct_ctx = rt | (mt | direct_ctx);
-						m_intr.p = rt | (mt | math::expand(direct_ctx.r.o, 1.f));
-						l_intr.t -= m_intr.t;
-
-						auto hit = m_intr.t >= intr.t;
-
-						mis_sd *= m_intr.spectra_pdf / m_intr.pdf;
-						mis_ed *= m_intr.spectra_pdf / m_intr.pdf;
-
-						if (!hit) {
-							betad *= m_intr.sigma_n * m_intr.transmittance / m_intr.pdf;
-							intr.t -= m_intr.t;
-							direct_ctx.r.o = m_intr.p;
-							mis_sd *= m_intr.sigma_n / m_intr.sigma_maj;
 							continue;
-						} else {
-							betad *= m_intr.transmittance / m_intr.pdf;
-							if (math::dot(-direct_ctx.r.d, intr.n) >= 0.f) {
-								medium = div->interior_medium;
-								medium_to_world = div->interior_transform;
-							} else {
-								medium = div->exterior_medium;
-								medium_to_world = div->exterior_transform;
-							}
-
-							direct_ctx.r.o = intr.p + direct_ctx.r.d * 0.001f;
-							break;
 						}
 					}
 
-					auto mis_w = math::guarded_div(1.f, spectra::avg(mis_sd + mis_ed));
-					Le += mis_w * betad * l_intr.Le;
-				} while (false);
-			}
+					auto& div = *div_opt.value();
+					auto& intr = intr_opt.value();
+
+					auto& mt = *medium_to_world;
+					direct_ctx = mt ^ (rt ^ direct_ctx);
+					OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(direct_ctx, intr.t, sampler.generate_1d()), {
+						betad = 0.f;
+						terminated = true;
+						break;
+					});
+					direct_ctx = rt | (mt | direct_ctx);
+					m_intr.p = rt | (mt | math::expand(m_intr.p, 1.f));
+					l_intr.t -= m_intr.t;
+
+					auto hit = m_intr.t >= intr.t;
+
+					betad *= m_intr.transmittance / m_intr.pdf;
+					mis_sd *= m_intr.spectra_pdf / m_intr.pdf;
+					mis_ed *= m_intr.spectra_pdf / m_intr.pdf;
+
+					if (!hit) {
+						betad *= m_intr.sigma_n;
+						mis_sd *= m_intr.sigma_n / m_intr.sigma_maj;
+						intr.t -= m_intr.t;
+						direct_ctx.r.o = m_intr.p;
+						crossed = false;
+					} else {
+						auto into = math::dot(direct_ctx.r.d, intr.n) < 0.f;
+						medium = into ? div.interior_medium : div.exterior_medium;
+						medium_to_world = into ? div.interior_transform : div.exterior_transform;
+						direct_ctx.r.o = intr.p + l_intr.wi * 0.001f;
+						crossed = true;
+					}
+					continue;
+				}
+
+				auto mis_w = math::guarded_div(1.f, spectra::avg(mis_sd + mis_ed));
+				L_e += betad * mis_w * l_intr.L_e;
+			} while (false);
 
 			if (scattered || crossed) {
 				div_opt = accel(trace_ctx.r);
@@ -204,16 +211,16 @@ namespace metatron::mc {
 				OPTIONAL_OR_CONTINUE(l_intr, (*e_intr.divider->light)(trace_ctx));
 				trace_ctx = rt | (lt | trace_ctx);
 
-				auto pl = e_intr.pdf * l_intr.pdf;
-				mis_e *= pl;
-				auto mis_w = (depth == 0uz && !transmitted) ? 1.f : math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
-				Le += beta * mis_w * l_intr.Le;
+				auto p_e = e_intr.pdf * l_intr.pdf;
+				mis_e *= math::guarded_div(p_e, scatter_pdf);
+				auto mis_w = math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
+				L_e += beta * mis_w * l_intr.L_e;
 				continue;
 			}
 
-			auto& div = div_opt.value();
+			auto& div = *div_opt.value();
 			auto& intr = intr_opt.value();
-			auto& lt = *div->local_to_world;
+			auto& lt = *div.local_to_world;
 			if (scattered || crossed) {
 				intr.p = rt | (lt | math::expand(intr.p, 1.f));
 				intr.n = math::normalize(rt | (lt | math::expand(intr.n, 0.f)));
@@ -236,42 +243,49 @@ namespace metatron::mc {
 
 			if (!hit) {
 				auto mis_a = math::guarded_div(1.f, spectra::avg(mis_s));
-				Le += mis_a * beta * m_intr.sigma_a * m_intr.Le;
+				L_e += mis_a * beta * m_intr.sigma_a * m_intr.L_e;
 
 				auto p_a = math::guarded_div(m_intr.sigma_a.value.front(), m_intr.sigma_maj.value.front());
 				auto p_s = math::guarded_div(m_intr.sigma_s.value.front(), m_intr.sigma_maj.value.front());
 				auto p_n = math::guarded_div(m_intr.sigma_n.value.front(), m_intr.sigma_maj.value.front());
 
 				auto u = sampler.generate_1d();
-				auto mode = math::Discrete_Distribution{std::array<f32, 3>{p_a, p_s, p_n}}.sample(u);
+				auto mode = math::Discrete_Distribution{{p_a, p_s, p_n}}.sample(u);
 				if (mode == 0uz) {
 					beta *= m_intr.sigma_a / p_a;
 					terminated = true;
 				} else if (mode == 1uz) {
 					phase = m_intr.phase;
 					bsdf.reset();
+
+					auto pt = math::Transform{};
+					pt.config.rotation = math::Quaternion<f32>::from_rotation_between(-trace_ctx.r.d, {0.f, 1.f, 0.f});
+
+					trace_ctx = pt | trace_ctx;
 					OPTIONAL_OR_CALLBACK(p_intr, phase->sample(trace_ctx, sampler.generate_2d()), {
 						terminated = true;
 						continue;
 					});
+					trace_ctx = pt ^ trace_ctx;
+					p_intr.wi = pt ^ math::expand(p_intr.wi, 0.f);
 
 					beta *= m_intr.sigma_s / p_s * p_intr.f / p_intr.pdf;
-					mis_s *= (m_intr.sigma_s / m_intr.sigma_maj * p_intr.pdf) / (p_s * p_intr.pdf);
-					mis_e = mis_s / p_intr.pdf;
+					mis_s *= m_intr.sigma_s / m_intr.sigma_maj / p_s;
+					mis_e = mis_s;
 
 					scattered = true;
 					crossed = false;
 					scatter_f = p_intr.f;
 					scatter_pdf = p_intr.pdf;
 					history_trace_ctx = trace_ctx;
-					trace_ctx = {{m_intr.p, p_intr.wi}, {}, Le};
+					trace_ctx = {{m_intr.p, p_intr.wi}, {}, L_e};
 				} else {
-					intr.t -= m_intr.t;
-					trace_ctx.r.o = m_intr.p;
 					beta *= m_intr.sigma_n / p_n;
 					mis_s *= (m_intr.sigma_n / m_intr.sigma_maj) / p_n;
 					mis_e /= p_n;
-					transmitted = true;
+
+					intr.t -= m_intr.t;
+					trace_ctx.r.o = m_intr.p;
 					scattered = false;
 					crossed = false;
 				}
@@ -284,6 +298,7 @@ namespace metatron::mc {
 				st.config.rotation = math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(intr.p));
 				ctx.ray_differential = st | rd;
 			}
+			ctx.ray_differential.differentiable = false;
 			
 			auto local_differential = lt ^ (rt ^ ctx.ray_differential);
 			auto tangent = shape::Plane{intr.p, intr.n};
@@ -298,30 +313,39 @@ namespace metatron::mc {
 			auto duvdy = math::least_squares(dpduv, dpdy);
 
 			auto tcoord = material::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
-			OPTIONAL_OR_CALLBACK(mat_intr, div->material->sample(trace_ctx, tcoord), {
-				terminated = true;
+			OPTIONAL_OR_CALLBACK(mat_intr, div.material->sample(trace_ctx, tcoord), {
+				scattered = false;
+				crossed = true;
+				history_trace_ctx = trace_ctx;
+				trace_ctx.r.o = intr.p + 0.001f * trace_ctx.r.d;
+
+				auto into = math::dot(trace_ctx.r.d, intr.n) < 0.f;
+				ctx.medium = into ? div.interior_medium : div.exterior_medium;
+				ctx.medium_to_world = into ? div.interior_transform : div.exterior_transform;
 				continue;
 			});
-			ctx.ray_differential.differentiable = false;
+
 			bsdf = std::move(mat_intr.bsdf);
 			phase = nullptr;
 
-			if (spectra::max(mat_intr.Le) > math::epsilon<f32>) {
-				do {
-					OPTIONAL_OR_BREAK(e_intr, emitter(trace_ctx, *div->Le));
-					auto& div = *e_intr.divider;
-					auto& lt = *div.local_to_world;
+			do {
+				if (spectra::max(mat_intr.L_e) < math::epsilon<f32>) {
+					break;
+				}
 
-					trace_ctx = lt ^ (rt ^ trace_ctx);
-					OPTIONAL_OR_BREAK(l_intr, (*e_intr.divider->light)(trace_ctx));
-					trace_ctx = rt | (lt | trace_ctx);
+				OPTIONAL_OR_BREAK(e_intr, emitter(trace_ctx, {div.light, div.local_to_world}));
+				auto& div = *e_intr.divider;
+				auto& lt = *div.local_to_world;
 
-					auto pe = e_intr.pdf * l_intr.pdf;
-					mis_e *= pe;
-					auto mis_w = math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
-					Le += mis_w * beta * mat_intr.Le;
-				} while (false);
-			}
+				trace_ctx = lt ^ (rt ^ trace_ctx);
+				OPTIONAL_OR_BREAK(l_intr, (*e_intr.divider->light)(trace_ctx));
+				trace_ctx = rt | (lt | trace_ctx);
+
+				auto p_e = e_intr.pdf * l_intr.pdf;
+				mis_e *= math::guarded_div(p_e, scatter_pdf);
+				auto mis_w = math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
+				L_e += mis_w * beta * mat_intr.L_e;
+			} while (false);
 
 			auto bt = math::Transform{};
 			bt.config.rotation = math::Quaternion<f32>::from_rotation_between(intr.n, {0.f, 1.f, 0.f});
@@ -338,33 +362,24 @@ namespace metatron::mc {
 
 			auto flip_n = 1.f;
 			if (math::dot(-trace_ctx.r.d, b_intr.wi) < 0.f) {
-				if (math::dot(b_intr.wi, intr.n) <= 0.f) {
-					ctx.medium = div->interior_medium;
-					ctx.medium_to_world = div->interior_transform;
-					flip_n = -1.f;
-				} else {
-					ctx.medium = div->exterior_medium;
-					ctx.medium_to_world = div->exterior_transform;
-				}
+				auto into = math::dot(b_intr.wi, intr.n) < 0.f;
+				ctx.medium = into ? div.interior_medium : div.exterior_medium;
+				ctx.medium_to_world = into ? div.interior_transform : div.exterior_transform;
+				flip_n = into ? -1.f : 1.f;
 			}
 			auto trace_n = flip_n * intr.n;
-			auto trace_p = intr.p + 0.001f * b_intr.wi;
+			auto trace_p = intr.p + std::min(0.1f, 0.001f / std::abs(math::dot(trace_n, b_intr.wi))) * b_intr.wi;
 
-			scattered = trace_ctx.r.d != b_intr.wi;
-			crossed = !scattered;
+			scattered = true;
+			crossed = false;
 			history_trace_ctx = trace_ctx;
-			trace_ctx = {{trace_p, b_intr.wi}, trace_n, Le};
-			if (scattered) {
-				beta *= b_intr.f / b_intr.pdf;
-				mis_e = mis_s / b_intr.pdf;
-				scatter_f = b_intr.f;
-				scatter_pdf = b_intr.pdf;
-			} else {
-				transmitted = true;
-				mis_e = 0.f;
-			}
+			trace_ctx = {{trace_p, b_intr.wi}, trace_n, L_e};
+			beta *= b_intr.f * std::abs(math::dot(b_intr.wi, trace_n)) / b_intr.pdf;
+			mis_e = mis_s;
+			scatter_f = b_intr.f;
+			scatter_pdf = b_intr.pdf;
 		}
 
-		return Le;
+		return L_e;
 	}
 }

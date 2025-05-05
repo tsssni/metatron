@@ -14,6 +14,7 @@ namespace metatron::mc {
 		math::Transform const* world_to_render;
 		math::Transform const* render_to_camera;
 		math::Transform const* medium_to_world;
+		usize max_depth;
 	};
 
 	struct Integrator {

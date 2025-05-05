@@ -7,13 +7,13 @@ namespace metatron::math {
 		Sphere_Distribution() = default;
 
 		auto sample(Vector<f32, 2> const& u) const -> Vector<f32, 3> {
-			auto z = 1.f - 2.f * u[0];
-			auto r = std::sqrt(1 - z * z);
+			auto cos_theta = 1.f - 2.f * u[0];
+			auto sin_theta = std::sqrt(1 - cos_theta * cos_theta);
 			auto phi = 2.f * pi * u[1];
-			return {r * std::cosf(phi), r * std::sin(phi), z};
+			return {sin_theta * std::cosf(phi), cos_theta, sin_theta * std::sin(phi)};
 		}
 
-		auto pdf() -> f32 {
+		auto pdf() const -> f32 {
 			return 1.f / (4.f * pi);
 		}
 	};

@@ -150,6 +150,16 @@ namespace metatron::spectra {
 		return *this;
 	};
 
+
+	Stochastic_Spectrum::operator bool() const {
+		for (auto& v: value) {
+			if (v != 0.f) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	auto operator+(f32 s, Stochastic_Spectrum const& spectrum) -> Stochastic_Spectrum {
 		return spectrum + s;
 	}

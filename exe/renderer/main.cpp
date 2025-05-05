@@ -1,4 +1,5 @@
 #include <metatron/core/math/quaternion.hpp>
+#include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/sampler/independent.hpp>
 #include <metatron/core/math/sampler/halton.hpp>
 #include <metatron/core/math/filter/box.hpp>
@@ -14,6 +15,7 @@
 #include <metatron/render/photo/lens/pinhole.hpp>
 #include <metatron/render/photo/lens/thin.hpp>
 #include <metatron/render/light/environment.hpp>
+#include <metatron/render/light/parallel.hpp>
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/render/accel/bvh.hpp>
@@ -38,7 +40,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 1024uz;
+	auto spp = 64uz;
 	auto blocks = 8uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
@@ -60,24 +62,30 @@ auto main() -> int {
 	auto sampler = math::Halton_Sampler{rd()};
 
 	auto identity = math::Transform{};
-	auto world_to_render = math::Transform{{0.f, 0.f, 500.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 1000.f}};
 	auto render_to_camera = identity;
 
-	auto sphere_to_world = math::Transform{{}, {250.f}};
-	auto medium_to_world = math::Transform{{}, {0.5f},
+	auto sphere_to_world = math::Transform{{}, {500.f}};
+	auto medium_to_world = math::Transform{{}, {1.0f},
 		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi / 2.f),
 	};
 	auto light_to_world = math::Transform{{}, {1.f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi / 1.f),
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi),
 	};
 
 	auto sphere = shape::Sphere{};
 	auto diffuse_material = material::Diffuse_Material{
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
-			std::make_unique<spectra::Constant_Spectrum>(0.5f)
+			color::Color_Space::sRGB->to_spectrum(
+				{1.0f, 1.0f, 1.0f},
+				color::Color_Space::Spectrum_Type::albedo
+			)
 		),
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
-			std::make_unique<spectra::Constant_Spectrum>(0.0f)
+			color::Color_Space::sRGB->to_spectrum(
+				{0.0f, 0.0f, 0.0f},
+				color::Color_Space::Spectrum_Type::albedo
+			)
 		),
 	};
 	auto interface_material = material::Interface_Material{};
@@ -105,8 +113,10 @@ auto main() -> int {
 			{0.0f, 0.0f, 0.0f},
 			color::Color_Space::Spectrum_Type::illuminant
 		),
-		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.0f),
+		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.877f),
+		1.f
 	};
+
 	auto bvh = accel::LBVH{{
 		{
 			&sphere,
@@ -126,8 +136,25 @@ auto main() -> int {
 		color::Color_Space::Spectrum_Type::illuminant
 	);
 	auto env_light = light::Environment_Light{std::move(env_map)};
-	auto lights = std::vector<emitter::Divider>{{&light_to_world, &env_light}};
-	auto inf_lights = std::vector<emitter::Divider>{{&light_to_world, &env_light}};
+	auto const_env_light = light::Environment_Light{std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
+		color::Color_Space::sRGB->to_spectrum(
+			{0.03f, 0.07f, 0.23f},
+			color::Color_Space::Spectrum_Type::illuminant
+		)
+	)};
+	auto parallel_light = light::Parallel_Light{
+		color::Color_Space::sRGB->to_spectrum(
+			{2.6f, 2.5f, 2.3f},
+			color::Color_Space::Spectrum_Type::illuminant
+		),
+		math::sphere_to_cartesion({math::pi * 0.5874f, math::pi * 1.2929f})
+	};
+	auto lights = std::vector<emitter::Divider>{
+		// {&parallel_light, &light_to_world},
+	};
+	auto inf_lights = std::vector<emitter::Divider>{
+		{&env_light, &light_to_world},
+	};
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
 	auto integrator = mc::Volume_Path_Integrator{};
@@ -167,12 +194,14 @@ auto main() -> int {
 							&vaccum_medium,
 							&world_to_render,
 							&render_to_camera,
-							&identity
+							&identity,
+							100uz
 						},
 						bvh,
 						emitter,
 						sampler
 					);
+
 					auto& Li = Li_opt.value();
 					s.fixel = Li;
 					atomic_count.fetch_add(1);

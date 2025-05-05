@@ -12,10 +12,11 @@ namespace metatron::math {
 	}
 
 	auto inline sphere_to_cartesion(f32 cos_theta, f32 phi) -> math::Vector<f32, 3> {
-		auto sin_theta = std::sqrt(1.f - cos_theta * cos_theta);
+		auto sin_theta_2 = 1.f - cos_theta * cos_theta;
+		auto sin_theta = sin_theta_2 > epsilon<f32> ? std::sqrt(sin_theta_2) : 0.f;
 		auto x = sin_theta * std::cos(phi);
-		auto y = sin_theta * std::sin(phi);
-		auto z = cos_theta;
+		auto z = sin_theta * std::sin(phi);
+		auto y = cos_theta;
 		return {x, y, z};
 	}
 
