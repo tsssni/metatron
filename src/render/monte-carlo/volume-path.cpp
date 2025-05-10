@@ -24,7 +24,7 @@ namespace metatron::mc {
 		auto terminated = false;
 
 		auto scattered = false;
-		auto scatter_pdf = 1.f;
+		auto scatter_pdf = 0.f;
 		auto scatter_f = Le;
 
 		auto trace_ctx = eval::Context{};
@@ -210,7 +210,7 @@ namespace metatron::mc {
 				trace_ctx = rt | (lt | trace_ctx);
 
 				auto p_l = e_intr.pdf * l_intr.pdf;
-				mis_e *= p_l / scatter_pdf;
+				mis_e *= math::guarded_div(p_l, scatter_pdf);
 				auto mis_w = math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
 				Le += beta * mis_w * l_intr.Le;
 				continue;

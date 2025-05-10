@@ -132,7 +132,7 @@ auto main() -> int {
 	auto env_light = light::Environment_Light{std::move(env_map)};
 	auto parallel_light = light::Parallel_Light{
 		color::Color_Space::sRGB->to_spectrum(
-			{1.0f, 1.0f, 1.0f},
+			{2.6f, 2.5f, 2.3f},
 			color::Color_Space::Spectrum_Type::illuminant
 		),
 		math::sphere_to_cartesion({0.f, math::pi * 3.f / 4.f})

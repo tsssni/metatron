@@ -41,7 +41,7 @@ namespace metatron::media {
 		auto update_majorant = [&](f32 t_max) -> void {
 			cache.bbox = grid->bounding_box(cache.r.o);
 			cache.t_max = math::hit(cache.r, cache.bbox).value_or(t_max);
-			cache.density_maj = (*grid)[grid->to_index(cache.r.o)] * density_scale;
+			cache.density_maj = (*grid)[grid->to_index(cache.r.o)];
 			cache.sigma_maj = cache.density_maj * sigma_t;
 			cache.distr = math::Exponential_Distribution(cache.sigma_maj.value.front());
 		};
@@ -57,7 +57,7 @@ namespace metatron::media {
 		auto t_offset = 0.005f / math::length(cache.r.d);
 		auto t_transmitted = 0.f;
 		auto transmittance = ctx.L;
-		transmittance.value = std::vector<f32>(transmittance.lambda.size(), 1.f);
+		transmittance.value = std::vector<f32>(ctx.L.lambda.size(), 1.f);
 		auto update_transmittance = [&](f32 t) -> void {
 			t_transmitted += t;
 			t_boundary -= t;
