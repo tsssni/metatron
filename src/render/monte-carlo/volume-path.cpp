@@ -97,14 +97,17 @@ namespace metatron::mc {
 
 				auto medium = ctx.medium;
 				auto medium_to_world = ctx.medium_to_world;
+				auto div_opt = std::optional<accel::Divider const*>{};
+				auto intr_opt = std::optional<shape::Interaction>{};
 				auto terminated = false;
+				auto crossed = true;
 
 				auto betad = beta * (f / p_e) / (scatter_f / scatter_pdf);
 				auto mis_sd = mis_s * p_s / p_e;
 				auto mis_ed = mis_s;
 
 				while (true) {
-					if (terminated || std::abs(l_intr.t) < math::epsilon<f32>) {
+					if (terminated) {
 						break;
 					}
 
@@ -119,58 +122,66 @@ namespace metatron::mc {
 						}
 					}
 
-					OPTIONAL_OR_CALLBACK(div, accel(direct_ctx.r), {
-						terminated = true;
-						continue;
-					});
-
-					auto& lt = *div->local_to_world;
-					auto lr = lt ^ (rt ^ direct_ctx.r);
-					OPTIONAL_OR_CALLBACK(intr, (*div->shape)(lr), {
-						terminated = true;
-						continue;
-					});
-
-					intr.p = rt | (lt | math::expand(intr.p, 1.f));
-					intr.n = math::normalize(rt | (lt | math::expand(intr.n, 0.f)));
-					if (div->material->sample(direct_ctx, {intr.uv})) {
-						terminated = true;
-						betad = 0.f;
-						continue;
-					}
-
-					while (true) {
-						auto& mt = *medium_to_world;
-						direct_ctx = mt ^ (rt ^ direct_ctx);
-						OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(direct_ctx, intr.t, sampler.generate_1d()), {
-							betad = 0.f;
+					if (crossed) {
+						div_opt = accel(direct_ctx.r);
+						if (!div_opt) {
 							terminated = true;
-							break;
-						});
-						direct_ctx = rt | (mt | direct_ctx);
-						m_intr.p = rt | (mt | math::expand(direct_ctx.r.o, 1.f));
-						l_intr.t -= m_intr.t;
-
-						auto hit = m_intr.t >= intr.t;
-
-						betad *= m_intr.transmittance / m_intr.pdf;
-						mis_sd *= m_intr.spectra_pdf / m_intr.pdf;
-						mis_ed *= m_intr.spectra_pdf / m_intr.pdf;
-
-						if (!hit) {
-							betad *= m_intr.sigma_n;
-							mis_sd *= m_intr.sigma_n / m_intr.sigma_maj;
-							intr.t -= m_intr.t;
-							direct_ctx.r.o = m_intr.p;
 							continue;
-						} else {
-							auto into = math::dot(direct_ctx.r.d, intr.n) < 0.f;
-							medium = into ? div->interior_medium : div->exterior_medium;
-							medium_to_world = into ? div->interior_transform : div->exterior_transform;
-							direct_ctx.r.o = intr.p + direct_ctx.r.d * 0.001f;
-							break;
+						}
+						auto& div = *div_opt.value();
+
+						auto& lt = *div.local_to_world;
+						auto lr = lt ^ (rt ^ direct_ctx.r);
+						intr_opt = (*div.shape)(lr);
+						if (!intr_opt) {
+							terminated = true;
+							continue;
+						}
+						auto& intr = intr_opt.value();
+
+						intr.p = rt | (lt | math::expand(intr.p, 1.f));
+						intr.n = math::normalize(rt | (lt | math::expand(intr.n, 0.f)));
+						if (div.material->sample(direct_ctx, {intr.uv})) {
+							terminated = true;
+							betad = 0.f;
+							continue;
 						}
 					}
+
+					auto& div = *div_opt.value();
+					auto& intr = intr_opt.value();
+
+					auto& mt = *medium_to_world;
+					direct_ctx = mt ^ (rt ^ direct_ctx);
+					OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(direct_ctx, intr.t, sampler.generate_1d()), {
+						betad = 0.f;
+						terminated = true;
+						break;
+					});
+					direct_ctx = rt | (mt | direct_ctx);
+					m_intr.p = rt | (mt | math::expand(direct_ctx.r.o, 1.f));
+					l_intr.t -= m_intr.t;
+
+					auto hit = m_intr.t >= intr.t;
+
+					betad *= m_intr.transmittance / m_intr.pdf;
+					mis_sd *= m_intr.spectra_pdf / m_intr.pdf;
+					mis_ed *= m_intr.spectra_pdf / m_intr.pdf;
+
+					if (!hit) {
+						betad *= m_intr.sigma_n;
+						mis_sd *= m_intr.sigma_n / m_intr.sigma_maj;
+						intr.t -= m_intr.t;
+						direct_ctx.r.o = m_intr.p;
+						crossed = false;
+					} else {
+						auto into = math::dot(direct_ctx.r.d, intr.n) < 0.f;
+						medium = into ? div.interior_medium : div.exterior_medium;
+						medium_to_world = into ? div.interior_transform : div.exterior_transform;
+						direct_ctx.r.o = intr.p + direct_ctx.r.d * 0.001f;
+						crossed = true;
+					}
+					continue;
 				}
 
 				auto mis_w = math::guarded_div(1.f, spectra::avg(mis_sd + mis_ed));
@@ -205,9 +216,9 @@ namespace metatron::mc {
 				continue;
 			}
 
-			auto& div = div_opt.value();
+			auto& div = *div_opt.value();
 			auto& intr = intr_opt.value();
-			auto& lt = *div->local_to_world;
+			auto& lt = *div.local_to_world;
 			if (scattered || crossed) {
 				intr.p = rt | (lt | math::expand(intr.p, 1.f));
 				intr.n = math::normalize(rt | (lt | math::expand(intr.n, 0.f)));
@@ -292,15 +303,15 @@ namespace metatron::mc {
 			auto duvdy = math::least_squares(dpduv, dpdy);
 
 			auto tcoord = material::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
-			OPTIONAL_OR_CALLBACK(mat_intr, div->material->sample(trace_ctx, tcoord), {
+			OPTIONAL_OR_CALLBACK(mat_intr, div.material->sample(trace_ctx, tcoord), {
 				scattered = false;
 				crossed = true;
 				history_trace_ctx = trace_ctx;
 				trace_ctx.r.o = intr.p + 0.001f * trace_ctx.r.d;
 
 				auto into = math::dot(trace_ctx.r.d, intr.n) < 0.f;
-				ctx.medium = into ? div->interior_medium : div->exterior_medium;
-				ctx.medium_to_world = into ? div->interior_transform : div->exterior_transform;
+				ctx.medium = into ? div.interior_medium : div.exterior_medium;
+				ctx.medium_to_world = into ? div.interior_transform : div.exterior_transform;
 				continue;
 			});
 
@@ -312,7 +323,7 @@ namespace metatron::mc {
 					break;
 				}
 
-				OPTIONAL_OR_BREAK(e_intr, emitter(trace_ctx, {div->light, div->local_to_world}));
+				OPTIONAL_OR_BREAK(e_intr, emitter(trace_ctx, {div.light, div.local_to_world}));
 				auto& div = *e_intr.divider;
 				auto& lt = *div.local_to_world;
 
@@ -342,8 +353,8 @@ namespace metatron::mc {
 			auto flip_n = 1.f;
 			if (math::dot(-trace_ctx.r.d, b_intr.wi) < 0.f) {
 				auto into = math::dot(b_intr.wi, intr.n) < 0.f;
-				ctx.medium = into ? div->interior_medium : div->exterior_medium;
-				ctx.medium_to_world = into ? div->interior_transform : div->exterior_transform;
+				ctx.medium = into ? div.interior_medium : div.exterior_medium;
+				ctx.medium_to_world = into ? div.interior_transform : div.exterior_transform;
 				flip_n = into ? -1.f : 1.f;
 			}
 			auto trace_n = flip_n * intr.n;

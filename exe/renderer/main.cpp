@@ -70,7 +70,7 @@ auto main() -> int {
 		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi / 2.f),
 	};
 	auto light_to_world = math::Transform{{}, {1.f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi / 1.f),
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi / 2.f),
 	};
 
 	auto sphere = shape::Sphere{};
@@ -97,18 +97,20 @@ auto main() -> int {
 		&nanovdb_grid,
 		color::Color_Space::sRGB->to_spectrum(
 			{0.0f, 0.0f, 0.0f},
-			color::Color_Space::Spectrum_Type::albedo
+			color::Color_Space::Spectrum_Type::unbounded
 		),
 		color::Color_Space::sRGB->to_spectrum(
 			{1.0f, 1.0f, 1.0f},
-			color::Color_Space::Spectrum_Type::albedo
+			color::Color_Space::Spectrum_Type::unbounded
 		),
 		color::Color_Space::sRGB->to_spectrum(
 			{0.0f, 0.0f, 0.0f},
 			color::Color_Space::Spectrum_Type::illuminant
 		),
-		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.0f),
+		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.877f),
+		4.f
 	};
+
 	auto bvh = accel::LBVH{{
 		{
 			&sphere,
@@ -136,7 +138,9 @@ auto main() -> int {
 		math::sphere_to_cartesion({0.f, math::pi * 3.f / 4.f})
 	};
 	auto lights = std::vector<emitter::Divider>{};
-	auto inf_lights = std::vector<emitter::Divider>{{&env_light, &light_to_world}};
+	auto inf_lights = std::vector<emitter::Divider>{
+		{&env_light, &light_to_world},
+	};
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
 	auto integrator = mc::Volume_Path_Integrator{};

@@ -69,6 +69,10 @@ namespace metatron::media {
 		};
 
 		while (true) {
+			if (!transmittance) {
+				return {};
+			}
+
 			auto t_u = cache.distr.sample(u);
 			if (t_boundary <= cache.t_max && (cache.density_maj == 0.f || t_u >= t_boundary)) {
 				update_transmittance(t_boundary + t_offset);
