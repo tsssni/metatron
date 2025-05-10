@@ -61,24 +61,24 @@ namespace metatron::shape {
 	) const -> std::optional<Interaction> {
 		auto d = math::length(ctx.r.o);
 		if (d <= 1.f) {
-			auto dist = math::Sphere_Distribution{};
-			auto p = dist.sample(u);
+			auto distr = math::Sphere_Distribution{};
+			auto p = distr.sample(u);
 			auto dir = math::normalize(p - ctx.r.o);
 
 			OPTIONAL_OR_RETURN(intr, (*this)({ctx.r.o, dir}), {});
-			intr.pdf = dist.pdf();
+			intr.pdf = distr.pdf();
 			return intr;
 		} else {
 			auto cos_theta_max = std::sqrt(1.f - 1.f / (d * d));
-			auto dist = math::Cone_Distribution{cos_theta_max};
+			auto distr = math::Cone_Distribution{cos_theta_max};
 			auto dir = math::normalize(-ctx.r.o);
 
-			auto sdir = dist.sample(u);
+			auto sdir = distr.sample(u);
 			auto rot = math::Quaternion<f32>::from_rotation_between({0.f, 0.f, 1.f}, dir);
 			sdir = math::rotate(math::expand(sdir, 0.f), rot);
 
 			OPTIONAL_OR_RETURN(intr, (*this)({ctx.r.o, sdir}), {});
-			intr.pdf = dist.pdf();
+			intr.pdf = distr.pdf();
 			return intr;
 		}
 	}

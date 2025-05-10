@@ -18,7 +18,6 @@ namespace metatron::spectra {
 	};
 
 	auto inline operator|(Spectrum const& x, Spectrum const& y) -> f32 {
-		auto constexpr CIE_Y_integral = 106.856895;
 		auto integral = 0.f;
 		for (auto lambda = visible_lambda[0]; lambda <= visible_lambda[1]; lambda++) {
 			integral += x(lambda) * y(lambda);

@@ -1,4 +1,5 @@
 #include <metatron/core/math/quaternion.hpp>
+#include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/sampler/independent.hpp>
 #include <metatron/core/math/sampler/halton.hpp>
 #include <metatron/core/math/filter/box.hpp>
@@ -14,6 +15,7 @@
 #include <metatron/render/photo/lens/pinhole.hpp>
 #include <metatron/render/photo/lens/thin.hpp>
 #include <metatron/render/light/environment.hpp>
+#include <metatron/render/light/parallel.hpp>
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/render/accel/bvh.hpp>
@@ -38,7 +40,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 1024uz;
+	auto spp = 16uz;
 	auto blocks = 8uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
@@ -126,8 +128,15 @@ auto main() -> int {
 		color::Color_Space::Spectrum_Type::illuminant
 	);
 	auto env_light = light::Environment_Light{std::move(env_map)};
-	auto lights = std::vector<emitter::Divider>{{&light_to_world, &env_light}};
-	auto inf_lights = std::vector<emitter::Divider>{{&light_to_world, &env_light}};
+	auto parallel_light = light::Parallel_Light{
+		color::Color_Space::sRGB->to_spectrum(
+			{1.0f, 1.0f, 1.0f},
+			color::Color_Space::Spectrum_Type::illuminant
+		),
+		math::sphere_to_cartesion({0.f, math::pi * 3.f / 4.f})
+	};
+	auto lights = std::vector<emitter::Divider>{};
+	auto inf_lights = std::vector<emitter::Divider>{{&env_light, &light_to_world}};
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
 	auto integrator = mc::Volume_Path_Integrator{};

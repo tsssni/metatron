@@ -13,7 +13,7 @@ namespace metatron::math {
 			return {r * std::cosf(phi), r * std::sin(phi), z};
 		}
 
-		auto pdf() -> f32 {
+		auto pdf() const -> f32 {
 			return 1.f / (2.f * pi);
 		}
 	};

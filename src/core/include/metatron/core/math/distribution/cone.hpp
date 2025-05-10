@@ -12,7 +12,7 @@ namespace metatron::math {
 			return sphere_to_cartesion(cos_theta, phi);
 		}
 
-		auto pdf() -> f32 {
+		auto pdf() const -> f32 {
 			return 1.f / (2.f * pi * (1.f - cos_theta_max));
 		};
 

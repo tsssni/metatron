@@ -1,10 +1,9 @@
 #pragma once
-#include <array>
+#include <vector>
 
 namespace metatron::math {
-	template<usize n>
 	struct Discrete_Distribution final {
-		Discrete_Distribution(std::array<f32, n> const& weights): weights(weights) {
+		Discrete_Distribution(std::vector<f32> const& weights): weights(weights) {
 			for (auto w: weights) {
 				sum_w += w;
 			}
@@ -14,7 +13,7 @@ namespace metatron::math {
 			u *= sum_w;
 			auto sum = 0.f;
 			auto i = 0uz;
-			for (; i < n; i++) {
+			for (; i < weights.size(); i++) {
 				if (sum + weights[i] < u) {
 					sum += weights[i];
 				} else {
@@ -26,6 +25,6 @@ namespace metatron::math {
 
 	private:
 		f32 sum_w{0.f};
-		std::array<f32, n> weights;
+		std::vector<f32> weights;
 	};
 }

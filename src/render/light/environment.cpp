@@ -3,7 +3,6 @@
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/quaternion.hpp>
-#include <metatron/core/math/distribution/cosine-hemisphere.hpp>
 #include <metatron/core/spectra/rgb.hpp>
 
 namespace metatron::light {
@@ -18,15 +17,12 @@ namespace metatron::light {
 			auto u = s[1] / (2.f * math::pi);
 			auto v = s[0] / math::pi;
 			auto spec = env_map->sample(ctx, {{u, v}});
-			auto dist = math::Cosine_Hemisphere_Distribution{};
 			return Interaction{
 				ctx.L & spec,
-				{},
-				{},
-				{},
+				{}, {}, {},
 				ctx.n != math::Vector<f32, 3>{0.f}
-				? dist.pdf(math::dot(ctx.n, ctx.r.d))
-				: 1.f / (4.f * math::pi)
+				? surface_distr.pdf(math::dot(ctx.n, ctx.r.d))
+				: volume_distr.pdf()
 			};
 		}
 
@@ -34,19 +30,20 @@ namespace metatron::light {
 			eval::Context const& ctx,
 			math::Vector<f32, 2> const& u
 		) const -> std::optional<Interaction> {
-			auto dist = math::Cosine_Hemisphere_Distribution{};
-			auto wi = dist.sample(u);
+			auto wi = math::Vector<f32, 3>{};
 			auto n = math::Vector<f32, 3>{0.f};
 			if (ctx.n != n) {
 				auto local_to_render = math::Quaternion<f32>::from_rotation_between({0.f, 1.f, 0.f}, ctx.n);
-				wi = math::Vector<f32, 3>{math::rotate(math::expand(wi, 0.f), local_to_render)};
+				wi = math::Vector<f32, 3>{math::rotate(math::expand(surface_distr.sample(u), 0.f), local_to_render)};
 				n = ctx.n;
+			} else {
+				wi = volume_distr.sample(u);
 			}
 			
 			auto intr = (*this)({{ctx.r.o, wi}, n, ctx.L}).value();
 			intr.wi = wi;
-			intr.p = ctx.r.o + 65536.f * wi;
-			intr.t = 65536.f;
+			intr.p = ctx.r.o + 65535.f * wi;
+			intr.t = 65535.f;
 			return intr;
 		}
 }

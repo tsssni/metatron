@@ -1,17 +1,20 @@
 #pragma once
 #include <metatron/render/emitter/emitter.hpp>
-#include <vector>
+#include <metatron/core/math/distribution/discrete.hpp>
 
 namespace metatron::emitter {
 	struct Uniform_Emitter final: Emitter {
-		Uniform_Emitter(std::vector<Divider>&& dividers, std::vector<Divider>&& infinite_dividers);
+		Uniform_Emitter(
+			std::vector<Divider>&& dividers,
+			std::vector<Divider>&& infinite_dividers
+		);
 		auto operator()(
 			eval::Context const& ctx,
-			light::Light const& light
+			Divider const& divider
 		) const -> std::optional<emitter::Interaction>;
 		auto sample(
 			eval::Context const& ctx,
-			math::Vector<f32, 2> const& u
+			f32 u
 		) const -> std::optional<emitter::Interaction>;
 		auto sample_infinite(
 			eval::Context const& ctx,
@@ -20,6 +23,8 @@ namespace metatron::emitter {
 
 	private:
 		std::vector<Divider> dividers;
-		std::vector<Divider> infinite_dividers;
+		std::vector<Divider> inf_dividers;
+		math::Discrete_Distribution distr;
+		math::Discrete_Distribution inf_distr;
 	};
 }
