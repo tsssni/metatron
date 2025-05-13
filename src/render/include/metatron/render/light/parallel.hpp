@@ -5,7 +5,7 @@ namespace metatron::light {
 	struct Parallel_Light final: Light {
 		Parallel_Light(
 			std::unique_ptr<spectra::Spectrum> L,
-			math::Vector<f32, 3> const& sphere_coord
+			math::Vector<f32, 3> const& d
 		);
 
 		auto operator()(
@@ -18,6 +18,6 @@ namespace metatron::light {
 
 	private:
 		std::unique_ptr<spectra::Spectrum> L;
-		math::Vector<f32, 3> sphere_coord;
+		math::Vector<f32, 3> d;
 	};
 }

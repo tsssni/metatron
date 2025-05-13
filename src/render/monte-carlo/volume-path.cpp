@@ -104,7 +104,7 @@ namespace metatron::mc {
 				auto crossed = true;
 
 				auto betad = beta * (f / p_e) / (scatter_f / scatter_pdf);
-				auto mis_sd = mis_s * p_s / p_e;
+				auto mis_sd = mis_s * p_s / p_e * float(!light::Light::is_delta(*e_intr.divider->light));
 				auto mis_ed = mis_s;
 				auto n_null = 0;
 
@@ -134,6 +134,7 @@ namespace metatron::mc {
 
 						auto& lt = *div.local_to_world;
 						auto lr = lt ^ (rt ^ direct_ctx.r);
+
 						intr_opt = (*div.shape)(lr);
 						if (!intr_opt) {
 							terminated = true;
@@ -143,11 +144,14 @@ namespace metatron::mc {
 
 						intr.p = rt | (lt | math::expand(intr.p, 1.f));
 						intr.n = math::normalize(rt | (lt | math::expand(intr.n, 0.f)));
-						if (div.material->sample(direct_ctx, {intr.uv})) {
+
+
+						if (!material::Material::is_interface(*div.material)) {
 							terminated = true;
 							betad = 0.f;
 							continue;
 						}
+
 					}
 
 					auto& div = *div_opt.value();

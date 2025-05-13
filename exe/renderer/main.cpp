@@ -38,10 +38,13 @@ using namespace metatron;
 auto main() -> int {
 	spectra::Spectrum::initialize();
 	color::Color_Space::initialize();
+	light::Light::initialize();
+	material::Material::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
 	auto spp = 64uz;
 	auto blocks = 8uz;
+	auto depth = 100uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
@@ -65,7 +68,8 @@ auto main() -> int {
 	auto world_to_render = math::Transform{{0.f, 0.f, 1000.f}};
 	auto render_to_camera = identity;
 
-	auto sphere_to_world = math::Transform{{}, {500.f}};
+	auto sphere_to_world = math::Transform{{}, {200.f}};
+	auto bound_to_world = math::Transform{{}, {500.f}};
 	auto medium_to_world = math::Transform{{}, {1.0f},
 		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi / 2.f),
 	};
@@ -114,7 +118,7 @@ auto main() -> int {
 			color::Color_Space::Spectrum_Type::illuminant
 		),
 		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.877f),
-		1.f
+		4.f
 	};
 
 	auto bvh = accel::LBVH{{
@@ -124,11 +128,22 @@ auto main() -> int {
 			&vaccum_medium,
 			&interface_material,
 			nullptr,
-			&sphere_to_world,
+			&bound_to_world,
 			&medium_to_world,
 			&identity,
 			0uz
-		}
+		},
+		// {
+		// 	&sphere,
+		// 	&vaccum_medium,
+		// 	&vaccum_medium,
+		// 	&diffuse_material,
+		// 	nullptr,
+		// 	&sphere_to_world,
+		// 	&identity,
+		// 	&identity,
+		// 	0uz
+		// },
 	}};
 
 	auto env_map = std::make_unique<material::Image_Texture<spectra::Stochastic_Spectrum>>(
@@ -147,13 +162,14 @@ auto main() -> int {
 			{2.6f, 2.5f, 2.3f},
 			color::Color_Space::Spectrum_Type::illuminant
 		),
-		math::sphere_to_cartesion({math::pi * 0.5874f, math::pi * 1.2929f})
+		math::sphere_to_cartesion({math::pi * 1.0f, math::pi * 0.0f})
+		// math::sphere_to_cartesion({math::pi * 0.5874f, math::pi * 1.2929f})
 	};
 	auto lights = std::vector<emitter::Divider>{
-		// {&parallel_light, &light_to_world},
+		{&parallel_light, &identity},
 	};
 	auto inf_lights = std::vector<emitter::Divider>{
-		{&env_light, &light_to_world},
+		{&const_env_light, &light_to_world},
 	};
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
@@ -195,7 +211,7 @@ auto main() -> int {
 							&world_to_render,
 							&render_to_camera,
 							&identity,
-							100uz
+							depth
 						},
 						bvh,
 						emitter,

@@ -2,6 +2,8 @@
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/spectra/stochastic.hpp>
 #include <metatron/core/eval/context.hpp>
+#include <unordered_set>
+#include <typeindex>
 
 namespace metatron::light {
 	struct Interaction final {
@@ -20,5 +22,11 @@ namespace metatron::light {
 			eval::Context const& ctx,
 			math::Vector<f32, 2> const& u
 		) const -> std::optional<Interaction> = 0;
+
+		auto static initialize() -> void;
+		auto static is_delta(Light const& light) -> bool;
+
+	private:
+		static std::unordered_set<std::type_index> delta_lights;
 	};
 }

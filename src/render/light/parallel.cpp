@@ -4,8 +4,8 @@
 namespace metatron::light {
 	Parallel_Light::Parallel_Light(
 		std::unique_ptr<spectra::Spectrum> L,
-		math::Vector<f32, 3> const& sphere_coord
-	): L(std::move(L)), sphere_coord(sphere_coord) {}
+		math::Vector<f32, 3> const& d
+	): L(std::move(L)), d(d) {}
 
 	auto Parallel_Light::operator()(
 		eval::Context const& ctx
@@ -19,8 +19,8 @@ namespace metatron::light {
 	) const -> std::optional<Interaction> {
 		return Interaction{
 			ctx.L & *L,
-			sphere_coord,
-			ctx.r.o + 65535.f * sphere_coord,
+			-d,
+			ctx.r.o - 65535.f * d,
 			65535.f,
 			1.f
 		};
