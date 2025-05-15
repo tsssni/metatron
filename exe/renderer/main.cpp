@@ -43,9 +43,9 @@ auto main() -> int {
 	material::Material::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 128uz;
+	auto spp = 16uz;
 	auto blocks = 8uz;
-	auto depth = 100uz;
+	auto depth = 10uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
@@ -66,13 +66,13 @@ auto main() -> int {
 	auto sampler = math::Halton_Sampler{rd()};
 
 	auto identity = math::Transform{};
-	auto world_to_render = math::Transform{{0.f, 0.f, 5.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 200.f}};
 	auto render_to_camera = identity;
 
 	auto sphere_to_world = math::Transform{{}, {1.f}};
-	auto bound_to_world = math::Transform{{}, {500.f}};
-	auto medium_to_world = math::Transform{{}, {1.0f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 3.f / 2.f),
+	auto bound_to_world = math::Transform{{}, {100.f}};
+	auto medium_to_world = math::Transform{{}, {0.2f},
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 2.f),
 	};
 	auto light_to_world = identity;
 	auto point_to_world = math::Transform{math::sphere_to_cartesion({math::pi * 1.f / 4.f, math::pi * 4.f / 3.f}) * 1.5f};
@@ -95,55 +95,55 @@ auto main() -> int {
 	auto interface_material = material::Interface_Material{};
 
 	auto vaccum_medium = media::Vaccum_Medium{};
-	// auto nanovdb_grid = media::Nanovdb_Grid<
-	// 	f32,
-	// 	media::grid_size,
-	// 	media::grid_size,
-	// 	media::grid_size
-	// >{
-	// 	"../Documents/metatron/disney-cloud.nvdb"
-	// };
-	// auto cloud_medium = media::Grid_Medium{
-	// 	&nanovdb_grid,
-	// 	color::Color_Space::sRGB->to_spectrum(
-	// 		{0.0f, 0.0f, 0.0f},
-	// 		color::Color_Space::Spectrum_Type::albedo
-	// 	),
-	// 	color::Color_Space::sRGB->to_spectrum(
-	// 		{1.0f, 1.0f, 1.0f},
-	// 		color::Color_Space::Spectrum_Type::albedo
-	// 	),
-	// 	color::Color_Space::sRGB->to_spectrum(
-	// 		{0.0f, 0.0f, 0.0f},
-	// 		color::Color_Space::Spectrum_Type::illuminant
-	// 	),
-	// 	std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.877f),
-	// 	4.f
-	// };
+	auto nanovdb_grid = media::Nanovdb_Grid<
+		f32,
+		media::grid_size,
+		media::grid_size,
+		media::grid_size
+	>{
+		"../Documents/metatron/disney-cloud.nvdb"
+	};
+	auto cloud_medium = media::Grid_Medium{
+		&nanovdb_grid,
+		color::Color_Space::sRGB->to_spectrum(
+			{0.0f, 0.0f, 0.0f},
+			color::Color_Space::Spectrum_Type::albedo
+		),
+		color::Color_Space::sRGB->to_spectrum(
+			{1.0f, 1.0f, 1.0f},
+			color::Color_Space::Spectrum_Type::albedo
+		),
+		color::Color_Space::sRGB->to_spectrum(
+			{0.0f, 0.0f, 0.0f},
+			color::Color_Space::Spectrum_Type::illuminant
+		),
+		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.877f),
+		4.f
+	};
 
 	auto bvh = accel::LBVH{{
-		// {
-		// 	&sphere,
-		// 	&cloud_medium,
-		// 	&vaccum_medium,
-		// 	&interface_material,
-		// 	nullptr,
-		// 	&bound_to_world,
-		// 	&medium_to_world,
-		// 	&identity,
-		// 	0uz
-		// },
 		{
 			&sphere,
+			&cloud_medium,
 			&vaccum_medium,
-			&vaccum_medium,
-			&diffuse_material,
+			&interface_material,
 			nullptr,
-			&sphere_to_world,
-			&identity,
+			&bound_to_world,
+			&medium_to_world,
 			&identity,
 			0uz
 		},
+		// {
+		// 	&sphere,
+		// 	&vaccum_medium,
+		// 	&vaccum_medium,
+		// 	&diffuse_material,
+		// 	nullptr,
+		// 	&sphere_to_world,
+		// 	&identity,
+		// 	&identity,
+		// 	0uz
+		// },
 	}};
 
 	auto env_map = std::make_unique<material::Image_Texture<spectra::Stochastic_Spectrum>>(
@@ -172,10 +172,11 @@ auto main() -> int {
 	};
 	auto lights = std::vector<emitter::Divider>{
 		// {&parallel_light, &identity},
-		{&point_light, &point_to_world},
+		// {&point_light, &point_to_world},
 	};
 	auto inf_lights = std::vector<emitter::Divider>{
-		{&const_env_light, &light_to_world},
+		{&env_light, &light_to_world},
+		// {&const_env_light, &light_to_world},
 	};
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
