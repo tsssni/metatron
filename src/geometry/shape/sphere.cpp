@@ -28,9 +28,9 @@ namespace metatron::shape {
 
 		auto t = x0 < 0.f ? x1 : x0;
 		auto p = r.o + t * r.d;
-		auto n = math::normalize(p);
+		auto n = p;
 
-		auto s = math::cartesion_to_sphere(n);
+		auto s = math::cartesion_to_sphere(p);
 		auto& theta = s[0];
 		auto& phi = s[1];
 		auto uv = math::Vector<f32, 2>{
@@ -60,7 +60,7 @@ namespace metatron::shape {
 		usize idx
 	) const -> std::optional<Interaction> {
 		auto d = math::length(ctx.r.o);
-		if (d <= 1.f) {
+		if (d < 1.f) {
 			auto distr = math::Sphere_Distribution{};
 			auto p = distr.sample(u);
 			auto dir = math::normalize(p - ctx.r.o);

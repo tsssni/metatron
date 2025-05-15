@@ -45,7 +45,7 @@ namespace metatron::photo {
 		auto f_intr = filter->sample(u).value();
 		auto pixel_position = math::Vector<f32, 2>{pixel} + 0.5f + f_intr.p;
 		auto uv = pixel_position / image.size;
-		auto film_position = (uv - 0.5f) * size;
+		auto film_position = (uv - 0.5f) * math::Vector<f32, 2>{-1.f, 1.f} * size;
 
 		return {
 			this,

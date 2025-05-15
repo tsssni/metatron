@@ -182,9 +182,10 @@ namespace metatron::mc {
 						crossed = false;
 					} else {
 						auto into = math::dot(direct_ctx.r.d, intr.n) < 0.f;
+						auto flip_n = into ? -1.f : 1.f;
 						medium = into ? div.interior_medium : div.exterior_medium;
 						medium_to_world = into ? div.interior_transform : div.exterior_transform;
-						direct_ctx.r.o = intr.p + l_intr.wi * 0.001f;
+						direct_ctx.r.o = intr.p + 0.001f * flip_n * intr.n;
 						crossed = true;
 					}
 					continue;
@@ -321,11 +322,12 @@ namespace metatron::mc {
 				scattered = false;
 				crossed = true;
 				history_trace_ctx = trace_ctx;
-				trace_ctx.r.o = intr.p + 0.001f * trace_ctx.r.d;
 
 				auto into = math::dot(trace_ctx.r.d, intr.n) < 0.f;
+				auto flip_n = into ? -1.f : 1.f;
 				ctx.medium = into ? div.interior_medium : div.exterior_medium;
 				ctx.medium_to_world = into ? div.interior_transform : div.exterior_transform;
+				trace_ctx.r.o = intr.p + 0.001f * flip_n * intr.n;
 				continue;
 			});
 
@@ -361,18 +363,19 @@ namespace metatron::mc {
 				terminated = true;
 				continue;
 			});
-			trace_ctx = bt ^ trace_ctx;
-			b_intr.wi = bt ^ math::expand(b_intr.wi, 0.f);
 
 			auto flip_n = 1.f;
-			if (math::dot(-trace_ctx.r.d, b_intr.wi) < 0.f) {
+			if (-trace_ctx.r.d[1] * b_intr.wi[1] < 0.f) {
 				auto into = math::dot(b_intr.wi, intr.n) < 0.f;
 				ctx.medium = into ? div.interior_medium : div.exterior_medium;
 				ctx.medium_to_world = into ? div.interior_transform : div.exterior_transform;
 				flip_n = into ? -1.f : 1.f;
 			}
+
+			trace_ctx = bt ^ trace_ctx;
+			b_intr.wi = bt ^ math::expand(b_intr.wi, 0.f);
 			auto trace_n = flip_n * intr.n;
-			auto trace_p = intr.p + std::min(0.1f, 0.001f / std::abs(math::dot(trace_n, b_intr.wi))) * b_intr.wi;
+			auto trace_p = intr.p + 0.001f * trace_n;
 
 			scattered = true;
 			crossed = false;
