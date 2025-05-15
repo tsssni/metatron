@@ -2,10 +2,7 @@
 #include <metatron/core/spectra/constant.hpp>
 
 namespace metatron::light {
-	Parallel_Light::Parallel_Light(
-		std::unique_ptr<spectra::Spectrum> L,
-		math::Vector<f32, 3> const& d
-	): L(std::move(L)), d(d) {}
+	Parallel_Light::Parallel_Light(std::unique_ptr<spectra::Spectrum> L): L(std::move(L)) {}
 
 	auto Parallel_Light::operator()(
 		eval::Context const& ctx
@@ -17,10 +14,11 @@ namespace metatron::light {
 		eval::Context const& ctx,
 		math::Vector<f32, 2> const& u
 	) const -> std::optional<Interaction> {
+		auto constexpr wi = math::Vector<f32, 3>{0.f, 0.f, -1.f};
 		return Interaction{
 			ctx.L & *L,
-			-d,
-			ctx.r.o - 65535.f * d,
+			wi,
+			ctx.r.o - 65535.f * wi,
 			65535.f,
 			1.f
 		};

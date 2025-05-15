@@ -17,6 +17,7 @@
 #include <metatron/render/light/environment.hpp>
 #include <metatron/render/light/parallel.hpp>
 #include <metatron/render/light/point.hpp>
+#include <metatron/render/light/spot.hpp>
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/render/accel/bvh.hpp>
@@ -66,7 +67,7 @@ auto main() -> int {
 	auto sampler = math::Halton_Sampler{rd()};
 
 	auto identity = math::Transform{};
-	auto world_to_render = math::Transform{{0.f, 0.f, 200.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 5.f}};
 	auto render_to_camera = identity;
 
 	auto sphere_to_world = math::Transform{{}, {1.f}};
@@ -75,7 +76,23 @@ auto main() -> int {
 		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 2.f),
 	};
 	auto light_to_world = identity;
-	auto point_to_world = math::Transform{math::sphere_to_cartesion({math::pi * 1.f / 4.f, math::pi * 4.f / 3.f}) * 1.5f};
+	auto parallel_to_world = math::Transform{{}, {1.f},
+		math::Quaternion<f32>::from_rotation_between(
+			{0.f, 0.f, 1.f},
+			math::sphere_to_cartesion({math::pi * 0.6f, math::pi * 1.3f})
+		),
+	};
+	auto point_to_world = math::Transform{
+		math::sphere_to_cartesion({math::pi * 1.f / 4.f, math::pi * 4.f / 3.f}) * 1.5f
+	};
+	auto spot_to_world = math::Transform{
+		math::sphere_to_cartesion({math::pi * 1.f / 4.f, math::pi * 4.f / 3.f}) * 1.5f,
+		{1.f},
+		math::Quaternion<f32>::from_rotation_between(
+			{0.f, 0.f, 1.f},
+			math::sphere_to_cartesion({math::pi * 3.f / 4.f, math::pi * 1.f / 3.f})
+		),
+	};
 
 	auto sphere = shape::Sphere{};
 	auto diffuse_material = material::Diffuse_Material{
@@ -122,28 +139,28 @@ auto main() -> int {
 	};
 
 	auto bvh = accel::LBVH{{
-		{
-			&sphere,
-			&cloud_medium,
-			&vaccum_medium,
-			&interface_material,
-			nullptr,
-			&bound_to_world,
-			&medium_to_world,
-			&identity,
-			0uz
-		},
 		// {
 		// 	&sphere,
+		// 	&cloud_medium,
 		// 	&vaccum_medium,
-		// 	&vaccum_medium,
-		// 	&diffuse_material,
+		// 	&interface_material,
 		// 	nullptr,
-		// 	&sphere_to_world,
-		// 	&identity,
+		// 	&bound_to_world,
+		// 	&medium_to_world,
 		// 	&identity,
 		// 	0uz
 		// },
+		{
+			&sphere,
+			&vaccum_medium,
+			&vaccum_medium,
+			&diffuse_material,
+			nullptr,
+			&sphere_to_world,
+			&identity,
+			&identity,
+			0uz
+		},
 	}};
 
 	auto env_map = std::make_unique<material::Image_Texture<spectra::Stochastic_Spectrum>>(
@@ -162,7 +179,6 @@ auto main() -> int {
 			{2.6f, 2.5f, 2.3f},
 			color::Color_Space::Spectrum_Type::illuminant
 		),
-		math::sphere_to_cartesion({math::pi * 0.6f, math::pi * 1.3f})
 	};
 	auto point_light = light::Point_Light{
 		color::Color_Space::sRGB->to_spectrum(
@@ -170,12 +186,21 @@ auto main() -> int {
 			color::Color_Space::Spectrum_Type::illuminant
 		)
 	};
+	auto spot_light = light::Spot_Light{
+		color::Color_Space::sRGB->to_spectrum(
+			{0.0f, 0.6f, 1.0f},
+			color::Color_Space::Spectrum_Type::illuminant
+		),
+		math::pi * 1.f / 16.f,
+		math::pi * 1.f / 4.f
+	};
 	auto lights = std::vector<emitter::Divider>{
-		// {&parallel_light, &identity},
+		// {&parallel_light, &parallel_to_world},
 		// {&point_light, &point_to_world},
+		{&spot_light, &spot_to_world},
 	};
 	auto inf_lights = std::vector<emitter::Divider>{
-		{&env_light, &light_to_world},
+		{&const_env_light, &light_to_world},
 		// {&const_env_light, &light_to_world},
 	};
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};

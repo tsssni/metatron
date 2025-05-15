@@ -14,11 +14,11 @@ namespace metatron::light {
 		eval::Context const& ctx,
 		math::Vector<f32, 2> const& u
 	) const -> std::optional<Interaction> {
-		auto d = math::normalize(-ctx.r.o);
+		auto wi = math::normalize(-ctx.r.o);
 		auto r = math::length(ctx.r.o);
 		return Interaction{
 			(ctx.L & *L) / (r * r),
-			d,
+			wi,
 			{0.f},
 			r,
 			1.f
