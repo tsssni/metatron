@@ -10,14 +10,14 @@ namespace metatron::media {
         Medium_Grid const* grid,
         std::unique_ptr<spectra::Spectrum> sigma_a,
         std::unique_ptr<spectra::Spectrum> sigma_s,
-        std::unique_ptr<spectra::Spectrum> Le,
+        std::unique_ptr<spectra::Spectrum> L,
 		std::unique_ptr<phase::Phase_Function> phase,
         f32 density_scale
     ):
 	grid(grid),
 	sigma_a(std::move(sigma_a)),
 	sigma_s(std::move(sigma_s)),
-	Le(std::move(Le)),
+	L(std::move(L)),
 	phase(std::move(phase)),
 	density_scale(density_scale) {
 		auto& cache = thread_caches[this];
@@ -41,7 +41,7 @@ namespace metatron::media {
 		auto update_majorant = [&](f32 t_max) -> void {
 			cache.bbox = grid->bounding_box(cache.r.o);
 			cache.t_max = math::hit(cache.r, cache.bbox).value_or(t_max);
-			cache.density_maj = (*grid)[grid->to_index(cache.r.o)] * density_scale;
+			cache.density_maj = (*grid)[grid->to_index(cache.r.o)];
 			cache.sigma_maj = cache.density_maj * sigma_t;
 			cache.distr = math::Exponential_Distribution(cache.sigma_maj.value.front());
 		};
@@ -57,7 +57,7 @@ namespace metatron::media {
 		auto t_offset = 0.005f / math::length(cache.r.d);
 		auto t_transmitted = 0.f;
 		auto transmittance = ctx.L;
-		transmittance.value = std::vector<f32>(transmittance.lambda.size(), 1.f);
+		transmittance.value = std::vector<f32>(ctx.L.lambda.size(), 1.f);
 		auto update_transmittance = [&](f32 t) -> void {
 			t_transmitted += t;
 			t_boundary -= t;
@@ -69,8 +69,12 @@ namespace metatron::media {
 		};
 
 		while (true) {
+			if (!transmittance) {
+				return {};
+			}
+
 			auto t_u = cache.distr.sample(u);
-			if (t_boundary <= cache.t_max && (cache.density_maj == 0.f || t_u >= t_boundary)) {
+			if (t_boundary <= cache.t_max && (cache.density_maj < math::epsilon<f32> || t_u >= t_boundary)) {
 				update_transmittance(t_boundary + t_offset);
 				return Interaction{
 					cache.r.o,
@@ -81,7 +85,7 @@ namespace metatron::media {
 					transmittance,
 					{}, {}, {}, {}, {}
 				};
-			} else if (t_boundary > cache.t_max && (cache.density_maj == 0.f || t_u >= cache.t_max)) {
+			} else if (t_boundary > cache.t_max && (cache.density_maj < math::epsilon<f32> || t_u >= cache.t_max)) {
 				update_transmittance(cache.t_max + t_offset);
 				update_majorant(t_boundary);
 			} else {
@@ -100,7 +104,7 @@ namespace metatron::media {
 					density * sigma_s,
 					cache.sigma_maj - density * sigma_t,
 					cache.sigma_maj,
-					density * (ctx.L & *Le),
+					density * (ctx.L & *L),
 				};
 			}
 		}

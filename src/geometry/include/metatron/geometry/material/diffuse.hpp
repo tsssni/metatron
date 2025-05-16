@@ -7,7 +7,8 @@ namespace metatron::material {
 	struct Diffuse_Material final: Material {
 		Diffuse_Material(
 			std::unique_ptr<material::Texture<spectra::Stochastic_Spectrum>> R,
-			std::unique_ptr<material::Texture<spectra::Stochastic_Spectrum>> T
+			std::unique_ptr<material::Texture<spectra::Stochastic_Spectrum>> T,
+			std::unique_ptr<material::Texture<spectra::Stochastic_Spectrum>> L
 		);
 
 		auto sample(
@@ -18,5 +19,6 @@ namespace metatron::material {
 	private:
 		std::unique_ptr<material::Texture<spectra::Stochastic_Spectrum>> R;
 		std::unique_ptr<material::Texture<spectra::Stochastic_Spectrum>> T;
+		std::unique_ptr<material::Texture<spectra::Stochastic_Spectrum>> L;
 	};
 }

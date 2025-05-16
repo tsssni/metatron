@@ -150,6 +150,16 @@ namespace metatron::spectra {
 		return *this;
 	};
 
+
+	Stochastic_Spectrum::operator bool() const {
+		for (auto& v: value) {
+			if (v != 0.f) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	auto operator+(f32 s, Stochastic_Spectrum const& spectrum) -> Stochastic_Spectrum {
 		return spectrum + s;
 	}
@@ -191,7 +201,7 @@ namespace metatron::spectra {
 		auto n = spectrum.lambda.size();
 		auto avgv = 0.f;
 		for (auto& v: spectrum.value) {
-			avgv += math::guarded_div(v, n);
+			avgv += math::guarded_div(v, f32(n));
 		}
 		return avgv;
 	}

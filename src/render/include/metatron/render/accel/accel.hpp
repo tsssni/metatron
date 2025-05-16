@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/render/light/light.hpp>
+#include <metatron/render/emitter/emitter.hpp>
 #include <metatron/geometry/shape/shape.hpp>
 #include <metatron/geometry/material/material.hpp>
 #include <metatron/volume/media/medium.hpp>
@@ -14,7 +14,7 @@ namespace metatron::accel {
 		media::Medium const* interior_medium{};
 		media::Medium const* exterior_medium{};
 		material::Material const* material{};
-		light::Light const* Le{};
+		light::Light const* light{};
 		math::Transform const* local_to_world{};
 		math::Transform const* interior_transform{};
 		math::Transform const* exterior_transform{};

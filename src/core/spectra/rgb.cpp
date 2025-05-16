@@ -1,4 +1,5 @@
 #include <metatron/core/spectra/rgb.hpp>
+#include <metatron/core/math/arithmetic.hpp>
 
 namespace metatron::spectra {
 	Rgb_Spectrum::Rgb_Spectrum(
@@ -12,7 +13,7 @@ namespace metatron::spectra {
 			if (std::isinf(x)) {
 				return x < 0.f ? 0.f : 1.f;
 			}
-			return 0.5f + x / (2.f * std::sqrt(1.f + x * x));
+			return 0.5f + x / (2.f * math::sqrt(1.f + x * x));
 		};
 		return s * sigmoid(polynomial(lambda)) * (illuminant ? (*illuminant)(lambda) : 1.f);
 	}

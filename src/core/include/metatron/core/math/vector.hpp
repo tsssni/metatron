@@ -1,10 +1,23 @@
 #pragma once
 #include <metatron/core/math/matrix.hpp>
+#include <metatron/core/math/arithmetic.hpp>
 #include <cmath>
 
 namespace metatron::math {
 	template<typename T, usize size>
 	using Vector = Matrix<T, size>;
+
+	template<usize n>
+	auto inline guarded_div(Vector<f32, n> const& x, f32 y) -> Vector<f32, n> {
+		return std::abs(y) < epsilon<f32> ? Vector<f32, n>{0.f} : x / y;
+	}
+
+	template<usize n>
+	auto inline guarded_div(Vector<f32, n> const& x, Vector<f32, n> const& y) -> Vector<f32, n> {
+		return foreach(x, [&y](f32 x, usize idx) -> f32 {
+			return guarded_div(x, y[idx]);
+		});
+	}
 
 	template<typename T, usize size>
 	auto dot(Vector<T, size> const& x, Vector<T, size> const& y) -> T {
@@ -27,14 +40,13 @@ namespace metatron::math {
 	template<typename T, usize size>
 	requires std::floating_point<T>
 	auto length(Vector<T, size> const& x) -> T {
-		return std::sqrt(dot(x, x));
+		return sqrt(dot(x, x));
 	}
 
 	template<typename T, usize size>
 	requires std::floating_point<T>
 	auto normalize(Vector<T, size> const& x) -> Vector<T, size> {
-		auto d = length(x);
-		return d < epsilon<f32> ? Vector<T, size>{0.f} : x / d;
+		return guarded_div(x, length(x));
 	}
 
 	template<typename T>
@@ -49,7 +61,7 @@ namespace metatron::math {
 		auto cos_theta_i = dot(in, n);
 		auto cos_2_theta_t = T{1.0} - eta * eta * (T{1.0} - cos_theta_i * cos_theta_i); 
 		if (cos_2_theta_t < 0.0) return Vector<T, 3>{T{0.0}};
-		return eta * in - (eta * cos_theta_i + std::sqrt(cos_2_theta_t)) * n;
+		return eta * in - (eta * cos_theta_i + sqrt(cos_2_theta_t)) * n;
 	}
 
 	template<typename T, typename... Ts, usize n, usize tail = sizeof...(Ts)>

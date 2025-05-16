@@ -52,7 +52,7 @@ namespace metatron::math {
 			} else if constexpr (std::is_same_v<Type, eval::Context>) {
 				auto ctx = rhs;
 				ctx.r = *this | ctx.r;
-				ctx.n = normalize(expand(ctx.n, 0.f) | inv_transform);
+				ctx.n = expand(ctx.n, 0.f) | inv_transform;
 				return ctx;
 			}
 		}
@@ -76,7 +76,7 @@ namespace metatron::math {
 			} else if constexpr (std::is_same_v<Type, eval::Context>) {
 				auto ctx = rhs;
 				ctx.r = *this ^ ctx.r;
-				ctx.n = normalize(expand(ctx.n, 0.f) | transform);
+				ctx.n = expand(ctx.n, 0.f) | transform;
 				return ctx;
 			}
 		}

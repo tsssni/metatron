@@ -4,8 +4,8 @@
 
 namespace metatron::emitter {
 	struct Divider final {
-		math::Transform const* local_to_world;
 		light::Light const* light;
+		math::Transform const* local_to_world;
 	};
 
 	struct Interaction final {
@@ -16,11 +16,11 @@ namespace metatron::emitter {
 	struct Emitter {
 		auto virtual operator()(
 			eval::Context const& ctx,
-			light::Light const& light
+			Divider const& divider
 		) const -> std::optional<emitter::Interaction> = 0;
 		auto virtual sample(
 			eval::Context const& ctx,
-			math::Vector<f32, 2> const& u
+			f32 u
 		) const -> std::optional<emitter::Interaction> = 0;
 		auto virtual sample_infinite(
 			eval::Context const& ctx,

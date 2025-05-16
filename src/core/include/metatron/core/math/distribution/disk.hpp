@@ -13,11 +13,11 @@ namespace metatron::math {
 
 			if (abs(disk_u) < Vector<f32, 2>{epsilon<f32>}) {
 				return {0.f};
-			} else if (disk_u[0] > disk_u[1]) {
-				r = disk_u[0];
+			} else if (std::abs(disk_u[0]) > std::abs(disk_u[1])) {
+				r = std::abs(disk_u[0]);
 				theta = pi / 4.f * guarded_div(disk_u[1], disk_u[0]);
 			} else {
-				r = disk_u[1];
+				r = std::abs(disk_u[1]);
 				theta = pi / 2.f - pi / 4.f * guarded_div(disk_u[0], disk_u[1]);
 			}
 

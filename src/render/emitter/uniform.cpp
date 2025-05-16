@@ -3,27 +3,45 @@
 #include <metatron/core/math/constant.hpp>
 
 namespace metatron::emitter {
-		Uniform_Emitter::Uniform_Emitter(std::vector<Divider>&& dividers, std::vector<Divider>&& infinite_dividers)
-			: dividers(std::move(dividers)), infinite_dividers(std::move(infinite_dividers)) {}
+		Uniform_Emitter::Uniform_Emitter(
+			std::vector<Divider>&& dividers,
+			std::vector<Divider>&& infinite_dividers
+		):
+		dividers(std::move(dividers)),
+		inf_dividers(std::move(infinite_dividers)),
+		distr(std::vector<f32>(
+			this->dividers.size() + this->inf_dividers.size(),
+			math::guarded_div(1.f, f32(this->dividers.size() + this->inf_dividers.size()))
+		)),
+		inf_distr(std::vector<f32>(
+			this->inf_dividers.size(),
+			math::guarded_div(1.f, f32(this->inf_dividers.size()))
+		)) {}
 
 		auto Uniform_Emitter::operator()(
 			eval::Context const& ctx,
-			light::Light const& light
+			Divider const& divider
 		) const -> std::optional<emitter::Interaction> {
-			if (&light != infinite_dividers.front().light) return {};
 			return emitter::Interaction{
-				&infinite_dividers.front(),
-				1.f
+				&divider,
+				math::guarded_div(1.f, f32(dividers.size() + inf_dividers.size()))
 			};
 		}
 
 		auto Uniform_Emitter::sample(
 			eval::Context const& ctx,
-			math::Vector<f32, 2> const& u
+			f32 u
 		) const -> std::optional<emitter::Interaction> {
+			if (dividers.empty() && inf_dividers.empty()) {
+				return {};
+			}
+
+			auto idx = distr.sample(u);
 			return emitter::Interaction{
-				&infinite_dividers.front(),
-				1.f
+				idx < dividers.size()
+				? &dividers[idx]
+				: &inf_dividers[idx - dividers.size()],
+				math::guarded_div(1.f, f32(dividers.size() + inf_dividers.size()))
 			};
 		}
 
@@ -31,9 +49,14 @@ namespace metatron::emitter {
 			eval::Context const& ctx,
 			f32 u
 		) const -> std::optional<emitter::Interaction> {
+			if (inf_dividers.empty()) {
+				return {};
+			}
+
+			auto idx = inf_distr.sample(u);
 			return emitter::Interaction{
-				&infinite_dividers.front(),
-				1.f
+				&inf_dividers[idx],
+				math::guarded_div(1.f, f32(inf_dividers.size()))
 			};
 		}
 }

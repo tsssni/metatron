@@ -7,10 +7,7 @@ namespace metatron::material {
 	Lambertian_Bsdf::Lambertian_Bsdf(
 		std::unique_ptr<spectra::Stochastic_Spectrum> R,
 		std::unique_ptr<spectra::Stochastic_Spectrum> T
-	) : R(std::move(R)), T(std::move(T)) {
-		*(this->R) /= math::pi;
-		*(this->T) /= math::pi;
-	}
+	) : R(std::move(R)), T(std::move(T)) {}
 
 	auto Lambertian_Bsdf::operator()(
 		math::Vector<f32, 3> const& wo,
@@ -30,8 +27,8 @@ namespace metatron::material {
 			}
 		}
 
-		auto dist = math::Cosine_Hemisphere_Distribution{};
-		auto pdf = dist.pdf(std::abs(wi[1]));
+		auto distr = math::Cosine_Hemisphere_Distribution{};
+		auto pdf = distr.pdf(std::abs(wi[1]));
 		pdf *= (-wo[1] * wi[1] >= 0.f ? ru : tu) / (ru + tu);
 
 		return bsdf::Interaction{f, wi, pdf};
@@ -45,9 +42,9 @@ namespace metatron::material {
 		auto rtu = ru / (ru + tu);
 		auto reflected = u[0] < rtu;
 
-		auto dist = math::Cosine_Hemisphere_Distribution{};
-		auto wi = dist.sample({u[1], u[2]});
-		auto pdf = dist.pdf(wi[1]);
+		auto distr = math::Cosine_Hemisphere_Distribution{};
+		auto wi = distr.sample({u[1], u[2]});
+		auto pdf = distr.pdf(wi[1]);
 
 		if (reflected) {
 			pdf *= rtu;
