@@ -9,8 +9,14 @@ namespace metatron::emitter {
 		):
 		dividers(std::move(dividers)),
 		inf_dividers(std::move(infinite_dividers)),
-		distr(std::vector<f32>(this->dividers.size() + this->inf_dividers.size(), 1.f / (this->dividers.size() + this->inf_dividers.size()))),
-		inf_distr(std::vector<f32>(this->inf_dividers.size(), 1.f / this->inf_dividers.size())) {}
+		distr(std::vector<f32>(
+			this->dividers.size() + this->inf_dividers.size(),
+			math::guarded_div(1.f, f32(this->dividers.size() + this->inf_dividers.size()))
+		)),
+		inf_distr(std::vector<f32>(
+			this->inf_dividers.size(),
+			math::guarded_div(1.f, f32(this->inf_dividers.size()))
+		)) {}
 
 		auto Uniform_Emitter::operator()(
 			eval::Context const& ctx,
@@ -18,7 +24,7 @@ namespace metatron::emitter {
 		) const -> std::optional<emitter::Interaction> {
 			return emitter::Interaction{
 				&divider,
-				1.f / (dividers.size() + inf_dividers.size())
+				math::guarded_div(1.f, f32(dividers.size() + inf_dividers.size()))
 			};
 		}
 
@@ -26,12 +32,16 @@ namespace metatron::emitter {
 			eval::Context const& ctx,
 			f32 u
 		) const -> std::optional<emitter::Interaction> {
+			if (dividers.empty() && inf_dividers.empty()) {
+				return {};
+			}
+
 			auto idx = distr.sample(u);
 			return emitter::Interaction{
 				idx < dividers.size()
 				? &dividers[idx]
 				: &inf_dividers[idx - dividers.size()],
-				1.f / (dividers.size() + inf_dividers.size())
+				math::guarded_div(1.f, f32(dividers.size() + inf_dividers.size()))
 			};
 		}
 
@@ -39,10 +49,14 @@ namespace metatron::emitter {
 			eval::Context const& ctx,
 			f32 u
 		) const -> std::optional<emitter::Interaction> {
+			if (inf_dividers.empty()) {
+				return {};
+			}
+
 			auto idx = inf_distr.sample(u);
 			return emitter::Interaction{
 				&inf_dividers[idx],
-				1.f
+				math::guarded_div(1.f, f32(inf_dividers.size()))
 			};
 		}
 }

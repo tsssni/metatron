@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
+#include <metatron/core/math/arithmetic.hpp>
 
 namespace metatron::math {
 	auto inline cartesion_to_sphere(math::Vector<f32, 3> const& d) -> math::Vector<f32, 2> {
@@ -13,7 +14,7 @@ namespace metatron::math {
 
 	auto inline sphere_to_cartesion(f32 cos_theta, f32 phi) -> math::Vector<f32, 3> {
 		auto sin_theta_2 = 1.f - cos_theta * cos_theta;
-		auto sin_theta = sin_theta_2 > epsilon<f32> ? std::sqrt(sin_theta_2) : 0.f;
+		auto sin_theta = math::sqrt(sin_theta_2);
 		auto x = sin_theta * std::cos(phi);
 		auto z = sin_theta * std::sin(phi);
 		auto y = cos_theta;

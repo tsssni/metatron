@@ -16,7 +16,7 @@ namespace metatron::media {
 		spectra::Stochastic_Spectrum sigma_s;
 		spectra::Stochastic_Spectrum sigma_n;
 		spectra::Stochastic_Spectrum sigma_maj;
-		spectra::Stochastic_Spectrum L_e;
+		spectra::Stochastic_Spectrum L;
 	};
 
 	struct Medium {

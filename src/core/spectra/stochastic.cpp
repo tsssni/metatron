@@ -201,7 +201,7 @@ namespace metatron::spectra {
 		auto n = spectrum.lambda.size();
 		auto avgv = 0.f;
 		for (auto& v: spectrum.value) {
-			avgv += math::guarded_div(v, n);
+			avgv += math::guarded_div(v, f32(n));
 		}
 		return avgv;
 	}

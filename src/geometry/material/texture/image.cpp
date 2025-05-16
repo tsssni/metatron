@@ -54,14 +54,14 @@ namespace metatron::material {
 		auto A = uy * uy + vy * vy;
 		auto B = -2.f * (ux * uy + vx * vy);
 		auto C = ux * ux + vx * vx;
-		auto F = std::sqrt(A * C -  B * B / 4.f);
+		auto F = math::sqrt(A * C -  B * B / 4.f);
 		A = math::guarded_div(A, F);
 		B = math::guarded_div(B, F);
 		C = math::guarded_div(C, F);
 
 		auto det = -B * B + 4.f * A * C;
-		auto u_tan = 2.f * math::guarded_div(std::sqrt(det * C), det);
-		auto v_tan = 2.f * math::guarded_div(std::sqrt(det * A), det);
+		auto u_tan = 2.f * math::guarded_div(math::sqrt(det * C), det);
+		auto v_tan = 2.f * math::guarded_div(math::sqrt(det * A), det);
 		auto u_range = math::Vector<i32, 2>{
 			i32(std::ceil(uv[0] - u_tan)),
 			i32(std::ceil(uv[0] + u_tan)),

@@ -10,14 +10,14 @@ namespace metatron::media {
         Medium_Grid const* grid,
         std::unique_ptr<spectra::Spectrum> sigma_a,
         std::unique_ptr<spectra::Spectrum> sigma_s,
-        std::unique_ptr<spectra::Spectrum> L_e,
+        std::unique_ptr<spectra::Spectrum> L,
 		std::unique_ptr<phase::Phase_Function> phase,
         f32 density_scale
     ):
 	grid(grid),
 	sigma_a(std::move(sigma_a)),
 	sigma_s(std::move(sigma_s)),
-	L_e(std::move(L_e)),
+	L(std::move(L)),
 	phase(std::move(phase)),
 	density_scale(density_scale) {
 		auto& cache = thread_caches[this];
@@ -104,7 +104,7 @@ namespace metatron::media {
 					density * sigma_s,
 					cache.sigma_maj - density * sigma_t,
 					cache.sigma_maj,
-					density * (ctx.L & *L_e),
+					density * (ctx.L & *L),
 				};
 			}
 		}

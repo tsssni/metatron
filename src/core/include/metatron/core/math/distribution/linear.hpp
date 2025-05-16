@@ -1,5 +1,5 @@
 #pragma once
-#include <cmath>
+#include <metatron/core/math/arithmetic.hpp>
 
 namespace metatron::math {
 	struct Linear_Distribution final {
@@ -10,7 +10,7 @@ namespace metatron::math {
 			auto b_norm = a + (b - a) / (r - l);
 			auto a2 = a * a;
 			auto b2 = b * b;
-			auto x =  u * (a + b_norm) / (a + std::sqrt(std::lerp(a2, b2, u)));
+			auto x =  u * (a + b_norm) / (a + math::sqrt(math::lerp(a2, b2, u)));
 			return l + x * (r - l);
 		}
 

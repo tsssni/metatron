@@ -8,7 +8,7 @@ namespace metatron::math {
 
 		auto sample(Vector<f32, 2> const& u) const -> Vector<f32, 3> {
 			auto cos_theta = 1.f - 2.f * u[0];
-			auto sin_theta = std::sqrt(1 - cos_theta * cos_theta);
+			auto sin_theta = math::sqrt(1 - cos_theta * cos_theta);
 			auto phi = 2.f * pi * u[1];
 			return {sin_theta * std::cosf(phi), cos_theta, sin_theta * std::sin(phi)};
 		}

@@ -1,23 +1,12 @@
 #pragma once
 #include <metatron/core/math/constant.hpp>
-#include <metatron/core/math/vector.hpp>
 #include <cmath>
 
 namespace metatron::math {
-	auto inline guarded_div(f32 x, f32 y) -> f32 {
-		return std::abs(y) < epsilon<f32> ? 0.f : x / y;
-	}
-
-	template<usize n>
-	auto inline guarded_div(Vector<f32, n> const& x, f32 y) -> Vector<f32, n> {
-		return std::abs(y) < epsilon<f32> ? Vector<f32, n>{0.f} : x / y;
-	}
-
-	template<usize n>
-	auto inline guarded_div(Vector<f32, n> const& x, Vector<f32, n> const& y) -> Vector<f32, n> {
-		return foreach(x, [&y](f32 x, usize idx) -> f32 {
-			return guarded_div(x, y[idx]);
-		});
+	template<typename T>
+	requires std::floating_point<T>
+	auto inline guarded_div(T x, T y) -> T {
+		return std::abs(y) < epsilon<T> ? 0.0 : x / y;
 	}
 
 	auto inline pow(usize x, usize n) -> usize {
@@ -30,5 +19,17 @@ namespace metatron::math {
 			n >>= 1;
 		}
 		return y;
+	}
+
+	template<typename T>
+	requires std::floating_point<T>
+	auto sqrt(T x) -> T {
+		return std::sqrt(std::max(0.f, x));
+	}
+
+	template<typename T>
+	requires std::floating_point<T>
+	auto lerp(T x, T y, T alpha) -> T {
+		return (T{1.0} - alpha) * x + alpha * y;
 	}
 }

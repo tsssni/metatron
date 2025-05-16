@@ -18,6 +18,7 @@
 #include <metatron/render/light/parallel.hpp>
 #include <metatron/render/light/point.hpp>
 #include <metatron/render/light/spot.hpp>
+#include <metatron/render/light/area.hpp>
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/render/accel/bvh.hpp>
@@ -108,6 +109,12 @@ auto main() -> int {
 				color::Color_Space::Spectrum_Type::albedo
 			)
 		),
+		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
+			color::Color_Space::sRGB->to_spectrum(
+				{0.0f, 0.6f, 1.0f},
+				color::Color_Space::Spectrum_Type::illuminant
+			)
+		)
 	};
 	auto interface_material = material::Interface_Material{};
 
@@ -137,31 +144,6 @@ auto main() -> int {
 		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.877f),
 		4.f
 	};
-
-	auto bvh = accel::LBVH{{
-		// {
-		// 	&sphere,
-		// 	&cloud_medium,
-		// 	&vaccum_medium,
-		// 	&interface_material,
-		// 	nullptr,
-		// 	&bound_to_world,
-		// 	&medium_to_world,
-		// 	&identity,
-		// 	0uz
-		// },
-		{
-			&sphere,
-			&vaccum_medium,
-			&vaccum_medium,
-			&diffuse_material,
-			nullptr,
-			&sphere_to_world,
-			&identity,
-			&identity,
-			0uz
-		},
-	}};
 
 	auto env_map = std::make_unique<material::Image_Texture<spectra::Stochastic_Spectrum>>(
 		image::Image::from_path("../Pictures/sky-on-fire.exr", true),
@@ -194,16 +176,43 @@ auto main() -> int {
 		math::pi * 1.f / 16.f,
 		math::pi * 1.f / 4.f
 	};
+	auto area_light = light::Area_Light{sphere};
 	auto lights = std::vector<emitter::Divider>{
-		// {&parallel_light, &parallel_to_world},
+		{&parallel_light, &parallel_to_world},
 		// {&point_light, &point_to_world},
-		{&spot_light, &spot_to_world},
+		// {&spot_light, &spot_to_world},
+		{&area_light, &sphere_to_world}
 	};
 	auto inf_lights = std::vector<emitter::Divider>{
 		{&const_env_light, &light_to_world},
-		// {&const_env_light, &light_to_world},
+		// {&env_light, &light_to_world},
 	};
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
+
+	auto bvh = accel::LBVH{{
+		// {
+		// 	&sphere,
+		// 	&cloud_medium,
+		// 	&vaccum_medium,
+		// 	&interface_material,
+		// 	nullptr,
+		// 	&bound_to_world,
+		// 	&medium_to_world,
+		// 	&identity,
+		// 	0uz
+		// },
+		{
+			&sphere,
+			&vaccum_medium,
+			&vaccum_medium,
+			&diffuse_material,
+			&area_light,
+			&sphere_to_world,
+			&identity,
+			&identity,
+			0uz
+		},
+	}};
 
 	auto integrator = mc::Volume_Path_Integrator{};
 

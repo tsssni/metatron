@@ -1,5 +1,6 @@
 #include <metatron/geometry/shape/sphere.hpp>
 #include <metatron/core/math/constant.hpp>
+#include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>
@@ -22,8 +23,8 @@ namespace metatron::shape {
 		auto delta = b * b - 4.f * a * c;
 		if (delta < 0.f) return {};
 
-		auto x0 = (-b - std::sqrt(delta)) / (2.f * a);
-		auto x1 = (-b + std::sqrt(delta)) / (2.f * a);
+		auto x0 = (-b - math::sqrt(delta)) / (2.f * a);
+		auto x1 = (-b + math::sqrt(delta)) / (2.f * a);
 		if (x1 < 0.f) return {};
 
 		auto t = x0 < 0.f ? x1 : x0;
@@ -69,7 +70,7 @@ namespace metatron::shape {
 			intr.pdf = distr.pdf();
 			return intr;
 		} else {
-			auto cos_theta_max = std::sqrt(1.f - 1.f / (d * d));
+			auto cos_theta_max = math::sqrt(1.f - 1.f / (d * d));
 			auto distr = math::Cone_Distribution{cos_theta_max};
 			auto dir = math::normalize(-ctx.r.o);
 

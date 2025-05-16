@@ -1,6 +1,5 @@
 #include <metatron/render/light/environment.hpp>
 #include <metatron/core/math/sphere.hpp>
-#include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/spectra/rgb.hpp>

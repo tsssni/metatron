@@ -1,5 +1,7 @@
 #include <metatron/geometry/material/material.hpp>
 #include <metatron/geometry/material/interface.hpp>
+#include <metatron/geometry/shape/plane.hpp>
+#include <metatron/core/stl/optional.hpp>
 
 namespace metatron::material {
 	std::unordered_set<std::type_index> Material::interface_materials;

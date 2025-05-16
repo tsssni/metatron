@@ -1,5 +1,4 @@
 #include <metatron/render/light/spot.hpp>
-#include <metatron/core/spectra/constant.hpp>
 
 namespace metatron::light {
 	Spot_Light::Spot_Light(

@@ -69,7 +69,8 @@ namespace metatron::mc {
 				OPTIONAL_OR_BREAK(l_intr, e_intr.divider->light->sample(direct_ctx, sampler.generate_2d()));
 				direct_ctx = rt | (lt | direct_ctx);
 
-				l_intr.wi = rt | (lt | math::expand(l_intr.wi, 0.f));
+				// transformation may contain non-uniform scaling
+				l_intr.wi = math::normalize(rt | (lt | math::expand(l_intr.wi, 0.f)));
 				direct_ctx.r.d = l_intr.wi;
 				auto p_e = e_intr.pdf * l_intr.pdf;
 				if (std::abs(p_e) < math::epsilon<f32>) {
@@ -106,10 +107,9 @@ namespace metatron::mc {
 				auto betad = beta * (f / p_e) / (scatter_f / scatter_pdf);
 				auto mis_sd = mis_s * p_s / p_e * float(!light::Light::is_delta(*e_intr.divider->light));
 				auto mis_ed = mis_s;
-				auto n_null = 0;
 
 				while (true) {
-					if (terminated) {
+					if (terminated || std::abs(l_intr.t) < 0.001f) {
 						break;
 					}
 
@@ -145,13 +145,34 @@ namespace metatron::mc {
 						intr.p = rt | (lt | math::expand(intr.p, 1.f));
 						intr.n = math::normalize(rt | (lt | math::expand(intr.n, 0.f)));
 
-
-						if (!material::Material::is_interface(*div.material)) {
+						auto close_to_light = math::length(intr.p - l_intr.p) < 0.001f;
+						if (!close_to_light && !material::Material::is_interface(*div.material)) {
 							terminated = true;
 							betad = 0.f;
 							continue;
-						}
+						} else if (close_to_light) {
+							auto rd = ct ^ ctx.default_differential;
+							auto st = math::Transform{};
+							st.config.rotation = math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(intr.p));
+							rd = st | rd;
 
+							auto local_differential = lt ^ (rt ^ rd);
+							auto tangent = shape::Plane{intr.p, intr.n};
+							#define DIRECT_CLEAR_L { terminated = true; l_intr.L = 0.f; continue; }
+							OPTIONAL_OR_CALLBACK(d_intr, tangent(local_differential.r), DIRECT_CLEAR_L);
+							OPTIONAL_OR_CALLBACK(dx_intr, tangent(local_differential.rx), DIRECT_CLEAR_L);
+							OPTIONAL_OR_CALLBACK(dy_intr, tangent(local_differential.ry), DIRECT_CLEAR_L);
+							
+							auto dpdx = dx_intr.p - d_intr.p;
+							auto dpdy = dy_intr.p - d_intr.p;
+							auto dpduv =  math::transpose(math::Matrix<f32, 2, 3>{intr.dpdu, intr.dpdv});
+							auto duvdx = math::least_squares(dpduv, dpdx);
+							auto duvdy = math::least_squares(dpduv, dpdy);
+
+							auto tcoord = material::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
+							OPTIONAL_OR_CALLBACK(mat_intr, div.material->sample(direct_ctx, tcoord), DIRECT_CLEAR_L);
+							l_intr.L = mat_intr.L;
+						}
 					}
 
 					auto& div = *div_opt.value();
@@ -192,7 +213,7 @@ namespace metatron::mc {
 				}
 
 				auto mis_w = math::guarded_div(1.f, spectra::avg(mis_sd + mis_ed));
-				L_e += betad * mis_w * l_intr.L_e;
+				L_e += betad * mis_w * l_intr.L;
 			} while (false);
 
 			if (scattered || crossed) {
@@ -219,7 +240,7 @@ namespace metatron::mc {
 				auto p_e = e_intr.pdf * l_intr.pdf;
 				mis_e *= math::guarded_div(p_e, scatter_pdf);
 				auto mis_w = math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
-				L_e += beta * mis_w * l_intr.L_e;
+				L_e += beta * mis_w * l_intr.L;
 				continue;
 			}
 
@@ -248,7 +269,7 @@ namespace metatron::mc {
 
 			if (!hit) {
 				auto mis_a = math::guarded_div(1.f, spectra::avg(mis_s));
-				L_e += mis_a * beta * m_intr.sigma_a * m_intr.L_e;
+				L_e += mis_a * beta * m_intr.sigma_a * m_intr.L;
 
 				auto p_a = math::guarded_div(m_intr.sigma_a.value.front(), m_intr.sigma_maj.value.front());
 				auto p_s = math::guarded_div(m_intr.sigma_s.value.front(), m_intr.sigma_maj.value.front());
@@ -335,7 +356,7 @@ namespace metatron::mc {
 			phase = nullptr;
 
 			do {
-				if (spectra::max(mat_intr.L_e) < math::epsilon<f32>) {
+				if (spectra::max(mat_intr.L) < math::epsilon<f32>) {
 					break;
 				}
 
@@ -343,14 +364,10 @@ namespace metatron::mc {
 				auto& div = *e_intr.divider;
 				auto& lt = *div.local_to_world;
 
-				trace_ctx = lt ^ (rt ^ trace_ctx);
-				OPTIONAL_OR_BREAK(l_intr, (*e_intr.divider->light)(trace_ctx));
-				trace_ctx = rt | (lt | trace_ctx);
-
-				auto p_e = e_intr.pdf * l_intr.pdf;
+				auto p_e = e_intr.pdf * intr.pdf;
 				mis_e *= math::guarded_div(p_e, scatter_pdf);
 				auto mis_w = math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
-				L_e += mis_w * beta * mat_intr.L_e;
+				L_e += mis_w * beta * mat_intr.L;
 			} while (false);
 
 			auto bt = math::Transform{};

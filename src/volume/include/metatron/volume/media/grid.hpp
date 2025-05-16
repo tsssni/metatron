@@ -26,7 +26,7 @@ namespace metatron::media {
 			Medium_Grid const* grid,
 			std::unique_ptr<spectra::Spectrum> sigma_a,
 			std::unique_ptr<spectra::Spectrum> sigma_s,
-			std::unique_ptr<spectra::Spectrum> L_e,
+			std::unique_ptr<spectra::Spectrum> L,
 			std::unique_ptr<phase::Phase_Function> phase,
 			f32 density_scale = 1.0f
 		);
@@ -38,7 +38,7 @@ namespace metatron::media {
 	private:
 		std::unique_ptr<spectra::Spectrum> sigma_a;
 		std::unique_ptr<spectra::Spectrum> sigma_s;
-		std::unique_ptr<spectra::Spectrum> L_e;
+		std::unique_ptr<spectra::Spectrum> L;
 		std::unique_ptr<phase::Phase_Function> phase;
 
 		Medium_Grid const* grid;

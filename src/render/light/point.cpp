@@ -1,5 +1,4 @@
 #include <metatron/render/light/point.hpp>
-#include <metatron/core/spectra/constant.hpp>
 
 namespace metatron::light {
 	Point_Light::Point_Light(std::unique_ptr<spectra::Spectrum> L): L(std::move(L)) {}

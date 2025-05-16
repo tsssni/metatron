@@ -8,7 +8,7 @@ namespace metatron::math {
 
 		auto sample(Vector<f32, 2> const& u) const -> Vector<f32, 3> {
 			auto z = u[0];
-			auto r = std::sqrt(1 - z * z);
+			auto r = math::sqrt(1 - z * z);
 			auto phi = 2.f * pi * u[1];
 			return {r * std::cosf(phi), r * std::sin(phi), z};
 		}
