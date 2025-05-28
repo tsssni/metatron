@@ -18,10 +18,14 @@ namespace metatron::shape {
 
 	private:
 		std::vector<math::Vector<usize, 3>> indices;
+
 		std::vector<math::Vector<f32, 3>> vertices;
 		std::vector<math::Vector<f32, 3>> normals;
 		std::vector<math::Vector<f32, 2>> uvs;
-		std::vector<math::Vector<f32, 3>> tangents;
-		std::vector<math::Vector<f32, 3>> bitangents;
+
+		std::vector<math::Vector<f32, 3>> dpdu;
+		std::vector<math::Vector<f32, 3>> dpdv;
+		std::vector<math::Vector<f32, 3>> dndu;
+		std::vector<math::Vector<f32, 3>> dndv;
 	};
 }

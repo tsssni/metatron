@@ -52,6 +52,15 @@ namespace metatron::math {
 		};
 	}
 
+	template<typename T, typename U, typename V = decltype(T{} * U{}), usize size>
+	auto mul(Vector<T, size> const& x, Vector<U, size> const& y) -> Vector<V, 3> {
+		auto z = Vector<V, size>{};
+		for (auto i = 0; i < size; i++) {
+			z[i] = x[i] * y[i];
+		}
+		return z;
+	}
+
 	template<typename T, usize size>
 	requires std::floating_point<T>
 	auto length(Vector<T, size> const& x) -> T {
@@ -109,6 +118,12 @@ namespace metatron::math {
 	}
 
 	template<typename T, usize size>
+	auto mini(Vector<T, size> const& x) -> usize {
+		auto const& x_arr = std::array<T, size>(x);
+		return std::ranges::distance(std::ranges::min_element(x_arr), x_arr.begin());
+	}
+
+	template<typename T, usize size>
 	requires std::totally_ordered<T>
 	auto max(Vector<T, size> const& x) -> T {
 		auto y = x[0];
@@ -126,23 +141,9 @@ namespace metatron::math {
 	}
 
 	template<typename T, usize size>
-	requires std::totally_ordered<T>
-	auto clamp(Vector<T, size> const& x, Vector<T, size> const& l, Vector<T, size> const& r) -> Vector<T, size> {
-		return foreach([&](T const& v, usize i) -> T {
-			return std::clamp(v, l[i], r[i]);
-		}, x);
-	}
-
-	template<typename T, usize size>
-	requires std::floating_point<T>
-	auto lerp(Vector<T, size> const& x, Vector<T, size> const& y, T const& alpha) -> Vector<T, size> {
-		return (T{1.0} - alpha) * x + alpha * y;
-	}
-
-	template<typename T, usize size>
-	requires std::floating_point<T>
-	auto lerp(Vector<T, size> const& x, Vector<T, size> const& y, Vector<T, size> const& alpha) -> Vector<T, size> {
-		return (T{1.0} - alpha) * x + alpha * y;
+	auto maxi(Vector<T, size> const& x) -> usize {
+		auto const& x_arr = std::array<T, size>(x);
+		return std::ranges::distance(std::ranges::max_element(x_arr), x_arr.begin());
 	}
 
 	template<typename T, usize size>
@@ -177,6 +178,16 @@ namespace metatron::math {
 
 	template<typename T, usize size>
 	requires std::floating_point<T> || std::integral<T>
+	auto mod(T const& x, T const& m) -> Vector<T, size> {
+		if constexpr (std::floating_point<T>) {
+			return std::fmod(x, m);
+		} else {
+			return x % m;
+		};
+	}
+
+	template<typename T, usize size>
+	requires std::floating_point<T> || std::integral<T>
 	auto mod(Vector<T, size> const& x, T const& m) -> Vector<T, size> {
 		return foreach([&](T const& v, usize i) -> T {
 			if constexpr (std::floating_point<T>) {
@@ -197,5 +208,31 @@ namespace metatron::math {
 				return v % m[i];
 			}
 		}, x);
+	}
+
+	template<typename T, usize size>
+	requires std::totally_ordered<T>
+	auto clamp(Vector<T, size> const& x, Vector<T, size> const& l, Vector<T, size> const& r) -> Vector<T, size> {
+		return foreach([&](T const& v, usize i) -> T {
+			return std::clamp(v, l[i], r[i]);
+		}, x);
+	}
+
+	template<typename T, usize size>
+	requires std::floating_point<T>
+	auto lerp(Vector<T, size> const& x, Vector<T, size> const& y, T const& alpha) -> Vector<T, size> {
+		return (T{1.0} - alpha) * x + alpha * y;
+	}
+
+	template<typename T, usize size>
+	requires std::floating_point<T>
+	auto lerp(Vector<T, size> const& x, Vector<T, size> const& y, Vector<T, size> const& alpha) -> Vector<T, size> {
+		return (T{1.0} - alpha) * x + alpha * y;
+	}
+
+	template<typename T, typename U, usize size>
+	requires std::floating_point<U>
+	auto lerp(Vector<T, size> const& x, Vector<U, size> const& b) -> T {
+		return sum(mul(x, b));
 	}
 }
