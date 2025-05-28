@@ -25,9 +25,9 @@ namespace metatron::math {
 
 		// high num_exponetial bits of radical_inverse(halton_index) equals pixel % (base ^ num_exoinential),
 		// so low num_exponetial bits of halton_index equals radical_inverse(pixel % (base ^ num_exoinetial))
-		auto halton_low_digits = math::foreach(math::mod(pixel, scale), [&](usize x, usize i) -> usize {
+		auto halton_low_digits = math::foreach([&](usize x, usize i) -> usize {
 			return inverse_radical(x, primes[i], exponential[i]);
-		});
+		}, math::mod(pixel, scale));
 
 		// halton_index≡halton_low_digits[i](mod base^num_exponential[i])
 		// use precomputed multiplicative inverse of scale to evaluate CRT

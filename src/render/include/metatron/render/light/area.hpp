@@ -6,7 +6,7 @@ namespace metatron::light {
 	struct Area_Light final: Light {
 		Area_Light(
 			shape::Shape const& shape,
-			usize idx = 0uz
+			usize primitive = 0uz
 		);
 
 		auto operator()(
@@ -19,6 +19,6 @@ namespace metatron::light {
 
 	private:
 		shape::Shape const* shape;
-		usize idx;
+		usize primitive;
 	};
 }
