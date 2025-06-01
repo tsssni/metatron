@@ -5,7 +5,7 @@
 namespace metatron::math {
     template<typename T>
     requires std::floating_point<T>
-    class Quaternion {
+    struct Quaternion final {
     public:
 		Quaternion() = default;
         Quaternion(T x, T y, T z, T w): data{x, y, z, w} {}
@@ -24,7 +24,7 @@ namespace metatron::math {
 		}
 
 		auto static from_rotation_between(Vector<T, 3> const& from, Vector<T, 3> const& to) -> Quaternion<T> {
-			auto axis = cross(from, to);
+			auto axis = math::normalize(cross(from, to));
 			auto rad = angle(from, to);
 			return from_axis_angle(axis, rad);
 		}

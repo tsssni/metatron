@@ -24,6 +24,7 @@ namespace metatron::shape {
 		auto virtual bounding_box(usize idx = 0uz) const -> math::Bounding_Box = 0;
 		auto virtual operator()(
 			math::Ray const& r,
+			math::Vector<f32, 3> const& np = {},
 			usize idx = 0uz
 		) const -> std::optional<Interaction> = 0;
 		auto virtual sample(

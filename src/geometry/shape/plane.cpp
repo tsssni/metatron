@@ -14,6 +14,7 @@ namespace metatron::shape {
 
 	auto Plane::operator()(
 		math::Ray const& r,
+		math::Vector<f32, 3> const& np,
 		usize idx
 	) const -> std::optional<Interaction> {
 		auto n = math::Vector<f32, 3>{a, b, c};

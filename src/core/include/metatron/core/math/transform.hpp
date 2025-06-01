@@ -23,32 +23,28 @@ namespace metatron::math {
 		} config;
 
 		struct Chain final {
-			template<typename T>
-			requires std::is_same_v<std::remove_cvref_t<T>, Transform>
-			auto operator|(T&& t) -> Chain& {
-				store(std::forward<T>(t));
+			auto operator|(Transform const& t) -> Chain& {
+				store(t);
 				ops.push_back(0);
 				return *this;
 			}
 
-			template<typename T>
-			requires std::is_same_v<std::remove_cvref_t<T>, Transform>
-			auto operator^(T&& t) -> Chain& {
-				store(std::forward<T>(t));
+			auto operator^(Transform const& t) -> Chain& {
+				store(t);
 				ops.push_back(1);
 				return *this;
 			}
 
 			template<Transformable T>
-			auto operator|(T&& t) {
+			auto operator|(T const& t) {
 				ops.push_back(0);
-				return dechain(std::forward<T>(t));
+				return dechain(t);
 			}
 
 			template<Transformable T>
-			auto operator^(T&& t) {
+			auto operator^(T const& t) {
 				ops.push_back(1);
-				return dechain(std::forward<T>(t));
+				return dechain(t);
 			}
 
 			explicit operator Matrix<f32, 4, 4>() const {
@@ -64,25 +60,16 @@ namespace metatron::math {
 			}
 
 		private:
-			template<typename T>
-			requires std::is_same_v<std::remove_cvref_t<T>, Transform>
-			Chain(T&& t) {
-				store(std::forward<T>(t));
+			Chain(Transform const& t) {
+				store(t);
 			}
 
-			template<typename T>
-			requires std::is_same_v<std::remove_cvref_t<T>, Transform>
-			auto store(T&& t) {
-				if constexpr (std::is_lvalue_reference_v<T>) {
-					transforms.push_back(&t);
-				} else {
-					owned_transforms.push_back(std::forward<T>(t));
-					transforms.push_back(&owned_transforms.back());
-				}
+			auto store(Transform const& t) -> void {
+				transforms.push_back(&t);
 			}
 
 			template<Transformable T, typename Type = std::remove_cvref_t<T>>
-			auto dechain(T&& rhs) -> Type {
+			auto dechain(T const& rhs) -> Type {
 				auto ret = rhs;
 				for (auto i = i32(transforms.size()) - 1; i >= 0; i--) {
 					if (ops[i] == 0) {
@@ -136,17 +123,6 @@ namespace metatron::math {
 		auto operator|(T&& rhs) const {
 			if constexpr (std::is_same_v<Type, Vector<f32, 4>>) {
 				return transform | rhs;
-			} else if constexpr (std::is_same_v<Type, Ray_Differential>) {
-				auto ray = rhs;
-				ray.r = *this | rhs.r;
-				ray.rx = *this | rhs.rx;
-				ray.ry = *this | rhs.ry;
-				return ray;
-			} else if constexpr (std::is_same_v<Type, eval::Context>) {
-				auto ctx = rhs;
-				ctx.r = *this | ctx.r;
-				ctx.n = expand(ctx.n, 0.f) | transform;
-				return ctx;
 			} else if constexpr (std::is_same_v<Type, Ray>) {
 				auto r = rhs;
 				r.o = *this | expand(r.o, 1.f);
@@ -166,10 +142,8 @@ namespace metatron::math {
 			}
 		}
 
-		template<typename T>
-		requires std::is_same_v<std::remove_cvref_t<T>, Transform>
-		auto operator|(T&& rhs) const -> Chain {
-			return Chain{*this} | rhs;
+		auto operator|(Transform const& rhs) const -> Chain {
+			return std::move(Chain{*this} | rhs);
 		}
 
 		template<Transformable T, typename Type = std::remove_cvref_t<T>>
@@ -198,7 +172,7 @@ namespace metatron::math {
 		template<typename T>
 		requires std::is_same_v<std::remove_cvref_t<T>, Transform>
 		auto operator^(T&& rhs) const -> Chain {
-			return Chain{*this} ^ rhs;
+			return std::move(Chain{*this} ^ rhs);
 		}
 	};
 }

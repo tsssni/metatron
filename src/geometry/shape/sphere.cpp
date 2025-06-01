@@ -14,6 +14,7 @@ namespace metatron::shape {
 
 	auto Sphere::operator()(
 		math::Ray const& r,
+		math::Vector<f32, 3> const& np,
 		usize idx
 	) const -> std::optional<Interaction> {
 		auto a = math::dot(r.d, r.d);

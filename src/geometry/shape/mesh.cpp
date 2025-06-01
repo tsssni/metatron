@@ -1,6 +1,6 @@
 #include <metatron/geometry/shape/mesh.hpp>
 #include <metatron/core/math/transform.hpp>
-
+#include <metatron/core/math/distribution/bilinear.hpp>
 namespace metatron::shape {
 	auto Mesh::bounding_box(usize idx) const -> math::Bounding_Box {
 		auto prim = indices[idx];
@@ -11,18 +11,21 @@ namespace metatron::shape {
 
 	auto Mesh::operator()(
 		math::Ray const& r,
+		math::Vector<f32, 3> const& np,
 		usize idx
 	) const -> std::optional<Interaction> {
 		auto T = math::Matrix<f32, 4, 4>{math::Transform{-r.o}};
 		auto P = math::Matrix<f32, 4, 4>{1.f};
-		auto S = math::Matrix<f32, 4, 4>{
-			{1.f, 0.f, -r.d[0] / r.d[2], 0.f,},
-			{0.f, 1.f, -r.d[1] / r.d[2], 0.f,},
-			{0.f, 1.f, -1.f / r.d[2], 0.f,},
-			{0.f, 0.f, 0.f, 1.f,},
-		};
 		
 		std::swap(P[2], P[math::maxi(r.d)]);
+		auto d = P | math::expand(r.d, 0.f);
+		auto S = math::Matrix<f32, 4, 4>{
+			{1.f, 0.f, -d[0] / d[2], 0.f,},
+			{0.f, 1.f, -d[1] / d[2], 0.f,},
+			{0.f, 1.f, -1.f / d[2], 0.f,},
+			{0.f, 0.f, 0.f, 1.f,},
+		};
+
 		auto prim = indices[idx];
 		auto local_to_shear = S | P | T;
 		auto v = math::Vector<math::Vector<f32, 4>, 3>{
@@ -44,7 +47,7 @@ namespace metatron::shape {
 			ef({0.f}, v[0], v[1]),
 		};
 		auto det = math::sum(e);
-		auto b = math::guarded_div(e, det);
+		auto bary = math::guarded_div(e, det);
 
 		if (false
 		|| std::abs(det) < math::epsilon<f32>
@@ -54,27 +57,78 @@ namespace metatron::shape {
 			return {};
 		}
 
+		auto p = blerp(vertices, bary, idx);
+		auto n = math::normalize(blerp(normals, bary, idx));
+		auto uv = blerp(uvs, bary, idx);
 		auto t = math::guarded_div(math::blerp(v, e)[2], det);
 		if (std::abs(t) < math::epsilon<f32>) {
 			return {};
 		}
 
+		auto a = math::normalize(vertices[prim[0]] - r.o);
+		auto b = math::normalize(vertices[prim[1]] - r.o);
+		auto c = math::normalize(vertices[prim[2]] - r.o);
+
+		auto n_ab = math::normalize(math::cross(b, a));
+		auto n_bc = math::normalize(math::cross(c, b));
+		auto n_ca = math::normalize(math::cross(a, c));
+
+		auto alpha = math::angle(n_ab, -n_ca);
+		auto beta = math::angle(n_bc, -n_ab);
+		auto gamma = math::angle(n_ca, -n_bc);
+
+		auto c_2 = r.d;
+		auto c_1 = math::normalize(math::cross(math::cross(b, c_2), math::cross(c, a)));
+		if (math::dot(c_1, a + c) < 0.f) {
+			c_1 *= -1.f;
+		}
+
+		auto u = math::Vector<f32, 2>{};
+		auto pdf = 1.f;
+		u[1] = math::guarded_div(1.f - math::dot(b, c_2), (1.f - math::dot(b, c_1)));
+		pdf = math::guarded_div(pdf, 1.f - math::dot(b, c_1));
+		if (math::dot(a, c_1) > 0.99999847691f) {/* 0.1 degrees */
+			u[0] = 0.f;
+		} else {
+			auto n_bc1 = math::normalize(math::cross(c_1, b));
+			auto n_c1a = math::normalize(math::cross(a, c_1));
+			auto A = alpha + beta + gamma - math::pi;
+			pdf = math::guarded_div(pdf, A);
+
+			if (math::length(n_bc1) < math::epsilon<f32> || math::length(n_c1a) < math::epsilon<f32>) {
+				u = {0.5f};
+			} else {
+				auto A_1 = alpha + math::angle(n_bc1, -n_ab) + math::angle(n_c1a, -n_bc1) - math::pi;
+				u[1] = math::guarded_div(A_1, A);
+			}
+		}
+
+		if (np != math::Vector<f32, 3>{0.f}) {
+			auto distr = math::Bilinear_Distribution{
+				math::dot(np, b),
+				math::dot(np, a),
+				math::dot(np, b),
+				math::dot(np, c),
+			};
+			pdf *= distr.pdf(u);
+		}
+
 		return shape::Interaction{
-			blerp(vertices, b, idx),
-			math::normalize(blerp(normals, b, idx)),
-			blerp(uvs, b, idx),
+			p,
+			n,
+			uv,
 			t,
 			dpdu[idx],
 			dpdv[idx],
 			dndu[idx],
 			dndv[idx],
-			1.f
+			pdf,
 		};
 	}
 
 	auto Mesh::sample(
 		eval::Context const& ctx,
-		math::Vector<f32, 2> const& u,
+		math::Vector<f32, 2> const& u_0,
 		usize idx
 	) const -> std::optional<Interaction> {
 		auto prim = indices[idx];
@@ -92,9 +146,9 @@ namespace metatron::shape {
 			return {};
 		}
 
-		auto n_ab = math::normalize(math::cross(a, b));
-		auto n_bc = math::normalize(math::cross(b, c));
-		auto n_ca = math::normalize(math::cross(c, a));
+		auto n_ab = math::normalize(math::cross(b, a));
+		auto n_bc = math::normalize(math::cross(c, b));
+		auto n_ca = math::normalize(math::cross(a, c));
 		if (false
 		|| validate_vector(n_ab)
 		|| validate_vector(n_bc)
@@ -105,6 +159,19 @@ namespace metatron::shape {
 		auto alpha = math::angle(n_ab, -n_ca);
 		auto beta = math::angle(n_bc, -n_ab);
 		auto gamma = math::angle(n_ca, -n_bc);
+
+		auto pdf = 1.f;
+		auto u = u_0;
+		if (ctx.n != math::Vector<f32, 3>{0.f}) {
+			auto distr = math::Bilinear_Distribution{
+				math::dot(ctx.n, b),
+				math::dot(ctx.n, a),
+				math::dot(ctx.n, b),
+				math::dot(ctx.n, c),
+			};
+			u = distr.sample(u_0);
+			pdf *= distr.pdf(u);
+		}
 
 		auto A_pi = alpha + beta + gamma;
 		auto A_1_pi = std::lerp(math::pi, A_pi, u[0]);
@@ -117,9 +184,10 @@ namespace metatron::shape {
 
 		auto k_1 = cos_p + cos_a;
 		auto k_2 = sin_p - sin_a * dot(a, b);
-		auto cos_ac1 = 1.f
-			* (k_2 + (k_2 * cos_p - k_1 * sin_p) * cos_a)
-			/ ((k_2 * sin_p + k_1 * cos_p) * sin_a);
+		auto cos_ac1 = math::guarded_div(
+			k_2 + (k_2 * cos_p - k_1 * sin_p) * cos_a,
+			(k_2 * sin_p + k_1 * cos_p) * sin_a
+		);
 		auto sin_ac1 = math::sqrt(1.f - cos_ac1 * cos_ac1);
 		auto c_1 = cos_ac1 * a + sin_ac1 * math::normalize(math::gram_schmidt(c, a));
 
@@ -156,7 +224,10 @@ namespace metatron::shape {
 			dpdv[idx],
 			dndu[idx],
 			dndv[idx],
-			1.f,
+			math::guarded_div(
+				math::guarded_div(pdf, (A_pi - math::pi)),
+				(1.f - cos_bc1)
+			),
 		};
 	}
 

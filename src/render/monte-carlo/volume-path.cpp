@@ -133,9 +133,9 @@ namespace metatron::mc {
 						auto& div = *div_opt.value();
 
 						auto& lt = *div.local_to_world;
-						auto lr = lt ^ rt ^ direct_ctx.r;
+						auto l_ctx = lt ^ rt ^ direct_ctx;
 
-						intr_opt = (*div.shape)(lr);
+						intr_opt = (*div.shape)(l_ctx.r, l_ctx.n, div.primitive);
 						if (!intr_opt) {
 							terminated = true;
 							continue;
@@ -222,8 +222,8 @@ namespace metatron::mc {
 				if (div_opt) {
 					auto div = div_opt.value();
 					auto& lt = *div->local_to_world;
-					auto r = lt ^ (rt ^ trace_ctx.r);
-					intr_opt = (*div->shape)(r, div->primitive);
+					auto s_ctx = lt ^ rt ^ trace_ctx;
+					intr_opt = (*div->shape)(s_ctx.r, s_ctx.n, div->primitive);
 				}
 			}
 
