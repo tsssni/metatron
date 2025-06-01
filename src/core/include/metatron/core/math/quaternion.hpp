@@ -15,30 +15,18 @@ namespace metatron::math {
 			auto half_angle = angle * T{0.5};
 			auto sin_half = std::sin(half_angle);
 			auto cos_half = std::cos(half_angle);
-			auto normalized_axis = normalize(axis);
 			return Quaternion{
-				normalized_axis[0] * sin_half,
-				normalized_axis[1] * sin_half,
-				normalized_axis[2] * sin_half,
+				axis[0] * sin_half,
+				axis[1] * sin_half,
+				axis[2] * sin_half,
 				cos_half
 			};
 		}
 
 		auto static from_rotation_between(Vector<T, 3> const& from, Vector<T, 3> const& to) -> Quaternion<T> {
-			auto from_normalized = normalize(from);
-			auto to_normalized = normalize(to);
-			
-			auto cos_theta = dot(from_normalized, to_normalized);
-			
-			// if parallel
-			if (std::abs(cos_theta) > T{0.9999}) {
-				return Quaternion<T>{};
-			}
-			
-			auto rotation_axis = cross(from, to);
-			auto angle = std::acos(cos_theta);
-			
-			return from_axis_angle(rotation_axis, angle);
+			auto axis = cross(from, to);
+			auto rad = angle(from, to);
+			return from_axis_angle(axis, rad);
 		}
 
 		auto operator[](usize idx) -> T& {
@@ -96,6 +84,8 @@ namespace metatron::math {
     template<typename T>
     requires std::floating_point<T>
 	auto slerp(Quaternion<T> const& q0, Quaternion<T> const& q1, T const& t) -> Quaternion<T> {
+		// quaternion fits x^2 + y^2 + z^2 + w^2 = 1, so it's 4D sphere which could use slerp
+
 		auto q0v = Vector<T, 4>{q0};
 		auto q1v = Vector<T, 4>{q1};
 		auto cos_theta = dot(q0v, q1v);
@@ -112,7 +102,7 @@ namespace metatron::math {
 			cos_theta = -cos_theta;
 		}
 
-		auto theta = std::acos(cos_theta);
+		auto theta = angle(q0v, q1v_adj);
 		auto sin_theta = std::sin(theta);
 		
 		auto scale1 = std::sin((T{1} - t) * theta) / sin_theta;

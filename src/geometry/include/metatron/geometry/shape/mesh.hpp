@@ -17,6 +17,25 @@ namespace metatron::shape {
 		auto static from_path(std::string_view path) -> std::unique_ptr<Mesh>;
 
 	private:
+		template<typename T>
+		auto blerp(
+			std::vector<T> const& traits,
+			math::Vector<f32, 3> const& b,
+			usize idx
+		) const -> T {
+			if (traits.empty()) {
+				return {};
+			}
+			auto prim = indices[idx];
+			return math::blerp(
+				math::Vector<T, 3>{
+					traits[prim[0]],
+					traits[prim[1]],
+					traits[prim[2]],
+				}, b
+			);
+		}
+
 		std::vector<math::Vector<usize, 3>> indices;
 
 		std::vector<math::Vector<f32, 3>> vertices;

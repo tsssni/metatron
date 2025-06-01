@@ -69,6 +69,17 @@ namespace metatron::math {
 
 	template<typename T, usize size>
 	requires std::floating_point<T>
+	auto angle(Vector<T, size> const& x, Vector<T, size> const& y) -> T {
+		// compute theta / 2 to avoid round-off error
+		if (dot(x, y) < 0.f) {
+			return pi - 2.f * std::asin(length(-y - x)/2);
+		} else {
+			return 2.f * std::asin(length(y - x) / 2);
+		}
+	}
+
+	template<typename T, usize size>
+	requires std::floating_point<T>
 	auto normalize(Vector<T, size> const& x) -> Vector<T, size> {
 		return guarded_div(x, length(x));
 	}
@@ -232,7 +243,13 @@ namespace metatron::math {
 
 	template<typename T, typename U, usize size>
 	requires std::floating_point<U>
-	auto lerp(Vector<T, size> const& x, Vector<U, size> const& b) -> T {
+	auto blerp(Vector<T, size> const& x, Vector<U, size> const& b) -> T {
 		return sum(mul(x, b));
+	}
+
+	template<typename T, usize size>
+	requires std::floating_point<T>
+	auto gram_schmidt(Vector<T, size> const& y, Vector<T, size> const& x) -> Vector<T, size> {
+		return y - x * dot(x, y);
 	}
 }

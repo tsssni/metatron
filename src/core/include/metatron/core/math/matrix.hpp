@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <span>
+#include <tuple>
 #include <cassert>
 #include <cmath>
 
@@ -328,6 +329,18 @@ namespace metatron::math {
 			return data;
 		};
 
+		template<usize I>
+		auto constexpr get() const -> Element const& {
+			static_assert(I < first_dim, "index out of bounds");
+			return data[I];
+		}
+
+		template<usize I>
+		auto constexpr get() -> Element& {
+			static_assert(I < first_dim, "index out of bounds");
+			return data[I];
+		}
+
 	private:
 		std::array<Element, first_dim> data{};
 
@@ -336,22 +349,34 @@ namespace metatron::math {
 	};
 
 	template<typename T, usize... dims>
-	auto inline constexpr operator+(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
+	auto constexpr operator+(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
 		return rhs + lhs;
 	}
 
 	template<typename T, usize... dims>
-	auto inline constexpr operator-(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
+	auto constexpr operator-(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
 		return -rhs + lhs;
 	}
 
 	template<typename T, usize... dims>
-	auto inline constexpr operator*(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
+	auto constexpr operator*(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
 		return rhs * lhs;
 	}
 
+	template<usize I, typename T, usize first_dim, usize... rest_dims>
+	auto inline constexpr get(Matrix<T, first_dim, rest_dims...> const& m) 
+		-> typename Matrix<T, first_dim, rest_dims...>::Element const& {
+		return m.template get<I>();
+	}
+
+	template<usize I, typename T, usize first_dim, usize... rest_dims>
+	auto constexpr get(Matrix<T, first_dim, rest_dims...>& m) 
+		-> typename Matrix<T, first_dim, rest_dims...>::Element& {
+		return m.template get<I>();
+	}
+
 	template<typename T, usize h, usize w>
-	auto inline constexpr transpose(Matrix<T, h, w> const& m) -> Matrix<T, w, h> {
+	auto constexpr transpose(Matrix<T, h, w> const& m) -> Matrix<T, w, h> {
 		auto result = Matrix<T, w, h>{};
 		for (auto i = 0; i < w; i++) {
 			for (auto j = 0; j < h; j++) {
@@ -363,7 +388,7 @@ namespace metatron::math {
 
 	template<typename T, usize n>
 	requires std::floating_point<T>
-	auto inline constexpr determinant(Matrix<T, n, n> const& m) -> T {
+	auto constexpr determinant(Matrix<T, n, n> const& m) -> T {
 		if constexpr (n == 1) {
 			return m[0][0];
 		} else if constexpr (n == 2) {
@@ -412,7 +437,7 @@ namespace metatron::math {
 
 	template<typename T, usize h>
 	requires std::floating_point<T>
-	auto inline constexpr inverse(Matrix<T, h, h> const& m) -> Matrix<T, h, h> {
+	auto constexpr inverse(Matrix<T, h, h> const& m) -> Matrix<T, h, h> {
 		auto augmented = Matrix<T, h, h * 2>{};
 		for (usize i = 0; i < h; i++) {
 			for (usize j = 0; j < h; j++) {
@@ -461,8 +486,44 @@ namespace metatron::math {
 
 	template<typename T, usize h, usize w>
 	requires std::floating_point<T>
-	auto inline constexpr least_squares(Matrix<T, h, w> const& a, Matrix<T, h> const& b) -> Matrix<T, w> {
+	auto constexpr least_squares(Matrix<T, h, w> const& a, Matrix<T, h> const& b) -> Matrix<T, w> {
 		auto a_t = math::transpose(a);
 		return math::inverse(a_t | a) | (a_t | b);
 	}
+
+	template<typename T, usize n>
+	requires std::floating_point<T>
+	auto constexpr cramer(
+		Matrix<T, n, n> const& a, 
+		Matrix<T, n> const& b
+	) -> Matrix<T, n> {
+		T det_a = determinant(a);
+		if (std::abs(det_a) >= std::numeric_limits<T>::epsilon()) {
+			return Matrix<T, n>{T{0}};
+		}
+		
+		auto result = Matrix<T, n>{};
+		for (usize i = 0; i < n; i++) {
+			auto a_i = a;
+			for (usize j = 0; j < n; j++) {
+				a_i[j][i] = b[j];
+			}
+			result[i] = determinant(a_i) / det_a;
+		}
+		
+		return result;
+	}
 }
+
+namespace std {
+	using namespace metatron;
+
+	template<typename T, usize first_dim, usize... rest_dims>
+	struct tuple_size<math::Matrix<T, first_dim, rest_dims...>> 
+		: std::integral_constant<size_t, first_dim> {};
+
+	template<size_t I, typename T, usize first_dim, usize... rest_dims>
+	struct tuple_element<I, math::Matrix<T, first_dim, rest_dims...>> {
+		using type = typename math::Matrix<T, first_dim, rest_dims...>::Element;
+	};
+};
