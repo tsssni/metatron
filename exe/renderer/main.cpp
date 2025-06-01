@@ -47,7 +47,7 @@ auto main() -> int {
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
 	auto spp = 16uz;
 	auto blocks = 8uz;
-	auto depth = 10uz;
+	auto depth = 100uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
@@ -68,7 +68,7 @@ auto main() -> int {
 	auto sampler = math::Halton_Sampler{rd()};
 
 	auto identity = math::Transform{};
-	auto world_to_render = math::Transform{{0.f, 0.f, 5.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 200.f}};
 	auto render_to_camera = identity;
 
 	auto sphere_to_world = math::Transform{{}, {1.f}};
@@ -181,7 +181,7 @@ auto main() -> int {
 		{&parallel_light, &parallel_to_world},
 		// {&point_light, &point_to_world},
 		// {&spot_light, &spot_to_world},
-		{&area_light, &sphere_to_world}
+		// {&area_light, &sphere_to_world}
 	};
 	auto inf_lights = std::vector<emitter::Divider>{
 		{&const_env_light, &light_to_world},
@@ -190,28 +190,28 @@ auto main() -> int {
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
 	auto bvh = accel::LBVH{{
-		// {
-		// 	&sphere,
-		// 	&cloud_medium,
-		// 	&vaccum_medium,
-		// 	&interface_material,
-		// 	nullptr,
-		// 	&bound_to_world,
-		// 	&medium_to_world,
-		// 	&identity,
-		// 	0uz
-		// },
 		{
 			&sphere,
+			&cloud_medium,
 			&vaccum_medium,
-			&vaccum_medium,
-			&diffuse_material,
-			&area_light,
-			&sphere_to_world,
-			&identity,
+			&interface_material,
+			nullptr,
+			&bound_to_world,
+			&medium_to_world,
 			&identity,
 			0uz
 		},
+		// {
+		// 	&sphere,
+		// 	&vaccum_medium,
+		// 	&vaccum_medium,
+		// 	&diffuse_material,
+		// 	&area_light,
+		// 	&sphere_to_world,
+		// 	&identity,
+		// 	&identity,
+		// 	0uz
+		// },
 	}};
 
 	auto integrator = mc::Volume_Path_Integrator{};

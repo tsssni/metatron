@@ -65,9 +65,8 @@ namespace metatron::mc {
 				OPTIONAL_OR_BREAK(e_intr, emitter.sample(direct_ctx, sampler.generate_1d()));
 				auto& lt = *e_intr.divider->local_to_world;
 
-				direct_ctx = lt ^ (rt ^ direct_ctx);
-				OPTIONAL_OR_BREAK(l_intr, e_intr.divider->light->sample(direct_ctx, sampler.generate_2d()));
-				direct_ctx = rt | (lt | direct_ctx);
+				auto l_ctx = lt ^ (rt ^ direct_ctx);
+				OPTIONAL_OR_BREAK(l_intr, e_intr.divider->light->sample(l_ctx, sampler.generate_2d()));
 
 				// transformation may contain non-uniform scaling
 				l_intr.wi = math::normalize(rt | (lt | math::expand(l_intr.wi, 0.f)));
@@ -179,13 +178,12 @@ namespace metatron::mc {
 					auto& intr = intr_opt.value();
 
 					auto& mt = *medium_to_world;
-					direct_ctx = mt ^ (rt ^ direct_ctx);
-					OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(direct_ctx, intr.t, sampler.generate_1d()), {
+					auto m_ctx = mt ^ (rt ^ direct_ctx);
+					OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
 						betad = 0.f;
 						terminated = true;
 						break;
 					});
-					direct_ctx = rt | (mt | direct_ctx);
 					m_intr.p = rt | (mt | math::expand(m_intr.p, 1.f));
 					l_intr.t -= m_intr.t;
 
@@ -233,9 +231,8 @@ namespace metatron::mc {
 				OPTIONAL_OR_CONTINUE(e_intr, emitter.sample_infinite(trace_ctx, sampler.generate_1d()));
 				auto& lt = *e_intr.divider->local_to_world;
 
-				trace_ctx = lt ^ (rt ^ trace_ctx);
-				OPTIONAL_OR_CONTINUE(l_intr, (*e_intr.divider->light)(trace_ctx));
-				trace_ctx = rt | (lt | trace_ctx);
+				auto l_ctx = lt ^ (rt ^ trace_ctx);
+				OPTIONAL_OR_CONTINUE(l_intr, (*e_intr.divider->light)(l_ctx));
 
 				auto p_e = e_intr.pdf * l_intr.pdf;
 				mis_e *= math::guarded_div(p_e, scatter_pdf);
@@ -253,12 +250,11 @@ namespace metatron::mc {
 			}
 
 			auto& mt = *ctx.medium_to_world;
-			trace_ctx = mt ^ (rt ^ trace_ctx);
-			OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(trace_ctx, intr.t, sampler.generate_1d()), {
+			auto m_ctx = mt ^ (rt ^ trace_ctx);
+			OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
 				terminated = true;
 				continue;
 			});
-			trace_ctx = rt | (mt | trace_ctx);
 			m_intr.p = rt | (mt | math::expand(m_intr.p, 1.f));
 
 			auto hit = m_intr.t >= intr.t;
@@ -287,12 +283,11 @@ namespace metatron::mc {
 					auto pt = math::Transform{};
 					pt.config.rotation = math::Quaternion<f32>::from_rotation_between(-trace_ctx.r.d, {0.f, 1.f, 0.f});
 
-					trace_ctx = pt | trace_ctx;
-					OPTIONAL_OR_CALLBACK(p_intr, phase->sample(trace_ctx, sampler.generate_2d()), {
+					auto p_ctx = pt | trace_ctx;
+					OPTIONAL_OR_CALLBACK(p_intr, phase->sample(p_ctx, sampler.generate_2d()), {
 						terminated = true;
 						continue;
 					});
-					trace_ctx = pt ^ trace_ctx;
 					p_intr.wi = pt ^ math::expand(p_intr.wi, 0.f);
 
 					beta *= m_intr.sigma_s / p_s * p_intr.f / p_intr.pdf;
@@ -375,21 +370,20 @@ namespace metatron::mc {
 			auto uc = sampler.generate_1d();
 			auto u = sampler.generate_2d();
 
-			trace_ctx = bt | trace_ctx;
-			OPTIONAL_OR_CALLBACK(b_intr, bsdf->sample(trace_ctx, {uc, u[0], u[1]}), {
+			auto b_ctx = bt | trace_ctx;
+			OPTIONAL_OR_CALLBACK(b_intr, bsdf->sample(b_ctx, {uc, u[0], u[1]}), {
 				terminated = true;
 				continue;
 			});
 
 			auto flip_n = 1.f;
-			if (-trace_ctx.r.d[1] * b_intr.wi[1] < 0.f) {
+			if (-b_ctx.r.d[1] * b_intr.wi[1] < 0.f) {
 				auto into = math::dot(b_intr.wi, intr.n) < 0.f;
 				ctx.medium = into ? div.interior_medium : div.exterior_medium;
 				ctx.medium_to_world = into ? div.interior_transform : div.exterior_transform;
 				flip_n = into ? -1.f : 1.f;
 			}
 
-			trace_ctx = bt ^ trace_ctx;
 			b_intr.wi = bt ^ math::expand(b_intr.wi, 0.f);
 			auto trace_n = flip_n * intr.n;
 			auto trace_p = intr.p + 0.001f * trace_n;
