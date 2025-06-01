@@ -47,7 +47,7 @@ auto main() -> int {
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
 	auto spp = 16uz;
 	auto blocks = 8uz;
-	auto depth = 100uz;
+	auto depth = 10uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
