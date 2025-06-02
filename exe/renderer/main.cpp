@@ -27,6 +27,7 @@
 #include <metatron/geometry/material/diffuse.hpp>
 #include <metatron/geometry/material/interface.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
+#include <metatron/geometry/shape/mesh.hpp>
 #include <metatron/volume/media/homogeneous.hpp>
 #include <metatron/volume/media/vaccum.hpp>
 #include <metatron/volume/media/grid.hpp>
@@ -71,7 +72,10 @@ auto main() -> int {
 	auto world_to_render = math::Transform{{0.f, 0.f, 200.f}};
 	auto render_to_camera = identity;
 
-	auto sphere_to_world = math::Transform{{}, {1.f}};
+	auto sphere_to_world = math::Transform{{}, {40.f}};
+	auto mesh_to_world = math::Transform{{}, {40.f},
+		math::Quaternion<f32>::from_axis_angle({1.f, 0.f, 0.f}, math::pi * 1.4f / 3.f),
+	};
 	auto bound_to_world = math::Transform{{}, {100.f}};
 	auto medium_to_world = math::Transform{{}, {0.2f},
 		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 2.f),
@@ -96,6 +100,12 @@ auto main() -> int {
 	};
 
 	auto sphere = shape::Sphere{};
+	auto mesh = shape::Mesh{
+		{{0, 1, 2}},
+		{{-1, -1, 0}, {0, 1, 0}, {1, -1, 0}},
+		{{0, 0, -1}, {0, 0, -1}, {0, 0, -1}},
+		{{1, 0}, {0, 0}, {0, 1}},
+	};
 	auto diffuse_material = material::Diffuse_Material{
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
 			color::Color_Space::sRGB->to_spectrum(
@@ -111,7 +121,7 @@ auto main() -> int {
 		),
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
 			color::Color_Space::sRGB->to_spectrum(
-				{0.0f, 0.6f, 1.0f},
+				{0.0f, 0.0f, 0.0f},
 				color::Color_Space::Spectrum_Type::illuminant
 			)
 		)
@@ -190,17 +200,17 @@ auto main() -> int {
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
 	auto bvh = accel::LBVH{{
-		{
-			&sphere,
-			&cloud_medium,
-			&vaccum_medium,
-			&interface_material,
-			nullptr,
-			&bound_to_world,
-			&medium_to_world,
-			&identity,
-			0uz
-		},
+		// {
+		// 	&sphere,
+		// 	&cloud_medium,
+		// 	&vaccum_medium,
+		// 	&interface_material,
+		// 	nullptr,
+		// 	&bound_to_world,
+		// 	&medium_to_world,
+		// 	&identity,
+		// 	0uz
+		// },
 		// {
 		// 	&sphere,
 		// 	&vaccum_medium,
@@ -212,6 +222,18 @@ auto main() -> int {
 		// 	&identity,
 		// 	0uz
 		// },
+		{
+			&mesh,
+			&vaccum_medium,
+			&vaccum_medium,
+			&diffuse_material,
+			&area_light,
+			&mesh_to_world,
+			&identity,
+			&identity,
+			0uz
+		},
+
 	}};
 
 	auto integrator = mc::Volume_Path_Integrator{};
@@ -237,6 +259,10 @@ auto main() -> int {
 				auto px = start + math::morton_decode(p);
 				if (px >= size) {
 					continue;
+				}
+
+				if (px == math::Vector<usize, 2>{150, 100}) {
+					int a = 1;
 				}
 
 				for (auto n = 0uz; n < spp; n++) {

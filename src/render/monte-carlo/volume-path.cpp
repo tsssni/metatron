@@ -62,14 +62,14 @@ namespace metatron::mc {
 				}
 
 				auto direct_ctx = trace_ctx;
-				OPTIONAL_OR_BREAK(e_intr, emitter.sample(direct_ctx, sampler.generate_1d()));
+				METATRON_OPT_OR_BREAK(e_intr, emitter.sample(direct_ctx, sampler.generate_1d()));
 				auto& lt = *e_intr.divider->local_to_world;
 
 				auto l_ctx = lt ^ rt ^ direct_ctx;
-				OPTIONAL_OR_BREAK(l_intr, e_intr.divider->light->sample(l_ctx, sampler.generate_2d()));
+				METATRON_OPT_OR_BREAK(l_intr, e_intr.divider->light->sample(l_ctx, sampler.generate_2d()));
 
 				// transformation may contain non-uniform scaling
-				l_intr.wi = math::normalize(rt | (lt | math::expand(l_intr.wi, 0.f)));
+				l_intr.wi = math::normalize(rt | lt | math::expand(l_intr.wi, 0.f));
 				direct_ctx.r.d = l_intr.wi;
 				auto p_e = e_intr.pdf * l_intr.pdf;
 				if (std::abs(p_e) < math::epsilon<f32>) {
@@ -85,11 +85,11 @@ namespace metatron::mc {
 					};
 					auto wo = t | math::expand(history_trace_ctx.r.d, 0.f);
 					auto wi = t | math::expand(l_intr.wi, 0.f);
-					OPTIONAL_OR_BREAK(b_intr, (*bsdf)(wo, wi, L_e));
+					METATRON_OPT_OR_BREAK(b_intr, (*bsdf)(wo, wi, L_e));
 					f = b_intr.f * std::abs(math::dot(l_intr.wi, direct_ctx.n));
 					p_s = b_intr.pdf;
 				} else if (phase) {
-					OPTIONAL_OR_BREAK(p_intr, (*phase)(history_trace_ctx.r.d, l_intr.wi, L_e));
+					METATRON_OPT_OR_BREAK(p_intr, (*phase)(history_trace_ctx.r.d, l_intr.wi, L_e));
 					f = p_intr.f;
 					p_s = p_intr.pdf;
 				} else {
@@ -113,7 +113,7 @@ namespace metatron::mc {
 						break;
 					}
 
-					if (spectra::max(beta * math::guarded_div(1.f, spectra::avg(mis_s + mis_e))) < 0.05f) {
+					if (spectra::max(betad * math::guarded_div(1.f, spectra::avg(mis_sd + mis_ed))) < 0.05f) {
 						auto q = 0.25f;
 						if (sampler.generate_1d() > q) {
 							betad = 0.f;
@@ -160,9 +160,9 @@ namespace metatron::mc {
 							auto local_differential = lt ^ rt ^ rd;
 							auto tangent = shape::Plane{intr.p, intr.n};
 							#define DIRECT_CLEAR_L { terminated = true; l_intr.L = 0.f; continue; }
-							OPTIONAL_OR_CALLBACK(d_intr, tangent(local_differential.r), DIRECT_CLEAR_L);
-							OPTIONAL_OR_CALLBACK(dx_intr, tangent(local_differential.rx), DIRECT_CLEAR_L);
-							OPTIONAL_OR_CALLBACK(dy_intr, tangent(local_differential.ry), DIRECT_CLEAR_L);
+							METATRON_OPT_OR_CALLBACK(d_intr, tangent(local_differential.r), DIRECT_CLEAR_L);
+							METATRON_OPT_OR_CALLBACK(dx_intr, tangent(local_differential.rx), DIRECT_CLEAR_L);
+							METATRON_OPT_OR_CALLBACK(dy_intr, tangent(local_differential.ry), DIRECT_CLEAR_L);
 							
 							auto dpdx = dx_intr.p - d_intr.p;
 							auto dpdy = dy_intr.p - d_intr.p;
@@ -171,7 +171,7 @@ namespace metatron::mc {
 							auto duvdy = math::least_squares(dpduv, dpdy);
 
 							auto tcoord = material::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
-							OPTIONAL_OR_CALLBACK(mat_intr, div.material->sample(direct_ctx, tcoord), DIRECT_CLEAR_L);
+							METATRON_OPT_OR_CALLBACK(mat_intr, div.material->sample(direct_ctx, tcoord), DIRECT_CLEAR_L);
 							l_intr.L = mat_intr.L;
 						}
 					}
@@ -181,7 +181,7 @@ namespace metatron::mc {
 
 					auto& mt = *medium_to_world;
 					auto m_ctx = mt ^ (rt ^ direct_ctx);
-					OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
+					METATRON_OPT_OR_CALLBACK(m_intr, ctx.medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
 						betad = 0.f;
 						terminated = true;
 						break;
@@ -230,11 +230,11 @@ namespace metatron::mc {
 			if (!intr_opt) {
 				terminated = true;
 
-				OPTIONAL_OR_CONTINUE(e_intr, emitter.sample_infinite(trace_ctx, sampler.generate_1d()));
+				METATRON_OPT_OR_CONTINUE(e_intr, emitter.sample_infinite(trace_ctx, sampler.generate_1d()));
 				auto& lt = *e_intr.divider->local_to_world;
 
 				auto l_ctx = lt ^ rt ^ trace_ctx;
-				OPTIONAL_OR_CONTINUE(l_intr, (*e_intr.divider->light)(l_ctx));
+				METATRON_OPT_OR_CONTINUE(l_intr, (*e_intr.divider->light)(l_ctx));
 
 				auto p_e = e_intr.pdf * l_intr.pdf;
 				mis_e *= math::guarded_div(p_e, scatter_pdf);
@@ -253,7 +253,7 @@ namespace metatron::mc {
 
 			auto& mt = *ctx.medium_to_world;
 			auto m_ctx = mt ^ rt ^ trace_ctx;
-			OPTIONAL_OR_CALLBACK(m_intr, ctx.medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
+			METATRON_OPT_OR_CALLBACK(m_intr, ctx.medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
 				terminated = true;
 				continue;
 			});
@@ -287,7 +287,7 @@ namespace metatron::mc {
 					};
 
 					auto p_ctx = pt | trace_ctx;
-					OPTIONAL_OR_CALLBACK(p_intr, phase->sample(p_ctx, sampler.generate_2d()), {
+					METATRON_OPT_OR_CALLBACK(p_intr, phase->sample(p_ctx, sampler.generate_2d()), {
 						terminated = true;
 						continue;
 					});
@@ -327,9 +327,9 @@ namespace metatron::mc {
 			
 			auto local_differential = lt ^ rt ^ ctx.ray_differential;
 			auto tangent = shape::Plane{intr.p, intr.n};
-			OPTIONAL_OR_BREAK(d_intr, tangent(local_differential.r));
-			OPTIONAL_OR_BREAK(dx_intr, tangent(local_differential.rx));
-			OPTIONAL_OR_BREAK(dy_intr, tangent(local_differential.ry));
+			METATRON_OPT_OR_BREAK(d_intr, tangent(local_differential.r));
+			METATRON_OPT_OR_BREAK(dx_intr, tangent(local_differential.rx));
+			METATRON_OPT_OR_BREAK(dy_intr, tangent(local_differential.ry));
 			
 			auto dpdx = dx_intr.p - d_intr.p;
 			auto dpdy = dy_intr.p - d_intr.p;
@@ -338,7 +338,7 @@ namespace metatron::mc {
 			auto duvdy = math::least_squares(dpduv, dpdy);
 
 			auto tcoord = material::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
-			OPTIONAL_OR_CALLBACK(mat_intr, div.material->sample(trace_ctx, tcoord), {
+			METATRON_OPT_OR_CALLBACK(mat_intr, div.material->sample(trace_ctx, tcoord), {
 				scattered = false;
 				crossed = true;
 				history_trace_ctx = trace_ctx;
@@ -359,7 +359,7 @@ namespace metatron::mc {
 					break;
 				}
 
-				OPTIONAL_OR_BREAK(e_intr, emitter(trace_ctx, {div.light, div.local_to_world}));
+				METATRON_OPT_OR_BREAK(e_intr, emitter(trace_ctx, {div.light, div.local_to_world}));
 				auto& div = *e_intr.divider;
 				auto& lt = *div.local_to_world;
 
@@ -376,7 +376,7 @@ namespace metatron::mc {
 			auto u = sampler.generate_2d();
 
 			auto b_ctx = bt | trace_ctx;
-			OPTIONAL_OR_CALLBACK(b_intr, bsdf->sample(b_ctx, {uc, u[0], u[1]}), {
+			METATRON_OPT_OR_CALLBACK(b_intr, bsdf->sample(b_ctx, {uc, u[0], u[1]}), {
 				terminated = true;
 				continue;
 			});

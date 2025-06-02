@@ -496,19 +496,49 @@ namespace metatron::math {
 	auto constexpr cramer(
 		Matrix<T, n, n> const& a, 
 		Matrix<T, n> const& b
-	) -> Matrix<T, n> {
+	) -> std::optional<Matrix<T, n>> {
 		T det_a = determinant(a);
-		if (std::abs(det_a) >= std::numeric_limits<T>::epsilon()) {
-			return Matrix<T, n>{T{0}};
+		if (std::abs(det_a) < epsilon<T>) {
+			return {};
 		}
-		
+
 		auto result = Matrix<T, n>{};
-		for (usize i = 0; i < n; i++) {
+		for (auto i = 0uz; i < n; i++) {
 			auto a_i = a;
-			for (usize j = 0; j < n; j++) {
+			for (auto j = 0uz; j < n; j++) {
 				a_i[j][i] = b[j];
 			}
 			result[i] = determinant(a_i) / det_a;
+		}
+		
+		return result;
+	}
+
+	template<typename T, usize n, usize m>
+	requires std::floating_point<T>
+	auto constexpr cramer(
+		Matrix<T, n, n> const& a, 
+		Matrix<T, n, m> const& b
+	) -> std::optional<Matrix<T, n, m>> {
+		T det_a = determinant(a);
+		if (std::abs(det_a) < epsilon<T>) {
+			return {};
+		}
+
+		auto result = Matrix<T, n, m>{};
+		if constexpr (n == 2) {
+			result[0] = (a[1][1] * b[0] - a[0][1] * b[1]) / det_a;
+			result[1] = (a[1][0] * b[0] - a[0][0] * b[1]) / det_a;
+		} else {
+			for (auto i = 0uz; i < n; i++) {
+				auto a_i = a;
+				for (auto j = 0uz; j < m; j++) {
+					for (auto k = 0uz; k < n; k++) {
+						a_i[k][i] = b[k][j];
+					}
+					result[i][j] = determinant(a_i) / det_a;
+				}
+			}
 		}
 		
 		return result;

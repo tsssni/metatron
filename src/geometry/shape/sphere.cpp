@@ -67,7 +67,7 @@ namespace metatron::shape {
 			auto p = distr.sample(u);
 			auto dir = math::normalize(p - ctx.r.o);
 
-			OPTIONAL_OR_RETURN(intr, (*this)({ctx.r.o, dir}), {});
+			METATRON_OPT_OR_RETURN(intr, (*this)({ctx.r.o, dir}), {});
 			intr.pdf = distr.pdf();
 			return intr;
 		} else {
@@ -79,7 +79,7 @@ namespace metatron::shape {
 			auto rot = math::Quaternion<f32>::from_rotation_between({0.f, 0.f, 1.f}, dir);
 			sdir = math::rotate(math::expand(sdir, 0.f), rot);
 
-			OPTIONAL_OR_RETURN(intr, (*this)({ctx.r.o, sdir}), {});
+			METATRON_OPT_OR_RETURN(intr, (*this)({ctx.r.o, sdir}), {});
 			intr.pdf = distr.pdf();
 			return intr;
 		}

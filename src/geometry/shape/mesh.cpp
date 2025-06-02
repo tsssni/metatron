@@ -1,7 +1,60 @@
 #include <metatron/geometry/shape/mesh.hpp>
 #include <metatron/core/math/transform.hpp>
 #include <metatron/core/math/distribution/bilinear.hpp>
+#include <metatron/core/stl/optional.hpp>
+
 namespace metatron::shape {
+	Mesh::Mesh(
+		std::vector<math::Vector<usize, 3>>&& indices,
+		std::vector<math::Vector<f32, 3>>&& vertices,
+		std::vector<math::Vector<f32, 3>>&& normals,
+		std::vector<math::Vector<f32, 2>>&& uvs
+	):
+	indices{std::move(indices)},
+	vertices{std::move(vertices)},
+	normals{std::move(normals)},
+	uvs{std::move(uvs)} {
+		dpdu.resize(this->indices.size());
+		dpdv.resize(this->indices.size());
+		dndu.resize(this->indices.size());
+		dndv.resize(this->indices.size());
+
+		for (auto i = 0uz; i < indices.size(); i++) {
+			auto prim = this->indices[i];
+			auto v = math::Vector<math::Vector<f32, 3>, 3>{
+				this->vertices[prim[0]],
+				this->vertices[prim[1]],
+				this->vertices[prim[2]],
+			};
+			auto n = math::Vector<math::Vector<f32, 3>, 3>{
+				this->normals[prim[0]],
+				this->normals[prim[1]],
+				this->normals[prim[2]],
+			};
+			auto uv = math::Vector<math::Vector<f32, 2>, 3>{
+				this->uvs[prim[0]],
+				this->uvs[prim[1]],
+				this->uvs[prim[2]],
+			};
+
+			auto quit = []{
+				std::printf("mesh: degenerate\n");
+				std::abort();
+			};
+			auto A = math::transpose(math::Matrix<f32, 2, 2>{uv[0] - uv[2], uv[1] - uv[2]});
+			METATRON_OPT_OR_CALLBACK(dpduv, math::cramer(A,
+				math::Matrix<f32, 2, 3>{v[0] - v[2], v[1] - v[2]}
+			), { quit(); });
+			METATRON_OPT_OR_CALLBACK(dnduv, math::cramer(A,
+				math::Matrix<f32, 2, 3>{n[0] - n[2], n[1] - n[2]}
+			), { quit(); });
+			dpdu[i] = dpduv[0];
+			dpdv[i] = dpduv[1];
+			dndu[i] = dnduv[0];
+			dndv[i] = dnduv[1];
+		}
+	}
+
 	auto Mesh::bounding_box(usize idx) const -> math::Bounding_Box {
 		auto prim = indices[idx];
 		auto p_min = math::min(vertices[prim[0]], vertices[prim[1]], vertices[prim[2]]);
@@ -17,12 +70,12 @@ namespace metatron::shape {
 		auto T = math::Matrix<f32, 4, 4>{math::Transform{-r.o}};
 		auto P = math::Matrix<f32, 4, 4>{1.f};
 		
-		std::swap(P[2], P[math::maxi(r.d)]);
+		std::swap(P[2], P[math::maxi(math::abs(r.d))]);
 		auto d = P | math::expand(r.d, 0.f);
 		auto S = math::Matrix<f32, 4, 4>{
 			{1.f, 0.f, -d[0] / d[2], 0.f,},
 			{0.f, 1.f, -d[1] / d[2], 0.f,},
-			{0.f, 1.f, -1.f / d[2], 0.f,},
+			{0.f, 0.f, 1.f / d[2], 0.f,},
 			{0.f, 0.f, 0.f, 1.f,},
 		};
 
@@ -61,7 +114,7 @@ namespace metatron::shape {
 		auto n = math::normalize(blerp(normals, bary, idx));
 		auto uv = blerp(uvs, bary, idx);
 		auto t = math::guarded_div(math::blerp(v, e)[2], det);
-		if (std::abs(t) < math::epsilon<f32>) {
+		if (t < math::epsilon<f32>) {
 			return {};
 		}
 
@@ -201,12 +254,11 @@ namespace metatron::shape {
 			vertices[prim[1]],
 			vertices[prim[2]],
 		};
-		auto [t, b_1, b_2] = math::cramer(
-			math::transpose(
-				math::Matrix<f32, 3, 3>{-d, v[1] - v[0], v[2] - v[0]}
-			),
+		METATRON_OPT_OR_RETURN(cramer, math::cramer(
+			math::transpose(math::Matrix<f32, 3, 3>{-d, v[1] - v[0], v[2] - v[0]}),
 			ctx.r.o - v[0]
-		);
+		), {});
+		auto [t, b_1, b_2] = cramer;
 		b_1 = std::clamp(b_1, 0.f, 1.f);
 		b_2 = std::clamp(b_2, 0.f, 1.f);
 		if (b_1 + b_2 > 1.f) {
@@ -232,6 +284,6 @@ namespace metatron::shape {
 	}
 
 	auto Mesh::from_path(std::string_view path) -> std::unique_ptr<Mesh> {
-		return std::make_unique<Mesh>();
+		return {};
 	}
 }

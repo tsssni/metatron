@@ -17,7 +17,7 @@ namespace metatron::light {
 		eval::Context const& ctx,
 		math::Vector<f32, 2> const& u
 	) const -> std::optional<Interaction> {
-		OPTIONAL_OR_RETURN(s_intr, shape->sample(ctx, u, primitive), {});
+		METATRON_OPT_OR_RETURN(s_intr, shape->sample(ctx, u, primitive), {});
 		auto L = ctx.L; L = 0.f; // delay fetching L in integrator material interaction
 		return Interaction{
 			L,

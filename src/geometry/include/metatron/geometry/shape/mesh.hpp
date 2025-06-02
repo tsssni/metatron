@@ -3,6 +3,13 @@
 
 namespace metatron::shape {
 	struct Mesh final: Shape {
+		Mesh(
+			std::vector<math::Vector<usize, 3>>&& indices,
+			std::vector<math::Vector<f32, 3>>&& vertices,
+			std::vector<math::Vector<f32, 3>>&& normals,
+			std::vector<math::Vector<f32, 2>>&& uvs
+		);
+
 		auto bounding_box(usize idx = 0uz) const -> math::Bounding_Box;
 		auto operator()(
 			math::Ray const& r,

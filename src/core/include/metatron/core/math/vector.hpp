@@ -131,7 +131,7 @@ namespace metatron::math {
 	template<typename T, usize size>
 	auto mini(Vector<T, size> const& x) -> usize {
 		auto const& x_arr = std::array<T, size>(x);
-		return std::ranges::distance(std::ranges::min_element(x_arr), x_arr.begin());
+		return std::ranges::distance(x_arr.begin(), std::ranges::min_element(x_arr));
 	}
 
 	template<typename T, usize size>
@@ -154,7 +154,7 @@ namespace metatron::math {
 	template<typename T, usize size>
 	auto maxi(Vector<T, size> const& x) -> usize {
 		auto const& x_arr = std::array<T, size>(x);
-		return std::ranges::distance(std::ranges::max_element(x_arr), x_arr.begin());
+		return std::ranges::distance(x_arr.begin(), std::ranges::max_element(x_arr));
 	}
 
 	template<typename T, usize size>
