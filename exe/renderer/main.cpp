@@ -46,7 +46,7 @@ auto main() -> int {
 	material::Material::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 256uz;
+	auto spp = 16uz;
 	auto blocks = 8uz;
 	auto depth = 100uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
@@ -72,9 +72,9 @@ auto main() -> int {
 	auto world_to_render = math::Transform{{0.f, 0.f, 1000.f}};
 	auto render_to_camera = identity;
 
-	auto sphere_to_world = math::Transform{{}, {250.f}};
-	auto mesh_to_world = math::Transform{{}, {250.f},
-		math::Quaternion<f32>::from_axis_angle({1.f, 0.f, 0.f}, math::pi * 1.4f / 3.f),
+	auto sphere_to_world = math::Transform{{}, {200.f}};
+	auto mesh_to_world = math::Transform{{}, {200.f},
+		// math::Quaternion<f32>::from_axis_angle({1.f, 0.f, 0.f}, math::pi * 1.4f / 3.f),
 	};
 	auto bound_to_world = math::Transform{{}, {500.f}};
 	auto medium_to_world = math::Transform{{}, {1.0f},
@@ -200,17 +200,17 @@ auto main() -> int {
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
 	auto bvh = accel::LBVH{{
-		{
-			&sphere,
-			&cloud_medium,
-			&vaccum_medium,
-			&interface_material,
-			nullptr,
-			&bound_to_world,
-			&medium_to_world,
-			&identity,
-			0uz
-		},
+		// {
+		// 	&sphere,
+		// 	&cloud_medium,
+		// 	&vaccum_medium,
+		// 	&interface_material,
+		// 	nullptr,
+		// 	&bound_to_world,
+		// 	&medium_to_world,
+		// 	&identity,
+		// 	0uz
+		// },
 		// {
 		// 	&sphere,
 		// 	&vaccum_medium,
@@ -222,17 +222,17 @@ auto main() -> int {
 		// 	&identity,
 		// 	0uz
 		// },
-		// {
-		// 	&mesh,
-		// 	&vaccum_medium,
-		// 	&vaccum_medium,
-		// 	&diffuse_material,
-		// 	&area_light,
-		// 	&mesh_to_world,
-		// 	&identity,
-		// 	&identity,
-		// 	0uz
-		// },
+		{
+			&mesh,
+			&vaccum_medium,
+			&vaccum_medium,
+			&diffuse_material,
+			&area_light,
+			&mesh_to_world,
+			&identity,
+			&identity,
+			0uz
+		},
 
 	}};
 
