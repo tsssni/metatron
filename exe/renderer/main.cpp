@@ -27,6 +27,7 @@
 #include <metatron/geometry/material/diffuse.hpp>
 #include <metatron/geometry/material/interface.hpp>
 #include <metatron/geometry/shape/sphere.hpp>
+#include <metatron/geometry/shape/mesh.hpp>
 #include <metatron/volume/media/homogeneous.hpp>
 #include <metatron/volume/media/vaccum.hpp>
 #include <metatron/volume/media/grid.hpp>
@@ -45,9 +46,9 @@ auto main() -> int {
 	material::Material::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 16uz;
+	auto spp = 256uz;
 	auto blocks = 8uz;
-	auto depth = 10uz;
+	auto depth = 100uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
@@ -68,19 +69,22 @@ auto main() -> int {
 	auto sampler = math::Halton_Sampler{rd()};
 
 	auto identity = math::Transform{};
-	auto world_to_render = math::Transform{{0.f, 0.f, 5.f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 1000.f}};
 	auto render_to_camera = identity;
 
-	auto sphere_to_world = math::Transform{{}, {1.f}};
-	auto bound_to_world = math::Transform{{}, {100.f}};
-	auto medium_to_world = math::Transform{{}, {0.2f},
+	auto sphere_to_world = math::Transform{{}, {250.f}};
+	auto mesh_to_world = math::Transform{{}, {250.f},
+		math::Quaternion<f32>::from_axis_angle({1.f, 0.f, 0.f}, math::pi * 1.4f / 3.f),
+	};
+	auto bound_to_world = math::Transform{{}, {500.f}};
+	auto medium_to_world = math::Transform{{}, {1.0f},
 		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 2.f),
 	};
 	auto light_to_world = identity;
 	auto parallel_to_world = math::Transform{{}, {1.f},
 		math::Quaternion<f32>::from_rotation_between(
 			{0.f, 0.f, 1.f},
-			math::sphere_to_cartesion({math::pi * 0.6f, math::pi * 1.3f})
+			math::sphere_to_cartesion({math::pi * 0.6f, math::pi * 0.3f})
 		),
 	};
 	auto point_to_world = math::Transform{
@@ -96,6 +100,12 @@ auto main() -> int {
 	};
 
 	auto sphere = shape::Sphere{};
+	auto mesh = shape::Mesh{
+		{{0, 1, 2}},
+		{{-1, -1, 0}, {0, 1, 0}, {1, -1, 0}},
+		{{0, 0, -1}, {0, 0, -1}, {0, 0, -1}},
+		{{1, 0}, {0, 0}, {0, 1}},
+	};
 	auto diffuse_material = material::Diffuse_Material{
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
 			color::Color_Space::sRGB->to_spectrum(
@@ -111,7 +121,7 @@ auto main() -> int {
 		),
 		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
 			color::Color_Space::sRGB->to_spectrum(
-				{0.0f, 0.6f, 1.0f},
+				{0.0f, 0.0f, 0.0f},
 				color::Color_Space::Spectrum_Type::illuminant
 			)
 		)
@@ -131,18 +141,18 @@ auto main() -> int {
 		&nanovdb_grid,
 		color::Color_Space::sRGB->to_spectrum(
 			{0.0f, 0.0f, 0.0f},
-			color::Color_Space::Spectrum_Type::albedo
+			color::Color_Space::Spectrum_Type::unbounded
 		),
 		color::Color_Space::sRGB->to_spectrum(
 			{1.0f, 1.0f, 1.0f},
-			color::Color_Space::Spectrum_Type::albedo
+			color::Color_Space::Spectrum_Type::unbounded
 		),
 		color::Color_Space::sRGB->to_spectrum(
 			{0.0f, 0.0f, 0.0f},
 			color::Color_Space::Spectrum_Type::illuminant
 		),
 		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.877f),
-		4.f
+		1.f
 	};
 
 	auto env_map = std::make_unique<material::Image_Texture<spectra::Stochastic_Spectrum>>(
@@ -178,40 +188,52 @@ auto main() -> int {
 	};
 	auto area_light = light::Area_Light{sphere};
 	auto lights = std::vector<emitter::Divider>{
-		{&parallel_light, &parallel_to_world},
+		// {&parallel_light, &parallel_to_world},
 		// {&point_light, &point_to_world},
 		// {&spot_light, &spot_to_world},
-		{&area_light, &sphere_to_world}
+		// {&area_light, &sphere_to_world}
 	};
 	auto inf_lights = std::vector<emitter::Divider>{
-		{&const_env_light, &light_to_world},
-		// {&env_light, &light_to_world},
+		// {&const_env_light, &light_to_world},
+		{&env_light, &light_to_world},
 	};
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
 	auto bvh = accel::LBVH{{
-		// {
-		// 	&sphere,
-		// 	&cloud_medium,
-		// 	&vaccum_medium,
-		// 	&interface_material,
-		// 	nullptr,
-		// 	&bound_to_world,
-		// 	&medium_to_world,
-		// 	&identity,
-		// 	0uz
-		// },
 		{
 			&sphere,
+			&cloud_medium,
 			&vaccum_medium,
-			&vaccum_medium,
-			&diffuse_material,
-			&area_light,
-			&sphere_to_world,
-			&identity,
+			&interface_material,
+			nullptr,
+			&bound_to_world,
+			&medium_to_world,
 			&identity,
 			0uz
 		},
+		// {
+		// 	&sphere,
+		// 	&vaccum_medium,
+		// 	&vaccum_medium,
+		// 	&diffuse_material,
+		// 	&area_light,
+		// 	&sphere_to_world,
+		// 	&identity,
+		// 	&identity,
+		// 	0uz
+		// },
+		// {
+		// 	&mesh,
+		// 	&vaccum_medium,
+		// 	&vaccum_medium,
+		// 	&diffuse_material,
+		// 	&area_light,
+		// 	&mesh_to_world,
+		// 	&identity,
+		// 	&identity,
+		// 	0uz
+		// },
+
 	}};
 
 	auto integrator = mc::Volume_Path_Integrator{};
@@ -237,6 +259,10 @@ auto main() -> int {
 				auto px = start + math::morton_decode(p);
 				if (px >= size) {
 					continue;
+				}
+
+				if (px == math::Vector<usize, 2>{150, 100}) {
+					int a = 1;
 				}
 
 				for (auto n = 0uz; n < spp; n++) {

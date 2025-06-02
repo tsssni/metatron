@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <span>
+#include <tuple>
 #include <cassert>
 #include <cmath>
 
@@ -324,6 +325,22 @@ namespace metatron::math {
 
 		auto constexpr operator<=>(Matrix const& rhs) const = default;
 
+		operator std::array<Element, first_dim> const&() const {
+			return data;
+		};
+
+		template<usize I>
+		auto constexpr get() const -> Element const& {
+			static_assert(I < first_dim, "index out of bounds");
+			return data[I];
+		}
+
+		template<usize I>
+		auto constexpr get() -> Element& {
+			static_assert(I < first_dim, "index out of bounds");
+			return data[I];
+		}
+
 	private:
 		std::array<Element, first_dim> data{};
 
@@ -332,22 +349,34 @@ namespace metatron::math {
 	};
 
 	template<typename T, usize... dims>
-	auto inline constexpr operator+(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
+	auto constexpr operator+(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
 		return rhs + lhs;
 	}
 
 	template<typename T, usize... dims>
-	auto inline constexpr operator-(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
+	auto constexpr operator-(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
 		return -rhs + lhs;
 	}
 
 	template<typename T, usize... dims>
-	auto inline constexpr operator*(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
+	auto constexpr operator*(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
 		return rhs * lhs;
 	}
 
+	template<usize I, typename T, usize first_dim, usize... rest_dims>
+	auto inline constexpr get(Matrix<T, first_dim, rest_dims...> const& m) 
+		-> typename Matrix<T, first_dim, rest_dims...>::Element const& {
+		return m.template get<I>();
+	}
+
+	template<usize I, typename T, usize first_dim, usize... rest_dims>
+	auto constexpr get(Matrix<T, first_dim, rest_dims...>& m) 
+		-> typename Matrix<T, first_dim, rest_dims...>::Element& {
+		return m.template get<I>();
+	}
+
 	template<typename T, usize h, usize w>
-	auto inline constexpr transpose(Matrix<T, h, w> const& m) -> Matrix<T, w, h> {
+	auto constexpr transpose(Matrix<T, h, w> const& m) -> Matrix<T, w, h> {
 		auto result = Matrix<T, w, h>{};
 		for (auto i = 0; i < w; i++) {
 			for (auto j = 0; j < h; j++) {
@@ -357,9 +386,58 @@ namespace metatron::math {
 		return result;
 	}
 
+	template<typename T, usize n>
+	requires std::floating_point<T>
+	auto constexpr determinant(Matrix<T, n, n> const& m) -> T {
+		if constexpr (n == 1) {
+			return m[0][0];
+		} else if constexpr (n == 2) {
+			return m[0][0] * m[1][1] - m[0][1] * m[1][0];
+		} else if constexpr (n == 3) {
+			return T{0}
+			+ m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
+			- m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
+			+ m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+		} else {
+			// upper triangular matrix
+			auto u = m;
+			T det = T{1};
+			
+			for (usize i = 0; i < n; i++) {
+				usize pivot_row = i;
+				T max_val = std::abs(u[i][i]);
+				
+				for (usize j = i + 1; j < n; j++) {
+					if (auto curr_val = std::abs(u[j][i]); curr_val > max_val) {
+						max_val = curr_val;
+						pivot_row = j;
+					}
+				}
+				
+				if (max_val < std::numeric_limits<T>::epsilon()) {
+					return T{0};
+				}
+				if (pivot_row != i) {
+					std::swap(u[i], u[pivot_row]);
+					det = -det;
+				}
+				det *= u[i][i];
+
+				for (usize j = i + 1; j < n; j++) {
+					T factor = u[j][i] / u[i][i];
+					for (usize k = i + 1; k < n; k++) {
+						u[j][k] -= factor * u[i][k];
+					}
+				}
+			}
+			
+			return det;
+		}
+	}
+
 	template<typename T, usize h>
 	requires std::floating_point<T>
-	auto inline constexpr inverse(Matrix<T, h, h> const& m) -> Matrix<T, h, h> {
+	auto constexpr inverse(Matrix<T, h, h> const& m) -> Matrix<T, h, h> {
 		auto augmented = Matrix<T, h, h * 2>{};
 		for (usize i = 0; i < h; i++) {
 			for (usize j = 0; j < h; j++) {
@@ -372,18 +450,18 @@ namespace metatron::math {
 
 		// Gaussian-Jordan
 		for (usize i = 0; i < h; i++) {
-			auto max_row = i;
+			auto pivot_row = i;
 			auto max_val = std::abs(augmented[i][i]);
 			
 			for (usize j = i + 1; j < h; j++) {
 				if (auto curr_val = std::abs(augmented[j][i]); curr_val > max_val) {
 					max_val = curr_val;
-					max_row = j;
+					pivot_row = j;
 				}
 			}
 
-			if (max_row != i) {
-				std::swap(augmented[i], augmented[max_row]);
+			if (pivot_row != i) {
+				std::swap(augmented[i], augmented[pivot_row]);
 			}
 
 			auto pivot = augmented[i][i];
@@ -408,8 +486,74 @@ namespace metatron::math {
 
 	template<typename T, usize h, usize w>
 	requires std::floating_point<T>
-	auto inline constexpr least_squares(Matrix<T, h, w> const& a, Matrix<T, h> const& b) -> Matrix<T, w> {
+	auto constexpr least_squares(Matrix<T, h, w> const& a, Matrix<T, h> const& b) -> Matrix<T, w> {
 		auto a_t = math::transpose(a);
 		return math::inverse(a_t | a) | (a_t | b);
 	}
+
+	template<typename T, usize n>
+	requires std::floating_point<T>
+	auto constexpr cramer(
+		Matrix<T, n, n> const& a, 
+		Matrix<T, n> const& b
+	) -> std::optional<Matrix<T, n>> {
+		T det_a = determinant(a);
+		if (std::abs(det_a) < epsilon<T>) {
+			return {};
+		}
+
+		auto result = Matrix<T, n>{};
+		for (auto i = 0uz; i < n; i++) {
+			auto a_i = a;
+			for (auto j = 0uz; j < n; j++) {
+				a_i[j][i] = b[j];
+			}
+			result[i] = determinant(a_i) / det_a;
+		}
+		
+		return result;
+	}
+
+	template<typename T, usize n, usize m>
+	requires std::floating_point<T>
+	auto constexpr cramer(
+		Matrix<T, n, n> const& a, 
+		Matrix<T, n, m> const& b
+	) -> std::optional<Matrix<T, n, m>> {
+		T det_a = determinant(a);
+		if (std::abs(det_a) < epsilon<T>) {
+			return {};
+		}
+
+		auto result = Matrix<T, n, m>{};
+		if constexpr (n == 2) {
+			result[0] = (a[1][1] * b[0] - a[0][1] * b[1]) / det_a;
+			result[1] = (a[1][0] * b[0] - a[0][0] * b[1]) / det_a;
+		} else {
+			for (auto i = 0uz; i < n; i++) {
+				auto a_i = a;
+				for (auto j = 0uz; j < m; j++) {
+					for (auto k = 0uz; k < n; k++) {
+						a_i[k][i] = b[k][j];
+					}
+					result[i][j] = determinant(a_i) / det_a;
+				}
+			}
+		}
+		
+		return result;
+	}
 }
+
+namespace std {
+	using namespace metatron;
+
+	template<typename T, usize first_dim, usize... rest_dims>
+	struct tuple_size<math::Matrix<T, first_dim, rest_dims...>> 
+		: std::integral_constant<size_t, first_dim> {};
+
+	template<size_t I, typename T, usize first_dim, usize... rest_dims>
+	struct tuple_element<I, math::Matrix<T, first_dim, rest_dims...>> {
+		using type = typename math::Matrix<T, first_dim, rest_dims...>::Element;
+	};
+};

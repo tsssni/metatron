@@ -14,8 +14,8 @@ namespace metatron::photo {
 	pixel(pixel),
 	position(position),
 	dxdy(math::foreach(
-		position + film->dxdy - film->size / 2.f,
-		[](f32 x, usize i){return x < 0.f ? 1.f : -1.f;}
+		[](f32 x, usize i){return x < 0.f ? 1.f : -1.f;},
+		position + film->dxdy - film->size / 2.f
 	) * film->dxdy),
 	weight(weight) {}
 

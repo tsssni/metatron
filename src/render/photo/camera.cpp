@@ -11,9 +11,9 @@ namespace metatron::photo {
 		auto rx_pos = r_pos + math::Vector<f32, 3>{this->film->dxdy[0], 0.f, 0.f};
 		auto ry_pos = r_pos + math::Vector<f32, 3>{0.f, this->film->dxdy[1], 0.f};
 
-		OPTIONAL_OR_RETURN(r_intr, this->lens->sample(r_pos, {0.f}));
-		OPTIONAL_OR_RETURN(rx_intr, this->lens->sample(rx_pos, {0.f}));
-		OPTIONAL_OR_RETURN(ry_intr, this->lens->sample(ry_pos, {0.f}));
+		METATRON_OPT_OR_RETURN(r_intr, this->lens->sample(r_pos, {0.f}));
+		METATRON_OPT_OR_RETURN(rx_intr, this->lens->sample(rx_pos, {0.f}));
+		METATRON_OPT_OR_RETURN(ry_intr, this->lens->sample(ry_pos, {0.f}));
 
 		ray.differentiable = false;
 		ray.r = r_intr.r;
@@ -34,9 +34,9 @@ namespace metatron::photo {
 		auto rx_pos = r_pos + math::Vector<f32, 3>{fixel.dxdy[0], 0.f, 0.f};
 		auto ry_pos = r_pos + math::Vector<f32, 3>{0.f, fixel.dxdy[1], 0.f};
 
-		OPTIONAL_OR_RETURN(r_intr, lens->sample(r_pos, sampler.generate_2d()), {});
-		OPTIONAL_OR_RETURN(rx_intr, lens->sample(rx_pos, sampler.generate_2d()), {});
-		OPTIONAL_OR_RETURN(ry_intr, lens->sample(ry_pos, sampler.generate_2d()), {});
+		METATRON_OPT_OR_RETURN(r_intr, lens->sample(r_pos, sampler.generate_2d()), {});
+		METATRON_OPT_OR_RETURN(rx_intr, lens->sample(rx_pos, sampler.generate_2d()), {});
+		METATRON_OPT_OR_RETURN(ry_intr, lens->sample(ry_pos, sampler.generate_2d()), {});
 
 		ray.differentiable = true;
 		ray.r = r_intr.r;

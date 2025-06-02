@@ -7,20 +7,86 @@
 
 namespace metatron::math {
 	template<typename T>
-	concept Transformable = false
+    concept Transformable = false
 	|| std::is_same_v<std::remove_cvref_t<T>, Vector<f32, 4>>
 	|| std::is_same_v<std::remove_cvref_t<T>, Ray>
 	|| std::is_same_v<std::remove_cvref_t<T>, Ray_Differential>
 	|| std::is_same_v<std::remove_cvref_t<T>, eval::Context>;
 
 	struct Transform final {
-		struct Config {
+		struct Config final {
 			Vector<f32, 3> translation{};
 			Vector<f32, 3> scaling{1.f};
 			Quaternion<f32> rotation{0.f, 0.f, 0.f, 1.f};
 
 			auto operator<=>(Config const& rhs) const = default;
 		} config;
+
+		struct Chain final {
+			auto operator|(Transform const& t) -> Chain& {
+				store(t);
+				ops.push_back(0);
+				return *this;
+			}
+
+			auto operator^(Transform const& t) -> Chain& {
+				store(t);
+				ops.push_back(1);
+				return *this;
+			}
+
+			template<Transformable T>
+			auto operator|(T const& t) {
+				ops.push_back(0);
+				return dechain(t);
+			}
+
+			template<Transformable T>
+			auto operator^(T const& t) {
+				ops.push_back(1);
+				return dechain(t);
+			}
+
+			explicit operator Matrix<f32, 4, 4>() const {
+				auto ret = transforms.back()->transform;
+				for (auto i = i32(transforms.size()) - 2; i >= 0; i--) {
+					if (ops[i] == 0) {
+						ret = transforms[i]->transform | ret;
+					} else {
+						ret = transforms[i]->inv_transform | ret;
+					}
+				}
+				return ret;
+			}
+
+		private:
+			Chain(Transform const& t) {
+				store(t);
+			}
+
+			auto store(Transform const& t) -> void {
+				transforms.push_back(&t);
+			}
+
+			template<Transformable T, typename Type = std::remove_cvref_t<T>>
+			auto dechain(T const& rhs) -> Type {
+				auto ret = rhs;
+				for (auto i = i32(transforms.size()) - 1; i >= 0; i--) {
+					if (ops[i] == 0) {
+						ret = *transforms[i] | ret;
+					} else {
+						ret = *transforms[i] ^ ret;
+					}
+				}
+				return ret;
+			}
+
+			std::vector<Transform const*> transforms;
+			std::vector<Transform> owned_transforms;
+			std::vector<byte> ops;
+
+			friend Transform;
+		};
 
 		mutable Matrix<f32, 4, 4> transform;
 		mutable Matrix<f32, 4, 4> inv_transform;
@@ -29,14 +95,33 @@ namespace metatron::math {
 			Vector<f32, 3> translation = {},
 			Vector<f32, 3> scaling = {1.f},
 			Quaternion<f32> rotation = {0.f, 0.f, 0.f, 1.f}
-		);
+		): config(translation, scaling, rotation) {
+			update();
+		}
 
-		explicit operator Matrix<f32, 4, 4>() const;
+		auto update() const -> void {
+			auto translation = math::Matrix<f32, 4, 4>{
+				{1.f, 0.f, 0.f, config.translation[0]},
+				{0.f, 1.f, 0.f, config.translation[1]},
+				{0.f, 0.f, 1.f, config.translation[2]},
+				{0.f, 0.f, 0.f, 1.f}
+			};
+			auto scaling = math::Matrix<f32, 4, 4>{
+				config.scaling[0], config.scaling[1], config.scaling[2], 1.f
+			};
+			auto rotation = math::Matrix<f32, 4, 4>{config.rotation};
+
+			transform = translation | rotation | scaling;
+			inv_transform = math::inverse(transform);
+		}
+
+		explicit operator Matrix<f32, 4, 4>() const {
+			return transform;
+		}
 
 		template<Transformable T, typename Type = std::remove_cvref_t<T>>
-		auto operator|(T&& rhs) const -> Type {
+		auto operator|(T&& rhs) const {
 			if constexpr (std::is_same_v<Type, Vector<f32, 4>>) {
-				update();
 				return transform | rhs;
 			} else if constexpr (std::is_same_v<Type, Ray>) {
 				auto r = rhs;
@@ -57,10 +142,13 @@ namespace metatron::math {
 			}
 		}
 
+		auto operator|(Transform const& rhs) const -> Chain {
+			return std::move(Chain{*this} | rhs);
+		}
+
 		template<Transformable T, typename Type = std::remove_cvref_t<T>>
-		auto operator^(T&& rhs) const -> Type {
+		auto operator^(T&& rhs) const {
 			if constexpr (std::is_same_v<Type, Vector<f32, 4>>) {
-				update();
 				return inv_transform | rhs;
 			} else if constexpr (std::is_same_v<Type, Ray>) {
 				auto r = rhs;
@@ -81,9 +169,10 @@ namespace metatron::math {
 			}
 		}
 
-	private:
-		auto update(bool force = false) const -> void;
-
-		mutable Config old_config{};
+		template<typename T>
+		requires std::is_same_v<std::remove_cvref_t<T>, Transform>
+		auto operator^(T&& rhs) const -> Chain {
+			return std::move(Chain{*this} ^ rhs);
+		}
 	};
 }
