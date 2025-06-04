@@ -12,7 +12,7 @@ namespace metatron::light {
 		auto Environment_Light::operator()(
 			eval::Context const& ctx
 		) const -> std::optional<Interaction> {
-			auto s = math::cartesion_to_sphere(ctx.r.d);
+			auto s = math::cartesion_to_unit_sphere(ctx.r.d);
 			auto u = 1.f - s[1] / (2.f * math::pi);
 			auto v = s[0] / math::pi;
 			auto spec = env_map->sample(ctx, {{u, v}});

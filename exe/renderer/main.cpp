@@ -85,18 +85,18 @@ auto main() -> int {
 	auto parallel_to_world = math::Transform{{}, {1.f},
 		math::Quaternion<f32>::from_rotation_between(
 			{0.f, 0.f, 1.f},
-			math::sphere_to_cartesion({math::pi * 0.6f, math::pi * 0.3f})
+			math::unit_sphere_to_cartesion({math::pi * 0.6f, math::pi * 0.3f})
 		),
 	};
 	auto point_to_world = math::Transform{
-		math::sphere_to_cartesion({math::pi * 1.f / 4.f, math::pi * 4.f / 3.f}) * 1.5f
+		math::unit_sphere_to_cartesion({math::pi * 1.f / 4.f, math::pi * 4.f / 3.f}) * 1.5f
 	};
 	auto spot_to_world = math::Transform{
-		math::sphere_to_cartesion({math::pi * 1.f / 4.f, math::pi * 4.f / 3.f}) * 1.5f,
+		math::unit_sphere_to_cartesion({math::pi * 1.f / 4.f, math::pi * 4.f / 3.f}) * 1.5f,
 		{1.f},
 		math::Quaternion<f32>::from_rotation_between(
 			{0.f, 0.f, 1.f},
-			math::sphere_to_cartesion({math::pi * 3.f / 4.f, math::pi * 1.f / 3.f})
+			math::unit_sphere_to_cartesion({math::pi * 3.f / 4.f, math::pi * 1.f / 3.f})
 		),
 	};
 

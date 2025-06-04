@@ -36,7 +36,7 @@ namespace metatron::shape {
 		auto p = r.o + t * r.d;
 		auto n = p;
 
-		auto s = math::cartesion_to_sphere(p);
+		auto s = math::cartesion_to_unit_sphere(p);
 		auto& theta = s[0];
 		auto& phi = s[1];
 		auto uv = math::Vector<f32, 2>{
