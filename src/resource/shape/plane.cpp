@@ -8,6 +8,10 @@ namespace metatron::shape {
 	Plane::Plane(math::Vector<f32, 3> const& p, math::Vector<f32, 3> const& n):
 		a(n[0]), b(n[1]), c(n[2]), d(-math::dot(n, p)) {}
 
+	auto Plane::size() const -> usize {
+		return 1uz;
+	}
+
 	auto Plane::bounding_box(usize idxuz) const -> math::Bounding_Box {
 		return {};
 	}

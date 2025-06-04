@@ -8,6 +8,10 @@
 #include <metatron/core/stl/optional.hpp>
 
 namespace metatron::shape {
+	auto Sphere::size() const -> usize {
+		return 1uz;
+	}
+
 	auto Sphere::bounding_box(usize idx) const -> math::Bounding_Box {
 		return {{-1.f}, {1.f}};
 	}

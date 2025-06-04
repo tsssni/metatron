@@ -5,6 +5,7 @@ namespace metatron::shape {
 	struct Plane final: Shape {
 		Plane(f32 a, f32 b, f32 c, f32 d);
 		Plane(math::Vector<f32, 3> const& p, math::Vector<f32, 3> const& n);
+		auto size() const -> usize;
 		auto bounding_box(usize idxuz) const -> math::Bounding_Box;
 		auto operator()(
 			math::Ray const& r,

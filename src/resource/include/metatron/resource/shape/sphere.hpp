@@ -3,6 +3,7 @@
 
 namespace metatron::shape {
 	struct Sphere final: Shape {
+		auto size() const -> usize;
 		auto bounding_box(usize idx = 0uz) const -> math::Bounding_Box;
 		auto operator()(
 			math::Ray const& r,

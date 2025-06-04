@@ -55,6 +55,10 @@ namespace metatron::shape {
 		}
 	}
 
+	auto Mesh::size() const -> usize {
+		return indices.size();
+	}
+
 	auto Mesh::bounding_box(usize idx) const -> math::Bounding_Box {
 		auto prim = indices[idx];
 		auto p_min = math::min(vertices[prim[0]], vertices[prim[1]], vertices[prim[2]]);
@@ -281,9 +285,5 @@ namespace metatron::shape {
 				(1.f - cos_bc1)
 			),
 		};
-	}
-
-	auto Mesh::from_path(std::string_view path) -> std::unique_ptr<Mesh> {
-		return {};
 	}
 }

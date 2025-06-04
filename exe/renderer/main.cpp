@@ -17,6 +17,7 @@
 #include <metatron/resource/material/interface.hpp>
 #include <metatron/resource/shape/sphere.hpp>
 #include <metatron/resource/shape/mesh.hpp>
+#include <metatron/resource/loader/assimp.hpp>
 #include <metatron/resource/media/homogeneous.hpp>
 #include <metatron/resource/media/vaccum.hpp>
 #include <metatron/resource/media/grid.hpp>
@@ -100,7 +101,7 @@ auto main() -> int {
 	};
 
 	auto sphere = shape::Sphere{};
-	auto mesh = shape::Mesh{
+	auto triangle = shape::Mesh{
 		{{0, 1, 2}},
 		{{-1, -1, 0}, {0, 1, 0}, {1, -1, 0}},
 		{{0, 0, -1}, {0, 0, -1}, {0, 0, -1}},
@@ -199,7 +200,7 @@ auto main() -> int {
 	};
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
-	auto bvh = accel::LBVH{{
+	auto dividers = std::vector<accel::Divider>{
 		// {
 		// 	&sphere,
 		// 	&cloud_medium,
@@ -216,25 +217,45 @@ auto main() -> int {
 		// 	&vaccum_medium,
 		// 	&vaccum_medium,
 		// 	&diffuse_material,
-		// 	&area_light,
+		// 	nullptr,
 		// 	&sphere_to_world,
 		// 	&identity,
 		// 	&identity,
 		// 	0uz
 		// },
-		{
-			&mesh,
-			&vaccum_medium,
-			&vaccum_medium,
-			&diffuse_material,
-			&area_light,
-			&mesh_to_world,
-			&identity,
-			&identity,
-			0uz
-		},
+		// {
+		// 	&triangle,
+		// 	&vaccum_medium,
+		// 	&vaccum_medium,
+		// 	&diffuse_material,
+		// 	nullptr,
+		// 	&mesh_to_world,
+		// 	&identity,
+		// 	&identity,
+		// 	0uz
+		// },
 
-	}};
+	};
+
+	auto assimp_loader = loader::Assimp_Loader{};
+	auto assets = assimp_loader.from_path("../glTF-Sample-Assets/Models/Triangle/glTF/Triangle.gltf");
+	for (auto& [mesh, material]: assets) {
+		for (auto i = 0uz; i < mesh->size(); i++) {
+			dividers.emplace_back(
+				mesh.get(),
+				&vaccum_medium,
+				&vaccum_medium,
+				material.get(),
+				nullptr,
+				&mesh_to_world,
+				&identity,
+				&identity,
+				i
+			);
+		}
+	}
+
+	auto bvh = accel::LBVH{std::move(dividers)};
 
 	auto integrator = monte_carlo::Volume_Path_Integrator{};
 

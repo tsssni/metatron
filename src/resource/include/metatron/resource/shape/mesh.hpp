@@ -10,6 +10,7 @@ namespace metatron::shape {
 			std::vector<math::Vector<f32, 2>>&& uvs
 		);
 
+		auto size() const -> usize;
 		auto bounding_box(usize idx = 0uz) const -> math::Bounding_Box;
 		auto operator()(
 			math::Ray const& r,
@@ -21,8 +22,6 @@ namespace metatron::shape {
 			math::Vector<f32, 2> const& u,
 			usize idx = 0uz
 		) const -> std::optional<Interaction>;
-
-		auto static from_path(std::string_view path) -> std::unique_ptr<Mesh>;
 
 	private:
 		template<typename T>

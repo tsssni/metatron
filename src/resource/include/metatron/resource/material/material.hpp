@@ -14,6 +14,7 @@ namespace metatron::material {
 	};
 
 	struct Material {
+		virtual ~Material() {}
 		auto virtual sample(
 			eval::Context const& ctx,
 			texture::Coordinate const& coord
