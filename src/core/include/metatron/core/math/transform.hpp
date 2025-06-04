@@ -3,15 +3,15 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/ray.hpp>
-#include <metatron/core/eval/context.hpp>
+#include <vector>
 
 namespace metatron::math {
 	template<typename T>
     concept Transformable = false
 	|| std::is_same_v<std::remove_cvref_t<T>, Vector<f32, 4>>
+	|| std::is_same_v<std::remove_cvref_t<T>, Vector<f32, 3>> // for normal
 	|| std::is_same_v<std::remove_cvref_t<T>, Ray>
-	|| std::is_same_v<std::remove_cvref_t<T>, Ray_Differential>
-	|| std::is_same_v<std::remove_cvref_t<T>, eval::Context>;
+	|| std::is_same_v<std::remove_cvref_t<T>, Ray_Differential>;
 
 	struct Transform final {
 		struct Config final {
@@ -123,6 +123,8 @@ namespace metatron::math {
 		auto operator|(T&& rhs) const {
 			if constexpr (std::is_same_v<Type, Vector<f32, 4>>) {
 				return transform | rhs;
+			} else if constexpr (std::is_same_v<Type, Vector<f32, 3>>) {
+				return expand(rhs, 0.f) | inv_transform;
 			} else if constexpr (std::is_same_v<Type, Ray>) {
 				auto r = rhs;
 				r.o = *this | expand(r.o, 1.f);
@@ -134,11 +136,6 @@ namespace metatron::math {
 				ray.rx = *this | rhs.rx;
 				ray.ry = *this | rhs.ry;
 				return ray;
-			} else if constexpr (std::is_same_v<Type, eval::Context>) {
-				auto ctx = rhs;
-				ctx.r = *this | ctx.r;
-				ctx.n = expand(ctx.n, 0.f) | inv_transform;
-				return ctx;
 			}
 		}
 
@@ -150,6 +147,8 @@ namespace metatron::math {
 		auto operator^(T&& rhs) const {
 			if constexpr (std::is_same_v<Type, Vector<f32, 4>>) {
 				return inv_transform | rhs;
+			} else if constexpr (std::is_same_v<Type, Vector<f32, 3>>) {
+				return expand(rhs, 0.f) | transform;
 			} else if constexpr (std::is_same_v<Type, Ray>) {
 				auto r = rhs;
 				r.o = *this ^ expand(r.o, 1.f);
@@ -161,11 +160,6 @@ namespace metatron::math {
 				ray.rx = *this ^ rhs.rx;
 				ray.ry = *this ^ rhs.ry;
 				return ray;
-			} else if constexpr (std::is_same_v<Type, eval::Context>) {
-				auto ctx = rhs;
-				ctx.r = *this ^ ctx.r;
-				ctx.n = expand(ctx.n, 0.f) | transform;
-				return ctx;
 			}
 		}
 

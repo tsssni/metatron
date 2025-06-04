@@ -1,1 +1,1 @@
-list(APPEND metatron-deps geometry volume)
+list(APPEND metatron-deps resource)
