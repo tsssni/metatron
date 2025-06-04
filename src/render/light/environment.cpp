@@ -1,12 +1,12 @@
 #include <metatron/render/light/environment.hpp>
+#include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/quaternion.hpp>
-#include <metatron/core/spectra/rgb.hpp>
 
 namespace metatron::light {
 		Environment_Light::Environment_Light(
-			std::unique_ptr<material::Texture<spectra::Stochastic_Spectrum>> env_map
+			std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> env_map
 		): env_map(std::move(env_map)) {}
 
 		auto Environment_Light::operator()(

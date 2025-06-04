@@ -1,1 +1,1 @@
-list(APPEND metatron-deps render geometry)
+list(APPEND metatron-deps resource render)

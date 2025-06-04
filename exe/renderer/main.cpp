@@ -7,13 +7,24 @@
 #include <metatron/core/math/filter/lanczos.hpp>
 #include <metatron/core/math/encode.hpp>
 #include <metatron/core/math/distribution/piecewise.hpp>
-#include <metatron/core/spectra/stochastic.hpp>
-#include <metatron/core/spectra/constant.hpp>
-#include <metatron/core/spectra/rgb.hpp>
-#include <metatron/core/color/color-space.hpp>
+#include <metatron/resource/spectra/stochastic.hpp>
+#include <metatron/resource/spectra/constant.hpp>
+#include <metatron/resource/spectra/rgb.hpp>
+#include <metatron/resource/color/color-space.hpp>
+#include <metatron/resource/texture/image.hpp>
+#include <metatron/resource/texture/constant.hpp>
+#include <metatron/resource/material/diffuse.hpp>
+#include <metatron/resource/material/interface.hpp>
+#include <metatron/resource/shape/sphere.hpp>
+#include <metatron/resource/shape/mesh.hpp>
+#include <metatron/resource/media/homogeneous.hpp>
+#include <metatron/resource/media/vaccum.hpp>
+#include <metatron/resource/media/grid.hpp>
+#include <metatron/resource/media/nanovdb.hpp>
+#include <metatron/resource/phase/henyey-greenstein.hpp>
 #include <metatron/render/photo/camera.hpp>
-#include <metatron/render/photo/lens/pinhole.hpp>
-#include <metatron/render/photo/lens/thin.hpp>
+#include <metatron/render/lens/pinhole.hpp>
+#include <metatron/render/lens/thin.hpp>
 #include <metatron/render/light/environment.hpp>
 #include <metatron/render/light/parallel.hpp>
 #include <metatron/render/light/point.hpp>
@@ -22,17 +33,6 @@
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/render/accel/bvh.hpp>
-#include <metatron/geometry/material/texture/image.hpp>
-#include <metatron/geometry/material/texture/constant.hpp>
-#include <metatron/geometry/material/diffuse.hpp>
-#include <metatron/geometry/material/interface.hpp>
-#include <metatron/geometry/shape/sphere.hpp>
-#include <metatron/geometry/shape/mesh.hpp>
-#include <metatron/volume/media/homogeneous.hpp>
-#include <metatron/volume/media/vaccum.hpp>
-#include <metatron/volume/media/grid.hpp>
-#include <metatron/volume/media/nanovdb.hpp>
-#include <metatron/volume/phase/henyey-greenstein.hpp>
 #include <atomic>
 #include <queue>
 #include <thread>
@@ -107,19 +107,19 @@ auto main() -> int {
 		{{1, 0}, {0, 0}, {0, 1}},
 	};
 	auto diffuse_material = material::Diffuse_Material{
-		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
+		std::make_unique<texture::Constant_Texture<spectra::Stochastic_Spectrum>>(
 			color::Color_Space::sRGB->to_spectrum(
 				{1.0f, 1.0f, 1.0f},
 				color::Color_Space::Spectrum_Type::albedo
 			)
 		),
-		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
+		std::make_unique<texture::Constant_Texture<spectra::Stochastic_Spectrum>>(
 			color::Color_Space::sRGB->to_spectrum(
 				{0.0f, 0.0f, 0.0f},
 				color::Color_Space::Spectrum_Type::albedo
 			)
 		),
-		std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
+		std::make_unique<texture::Constant_Texture<spectra::Stochastic_Spectrum>>(
 			color::Color_Space::sRGB->to_spectrum(
 				{0.0f, 0.0f, 0.0f},
 				color::Color_Space::Spectrum_Type::illuminant
@@ -151,16 +151,16 @@ auto main() -> int {
 			{0.0f, 0.0f, 0.0f},
 			color::Color_Space::Spectrum_Type::illuminant
 		),
-		std::make_unique<phase::Henyey_Greenstein_Phase_Function>(0.877f),
+		0.877f,
 		1.f
 	};
 
-	auto env_map = std::make_unique<material::Image_Texture<spectra::Stochastic_Spectrum>>(
+	auto env_map = std::make_unique<texture::Image_Texture<spectra::Stochastic_Spectrum>>(
 		image::Image::from_path("../Pictures/sky-on-fire.exr", true),
 		color::Color_Space::Spectrum_Type::illuminant
 	);
 	auto env_light = light::Environment_Light{std::move(env_map)};
-	auto const_env_light = light::Environment_Light{std::make_unique<material::Constant_Texture<spectra::Stochastic_Spectrum>>(
+	auto const_env_light = light::Environment_Light{std::make_unique<texture::Constant_Texture<spectra::Stochastic_Spectrum>>(
 		color::Color_Space::sRGB->to_spectrum(
 			{0.03f, 0.07f, 0.23f},
 			color::Color_Space::Spectrum_Type::illuminant
@@ -236,7 +236,7 @@ auto main() -> int {
 
 	}};
 
-	auto integrator = mc::Volume_Path_Integrator{};
+	auto integrator = monte_carlo::Volume_Path_Integrator{};
 
 	auto block_queue = std::vector<std::queue<math::Vector<usize, 2>>>(kernels);
 	auto w_blocks = (size[0] + blocks - 1) / blocks;

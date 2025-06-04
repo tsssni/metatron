@@ -2,11 +2,11 @@
 #include <metatron/render/emitter/emitter.hpp>
 #include <metatron/render/photo/camera.hpp>
 #include <metatron/render/accel/accel.hpp>
-#include <metatron/volume/media/medium.hpp>
-#include <metatron/core/spectra/stochastic.hpp>
+#include <metatron/resource/media/medium.hpp>
+#include <metatron/resource/spectra/stochastic.hpp>
 #include <metatron/core/math/sampler/sampler.hpp>
 
-namespace metatron::mc {
+namespace metatron::monte_carlo {
 	struct Context final {
 		math::Ray_Differential ray_differential;
 		math::Ray_Differential default_differential;

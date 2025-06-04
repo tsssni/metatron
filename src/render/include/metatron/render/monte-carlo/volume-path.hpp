@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/render/monte-carlo/integrator.hpp>
 
-namespace metatron::mc {
+namespace metatron::monte_carlo {
 	struct Volume_Path_Integrator final: Integrator {
 		auto sample(
 			Context ctx,

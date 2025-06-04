@@ -1,7 +1,7 @@
 #pragma once
+#include <metatron/resource/eval/context.hpp>
+#include <metatron/resource/spectra/stochastic.hpp>
 #include <metatron/core/math/ray.hpp>
-#include <metatron/core/spectra/stochastic.hpp>
-#include <metatron/core/eval/context.hpp>
 #include <unordered_set>
 #include <typeindex>
 

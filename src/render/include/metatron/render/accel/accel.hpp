@@ -1,8 +1,8 @@
 #pragma once
 #include <metatron/render/emitter/emitter.hpp>
-#include <metatron/geometry/shape/shape.hpp>
-#include <metatron/geometry/material/material.hpp>
-#include <metatron/volume/media/medium.hpp>
+#include <metatron/resource/shape/shape.hpp>
+#include <metatron/resource/material/material.hpp>
+#include <metatron/resource/media/medium.hpp>
 #include <metatron/core/math/bounding-box.hpp>
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/math/transform.hpp>

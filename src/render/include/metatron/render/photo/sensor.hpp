@@ -1,7 +1,6 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
-#include <metatron/core/spectra/stochastic.hpp>
-#include <metatron/core/color/color-space.hpp>
+#include <metatron/resource/spectra/stochastic.hpp>
+#include <metatron/resource/color/color-space.hpp>
 
 namespace metatron::photo {
 	struct Sensor final {

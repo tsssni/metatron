@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/render/light/light.hpp>
-#include <metatron/geometry/shape/shape.hpp>
+#include <metatron/resource/shape/shape.hpp>
 
 namespace metatron::light {
 	struct Area_Light final: Light {

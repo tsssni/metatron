@@ -1,13 +1,13 @@
 #include <metatron/render/monte-carlo/volume-path.hpp>
+#include <metatron/resource/shape/plane.hpp>
 #include <metatron/core/math/distribution/discrete.hpp>
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/optional.hpp>
-#include <metatron/geometry/shape/plane.hpp>
 
-namespace metatron::mc {
+namespace metatron::monte_carlo {
 	auto Volume_Path_Integrator::sample(
-		Context ctx,
+		Context int_ctx,
 		accel::Acceleration const& accel,
 		emitter::Emitter const& emitter,
 		math::Sampler const& sampler
@@ -26,22 +26,22 @@ namespace metatron::mc {
 		auto scatter_pdf = 0.f;
 		auto scatter_f = L_e;
 
+		auto bsdf = std::unique_ptr<bsdf::Bsdf>{};
+		auto phase = std::unique_ptr<phase::Phase_Function>{};
 		auto trace_ctx = eval::Context{};
 		auto history_trace_ctx = eval::Context{};
-		trace_ctx.r = ctx.ray_differential.r;
+		trace_ctx.r = int_ctx.ray_differential.r;
 		trace_ctx.L = L_e;
 
 		auto div_opt = std::optional<accel::Divider const*>{};
 		auto intr_opt = std::optional<shape::Interaction>{};
-		auto bsdf = std::unique_ptr<material::Bsdf>{};
-		auto phase = (phase::Phase_Function const*)nullptr;
 
-		auto& rt = *ctx.world_to_render;
-		auto& ct = *ctx.render_to_camera;
+		auto& rt = *int_ctx.world_to_render;
+		auto& ct = *int_ctx.render_to_camera;
 		
 		while (true) {
 			depth += usize(scattered);
-			if (terminated || depth >= ctx.max_depth) {
+			if (terminated || depth >= int_ctx.max_depth) {
 				break;
 			}
 
@@ -79,25 +79,25 @@ namespace metatron::mc {
 				auto p_s = 0.f;
 				auto f = spectra::Stochastic_Spectrum{};
 
-				if (bsdf) {
+				if (trace_ctx.bsdf) {
 					auto t = math::Transform{{}, {1.f},
 						math::Quaternion<f32>::from_rotation_between(direct_ctx.n, {0.f, 1.f, 0.f})
 					};
 					auto wo = t | math::expand(history_trace_ctx.r.d, 0.f);
 					auto wi = t | math::expand(l_intr.wi, 0.f);
-					METATRON_OPT_OR_BREAK(b_intr, (*bsdf)(wo, wi, L_e));
+					METATRON_OPT_OR_BREAK(b_intr, (*trace_ctx.bsdf)(wo, wi, L_e));
 					f = b_intr.f * std::abs(math::dot(l_intr.wi, direct_ctx.n));
 					p_s = b_intr.pdf;
-				} else if (phase) {
-					METATRON_OPT_OR_BREAK(p_intr, (*phase)(history_trace_ctx.r.d, l_intr.wi, L_e));
+				} else if (trace_ctx.phase) {
+					METATRON_OPT_OR_BREAK(p_intr, (*trace_ctx.phase)(history_trace_ctx.r.d, l_intr.wi, L_e));
 					f = p_intr.f;
 					p_s = p_intr.pdf;
 				} else {
 					break;
 				}
 
-				auto medium = ctx.medium;
-				auto medium_to_world = ctx.medium_to_world;
+				auto medium = int_ctx.medium;
+				auto medium_to_world = int_ctx.medium_to_world;
 
 				auto div_opt = std::optional<accel::Divider const*>{};
 				auto intr_opt = std::optional<shape::Interaction>{};
@@ -143,7 +143,7 @@ namespace metatron::mc {
 						auto& intr = intr_opt.value();
 
 						intr.p = rt | lt | math::expand(intr.p, 1.f);
-						intr.n = math::normalize(rt | lt | math::expand(intr.n, 0.f));
+						intr.n = math::normalize(rt | lt | intr.n);
 
 						auto close_to_light = math::length(intr.p - l_intr.p) < 0.001f;
 						if (!close_to_light && !material::Material::is_interface(*div.material)) {
@@ -151,7 +151,7 @@ namespace metatron::mc {
 							betad = 0.f;
 							continue;
 						} else if (close_to_light) {
-							auto rd = ct ^ ctx.default_differential;
+							auto rd = ct ^ int_ctx.default_differential;
 							auto st = math::Transform{{}, {1.f},
 								math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(intr.p))
 							};
@@ -170,7 +170,7 @@ namespace metatron::mc {
 							auto duvdx = math::least_squares(dpduv, dpdx);
 							auto duvdy = math::least_squares(dpduv, dpdy);
 
-							auto tcoord = material::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
+							auto tcoord = texture::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
 							METATRON_OPT_OR_CALLBACK(mat_intr, div.material->sample(direct_ctx, tcoord), DIRECT_CLEAR_L);
 							l_intr.L = mat_intr.L;
 						}
@@ -181,7 +181,7 @@ namespace metatron::mc {
 
 					auto& mt = *medium_to_world;
 					auto m_ctx = mt ^ (rt ^ direct_ctx);
-					METATRON_OPT_OR_CALLBACK(m_intr, ctx.medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
+					METATRON_OPT_OR_CALLBACK(m_intr, int_ctx.medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
 						betad = 0.f;
 						terminated = true;
 						break;
@@ -248,12 +248,12 @@ namespace metatron::mc {
 			auto& lt = *div.local_to_world;
 			if (scattered || crossed) {
 				intr.p = rt | lt | math::expand(intr.p, 1.f);
-				intr.n = math::normalize(rt | (lt | math::expand(intr.n, 0.f)));
+				intr.n = math::normalize(rt | lt | intr.n);
 			}
 
-			auto& mt = *ctx.medium_to_world;
+			auto& mt = *int_ctx.medium_to_world;
 			auto m_ctx = mt ^ rt ^ trace_ctx;
-			METATRON_OPT_OR_CALLBACK(m_intr, ctx.medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
+			METATRON_OPT_OR_CALLBACK(m_intr, int_ctx.medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
 				terminated = true;
 				continue;
 			});
@@ -279,15 +279,16 @@ namespace metatron::mc {
 					beta *= m_intr.sigma_a / p_a;
 					terminated = true;
 				} else if (mode == 1uz) {
-					phase = m_intr.phase;
-					bsdf.reset();
+					phase = std::move(m_intr.phase);
+					trace_ctx.phase = phase.get();
+					trace_ctx.bsdf = nullptr;
 
 					auto pt = math::Transform{{}, {1.f},
 						math::Quaternion<f32>::from_rotation_between(-trace_ctx.r.d, {0.f, 1.f, 0.f})
 					};
 
 					auto p_ctx = pt | trace_ctx;
-					METATRON_OPT_OR_CALLBACK(p_intr, phase->sample(p_ctx, sampler.generate_2d()), {
+					METATRON_OPT_OR_CALLBACK(p_intr, trace_ctx.phase->sample(p_ctx, sampler.generate_2d()), {
 						terminated = true;
 						continue;
 					});
@@ -316,16 +317,16 @@ namespace metatron::mc {
 				continue;
 			}
 
-			if (!ctx.ray_differential.differentiable) {
-				auto rd = ct ^ ctx.default_differential;
+			if (!int_ctx.ray_differential.differentiable) {
+				auto rd = ct ^ int_ctx.default_differential;
 				auto st = math::Transform{{}, {1.f},
 					math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(intr.p))
 				};
-				ctx.ray_differential = st | rd;
+				int_ctx.ray_differential = st | rd;
 			}
-			ctx.ray_differential.differentiable = false;
+			int_ctx.ray_differential.differentiable = false;
 			
-			auto local_differential = lt ^ rt ^ ctx.ray_differential;
+			auto local_differential = lt ^ rt ^ int_ctx.ray_differential;
 			auto tangent = shape::Plane{intr.p, intr.n};
 			METATRON_OPT_OR_BREAK(d_intr, tangent(local_differential.r));
 			METATRON_OPT_OR_BREAK(dx_intr, tangent(local_differential.rx));
@@ -337,7 +338,7 @@ namespace metatron::mc {
 			auto duvdx = math::least_squares(dpduv, dpdx);
 			auto duvdy = math::least_squares(dpduv, dpdy);
 
-			auto tcoord = material::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
+			auto tcoord = texture::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
 			METATRON_OPT_OR_CALLBACK(mat_intr, div.material->sample(trace_ctx, tcoord), {
 				scattered = false;
 				crossed = true;
@@ -345,14 +346,15 @@ namespace metatron::mc {
 
 				auto into = math::dot(trace_ctx.r.d, intr.n) < 0.f;
 				auto flip_n = into ? -1.f : 1.f;
-				ctx.medium = into ? div.interior_medium : div.exterior_medium;
-				ctx.medium_to_world = into ? div.interior_transform : div.exterior_transform;
+				int_ctx.medium = into ? div.interior_medium : div.exterior_medium;
+				int_ctx.medium_to_world = into ? div.interior_transform : div.exterior_transform;
 				trace_ctx.r.o = intr.p + 0.001f * flip_n * intr.n;
 				continue;
 			});
 
 			bsdf = std::move(mat_intr.bsdf);
-			phase = nullptr;
+			trace_ctx.bsdf = bsdf.get();
+			trace_ctx.phase = nullptr;
 
 			do {
 				if (spectra::max(mat_intr.L) < math::epsilon<f32>) {
@@ -376,7 +378,7 @@ namespace metatron::mc {
 			auto u = sampler.generate_2d();
 
 			auto b_ctx = bt | trace_ctx;
-			METATRON_OPT_OR_CALLBACK(b_intr, bsdf->sample(b_ctx, {uc, u[0], u[1]}), {
+			METATRON_OPT_OR_CALLBACK(b_intr, trace_ctx.bsdf->sample(b_ctx, {uc, u[0], u[1]}), {
 				terminated = true;
 				continue;
 			});
@@ -384,8 +386,8 @@ namespace metatron::mc {
 			auto flip_n = 1.f;
 			if (-b_ctx.r.d[1] * b_intr.wi[1] < 0.f) {
 				auto into = math::dot(b_intr.wi, intr.n) < 0.f;
-				ctx.medium = into ? div.interior_medium : div.exterior_medium;
-				ctx.medium_to_world = into ? div.interior_transform : div.exterior_transform;
+				int_ctx.medium = into ? div.interior_medium : div.exterior_medium;
+				int_ctx.medium_to_world = into ? div.interior_transform : div.exterior_transform;
 				flip_n = into ? -1.f : 1.f;
 			}
 
