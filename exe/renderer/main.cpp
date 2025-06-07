@@ -47,9 +47,9 @@ auto main() -> int {
 	material::Material::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 16uz;
+	auto spp = 256uz;
 	auto blocks = 8uz;
-	auto depth = 10uz;
+	auto depth = 100uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
@@ -81,7 +81,9 @@ auto main() -> int {
 	auto medium_to_world = math::Transform{{}, {1.0f},
 		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 2.f),
 	};
-	auto light_to_world = identity;
+	auto light_to_world = math::Transform{{}, {1.0f},
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 0.f / 1.f),
+	};
 	auto parallel_to_world = math::Transform{{}, {1.f},
 		math::Quaternion<f32>::from_rotation_between(
 			{0.f, 0.f, 1.f},
@@ -130,31 +132,31 @@ auto main() -> int {
 	auto interface_material = material::Interface_Material{};
 
 	auto vaccum_medium = media::Vaccum_Medium{};
-	// auto nanovdb_grid = media::Nanovdb_Grid<
-	// 	f32,
-	// 	media::grid_size,
-	// 	media::grid_size,
-	// 	media::grid_size
-	// >{
-	// 	"../metatron-assets/disney-cloud/volume/disney-cloud.nvdb"
-	// };
-	// auto cloud_medium = media::Grid_Medium{
-	// 	&nanovdb_grid,
-	// 	color::Color_Space::sRGB->to_spectrum(
-	// 		{0.0f, 0.0f, 0.0f},
-	// 		color::Color_Space::Spectrum_Type::unbounded
-	// 	),
-	// 	color::Color_Space::sRGB->to_spectrum(
-	// 		{1.0f, 1.0f, 1.0f},
-	// 		color::Color_Space::Spectrum_Type::unbounded
-	// 	),
-	// 	color::Color_Space::sRGB->to_spectrum(
-	// 		{0.0f, 0.0f, 0.0f},
-	// 		color::Color_Space::Spectrum_Type::illuminant
-	// 	),
-	// 	0.877f,
-	// 	1.f
-	// };
+	auto nanovdb_grid = media::Nanovdb_Grid<
+		f32,
+		media::grid_size,
+		media::grid_size,
+		media::grid_size
+	>{
+		"../metatron-assets/disney-cloud/volume/disney-cloud.nvdb"
+	};
+	auto cloud_medium = media::Grid_Medium{
+		&nanovdb_grid,
+		color::Color_Space::sRGB->to_spectrum(
+			{0.0f, 0.0f, 0.0f},
+			color::Color_Space::Spectrum_Type::unbounded
+		),
+		color::Color_Space::sRGB->to_spectrum(
+			{1.0f, 1.0f, 1.0f},
+			color::Color_Space::Spectrum_Type::unbounded
+		),
+		color::Color_Space::sRGB->to_spectrum(
+			{0.0f, 0.0f, 0.0f},
+			color::Color_Space::Spectrum_Type::illuminant
+		),
+		0.877f,
+		1.f
+	};
 
 	auto env_map = std::make_unique<texture::Image_Texture<spectra::Stochastic_Spectrum>>(
 		image::Image::from_path("../metatron-assets/material/texture/sky-on-fire.exr", true),
@@ -201,17 +203,17 @@ auto main() -> int {
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
 	auto dividers = std::vector<accel::Divider>{
-		// {
-		// 	&sphere,
-		// 	&cloud_medium,
-		// 	&vaccum_medium,
-		// 	&interface_material,
-		// 	nullptr,
-		// 	&bound_to_world,
-		// 	&medium_to_world,
-		// 	&identity,
-		// 	0uz
-		// },
+		{
+			&sphere,
+			&cloud_medium,
+			&vaccum_medium,
+			&interface_material,
+			nullptr,
+			&bound_to_world,
+			&medium_to_world,
+			&identity,
+			0uz
+		},
 		// {
 		// 	&sphere,
 		// 	&vaccum_medium,
@@ -237,23 +239,23 @@ auto main() -> int {
 
 	};
 
-	auto assimp_loader = loader::Assimp_Loader{};
-	auto assets = assimp_loader.from_path("../metatron-assets/material/mesh/shell.ply");
-	for (auto& [mesh, material]: assets) {
-		for (auto i = 0uz; i < mesh->size(); i++) {
-			dividers.emplace_back(
-				mesh.get(),
-				&vaccum_medium,
-				&vaccum_medium,
-				material.get(),
-				nullptr,
-				&mesh_to_world,
-				&identity,
-				&identity,
-				i
-			);
-		}
-	}
+	// auto assimp_loader = loader::Assimp_Loader{};
+	// auto assets = assimp_loader.from_path("../metatron-assets/material/mesh/shell.ply");
+	// for (auto& [mesh, material]: assets) {
+	// 	for (auto i = 0uz; i < mesh->size(); i++) {
+	// 		dividers.emplace_back(
+	// 			mesh.get(),
+	// 			&vaccum_medium,
+	// 			&vaccum_medium,
+	// 			material.get(),
+	// 			nullptr,
+	// 			&mesh_to_world,
+	// 			&identity,
+	// 			&identity,
+	// 			i
+	// 		);
+	// 	}
+	// }
 
 	auto bvh = accel::LBVH{std::move(dividers), &world_to_render};
 	auto integrator = monte_carlo::Volume_Path_Integrator{};
@@ -279,10 +281,6 @@ auto main() -> int {
 				auto px = start + math::morton_decode<2>(p);
 				if (px >= size) {
 					continue;
-				}
-
-				if (px == math::Vector<usize, 2>{150, 100}) {
-					int a = 1;
 				}
 
 				for (auto n = 0uz; n < spp; n++) {

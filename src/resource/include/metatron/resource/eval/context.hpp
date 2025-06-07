@@ -24,14 +24,14 @@ namespace metatron::eval {
 	auto inline operator|(math::Transform const& t, Context const& ctx) -> Context {
 		auto result = ctx;
 		result.r = t | result.r;
-		result.n = math::expand(result.n, 0.f) | t.inv_transform;
+		result.n = t | result.n;
 		return result;
 	}
 
 	auto inline operator^(math::Transform const& t, Context const& ctx) -> Context {
 		auto result = ctx;
 		result.r = t ^ result.r;
-		result.n = math::expand(result.n, 0.f) | t.transform;
+		result.n = t ^ result.n;
 		return result;
 	}
 
