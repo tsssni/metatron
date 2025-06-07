@@ -28,8 +28,16 @@ namespace metatron::accel {
 		std::unique_ptr<Node> right;
 	};
 
+	struct Interaction final {
+		Divider const* divider{nullptr};
+		std::optional<shape::Interaction> intr_opt;
+	};
+
 	struct Acceleration {
 		virtual ~Acceleration() {}
-		auto virtual operator()(math::Ray const& r) const -> std::optional<Divider const*> = 0;
+		auto virtual operator()(
+			math::Ray const& r,
+			math::Vector<f32, 3> const& np = {}
+		) const -> std::optional<Interaction> = 0;
 	};
 }

@@ -201,17 +201,17 @@ auto main() -> int {
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
 	auto dividers = std::vector<accel::Divider>{
-		// {
-		// 	&sphere,
-		// 	&cloud_medium,
-		// 	&vaccum_medium,
-		// 	&interface_material,
-		// 	nullptr,
-		// 	&bound_to_world,
-		// 	&medium_to_world,
-		// 	&identity,
-		// 	0uz
-		// },
+		{
+			&sphere,
+			&cloud_medium,
+			&vaccum_medium,
+			&interface_material,
+			nullptr,
+			&bound_to_world,
+			&medium_to_world,
+			&identity,
+			0uz
+		},
 		// {
 		// 	&sphere,
 		// 	&vaccum_medium,
@@ -237,25 +237,25 @@ auto main() -> int {
 
 	};
 
-	auto assimp_loader = loader::Assimp_Loader{};
-	auto assets = assimp_loader.from_path("../glTF-Sample-Assets/Models/Triangle/glTF/Triangle.gltf");
-	for (auto& [mesh, material]: assets) {
-		for (auto i = 0uz; i < mesh->size(); i++) {
-			dividers.emplace_back(
-				mesh.get(),
-				&vaccum_medium,
-				&vaccum_medium,
-				material.get(),
-				nullptr,
-				&mesh_to_world,
-				&identity,
-				&identity,
-				i
-			);
-		}
-	}
+	// auto assimp_loader = loader::Assimp_Loader{};
+	// auto assets = assimp_loader.from_path("../glTF-Sample-Assets/Models/Triangle/glTF/Triangle.gltf");
+	// for (auto& [mesh, material]: assets) {
+	// 	for (auto i = 0uz; i < mesh->size(); i++) {
+	// 		dividers.emplace_back(
+	// 			mesh.get(),
+	// 			&vaccum_medium,
+	// 			&vaccum_medium,
+	// 			material.get(),
+	// 			nullptr,
+	// 			&mesh_to_world,
+	// 			&identity,
+	// 			&identity,
+	// 			i
+	// 		);
+	// 	}
+	// }
 
-	auto bvh = accel::LBVH{std::move(dividers)};
+	auto bvh = accel::LBVH{std::move(dividers), &world_to_render};
 
 	auto integrator = monte_carlo::Volume_Path_Integrator{};
 

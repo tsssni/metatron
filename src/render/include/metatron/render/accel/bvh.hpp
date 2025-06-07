@@ -3,12 +3,17 @@
 
 namespace metatron::accel {
 	struct LBVH final: Acceleration {
-		LBVH(std::vector<Divider>&& dividers);
+		LBVH(
+			std::vector<Divider>&& dividers,
+			math::Transform const* world_to_render
+		);
 		auto operator()(
-			math::Ray const& r
-		) const -> std::optional<Divider const*>;
+			math::Ray const& r,
+			math::Vector<f32, 3> const& np = {}
+		) const -> std::optional<Interaction>;
 
 	private:
 		std::vector<Divider> dividers;
+		math::Transform const* world_to_render;
 	};
 }

@@ -33,9 +33,7 @@ namespace metatron::monte_carlo {
 		trace_ctx.r = int_ctx.ray_differential.r;
 		trace_ctx.L = L_e;
 
-		auto div_opt = std::optional<accel::Divider const*>{};
-		auto intr_opt = std::optional<shape::Interaction>{};
-
+		auto acc_opt = std::optional<accel::Interaction>{};
 		auto& rt = *int_ctx.world_to_render;
 		auto& ct = *int_ctx.render_to_camera;
 		
@@ -99,8 +97,7 @@ namespace metatron::monte_carlo {
 				auto medium = int_ctx.medium;
 				auto medium_to_world = int_ctx.medium_to_world;
 
-				auto div_opt = std::optional<accel::Divider const*>{};
-				auto intr_opt = std::optional<shape::Interaction>{};
+				auto acc_opt = std::optional<accel::Interaction>{};
 				auto terminated = false;
 				auto crossed = true;
 
@@ -125,23 +122,20 @@ namespace metatron::monte_carlo {
 					}
 
 					if (crossed) {
-						div_opt = accel(direct_ctx.r);
-						if (!div_opt) {
+						acc_opt = accel(l_ctx.r, l_ctx.n);
+						if (!acc_opt) {
 							terminated = true;
 							continue;
 						}
-						auto& div = *div_opt.value();
+						auto& acc = acc_opt.value();
 
-						auto& lt = *div.local_to_world;
-						auto l_ctx = lt ^ rt ^ direct_ctx;
-
-						intr_opt = (*div.shape)(l_ctx.r, l_ctx.n, div.primitive);
-						if (!intr_opt) {
+						if (!acc_opt->intr_opt) {
 							terminated = true;
 							continue;
 						}
-						auto& intr = intr_opt.value();
+						auto& intr = acc_opt->intr_opt.value();
 
+						auto& div = *acc.divider;
 						intr.p = rt | lt | math::expand(intr.p, 1.f);
 						intr.n = math::normalize(rt | lt | intr.n);
 
@@ -176,8 +170,9 @@ namespace metatron::monte_carlo {
 						}
 					}
 
-					auto& div = *div_opt.value();
-					auto& intr = intr_opt.value();
+					auto& acc = acc_opt.value();
+					auto& div = acc.divider;
+					auto& intr = acc.intr_opt.value();
 
 					auto& mt = *medium_to_world;
 					auto m_ctx = mt ^ (rt ^ direct_ctx);
@@ -204,8 +199,8 @@ namespace metatron::monte_carlo {
 					} else {
 						auto into = math::dot(direct_ctx.r.d, intr.n) < 0.f;
 						auto flip_n = into ? -1.f : 1.f;
-						medium = into ? div.interior_medium : div.exterior_medium;
-						medium_to_world = into ? div.interior_transform : div.exterior_transform;
+						medium = into ? div->interior_medium : div->exterior_medium;
+						medium_to_world = into ? div->interior_transform : div->exterior_transform;
 						direct_ctx.r.o = intr.p + 0.001f * flip_n * intr.n;
 						crossed = true;
 					}
@@ -217,17 +212,10 @@ namespace metatron::monte_carlo {
 			} while (false);
 
 			if (scattered || crossed) {
-				div_opt = accel(trace_ctx.r);
-				intr_opt = {};
-				if (div_opt) {
-					auto div = div_opt.value();
-					auto& lt = *div->local_to_world;
-					auto s_ctx = lt ^ rt ^ trace_ctx;
-					intr_opt = (*div->shape)(s_ctx.r, s_ctx.n, div->primitive);
-				}
+				acc_opt = accel(trace_ctx.r, trace_ctx.n);
 			}
 
-			if (!intr_opt) {
+			if (!acc_opt || !acc_opt.value().intr_opt) {
 				terminated = true;
 
 				METATRON_OPT_OR_CONTINUE(e_intr, emitter.sample_infinite(trace_ctx, sampler.generate_1d()));
@@ -243,9 +231,10 @@ namespace metatron::monte_carlo {
 				continue;
 			}
 
-			auto& div = *div_opt.value();
-			auto& intr = intr_opt.value();
-			auto& lt = *div.local_to_world;
+			auto& acc = acc_opt.value();
+			auto& div = acc.divider;;
+			auto& intr = acc.intr_opt.value();
+			auto& lt = *div->local_to_world;
 			if (scattered || crossed) {
 				intr.p = rt | lt | math::expand(intr.p, 1.f);
 				intr.n = math::normalize(rt | lt | intr.n);
@@ -339,15 +328,15 @@ namespace metatron::monte_carlo {
 			auto duvdy = math::least_squares(dpduv, dpdy);
 
 			auto tcoord = texture::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
-			METATRON_OPT_OR_CALLBACK(mat_intr, div.material->sample(trace_ctx, tcoord), {
+			METATRON_OPT_OR_CALLBACK(mat_intr, div->material->sample(trace_ctx, tcoord), {
 				scattered = false;
 				crossed = true;
 				history_trace_ctx = trace_ctx;
 
 				auto into = math::dot(trace_ctx.r.d, intr.n) < 0.f;
 				auto flip_n = into ? -1.f : 1.f;
-				int_ctx.medium = into ? div.interior_medium : div.exterior_medium;
-				int_ctx.medium_to_world = into ? div.interior_transform : div.exterior_transform;
+				int_ctx.medium = into ? div->interior_medium : div->exterior_medium;
+				int_ctx.medium_to_world = into ? div->interior_transform : div->exterior_transform;
 				trace_ctx.r.o = intr.p + 0.001f * flip_n * intr.n;
 				continue;
 			});
@@ -361,7 +350,7 @@ namespace metatron::monte_carlo {
 					break;
 				}
 
-				METATRON_OPT_OR_BREAK(e_intr, emitter(trace_ctx, {div.light, div.local_to_world}));
+				METATRON_OPT_OR_BREAK(e_intr, emitter(trace_ctx, {div->light, div->local_to_world}));
 				auto& div = *e_intr.divider;
 				auto& lt = *div.local_to_world;
 
@@ -386,8 +375,8 @@ namespace metatron::monte_carlo {
 			auto flip_n = 1.f;
 			if (-b_ctx.r.d[1] * b_intr.wi[1] < 0.f) {
 				auto into = math::dot(b_intr.wi, intr.n) < 0.f;
-				int_ctx.medium = into ? div.interior_medium : div.exterior_medium;
-				int_ctx.medium_to_world = into ? div.interior_transform : div.exterior_transform;
+				int_ctx.medium = into ? div->interior_medium : div->exterior_medium;
+				int_ctx.medium_to_world = into ? div->interior_transform : div->exterior_transform;
 				flip_n = into ? -1.f : 1.f;
 			}
 
