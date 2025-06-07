@@ -60,7 +60,7 @@ namespace metatron::shape {
 	}
 
 	auto Mesh::bounding_box(
-		math::Transform const* t,
+		math::Matrix<f32, 4, 4> const* t,
 		usize idx
 	) const -> math::Bounding_Box {
 		auto prim = indices[idx];

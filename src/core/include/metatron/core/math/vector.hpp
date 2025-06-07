@@ -22,6 +22,42 @@ namespace metatron::math {
 		return r;
 	}
 
+	template<
+		typename Func,
+		typename... Ts,
+		usize size
+	>
+	auto any(Func f, Vector<Ts, size> const&... vectors) -> bool {
+		using Return_Type = decltype(f(vectors[0]..., 0uz));
+		static_assert(std::is_same_v<Return_Type, bool>, "f must return bool");
+
+		auto r = foreach(f, vectors...);
+		for (auto i = 0uz; i < size; i++) {
+			if (r[i]) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	template<
+		typename Func,
+		typename... Ts,
+		usize size
+	>
+	auto all(Func f, Vector<Ts, size> const&... vectors) -> bool {
+		using Return_Type = decltype(f(vectors[0]..., 0uz));
+		static_assert(std::is_same_v<Return_Type, bool>, "f must return bool");
+
+		auto r = foreach(f, vectors...);
+		for (auto i = 0uz; i < size; i++) {
+			if (!r[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	template<usize n>
 	auto inline guarded_div(Vector<f32, n> const& x, f32 y) -> Vector<f32, n> {
 		return std::abs(y) < epsilon<f32> ? Vector<f32, n>{0.f} : x / y;
@@ -53,7 +89,7 @@ namespace metatron::math {
 	}
 
 	template<typename T, typename U, typename V = decltype(T{} * U{}), usize size>
-	auto mul(Vector<T, size> const& x, Vector<U, size> const& y) -> Vector<V, 3> {
+	auto mul(Vector<T, size> const& x, Vector<U, size> const& y) -> Vector<V, size> {
 		auto z = Vector<V, size>{};
 		for (auto i = 0; i < size; i++) {
 			z[i] = x[i] * y[i];

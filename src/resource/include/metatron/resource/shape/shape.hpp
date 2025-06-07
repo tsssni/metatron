@@ -23,7 +23,7 @@ namespace metatron::shape {
 		virtual ~Shape() {}
 		auto virtual size() const -> usize = 0;
 		auto virtual bounding_box(
-			math::Transform const* t,
+			math::Matrix<f32, 4, 4> const* t,
 			usize idx = 0uz
 		) const -> math::Bounding_Box = 0;
 		auto virtual operator()(

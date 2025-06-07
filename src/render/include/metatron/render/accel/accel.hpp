@@ -6,7 +6,6 @@
 #include <metatron/core/math/bounding-box.hpp>
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/math/transform.hpp>
-#include <memory>
 
 namespace metatron::accel {
 	struct Divider final {
@@ -19,13 +18,6 @@ namespace metatron::accel {
 		math::Transform const* interior_transform{};
 		math::Transform const* exterior_transform{};
 		usize primitive{0uz};
-	};
-
-	struct Node final {
-		Divider const* divider{nullptr};
-		math::Bounding_Box bbox;
-		std::unique_ptr<Node> left;
-		std::unique_ptr<Node> right;
 	};
 
 	struct Interaction final {

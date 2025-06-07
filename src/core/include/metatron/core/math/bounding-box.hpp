@@ -41,4 +41,25 @@ namespace metatron::math {
 			return t_enter > 0.f ? t_enter : t_exit;
 		}
 	}
+
+	auto inline merge(
+		Bounding_Box const& a,
+		Bounding_Box const& b
+	) -> Bounding_Box {
+		return Bounding_Box{
+			.p_min = math::min(a.p_min, b.p_min),
+			.p_max = math::max(a.p_max, b.p_max)
+		};
+	}
+
+	auto inline area(Bounding_Box const& bbox) -> f32 {
+		if(math::any([](f32 x, f32 y, usize) {
+				return x >= y;
+			}, bbox.p_min, bbox.p_max)
+		) {
+			return 0.f;
+		}
+		auto extent = bbox.p_max - bbox.p_min;
+		return 2.f * (extent[0] * extent[1] + extent[1] * extent[2] + extent[2] * extent[0]);
+	}
 }

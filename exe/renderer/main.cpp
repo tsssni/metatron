@@ -33,7 +33,7 @@
 #include <metatron/render/light/area.hpp>
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
-#include <metatron/render/accel/bvh.hpp>
+#include <metatron/render/accel/lbvh.hpp>
 #include <atomic>
 #include <queue>
 #include <thread>
@@ -49,7 +49,7 @@ auto main() -> int {
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
 	auto spp = 16uz;
 	auto blocks = 8uz;
-	auto depth = 100uz;
+	auto depth = 10uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
@@ -74,8 +74,8 @@ auto main() -> int {
 	auto render_to_camera = identity;
 
 	auto sphere_to_world = math::Transform{{}, {200.f}};
-	auto mesh_to_world = math::Transform{{}, {200.f},
-		// math::Quaternion<f32>::from_axis_angle({1.f, 0.f, 0.f}, math::pi * 1.4f / 3.f),
+	auto mesh_to_world = math::Transform{{}, {100.f},
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
 	};
 	auto bound_to_world = math::Transform{{}, {500.f}};
 	auto medium_to_world = math::Transform{{}, {1.0f},
@@ -130,31 +130,31 @@ auto main() -> int {
 	auto interface_material = material::Interface_Material{};
 
 	auto vaccum_medium = media::Vaccum_Medium{};
-	auto nanovdb_grid = media::Nanovdb_Grid<
-		f32,
-		media::grid_size,
-		media::grid_size,
-		media::grid_size
-	>{
-		"../metatron-assets/disney-cloud/volume/disney-cloud.nvdb"
-	};
-	auto cloud_medium = media::Grid_Medium{
-		&nanovdb_grid,
-		color::Color_Space::sRGB->to_spectrum(
-			{0.0f, 0.0f, 0.0f},
-			color::Color_Space::Spectrum_Type::unbounded
-		),
-		color::Color_Space::sRGB->to_spectrum(
-			{1.0f, 1.0f, 1.0f},
-			color::Color_Space::Spectrum_Type::unbounded
-		),
-		color::Color_Space::sRGB->to_spectrum(
-			{0.0f, 0.0f, 0.0f},
-			color::Color_Space::Spectrum_Type::illuminant
-		),
-		0.877f,
-		1.f
-	};
+	// auto nanovdb_grid = media::Nanovdb_Grid<
+	// 	f32,
+	// 	media::grid_size,
+	// 	media::grid_size,
+	// 	media::grid_size
+	// >{
+	// 	"../metatron-assets/disney-cloud/volume/disney-cloud.nvdb"
+	// };
+	// auto cloud_medium = media::Grid_Medium{
+	// 	&nanovdb_grid,
+	// 	color::Color_Space::sRGB->to_spectrum(
+	// 		{0.0f, 0.0f, 0.0f},
+	// 		color::Color_Space::Spectrum_Type::unbounded
+	// 	),
+	// 	color::Color_Space::sRGB->to_spectrum(
+	// 		{1.0f, 1.0f, 1.0f},
+	// 		color::Color_Space::Spectrum_Type::unbounded
+	// 	),
+	// 	color::Color_Space::sRGB->to_spectrum(
+	// 		{0.0f, 0.0f, 0.0f},
+	// 		color::Color_Space::Spectrum_Type::illuminant
+	// 	),
+	// 	0.877f,
+	// 	1.f
+	// };
 
 	auto env_map = std::make_unique<texture::Image_Texture<spectra::Stochastic_Spectrum>>(
 		image::Image::from_path("../metatron-assets/material/texture/sky-on-fire.exr", true),
@@ -256,7 +256,6 @@ auto main() -> int {
 	}
 
 	auto bvh = accel::LBVH{std::move(dividers), &world_to_render};
-
 	auto integrator = monte_carlo::Volume_Path_Integrator{};
 
 	auto block_queue = std::vector<std::queue<math::Vector<usize, 2>>>(kernels);
@@ -264,7 +263,7 @@ auto main() -> int {
 	auto h_blocks = (size[1] + blocks - 1) / blocks;
 	for (auto i = 0uz; i < w_blocks; i++) {
 		for (auto j = 0uz; j < h_blocks; j++) {
-			auto m = math::morton_encode(i, j);
+			auto m = math::morton_encode(math::Vector<u32, 2>{i, j});
 			block_queue[m % kernels].push({i, j});
 		}
 	}
@@ -277,7 +276,7 @@ auto main() -> int {
 
 			auto start = blocks * block_idx;
 			for (auto p = 0; p < blocks * blocks; p++) {
-				auto px = start + math::morton_decode(p);
+				auto px = start + math::morton_decode<2>(p);
 				if (px >= size) {
 					continue;
 				}

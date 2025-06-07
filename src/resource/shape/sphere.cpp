@@ -13,7 +13,7 @@ namespace metatron::shape {
 	}
 
 	auto Sphere::bounding_box(
-		math::Transform const* t,
+		math::Matrix<f32, 4, 4> const* t,
 		usize idx
 	) const -> math::Bounding_Box {
 		auto c = *t | math::Vector<f32, 4>{0.f, 0.f, 0.f, 1.f};

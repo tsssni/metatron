@@ -13,7 +13,7 @@ namespace metatron::shape {
 	}
 
 	auto Plane::bounding_box(
-		math::Transform const* t,
+		math::Matrix<f32, 4, 4> const* t,
 		usize idx
 	) const -> math::Bounding_Box {
 		return {};
@@ -39,7 +39,7 @@ namespace metatron::shape {
 	auto Plane::sample(
 		eval::Context const& ctx,
 		math::Vector<f32, 2> const& u,
-		usize idxuz
+		usize idx
 	) const -> std::optional<Interaction> {
 		return {};
 	}
