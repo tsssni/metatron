@@ -59,10 +59,18 @@ namespace metatron::shape {
 		return indices.size();
 	}
 
-	auto Mesh::bounding_box(usize idx) const -> math::Bounding_Box {
+	auto Mesh::bounding_box(
+		math::Transform const* t,
+		usize idx
+	) const -> math::Bounding_Box {
 		auto prim = indices[idx];
-		auto p_min = math::min(vertices[prim[0]], vertices[prim[1]], vertices[prim[2]]);
-		auto p_max = math::max(vertices[prim[0]], vertices[prim[1]], vertices[prim[2]]);
+		auto v = math::Vector<math::Vector<f32, 4>, 3>{
+			*t | math::expand(vertices[prim[0]], 1.f),
+			*t | math::expand(vertices[prim[1]], 1.f),
+			*t | math::expand(vertices[prim[2]], 1.f)
+		};
+		auto p_min = math::min(v[0], v[1], v[2]);
+		auto p_max = math::max(v[0], v[1], v[2]);
 		return {p_min, p_max};
 	}
 

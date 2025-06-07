@@ -12,7 +12,10 @@ namespace metatron::shape {
 		return 1uz;
 	}
 
-	auto Plane::bounding_box(usize idxuz) const -> math::Bounding_Box {
+	auto Plane::bounding_box(
+		math::Transform const* t,
+		usize idx
+	) const -> math::Bounding_Box {
 		return {};
 	}
 
