@@ -84,7 +84,7 @@ namespace metatron::loader {
 					mesh->mTextureCoords[0][i].y
 				}
 				: 1.f
-				* math::cartesion_to_sphere(math::normalize(vertices.back()))
+				* math::cartesion_to_unit_sphere(math::normalize(vertices.back()))
 				/ math::Vector<f32, 2>{math::pi, 2.f * math::pi}
 			);
 		}

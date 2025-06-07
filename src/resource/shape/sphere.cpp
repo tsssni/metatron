@@ -12,8 +12,14 @@ namespace metatron::shape {
 		return 1uz;
 	}
 
-	auto Sphere::bounding_box(usize idx) const -> math::Bounding_Box {
-		return {{-1.f}, {1.f}};
+	auto Sphere::bounding_box(
+		math::Matrix<f32, 4, 4> const* t,
+		usize idx
+	) const -> math::Bounding_Box {
+		auto c = *t | math::Vector<f32, 4>{0.f, 0.f, 0.f, 1.f};
+		auto d = *t | math::Vector<f32, 4>{0.f, 1.f, 0.f, 0.f};
+		auto r = math::Vector<f32, 3>{math::length(d - c)};
+		return {c - r, c + r};
 	}
 
 	auto Sphere::operator()(
@@ -36,7 +42,7 @@ namespace metatron::shape {
 		auto p = r.o + t * r.d;
 		auto n = p;
 
-		auto s = math::cartesion_to_sphere(p);
+		auto s = math::cartesion_to_unit_sphere(p);
 		auto& theta = s[0];
 		auto& phi = s[1];
 		auto uv = math::Vector<f32, 2>{

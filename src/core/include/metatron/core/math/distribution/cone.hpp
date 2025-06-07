@@ -9,7 +9,7 @@ namespace metatron::math {
 		auto sample(Vector<f32, 2> const& u) const -> Vector<f32, 3> {
 			auto cos_theta = 1.f - u[0] * (1.f - cos_theta_max);
 			auto phi = u[1] * 2.f * pi;
-			return sphere_to_cartesion(cos_theta, phi);
+			return unit_sphere_to_cartesion(cos_theta, phi);
 		}
 
 		auto pdf() const -> f32 {

@@ -6,7 +6,6 @@
 #include <metatron/core/math/bounding-box.hpp>
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/math/transform.hpp>
-#include <memory>
 
 namespace metatron::accel {
 	struct Divider final {
@@ -21,15 +20,16 @@ namespace metatron::accel {
 		usize primitive{0uz};
 	};
 
-	struct Node final {
+	struct Interaction final {
 		Divider const* divider{nullptr};
-		math::Bounding_Box bbox;
-		std::unique_ptr<Node> left;
-		std::unique_ptr<Node> right;
+		std::optional<shape::Interaction> intr_opt;
 	};
 
 	struct Acceleration {
 		virtual ~Acceleration() {}
-		auto virtual operator()(math::Ray const& r) const -> std::optional<Divider const*> = 0;
+		auto virtual operator()(
+			math::Ray const& r,
+			math::Vector<f32, 3> const& np = {}
+		) const -> std::optional<Interaction> = 0;
 	};
 }

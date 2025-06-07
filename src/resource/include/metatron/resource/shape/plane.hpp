@@ -6,7 +6,10 @@ namespace metatron::shape {
 		Plane(f32 a, f32 b, f32 c, f32 d);
 		Plane(math::Vector<f32, 3> const& p, math::Vector<f32, 3> const& n);
 		auto size() const -> usize;
-		auto bounding_box(usize idxuz) const -> math::Bounding_Box;
+		auto bounding_box(
+			math::Matrix<f32, 4, 4> const* t,
+			usize idx
+		) const -> math::Bounding_Box;
 		auto operator()(
 			math::Ray const& r,
 			math::Vector<f32, 3> const& np = {},

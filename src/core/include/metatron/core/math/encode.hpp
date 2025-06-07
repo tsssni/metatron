@@ -2,27 +2,52 @@
 #include <metatron/core/math/vector.hpp>
 
 namespace metatron::math {
-	auto inline constexpr morton_encode(u32 x, u32 y) -> u32 {
-		auto constexpr spread_bits = [](u32 n) -> u32 {
-			n = (n | (n << 16)) & 0x0000ffff;
-			n = (n | (n << 8)) & 0x00ff00ff;
-			n = (n | (n << 4)) & 0x0f0f0f0f;
-			n = (n | (n << 2)) & 0x33333333;
-			n = (n | (n << 1)) & 0x55555555;
-			return n;
-		};
-		return (spread_bits(y) << 1) | spread_bits(x);
-	};
+	template<usize n>
+	auto inline constexpr morton_encode(math::Vector<u32, n> x) -> u32 {
+		if constexpr (n == 2) {
+			auto constexpr spread_bits = [](u32 x) -> u32 {
+				x = (x | (x << 16)) & 0x0000ffff;
+				x = (x | (x << 8)) & 0x00ff00ff;
+				x = (x | (x << 4)) & 0x0f0f0f0f;
+				x = (x | (x << 2)) & 0x33333333;
+				x = (x | (x << 1)) & 0x55555555;
+				return x;
+			};
+			return (spread_bits(x[1]) << 1) | spread_bits(x[0]);
+		} else if constexpr (n == 3) {
+			auto constexpr spread_bits = [](u32 x) -> u32 {
+				x = (x | (x << 16)) & 0x030000ff;
+				x = (x | (x << 8)) & 0x0300f00f;
+				x = (x | (x << 4)) & 0x030c30c3;
+				x = (x | (x << 2)) & 0x09249249;
+				return x;
+			};
+			return (spread_bits(x[2]) << 2) | (spread_bits(x[1]) << 1) | spread_bits(x[0]);
+		}
+	}
 
-	auto inline constexpr morton_decode(u32 x) -> math::Vector<u32, 2> {
-		auto constexpr compact_bits = [](u32 n) -> u32 {
-			n &= 0x55555555;
-			n = (n | (n >> 1)) & 0x33333333;
-			n = (n | (n >> 2)) & 0x0F0F0F0F;
-			n = (n | (n >> 4)) & 0x00FF00FF;
-			n = (n | (n >> 8)) & 0x0000FFFF;
-			return n;
-		};
-		return {compact_bits(x), compact_bits(x >> 1)};
+	template<usize n>
+	auto inline constexpr morton_decode(u32 x) -> math::Vector<u32, n> {
+		if constexpr (n == 2) {
+			auto constexpr compact_bits = [](u32 x) -> u32 {
+				x &= 0x55555555;
+				x = (x | (x >> 1)) & 0x33333333;
+				x = (x | (x >> 2)) & 0x0f0f0f0f;
+				x = (x | (x >> 4)) & 0x00ff00ff;
+				x = (x | (x >> 8)) & 0x0000ffff;
+				return x;
+			};
+			return {compact_bits(x), compact_bits(x >> 1)};
+		} else if constexpr (n == 3) {
+			auto constexpr compact_bits = [](u32 x) -> u32 {
+				x &= 0x09249249;
+				x = (x | (x >> 2)) & 0x030c30c3;
+				x = (x | (x >> 4)) & 0x0300f00f;
+				x = (x | (x >> 8)) & 0x030000ff;
+				x = (x | (x >> 16)) & 0x000000ff;
+				return x;
+			};
+			return {compact_bits(x), compact_bits(x >> 1), compact_bits(x >> 2)};
+		}
 	}
 }
