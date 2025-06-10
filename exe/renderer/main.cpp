@@ -35,7 +35,6 @@
 #include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/render/accel/lbvh.hpp>
 #include <atomic>
-#include <queue>
 #include <thread>
 
 using namespace metatron;
@@ -47,7 +46,7 @@ auto main() -> int {
 	material::Material::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 256uz;
+	auto spp = 16uz;
 	auto blocks = 8uz;
 	auto depth = 100uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
@@ -260,61 +259,33 @@ auto main() -> int {
 	auto bvh = accel::LBVH{std::move(dividers), &world_to_render};
 	auto integrator = monte_carlo::Volume_Path_Integrator{};
 
-	auto block_queue = std::vector<std::queue<math::Vector<usize, 2>>>(kernels);
-	auto w_blocks = (size[0] + blocks - 1) / blocks;
-	auto h_blocks = (size[1] + blocks - 1) / blocks;
-	for (auto i = 0uz; i < w_blocks; i++) {
-		for (auto j = 0uz; j < h_blocks; j++) {
-			auto m = math::morton_encode(math::Vector<u32, 2>{i, j});
-			block_queue[m % kernels].push({i, j});
-		}
-	}
-
 	auto atomic_count = std::atomic<usize>{0uz};
-	auto dispatch = [&](usize idx) -> void {
-		while (!block_queue[idx].empty()) {
-			auto block_idx = block_queue[idx].front();
-			block_queue[idx].pop();
+	auto future = stl::Dispatcher::instance().async_parallel(size, [&](math::Vector<usize, 2> const& px) {
+		for (auto n = 0uz; n < spp; n++) {
+			auto sample = camera.sample(px, n, sampler);
+			sample->ray_differential = render_to_camera ^ sample->ray_differential;
+			auto& s = sample.value();
 
-			auto start = blocks * block_idx;
-			for (auto p = 0; p < blocks * blocks; p++) {
-				auto px = start + math::morton_decode<2>(p);
-				if (px >= size) {
-					continue;
-				}
+			auto Li_opt = integrator.sample(
+				{
+					s.ray_differential,
+					s.default_differential,
+					&vaccum_medium,
+					&world_to_render,
+					&render_to_camera,
+					&identity,
+					depth
+				},
+				bvh,
+				emitter,
+				sampler
+			);
 
-				for (auto n = 0uz; n < spp; n++) {
-					auto sample = camera.sample(px, n, sampler);
-					sample->ray_differential = render_to_camera ^ sample->ray_differential;
-					auto& s = sample.value();
-
-					auto Li_opt = integrator.sample(
-						{
-							s.ray_differential,
-							s.default_differential,
-							&vaccum_medium,
-							&world_to_render,
-							&render_to_camera,
-							&identity,
-							depth
-						},
-						bvh,
-						emitter,
-						sampler
-					);
-
-					auto& Li = Li_opt.value();
-					s.fixel = Li;
-					atomic_count.fetch_add(1);
-				}
-			}
+			auto& Li = Li_opt.value();
+			s.fixel = Li;
+			atomic_count.fetch_add(1);
 		}
-	};
-
-	auto threads = std::vector<std::thread>{};
-	for (auto i = 0uz; i < kernels; i++) {
-		threads.emplace_back(dispatch, i);
-	}
+	});
 
 	while (true) {
 		auto total = size[0] * size[1] * spp;
@@ -323,9 +294,7 @@ auto main() -> int {
 			std::printf("\r");
 			std::printf("%f", 1.f * count / total);
 		} else {
-			for (auto i = 0uz; i < kernels; i++) {
-				threads[i].join();
-			}
+			future.wait();
 			break;
 		}
 	}

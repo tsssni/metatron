@@ -1,6 +1,7 @@
 #include <metatron/render/accel/lbvh.hpp>
 #include <metatron/core/math/encode.hpp>
 #include <metatron/core/stl/optional.hpp>
+#include <metatron/core/stl/thread.hpp>
 #include <ranges>
 #include <stack>
 
@@ -100,10 +101,14 @@ namespace metatron::accel {
 			}
 		};
 		auto lbvh_nodes = std::vector<std::unique_ptr<LBVH_Node>>(intervals.size());
-		for (auto i = 0u; i < intervals.size(); i++) {
-			auto& interval = intervals[i];
-			lbvh_nodes[i] = morton_split(interval, 29 - 12);
-		}
+		stl::Dispatcher::instance().sync_parallel(
+			math::Vector<usize, 1>{intervals.size()},
+			[&](auto const& idx) {
+				auto [i] = idx;
+				auto& interval = intervals[i];
+				lbvh_nodes[i] = morton_split(interval, 29 - 12);
+			}
+		);
 
 		auto area_split = [&](this auto self, std::vector<std::unique_ptr<LBVH_Node>>&& nodes) -> std::unique_ptr<LBVH_Node> {
 			if (nodes.size() == 1) {

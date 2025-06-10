@@ -1,6 +1,7 @@
 #include <metatron/resource/texture/image.hpp>
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <metatron/core/stl/thread.hpp>
 #include <bit>
 
 namespace metatron::texture {
@@ -25,16 +26,15 @@ namespace metatron::texture {
 			auto& image = *images[mip];
 			auto& upper = *images[mip - 1];
 
-			for (auto j = 0uz; j < size[1]; j++) {
-				for (auto i = 0uz; i < size[0]; i++) {
-					image[i, j] = 0.25f * (math::Vector<f32, 4>{0.f}
-						+ math::Vector<f32, 4>{upper[i * 2uz + 0, j * 2uz + 0]}
-						+ math::Vector<f32, 4>{upper[i * 2uz + 0, j * 2uz + 1]}
-						+ math::Vector<f32, 4>{upper[i * 2uz + 1, j * 2uz + 0]}
-						+ math::Vector<f32, 4>{upper[i * 2uz + 1, j * 2uz + 1]}
-					);
-				}
-			}
+			stl::Dispatcher::instance().sync_parallel(size, [&](math::Vector<usize, 2> const& px) {
+				auto [i, j] = px;
+				image[i, j] = 0.25f * (math::Vector<f32, 4>{0.f}
+					+ math::Vector<f32, 4>{upper[i * 2uz + 0, j * 2uz + 0]}
+					+ math::Vector<f32, 4>{upper[i * 2uz + 0, j * 2uz + 1]}
+					+ math::Vector<f32, 4>{upper[i * 2uz + 1, j * 2uz + 0]}
+					+ math::Vector<f32, 4>{upper[i * 2uz + 1, j * 2uz + 1]}
+				);
+			});
 		}
 	}
 
