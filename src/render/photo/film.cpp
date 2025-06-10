@@ -1,6 +1,7 @@
 #include <metatron/render/photo/film.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <metatron/core/stl/thread.hpp>
 #include <span>
 
 namespace metatron::photo {
@@ -56,13 +57,15 @@ namespace metatron::photo {
 	}
 
 	auto Film::to_path(std::string_view path) -> void {
-		for (auto j = 0; j < image.height; j++) {
-			for (auto i = 0; i < image.width; i++) {
+		stl::Dispatcher::instance().sync_parallel(
+			math::Vector<usize, 2>{image.width, image.height},
+			[&](math::Vector<usize, 2> const& px) {
+				auto [i, j] = px;
 				auto pixel = math::Vector<f32, 4>{image[i, j]};
 				pixel = std::abs(pixel[3]) < math::epsilon<f32> ? math::Vector<f32, 4>{0.f} : pixel / pixel[3];
 				image[i, j] = pixel;
 			}
-		}
+		);
 		image.to_path(path);
 	}
 }

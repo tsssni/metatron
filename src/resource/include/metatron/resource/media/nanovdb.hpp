@@ -3,6 +3,7 @@
 #include <metatron/core/math/bounding-box.hpp>
 #include <metatron/core/math/distribution/exponential.hpp>
 #include <metatron/core/math/grid/uniform.hpp>
+#include <metatron/core/stl/thread.hpp>
 #include <nanovdb/NanoVDB.h>
 #include <nanovdb/io/IO.h>
 #include <nanovdb/math/SampleFromVoxels.h>
@@ -47,30 +48,28 @@ namespace metatron::media {
 			))
 		) {
 			auto& root = nanovdb_grid->tree().root();
-			auto accessor = nanovdb_grid->getAccessor();
-			for (auto n = 0; n < majorant_grid.dimensions[0] * majorant_grid.dimensions[1] * majorant_grid.dimensions[2]; n++) {
-				auto ijk = math::Vector<i32, 3>{
-					n / (majorant_grid.dimensions[2] * majorant_grid.dimensions[1]),
-					(n / majorant_grid.dimensions[2]) % majorant_grid.dimensions[1],
-					n % majorant_grid.dimensions[2]
-				};
-				auto voxel_bbox = majorant_grid.bounding_box(ijk);
-				majorant_grid[ijk] = math::low<T>;
+			stl::Dispatcher::instance().sync_parallel(
+				majorant_grid.dimensions,
+				[&](math::Vector<usize, 3> const& xyz) {
+					auto ijk = math::Vector<i32, 3>{xyz};
+					auto voxel_bbox = majorant_grid.bounding_box(ijk);
+					majorant_grid[ijk] = math::low<T>;
 
-				std::swap(voxel_bbox.p_min[2], voxel_bbox.p_max[2]);
-				auto p_min = math::Vector<i32, 3>{from_nanovdb(nanovdb_grid->worldToIndex(to_nanovdb(voxel_bbox.p_min)))};
-				auto p_max = math::Vector<i32, 3>{from_nanovdb(nanovdb_grid->worldToIndex(to_nanovdb(voxel_bbox.p_max)))};
-				p_min[2] *= -1;
-				p_max[2] *= -1;
+					std::swap(voxel_bbox.p_min[2], voxel_bbox.p_max[2]);
+					auto p_min = math::Vector<i32, 3>{from_nanovdb(nanovdb_grid->worldToIndex(to_nanovdb(voxel_bbox.p_min)))};
+					auto p_max = math::Vector<i32, 3>{from_nanovdb(nanovdb_grid->worldToIndex(to_nanovdb(voxel_bbox.p_max)))};
+					p_min[2] *= -1;
+					p_max[2] *= -1;
 
-				for (auto i = p_min[0]; i <= p_max[0]; i++) {
-					for (auto j = p_min[1]; j <= p_max[1]; j++) {
-						for (auto k = p_min[2]; k <= p_max[2]; k++) {
-							majorant_grid[ijk] = std::max(majorant_grid[ijk], accessor.getValue({i, j, k}));
+					for (auto i = p_min[0]; i <= p_max[0]; i++) {
+						for (auto j = p_min[1]; j <= p_max[1]; j++) {
+							for (auto k = p_min[2]; k <= p_max[2]; k++) {
+								majorant_grid[ijk] = std::max(majorant_grid[ijk], nanovdb_grid->tree().getValue({i, j, k}));
+							}
 						}
 					}
 				}
-			}
+			);
 		}
 
 		auto virtual to_local(math::Vector<i32, 3> const& ijk) const -> math::Vector<f32, 3> { return majorant_grid.to_local(ijk); }

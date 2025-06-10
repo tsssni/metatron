@@ -3,14 +3,14 @@
 #include <tuple>
 
 namespace metatron::math {
-	auto inline gcd(usize a, usize b) -> usize {
+	auto inline constexpr gcd(usize a, usize b) -> usize {
 		if (b == 0) {
 			return a;
 		}
 		return gcd(b, a % b);
 	}
 
-	auto inline extended_gcd(usize a, usize b) -> std::tuple<usize, usize, usize> {
+	auto inline constexpr extended_gcd(usize a, usize b) -> std::tuple<usize, usize, usize> {
 		if (b == 0) {
 			return {a, 1uz, 0uz};
 		}
@@ -21,13 +21,13 @@ namespace metatron::math {
 		return {gcd, y, x - (a / b) * y};
 	}
 
-	auto inline multiplicative_inverse(usize a, usize b) -> usize {
+	auto inline constexpr multiplicative_inverse(usize a, usize b) -> usize {
 		auto [gcd, x, y] = extended_gcd(a, b);
 		return x;
 	}
 
 	template<usize n>
-	auto inline chinese_remainder_theorem(
+	auto inline constexpr chinese_remainder_theorem(
 		Vector<usize, n> const& a,
 		Vector<usize, n> const& b
 	) -> usize {

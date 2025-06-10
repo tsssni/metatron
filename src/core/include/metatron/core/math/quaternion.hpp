@@ -83,7 +83,7 @@ namespace metatron::math {
 
     template<typename T>
     requires std::floating_point<T>
-	auto slerp(Quaternion<T> const& q0, Quaternion<T> const& q1, T const& t) -> Quaternion<T> {
+	auto constexpr slerp(Quaternion<T> const& q0, Quaternion<T> const& q1, T const& t) -> Quaternion<T> {
 		// quaternion fits x^2 + y^2 + z^2 + w^2 = 1, so it's 4D sphere which could use slerp
 
 		auto q0v = Vector<T, 4>{q0};
@@ -113,13 +113,13 @@ namespace metatron::math {
 
     template<typename T>
     requires std::floating_point<T>
-	auto conjugate(Quaternion<T> const& q) -> Quaternion<T> {
+	auto constexpr conjugate(Quaternion<T> const& q) -> Quaternion<T> {
 		return {-q[0], -q[1], -q[2], q[3]};
 	}
 
     template<typename T>
     requires std::floating_point<T>
-	auto rotate(Vector<T, 4> const& x, Quaternion<T> const& q) -> math::Vector<T, 4> {
+	auto constexpr rotate(Vector<T, 4> const& x, Quaternion<T> const& q) -> math::Vector<T, 4> {
 		auto p = Quaternion{x[0], x[1], x[2], T{0}};
 		auto r = q * p * conjugate(q);
 		return {r[0], r[1], r[2], T{0}};
