@@ -46,7 +46,7 @@ auto main() -> int {
 	material::Material::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 256uz;
+	auto spp = 16uz;
 	auto blocks = 8uz;
 	auto depth = 10uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
@@ -117,7 +117,7 @@ auto main() -> int {
 		{{0, 0, -1}, {0, 0, -1}, {0, 0, -1}},
 		{{1, 0}, {0, 0}, {0, 1}},
 	};
-	auto diffuse_material = material::Diffuse_Material{
+	auto diffuse_material = material::Diffuse_Material{{
 		std::make_unique<texture::Constant_Texture<spectra::Stochastic_Spectrum>>(
 			color::Color_Space::sRGB->to_spectrum(
 				{1.f / math::pi, 1.f / math::pi, 1.f / math::pi},
@@ -139,7 +139,7 @@ auto main() -> int {
 		std::make_unique<texture::Constant_Texture<math::Vector<f32, 4>>>(
 			math::Vector<f32, 4>{0.f, 0.f, 1.f, 0.f}
 		)
-	};
+	}};
 	auto interface_material = material::Interface_Material{};
 
 	auto vaccum_medium = media::Vaccum_Medium{};

@@ -5,12 +5,7 @@
 
 namespace metatron::material {
 	struct Diffuse_Material final: Material {
-		Diffuse_Material(
-			std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> R,
-			std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> T,
-			std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> L,
-			std::unique_ptr<texture::Texture<math::Vector<f32, 4>>> N
-		);
+		Diffuse_Material(Texture_Set&& texture_set);
 
 		auto sample(
 			eval::Context const& ctx,
@@ -18,9 +13,6 @@ namespace metatron::material {
 		) const -> std::optional<Interaction>;
 
 	private:
-		std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> R;
-		std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> T;
-		std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> L;
-		std::unique_ptr<texture::Texture<math::Vector<f32, 4>>> N;
+		Texture_Set texture_set;
 	};
 }

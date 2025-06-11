@@ -2,12 +2,8 @@
 #include <metatron/resource/spectra/constant.hpp>
 
 namespace metatron::material {
-	Diffuse_Material::Diffuse_Material(
-		std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> R,
-		std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> T,
-		std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> L,
-		std::unique_ptr<texture::Texture<math::Vector<f32, 4>>> N
-	): R(std::move(R)), T(std::move(T)), L(std::move(L)), N(std::move(N)) {}
+	Diffuse_Material::Diffuse_Material(Texture_Set&& texture_set)
+	: texture_set(std::move(texture_set)) {}
 
 	auto Diffuse_Material::sample(
 		eval::Context const& ctx,
@@ -15,11 +11,11 @@ namespace metatron::material {
 	) const -> std::optional<Interaction> {
 		return Interaction{
 			std::make_unique<bsdf::Lambertian_Bsdf>(
-				std::make_unique<spectra::Stochastic_Spectrum>(R->sample(ctx, coord)),
-				std::make_unique<spectra::Stochastic_Spectrum>(T->sample(ctx, coord))
+				std::make_unique<spectra::Stochastic_Spectrum>(texture_set.R->sample(ctx, coord)),
+				std::make_unique<spectra::Stochastic_Spectrum>(texture_set.T->sample(ctx, coord))
 			),
-			L->sample(ctx, coord),
-			N->sample(ctx, coord)
+			texture_set.L->sample(ctx, coord),
+			texture_set.N->sample(ctx, coord)
 		};
 	}
 }

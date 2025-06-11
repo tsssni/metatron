@@ -14,6 +14,14 @@ namespace metatron::material {
 		math::Vector<f32, 3> n;
 	};
 
+	struct Texture_Set final {
+		std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> R;
+		std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> T;
+		std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> L;
+		std::unique_ptr<texture::Texture<math::Vector<f32, 4>>> N;
+		std::unique_ptr<texture::Texture<math::Vector<f32, 4>>> MRS;
+	};
+
 	struct Material {
 		virtual ~Material() {}
 		auto virtual sample(
