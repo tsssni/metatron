@@ -5,8 +5,9 @@ namespace metatron::material {
 	Diffuse_Material::Diffuse_Material(
 		std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> R,
 		std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> T,
-		std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> L
-	): R(std::move(R)), T(std::move(T)), L(std::move(L)) {}
+		std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> L,
+		std::unique_ptr<texture::Texture<math::Vector<f32, 4>>> N
+	): R(std::move(R)), T(std::move(T)), L(std::move(L)), N(std::move(N)) {}
 
 	auto Diffuse_Material::sample(
 		eval::Context const& ctx,
@@ -17,7 +18,8 @@ namespace metatron::material {
 				std::make_unique<spectra::Stochastic_Spectrum>(R->sample(ctx, coord)),
 				std::make_unique<spectra::Stochastic_Spectrum>(T->sample(ctx, coord))
 			),
-			L->sample(ctx, coord)
+			L->sample(ctx, coord),
+			N->sample(ctx, coord)
 		};
 	}
 }

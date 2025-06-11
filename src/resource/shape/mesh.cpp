@@ -178,15 +178,14 @@ namespace metatron::shape {
 			pdf *= distr.pdf(u);
 		}
 
+		auto tn = math::normalize(dpdu[idx]);
+		tn = math::gram_schmidt(tn, n);
+		auto bn = math::cross(tn, n);
+
 		return shape::Interaction{
-			p,
-			n,
-			uv,
-			t,
-			dpdu[idx],
-			dpdv[idx],
-			dndu[idx],
-			dndv[idx],
+			p, n, tn, bn, uv, t,
+			dpdu[idx], dpdv[idx],
+			dndu[idx], dndv[idx],
 			pdf,
 		};
 	}
@@ -279,15 +278,17 @@ namespace metatron::shape {
 		}
 		auto bary = math::Vector<f32, 3>{1.f - b_1 - b_2, b_1, b_2};
 
-		return Interaction{
-			ctx.r.o + t * d,
-			math::normalize(blerp(normals, b, idx)),
-			blerp(uvs, bary, idx),
-			t,
-			dpdu[idx],
-			dpdv[idx],
-			dndu[idx],
-			dndv[idx],
+		auto p = ctx.r.o + t * d;
+		auto n = math::normalize(blerp(normals, bary, idx));
+		auto tn = math::normalize(dpdu[idx]);
+		tn = math::gram_schmidt(tn, n);
+		auto bn = math::cross(tn, n);
+		auto uv = blerp(uvs, bary, idx);
+
+		return shape::Interaction{
+			p, n, tn, bn, uv, t,
+			dpdu[idx], dpdv[idx],
+			dndu[idx], dndv[idx],
 			math::guarded_div(
 				math::guarded_div(pdf, (A_pi - math::pi)),
 				(1.f - cos_bc1)

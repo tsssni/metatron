@@ -135,6 +135,9 @@ auto main() -> int {
 				{0.0f, 0.0f, 0.0f},
 				color::Color_Space::Spectrum_Type::illuminant
 			)
+		),
+		std::make_unique<texture::Constant_Texture<math::Vector<f32, 4>>>(
+			math::Vector<f32, 4>{0.f, 0.f, 1.f, 0.f}
 		)
 	};
 	auto interface_material = material::Interface_Material{};

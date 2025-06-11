@@ -33,7 +33,7 @@ namespace metatron::shape {
 
 		auto t = -no / nd;
 		auto p = r.o + t * r.d;
-		return Interaction{p, n, {}, t};
+		return Interaction{p, n, {}, {}, {}, t};
 	}
 
 	auto Plane::sample(

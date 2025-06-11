@@ -247,6 +247,8 @@ namespace metatron::monte_carlo {
 				intr.n = math::normalize(rt | lt | intr.n);
 				inside = math::dot(-trace_ctx.r.d, intr.n) < 0.f;
 				intr.n *= inside ? -1.f : 1.f;
+				intr.tn = rt | lt | math::expand(intr.tn, 0.f);
+				intr.bn = rt | lt | math::expand(intr.bn, 0.f);
 			}
 
 			auto& mt = *medium_to_world;
@@ -346,12 +348,15 @@ namespace metatron::monte_carlo {
 				continue;
 			});
 
-			do {
+			auto tbn = math::transpose(math::Matrix<f32, 3, 3>{intr.tn, intr.bn, intr.n});
+			intr.n = tbn | mat_intr.n;
+
+			[&]() {
 				if (spectra::max(mat_intr.L) < math::epsilon<f32>) {
-					break;
+					return;
 				}
 
-				METATRON_OPT_OR_BREAK(e_intr, emitter(trace_ctx, {div->light, div->local_to_world}));
+				METATRON_OPT_OR_RETURN(e_intr, emitter(trace_ctx, {div->light, div->local_to_world}));
 				auto& div = *e_intr.divider;
 				auto& lt = *div.local_to_world;
 
@@ -359,7 +364,7 @@ namespace metatron::monte_carlo {
 				mis_e *= math::guarded_div(p_e, scatter_pdf);
 				auto mis_w = math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
 				L_e += mis_w * beta * mat_intr.L;
-			} while (false);
+			}();
 
 			bsdf = std::move(mat_intr.bsdf);
 			auto bt = math::Transform{{}, {1.f},

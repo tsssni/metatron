@@ -11,6 +11,7 @@ namespace metatron::material {
 	struct Interaction final {
 		std::unique_ptr<bsdf::Bsdf> bsdf;
 		spectra::Stochastic_Spectrum L;
+		math::Vector<f32, 3> n;
 	};
 
 	struct Material {
