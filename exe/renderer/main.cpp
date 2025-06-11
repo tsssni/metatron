@@ -46,9 +46,9 @@ auto main() -> int {
 	material::Material::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 16uz;
+	auto spp = 256uz;
 	auto blocks = 8uz;
-	auto depth = 100uz;
+	auto depth = 10uz;
 	auto kernels = usize(std::thread::hardware_concurrency());
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
@@ -74,6 +74,15 @@ auto main() -> int {
 
 	auto sphere_to_world = math::Transform{{}, {200.f}};
 	auto mesh_to_world = math::Transform{{}, {100.f},
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
+	};
+	auto shell_to_world = math::Transform{{0.f, 50.f, 0.f}, {100.f},
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
+	};
+	auto kernel_to_world = math::Transform{{0.f, 0.f, 0.f}, {100.f},
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
+	};
+	auto base_to_world = math::Transform{{0.f, -50.f, 0.f}, {100.f},
 		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
 	};
 	auto bound_to_world = math::Transform{{}, {500.f}};
@@ -111,7 +120,7 @@ auto main() -> int {
 	auto diffuse_material = material::Diffuse_Material{
 		std::make_unique<texture::Constant_Texture<spectra::Stochastic_Spectrum>>(
 			color::Color_Space::sRGB->to_spectrum(
-				{1.0f, 1.0f, 1.0f},
+				{1.f / math::pi, 1.f / math::pi, 1.f / math::pi},
 				color::Color_Space::Spectrum_Type::albedo
 			)
 		),
@@ -202,17 +211,17 @@ auto main() -> int {
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
 	auto dividers = std::vector<accel::Divider>{
-		{
-			&sphere,
-			&cloud_medium,
-			&vaccum_medium,
-			&interface_material,
-			nullptr,
-			&bound_to_world,
-			&medium_to_world,
-			&identity,
-			0uz
-		},
+		// {
+		// 	&sphere,
+		// 	&cloud_medium,
+		// 	&vaccum_medium,
+		// 	&interface_material,
+		// 	nullptr,
+		// 	&bound_to_world,
+		// 	&medium_to_world,
+		// 	&identity,
+		// 	0uz
+		// },
 		// {
 		// 	&sphere,
 		// 	&vaccum_medium,
@@ -238,23 +247,49 @@ auto main() -> int {
 
 	};
 
-	// auto assimp_loader = loader::Assimp_Loader{};
-	// auto assets = assimp_loader.from_path("../metatron-assets/material/mesh/shell.ply");
-	// for (auto& [mesh, material]: assets) {
-	// 	for (auto i = 0uz; i < mesh->size(); i++) {
-	// 		dividers.emplace_back(
-	// 			mesh.get(),
-	// 			&vaccum_medium,
-	// 			&vaccum_medium,
-	// 			material.get(),
-	// 			nullptr,
-	// 			&mesh_to_world,
-	// 			&identity,
-	// 			&identity,
-	// 			i
-	// 		);
-	// 	}
-	// }
+	auto assimp_loader = loader::Assimp_Loader{};
+	auto shell = assimp_loader.from_path("../metatron-assets/material/mesh/shell.ply");
+	auto kernel = assimp_loader.from_path("../metatron-assets/material/mesh/kernel.ply");
+	auto base = assimp_loader.from_path("../metatron-assets/material/mesh/base.ply");
+
+	auto divider = accel::Divider{
+		nullptr,
+		&vaccum_medium,
+		&vaccum_medium,
+		&diffuse_material,
+		nullptr,
+		nullptr,
+		&identity,
+		&identity,
+		0uz,
+	};
+	for (auto& mesh: shell) {
+		for (auto i = 0uz; i < mesh->size(); i++) {
+			auto div = divider;
+			div.shape = mesh.get();
+			div.local_to_world = &shell_to_world;
+			div.primitive = i;
+			dividers.push_back(div);
+		}
+	}
+	for (auto& mesh: kernel) {
+		for (auto i = 0uz; i < mesh->size(); i++) {
+			auto div = divider;
+			div.shape = mesh.get();
+			div.local_to_world = &kernel_to_world;
+			div.primitive = i;
+			dividers.push_back(div);
+		}
+	}
+	for (auto& mesh: base) {
+		for (auto i = 0uz; i < mesh->size(); i++) {
+			auto div = divider;
+			div.shape = mesh.get();
+			div.local_to_world = &base_to_world;
+			div.primitive = i;
+			dividers.push_back(div);
+		}
+	}
 
 	auto bvh = accel::LBVH{std::move(dividers), &world_to_render};
 	auto integrator = monte_carlo::Volume_Path_Integrator{};

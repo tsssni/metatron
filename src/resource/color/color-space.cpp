@@ -40,7 +40,9 @@ namespace metatron::color {
 	}
 
 	auto Color_Space::to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> std::unique_ptr<spectra::Spectrum> {
-		if (rgb < math::Vector<f32, 3>{0.f} || rgb > math::Vector<f32, 3>{1.f}) {
+		if (false
+		|| math::any([](f32 x, usize i){ return x < 0.f; }, rgb)
+		|| math::any([](f32 x, usize i){ return x > 1.f; }, rgb)) {
 			assert("RGB exceed [0.0, 1.0]");
 		}
 
@@ -60,7 +62,13 @@ namespace metatron::color {
 		rgb = math::guarded_div(rgb, s);
 
 		if (rgb[0] == rgb[1] && rgb[1] == rgb[2]) {
-			return std::make_unique<spectra::Rgb_Spectrum>(math::Vector<f32, 3>{0.f, 0.f, (rgb[0] - 0.5f) / math::sqrt(rgb[0] * (1.f - rgb[0]))}, s, w);
+			return std::make_unique<spectra::Rgb_Spectrum>(
+				math::Vector<f32, 3>{
+					(rgb[0] - 0.5f) / math::sqrt(rgb[0] * (1.f - rgb[0])),
+					0.f, 0.f,
+				},
+				s, w
+			);
 		}
 
 		auto maxc = (rgb[0] > rgb[1]) ? ((rgb[0] > rgb[2]) ? 0 : 2) : ((rgb[1] > rgb[2]) ? 1 : 2);
