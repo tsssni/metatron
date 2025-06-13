@@ -20,4 +20,10 @@ namespace metatron::texture {
 			Coordinate const& coord
 		) const -> T = 0;
 	};
+
+	auto grad(
+		math::Ray_Differential const& diff,
+		shape::Interaction const& intr
+	) -> std::optional<texture::Coordinate>;
+
 }

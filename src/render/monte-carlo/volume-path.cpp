@@ -7,7 +7,7 @@
 
 namespace metatron::monte_carlo {
 	auto Volume_Path_Integrator::sample(
-		Context int_ctx,
+		Status initial_status,
 		accel::Acceleration const& accel,
 		emitter::Emitter const& emitter,
 		math::Sampler const& sampler
@@ -19,7 +19,7 @@ namespace metatron::monte_carlo {
 		auto mis_e = L_e; mis_e = 0.f;
 
 		auto depth = 0uz;
-		auto max_depth = int_ctx.max_depth;
+		auto max_depth = initial_status.max_depth;
 		auto crossed = true;
 		auto terminated = false;
 		auto inside = false;
@@ -32,16 +32,16 @@ namespace metatron::monte_carlo {
 		auto phase = std::unique_ptr<phase::Phase_Function>{};
 		auto trace_ctx = eval::Context{};
 		auto history_trace_ctx = eval::Context{};
-		trace_ctx.r = int_ctx.ray_differential.r;
+		trace_ctx.r = initial_status.ray_differential.r;
 		trace_ctx.L = L_e;
 
 		auto acc_opt = std::optional<accel::Interaction>{};
-		auto* medium = int_ctx.medium;
-		auto* medium_to_world = int_ctx.medium_to_world;
-		auto& rdiff = int_ctx.ray_differential;
-		auto& ddiff = int_ctx.default_differential;
-		auto& rt = *int_ctx.world_to_render;
-		auto& ct = *int_ctx.render_to_camera;
+		auto* medium = initial_status.medium;
+		auto* medium_to_world = initial_status.medium_to_world;
+		auto& rdiff = initial_status.ray_differential;
+		auto& ddiff = initial_status.default_differential;
+		auto& rt = *initial_status.world_to_render;
+		auto& ct = *initial_status.render_to_camera;
 		
 		while (true) {
 			depth += usize(scattered);
@@ -162,19 +162,12 @@ namespace metatron::monte_carlo {
 
 							auto ldiff = lt ^ rt ^ rd;
 							auto tangent = shape::Plane{intr.p, intr.n};
-							#define METATRON_DSTOP {terminated = true; gamma = 0.f; std::printf("\n===\n"); continue;}
-							METATRON_OPT_OR_CALLBACK(d_intr, tangent(ldiff.r), METATRON_DSTOP);
-							METATRON_OPT_OR_CALLBACK(dx_intr, tangent(ldiff.rx), METATRON_DSTOP);
-							METATRON_OPT_OR_CALLBACK(dy_intr, tangent(ldiff.ry), METATRON_DSTOP);
-							
-							auto dpdx = dx_intr.p - d_intr.p;
-							auto dpdy = dy_intr.p - d_intr.p;
-							auto dpduv =  math::transpose(math::Matrix<f32, 2, 3>{intr.dpdu, intr.dpdv});
-							auto duvdx = math::least_squares(dpduv, dpdx);
-							auto duvdy = math::least_squares(dpduv, dpdy);
-
-							auto tcoord = texture::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
-							METATRON_OPT_OR_CALLBACK(mat_intr, div.material->sample(direct_ctx, tcoord), METATRON_DSTOP);
+							METATRON_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, intr), {
+								terminated = true; gamma = 0.f; continue;
+							});
+							METATRON_OPT_OR_CALLBACK(mat_intr, div.material->sample(direct_ctx, tcoord), {
+								terminated = true; gamma = 0.f; continue;
+							});
 							l_intr.L = mat_intr.L;
 						}
 					}
@@ -322,20 +315,9 @@ namespace metatron::monte_carlo {
 				rdiff = st | rd;
 			}
 			rdiff.differentiable = false;
-			
 			auto ldiff = lt ^ rt ^ rdiff;
-			auto tangent = shape::Plane{intr.p, intr.n};
-			METATRON_OPT_OR_BREAK(d_intr, tangent(ldiff.r));
-			METATRON_OPT_OR_BREAK(dx_intr, tangent(ldiff.rx));
-			METATRON_OPT_OR_BREAK(dy_intr, tangent(ldiff.ry));
-			
-			auto dpdx = dx_intr.p - d_intr.p;
-			auto dpdy = dy_intr.p - d_intr.p;
-			auto dpduv =  math::transpose(math::Matrix<f32, 2, 3>{intr.dpdu, intr.dpdv});
-			auto duvdx = math::least_squares(dpduv, dpdx);
-			auto duvdy = math::least_squares(dpduv, dpdy);
 
-			auto tcoord = texture::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
+			METATRON_OPT_OR_BREAK(tcoord, texture::grad(ldiff, intr));
 			METATRON_OPT_OR_CALLBACK(mat_intr, div->material->sample(trace_ctx, tcoord), {
 				scattered = false;
 				crossed = true;
@@ -380,8 +362,8 @@ namespace metatron::monte_carlo {
 			});
 
 			if (-b_ctx.r.d[1] * b_intr.wi[1] < 0.f) {
-				int_ctx.medium = !inside ? div->interior_medium : div->exterior_medium;
-				int_ctx.medium_to_world = !inside ? div->interior_transform : div->exterior_transform;
+				initial_status.medium = !inside ? div->interior_medium : div->exterior_medium;
+				initial_status.medium_to_world = !inside ? div->interior_transform : div->exterior_transform;
 			}
 
 			b_intr.wi = math::normalize(bt ^ math::expand(b_intr.wi, 0.f));

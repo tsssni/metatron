@@ -7,7 +7,7 @@
 #include <metatron/core/math/sampler/sampler.hpp>
 
 namespace metatron::monte_carlo {
-	struct Context final {
+	struct Status final {
 		math::Ray_Differential ray_differential;
 		math::Ray_Differential default_differential;
 		media::Medium const* medium;
@@ -19,7 +19,7 @@ namespace metatron::monte_carlo {
 
 	struct Integrator {
 		auto virtual sample(
-			Context ctx,
+			Status initial_status,
 			accel::Acceleration const& accel,
 			emitter::Emitter const& emitter,
 			math::Sampler const& sampler
