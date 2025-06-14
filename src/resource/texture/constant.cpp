@@ -10,7 +10,7 @@ namespace metatron::texture {
 		eval::Context const& ctx,
 		Coordinate const& coord
 	) const -> spectra::Stochastic_Spectrum {
-		return ctx.L & (*x);
+		return ctx.spec & (*x);
 	}
 
 	Constant_Texture<math::Vector<f32, 4>>::Constant_Texture(

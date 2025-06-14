@@ -10,6 +10,7 @@ namespace metatron::phase {
 			spectra::Stochastic_Spectrum const& L
 		) const -> std::optional<Interaction>;
 		auto sample(eval::Context const& ctx, math::Vector<f32, 2> const& u) const -> std::optional<Interaction>;
+		auto clone() const -> std::unique_ptr<Phase_Function>;
 	
 	private:
 		f32 g;

@@ -16,9 +16,7 @@ namespace metatron::eval {
 	struct Context final {
 		math::Ray r{};
 		math::Vector<f32, 3> n{};
-		spectra::Stochastic_Spectrum L{};
-		bsdf::Bsdf const* bsdf{};
-		phase::Phase_Function const* phase{};
+		spectra::Stochastic_Spectrum spec{};
 	};
 
 	auto inline operator|(math::Transform const& t, Context const& ctx) -> Context {

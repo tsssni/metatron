@@ -15,7 +15,7 @@ namespace metatron::light {
 	) const -> std::optional<Interaction> {
 		auto constexpr wi = math::Vector<f32, 3>{0.f, 0.f, -1.f};
 		return Interaction{
-			ctx.L & *L,
+			ctx.spec & *L,
 			wi,
 			ctx.r.o - 65535.f * wi,
 			65535.f,

@@ -1,5 +1,4 @@
 #include <metatron/resource/loader/assimp.hpp>
-#include <metatron/resource/material/diffuse.hpp>
 #include <metatron/resource/texture/constant.hpp>
 #include <metatron/core/math/sphere.hpp>
 #include <assimp/Importer.hpp>

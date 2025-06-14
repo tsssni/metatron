@@ -30,7 +30,12 @@ namespace metatron::phase {
 		auto phi = 2.f * math::pi * u[1];
 
 		auto wi = math::unit_sphere_to_cartesion(cos_theta, phi);
-		auto x = (*this)({0.f, -1.f, 0.f}, wi, ctx.L);
+		auto x = (*this)({0.f, -1.f, 0.f}, wi, ctx.spec);
 		return x;
+	}
+
+	auto Henyey_Greenstein_Phase_Function::clone() const -> std::unique_ptr<Phase_Function> {
+		auto phase = std::make_unique<Henyey_Greenstein_Phase_Function>(g);
+		return phase;
 	}
 }

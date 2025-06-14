@@ -17,7 +17,7 @@ namespace metatron::light {
 			auto v = s[0] / math::pi;
 			auto spec = env_map->sample(ctx, {{u, v}});
 			return Interaction{
-				ctx.L & spec,
+				ctx.spec & spec,
 				{}, {}, {},
 				ctx.n != math::Vector<f32, 3>{0.f}
 				? surface_distr.pdf(math::dot(ctx.n, ctx.r.d))
@@ -39,7 +39,7 @@ namespace metatron::light {
 				wi = volume_distr.sample(u);
 			}
 			
-			auto intr = (*this)({{ctx.r.o, wi}, n, ctx.L}).value();
+			auto intr = (*this)({{ctx.r.o, wi}, n, ctx.spec}).value();
 			intr.wi = wi;
 			intr.p = ctx.r.o + 65535.f * wi;
 			intr.t = 65535.f;

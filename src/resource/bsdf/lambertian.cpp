@@ -4,26 +4,20 @@
 #include <metatron/core/math/distribution/cosine-hemisphere.hpp>
 
 namespace metatron::bsdf {
-	Lambertian_Bsdf::Lambertian_Bsdf(
-		std::unique_ptr<spectra::Stochastic_Spectrum> R,
-		std::unique_ptr<spectra::Stochastic_Spectrum> T
-	) : R(std::move(R)), T(std::move(T)) {}
-
 	auto Lambertian_Bsdf::operator()(
 		math::Vector<f32, 3> const& wo,
-		math::Vector<f32, 3> const& wi,
-		spectra::Stochastic_Spectrum const& L
+		math::Vector<f32, 3> const& wi
 	) const -> std::optional<Interaction> {
-		auto ru = spectra::max(*R);
-		auto tu = spectra::max(*T);
+		auto ru = spectra::max(reflectance);
+		auto tu = spectra::max(transmittance);
 		if (std::abs(ru + tu) < math::epsilon<f32>) return {};
 
-		auto f = L;
+		auto f = spectrum;
 		for (auto i = 0uz; i < f.lambda.size(); i++) {
 			if (-wo[1] * wi[1] >= 0.f) {
-				f.value[i] = (*R)(f.lambda[i]);
+				f.value[i] = reflectance(f.lambda[i]);
 			} else {
-				f.value[i] = (*T)(f.lambda[i]);
+				f.value[i] = transmittance(f.lambda[i]);
 			}
 		}
 
@@ -35,8 +29,8 @@ namespace metatron::bsdf {
 	}
 
 	auto Lambertian_Bsdf::sample(eval::Context const& ctx, math::Vector<f32, 3> const& u) const -> std::optional<Interaction> {
-		auto ru = spectra::max(*R);
-		auto tu = spectra::max(*T);
+		auto ru = spectra::max(reflectance);
+		auto tu = spectra::max(transmittance);
 		if (std::abs(ru + tu) < math::epsilon<f32>) return {};
 
 		auto rtu = ru / (ru + tu);
@@ -58,15 +52,23 @@ namespace metatron::bsdf {
 			}
 		}
 
-		auto f = ctx.L;
+		auto f = spectrum;
 		for (auto i = 0uz; i < f.lambda.size(); i++) {
 			if (reflected) {
-				f.value[i] = (*R)(f.lambda[i]);
+				f.value[i] = reflectance(f.lambda[i]);
 			} else {
-				f.value[i] = (*T)(f.lambda[i]);
+				f.value[i] = transmittance(f.lambda[i]);
 			}
 		}
 
 		return Interaction{f, wi, pdf};
+	}
+
+	auto Lambertian_Bsdf::clone(Attribute const& attr) const -> std::unique_ptr<Bsdf> {
+		auto bsdf = std::make_unique<Lambertian_Bsdf>();
+		bsdf->spectrum = attr.spectrum;
+		bsdf->reflectance = attr.reflectance;
+		bsdf->transmittance = attr.transmittance;
+		return bsdf;
 	}
 }

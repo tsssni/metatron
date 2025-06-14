@@ -2,7 +2,7 @@
 #include <metatron/resource/bsdf/bsdf.hpp>
 
 namespace metatron::bsdf {
-	struct Lambertian_Bsdf final: Bsdf {
+	struct Interface_Bsdf final: Bsdf {
 		auto operator()(
 			math::Vector<f32, 3> const& wo,
 			math::Vector<f32, 3> const& wi
@@ -15,7 +15,5 @@ namespace metatron::bsdf {
 
 	private:
 		spectra::Stochastic_Spectrum spectrum;
-		spectra::Stochastic_Spectrum reflectance;
-		spectra::Stochastic_Spectrum transmittance;
 	};
 }

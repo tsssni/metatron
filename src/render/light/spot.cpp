@@ -42,7 +42,7 @@ namespace metatron::light {
 		);
 
 		return Interaction{
-			(ctx.L & *L) * intensity / (r * r),
+			(ctx.spec & *L) * intensity / (r * r),
 			wi,
 			{0.f},
 			r,

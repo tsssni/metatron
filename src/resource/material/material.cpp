@@ -1,16 +1,19 @@
 #include <metatron/resource/material/material.hpp>
-#include <metatron/resource/material/interface.hpp>
-#include <metatron/resource/shape/plane.hpp>
-#include <metatron/core/stl/optional.hpp>
+#include <metatron/resource/bsdf/interface.hpp>
 
 namespace metatron::material {
-	std::unordered_set<std::type_index> Material::interface_materials;
-
-	auto Material::initialize() -> void {
-		interface_materials.insert(typeid(Interface_Material));
-	}
-
-	auto Material::is_interface(Material const& material) -> bool {
-		return interface_materials.contains(typeid(material));
+	auto Material::sample(
+		eval::Context const& ctx,
+		texture::Coordinate const& coord
+	) const -> std::optional<Interaction> {
+		auto attr = bsdf::Attribute{};
+		auto intr = Interaction{};
+		attr.spectrum = ctx.spec;
+		attr.reflectance = reflectance->sample(ctx, coord);
+		attr.transmittance = transmittance->sample(ctx, coord);
+		intr.normal = nomral->sample(ctx, coord);
+		intr.emission = emission->sample(ctx, coord);
+		intr.bsdf = bsdf->clone(attr);
+		return intr;
 	}
 }
