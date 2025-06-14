@@ -11,12 +11,11 @@ namespace metatron::phase {
 
 	auto Henyey_Greenstein_Phase_Function::operator()(
 		math::Vector<f32, 3> const& wo,
-		math::Vector<f32, 3> const& wi,
-		spectra::Stochastic_Spectrum const& L
+		math::Vector<f32, 3> const& wi
 	) const -> std::optional<Interaction> {
 		auto f = math::guarded_div((1.f - g * g) / (4.f * math::pi), std::pow(1.f + g * g + 2.f * g * math::dot(-wo, wi), 1.5f));
 		return Interaction{
-			L & spectra::Constant_Spectrum{f},
+			spectrum & spectra::Constant_Spectrum{f},
 			wi,
 			f
 		};
@@ -30,12 +29,13 @@ namespace metatron::phase {
 		auto phi = 2.f * math::pi * u[1];
 
 		auto wi = math::unit_sphere_to_cartesion(cos_theta, phi);
-		auto x = (*this)({0.f, -1.f, 0.f}, wi, ctx.spec);
+		auto x = (*this)({0.f, -1.f, 0.f}, wi);
 		return x;
 	}
 
-	auto Henyey_Greenstein_Phase_Function::clone() const -> std::unique_ptr<Phase_Function> {
+	auto Henyey_Greenstein_Phase_Function::clone(Attribute const& attr) const -> std::unique_ptr<Phase_Function> {
 		auto phase = std::make_unique<Henyey_Greenstein_Phase_Function>(g);
+		phase->spectrum = attr.spectrum;
 		return phase;
 	}
 }

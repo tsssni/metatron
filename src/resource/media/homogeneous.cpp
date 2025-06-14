@@ -35,7 +35,7 @@ namespace metatron::media {
 
 		return Interaction{
 			ctx.r.o + ctx.r.d * t,
-			phase->clone(),
+			phase->clone({ctx.spec}),
 			t,
 			pdf,
 			t < t_max ? sigma_maj * transmittance : transmittance,

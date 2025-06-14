@@ -92,7 +92,7 @@ namespace metatron::monte_carlo {
 					f = b_intr.f * std::abs(math::dot(l_intr.wi, direct_ctx.n));
 					p_s = b_intr.pdf;
 				} else {
-					METATRON_OPT_OR_RETURN(p_intr, (*phase)(history_ctx.r.d, l_intr.wi, emission));
+					METATRON_OPT_OR_RETURN(p_intr, (*phase)(history_ctx.r.d, l_intr.wi));
 					f = p_intr.f;
 					p_s = p_intr.pdf;
 				}

@@ -73,7 +73,7 @@ namespace metatron::media {
 				update_transmittance(t_boundary + t_offset);
 				return Interaction{
 					cache.r.o,
-					phase->clone(),
+					phase->clone({ctx.spec}),
 					t_max,
 					transmittance.value[0],
 					transmittance,
@@ -90,7 +90,7 @@ namespace metatron::media {
 
 				return Interaction{
 					cache.r.o,
-					phase->clone(),
+					phase->clone({ctx.spec}),
 					t_transmitted,
 					spectra_pdf.value[0],
 					spectra_pdf,
