@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/core/math/constant.hpp>
+#include <metatron/core/math/arithmetic.hpp>
 #include <algorithm>
 #include <array>
 #include <span>
@@ -300,7 +301,7 @@ namespace metatron::math {
 		auto constexpr operator/(Matrix const& rhs) const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = data[i] / rhs[i];
+				result[i] = math::guarded_div(data[i], rhs[i]);
 			}
 			return result;
 		}
@@ -313,7 +314,7 @@ namespace metatron::math {
 		auto constexpr operator/(T const& rhs) const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = data[i] / rhs;
+				result[i] = math::guarded_div(data[i], rhs);
 			}
 			return result;
 		}

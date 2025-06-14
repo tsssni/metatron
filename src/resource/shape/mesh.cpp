@@ -112,7 +112,7 @@ namespace metatron::shape {
 			ef({0.f}, v[0], v[1]),
 		};
 		auto det = math::sum(e);
-		auto bary = math::guarded_div(e, det);
+		auto bary = e / det;
 
 		if (false
 		|| std::abs(det) < math::epsilon<f32>

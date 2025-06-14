@@ -22,17 +22,16 @@ namespace metatron::media {
 		auto sigma_maj = sigma_t;
 		auto sigma_n = ctx.spec & spectra::Constant_Spectrum{0.f};
 
-		auto distr = math::Exponential_Distribution{sigma_t.value.front()};
+		auto distr = math::Exponential_Distribution{sigma_t.value[0]};
 		auto t_u = distr.sample(u);
 		auto t = std::min(t_u, t_max);
-		auto pdf = t < t_max ? distr.pdf(t) : distr.pdf(t) / sigma_t.value.front();
+		auto pdf = t < t_max ? distr.pdf(t) : distr.pdf(t) / sigma_t.value[0];
 
-		auto transmittance = ctx.spec;
 		auto emission = ctx.spec & (*this->emission);
-
-		for (auto i = 0uz; i < transmittance.lambda.size(); i++) {
-			transmittance.value[i] = std::exp(-sigma_maj.value[i] * t);
-		}
+		auto transmittance = ctx.spec;
+		transmittance.value = math::foreach([&](f32 value, usize i) {
+			return std::exp(-value * t);
+		}, transmittance.value);
 
 		return Interaction{
 			ctx.r.o + ctx.r.d * t,

@@ -1,17 +1,17 @@
 #pragma once
 #include <metatron/resource/spectra/spectrum.hpp>
-#include <vector>
+#include <metatron/core/math/vector.hpp>
 
 namespace metatron::spectra {
 	auto constexpr stochastic_samples = 4uz;
 
 	struct Stochastic_Spectrum final: Spectrum {
-		std::vector<f32> lambda{};
-		std::vector<f32> pdf{};
-		std::vector<f32> value{};
+		math::Vector<f32, stochastic_samples> lambda{};
+		math::Vector<f32, stochastic_samples> pdf{};
+		math::Vector<f32, stochastic_samples> value{};
 
 		Stochastic_Spectrum() = default;
-		Stochastic_Spectrum(usize n, f32 u, f32 v = 0.f);
+		Stochastic_Spectrum(f32 u, f32 v = 0.f);
 
 		auto operator()(f32 lambda) const -> f32;
 		auto operator()(Spectrum const& spectrum) const -> f32;

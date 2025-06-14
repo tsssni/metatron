@@ -2,19 +2,21 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <cstdio>
+#include <cstdlib>
 
 namespace metatron::spectra {
-	Stochastic_Spectrum::Stochastic_Spectrum(usize n, f32 u, f32 v) {
-		for (auto i = 0; i < n; i++) {
-			auto ui = std::fmod(u + i / float(n), 1.f);
-			lambda.emplace_back(std::lerp(visible_lambda[0], visible_lambda[1], ui));
-		}
-		value.resize(n, v);
-		pdf.resize(n, 1.f / (visible_lambda[1] - visible_lambda[0]));
+	Stochastic_Spectrum::Stochastic_Spectrum(f32 u, f32 v) {
+		lambda = math::foreach([&](f32 l, usize i) {
+			auto ui = std::fmod(u + i / f32(stochastic_samples), 1.f);
+			return std::lerp(visible_lambda[0], visible_lambda[1], ui);
+		}, lambda);
+		value = math::Vector<f32, stochastic_samples>{v};
+		pdf = math::Vector<f32, stochastic_samples>{1.f / (visible_lambda[1] - visible_lambda[0])};
 	}
 
 	auto Stochastic_Spectrum::operator()(f32 lambda) const -> f32 {
-		for (auto i = 0uz; i < this->lambda.size(); i++) {
+		for (auto i = 0uz; i < stochastic_samples; i++) {
 			if (lambda == this->lambda[i]) {
 				return value[i];
 			}
@@ -24,18 +26,16 @@ namespace metatron::spectra {
 	}
 
 	auto Stochastic_Spectrum::operator()(Spectrum const& spectrum) const -> f32 {
-		auto f = 0.f;
-		for (auto i = 0uz; i < lambda.size(); i++) {
-			f += value[i] * spectrum(lambda[i]) / pdf[i];
-		}
-		return f / lambda.size();
+		return math::sum(math::foreach([&](f32 lambda, f32 value, f32 pdf, usize i) {
+			return value * spectrum(lambda) / pdf;
+		}, lambda, value, pdf)) / stochastic_samples;
 	}
 
 	auto Stochastic_Spectrum::operator&(Spectrum const& spectrum) const -> Stochastic_Spectrum {
 		auto spec = *this;
-		for (auto i = 0uz; i < lambda.size(); i++) {
-			spec.value[i] = spectrum(lambda[i]);
-		}
+		spec.value = math::foreach([&](f32 lambda, usize i) {
+			return spectrum(lambda);
+		}, lambda);
 		return spec;
 	}
 
@@ -46,9 +46,9 @@ namespace metatron::spectra {
 	}
 	
 	auto Stochastic_Spectrum::operator+=(Spectrum const& spectrum) -> Stochastic_Spectrum& {
-		for (auto i = 0uz; i < lambda.size(); i++) {
-			value[i] += spectrum(lambda[i]);
-		}
+		value += math::foreach([&](f32 lambda, usize i) {
+			return spectrum(lambda);
+		}, lambda);
 		return *this;
 	}
 
@@ -59,9 +59,9 @@ namespace metatron::spectra {
 	}
 	
 	auto Stochastic_Spectrum::operator-=(Spectrum const& spectrum) -> Stochastic_Spectrum& {
-		for (auto i = 0uz; i < lambda.size(); i++) {
-			value[i] -= spectrum(lambda[i]);
-		}
+		value -= math::foreach([&](f32 lambda, usize i) {
+			return spectrum(lambda);
+		}, lambda);
 		return *this;
 	}
 
@@ -72,9 +72,9 @@ namespace metatron::spectra {
 	}
 	
 	auto Stochastic_Spectrum::operator*=(Spectrum const& spectrum) -> Stochastic_Spectrum& {
-		for (auto i = 0uz; i < lambda.size(); i++) {
-			value[i] *= spectrum(lambda[i]);
-		}
+		value *= math::foreach([&](f32 lambda, usize i) {
+			return spectrum(lambda);
+		}, lambda);
 		return *this;
 	}
 
@@ -85,16 +85,14 @@ namespace metatron::spectra {
 	}
 	
 	auto Stochastic_Spectrum::operator/=(Spectrum const& spectrum) -> Stochastic_Spectrum& {
-		for (auto i = 0uz; i < lambda.size(); i++) {
-			value[i] = math::guarded_div(value[i], spectrum(lambda[i]));
-		}
+		value = math::foreach([&](f32 value, f32 lambda, usize i) {
+			return math::guarded_div(value, spectrum(lambda));
+		}, value, lambda);
 		return *this;
 	}
 
 	auto Stochastic_Spectrum::operator=(f32 s) -> Stochastic_Spectrum& {
-		for (auto& v: value) {
-			v = s;
-		}
+		value = math::Vector<f32, stochastic_samples>{s};
 		return *this;
 	}
 
@@ -105,9 +103,7 @@ namespace metatron::spectra {
 	};
 
 	auto Stochastic_Spectrum::operator+=(f32 s) -> Stochastic_Spectrum& {
-		for (auto& v: value) {
-			v += s;
-		}
+		value += math::Vector<f32, stochastic_samples>{s};
 		return *this;
 	};
 
@@ -118,9 +114,7 @@ namespace metatron::spectra {
 	};
 
 	auto Stochastic_Spectrum::operator-=(f32 s) -> Stochastic_Spectrum& {
-		for (auto& v: value) {
-			v -= s;
-		}
+		value -= math::Vector<f32, stochastic_samples>{s};
 		return *this;
 	};
 
@@ -131,9 +125,7 @@ namespace metatron::spectra {
 	};
 
 	auto Stochastic_Spectrum::operator*=(f32 s) -> Stochastic_Spectrum& {
-		for (auto& v: value) {
-			v *= s;
-		}
+		value *= math::Vector<f32, stochastic_samples>{s};
 		return *this;
 	};
 
@@ -144,20 +136,12 @@ namespace metatron::spectra {
 	};
 
 	auto Stochastic_Spectrum::operator/=(f32 s) -> Stochastic_Spectrum& {
-		for (auto& v: value) {
-			v = math::guarded_div(v, s);
-		}
+		value /= math::Vector<f32, stochastic_samples>{s};
 		return *this;
 	};
 
-
 	Stochastic_Spectrum::operator bool() const {
-		for (auto& v: value) {
-			if (v != 0.f) {
-				return true;
-			}
-		}
-		return false;
+		return math::any([](f32 x, usize i) { return x > 0.f; }, value);
 	}
 
 	auto operator+(f32 s, Stochastic_Spectrum const& spectrum) -> Stochastic_Spectrum {
@@ -174,41 +158,25 @@ namespace metatron::spectra {
 
 	auto operator/(f32 s, Stochastic_Spectrum const& spectrum) -> Stochastic_Spectrum {
 		auto spec = spectrum;
-		for (auto& v: spec.value) {
-			v = math::guarded_div(s, v);
-		}
+		spec.value = math::foreach([&](f32 v, usize i) {
+			return math::guarded_div(s, v);
+		}, spectrum.value);
 		return spec;
 	}
 
 	auto min(Stochastic_Spectrum const& spectrum) -> f32 {
-		auto minv = math::maxv<f32>;
-		for (auto& v: spectrum.value) {
-			minv = std::min(minv, v);
-		}
-		return minv;
+		return math::min(spectrum.value);
 	}
 
 	auto max(Stochastic_Spectrum const& spectrum) -> f32 {
-		auto maxv = math::minv<f32>;
-		for (auto& v: spectrum.value) {
-			maxv = std::max(maxv, v);
-		}
-		return maxv;
+		return math::max(spectrum.value);
 	}
 
-
 	auto avg(Stochastic_Spectrum const& spectrum) -> f32 {
-		auto n = spectrum.lambda.size();
-		auto avgv = 0.f;
-		for (auto& v: spectrum.value) {
-			avgv += math::guarded_div(v, f32(n));
-		}
-		return avgv;
+		return math::sum(spectrum.value / stochastic_samples);
 	}
 
 	auto clear(Stochastic_Spectrum& spectrum, f32 cv) -> void {
-		for (auto& v: spectrum.value) {
-			v = cv;
-		}
+		spectrum.value = math::Vector<f32, stochastic_samples>{cv};
 	}
 }

@@ -13,13 +13,13 @@ namespace metatron::bsdf {
 		if (std::abs(ru + tu) < math::epsilon<f32>) return {};
 
 		auto f = spectrum;
-		for (auto i = 0uz; i < f.lambda.size(); i++) {
+		f.value = math::foreach([&](f32 lambda, usize i) {
 			if (-wo[1] * wi[1] >= 0.f) {
-				f.value[i] = reflectance(f.lambda[i]);
+				return reflectance(lambda);
 			} else {
-				f.value[i] = transmittance(f.lambda[i]);
+				return transmittance(lambda);
 			}
-		}
+		}, f.lambda);
 
 		auto distr = math::Cosine_Hemisphere_Distribution{};
 		auto pdf = distr.pdf(std::abs(wi[1]));
@@ -53,13 +53,13 @@ namespace metatron::bsdf {
 		}
 
 		auto f = spectrum;
-		for (auto i = 0uz; i < f.lambda.size(); i++) {
+		f.value = math::foreach([&](f32 lambda, usize i) {
 			if (reflected) {
-				f.value[i] = reflectance(f.lambda[i]);
+				return reflectance(lambda);
 			} else {
-				f.value[i] = transmittance(f.lambda[i]);
+				return transmittance(lambda);
 			}
-		}
+		}, f.lambda);
 
 		return Interaction{f, wi, pdf};
 	}

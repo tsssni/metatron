@@ -47,7 +47,7 @@ namespace metatron::accel {
 		for (auto& div: lbvh_divs) {
 			auto extent = render_bbox.p_max - render_bbox.p_min;
 			auto pos = math::lerp(div.bbox.p_min, div.bbox.p_max, 0.5f) - render_bbox.p_min;
-			auto voxel = math::Vector<u32, 3>{math::guarded_div(pos, extent) * 1024};
+			auto voxel = math::Vector<u32, 3>{pos / extent * 1024};
 			div.morton_code = math::morton_encode(voxel);
 		}
 		std::ranges::sort(lbvh_divs, [](LBVH_Divider const& a, LBVH_Divider const& b) {

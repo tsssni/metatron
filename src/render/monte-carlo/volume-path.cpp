@@ -13,7 +13,7 @@ namespace metatron::monte_carlo {
 		math::Sampler const& sampler
 	) const -> std::optional<spectra::Stochastic_Spectrum> {
 		auto lambda_u = sampler.generate_1d();
-		auto emission = spectra::Stochastic_Spectrum{spectra::stochastic_samples, lambda_u};
+		auto emission = spectra::Stochastic_Spectrum{lambda_u};
 		auto beta = emission; beta = 1.f;
 		auto mis_s = emission; mis_s = 1.f;
 		auto mis_e = emission; mis_e = 0.f;
@@ -260,9 +260,9 @@ namespace metatron::monte_carlo {
 				auto mis_a = math::guarded_div(1.f, spectra::avg(mis_s));
 				emission += mis_a * beta * m_intr.sigma_a * m_intr.L;
 
-				auto p_a = math::guarded_div(m_intr.sigma_a.value.front(), m_intr.sigma_maj.value.front());
-				auto p_s = math::guarded_div(m_intr.sigma_s.value.front(), m_intr.sigma_maj.value.front());
-				auto p_n = math::guarded_div(m_intr.sigma_n.value.front(), m_intr.sigma_maj.value.front());
+				auto p_a = math::guarded_div(m_intr.sigma_a.value[0], m_intr.sigma_maj.value[0]);
+				auto p_s = math::guarded_div(m_intr.sigma_s.value[0], m_intr.sigma_maj.value[0]);
+				auto p_n = math::guarded_div(m_intr.sigma_n.value[0], m_intr.sigma_maj.value[0]);
 
 				auto u = sampler.generate_1d();
 				auto mode = math::Discrete_Distribution{{p_a, p_s, p_n}}.sample(u);

@@ -41,7 +41,7 @@ namespace metatron::media {
 			cache.t_max = math::hit(cache.r, cache.bbox).value_or(t_max);
 			cache.density_maj = (*grid)[grid->to_index(cache.r.o)];
 			cache.sigma_maj = cache.density_maj * sigma_t;
-			cache.distr = math::Exponential_Distribution(cache.sigma_maj.value.front());
+			cache.distr = math::Exponential_Distribution(cache.sigma_maj.value[0]);
 		};
 
 		if (false 
@@ -55,15 +55,16 @@ namespace metatron::media {
 		auto t_offset = 0.005f / math::length(cache.r.d);
 		auto t_transmitted = 0.f;
 		auto transmittance = ctx.spec;
-		transmittance.value = std::vector<f32>(ctx.spec.lambda.size(), 1.f);
+		spectra::clear(transmittance, 1.f);
+
 		auto update_transmittance = [&](f32 t) -> void {
 			t_transmitted += t;
 			t_boundary -= t;
 			cache.t_max -= t;
 			cache.r.o += t * cache.r.d;
-			for (auto i = 0uz; i < transmittance.lambda.size(); i++) {
-				transmittance.value[i] *= std::exp(-cache.sigma_maj.value[i] * t);
-			}
+			transmittance.value *= math::foreach([&](f32 value, usize i) {
+				return std::exp(-value * t);
+			}, cache.sigma_maj.value);
 		};
 
 		while (true) {
@@ -74,7 +75,7 @@ namespace metatron::media {
 					cache.r.o,
 					phase->clone(),
 					t_max,
-					transmittance.value.front(),
+					transmittance.value[0],
 					transmittance,
 					transmittance,
 					{}, {}, {}, {}, {}
@@ -91,7 +92,7 @@ namespace metatron::media {
 					cache.r.o,
 					phase->clone(),
 					t_transmitted,
-					spectra_pdf.value.front(),
+					spectra_pdf.value[0],
 					spectra_pdf,
 					transmittance,
 					density * sigma_a,

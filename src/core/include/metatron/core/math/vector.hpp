@@ -58,18 +58,6 @@ namespace metatron::math {
 		return true;
 	}
 
-	template<usize n>
-	auto inline constexpr guarded_div(Vector<f32, n> const& x, f32 y) -> Vector<f32, n> {
-		return std::abs(y) < epsilon<f32> ? Vector<f32, n>{0.f} : x / y;
-	}
-
-	template<usize n>
-	auto inline constexpr guarded_div(Vector<f32, n> const& x, Vector<f32, n> const& y) -> Vector<f32, n> {
-		return foreach([&y](f32 x, usize idx) -> f32 {
-			return guarded_div(x, y[idx]);
-		}, x);
-	}
-
 	template<typename T, usize size>
 	auto constexpr dot(Vector<T, size> const& x, Vector<T, size> const& y) -> T {
 		auto result = T{};
@@ -117,7 +105,7 @@ namespace metatron::math {
 	template<typename T, usize size>
 	requires std::floating_point<T>
 	auto constexpr normalize(Vector<T, size> const& x) -> Vector<T, size> {
-		return guarded_div(x, length(x));
+		return x / length(x);
 	}
 
 	template<typename T>
