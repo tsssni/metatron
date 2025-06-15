@@ -2,7 +2,6 @@
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <span>
 
 namespace metatron::photo {
 	Fixel::Fixel(
@@ -23,7 +22,7 @@ namespace metatron::photo {
 	auto Fixel::operator=(spectra::Stochastic_Spectrum const& spectrum) -> void {
 		auto rgb = (*film->sensor)(spectrum);
 		film->image[pixel[0], pixel[1]] += {rgb * weight, 1.f};
-		// film->image[pixel[0], pixel[1]] += {math::Vector<f32, 3>{std::span(spectrum.value)}, 1.f};
+		// film->image[pixel[0], pixel[1]] += spectrum.value;
 	}
 
 	Film::Film(

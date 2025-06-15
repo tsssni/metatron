@@ -36,7 +36,6 @@
 #include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/render/accel/lbvh.hpp>
 #include <atomic>
-#include <thread>
 
 using namespace metatron;
 
@@ -47,9 +46,7 @@ auto main() -> int {
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
 	auto spp = 16uz;
-	auto blocks = 8uz;
-	auto depth = 100uz;
-	auto kernels = usize(std::thread::hardware_concurrency());
+	auto depth = 64uz;
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
 	auto lens = std::make_unique<photo::Thin_Lens>(5.6f, 0.05f, 10.f);
@@ -69,28 +66,30 @@ auto main() -> int {
 	auto sampler = math::Halton_Sampler{rd()};
 
 	auto identity = math::Transform{};
-	auto world_to_render = math::Transform{{0.f, 0.f, 1000.f}};
-	auto render_to_camera = identity;
+	auto world_to_render = math::Transform{{-5.f, -0.5f, 5.f}};
+	auto render_to_camera = math::Transform{{0.f, 0.f, 0.f}, {1.f},
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
+	};
 
 	auto sphere_to_world = math::Transform{{}, {200.f}};
 	auto mesh_to_world = math::Transform{{}, {100.f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 1.f),
 	};
-	auto shell_to_world = math::Transform{{0.f, 50.f, 0.f}, {100.f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
+	auto shell_to_world = math::Transform{{0.156382, 0.777229, -0.161698}, {0.482906f},
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 0.f / 1.f),
 	};
-	auto kernel_to_world = math::Transform{{0.f, 0.f, 0.f}, {100.f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
+	auto kernel_to_world = math::Transform{{0.110507, 0.494301, -0.126194}, {0.482906f},
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 0.f / 1.f),
 	};
-	auto base_to_world = math::Transform{{0.f, -50.f, 0.f}, {100.f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
+	auto base_to_world = math::Transform{{0.0571719, 0.213656, -0.0682078}, {0.482906f},
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 0.f / 1.f),
 	};
 	auto bound_to_world = math::Transform{{}, {500.f}};
 	auto medium_to_world = math::Transform{{}, {1.0f},
 		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 2.f),
 	};
 	auto light_to_world = math::Transform{{}, {1.0f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 0.f / 1.f),
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 1.f),
 	};
 	auto parallel_to_world = math::Transform{{}, {1.f},
 		math::Quaternion<f32>::from_rotation_between(
@@ -119,14 +118,6 @@ auto main() -> int {
 	};
 
 	auto vaccum_medium = media::Vaccum_Medium{};
-	auto nanovdb_grid = media::Nanovdb_Grid<
-		f32,
-		media::grid_size,
-		media::grid_size,
-		media::grid_size
-	>{
-		"../metatron-assets/disney-cloud/volume/disney-cloud.nvdb"
-	};
 	auto sigma_a = color::Color_Space::sRGB->to_spectrum(
 		{0.0f, 0.0f, 0.0f},
 		color::Color_Space::Spectrum_Type::unbounded
@@ -140,6 +131,14 @@ auto main() -> int {
 		color::Color_Space::Spectrum_Type::illuminant
 	);
 	auto hg_phase = phase::Henyey_Greenstein_Phase_Function{0.877f};
+	auto nanovdb_grid = media::Nanovdb_Grid<
+		f32,
+		media::grid_size,
+		media::grid_size,
+		media::grid_size
+	>{
+		"../metatron-assets/disney-cloud/volume/disney-cloud.nvdb"
+	};
 	auto cloud_medium = media::Grid_Medium{
 		&nanovdb_grid,
 		&hg_phase,
@@ -151,15 +150,27 @@ auto main() -> int {
 
 	auto lambertian = bsdf::Lambertian_Bsdf{};
 	auto interface = bsdf::Interface_Bsdf{};
-	auto reflectance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
+	auto diffuse_reflectance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
 		color::Color_Space::sRGB->to_spectrum(
 			{1.f / math::pi, 1.f / math::pi, 1.f / math::pi},
 			color::Color_Space::Spectrum_Type::albedo
 		)
 	};
-	auto transmittance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
+	auto diffuse_transmittance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
 		color::Color_Space::sRGB->to_spectrum(
-			{0.f, 0.f, 0.f},
+			{0.f / math::pi, 0.f / math::pi, 0.f / math::pi},
+			color::Color_Space::Spectrum_Type::albedo
+		)
+	};
+	auto test_reflectance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
+		color::Color_Space::sRGB->to_spectrum(
+			{0.f / math::pi, 0.f / math::pi, 0.f / math::pi},
+			color::Color_Space::Spectrum_Type::albedo
+		)
+	};
+	auto test_transmittance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
+		color::Color_Space::sRGB->to_spectrum(
+			{1.f / math::pi, 1.f / math::pi, 1.f / math::pi},
 			color::Color_Space::Spectrum_Type::albedo
 		)
 	};
@@ -183,8 +194,17 @@ auto main() -> int {
 	auto diffuse_material = material::Material{
 		&lambertian,
 		&vaccum_medium,
-		&reflectance,
-		&transmittance,
+		&diffuse_reflectance,
+		&diffuse_transmittance,
+		&emission,
+		&normal,
+		&fallback_float,
+	};
+	auto test_material = material::Material{
+		&lambertian,
+		&vaccum_medium,
+		&test_reflectance,
+		&test_transmittance,
 		&emission,
 		&normal,
 		&fallback_float,
@@ -206,7 +226,8 @@ auto main() -> int {
 	auto env_light = light::Environment_Light{std::move(env_map)};
 	auto const_env_light = light::Environment_Light{std::make_unique<texture::Constant_Texture<spectra::Stochastic_Spectrum>>(
 		color::Color_Space::sRGB->to_spectrum(
-			{0.03f, 0.07f, 0.23f},
+			// {0.03f, 0.07f, 0.23f},
+			{1.f, 1.f, 1.f},
 			color::Color_Space::Spectrum_Type::illuminant
 		)
 	)};
@@ -244,14 +265,14 @@ auto main() -> int {
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
 	auto dividers = std::vector<accel::Divider>{
-		{
-			&sphere,
-			&interface_material,
-			nullptr,
-			&bound_to_world,
-			&medium_to_world,
-			0uz
-		},
+		// {
+		// 	&sphere,
+		// 	&interface_material,
+		// 	nullptr,
+		// 	&bound_to_world,
+		// 	&medium_to_world,
+		// 	0uz
+		// },
 	};
 
 	auto assimp_loader = loader::Assimp_Loader{};
@@ -259,41 +280,42 @@ auto main() -> int {
 	auto kernel = assimp_loader.from_path("../metatron-assets/material/mesh/kernel.ply");
 	auto base = assimp_loader.from_path("../metatron-assets/material/mesh/base.ply");
 
-	// auto divider = accel::Divider{
-	// 	nullptr,
-	// 	&diffuse_material,
-	// 	nullptr,
-	// 	&identity,
-	// 	&identity,
-	// 	0uz,
-	// };
-	// for (auto& mesh: shell) {
-	// 	for (auto i = 0uz; i < mesh->size(); i++) {
-	// 		auto div = divider;
-	// 		div.shape = mesh.get();
-	// 		div.local_to_world = &shell_to_world;
-	// 		div.primitive = i;
-	// 		dividers.push_back(div);
-	// 	}
-	// }
-	// for (auto& mesh: kernel) {
-	// 	for (auto i = 0uz; i < mesh->size(); i++) {
-	// 		auto div = divider;
-	// 		div.shape = mesh.get();
-	// 		div.local_to_world = &kernel_to_world;
-	// 		div.primitive = i;
-	// 		dividers.push_back(div);
-	// 	}
-	// }
-	// for (auto& mesh: base) {
-	// 	for (auto i = 0uz; i < mesh->size(); i++) {
-	// 		auto div = divider;
-	// 		div.shape = mesh.get();
-	// 		div.local_to_world = &base_to_world;
-	// 		div.primitive = i;
-	// 		dividers.push_back(div);
-	// 	}
-	// }
+	for (auto& mesh: shell) {
+		for (auto i = 0uz; i < mesh->size(); i++) {
+			dividers.push_back({
+				mesh.get(),
+				&test_material,
+				nullptr,
+				&shell_to_world,
+				&identity,
+				i,
+			});
+		}
+	}
+	for (auto& mesh: kernel) {
+		for (auto i = 0uz; i < mesh->size(); i++) {
+			dividers.push_back({
+				mesh.get(),
+				&diffuse_material,
+				nullptr,
+				&kernel_to_world,
+				&identity,
+				i,
+			});
+		}
+	}
+	for (auto& mesh: base) {
+		for (auto i = 0uz; i < mesh->size(); i++) {
+			dividers.push_back({
+				mesh.get(),
+				&test_material,
+				nullptr,
+				&base_to_world,
+				&identity,
+				i,
+			});
+		}
+	}
 
 	auto bvh = accel::LBVH{std::move(dividers), &world_to_render};
 	auto integrator = monte_carlo::Volume_Path_Integrator{};

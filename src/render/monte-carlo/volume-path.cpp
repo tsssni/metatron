@@ -22,6 +22,7 @@ namespace metatron::monte_carlo {
 		auto max_depth = initial_status.max_depth;
 		auto crossed = true;
 		auto terminated = false;
+		auto inside = false;
 
 		auto scattered = false;
 		auto scatter_pdf = 0.f;
@@ -97,9 +98,10 @@ namespace metatron::monte_carlo {
 					p_s = p_intr.pdf;
 				}
 
-				auto acc_opt = std::optional<accel::Interaction>{};
-				auto terminated = false;
-				auto crossed = true;
+				auto amm_opt = std::optional<accel::Interaction>{};
+				auto termenated = false;
+				auto crommed = true;
+				auto inmed = false;
 
 				auto dedium = medium;
 				auto direct_to_world = medium_to_world;
@@ -108,7 +110,7 @@ namespace metatron::monte_carlo {
 				auto mis_l = mis_s;
 
 				while (true) {
-					if (terminated || l_intr.t < 0.001f) {
+					if (termenated || l_intr.t < 0.001f) {
 						break;
 					}
 
@@ -116,75 +118,75 @@ namespace metatron::monte_carlo {
 						auto q = 0.25f;
 						if (sampler.generate_1d() > q) {
 							gamma = 0.f;
-							terminated = true;
+							termenated = true;
 							continue;
 						} else {
 							gamma /= q;
 						}
 					}
 
-					if (crossed) {
-						acc_opt = accel(direct_ctx.r, direct_ctx.n);
-						if (!acc_opt) {
-							terminated = true;
+					if (crommed) {
+						amm_opt = accel(direct_ctx.r, direct_ctx.n);
+						if (!amm_opt) {
+							termenated = true;
 							continue;
 						}
-						auto& acc = acc_opt.value();
+						auto& amm = amm_opt.value();
 
-						if (!acc.intr_opt) {
-							terminated = true;
+						if (!amm.intr_opt) {
+							termenated = true;
 							continue;
 						}
-						auto& intr = acc_opt->intr_opt.value();
+						auto& imtr = amm_opt->intr_opt.value();
 
-						auto& div = *acc.divider;
-						auto& lt = *div.local_to_world;
-						intr.p = rt | lt | math::expand(intr.p, 1.f);
-						intr.n = math::normalize(rt | lt | intr.n);
-						auto inmed = math::dot(-direct_ctx.r.d, intr.n) < 0.f;
-						dedium = inmed ? div.material->medium : initial_status.medium;
-						direct_to_world = inmed ? div.medium_to_world : initial_status.medium_to_world;
-						intr.n *= inmed ? -1.f : 1.f;
+						auto& dim = *amm.divider;
+						auto& lt = *dim.local_to_world;
+						imtr.p = rt | lt | math::expand(imtr.p, 1.f);
+						imtr.n = math::normalize(rt | lt | imtr.n);
+						inmed = math::dot(-direct_ctx.r.d, imtr.n) < 0.f;
+						dedium = inmed ? dim.material->medium : initial_status.medium;
+						direct_to_world = inmed ? dim.medium_to_world : initial_status.medium_to_world;
+						imtr.n *= inmed ? -1.f : 1.f;
 
-						auto close_to_light = math::length(intr.p - l_intr.p) < 0.001f;
-						if (!close_to_light && !bsdf::Bsdf::is_interface(div.material->bsdf)) {
-							terminated = true;
+						auto close_to_light = math::length(imtr.p - l_intr.p) < 0.001f;
+						if (!close_to_light && !bsdf::Bsdf::is_interface(dim.material->bsdf)) {
+							termenated = true;
 							gamma = 0.f;
 							continue;
 						} else if (close_to_light) {
 							auto rd = ct ^ ddiff;
 							auto st = math::Transform{{}, {1.f},
-								math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(intr.p))
+								math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(imtr.p))
 							};
 							rd = st | rd;
 
 							auto ldiff = lt ^ rt ^ rd;
-							auto tangent = shape::Plane{intr.p, intr.n};
-							METATRON_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, intr), {
-								terminated = true; gamma = 0.f; continue;
+							auto tangent = shape::Plane{imtr.p, imtr.n};
+							METATRON_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, imtr), {
+								termenated = true; gamma = 0.f; continue;
 							});
-							METATRON_OPT_OR_CALLBACK(mat_intr, div.material->sample(direct_ctx, tcoord), {
-								terminated = true; gamma = 0.f; continue;
+							METATRON_OPT_OR_CALLBACK(mat_intr, dim.material->sample(direct_ctx, tcoord), {
+								termenated = true; gamma = 0.f; continue;
 							});
 							l_intr.L = mat_intr.emission;
 						}
 					}
 
-					auto& acc = acc_opt.value();
-					auto& div = acc.divider;
-					auto& intr = acc.intr_opt.value();
+					auto& amm = amm_opt.value();
+					auto& dim = amm.divider;
+					auto& imtr = amm.intr_opt.value();
 
 					auto& mt = *direct_to_world;
 					auto m_ctx = mt ^ rt ^ direct_ctx;
-					METATRON_OPT_OR_CALLBACK(m_intr, dedium->sample(m_ctx, intr.t, sampler.generate_1d()), {
+					METATRON_OPT_OR_CALLBACK(m_intr, dedium->sample(m_ctx, imtr.t, sampler.generate_1d()), {
 						gamma = 0.f;
-						terminated = true;
+						termenated = true;
 						break;
 					});
 					m_intr.p = rt | mt | math::expand(m_intr.p, 1.f);
 					l_intr.t -= m_intr.t;
 
-					auto hit = m_intr.t >= intr.t;
+					auto hit = m_intr.t >= imtr.t;
 
 					gamma *= m_intr.transmittance / m_intr.pdf;
 					mis_d *= m_intr.spectra_pdf / m_intr.pdf;
@@ -193,12 +195,12 @@ namespace metatron::monte_carlo {
 					if (!hit) {
 						gamma *= m_intr.sigma_n;
 						mis_d *= m_intr.sigma_n / m_intr.sigma_maj;
-						intr.t -= m_intr.t;
+						imtr.t -= m_intr.t;
 						direct_ctx.r.o = m_intr.p;
-						crossed = false;
+						crommed = false;
 					} else {
-						direct_ctx.r.o = intr.p - 0.001f * intr.n;
-						crossed = true;
+						direct_ctx.r.o = imtr.p - 0.001f * imtr.n;
+						crommed = true;
 					}
 					continue;
 				}
@@ -234,7 +236,7 @@ namespace metatron::monte_carlo {
 			if (scattered || crossed) {
 				intr.p = rt | lt | math::expand(intr.p, 1.f);
 				intr.n = math::normalize(rt | lt | intr.n);
-				auto inside = math::dot(-trace_ctx.r.d, intr.n) < 0.f;
+				inside = math::dot(-trace_ctx.r.d, intr.n) < 0.f;
 				medium = inside ? div->material->medium : initial_status.medium;
 				medium_to_world = inside ? div->medium_to_world : initial_status.medium_to_world;
 				intr.n *= inside ? -1.f : 1.f;
