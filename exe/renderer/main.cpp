@@ -66,6 +66,7 @@ auto main() -> int {
 
 	auto identity = math::Transform{};
 	auto world_to_render = math::Transform{{-5.f, -0.5f, 5.f}};
+	// auto world_to_render = math::Transform{{0.f, 0.f, 1000.f}};
 	auto render_to_camera = math::Transform{{0.f, 0.f, 0.f}, {1.f},
 		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
 	};
@@ -151,25 +152,25 @@ auto main() -> int {
 	auto interface = bsdf::Interface_Bsdf{};
 	auto diffuse_reflectance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
 		color::Color_Space::sRGB->to_spectrum(
-			{1.f / math::pi, 1.f / math::pi, 1.f / math::pi},
+			{1.f, 1.f, 1.f},
 			color::Color_Space::Spectrum_Type::albedo
 		)
 	};
 	auto diffuse_transmittance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
 		color::Color_Space::sRGB->to_spectrum(
-			{0.f / math::pi, 0.f / math::pi, 0.f / math::pi},
+			{0.f, 0.f, 0.f},
 			color::Color_Space::Spectrum_Type::albedo
 		)
 	};
 	auto test_reflectance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
 		color::Color_Space::sRGB->to_spectrum(
-			{0.0f / math::pi, 0.0f / math::pi, 0.0f / math::pi},
+			{1.0f, 1.0f, 1.0f},
 			color::Color_Space::Spectrum_Type::albedo
 		)
 	};
 	auto test_transmittance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
 		color::Color_Space::sRGB->to_spectrum(
-			{1.0f / math::pi, 1.0f / math::pi, 1.0f / math::pi},
+			{0.0f, 0.0f, 0.0f},
 			color::Color_Space::Spectrum_Type::albedo
 		)
 	};
