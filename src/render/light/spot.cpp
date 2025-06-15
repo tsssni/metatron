@@ -49,4 +49,8 @@ namespace metatron::light {
 			1.f
 		};
 	}
+
+	auto Spot_Light::flags() const -> Flags {
+		return delta;
+	}
 }

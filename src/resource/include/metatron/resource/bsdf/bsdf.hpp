@@ -22,6 +22,12 @@ namespace metatron::bsdf {
 	};
 
 	struct Bsdf {
+		enum Flags {
+			reflective = 1 << 0,
+			transmissive = 1 << 1,
+			interface = 1 << 2,
+		};
+
 		virtual ~Bsdf() {}
 		auto virtual operator()(
 			math::Vector<f32, 3> const& wo,
@@ -32,6 +38,6 @@ namespace metatron::bsdf {
 			math::Vector<f32, 3> const& u
 		) const -> std::optional<Interaction> = 0;
 		auto virtual clone(Attribute const& attr) const -> std::unique_ptr<Bsdf> = 0;
-		auto static is_interface(Bsdf const* bsdf) -> bool;
+		auto virtual flags() const -> Flags = 0;
 	};
 }

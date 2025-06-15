@@ -42,7 +42,6 @@ using namespace metatron;
 auto main() -> int {
 	spectra::Spectrum::initialize();
 	color::Color_Space::initialize();
-	light::Light::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
 	auto spp = 16uz;
@@ -164,13 +163,13 @@ auto main() -> int {
 	};
 	auto test_reflectance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
 		color::Color_Space::sRGB->to_spectrum(
-			{0.f / math::pi, 0.f / math::pi, 0.f / math::pi},
+			{0.0f / math::pi, 0.0f / math::pi, 0.0f / math::pi},
 			color::Color_Space::Spectrum_Type::albedo
 		)
 	};
 	auto test_transmittance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
 		color::Color_Space::sRGB->to_spectrum(
-			{1.f / math::pi, 1.f / math::pi, 1.f / math::pi},
+			{1.0f / math::pi, 1.0f / math::pi, 1.0f / math::pi},
 			color::Color_Space::Spectrum_Type::albedo
 		)
 	};

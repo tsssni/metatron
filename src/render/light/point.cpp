@@ -23,4 +23,8 @@ namespace metatron::light {
 			1.f
 		};
 	}
+
+	auto Point_Light::flags() const -> Flags {
+		return delta;
+	}
 }

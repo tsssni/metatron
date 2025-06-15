@@ -12,6 +12,7 @@ namespace metatron::bsdf {
 			math::Vector<f32, 3> const& u
 		) const -> std::optional<Interaction>;
 		auto clone(Attribute const& attr) const -> std::unique_ptr<Bsdf>;
+		auto flags() const -> Flags;
 
 	private:
 		spectra::Stochastic_Spectrum spectrum;

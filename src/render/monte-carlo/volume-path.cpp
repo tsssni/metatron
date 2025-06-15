@@ -31,7 +31,6 @@ namespace metatron::monte_carlo {
 		auto bsdf = std::unique_ptr<bsdf::Bsdf>{};
 		auto phase = std::unique_ptr<phase::Phase_Function>{};
 		auto trace_ctx = eval::Context{};
-		auto direct_ctx = eval::Context{};
 		auto history_ctx = eval::Context{};
 		trace_ctx.r = initial_status.ray_differential.r;
 		trace_ctx.spec = emission;
@@ -66,6 +65,7 @@ namespace metatron::monte_carlo {
 					return;
 				}
 
+				auto direct_ctx = trace_ctx;
 				METATRON_OPT_OR_RETURN(e_intr, emitter.sample(direct_ctx, sampler.generate_1d()));
 				auto& et = *e_intr.divider->local_to_world;
 
@@ -106,7 +106,7 @@ namespace metatron::monte_carlo {
 				auto dedium = medium;
 				auto direct_to_world = medium_to_world;
 				auto gamma = beta * (f / p_e) / (scatter_f / scatter_pdf);
-				auto mis_d = mis_s * p_s / p_e * float(!light::Light::is_delta(*e_intr.divider->light));
+				auto mis_d = mis_s * p_s / p_e * float(!(e_intr.divider->light->flags() & light::Light::delta));
 				auto mis_l = mis_s;
 
 				while (true) {
@@ -149,7 +149,7 @@ namespace metatron::monte_carlo {
 						imtr.n *= inmed ? -1.f : 1.f;
 
 						auto close_to_light = math::length(imtr.p - l_intr.p) < 0.001f;
-						if (!close_to_light && !bsdf::Bsdf::is_interface(dim.material->bsdf)) {
+						if (!close_to_light && !(dim.material->bsdf->flags() & bsdf::Bsdf::interface)) {
 							termenated = true;
 							gamma = 0.f;
 							continue;
@@ -294,7 +294,6 @@ namespace metatron::monte_carlo {
 					scatter_pdf = p_intr.pdf;
 					history_ctx = trace_ctx;
 					trace_ctx = {{m_intr.p, p_intr.wi}, {}, emission};
-					direct_ctx = trace_ctx;
 				} else {
 					beta *= m_intr.sigma_n / p_n;
 					mis_s *= (m_intr.sigma_n / m_intr.sigma_maj) / p_n;
@@ -363,14 +362,11 @@ namespace metatron::monte_carlo {
 			b_intr.wi = math::normalize(bt ^ math::expand(b_intr.wi, 0.f));
 			auto trace_n = (math::dot(b_intr.wi, intr.n) > 0.f ? 1.f : -1.f) * intr.n;
 			auto trace_p = intr.p + 0.001f * trace_n;
-			auto direct_n = intr.n;
-			auto direct_p = intr.p + 0.001f * direct_n;
 
 			scattered = true;
 			crossed = false;
 			history_ctx = trace_ctx;
 			trace_ctx = {{trace_p, b_intr.wi}, trace_n, emission};
-			direct_ctx = {{direct_p, b_intr.wi}, direct_n, emission};
 			beta *= b_intr.f * math::guarded_div(std::abs(math::dot(b_intr.wi, trace_n)), b_intr.pdf);
 			mis_e = mis_s;
 			scatter_f = b_intr.f;

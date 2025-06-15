@@ -27,4 +27,8 @@ namespace metatron::light {
 			s_intr.pdf
 		};
 	}
+
+	auto Area_Light::flags() const -> Flags {
+		return Flags(0);
+	}
 }

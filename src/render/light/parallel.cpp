@@ -22,4 +22,8 @@ namespace metatron::light {
 			1.f
 		};
 	}
+
+	auto Parallel_Light::flags() const -> Flags {
+		return delta;
+	}
 }

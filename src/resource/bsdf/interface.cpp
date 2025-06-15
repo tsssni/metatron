@@ -24,4 +24,8 @@ namespace metatron::bsdf {
 		bsdf->spectrum = attr.spectrum;
 		return bsdf;
 	}
+
+	auto Interface_Bsdf::flags() const -> Flags {
+		return Flags::interface;
+	}
 }

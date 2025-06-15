@@ -71,4 +71,10 @@ namespace metatron::bsdf {
 		bsdf->transmittance = attr.transmittance;
 		return bsdf;
 	}
+
+	auto Lambertian_Bsdf::flags() const -> Flags {
+		auto reflective = spectra::max(transmittance) > 0.f ? Flags::reflective : Flags(0);
+		auto transmissive = spectra::max(reflectance) > 0.f ? Flags::transmissive : Flags(0);
+		return Flags(reflective | transmissive);
+	}
 }
