@@ -17,8 +17,11 @@ namespace metatron::material {
 		texture::Texture<spectra::Stochastic_Spectrum> const* reflectance;
 		texture::Texture<spectra::Stochastic_Spectrum> const* transmittance;
 		texture::Texture<spectra::Stochastic_Spectrum> const* emission;
+		texture::Texture<spectra::Stochastic_Spectrum> const* eta;
+		texture::Texture<spectra::Stochastic_Spectrum> const* k;
+		texture::Texture<math::Vector<f32, 4>> const* u_roughness;
+		texture::Texture<math::Vector<f32, 4>> const* v_roughness;
 		texture::Texture<math::Vector<f32, 4>> const* nomral;
-		texture::Texture<math::Vector<f32, 4>> const* mrsa;
 		
 		auto sample(
 			eval::Context const& ctx,

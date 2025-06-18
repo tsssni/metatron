@@ -192,31 +192,20 @@ auto main() -> int {
 	auto fallback_float = texture::Constant_Texture<math::Vector<f32, 4>>{math::Vector<f32, 4>{0.f}};
 
 	auto diffuse_material = material::Material{
-		&lambertian,
-		&vaccum_medium,
-		&diffuse_reflectance,
-		&diffuse_transmittance,
-		&emission,
-		&normal,
-		&fallback_float,
+		.bsdf = &lambertian,
+		.medium = &vaccum_medium,
+		.reflectance = &diffuse_reflectance,
+		.transmittance = &diffuse_transmittance,
 	};
 	auto test_material = material::Material{
-		&lambertian,
-		&vaccum_medium,
-		&test_reflectance,
-		&test_transmittance,
-		&emission,
-		&normal,
-		&fallback_float,
+		.bsdf = &lambertian,
+		.medium = &vaccum_medium,
+		.reflectance = &test_reflectance,
+		.transmittance = &test_transmittance,
 	};
 	auto interface_material = material::Material{
-		&interface,
-		&cloud_medium,
-		&fallback_spec,
-		&fallback_spec,
-		&fallback_spec,
-		&normal,
-		&fallback_float,
+		.bsdf = &interface,
+		.medium = &cloud_medium,
 	};
 
 	auto env_map = std::make_unique<texture::Image_Texture<spectra::Stochastic_Spectrum>>(
