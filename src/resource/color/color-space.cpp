@@ -23,7 +23,7 @@ namespace metatron::color {
 	table(table),
 	encode(encode), 
 	decode(decode) {
-		auto w = &(*white_point);
+		auto w = ~(*white_point);
 		auto r= math::Vector<f32, 3>{r_chroma, 1.f - r_chroma[0] - r_chroma[1]};
 		auto g= math::Vector<f32, 3>{g_chroma, 1.f - g_chroma[0] - g_chroma[1]};
 		auto b= math::Vector<f32, 3>{b_chroma, 1.f - b_chroma[0] - b_chroma[1]};

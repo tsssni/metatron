@@ -34,6 +34,8 @@ namespace metatron::monte_carlo {
 		auto history_ctx = eval::Context{};
 		trace_ctx.r = initial_status.ray_differential.r;
 		trace_ctx.spec = emission;
+		trace_ctx.eta = emission & *initial_status.eta;
+		trace_ctx.k = emission & *initial_status.k;
 
 		auto acc_opt = std::optional<accel::Interaction>{};
 		auto medium = initial_status.medium;
@@ -239,6 +241,8 @@ namespace metatron::monte_carlo {
 				inside = math::dot(-trace_ctx.r.d, intr.n) < 0.f;
 				medium = inside ? div->material->medium : initial_status.medium;
 				medium_to_world = inside ? div->medium_to_world : initial_status.medium_to_world;
+				trace_ctx.eta = emission & (inside ? *div->material->eta : *initial_status.eta);
+				trace_ctx.k = emission & (inside ? *div->material->k : *initial_status.k);
 				intr.n *= inside ? -1.f : 1.f;
 				intr.tn = rt | lt | math::expand(intr.tn, 0.f);
 				intr.bn = rt | lt | math::expand(intr.bn, 0.f);

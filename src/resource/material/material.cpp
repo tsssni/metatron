@@ -14,6 +14,13 @@ namespace metatron::material {
 				attr = tex->sample(ctx, coord);
 			}
 		};
+		auto sample_spectrum = [&](auto& attr, auto* spec, auto const& default_v) {
+			if (!spec) {
+				attr = default_v;
+			} else {
+				attr = ctx.spec & *spec;
+			}
+		};
 		auto sample_channel = [&](f32& attr, auto* tex, usize idx, auto const& default_v) {
 			if (!tex) {
 				attr = default_v;
@@ -29,12 +36,12 @@ namespace metatron::material {
 
 		sample(attr.reflectance, reflectance, null_spec);
 		sample(attr.transmittance, transmittance, null_spec);
-		sample(attr.eta, eta, null_spec);
-		sample(attr.k, k, null_spec);
 		sample(intr.emission, emission, null_spec);
 		sample(intr.normal, nomral, geometry_normal);
 		sample_channel(attr.u_roughness, u_roughness, 0, 0.f);
 		sample_channel(attr.v_roughness, v_roughness, 0, 0.f);
+		sample_spectrum(attr.eta, eta, null_spec);
+		sample_spectrum(attr.k, k, null_spec);
 
 		attr.spectrum = ctx.spec;
 		intr.bsdf = bsdf->clone(attr);

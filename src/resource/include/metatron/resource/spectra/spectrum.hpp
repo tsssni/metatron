@@ -25,7 +25,7 @@ namespace metatron::spectra {
 		return integral;
 	}
 
-	auto inline operator&(Spectrum const& s) -> math::Vector<f32, 3> {
+	auto inline operator~(Spectrum const& s) -> math::Vector<f32, 3> {
 		return {
 			*Spectrum::CIE_X | s,
 			*Spectrum::CIE_Y | s,

@@ -11,6 +11,8 @@ namespace metatron::monte_carlo {
 		math::Ray_Differential ray_differential;
 		math::Ray_Differential default_differential;
 		media::Medium const* medium;
+		spectra::Spectrum const* eta;
+		spectra::Spectrum const* k;
 		math::Transform const* world_to_render;
 		math::Transform const* render_to_camera;
 		math::Transform const* medium_to_world;

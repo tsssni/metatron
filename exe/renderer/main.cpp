@@ -183,29 +183,30 @@ auto main() -> int {
 	auto normal = texture::Constant_Texture<math::Vector<f32, 4>>{
 		math::Vector<f32, 4>{0.f, 0.f, 1.f, 0.f}
 	};
-	auto fallback_spec = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
-		color::Color_Space::sRGB->to_spectrum(
-			{0.f, 0.f, 0.f},
-			color::Color_Space::Spectrum_Type::albedo
-		)
-	};
-	auto fallback_float = texture::Constant_Texture<math::Vector<f32, 4>>{math::Vector<f32, 4>{0.f}};
-
+	auto eta = spectra::Constant_Spectrum{1.f};
+	auto k = spectra::Constant_Spectrum{0.f};
+	
 	auto diffuse_material = material::Material{
 		.bsdf = &lambertian,
 		.medium = &vaccum_medium,
 		.reflectance = &diffuse_reflectance,
 		.transmittance = &diffuse_transmittance,
+		.eta = &eta,
+		.k = &k,
 	};
 	auto test_material = material::Material{
 		.bsdf = &lambertian,
 		.medium = &vaccum_medium,
 		.reflectance = &test_reflectance,
 		.transmittance = &test_transmittance,
+		.eta = &eta,
+		.k = &k,
 	};
 	auto interface_material = material::Material{
 		.bsdf = &interface,
 		.medium = &cloud_medium,
+		.eta = &eta,
+		.k = &k,
 	};
 
 	auto env_map = std::make_unique<texture::Image_Texture<spectra::Stochastic_Spectrum>>(
@@ -305,7 +306,6 @@ auto main() -> int {
 			});
 		}
 	}
-
 	auto bvh = accel::LBVH{std::move(dividers), &world_to_render};
 	auto integrator = monte_carlo::Volume_Path_Integrator{};
 
@@ -321,10 +321,12 @@ auto main() -> int {
 					s.ray_differential,
 					s.default_differential,
 					&vaccum_medium,
+					&eta,
+					&k,
 					&world_to_render,
 					&render_to_camera,
 					&identity,
-					depth
+					depth,
 				},
 				bvh,
 				emitter,
