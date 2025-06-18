@@ -189,25 +189,30 @@ auto main() -> int {
 	
 	auto diffuse_material = material::Material{
 		.bsdf = &lambertian,
-		.medium = &vaccum_medium,
+		.interior_medium = &vaccum_medium,
+		.exterior_medium = &vaccum_medium,
+		.interior_eta = &eta,
+		.exterior_eta = &eta,
+		.interior_k = &k,
+		.exterior_k = &k,
 		.reflectance = &diffuse_reflectance,
 		.transmittance = &diffuse_transmittance,
-		.eta = &eta,
-		.k = &k,
 	};
 	auto test_material = material::Material{
 		.bsdf = &lambertian,
-		.medium = &vaccum_medium,
+		.interior_medium = &vaccum_medium,
+		.exterior_medium = &vaccum_medium,
+		.interior_eta = &eta,
+		.exterior_eta = &eta,
+		.interior_k = &k,
+		.exterior_k = &k,
 		.reflectance = &test_reflectance,
 		.transmittance = &test_transmittance,
-		.eta = &eta,
-		.k = &k,
 	};
 	auto interface_material = material::Material{
 		.bsdf = &interface,
-		.medium = &cloud_medium,
-		.eta = &eta,
-		.k = &k,
+		.interior_medium = &cloud_medium,
+		.exterior_medium = &vaccum_medium,
 	};
 
 	auto env_map = std::make_unique<texture::Image_Texture<spectra::Stochastic_Spectrum>>(
@@ -257,12 +262,12 @@ auto main() -> int {
 
 	auto dividers = std::vector<accel::Divider>{
 		// {
-		// 	&sphere,
-		// 	&interface_material,
-		// 	nullptr,
-		// 	&bound_to_world,
-		// 	&medium_to_world,
-		// 	0uz
+		// 	.shape = &sphere,
+		// 	.material = &interface_material,
+		// 	.light = nullptr,
+		// 	.local_to_world = &bound_to_world,
+		// 	.interior_to_world = &medium_to_world,
+		// 	.exterior_to_world = &identity,
 		// },
 	};
 
@@ -274,36 +279,39 @@ auto main() -> int {
 	for (auto& mesh: shell) {
 		for (auto i = 0uz; i < mesh->size(); i++) {
 			dividers.push_back({
-				mesh.get(),
-				&test_material,
-				nullptr,
-				&shell_to_world,
-				&identity,
-				i,
+				.shape = mesh.get(),
+				.material = &test_material,
+				.light = nullptr,
+				.local_to_world = &shell_to_world,
+				.interior_to_world = &identity,
+				.exterior_to_world = &identity,
+				.primitive = i,
 			});
 		}
 	}
 	for (auto& mesh: kernel) {
 		for (auto i = 0uz; i < mesh->size(); i++) {
 			dividers.push_back({
-				mesh.get(),
-				&diffuse_material,
-				nullptr,
-				&kernel_to_world,
-				&identity,
-				i,
+				.shape = mesh.get(),
+				.material = &test_material,
+				.light = nullptr,
+				.local_to_world = &kernel_to_world,
+				.interior_to_world = &identity,
+				.exterior_to_world = &identity,
+				.primitive = i,
 			});
 		}
 	}
 	for (auto& mesh: base) {
 		for (auto i = 0uz; i < mesh->size(); i++) {
 			dividers.push_back({
-				mesh.get(),
-				&test_material,
-				nullptr,
-				&base_to_world,
-				&identity,
-				i,
+				.shape = mesh.get(),
+				.material = &test_material,
+				.light = nullptr,
+				.local_to_world = &base_to_world,
+				.interior_to_world = &identity,
+				.exterior_to_world = &identity,
+				.primitive = i,
 			});
 		}
 	}
@@ -321,12 +329,8 @@ auto main() -> int {
 				{
 					s.ray_differential,
 					s.default_differential,
-					&vaccum_medium,
-					&eta,
-					&k,
 					&world_to_render,
 					&render_to_camera,
-					&identity,
 					depth,
 				},
 				bvh,

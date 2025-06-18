@@ -17,8 +17,6 @@ namespace metatron::eval {
 		math::Ray r{};
 		math::Vector<f32, 3> n{};
 		spectra::Stochastic_Spectrum spec{};
-		spectra::Stochastic_Spectrum eta{};
-		spectra::Stochastic_Spectrum k{};
 		bool inside;
 	};
 

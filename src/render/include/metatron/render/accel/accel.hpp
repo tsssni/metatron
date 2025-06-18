@@ -13,7 +13,8 @@ namespace metatron::accel {
 		material::Material const* material{};
 		light::Light const* light{};
 		math::Transform const* local_to_world{};
-		math::Transform const* medium_to_world{};
+		math::Transform const* interior_to_world{};
+		math::Transform const* exterior_to_world{};
 		usize primitive{0uz};
 	};
 

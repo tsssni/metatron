@@ -40,8 +40,10 @@ namespace metatron::material {
 		sample(intr.normal, nomral, geometry_normal);
 		sample_channel(attr.u_roughness, u_roughness, 0, 0.f);
 		sample_channel(attr.v_roughness, v_roughness, 0, 0.f);
-		sample_spectrum(attr.eta, eta, null_spec);
-		sample_spectrum(attr.k, k, null_spec);
+		sample_spectrum(attr.interior_eta, interior_eta, null_spec);
+		sample_spectrum(attr.exterior_eta, exterior_eta, null_spec);
+		sample_spectrum(attr.interior_k, interior_k, null_spec);
+		sample_spectrum(attr.exterior_k, exterior_k, null_spec);
 
 		attr.spectrum = ctx.spec;
 		intr.bsdf = bsdf->clone(attr);

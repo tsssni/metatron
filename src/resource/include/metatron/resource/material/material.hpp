@@ -13,15 +13,18 @@ namespace metatron::material {
 
 	struct Material final {
 		bsdf::Bsdf const* bsdf;
-		media::Medium const* medium;
+		media::Medium const* interior_medium;
+		media::Medium const* exterior_medium;
+		spectra::Spectrum const* interior_eta;
+		spectra::Spectrum const* exterior_eta;
+		spectra::Spectrum const* interior_k;
+		spectra::Spectrum const* exterior_k;
 		texture::Texture<spectra::Stochastic_Spectrum> const* reflectance;
 		texture::Texture<spectra::Stochastic_Spectrum> const* transmittance;
 		texture::Texture<spectra::Stochastic_Spectrum> const* emission;
 		texture::Texture<math::Vector<f32, 4>> const* u_roughness;
 		texture::Texture<math::Vector<f32, 4>> const* v_roughness;
 		texture::Texture<math::Vector<f32, 4>> const* nomral;
-		spectra::Spectrum const* eta;
-		spectra::Spectrum const* k;
 		
 		auto sample(
 			eval::Context const& ctx,
