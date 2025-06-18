@@ -19,6 +19,7 @@ namespace metatron::eval {
 		spectra::Stochastic_Spectrum spec{};
 		spectra::Stochastic_Spectrum eta{};
 		spectra::Stochastic_Spectrum k{};
+		bool inside;
 	};
 
 	auto inline operator|(math::Transform const& t, Context const& ctx) -> Context {

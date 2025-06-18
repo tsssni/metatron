@@ -22,7 +22,6 @@ namespace metatron::monte_carlo {
 		auto max_depth = initial_status.max_depth;
 		auto crossed = true;
 		auto terminated = false;
-		auto inside = false;
 
 		auto scattered = false;
 		auto scatter_pdf = 0.f;
@@ -103,7 +102,6 @@ namespace metatron::monte_carlo {
 				auto amm_opt = std::optional<accel::Interaction>{};
 				auto termenated = false;
 				auto crommed = true;
-				auto inmed = false;
 
 				auto dedium = medium;
 				auto direct_to_world = medium_to_world;
@@ -145,10 +143,10 @@ namespace metatron::monte_carlo {
 						auto& lt = *dim.local_to_world;
 						imtr.p = rt | lt | math::expand(imtr.p, 1.f);
 						imtr.n = math::normalize(rt | lt | imtr.n);
-						inmed = math::dot(-direct_ctx.r.d, imtr.n) < 0.f;
-						dedium = inmed ? dim.material->medium : initial_status.medium;
-						direct_to_world = inmed ? dim.medium_to_world : initial_status.medium_to_world;
-						imtr.n *= inmed ? -1.f : 1.f;
+						direct_ctx.inside = math::dot(-direct_ctx.r.d, imtr.n) < 0.f;
+						dedium = direct_ctx.inside ? dim.material->medium : initial_status.medium;
+						direct_to_world = direct_ctx.inside ? dim.medium_to_world : initial_status.medium_to_world;
+						imtr.n *= direct_ctx.inside ? -1.f : 1.f;
 
 						auto close_to_light = math::length(imtr.p - l_intr.p) < 0.001f;
 						if (!close_to_light && !(dim.material->bsdf->flags() & bsdf::Bsdf::interface)) {
@@ -238,12 +236,12 @@ namespace metatron::monte_carlo {
 			if (scattered || crossed) {
 				intr.p = rt | lt | math::expand(intr.p, 1.f);
 				intr.n = math::normalize(rt | lt | intr.n);
-				inside = math::dot(-trace_ctx.r.d, intr.n) < 0.f;
-				medium = inside ? div->material->medium : initial_status.medium;
-				medium_to_world = inside ? div->medium_to_world : initial_status.medium_to_world;
-				trace_ctx.eta = emission & (inside ? *div->material->eta : *initial_status.eta);
-				trace_ctx.k = emission & (inside ? *div->material->k : *initial_status.k);
-				intr.n *= inside ? -1.f : 1.f;
+				trace_ctx.inside = math::dot(-trace_ctx.r.d, intr.n) < 0.f;
+				medium = trace_ctx.inside ? div->material->medium : initial_status.medium;
+				medium_to_world = trace_ctx.inside ? div->medium_to_world : initial_status.medium_to_world;
+				trace_ctx.eta = emission & (trace_ctx.inside ? *div->material->eta : *initial_status.eta);
+				trace_ctx.k = emission & (trace_ctx.inside ? *div->material->k : *initial_status.k);
+				intr.n *= trace_ctx.inside ? -1.f : 1.f;
 				intr.tn = rt | lt | math::expand(intr.tn, 0.f);
 				intr.bn = rt | lt | math::expand(intr.bn, 0.f);
 			}
