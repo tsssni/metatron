@@ -1,4 +1,5 @@
 #include <metatron/core/math/quaternion.hpp>
+#include <metatron/core/math/complex.hpp>
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/sampler/independent.hpp>
 #include <metatron/core/math/sampler/halton.hpp>

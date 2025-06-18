@@ -330,16 +330,16 @@ namespace metatron::math {
 			return data;
 		};
 
-		template<usize I>
+		template<usize idx>
 		auto constexpr get() const -> Element const& {
-			static_assert(I < first_dim, "index out of bounds");
-			return data[I];
+			static_assert(idx < first_dim, "index out of bounds");
+			return data[idx];
 		}
 
-		template<usize I>
+		template<usize idx>
 		auto constexpr get() -> Element& {
-			static_assert(I < first_dim, "index out of bounds");
-			return data[I];
+			static_assert(idx < first_dim, "index out of bounds");
+			return data[idx];
 		}
 
 	private:
@@ -364,16 +364,16 @@ namespace metatron::math {
 		return rhs * lhs;
 	}
 
-	template<usize I, typename T, usize first_dim, usize... rest_dims>
-	auto inline constexpr get(Matrix<T, first_dim, rest_dims...> const& m) 
+	template<usize idx, typename T, usize first_dim, usize... rest_dims>
+	auto constexpr get(Matrix<T, first_dim, rest_dims...> const& m) 
 		-> typename Matrix<T, first_dim, rest_dims...>::Element const& {
-		return m.template get<I>();
+		return m.template get<idx>();
 	}
 
-	template<usize I, typename T, usize first_dim, usize... rest_dims>
+	template<usize idx, typename T, usize first_dim, usize... rest_dims>
 	auto constexpr get(Matrix<T, first_dim, rest_dims...>& m) 
 		-> typename Matrix<T, first_dim, rest_dims...>::Element& {
-		return m.template get<I>();
+		return m.template get<idx>();
 	}
 
 	template<typename T, usize h, usize w>
