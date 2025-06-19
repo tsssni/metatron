@@ -5,7 +5,7 @@ namespace metatron::media {
 
 	auto Vaccum_Medium::sample(eval::Context const& ctx, f32 t_max, f32 u) const -> std::optional<Interaction> {
 		auto transmittance = ctx.spec;
-		spectra::clear(transmittance, 1.f);
+		transmittance = 1.f;
 
 		return Interaction{
 			ctx.r.o + t_max * ctx.r.d,

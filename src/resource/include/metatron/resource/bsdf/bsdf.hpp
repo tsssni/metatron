@@ -15,8 +15,9 @@ namespace metatron::bsdf {
 		spectra::Stochastic_Spectrum exterior_eta;
 		spectra::Stochastic_Spectrum interior_k;
 		spectra::Stochastic_Spectrum exterior_k;
-		f32 u_roughness{1.f};
-		f32 v_roughness{1.f};
+		f32 u_roughness;
+		f32 v_roughness;
+		bool inside;
 	};
 
 	struct Interaction final {

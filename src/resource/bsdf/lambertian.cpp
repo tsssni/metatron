@@ -24,7 +24,10 @@ namespace metatron::bsdf {
 		return Interaction{f, wi, pdf};
 	}
 
-	auto Lambertian_Bsdf::sample(eval::Context const& ctx, math::Vector<f32, 3> const& u) const -> std::optional<Interaction> {
+	auto Lambertian_Bsdf::sample(
+		eval::Context const& ctx,
+		math::Vector<f32, 3> const& u
+	) const -> std::optional<Interaction> {
 		auto distr = math::Cosine_Hemisphere_Distribution{};
 		auto wi = distr.sample({u[1], u[2]});
 		auto pdf = distr.pdf(wi[1]);

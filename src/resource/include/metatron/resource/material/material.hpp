@@ -8,7 +8,8 @@ namespace metatron::material {
 	struct Interaction final {
 		std::unique_ptr<bsdf::Bsdf> bsdf;
 		spectra::Stochastic_Spectrum emission;
-		math::Vector<f32, 3> normal;
+		math::Vector<f32, 3> normal{0.f};
+		bool degraded{false};
 	};
 
 	struct Material final {

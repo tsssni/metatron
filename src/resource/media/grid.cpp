@@ -55,7 +55,7 @@ namespace metatron::media {
 		auto t_offset = 0.005f / math::length(cache.r.d);
 		auto t_transmitted = 0.f;
 		auto transmittance = ctx.spec;
-		spectra::clear(transmittance, 1.f);
+		transmittance = 1.f;
 
 		auto update_transmittance = [&](f32 t) -> void {
 			t_transmitted += t;

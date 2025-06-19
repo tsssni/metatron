@@ -318,9 +318,6 @@ namespace metatron::monte_carlo {
 			METATRON_OPT_OR_BREAK(tcoord, texture::grad(ldiff, intr));
 			METATRON_OPT_OR_BREAK(mat_intr, div->material->sample(trace_ctx, tcoord));
 
-			auto tbn = math::transpose(math::Matrix<f32, 3, 3>{intr.tn, intr.bn, intr.n});
-			intr.n = tbn | mat_intr.normal;
-
 			[&]() {
 				if (spectra::max(mat_intr.emission) < math::epsilon<f32>) {
 					return;
@@ -335,6 +332,15 @@ namespace metatron::monte_carlo {
 				auto mis_w = math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
 				emission += mis_w * beta * mat_intr.emission;
 			}();
+
+			auto tbn = math::transpose(math::Matrix<f32, 3, 3>{intr.tn, intr.bn, intr.n});
+			intr.n = tbn | mat_intr.normal;
+
+			if (mat_intr.degraded && !spectra::constant(emission)) {
+				spectra::degrade(emission); spectra::degrade(beta);
+				spectra::degrade(mis_s); spectra::degrade(mis_e);
+				trace_ctx.spec = emission;
+			}
 
 			bsdf = std::move(mat_intr.bsdf);
 			auto bt = math::Transform{{}, {1.f},

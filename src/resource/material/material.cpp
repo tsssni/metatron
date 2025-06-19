@@ -7,6 +7,17 @@ namespace metatron::material {
 		eval::Context const& ctx,
 		texture::Coordinate const& coord
 	) const -> std::optional<Interaction> {
+		auto attr = bsdf::Attribute{};
+		auto intr = Interaction{};
+		auto spec = ctx.spec;
+		if (!spectra::constant(spec) && (false
+		|| typeid(*exterior_eta) != typeid(spectra::Constant_Spectrum)
+		|| typeid(*interior_eta) != typeid(spectra::Constant_Spectrum)
+		)) {
+			spectra::degrade(spec);
+			intr.degraded = true;
+		}
+
 		auto sample = [&](auto& attr, auto* tex, auto const& default_v) {
 			if (!tex) {
 				attr = default_v;
@@ -29,9 +40,7 @@ namespace metatron::material {
 			}
 		};
 
-		auto attr = bsdf::Attribute{};
-		auto intr = Interaction{};
-		auto null_spec = ctx.spec & spectra::Constant_Spectrum{0.f};
+		auto null_spec = spec & spectra::Constant_Spectrum{0.f};
 		auto geometry_normal = math::Vector<f32, 3>{0.f, 0.f, 1.f};
 
 		sample(attr.reflectance, reflectance, null_spec);
@@ -45,7 +54,8 @@ namespace metatron::material {
 		sample_spectrum(attr.interior_k, interior_k, null_spec);
 		sample_spectrum(attr.exterior_k, exterior_k, null_spec);
 
-		attr.spectrum = ctx.spec;
+		attr.spectrum = spec;
+		attr.inside = ctx.inside;
 		intr.bsdf = bsdf->clone(attr);
 		return intr;
 	}

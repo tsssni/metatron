@@ -101,11 +101,24 @@ namespace metatron::math {
 		constexpr Matrix(Matrix<U, rhs_first_dim, rest_dims...> const& rhs, Args&&... rest) {
 			*this = rhs;
 			if constexpr (first_dim > rhs_first_dim) {
-				[this, rest...]<usize... idxs>(std::index_sequence<idxs...>) {
-						((data[rhs_first_dim + idxs] = rest), ...);
+				[this, &rest...]<usize... idxs>(std::index_sequence<idxs...>) {
+						((data[rhs_first_dim + idxs] = std::forward<Args>(rest)), ...);
 				}(std::make_index_sequence<std::min(sizeof...(rest), first_dim - rhs_first_dim)>{});
 			}
+		}
 
+		template<typename U, typename... Args, usize rhs_first_dim>
+		requires (true
+			&& std::is_convertible_v<U, T>
+			&& (std::is_convertible_v<Args, Element> && ...)
+		)
+		constexpr Matrix(Matrix<U, rhs_first_dim, rest_dims...>&& rhs, Args&&... rest) {
+			*this = std::move(rhs);
+			if constexpr (first_dim > rhs_first_dim) {
+				[this, &rest...]<usize... idxs>(std::index_sequence<idxs...>) {
+						((data[rhs_first_dim + idxs] = std::forward<Args>(rest)), ...);
+				}(std::make_index_sequence<std::min(sizeof...(rest), first_dim - rhs_first_dim)>{});
+			}
 		}
 
 		template<usize rhs_first_dim0, usize rhs_first_dim1>
@@ -119,12 +132,32 @@ namespace metatron::math {
 			}
 		}
 
+		template<usize rhs_first_dim0, usize rhs_first_dim1>
+		constexpr Matrix(
+			Matrix<T, rhs_first_dim0, rest_dims...>&& rhs0,
+			Matrix<T, rhs_first_dim1, rest_dims...>&& rhs1
+		) {
+			*this = std::move(rhs0);
+			if constexpr (first_dim > rhs_first_dim0) {
+				std::move(rhs1.data.begin(), rhs1.data.begin() + (std::min(first_dim, rhs_first_dim1) - rhs_first_dim0), data.begin() + rhs_first_dim0);
+			}
+		}
+
 		template<typename U, usize rhs_first_dim, usize... rhs_rest_dims>
 		requires true
 			&& std::is_convertible_v<U, T>
 			&& (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
 		auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...> const& rhs) -> Matrix& {
 			std::copy_n(rhs.data.begin(), std::min(first_dim, rhs_first_dim), data.begin());
+			return *this;
+		}
+
+		template<typename U, usize rhs_first_dim, usize... rhs_rest_dims>
+		requires true
+			&& std::is_convertible_v<U, T>
+			&& (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
+		auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...>&& rhs) -> Matrix& {
+			std::move(rhs.data.begin(), rhs.data.begin() + std::min(first_dim, rhs_first_dim), data.begin());
 			return *this;
 		}
 
@@ -557,4 +590,4 @@ namespace std {
 	struct tuple_element<I, math::Matrix<T, first_dim, rest_dims...>> {
 		using type = typename math::Matrix<T, first_dim, rest_dims...>::Element;
 	};
-};
+}
