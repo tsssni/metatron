@@ -61,7 +61,7 @@ namespace metatron::photo {
 			[&](math::Vector<usize, 2> const& px) {
 				auto [i, j] = px;
 				auto pixel = math::Vector<f32, 4>{image[i, j]};
-				pixel = std::abs(pixel[3]) < math::epsilon<f32> ? math::Vector<f32, 4>{0.f} : pixel / pixel[3];
+				pixel = math::abs(pixel[3]) < math::epsilon<f32> ? math::Vector<f32, 4>{0.f} : pixel / pixel[3];
 				image[i, j] = pixel;
 			}
 		);

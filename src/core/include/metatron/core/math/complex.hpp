@@ -155,4 +155,10 @@ namespace metatron::math {
 			return {T{0}, math::sqrt(-a)};
 		}
 	}
+
+	template <typename T>
+	requires std::floating_point<T>
+	auto constexpr sqr(Complex<T> const& z) -> Complex<T> {
+		return z * z;
+	}
 }

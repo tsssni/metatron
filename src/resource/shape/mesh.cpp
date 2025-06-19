@@ -115,7 +115,7 @@ namespace metatron::shape {
 		auto bary = e / det;
 
 		if (false
-		|| std::abs(det) < math::epsilon<f32>
+		|| math::abs(det) < math::epsilon<f32>
 		|| std::signbit(e[0]) != std::signbit(e[1])
 		|| std::signbit(e[1]) != std::signbit(e[2])
 		) {

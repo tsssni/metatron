@@ -184,7 +184,7 @@ namespace metatron::math {
 			&& (false
 				|| i32(l_n) - i32(r_n) < 2
 				|| i32(r_n) - i32(l_n) < 2
-			) // clangd could not use std::abs
+			) // clangd could not use math::abs
 			&& []() -> bool {
 				return std::equal(
 					lds.begin(), lds.begin() + higher_n,
@@ -439,10 +439,10 @@ namespace metatron::math {
 			
 			for (usize i = 0; i < n; i++) {
 				usize pivot_row = i;
-				T max_val = std::abs(u[i][i]);
+				T max_val = math::abs(u[i][i]);
 				
 				for (usize j = i + 1; j < n; j++) {
-					if (auto curr_val = std::abs(u[j][i]); curr_val > max_val) {
+					if (auto curr_val = math::abs(u[j][i]); curr_val > max_val) {
 						max_val = curr_val;
 						pivot_row = j;
 					}
@@ -485,10 +485,10 @@ namespace metatron::math {
 		// Gaussian-Jordan
 		for (usize i = 0; i < h; i++) {
 			auto pivot_row = i;
-			auto max_val = std::abs(augmented[i][i]);
+			auto max_val = math::abs(augmented[i][i]);
 			
 			for (usize j = i + 1; j < h; j++) {
-				if (auto curr_val = std::abs(augmented[j][i]); curr_val > max_val) {
+				if (auto curr_val = math::abs(augmented[j][i]); curr_val > max_val) {
 					max_val = curr_val;
 					pivot_row = j;
 				}
@@ -532,7 +532,7 @@ namespace metatron::math {
 		Matrix<T, n> const& b
 	) -> std::optional<Matrix<T, n>> {
 		T det_a = determinant(a);
-		if (std::abs(det_a) < epsilon<T>) {
+		if (math::abs(det_a) < epsilon<T>) {
 			return {};
 		}
 
@@ -555,7 +555,7 @@ namespace metatron::math {
 		Matrix<T, n, m> const& b
 	) -> std::optional<Matrix<T, n, m>> {
 		T det_a = determinant(a);
-		if (std::abs(det_a) < epsilon<T>) {
+		if (math::abs(det_a) < epsilon<T>) {
 			return {};
 		}
 

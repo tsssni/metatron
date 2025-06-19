@@ -29,7 +29,7 @@ namespace metatron::math {
 
 			for (auto i = 0uz; i < first_dim; i++) {
 				if constexpr (n == 1uz) {
-					rows[i] = std::abs(matrix[i]);
+					rows[i] = math::abs(matrix[i]);
 					cdf[i + 1] = rows[i];
 				} else {
 					rows[i] = Element{std::move(matrix[i]), shrink(low), shrink(high)};

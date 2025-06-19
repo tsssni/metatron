@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/resource/bsdf/bsdf.hpp>
+#include <metatron/core/math/complex.hpp>
 
 namespace metatron::bsdf {
 	struct Microfacet_Bsdf final: Bsdf {

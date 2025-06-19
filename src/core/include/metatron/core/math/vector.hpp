@@ -194,7 +194,7 @@ namespace metatron::math {
 	requires std::floating_point<T> || std::integral<T>
 	auto constexpr abs(Vector<T, size> const& x) -> Vector<T, size> {
 		return foreach([](T const& v, usize) -> T {
-			return std::abs(v);
+			return math::abs(v);
 		}, x);
 	}
 

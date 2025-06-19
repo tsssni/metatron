@@ -75,7 +75,7 @@ namespace metatron::monte_carlo {
 				l_intr.wi = math::normalize(rt | et | math::expand(l_intr.wi, 0.f));
 				direct_ctx.r.d = l_intr.wi;
 				auto p_e = e_intr.pdf * l_intr.pdf;
-				if (std::abs(p_e) < math::epsilon<f32>) {
+				if (math::abs(p_e) < math::epsilon<f32>) {
 					return;
 				}
 
@@ -89,7 +89,7 @@ namespace metatron::monte_carlo {
 					auto wo = t | math::expand(history_ctx.r.d, 0.f);
 					auto wi = t | math::expand(l_intr.wi, 0.f);
 					METATRON_OPT_OR_RETURN(b_intr, (*bsdf)(wo, wi));
-					f = b_intr.f * std::abs(math::dot(l_intr.wi, direct_ctx.n));
+					f = b_intr.f * math::abs(math::dot(l_intr.wi, direct_ctx.n));
 					p_s = b_intr.pdf;
 				} else {
 					METATRON_OPT_OR_RETURN(p_intr, (*phase)(history_ctx.r.d, l_intr.wi));
@@ -371,7 +371,7 @@ namespace metatron::monte_carlo {
 			crossed = false;
 			history_ctx = trace_ctx;
 			trace_ctx = {{trace_p, b_intr.wi}, trace_n, emission};
-			beta *= b_intr.f * math::guarded_div(std::abs(math::dot(b_intr.wi, trace_n)), b_intr.pdf);
+			beta *= b_intr.f * math::guarded_div(math::abs(math::dot(b_intr.wi, trace_n)), b_intr.pdf);
 			mis_e = mis_s;
 			scatter_f = b_intr.f;
 			scatter_pdf = b_intr.pdf;

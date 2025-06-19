@@ -18,7 +18,7 @@ namespace metatron::bsdf {
 		}, f.lambda);
 
 		auto distr = math::Cosine_Hemisphere_Distribution{};
-		auto pdf = distr.pdf(std::abs(wi[1]));
+		auto pdf = distr.pdf(math::abs(wi[1]));
 		pdf *= -wo[1] * wi[1] >= 0.f ? 1.f : 0.f;
 
 		return Interaction{f, wi, pdf};
