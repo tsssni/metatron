@@ -2,6 +2,7 @@
 #include <metatron/resource/spectra/constant.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/sphere.hpp>
+#include <metatron/core/math/distribution/disk.hpp>
 #include <utility>
 
 namespace metatron::bsdf {
@@ -26,10 +27,7 @@ namespace metatron::bsdf {
 		* math::Complex<f32>{interior_eta.value[0], interior_k.value[0]}
 		/ math::Complex<f32>{exterior_eta.value[0], exterior_k.value[0]};
 		auto wm = math::normalize(reflective ? wo + wi : wo * eta.r + wi);
-		if (math::all(
-			[](f32 v, usize) { return v < math::epsilon<f32>; },
-			math::abs(wm)
-		)) {
+		if (wm[1] < math::epsilon<f32>) {
 			return {};
 		}
 
@@ -40,12 +38,8 @@ namespace metatron::bsdf {
 		auto pr = F;
 		auto pt = 1.f - F;
 		auto flags = this->flags();
-		if (!(flags & bsdf::Bsdf::reflective)) {
-			pr = 0.f;
-		}
-		if (!(flags & bsdf::Bsdf::transmissive)) {
-			pt = 0.f;
-		}
+		pr *= (flags & bsdf::Bsdf::reflective);
+		pt *= (flags & bsdf::Bsdf::transmissive);
 		if (pr == 0.f && pt == 0.f) {
 			return {};
 		}
@@ -76,7 +70,39 @@ namespace metatron::bsdf {
 		math::Vector<f32, 3> const& u
 	) const -> std::optional<Interaction> {
 		auto wo = ctx.r.d;
-		return {};
+		
+		auto wy = math::normalize(-wo * math::Vector<f32, 3>{u_roughness, 1.f, v_roughness});
+		auto wx = wy[1] < 1.f - math::epsilon<f32>
+			? math::cross(wy, math::Vector<f32, 3>{0.f, 1.f, 0.f})
+			: math::Vector<f32, 3>{1.f, 0.f, 0.f};
+		auto wz = math::cross(wx, wy);
+
+		auto distr = math::Disk_Distribution{};
+		auto sample_p = distr.sample({u[1], u[2]});
+		auto sample_h = math::sqrt(1.f - math::sqr(sample_p[0]));
+		sample_p[1] = (1.f + wy[1]) / 2.f * sample_p[1] + (1.f - wy[1]) * sample_h / 2.f;
+
+		auto sample_y = math::sqrt(1.f - math::dot(sample_p, sample_p));
+		auto wm = sample_p[0] * wx + sample_y * wy + sample_p[1] * wz;
+		if (wm[1] < math::epsilon<f32>) {
+			return {};
+		}
+		wm = math::normalize(wm);
+
+		auto eta = 1.f
+		* math::Complex<f32>{interior_eta.value[0], interior_k.value[0]}
+		/ math::Complex<f32>{exterior_eta.value[0], exterior_k.value[0]};
+		auto pr = fresnel(math::dot(-wo, wm), eta);
+		auto pt = 1.f - pr;
+		auto flags = this->flags();
+		pr *= (flags & bsdf::Bsdf::reflective);
+		pt *= (flags & bsdf::Bsdf::transmissive);
+		if (pr == 0.f && pt == 0.f) {
+			return {};
+		}
+
+		auto wi = u[0] < pr / (pr + pt) ? math::reflect(wo, wm) : math::refract(wo, wm, eta.r);
+		return (*this)(wo, wi);
 	}
 
 	auto Microfacet_Bsdf::clone(Attribute const& attr) const -> std::unique_ptr<Bsdf> {
@@ -85,8 +111,8 @@ namespace metatron::bsdf {
 		bsdf->interior_eta = attr.interior_eta;
 		bsdf->exterior_k = attr.exterior_k;
 		bsdf->interior_k = attr.interior_k;
-		bsdf->alpha_x = attr.u_roughness;
-		bsdf->alpha_y = attr.v_roughness;
+		bsdf->u_roughness = attr.u_roughness;
+		bsdf->v_roughness = attr.v_roughness;
 
 		if (attr.inside) {
 			std::swap(bsdf->exterior_eta, bsdf->interior_eta);
@@ -144,10 +170,10 @@ namespace metatron::bsdf {
 		auto cos_phi = math::unit_to_cos_phi(wm);
 		auto sin_phi = math::unit_to_sin_phi(wm);
 		auto e = tan2_theta * (0.f
-		+ math::sqr(cos_phi / alpha_x)
-		+ math::sqr(sin_phi / alpha_y));
+		+ math::sqr(cos_phi / u_roughness)
+		+ math::sqr(sin_phi / v_roughness));
 
-		return 1.f / (math::pi * alpha_x * alpha_y * cos4_theta * math::sqr(1.f + e));
+		return 1.f / (math::pi * u_roughness * v_roughness * cos4_theta * math::sqr(1.f + e));
 	}
 
 	auto Microfacet_Bsdf::smith(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wi) const -> f32 {
@@ -157,8 +183,8 @@ namespace metatron::bsdf {
 				return 0.f;
 			}
 			auto alpha2 = 0.f
-			+ math::sqr(math::unit_to_cos_theta(w) * alpha_x)
-			+ math::sqr(math::unit_to_sin_theta(w) * alpha_y);
+			+ math::sqr(math::unit_to_cos_theta(w) * u_roughness)
+			+ math::sqr(math::unit_to_sin_theta(w) * v_roughness);
 			return (math::sqrt(1.f + alpha2 * tan2_theta) - 1.f) / 2.f;
 		};
 		return 1.f / (1.f + lambda(-wo) + lambda(wi));

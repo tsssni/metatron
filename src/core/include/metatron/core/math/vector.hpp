@@ -118,9 +118,9 @@ namespace metatron::math {
 	requires std::floating_point<T>
 	auto constexpr refract(Vector<T, 3> const& in, Vector<T, 3> const& n, T const& eta) -> Vector<T, 3> {
 		auto cos_theta_i = dot(in, n);
-		auto cos_2_theta_t = T{1.0} - eta * eta * (T{1.0} - cos_theta_i * cos_theta_i); 
+		auto cos_2_theta_t = T{1.0} - (T{1.0} - sqr(cos_theta_i)) / sqr(eta);
 		if (cos_2_theta_t < 0.0) return Vector<T, 3>{T{0.0}};
-		return eta * in - (eta * cos_theta_i + sqrt(cos_2_theta_t)) * n;
+		return in / eta - (cos_theta_i / eta + sqrt(cos_2_theta_t)) * n;
 	}
 
 	template<typename T, typename... Ts, usize n, usize tail = sizeof...(Ts)>

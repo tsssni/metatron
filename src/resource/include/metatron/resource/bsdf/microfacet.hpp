@@ -24,7 +24,7 @@ namespace metatron::bsdf {
 		spectra::Stochastic_Spectrum exterior_eta;
 		spectra::Stochastic_Spectrum interior_k;
 		spectra::Stochastic_Spectrum exterior_k;
-		f32 alpha_x;
-		f32 alpha_y;
+		f32 u_roughness;
+		f32 v_roughness;
 	};
 }
