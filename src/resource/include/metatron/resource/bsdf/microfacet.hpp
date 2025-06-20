@@ -18,7 +18,10 @@ namespace metatron::bsdf {
 	private:
 		auto fresnel(f32 cos_theta_i, math::Complex<f32> eta) const -> f32;
 		auto trowbridge_reitz(math::Vector<f32, 3> const& wm) const -> f32;
-		auto smith(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wi) const -> f32;
+		auto visible_trowbridge_reitz(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wm) const -> f32;
+		auto lambda(math::Vector<f32, 3> const& wo) const -> f32;
+		auto smith_mask(math::Vector<f32, 3> const& wo) const -> f32;
+		auto smith_shadow(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wi) const -> f32;
 
 		spectra::Stochastic_Spectrum interior_eta;
 		spectra::Stochastic_Spectrum exterior_eta;

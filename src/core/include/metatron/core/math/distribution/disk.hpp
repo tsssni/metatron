@@ -3,8 +3,22 @@
 #include <metatron/core/math/arithmetic.hpp>
 
 namespace metatron::math {
-	struct Disk_Distribution final {
-		Disk_Distribution() = default;
+	struct Polar_Disk_Distribution final {
+		Polar_Disk_Distribution() = default;
+
+		auto sample(Vector<f32, 2> const& u) const -> Vector<f32, 2> {
+			auto r = std::sqrt(u[0]);
+			auto theta = 2.f * pi * u[1];
+			return r * Vector<f32, 2>{std::cos(theta), std::sin(theta)};
+		}
+
+		auto pdf() const -> f32 {
+			return 1.f / pi;
+		}
+	};
+
+	struct Unifrom_Disk_Distribution final {
+		Unifrom_Disk_Distribution() = default;
 
 		auto sample(Vector<f32, 2> const& u) const -> Vector<f32, 2> {
 			auto disk_u = u * 2.f - 1.f;

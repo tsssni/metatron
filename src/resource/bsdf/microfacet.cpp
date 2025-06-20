@@ -33,7 +33,7 @@ namespace metatron::bsdf {
 
 		auto F = fresnel(math::dot(-wo, wm), eta);
 		auto D = trowbridge_reitz(wm);
-		auto G = smith(wo, wi);
+		auto G = smith_shadow(wo, wi);
 
 		auto pr = F;
 		auto pt = 1.f - F;
@@ -52,14 +52,22 @@ namespace metatron::bsdf {
 		auto f = exterior_eta;
 		auto pdf = 1.f;
 		if (reflective) {
-			f = F * D * G / math::abs(4.f * cos_theta_o * cos_theta_i);
-			pdf = D / (4.f * math::abs(cos_theta_om)) * pr / (pr + pt);
+			f = 1.f
+			* F * D * G
+			/ math::abs(4.f * cos_theta_o * cos_theta_i);
+			pdf = 1.f
+			* visible_trowbridge_reitz(wo, wm)
+			/ (4.f * math::abs(cos_theta_om))
+			* pr / (pr + pt);
 		} else {
 			auto denom = math::sqr(cos_theta_im + cos_theta_om / eta.r);
 			f = (1.f - F) * D * G
 			* math::abs(cos_theta_om * cos_theta_im / (denom * cos_theta_i * cos_theta_o))
 			/ math::sqr(eta.r);
-			pdf = D * math::abs(cos_theta_im) / denom * pt / (pr + pt); 
+			pdf = 1.f
+			* visible_trowbridge_reitz(wo, wm)
+			* math::abs(cos_theta_im) / denom
+			* pt / (pr + pt); 
 		}
 
 		return Interaction{f, wi, pdf};
@@ -77,7 +85,8 @@ namespace metatron::bsdf {
 			: math::Vector<f32, 3>{1.f, 0.f, 0.f};
 		auto wz = math::cross(wx, wy);
 
-		auto distr = math::Disk_Distribution{};
+		// use polar disk distribution to fetch more samples near center
+		auto distr = math::Polar_Disk_Distribution{};
 		auto sample_p = distr.sample({u[1], u[2]});
 		auto sample_h = math::sqrt(1.f - math::sqr(sample_p[0]));
 		sample_p[1] = (1.f + wy[1]) / 2.f * sample_p[1] + (1.f - wy[1]) * sample_h / 2.f;
@@ -87,7 +96,8 @@ namespace metatron::bsdf {
 		if (wm[1] < math::epsilon<f32>) {
 			return {};
 		}
-		wm = math::normalize(wm);
+		// normal transformation with inverse transposed matrix
+		wm = math::normalize(wm * math::Vector<f32, 3>{u_roughness, 1.f, v_roughness});
 
 		auto eta = 1.f
 		* math::Complex<f32>{interior_eta.value[0], interior_k.value[0]}
@@ -176,17 +186,30 @@ namespace metatron::bsdf {
 		return 1.f / (math::pi * u_roughness * v_roughness * cos4_theta * math::sqr(1.f + e));
 	}
 
-	auto Microfacet_Bsdf::smith(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wi) const -> f32 {
-		auto lambda = [&](math::Vector<f32, 3> const& w) {
-			auto tan2_theta = math::unit_to_tan2_theta(w);
-			if (std::isinf(tan2_theta)) {
-				return 0.f;
-			}
-			auto alpha2 = 0.f
-			+ math::sqr(math::unit_to_cos_theta(w) * u_roughness)
-			+ math::sqr(math::unit_to_sin_theta(w) * v_roughness);
-			return (math::sqrt(1.f + alpha2 * tan2_theta) - 1.f) / 2.f;
-		};
+	auto Microfacet_Bsdf::visible_trowbridge_reitz(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wm) const -> f32 {
+		return 1.f
+		* trowbridge_reitz(wm)
+		* smith_mask(-wo)
+		* math::abs(math::dot(-wo, wm))
+		/ math::abs(math::unit_to_cos_theta(-wo));
+	}
+
+	auto Microfacet_Bsdf::lambda(math::Vector<f32, 3> const& wo) const -> f32 {
+		auto tan2_theta = math::unit_to_tan2_theta(wo);
+		if (std::isinf(tan2_theta)) {
+			return 0.f;
+		}
+		auto alpha2 = 0.f
+		+ math::sqr(math::unit_to_cos_theta(wo) * u_roughness)
+		+ math::sqr(math::unit_to_sin_theta(wo) * v_roughness);
+		return (math::sqrt(1.f + alpha2 * tan2_theta) - 1.f) / 2.f;
+	}
+
+	auto Microfacet_Bsdf::smith_mask(math::Vector<f32, 3> const& wo) const -> f32 {
+		return 1.f / (1.f + lambda(-wo));
+	}
+
+	auto Microfacet_Bsdf::smith_shadow(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wi) const -> f32 {
 		return 1.f / (1.f + lambda(-wo) + lambda(wi));
 	}
 }
