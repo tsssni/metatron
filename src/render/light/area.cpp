@@ -18,7 +18,7 @@ namespace metatron::light {
 		math::Vector<f32, 2> const& u
 	) const -> std::optional<Interaction> {
 		METATRON_OPT_OR_RETURN(s_intr, shape->sample(ctx, u, primitive), {});
-		auto L = ctx.L; L = 0.f; // delay fetching L in integrator material interaction
+		auto L = ctx.spec; L = 0.f; // delay fetching L in integrator material interaction
 		return Interaction{
 			L,
 			math::normalize(s_intr.p - ctx.r.o),
@@ -26,5 +26,9 @@ namespace metatron::light {
 			s_intr.t,
 			s_intr.pdf
 		};
+	}
+
+	auto Area_Light::flags() const -> Flags {
+		return Flags(0);
 	}
 }

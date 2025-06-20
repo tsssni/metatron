@@ -15,7 +15,7 @@ namespace metatron::math {
 		}
 
 		auto pdf(f32 x) const -> f32 {
-			return 1.f / r - std::abs(x) / (r * r);
+			return 1.f / r - math::abs(x) / (r * r);
 		}
 
 	private:

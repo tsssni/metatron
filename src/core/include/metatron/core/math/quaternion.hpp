@@ -113,7 +113,7 @@ namespace metatron::math {
 
     template<typename T>
     requires std::floating_point<T>
-	auto constexpr conjugate(Quaternion<T> const& q) -> Quaternion<T> {
+	auto constexpr conj(Quaternion<T> const& q) -> Quaternion<T> {
 		return {-q[0], -q[1], -q[2], q[3]};
 	}
 
@@ -121,7 +121,7 @@ namespace metatron::math {
     requires std::floating_point<T>
 	auto constexpr rotate(Vector<T, 4> const& x, Quaternion<T> const& q) -> math::Vector<T, 4> {
 		auto p = Quaternion{x[0], x[1], x[2], T{0}};
-		auto r = q * p * conjugate(q);
+		auto r = q * p * conj(q);
 		return {r[0], r[1], r[2], T{0}};
 	}
 }

@@ -58,18 +58,6 @@ namespace metatron::math {
 		return true;
 	}
 
-	template<usize n>
-	auto inline constexpr guarded_div(Vector<f32, n> const& x, f32 y) -> Vector<f32, n> {
-		return std::abs(y) < epsilon<f32> ? Vector<f32, n>{0.f} : x / y;
-	}
-
-	template<usize n>
-	auto inline constexpr guarded_div(Vector<f32, n> const& x, Vector<f32, n> const& y) -> Vector<f32, n> {
-		return foreach([&y](f32 x, usize idx) -> f32 {
-			return guarded_div(x, y[idx]);
-		}, x);
-	}
-
 	template<typename T, usize size>
 	auto constexpr dot(Vector<T, size> const& x, Vector<T, size> const& y) -> T {
 		auto result = T{};
@@ -117,7 +105,7 @@ namespace metatron::math {
 	template<typename T, usize size>
 	requires std::floating_point<T>
 	auto constexpr normalize(Vector<T, size> const& x) -> Vector<T, size> {
-		return guarded_div(x, length(x));
+		return x / length(x);
 	}
 
 	template<typename T>
@@ -130,9 +118,9 @@ namespace metatron::math {
 	requires std::floating_point<T>
 	auto constexpr refract(Vector<T, 3> const& in, Vector<T, 3> const& n, T const& eta) -> Vector<T, 3> {
 		auto cos_theta_i = dot(in, n);
-		auto cos_2_theta_t = T{1.0} - eta * eta * (T{1.0} - cos_theta_i * cos_theta_i); 
+		auto cos_2_theta_t = T{1.0} - (T{1.0} - sqr(cos_theta_i)) / sqr(eta);
 		if (cos_2_theta_t < 0.0) return Vector<T, 3>{T{0.0}};
-		return eta * in - (eta * cos_theta_i + sqrt(cos_2_theta_t)) * n;
+		return in / eta - (cos_theta_i / eta + sqrt(cos_2_theta_t)) * n;
 	}
 
 	template<typename T, typename... Ts, usize n, usize tail = sizeof...(Ts)>
@@ -206,7 +194,7 @@ namespace metatron::math {
 	requires std::floating_point<T> || std::integral<T>
 	auto constexpr abs(Vector<T, size> const& x) -> Vector<T, size> {
 		return foreach([](T const& v, usize) -> T {
-			return std::abs(v);
+			return math::abs(v);
 		}, x);
 	}
 

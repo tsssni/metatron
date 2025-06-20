@@ -4,7 +4,7 @@
 namespace metatron::monte_carlo {
 	struct Volume_Path_Integrator final: Integrator {
 		auto sample(
-			Context ctx,
+			Status initial_status,
 			accel::Acceleration const& accel,
 			emitter::Emitter const& emitter,
 			math::Sampler const& sampler

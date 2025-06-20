@@ -4,9 +4,14 @@
 
 namespace metatron::math {
 	template<typename T>
+	auto inline constexpr abs(T x) -> T {
+		return std::abs(x);
+	}
+
+	template<typename T>
 	requires std::floating_point<T>
 	auto inline constexpr guarded_div(T x, T y) -> T {
-		return std::abs(y) < epsilon<T> ? 0.0 : x / y;
+		return abs(y) < epsilon<T> ? 0.0 : x / y;
 	}
 
 	auto inline constexpr pow(usize x, usize n) -> usize {
@@ -25,6 +30,12 @@ namespace metatron::math {
 	requires std::floating_point<T>
 	auto constexpr sqrt(T x) -> T {
 		return std::sqrt(std::max(0.f, x));
+	}
+
+	template<typename T>
+	requires requires(T x) { {x * x} -> std::convertible_to<T>; }
+	auto constexpr sqr(T x) -> T {
+		return x * x;
 	}
 
 	template<typename T>

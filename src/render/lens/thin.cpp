@@ -17,7 +17,7 @@ namespace metatron::photo {
 		auto focused = center + (center - o) * focus_distance / focal_length;
 		
 		auto radius = focal_length / aperture / 2.f;
-		auto distr = math::Disk_Distribution{};
+		auto distr = math::Unifrom_Disk_Distribution{};
 		auto lens_p = math::Vector<f32, 3>{distr.sample(u) * radius, focal_length};
 		auto direction = math::normalize(focused - lens_p);
 

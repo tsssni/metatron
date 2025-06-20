@@ -63,7 +63,11 @@ namespace metatron::shape {
 		auto dndu = dpdu;
 		auto dndv = dpdv;
 
-		return Interaction{p, n, uv, t, dpdu, dpdv, dndu, dndv, 1.f};
+		auto tn = math::normalize(dpdu);
+		tn = math::gram_schmidt(tn, n);
+		auto bn = math::cross(tn, n);
+
+		return Interaction{p, n, tn, bn, uv, t, dpdu, dpdv, dndu, dndv, 1.f};
 	}
 
 	auto Sphere::sample(

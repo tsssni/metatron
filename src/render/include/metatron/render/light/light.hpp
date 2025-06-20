@@ -15,6 +15,10 @@ namespace metatron::light {
 	};
 
 	struct Light {
+		enum Flags {
+			delta = 1 << 0,
+		};
+
 		auto virtual operator()(
 			eval::Context const& ctx
 		) const -> std::optional<Interaction> = 0;
@@ -22,9 +26,9 @@ namespace metatron::light {
 			eval::Context const& ctx,
 			math::Vector<f32, 2> const& u
 		) const -> std::optional<Interaction> = 0;
+		auto virtual flags() const -> Flags = 0;
 
 		auto static initialize() -> void;
-		auto static is_delta(Light const& light) -> bool;
 
 	private:
 		static std::unordered_set<std::type_index> delta_lights;

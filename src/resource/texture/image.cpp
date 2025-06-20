@@ -143,6 +143,6 @@ namespace metatron::texture {
 	) const -> spectra::Stochastic_Spectrum {
 		auto rgba = image_tex.sample(ctx, coord);
 		auto rgb_spec = image_tex.images.front()->color_space->to_spectrum(rgba, spectrum_type);
-		return ctx.L & *rgb_spec;
+		return ctx.spec & *rgb_spec;
 	}
 }

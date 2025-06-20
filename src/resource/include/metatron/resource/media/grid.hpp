@@ -24,10 +24,10 @@ namespace metatron::media {
 
 		Grid_Medium(
 			Medium_Grid const* grid,
-			std::unique_ptr<spectra::Spectrum> sigma_a,
-			std::unique_ptr<spectra::Spectrum> sigma_s,
-			std::unique_ptr<spectra::Spectrum> L,
-			f32 g,
+			phase::Phase_Function const* phase,
+			spectra::Spectrum const* sigma_a,
+			spectra::Spectrum const* sigma_s,
+			spectra::Spectrum const* emission,
 			f32 density_scale = 1.0f
 		);
 
@@ -36,14 +36,14 @@ namespace metatron::media {
 		auto sample(eval::Context const& ctx, f32 t_max, f32 u) const -> std::optional<Interaction>;
 		
 	private:
-		std::unique_ptr<spectra::Spectrum> sigma_a;
-		std::unique_ptr<spectra::Spectrum> sigma_s;
-		std::unique_ptr<spectra::Spectrum> L;
+		phase::Phase_Function const* phase;
+		spectra::Spectrum const* sigma_a;
+		spectra::Spectrum const* sigma_s;
+		spectra::Spectrum const* emission;
 
 		Medium_Grid const* grid;
-		f32 g;
 		f32 density_scale;
 
-		static thread_local std::unordered_map<Grid_Medium const*, Cache> thread_caches;
+		static thread_local std::unordered_map<Grid_Medium const*, Cache> thread_cache;
 	};
 }
