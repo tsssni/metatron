@@ -366,12 +366,13 @@ namespace metatron::monte_carlo {
 				continue;
 			}
 
+			scattered = true;
+			crossed = b_intr.wi[1] < 0.f;
+
 			b_intr.wi = math::normalize(bt ^ math::expand(b_intr.wi, 0.f));
-			auto trace_n = (math::dot(b_intr.wi, intr.n) > 0.f ? 1.f : -1.f) * intr.n;
+			auto trace_n = (crossed ? -1.f : 1.f) * intr.n;
 			auto trace_p = intr.p + 0.001f * trace_n;
 
-			scattered = true;
-			crossed = false;
 			history_ctx = trace_ctx;
 			trace_ctx = {{trace_p, b_intr.wi}, trace_n, emission};
 			beta *= b_intr.f * math::guarded_div(math::abs(math::dot(b_intr.wi, trace_n)), b_intr.pdf);

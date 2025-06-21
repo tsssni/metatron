@@ -46,8 +46,8 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 64uz;
-	auto depth = 128uz;
+	auto spp = 256uz;
+	auto depth = 10uz;
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
 	auto lens = std::make_unique<photo::Thin_Lens>(5.6f, 0.05f, 10.f);
@@ -67,7 +67,7 @@ auto main() -> int {
 	auto sampler = math::Halton_Sampler{rd()};
 
 	auto identity = math::Transform{};
-	auto world_to_render = math::Transform{{-5.f, -0.5f, 5.f}};
+	auto world_to_render = math::Transform{{-2.5f, -0.6f, 2.5f}};
 	// auto world_to_render = math::Transform{{0.f, 0.f, 1000.f}};
 	auto render_to_camera = math::Transform{{0.f, 0.f, 0.f}, {1.f},
 		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
@@ -191,10 +191,10 @@ auto main() -> int {
 	auto test_eta = spectra::Constant_Spectrum{1.5f};
 	auto k = spectra::Constant_Spectrum{0.f};
 	auto u_roughness = texture::Constant_Texture<math::Vector<f32, 4>>{
-		math::Vector<f32, 4>{0.1f, 0.f, 0.f, 0.f}
+		math::Vector<f32, 4>{0.5f, 0.f, 0.f, 0.f}
 	};
 	auto v_roughness = texture::Constant_Texture<math::Vector<f32, 4>>{
-		math::Vector<f32, 4>{0.1f, 0.f, 0.f, 0.f}
+		math::Vector<f32, 4>{0.5f, 0.f, 0.f, 0.f}
 	};
 	
 	auto diffuse_material = material::Material{
@@ -334,6 +334,10 @@ auto main() -> int {
 			auto sample = camera.sample(px, n, sampler);
 			sample->ray_differential = render_to_camera ^ sample->ray_differential;
 			auto& s = sample.value();
+
+			if (px == math::Vector<usize, 2>{303, 267}) {
+				auto a = 1;
+			}
 
 			auto Li_opt = integrator.sample(
 				{

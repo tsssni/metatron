@@ -6,6 +6,7 @@ namespace metatron::spectra {
 	auto constexpr visible_lambda = math::Vector<f32, 2>{360.f, 830.f};
 
 	struct Spectrum {
+		virtual ~Spectrum() = default;
 		auto virtual operator()(f32 lambda) const -> f32 = 0;
 
 		std::unique_ptr<Spectrum> static CIE_X;
