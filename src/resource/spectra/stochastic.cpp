@@ -175,4 +175,13 @@ namespace metatron::spectra {
 	auto avg(Stochastic_Spectrum const& spectrum) -> f32 {
 		return math::sum(spectrum.value / stochastic_samples);
 	}
+
+	auto constant(Stochastic_Spectrum const& spectrum) -> bool {
+		return math::all([&](f32 x, usize i) { return x == spectrum.value[0]; }, spectrum.value);
+	}
+
+	auto degrade(Stochastic_Spectrum& spectrum) -> void {
+		spectrum.value = math::Vector<f32, stochastic_samples>{spectrum.value[0]};
+		spectrum.lambda = math::Vector<f32, stochastic_samples>{visible_lambda[0]};
+	}
 }

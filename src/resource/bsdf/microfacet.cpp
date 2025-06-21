@@ -23,17 +23,27 @@ namespace metatron::bsdf {
 			return {};
 		}
 
-		auto eta = 1.f
-		* math::Complex<f32>{interior_eta.value[0], interior_k.value[0]}
-		/ math::Complex<f32>{exterior_eta.value[0], exterior_k.value[0]};
-		auto wm = math::normalize(reflective ? wo + wi : wo * eta.r + wi);
-		if (wm[1] < math::epsilon<f32>) {
+		auto wm = math::normalize(reflective ? -wo + wi : -wo + wi * eta.r);
+		if (wm[1] < 0.f) {
+			wm *= -1.f;
+		}
+		if (false
+		|| math::abs(wm[1]) < math::epsilon<f32>
+		|| math::dot(-wo, wm) < 0.f
+		|| math::dot((reflective ? 1.f : -1.f) * wi, wm) < 0.f) {
 			return {};
 		}
 
 		auto F = fresnel(math::dot(-wo, wm), eta);
 		auto D = trowbridge_reitz(wm);
 		auto G = smith_shadow(wo, wi);
+
+		if (F > 1.f) {
+			std::printf("\n%f %f %f %f %f %f %f %f %f\n",
+				-wo[0], -wo[1], -wo[2],
+				wi[0], wi[1], wi[2],
+				wm[0], wm[1], wm[2]);
+		}
 
 		auto pr = F;
 		auto pt = 1.f - F;
@@ -44,33 +54,7 @@ namespace metatron::bsdf {
 			return {};
 		}
 
-		auto cos_theta_o = math::unit_to_cos_theta(-wo);
-		auto cos_theta_i = math::unit_to_cos_theta(wi);
-		auto cos_theta_om = math::dot(-wo, wm);
-		auto cos_theta_im = math::dot(wi, wm);
-
-		auto f = exterior_eta;
-		auto pdf = 1.f;
-		if (reflective) {
-			f = 1.f
-			* F * D * G
-			/ math::abs(4.f * cos_theta_o * cos_theta_i);
-			pdf = 1.f
-			* visible_trowbridge_reitz(wo, wm)
-			/ (4.f * math::abs(cos_theta_om))
-			* pr / (pr + pt);
-		} else {
-			auto denom = math::sqr(cos_theta_im + cos_theta_om / eta.r);
-			f = (1.f - F) * D * G
-			* math::abs(cos_theta_om * cos_theta_im / (denom * cos_theta_i * cos_theta_o))
-			/ math::sqr(eta.r);
-			pdf = 1.f
-			* visible_trowbridge_reitz(wo, wm)
-			* math::abs(cos_theta_im) / denom
-			* pt / (pr + pt); 
-		}
-
-		return Interaction{f, wi, pdf};
+		return torrance_sparrow(reflective, pr, pt, F, D, G, wo, wi, wm);
 	}
 
 	auto Microfacet_Bsdf::sample(
@@ -99,10 +83,10 @@ namespace metatron::bsdf {
 		// normal transformation with inverse transposed matrix
 		wm = math::normalize(wm * math::Vector<f32, 3>{u_roughness, 1.f, v_roughness});
 
-		auto eta = 1.f
-		* math::Complex<f32>{interior_eta.value[0], interior_k.value[0]}
-		/ math::Complex<f32>{exterior_eta.value[0], exterior_k.value[0]};
-		auto pr = fresnel(math::dot(-wo, wm), eta);
+		auto F = fresnel(math::dot(-wo, wm), eta);
+		auto D = trowbridge_reitz(wm);
+
+		auto pr = F;
 		auto pt = 1.f - pr;
 		auto flags = this->flags();
 		pr *= (flags & bsdf::Bsdf::reflective);
@@ -111,8 +95,11 @@ namespace metatron::bsdf {
 			return {};
 		}
 
-		auto wi = u[0] < pr / (pr + pt) ? math::reflect(wo, wm) : math::refract(wo, wm, eta.r);
-		return (*this)(wo, wi);
+		auto reflective = u[0] < pr / (pr + pt);
+		auto wi = reflective ? math::reflect(wo, wm) : math::refract(wo, wm, eta.r);
+		auto G = smith_shadow(wo, wi);
+
+		return torrance_sparrow(reflective, pr, pt, F, D, G, wo, wi, wm);
 	}
 
 	auto Microfacet_Bsdf::clone(Attribute const& attr) const -> std::unique_ptr<Bsdf> {
@@ -128,15 +115,19 @@ namespace metatron::bsdf {
 			std::swap(bsdf->exterior_eta, bsdf->interior_eta);
 			std::swap(bsdf->exterior_k, bsdf->interior_k);
 		}
+
+		bsdf->eta = 1.f
+		* math::Complex<f32>{bsdf->interior_eta.value[0], bsdf->interior_k.value[0]}
+		/ math::Complex<f32>{bsdf->exterior_eta.value[0], bsdf->exterior_k.value[0]};
+
 		return bsdf;
 	}
 
 	auto Microfacet_Bsdf::flags() const -> Flags {
 		auto flags = 0;
-		auto conductive = spectra::max(interior_k) > math::epsilon<f32>;
-		if (conductive) {
+		if (eta.i > 0.f) {
 			flags |= bsdf::Bsdf::reflective;
-		} else if (interior_eta.value[0] == interior_eta.value[1]) {
+		} else if (eta.r == 1.f) {
 			flags |= bsdf::Bsdf::transmissive;
 		} else {
 			flags |= (bsdf::Bsdf::transmissive | bsdf::Bsdf::reflective);
@@ -211,5 +202,32 @@ namespace metatron::bsdf {
 
 	auto Microfacet_Bsdf::smith_shadow(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wi) const -> f32 {
 		return 1.f / (1.f + lambda(-wo) + lambda(wi));
+	}
+
+	auto Microfacet_Bsdf::torrance_sparrow(
+		bool reflective, f32 pr, f32 pt,
+		f32 F, f32 D, f32 G,
+		math::Vector<f32, 3> const& wo,
+		math::Vector<f32, 3> const& wi,
+		math::Vector<f32, 3> const& wm
+	) const -> std::optional<Interaction> {
+		auto cos_theta_o = math::unit_to_cos_theta(-wo);
+		auto cos_theta_i = math::unit_to_cos_theta(wi);
+		auto cos_theta_om = math::dot(-wo, wm);
+		auto cos_theta_im = math::dot(wi, wm);
+
+		auto f = exterior_eta;
+		auto pdf = 1.f;
+		auto denom = 0.f;
+		if (reflective) {
+			f = F * D * G / math::abs(4.f * cos_theta_o * cos_theta_i);
+			pdf = visible_trowbridge_reitz(wo, wm) / (4.f * math::abs(cos_theta_om)) * pr / (pr + pt);
+		} else {
+			denom = math::sqr(cos_theta_im + cos_theta_om / eta.r);
+			f = (1.f - F) * D * G * math::abs(cos_theta_om * cos_theta_im / (denom * cos_theta_i * cos_theta_o)) / math::sqr(eta.r);
+			pdf = visible_trowbridge_reitz(wo, wm) * math::abs(cos_theta_im) / denom * pt / (pr + pt);
+		}
+
+		return Interaction{f, wi, pdf};
 	}
 }

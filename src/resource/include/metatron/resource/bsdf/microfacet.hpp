@@ -22,6 +22,13 @@ namespace metatron::bsdf {
 		auto lambda(math::Vector<f32, 3> const& wo) const -> f32;
 		auto smith_mask(math::Vector<f32, 3> const& wo) const -> f32;
 		auto smith_shadow(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wi) const -> f32;
+		auto torrance_sparrow(
+			bool reflective, f32 pr, f32 pt,
+			f32 F, f32 D, f32 G,
+			math::Vector<f32, 3> const& wo,
+			math::Vector<f32, 3> const& wi,
+			math::Vector<f32, 3> const& wm
+		) const -> std::optional<Interaction>;
 
 		spectra::Stochastic_Spectrum interior_eta;
 		spectra::Stochastic_Spectrum exterior_eta;
@@ -29,5 +36,7 @@ namespace metatron::bsdf {
 		spectra::Stochastic_Spectrum exterior_k;
 		f32 u_roughness;
 		f32 v_roughness;
+
+		math::Complex<f32> eta;
 	};
 }

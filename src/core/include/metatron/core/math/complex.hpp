@@ -7,6 +7,7 @@ namespace metatron::math {
 		T r;
 		T i;
 
+		Complex() = default;
 		Complex(T r, T i = T{0}): r(r), i(i) {}
 
 		auto constexpr operator+(Complex const& rhs) const -> Complex {

@@ -83,8 +83,9 @@ namespace metatron::monte_carlo {
 				auto f = spectra::Stochastic_Spectrum{};
 
 				if (direct_ctx.n != math::Vector<f32, 3>{0.f}) {
+					auto flip_n = math::dot(-history_ctx.r.d, direct_ctx.n) < 0.f ? -1.f : 1.f;
 					auto t = math::Transform{{}, {1.f},
-						math::Quaternion<f32>::from_rotation_between(direct_ctx.n, {0.f, 1.f, 0.f})
+						math::Quaternion<f32>::from_rotation_between(flip_n * direct_ctx.n, {0.f, 1.f, 0.f})
 					};
 					auto wo = t | math::expand(history_ctx.r.d, 0.f);
 					auto wi = t | math::expand(l_intr.wi, 0.f);
@@ -237,9 +238,11 @@ namespace metatron::monte_carlo {
 				trace_ctx.inside = math::dot(-trace_ctx.r.d, intr.n) < 0.f;
 				medium = trace_ctx.inside ? div->material->interior_medium : div->material->exterior_medium;
 				medium_to_world = trace_ctx.inside ? div->interior_to_world : div->exterior_to_world;
-				intr.n *= trace_ctx.inside ? -1.f : 1.f;
-				intr.tn = rt | lt | math::expand(intr.tn, 0.f);
-				intr.bn = rt | lt | math::expand(intr.bn, 0.f);
+
+				auto flip_n = trace_ctx.inside ? -1.f : 1.f;
+				intr.n *= flip_n;
+				intr.tn = rt | lt | math::expand(intr.tn * flip_n, 0.f);
+				intr.bn = rt | lt | math::expand(intr.bn * flip_n, 0.f);
 			}
 
 			auto& mt = *medium_to_world;

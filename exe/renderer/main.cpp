@@ -17,6 +17,7 @@
 #include <metatron/resource/material/material.hpp>
 #include <metatron/resource/bsdf/lambertian.hpp>
 #include <metatron/resource/bsdf/interface.hpp>
+#include <metatron/resource/bsdf/microfacet.hpp>
 #include <metatron/resource/shape/sphere.hpp>
 #include <metatron/resource/shape/mesh.hpp>
 #include <metatron/resource/loader/assimp.hpp>
@@ -45,8 +46,8 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 16uz;
-	auto depth = 64uz;
+	auto spp = 64uz;
+	auto depth = 128uz;
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
 	auto lens = std::make_unique<photo::Thin_Lens>(5.6f, 0.05f, 10.f);
@@ -151,6 +152,8 @@ auto main() -> int {
 
 	auto lambertian = bsdf::Lambertian_Bsdf{};
 	auto interface = bsdf::Interface_Bsdf{};
+	auto microfacet = bsdf::Microfacet_Bsdf{};
+
 	auto diffuse_reflectance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
 		color::Color_Space::sRGB->to_spectrum(
 			{1.f, 1.f, 1.f},
@@ -184,8 +187,15 @@ auto main() -> int {
 	auto normal = texture::Constant_Texture<math::Vector<f32, 4>>{
 		math::Vector<f32, 4>{0.f, 0.f, 1.f, 0.f}
 	};
-	auto eta = spectra::Constant_Spectrum{1.f};
+	auto eta = spectra::Constant_Spectrum{1.0f};
+	auto test_eta = spectra::Constant_Spectrum{1.5f};
 	auto k = spectra::Constant_Spectrum{0.f};
+	auto u_roughness = texture::Constant_Texture<math::Vector<f32, 4>>{
+		math::Vector<f32, 4>{0.1f, 0.f, 0.f, 0.f}
+	};
+	auto v_roughness = texture::Constant_Texture<math::Vector<f32, 4>>{
+		math::Vector<f32, 4>{0.1f, 0.f, 0.f, 0.f}
+	};
 	
 	auto diffuse_material = material::Material{
 		.bsdf = &lambertian,
@@ -199,15 +209,15 @@ auto main() -> int {
 		.transmittance = &diffuse_transmittance,
 	};
 	auto test_material = material::Material{
-		.bsdf = &lambertian,
+		.bsdf = &microfacet,
 		.interior_medium = &vaccum_medium,
 		.exterior_medium = &vaccum_medium,
-		.interior_eta = &eta,
+		.interior_eta = &test_eta,
 		.exterior_eta = &eta,
 		.interior_k = &k,
 		.exterior_k = &k,
-		.reflectance = &test_reflectance,
-		.transmittance = &test_transmittance,
+		.u_roughness = &u_roughness,
+		.v_roughness = &v_roughness,
 	};
 	auto interface_material = material::Material{
 		.bsdf = &interface,
@@ -293,7 +303,7 @@ auto main() -> int {
 		for (auto i = 0uz; i < mesh->size(); i++) {
 			dividers.push_back({
 				.shape = mesh.get(),
-				.material = &test_material,
+				.material = &diffuse_material,
 				.light = nullptr,
 				.local_to_world = &kernel_to_world,
 				.interior_to_world = &identity,
