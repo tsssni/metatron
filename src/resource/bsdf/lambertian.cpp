@@ -8,18 +8,19 @@ namespace metatron::bsdf {
 		math::Vector<f32, 3> const& wo,
 		math::Vector<f32, 3> const& wi
 	) const -> std::optional<Interaction> {
+		auto reflective = -wo[1] * wi[1] >= 0.f;
+		auto forward = wi[1] > 0.f;
+		if (!reflective || !forward) {
+			return {};
+		}
+
 		auto f = spectrum;
 		f.value = math::foreach([&](f32 lambda, usize i) {
-			if (-wo[1] * wi[1] >= 0.f) {
-				return math::guarded_div(reflectance(lambda), math::pi);
-			} else {
-				return 0.f;
-			}
+			return math::guarded_div(reflectance(lambda), math::pi);
 		}, f.lambda);
 
 		auto distr = math::Cosine_Hemisphere_Distribution{};
 		auto pdf = distr.pdf(math::abs(wi[1]));
-		pdf *= -wo[1] * wi[1] >= 0.f ? 1.f : 0.f;
 
 		return Interaction{f, wi, pdf};
 	}
@@ -31,9 +32,6 @@ namespace metatron::bsdf {
 		auto distr = math::Cosine_Hemisphere_Distribution{};
 		auto wi = distr.sample({u[1], u[2]});
 		auto pdf = distr.pdf(wi[1]);
-		if (-ctx.r.d[1] * wi[1] < 0.f) {
-			wi *= -1.f;
-		}
 
 		auto f = spectrum;
 		f.value = math::foreach([&](f32 lambda, usize i) {

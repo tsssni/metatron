@@ -25,7 +25,7 @@ namespace metatron::math {
 			auto r = 0.f;
 			auto theta = 0.f;
 
-			if (abs(disk_u) < Vector<f32, 2>{epsilon<f32>}) {
+			if (math::all([](f32 x, usize i){return x < math::epsilon<f32>;}, disk_u)) {
 				return {0.f};
 			} else if (math::abs(disk_u[0]) > math::abs(disk_u[1])) {
 				r = math::abs(disk_u[0]);

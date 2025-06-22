@@ -9,7 +9,7 @@ namespace metatron::math {
 		auto sample(math::Vector<f32, 2> const& u) const -> math::Vector<f32, 3> {
 			auto distr = Unifrom_Disk_Distribution{};
 			auto d = distr.sample(u);
-			return {d[0], math::sqrt(1.f - d[0] * d[0] - d[1] * d[1]), d[1]};
+			return {d[0], math::sqrt(1.f - math::sqr(d[0]) - math::sqr(d[1])), d[1]};
 		}
 
 		auto pdf(f32 cos_theta) const -> f32 {

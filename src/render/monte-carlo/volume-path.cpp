@@ -105,7 +105,7 @@ namespace metatron::monte_carlo {
 				auto dedium = medium;
 				auto direct_to_world = medium_to_world;
 				auto gamma = beta * (f / p_e) / (scatter_f / scatter_pdf);
-				auto mis_d = mis_s * p_s / p_e * float(!(e_intr.divider->light->flags() & light::Light::delta));
+				auto mis_d = mis_s * p_s / p_e * f32(!(e_intr.divider->light->flags() & light::Light::delta));
 				auto mis_l = mis_s;
 
 				while (true) {
