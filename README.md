@@ -1,3 +1,5 @@
 # metatron
 
-![disney-cloud](asset/disney-fire.png)
+![disney-fire](asset/disney-fire.png)
+
+![frosted-glass](asset/frosted-glass.png)

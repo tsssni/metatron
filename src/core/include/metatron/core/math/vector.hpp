@@ -78,11 +78,9 @@ namespace metatron::math {
 
 	template<typename T, typename U, typename V = decltype(T{} * U{}), usize size>
 	auto constexpr mul(Vector<T, size> const& x, Vector<U, size> const& y) -> Vector<V, size> {
-		auto z = Vector<V, size>{};
-		for (auto i = 0; i < size; i++) {
-			z[i] = x[i] * y[i];
-		}
-		return z;
+		return foreach([&](T const& v1, U const& v2, usize) -> V {
+			return v1 * v2;
+		}, x, y);
 	}
 
 	template<typename T, usize size>
@@ -137,11 +135,9 @@ namespace metatron::math {
 
 	template<typename T, usize n>
 	auto constexpr reverse(Vector<T, n> const& x) -> Vector<T, n> {
-		auto y = Vector<T, n>{};
-		for (auto i = 0uz; i < n; i++) {
-			y[i] = x[n - 1 - i];
-		}
-		return y;
+		return foreach([&](T const& v, usize i) -> T {
+			return x[n - 1 - i];
+		}, x);
 	}
 
 	template<typename T, usize size>

@@ -104,7 +104,7 @@ namespace metatron::shape {
 			math::Vector<f32, 2> v0,
 			math::Vector<f32, 2> v1
 		) -> f32 {
-			return math::determinant(math::Matrix<f32, 2, 2>{p - v0, v1 - v0});
+			return math::determinant(math::Matrix<f32, 2, 2>{v1 - v0, p - v0});
 		};
 		auto e = math::Vector<f32, 3>{
 			ef({0.f}, v[1], v[2]),
@@ -124,8 +124,10 @@ namespace metatron::shape {
 
 		auto p = blerp(vertices, bary, idx);
 		auto n = math::normalize(blerp(normals, bary, idx));
+		auto tn = math::gram_schmidt(math::normalize(dpdu[idx]), n);
+		auto bn = math::cross(tn, n);
 		auto uv = blerp(uvs, bary, idx);
-		auto t = math::guarded_div(math::blerp(v, e)[2], det);
+		auto t = math::blerp(v, bary)[2];
 		if (t < math::epsilon<f32>) {
 			return {};
 		}
@@ -177,10 +179,6 @@ namespace metatron::shape {
 			};
 			pdf *= distr.pdf(u);
 		}
-
-		auto tn = math::normalize(dpdu[idx]);
-		tn = math::gram_schmidt(tn, n);
-		auto bn = math::cross(tn, n);
 
 		return shape::Interaction{
 			p, n, tn, bn, uv, t,
@@ -280,8 +278,7 @@ namespace metatron::shape {
 
 		auto p = ctx.r.o + t * d;
 		auto n = math::normalize(blerp(normals, bary, idx));
-		auto tn = math::normalize(dpdu[idx]);
-		tn = math::gram_schmidt(tn, n);
+		auto tn = math::gram_schmidt(math::normalize(dpdu[idx]), n);
 		auto bn = math::cross(tn, n);
 		auto uv = blerp(uvs, bary, idx);
 

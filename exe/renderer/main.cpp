@@ -46,8 +46,8 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 16uz;
-	auto depth = 10uz;
+	auto spp = 256uz;
+	auto depth = 64uz;
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
 	auto lens = std::make_unique<photo::Thin_Lens>(5.6f, 0.05f, 10.f);
@@ -189,13 +189,13 @@ auto main() -> int {
 		math::Vector<f32, 4>{0.f, 0.f, 1.f, 0.f}
 	};
 	auto eta = spectra::Constant_Spectrum{1.0f};
-	auto test_eta = spectra::Constant_Spectrum{0.1f};
+	auto test_eta = spectra::Constant_Spectrum{1.5f};
 	auto k = spectra::Constant_Spectrum{0.f};
 	auto u_roughness = texture::Constant_Texture<math::Vector<f32, 4>>{
-		math::Vector<f32, 4>{0.01f, 0.f, 0.f, 0.f}
+		math::Vector<f32, 4>{0.5f, 0.f, 0.f, 0.f}
 	};
 	auto v_roughness = texture::Constant_Texture<math::Vector<f32, 4>>{
-		math::Vector<f32, 4>{0.01f, 0.f, 0.f, 0.f}
+		math::Vector<f32, 4>{0.5f, 0.f, 0.f, 0.f}
 	};
 	
 	auto diffuse_material = material::Material{
@@ -291,7 +291,7 @@ auto main() -> int {
 		for (auto i = 0uz; i < mesh->size(); i++) {
 			dividers.push_back({
 				.shape = mesh.get(),
-				.material = &diffuse_material,
+				.material = &test_material,
 				.light = nullptr,
 				.local_to_world = &shell_to_world,
 				.interior_to_world = &identity,
@@ -317,7 +317,7 @@ auto main() -> int {
 		for (auto i = 0uz; i < mesh->size(); i++) {
 			dividers.push_back({
 				.shape = mesh.get(),
-				.material = &diffuse_material,
+				.material = &test_material,
 				.light = nullptr,
 				.local_to_world = &base_to_world,
 				.interior_to_world = &identity,
