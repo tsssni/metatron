@@ -1,7 +1,7 @@
 #include <metatron/resource/bsdf/lambertian.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/sphere.hpp>
-#include <metatron/core/math/distribution/cosine-hemisphere.hpp>
+#include <metatron/core/math/distribution/sphere.hpp>
 
 namespace metatron::bsdf {
 	auto Lambertian_Bsdf::operator()(

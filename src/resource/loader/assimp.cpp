@@ -8,6 +8,7 @@ namespace metatron::loader {
 	auto Assimp_Loader::from_path(std::string_view path) -> std::vector<std::unique_ptr<shape::Mesh>> {
 		auto importer = Assimp::Importer{};
 		scene = importer.ReadFile(path.data(), 0
+			| aiProcess_FindDegenerates
 			| aiProcess_FlipUVs
 			| aiProcess_FlipWindingOrder
 			| aiProcess_GenSmoothNormals
@@ -51,8 +52,9 @@ namespace metatron::loader {
 		for (auto i = 0uz; i < mesh->mNumFaces; i++) {
 			auto face = mesh->mFaces[i];
 			if (face.mNumIndices != 3) {
-				std::printf("assimp error: mesh %s has non-triangle face\n", mesh->mName.C_Str());
-				std::abort();
+				// std::printf("assimp error: mesh %s has non-triangle face\n", mesh->mName.C_Str());
+				// std::abort();
+				continue;
 			}
 			indices.push_back({
 				face.mIndices[0],

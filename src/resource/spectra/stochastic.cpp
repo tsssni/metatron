@@ -9,7 +9,7 @@ namespace metatron::spectra {
 	Stochastic_Spectrum::Stochastic_Spectrum(f32 u, f32 v) {
 		lambda = math::foreach([&](f32 l, usize i) {
 			auto ui = std::fmod(u + i / f32(stochastic_samples), 1.f);
-			return std::lerp(visible_lambda[0], visible_lambda[1], ui);
+			return math::lerp(visible_lambda[0], visible_lambda[1], ui);
 		}, lambda);
 		value = math::Vector<f32, stochastic_samples>{v};
 		pdf = math::Vector<f32, stochastic_samples>{1.f / (visible_lambda[1] - visible_lambda[0])};

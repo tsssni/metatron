@@ -8,9 +8,9 @@ namespace metatron::math {
 
 		auto sample(f32 u) const -> f32 {
 			if (u < 0.5) {
-				return std::lerp(-r, 0.f, Linear_Distribution{0.f, 1.f / r}.sample(u / 0.5f));
+				return math::lerp(-r, 0.f, Linear_Distribution{0.f, 1.f / r}.sample(u / 0.5f));
 			} else {
-				return std::lerp(0.f, r, Linear_Distribution{1.f / r, 0.f}.sample((u - 0.5f) / 0.5f));
+				return math::lerp(0.f, r, Linear_Distribution{1.f / r, 0.f}.sample((u - 0.5f) / 0.5f));
 			}
 		}
 

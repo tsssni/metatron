@@ -1,6 +1,6 @@
 #include <metatron/resource/shape/mesh.hpp>
 #include <metatron/core/math/transform.hpp>
-#include <metatron/core/math/distribution/bilinear.hpp>
+#include <metatron/core/math/distribution/linear.hpp>
 #include <metatron/core/stl/optional.hpp>
 
 namespace metatron::shape {
@@ -19,7 +19,7 @@ namespace metatron::shape {
 		dndu.resize(this->indices.size());
 		dndv.resize(this->indices.size());
 
-		for (auto i = 0uz; i < indices.size(); i++) {
+		for (auto i = 0uz; i < this->indices.size(); i++) {
 			auto prim = this->indices[i];
 			auto v = math::Vector<math::Vector<f32, 3>, 3>{
 				this->vertices[prim[0]],
@@ -238,7 +238,7 @@ namespace metatron::shape {
 		}
 
 		auto A_pi = alpha + beta + gamma;
-		auto A_1_pi = std::lerp(math::pi, A_pi, u[0]);
+		auto A_1_pi = math::lerp(math::pi, A_pi, u[0]);
 
 		auto phi = A_1_pi - alpha;
 		auto cos_a = std::cos(alpha);

@@ -12,6 +12,8 @@ namespace metatron::monte_carlo {
 		math::Ray_Differential default_differential;
 		math::Transform const* world_to_render;
 		math::Transform const* render_to_camera;
+		math::Vector<usize, 2> pixel;
+		usize sample_index;
 		usize max_depth;
 	};
 

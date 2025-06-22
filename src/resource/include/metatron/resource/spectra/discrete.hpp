@@ -29,7 +29,7 @@ namespace metatron::spectra {
 				) - this->lambda.begin() - 1uz
 			));
 			auto alpha = (lambda - this->lambda[idx]) / (this->lambda[idx + 1] - this->lambda[idx]);
-			return std::lerp(data[idx], data[idx + 1], alpha);
+			return math::lerp(data[idx], data[idx + 1], alpha);
 		}
 
 	private:

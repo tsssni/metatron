@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/core/math/distribution/disk.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/sphere.hpp>
 
@@ -15,6 +16,35 @@ namespace metatron::math {
 
 		auto pdf() const -> f32 {
 			return 1.f / (4.f * pi);
+		}
+	};
+
+	struct Hemisphere_Distribution final {
+		Hemisphere_Distribution() = default;
+
+		auto sample(Vector<f32, 2> const& u) const -> Vector<f32, 3> {
+			auto z = u[0];
+			auto r = math::sqrt(1 - z * z);
+			auto phi = 2.f * pi * u[1];
+			return {r * std::cosf(phi), r * std::sin(phi), z};
+		}
+
+		auto pdf() const -> f32 {
+			return 1.f / (2.f * pi);
+		}
+	};
+
+	struct Cosine_Hemisphere_Distribution final {
+		Cosine_Hemisphere_Distribution() = default;
+
+		auto sample(math::Vector<f32, 2> const& u) const -> math::Vector<f32, 3> {
+			auto distr = Unifrom_Disk_Distribution{};
+			auto d = distr.sample(u);
+			return {d[0], math::sqrt(1.f - math::sqr(d[0]) - math::sqr(d[1])), d[1]};
+		}
+
+		auto pdf(f32 cos_theta) const -> f32 {
+			return cos_theta / math::pi;
 		}
 	};
 }

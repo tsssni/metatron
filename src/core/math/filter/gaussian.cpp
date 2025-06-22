@@ -9,9 +9,9 @@ namespace metatron::math {
 	gaussian(sigma) {
 		auto matrix = math::Matrix<f32, 64, 64>{};
 		for (auto i = 0uz; i < 64; i++) {
-			auto x = std::lerp(-radius[0], radius[0], (f32(i) + 0.5f) / 64.f);
+			auto x = math::lerp(-radius[0], radius[0], (f32(i) + 0.5f) / 64.f);
 			for (auto j = 0uz; j < 64; j++) {
-				auto y = std::lerp(-radius[1], radius[1], (f32(j) + 0.5f) / 64.f);
+				auto y = math::lerp(-radius[1], radius[1], (f32(j) + 0.5f) / 64.f);
 				matrix[i][j] = (*this)({x, y});
 			}
 		}

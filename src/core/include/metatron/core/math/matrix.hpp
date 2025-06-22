@@ -555,7 +555,7 @@ namespace metatron::math {
 		Matrix<T, n, m> const& b
 	) -> std::optional<Matrix<T, n, m>> {
 		T det_a = determinant(a);
-		if (math::abs(det_a) < epsilon<T>) {
+		if (math::abs(det_a) < 1e-12f) {
 			return {};
 		}
 

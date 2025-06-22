@@ -7,6 +7,6 @@ namespace metatron::spectra {
 		auto idx = usize(std::clamp(std::floor(lambda), visible_lambda[0], visible_lambda[1]));
 		auto frac = lambda - idx;
 		idx -= usize(visible_lambda[0]);
-		return std::lerp(data[idx], data[idx + 1], frac);
+		return math::lerp(data[idx], data[idx + 1], frac);
 	}
 }

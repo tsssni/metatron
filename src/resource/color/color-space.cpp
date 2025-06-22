@@ -92,15 +92,15 @@ namespace metatron::color {
 				return (*table)[maxc][zi + dz][yi + dy][xi + dx][i];
 			};
 
-			c[2 - i] = std::lerp(
-				std::lerp(
-					std::lerp(co(0, 0, 0), co(1, 0, 0), dx),
-					std::lerp(co(0, 1, 0), co(1, 1, 0), dx),
+			c[2 - i] = math::lerp(
+				math::lerp(
+					math::lerp(co(0, 0, 0), co(1, 0, 0), dx),
+					math::lerp(co(0, 1, 0), co(1, 1, 0), dx),
 					dy
 				),
-				std::lerp(
-					std::lerp(co(0, 0, 1), co(1, 0, 1), dx),
-					std::lerp(co(0, 1, 1), co(1, 1, 1), dx),
+				math::lerp(
+					math::lerp(co(0, 0, 1), co(1, 0, 1), dx),
+					math::lerp(co(0, 1, 1), co(1, 1, 1), dx),
 					dy
 				),
 				dz

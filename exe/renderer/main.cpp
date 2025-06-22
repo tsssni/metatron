@@ -47,7 +47,7 @@ auto main() -> int {
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
 	auto spp = 16uz;
-	auto depth = 64uz;
+	auto depth = 10uz;
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
 	auto lens = std::make_unique<photo::Thin_Lens>(5.6f, 0.05f, 10.f);
@@ -291,7 +291,7 @@ auto main() -> int {
 		for (auto i = 0uz; i < mesh->size(); i++) {
 			dividers.push_back({
 				.shape = mesh.get(),
-				.material = &test_material,
+				.material = &diffuse_material,
 				.light = nullptr,
 				.local_to_world = &shell_to_world,
 				.interior_to_world = &identity,
@@ -317,7 +317,7 @@ auto main() -> int {
 		for (auto i = 0uz; i < mesh->size(); i++) {
 			dividers.push_back({
 				.shape = mesh.get(),
-				.material = &test_material,
+				.material = &diffuse_material,
 				.light = nullptr,
 				.local_to_world = &base_to_world,
 				.interior_to_world = &identity,
@@ -337,16 +337,14 @@ auto main() -> int {
 			sample->ray_differential = render_to_camera ^ sample->ray_differential;
 			auto& s = sample.value();
 
-			if (px == math::Vector<usize, 2>{303, 267}) {
-				auto a = 1;
-			}
-
 			auto Li_opt = integrator.sample(
 				{
 					s.ray_differential,
 					s.default_differential,
 					&world_to_render,
 					&render_to_camera,
+					px,
+					n,
 					depth,
 				},
 				bvh,

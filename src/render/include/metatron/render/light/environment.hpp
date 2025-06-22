@@ -2,7 +2,7 @@
 #include <metatron/render/light/light.hpp>
 #include <metatron/resource/texture/texture.hpp>
 #include <metatron/resource/image/image.hpp>
-#include <metatron/core/math/distribution/cosine-hemisphere.hpp>
+#include <metatron/core/math/distribution/sphere.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>
 
 namespace metatron::light {

@@ -25,13 +25,13 @@ namespace metatron::math {
 			auto r = 0.f;
 			auto theta = 0.f;
 
-			if (math::all([](f32 x, usize i){return x < math::epsilon<f32>;}, disk_u)) {
+			if (math::all([](f32 x, usize i){return x < math::epsilon<f32>;}, math::abs(disk_u))) {
 				return {0.f};
 			} else if (math::abs(disk_u[0]) > math::abs(disk_u[1])) {
-				r = math::abs(disk_u[0]);
+				r = disk_u[0];
 				theta = pi / 4.f * guarded_div(disk_u[1], disk_u[0]);
 			} else {
-				r = math::abs(disk_u[1]);
+				r = disk_u[1];
 				theta = pi / 2.f - pi / 4.f * guarded_div(disk_u[0], disk_u[1]);
 			}
 
