@@ -30,6 +30,7 @@ namespace metatron::spectra {
 		auto operator+(f32 s) const -> Stochastic_Spectrum;
 		auto operator+=(f32 s) -> Stochastic_Spectrum&;
 		auto operator-(f32 s) const -> Stochastic_Spectrum;
+		auto operator-() const -> Stochastic_Spectrum;
 		auto operator-=(f32 s) -> Stochastic_Spectrum&;
 		auto operator*(f32 s) const -> Stochastic_Spectrum;
 		auto operator*=(f32 s) -> Stochastic_Spectrum&;

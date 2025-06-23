@@ -17,7 +17,7 @@ namespace metatron::bsdf {
 		auto degrade() -> bool;
 
 	private:
-		auto fresnel(f32 cos_theta_i, math::Complex<f32> eta) const -> f32;
+		auto fresnel(f32 cos_theta_i) const -> spectra::Stochastic_Spectrum;
 		auto trowbridge_reitz(math::Vector<f32, 3> const& wm) const -> f32;
 		auto visible_trowbridge_reitz(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wm) const -> f32;
 		auto lambda(math::Vector<f32, 3> const& wo) const -> f32;
@@ -25,19 +25,15 @@ namespace metatron::bsdf {
 		auto smith_shadow(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wi) const -> f32;
 		auto torrance_sparrow(
 			bool reflective, f32 pr, f32 pt,
-			f32 F, f32 D, f32 G,
+			spectra::Stochastic_Spectrum const& F, f32 D, f32 G,
 			math::Vector<f32, 3> const& wo,
 			math::Vector<f32, 3> const& wi,
 			math::Vector<f32, 3> const& wm
 		) const -> std::optional<Interaction>;
 
-		spectra::Stochastic_Spectrum interior_eta;
-		spectra::Stochastic_Spectrum exterior_eta;
-		spectra::Stochastic_Spectrum interior_k;
-		spectra::Stochastic_Spectrum exterior_k;
-		f32 u_roughness;
-		f32 v_roughness;
-
-		math::Complex<f32> eta;
+		f32 alpha_x;
+		f32 alpha_y;
+		spectra::Stochastic_Spectrum eta;
+		spectra::Stochastic_Spectrum k;
 	};
 }

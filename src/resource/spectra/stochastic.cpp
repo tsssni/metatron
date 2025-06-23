@@ -113,6 +113,12 @@ namespace metatron::spectra {
 		return spec;
 	};
 
+	auto Stochastic_Spectrum::operator-() const -> Stochastic_Spectrum {
+		auto spec = *this;
+		spec.value = -spec.value;
+		return spec;
+	};
+
 	auto Stochastic_Spectrum::operator-=(f32 s) -> Stochastic_Spectrum& {
 		value -= math::Vector<f32, stochastic_samples>{s};
 		return *this;
@@ -149,7 +155,7 @@ namespace metatron::spectra {
 	}
 
 	auto operator-(f32 s, Stochastic_Spectrum const& spectrum) -> Stochastic_Spectrum {
-		return spectrum - s;
+		return -spectrum + s;
 	}
 
 	auto operator*(f32 s, Stochastic_Spectrum const& spectrum) -> Stochastic_Spectrum {

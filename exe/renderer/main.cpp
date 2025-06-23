@@ -46,7 +46,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 16uz;
+	auto spp = 256uz;
 	auto depth = 64uz;
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
@@ -189,17 +189,13 @@ auto main() -> int {
 		math::Vector<f32, 4>{0.f, 0.f, 1.f, 0.f}
 	};
 	auto eta = spectra::Constant_Spectrum{1.0f};
-	// auto test_eta = spectra::Constant_Spectrum{1.5f};
-	auto test_eta = color::Color_Space::sRGB->to_spectrum(
-		{1.0f, 0.4f, 0.0f},
-		color::Color_Space::Spectrum_Type::unbounded
-	);
+	auto test_eta = spectra::Constant_Spectrum{1.5f};
 	auto k = spectra::Constant_Spectrum{0.f};
 	auto u_roughness = texture::Constant_Texture<math::Vector<f32, 4>>{
-		math::Vector<f32, 4>{0.1f, 0.f, 0.f, 0.f}
+		math::Vector<f32, 4>{0.5f, 0.f, 0.f, 0.f}
 	};
 	auto v_roughness = texture::Constant_Texture<math::Vector<f32, 4>>{
-		math::Vector<f32, 4>{0.1f, 0.f, 0.f, 0.f}
+		math::Vector<f32, 4>{0.5f, 0.f, 0.f, 0.f}
 	};
 	
 	auto diffuse_material = material::Material{
@@ -217,9 +213,9 @@ auto main() -> int {
 		.bsdf = &microfacet,
 		.interior_medium = &vaccum_medium,
 		.exterior_medium = &vaccum_medium,
-		.interior_eta = test_eta.get(),
+		.interior_eta = &test_eta, // spectra::Spectrum::Au_eta.get(),
 		.exterior_eta = &eta,
-		.interior_k = &k,
+		.interior_k = &k, // spectra::Spectrum::Au_k.get(),
 		.exterior_k = &k,
 		.u_roughness = &u_roughness,
 		.v_roughness = &v_roughness,

@@ -14,6 +14,9 @@ namespace metatron::spectra {
 		std::unique_ptr<Spectrum> static CIE_Z;
 		std::unique_ptr<Spectrum> static CIE_D65;
 
+		std::unique_ptr<Spectrum> static Au_eta;
+		std::unique_ptr<Spectrum> static Au_k;
+
 		auto static initialize() -> void;
 	};
 
