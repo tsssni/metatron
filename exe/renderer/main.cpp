@@ -46,7 +46,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 256uz;
+	auto spp = 16uz;
 	auto depth = 64uz;
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
