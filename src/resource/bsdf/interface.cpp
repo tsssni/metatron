@@ -29,4 +29,8 @@ namespace metatron::bsdf {
 	auto Interface_Bsdf::flags() const -> Flags {
 		return Flags::interface;
 	}
+
+	auto Interface_Bsdf::degrade() -> bool {
+		return false;
+	}
 }

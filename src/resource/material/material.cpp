@@ -10,13 +10,6 @@ namespace metatron::material {
 		auto attr = bsdf::Attribute{};
 		auto intr = Interaction{};
 		auto spec = ctx.spec;
-		if (!spectra::constant(spec) && (false
-		|| typeid(*exterior_eta) != typeid(spectra::Constant_Spectrum)
-		|| typeid(*interior_eta) != typeid(spectra::Constant_Spectrum)
-		)) {
-			spectra::degrade(spec);
-			intr.degraded = true;
-		}
 
 		auto sample = [&](auto& attr, auto* tex, auto const& default_v) {
 			if (!tex) {
@@ -57,6 +50,7 @@ namespace metatron::material {
 		attr.spectrum = spec;
 		attr.inside = ctx.inside;
 		intr.bsdf = bsdf->clone(attr);
+		intr.degraded = intr.bsdf->degrade();
 		return intr;
 	}
 }

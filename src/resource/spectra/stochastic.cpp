@@ -183,5 +183,6 @@ namespace metatron::spectra {
 	auto degrade(Stochastic_Spectrum& spectrum) -> void {
 		spectrum.value = math::Vector<f32, stochastic_samples>{spectrum.value[0]};
 		spectrum.lambda = math::Vector<f32, stochastic_samples>{visible_lambda[0]};
+		spectrum.pdf = math::Vector<f32, stochastic_samples>{math::sum(spectrum.pdf)};
 	}
 }

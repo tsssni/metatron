@@ -51,4 +51,8 @@ namespace metatron::bsdf {
 	auto Lambertian_Bsdf::flags() const -> Flags {
 		return Flags::reflective;
 	}
+
+	auto Lambertian_Bsdf::degrade() -> bool {
+		return false;
+	}
 }

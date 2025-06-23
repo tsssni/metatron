@@ -24,6 +24,7 @@ namespace metatron::bsdf {
 		spectra::Stochastic_Spectrum f;
 		math::Vector<f32, 3> wi;
 		f32 pdf;
+		bool degraded{false};
 	};
 
 	struct Bsdf {
@@ -44,5 +45,6 @@ namespace metatron::bsdf {
 		) const -> std::optional<Interaction> = 0;
 		auto virtual clone(Attribute const& attr) const -> std::unique_ptr<Bsdf> = 0;
 		auto virtual flags() const -> Flags = 0;
+		auto virtual degrade() -> bool = 0;
 	};
 }

@@ -62,7 +62,6 @@ namespace metatron::bsdf {
 		math::Vector<f32, 3> const& u
 	) const -> std::optional<Interaction> {
 		auto wo = ctx.r.d;
-		
 		auto wy = math::normalize(-wo * math::Vector<f32, 3>{u_roughness, 1.f, v_roughness});
 		auto wx = wy[1] < 1.f - math::epsilon<f32>
 			? math::cross(wy, math::Vector<f32, 3>{0.f, 1.f, 0.f})
@@ -229,5 +228,19 @@ namespace metatron::bsdf {
 		}
 
 		return Interaction{f, wi, pdf};
+	}
+
+	auto Microfacet_Bsdf::degrade() -> bool {
+		if (false
+		|| (spectra::max(interior_k) == 0.f && !spectra::constant(interior_eta))
+		|| (spectra::max(exterior_k) == 0.f && !spectra::constant(exterior_eta))) {
+			spectra::degrade(interior_eta);
+			spectra::degrade(interior_k);
+			spectra::degrade(exterior_eta);
+			spectra::degrade(exterior_k);
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

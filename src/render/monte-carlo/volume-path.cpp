@@ -369,13 +369,14 @@ namespace metatron::monte_carlo {
 			scattered = true;
 			crossed = b_intr.wi[1] < 0.f;
 
-			b_intr.wi = math::normalize(bt ^ math::expand(b_intr.wi, 0.f));
 			auto trace_n = (crossed ? -1.f : 1.f) * intr.n;
 			auto trace_p = intr.p + 0.001f * trace_n;
+			b_intr.wi = math::normalize(bt ^ math::expand(b_intr.wi, 0.f));
+			b_intr.f *= math::abs(math::dot(b_intr.wi, trace_n));
 
 			history_ctx = trace_ctx;
 			trace_ctx = {{trace_p, b_intr.wi}, trace_n, emission};
-			beta *= b_intr.f * math::guarded_div(math::abs(math::dot(b_intr.wi, trace_n)), b_intr.pdf);
+			beta *= b_intr.f / b_intr.pdf;
 			mis_e = mis_s;
 			scatter_f = b_intr.f;
 			scatter_pdf = b_intr.pdf;

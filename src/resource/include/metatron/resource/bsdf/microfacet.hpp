@@ -14,6 +14,7 @@ namespace metatron::bsdf {
 		) const -> std::optional<Interaction>;
 		auto clone(Attribute const& attr) const -> std::unique_ptr<Bsdf>;
 		auto flags() const -> Flags;
+		auto degrade() -> bool;
 
 	private:
 		auto fresnel(f32 cos_theta_i, math::Complex<f32> eta) const -> f32;
