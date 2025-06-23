@@ -49,5 +49,6 @@ namespace metatron::spectra {
 	auto avg(Stochastic_Spectrum const& spectrum) -> f32;
 
 	auto constant(Stochastic_Spectrum const& spectrum) -> bool;
+	auto coherent(Stochastic_Spectrum const& spectrum) -> bool;
 	auto degrade(Stochastic_Spectrum& spectrum) -> void;
 }

@@ -180,9 +180,12 @@ namespace metatron::spectra {
 		return math::all([&](f32 x, usize i) { return x == spectrum.value[0]; }, spectrum.value);
 	}
 
+	auto coherent(Stochastic_Spectrum const& spectrum) -> bool {
+		return math::all([&](f32 x, usize i) { return x == spectrum.lambda[0]; }, spectrum.lambda);
+	}
+
 	auto degrade(Stochastic_Spectrum& spectrum) -> void {
 		spectrum.value = math::Vector<f32, stochastic_samples>{spectrum.value[0]};
-		spectrum.lambda = math::Vector<f32, stochastic_samples>{visible_lambda[0]};
-		spectrum.pdf = math::Vector<f32, stochastic_samples>{math::sum(spectrum.pdf)};
+		spectrum.lambda = math::Vector<f32, stochastic_samples>{spectrum.lambda[0]};
 	}
 }

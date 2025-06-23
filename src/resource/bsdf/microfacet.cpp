@@ -98,7 +98,9 @@ namespace metatron::bsdf {
 		auto wi = reflective ? math::reflect(wo, wm) : math::refract(wo, wm, eta.r);
 		auto G = smith_shadow(wo, wi);
 
-		return torrance_sparrow(reflective, pr, pt, F, D, G, wo, wi, wm);
+		return wi == math::Vector<f32, 3>{0.f}
+		? std::optional<Interaction>{}
+		: torrance_sparrow(reflective, pr, pt, F, D, G, wo, wi, wm);
 	}
 
 	auto Microfacet_Bsdf::clone(Attribute const& attr) const -> std::unique_ptr<Bsdf> {
@@ -120,6 +122,20 @@ namespace metatron::bsdf {
 		/ math::Complex<f32>{bsdf->exterior_eta.value[0], bsdf->exterior_k.value[0]};
 
 		return bsdf;
+	}
+
+	auto Microfacet_Bsdf::degrade() -> bool {
+		if (false
+		|| (spectra::max(interior_k) == 0.f && !spectra::constant(interior_eta))
+		|| (spectra::max(exterior_k) == 0.f && !spectra::constant(exterior_eta))) {
+			spectra::degrade(interior_eta);
+			spectra::degrade(interior_k);
+			spectra::degrade(exterior_eta);
+			spectra::degrade(exterior_k);
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	auto Microfacet_Bsdf::flags() const -> Flags {
@@ -228,19 +244,5 @@ namespace metatron::bsdf {
 		}
 
 		return Interaction{f, wi, pdf};
-	}
-
-	auto Microfacet_Bsdf::degrade() -> bool {
-		if (false
-		|| (spectra::max(interior_k) == 0.f && !spectra::constant(interior_eta))
-		|| (spectra::max(exterior_k) == 0.f && !spectra::constant(exterior_eta))) {
-			spectra::degrade(interior_eta);
-			spectra::degrade(interior_k);
-			spectra::degrade(exterior_eta);
-			spectra::degrade(exterior_k);
-			return true;
-		} else {
-			return false;
-		}
 	}
 }

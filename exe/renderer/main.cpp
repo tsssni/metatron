@@ -189,13 +189,17 @@ auto main() -> int {
 		math::Vector<f32, 4>{0.f, 0.f, 1.f, 0.f}
 	};
 	auto eta = spectra::Constant_Spectrum{1.0f};
-	auto test_eta = spectra::Constant_Spectrum{1.5f};
+	// auto test_eta = spectra::Constant_Spectrum{1.5f};
+	auto test_eta = color::Color_Space::sRGB->to_spectrum(
+		{1.0f, 0.4f, 0.0f},
+		color::Color_Space::Spectrum_Type::unbounded
+	);
 	auto k = spectra::Constant_Spectrum{0.f};
 	auto u_roughness = texture::Constant_Texture<math::Vector<f32, 4>>{
-		math::Vector<f32, 4>{0.5f, 0.f, 0.f, 0.f}
+		math::Vector<f32, 4>{0.1f, 0.f, 0.f, 0.f}
 	};
 	auto v_roughness = texture::Constant_Texture<math::Vector<f32, 4>>{
-		math::Vector<f32, 4>{0.5f, 0.f, 0.f, 0.f}
+		math::Vector<f32, 4>{0.1f, 0.f, 0.f, 0.f}
 	};
 	
 	auto diffuse_material = material::Material{
@@ -213,7 +217,7 @@ auto main() -> int {
 		.bsdf = &microfacet,
 		.interior_medium = &vaccum_medium,
 		.exterior_medium = &vaccum_medium,
-		.interior_eta = &test_eta,
+		.interior_eta = test_eta.get(),
 		.exterior_eta = &eta,
 		.interior_k = &k,
 		.exterior_k = &k,

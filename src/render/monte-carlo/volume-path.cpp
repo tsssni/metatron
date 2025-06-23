@@ -339,7 +339,7 @@ namespace metatron::monte_carlo {
 			auto tbn = math::transpose(math::Matrix<f32, 3, 3>{intr.tn, intr.bn, intr.n});
 			intr.n = tbn | mat_intr.normal;
 
-			if (mat_intr.degraded && !spectra::constant(emission)) {
+			if (mat_intr.degraded && !spectra::coherent(emission)) {
 				spectra::degrade(emission); spectra::degrade(beta);
 				spectra::degrade(mis_s); spectra::degrade(mis_e);
 				trace_ctx.spec = emission;
