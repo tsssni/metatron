@@ -46,7 +46,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 256uz;
+	auto spp = 16uz;
 	auto depth = 64uz;
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
@@ -68,10 +68,10 @@ auto main() -> int {
 	auto halton = math::Halton_Sampler{seed};
 
 	auto identity = math::Transform{};
-	// auto world_to_render = math::Transform{{-2.5f, -0.6f, 2.5f}};
-	auto world_to_render = math::Transform{{0.f, 0.f, 1000.f}};
+	auto world_to_render = math::Transform{{-2.5f, -0.6f, 2.5f}};
+	// auto world_to_render = math::Transform{{0.f, 0.f, 1000.f}};
 	auto render_to_camera = math::Transform{{0.f, 0.f, 0.f}, {1.f},
-		// math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
 	};
 
 	auto sphere_to_world = math::Transform{{}, {200.f}};
@@ -92,7 +92,7 @@ auto main() -> int {
 		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 2.f),
 	};
 	auto light_to_world = math::Transform{{}, {1.0f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 0.f / 1.f),
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 1.f),
 	};
 	auto parallel_to_world = math::Transform{{}, {1.f},
 		math::Quaternion<f32>::from_rotation_between(
@@ -155,79 +155,59 @@ auto main() -> int {
 	auto interface = bsdf::Interface_Bsdf{};
 	auto microfacet = bsdf::Microfacet_Bsdf{};
 
-	auto diffuse_reflectance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
-		color::Color_Space::sRGB->to_spectrum(
-			{1.f, 1.f, 1.f},
-			color::Color_Space::Spectrum_Type::albedo
-		)
+	auto diffuse_reflectance = color::Color_Space::sRGB->to_spectrum(
+		{1.f, 1.f, 1.f},
+		color::Color_Space::Spectrum_Type::albedo
+	);
+	auto diffuse_texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
+		diffuse_reflectance.get()
 	};
-	auto diffuse_transmittance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
-		color::Color_Space::sRGB->to_spectrum(
-			{0.f, 0.f, 0.f},
-			color::Color_Space::Spectrum_Type::albedo
-		)
+	auto eta_texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
+		spectra::Spectrum::Au_eta.get()
 	};
-	auto test_reflectance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
-		color::Color_Space::sRGB->to_spectrum(
-			{1.0f, 1.0f, 1.0f},
-			color::Color_Space::Spectrum_Type::albedo
-		)
+	auto k_texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
+		spectra::Spectrum::Au_k.get()
 	};
-	auto test_transmittance = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
-		color::Color_Space::sRGB->to_spectrum(
-			{0.0f, 0.0f, 0.0f},
-			color::Color_Space::Spectrum_Type::albedo
-		)
-	};
-	auto emission = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
-		color::Color_Space::sRGB->to_spectrum(
-			{0.f, 0.f, 0.f},
-			color::Color_Space::Spectrum_Type::illuminant
-		)
-	};
-	auto normal = texture::Constant_Texture<math::Vector<f32, 4>>{
-		math::Vector<f32, 4>{0.f, 0.f, 1.f, 0.f}
-	};
+	
 	auto eta = spectra::Constant_Spectrum{1.0f};
 	auto test_eta = spectra::Constant_Spectrum{1.5f};
 	auto k = spectra::Constant_Spectrum{0.f};
-	auto u_roughness = texture::Constant_Texture<math::Vector<f32, 4>>{
+	auto alpha = texture::Constant_Texture<math::Vector<f32, 4>>{
 		math::Vector<f32, 4>{0.5f, 0.f, 0.f, 0.f}
 	};
-	auto v_roughness = texture::Constant_Texture<math::Vector<f32, 4>>{
-		math::Vector<f32, 4>{0.5f, 0.f, 0.f, 0.f}
+
+	auto env_map = texture::Image_Texture<spectra::Stochastic_Spectrum>{
+		image::Image::from_path("../metatron-assets/material/texture/sky-on-fire.exr", true),
+		color::Color_Space::Spectrum_Type::illuminant
 	};
+	auto illuminance = color::Color_Space::sRGB->to_spectrum(
+		{1.f, 1.f, 1.f},
+		color::Color_Space::Spectrum_Type::illuminant
+	);
+	auto illuminance_texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>{illuminance.get()};
 	
 	auto diffuse_material = material::Material{
 		.bsdf = &lambertian,
-		.eta = &eta,
-		.k = &k,
-		.reflectance = &diffuse_reflectance,
-		.transmittance = &diffuse_transmittance,
+		.spectrum_textures = {
+			{"reflectance", &diffuse_texture},
+		},
 	};
 	auto test_material = material::Material{
 		.bsdf = &microfacet,
-		.eta = spectra::Spectrum::Au_eta.get(),
-		.k = spectra::Spectrum::Au_k.get(),
-		.u_roughness = &u_roughness,
-		.v_roughness = &v_roughness,
+		.spectrum_textures = {
+			{"eta", &eta_texture},
+			{"k", &k_texture},
+		},
+		.vector_textures = {
+			{"alpha", &alpha},
+		},
 	};
 	auto interface_material = material::Material{
 		.bsdf = &interface,
 	};
 
-	auto env_map = std::make_unique<texture::Image_Texture<spectra::Stochastic_Spectrum>>(
-		image::Image::from_path("../metatron-assets/material/texture/sky-on-fire.exr", true),
-		color::Color_Space::Spectrum_Type::illuminant
-	);
-	auto env_light = light::Environment_Light{std::move(env_map)};
-	auto const_env_light = light::Environment_Light{std::make_unique<texture::Constant_Texture<spectra::Stochastic_Spectrum>>(
-		color::Color_Space::sRGB->to_spectrum(
-			// {0.03f, 0.07f, 0.23f},
-			{1.f, 1.f, 1.f},
-			color::Color_Space::Spectrum_Type::illuminant
-		)
-	)};
+	auto env_light = light::Environment_Light{&env_map};
+	auto const_env_light = light::Environment_Light{&illuminance_texture};
 	auto parallel_light = light::Parallel_Light{
 		color::Color_Space::sRGB->to_spectrum(
 			{2.6f, 2.5f, 2.3f},
@@ -262,14 +242,14 @@ auto main() -> int {
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
 	auto dividers = std::vector<accel::Divider>{
-		{
-			.shape = &sphere,
-			.medium = &cloud_medium,
-			.material = &interface_material,
-			.light = nullptr,
-			.local_to_world = &bound_to_world,
-			.medium_to_world = &medium_to_world,
-		},
+		// {
+		// 	.shape = &sphere,
+		// 	.medium = &cloud_medium,
+		// 	.material = &interface_material,
+		// 	.light = nullptr,
+		// 	.local_to_world = &bound_to_world,
+		// 	.medium_to_world = &medium_to_world,
+		// },
 	};
 
 	auto assimp_loader = loader::Assimp_Loader{};
@@ -277,45 +257,45 @@ auto main() -> int {
 	auto kernel = assimp_loader.from_path("../metatron-assets/material/mesh/kernel.ply");
 	auto base = assimp_loader.from_path("../metatron-assets/material/mesh/base.ply");
 
-	// for (auto& mesh: shell) {
-	// 	for (auto i = 0uz; i < mesh->size(); i++) {
-	// 		dividers.push_back({
-	// 			.shape = mesh.get(),
-	// 			.medium = &vaccum_medium,
-	// 			.material = &test_material,
-	// 			.light = nullptr,
-	// 			.local_to_world = &shell_to_world,
-	// 			.medium_to_world = &identity,
-	// 			.primitive = i,
-	// 		});
-	// 	}
-	// }
-	// for (auto& mesh: kernel) {
-	// 	for (auto i = 0uz; i < mesh->size(); i++) {
-	// 		dividers.push_back({
-	// 			.shape = mesh.get(),
-	// 			.medium = &vaccum_medium,
-	// 			.material = &diffuse_material,
-	// 			.light = nullptr,
-	// 			.local_to_world = &kernel_to_world,
-	// 			.medium_to_world = &identity,
-	// 			.primitive = i,
-	// 		});
-	// 	}
-	// }
-	// for (auto& mesh: base) {
-	// 	for (auto i = 0uz; i < mesh->size(); i++) {
-	// 		dividers.push_back({
-	// 			.shape = mesh.get(),
-	// 			.medium = &vaccum_medium,
-	// 			.material = &test_material,
-	// 			.light = nullptr,
-	// 			.local_to_world = &base_to_world,
-	// 			.medium_to_world = &identity,
-	// 			.primitive = i,
-	// 		});
-	// 	}
-	// }
+	for (auto& mesh: shell) {
+		for (auto i = 0uz; i < mesh->size(); i++) {
+			dividers.push_back({
+				.shape = mesh.get(),
+				.medium = &vaccum_medium,
+				.material = &test_material,
+				.light = nullptr,
+				.local_to_world = &shell_to_world,
+				.medium_to_world = &identity,
+				.primitive = i,
+			});
+		}
+	}
+	for (auto& mesh: kernel) {
+		for (auto i = 0uz; i < mesh->size(); i++) {
+			dividers.push_back({
+				.shape = mesh.get(),
+				.medium = &vaccum_medium,
+				.material = &diffuse_material,
+				.light = nullptr,
+				.local_to_world = &kernel_to_world,
+				.medium_to_world = &identity,
+				.primitive = i,
+			});
+		}
+	}
+	for (auto& mesh: base) {
+		for (auto i = 0uz; i < mesh->size(); i++) {
+			dividers.push_back({
+				.shape = mesh.get(),
+				.medium = &vaccum_medium,
+				.material = &test_material,
+				.light = nullptr,
+				.local_to_world = &base_to_world,
+				.medium_to_world = &identity,
+				.primitive = i,
+			});
+		}
+	}
 	auto bvh = accel::LBVH{std::move(dividers), &world_to_render};
 	auto integrator = monte_carlo::Volume_Path_Integrator{};
 

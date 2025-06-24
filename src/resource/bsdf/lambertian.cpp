@@ -1,4 +1,5 @@
 #include <metatron/resource/bsdf/lambertian.hpp>
+#include <metatron/resource/spectra/constant.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>
@@ -43,8 +44,10 @@ namespace metatron::bsdf {
 
 	auto Lambertian_Bsdf::clone(Attribute const& attr) const -> std::unique_ptr<Bsdf> {
 		auto bsdf = std::make_unique<Lambertian_Bsdf>();
-		bsdf->spectrum = attr.spectrum;
-		bsdf->reflectance = attr.reflectance;
+		bsdf->spectrum = attr.spectra.at("spectrum");
+		bsdf->reflectance = attr.spectra.count("reflectance") > 0
+		? attr.spectra.at("reflectance")
+		: bsdf->spectrum & spectra::Constant_Spectrum{0.f};
 		return bsdf;
 	}
 

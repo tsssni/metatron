@@ -54,7 +54,7 @@ namespace metatron::bsdf {
 		math::Vector<f32, 3> const& u
 	) const -> std::optional<Interaction> {
 		auto wo = ctx.r.d;
-		auto wy = math::normalize(-wo * math::Vector<f32, 3>{alpha_x, 1.f, alpha_y});
+		auto wy = math::normalize(-wo * math::Vector<f32, 3>{alpha_u, 1.f, alpha_v});
 		auto wx = wy[1] < 1.f - math::epsilon<f32>
 			? math::cross(wy, math::Vector<f32, 3>{0.f, 1.f, 0.f})
 			: math::Vector<f32, 3>{1.f, 0.f, 0.f};
@@ -72,7 +72,7 @@ namespace metatron::bsdf {
 			return {};
 		}
 		// normal transformation with inverse transposed matrix
-		wm = math::normalize(wm * math::Vector<f32, 3>{alpha_x, 1.f, alpha_y});
+		wm = math::normalize(wm * math::Vector<f32, 3>{alpha_u, 1.f, alpha_v});
 
 		auto F = fresnel(math::dot(-wo, wm));
 		auto D = trowbridge_reitz(wm);
@@ -97,10 +97,16 @@ namespace metatron::bsdf {
 
 	auto Microfacet_Bsdf::clone(Attribute const& attr) const -> std::unique_ptr<Bsdf> {
 		auto bsdf = std::make_unique<Microfacet_Bsdf>();
-		bsdf->eta = attr.eta;
-		bsdf->k = attr.k;
-		bsdf->alpha_x = attr.u_roughness;
-		bsdf->alpha_y = attr.v_roughness;
+		auto null_spec = attr.spectra.at("spectrum") & spectra::Constant_Spectrum{0.f};
+		bsdf->eta = attr.spectra.count("eta") > 0 ? attr.spectra.at("eta") : null_spec;
+		bsdf->k = attr.spectra.count("k") > 0 ? attr.spectra.at("k") : null_spec;
+
+		auto alpha = attr.vectors.count("alpha") > 0
+		? attr.vectors.at("alpha")[0] : 1.f;
+		bsdf->alpha_u = attr.vectors.count("alpha_u") > 0
+		? attr.vectors.at("alpha_u")[0] : alpha;
+		bsdf->alpha_v = attr.vectors.count("alpha_v") > 0
+		? attr.vectors.at("alpha_v")[0] : alpha;
 
 		if (attr.inside) {
 			bsdf->eta.value = 1.f / bsdf->eta.value;
@@ -172,10 +178,10 @@ namespace metatron::bsdf {
 		auto cos_phi = math::unit_to_cos_phi(wm);
 		auto sin_phi = math::unit_to_sin_phi(wm);
 		auto e = tan2_theta * (0.f
-		+ math::sqr(cos_phi / alpha_x)
-		+ math::sqr(sin_phi / alpha_y));
+		+ math::sqr(cos_phi / alpha_u)
+		+ math::sqr(sin_phi / alpha_v));
 
-		return 1.f / (math::pi * alpha_x * alpha_y * cos4_theta * math::sqr(1.f + e));
+		return 1.f / (math::pi * alpha_u * alpha_v * cos4_theta * math::sqr(1.f + e));
 	}
 
 	auto Microfacet_Bsdf::visible_trowbridge_reitz(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wm) const -> f32 {
@@ -192,8 +198,8 @@ namespace metatron::bsdf {
 			return 0.f;
 		}
 		auto alpha2 = 0.f
-		+ math::sqr(math::unit_to_cos_theta(wo) * alpha_x)
-		+ math::sqr(math::unit_to_sin_theta(wo) * alpha_y);
+		+ math::sqr(math::unit_to_cos_theta(wo) * alpha_u)
+		+ math::sqr(math::unit_to_sin_theta(wo) * alpha_v);
 		return (math::sqrt(1.f + alpha2 * tan2_theta) - 1.f) / 2.f;
 	}
 

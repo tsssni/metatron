@@ -7,7 +7,7 @@
 
 namespace metatron::light {
 	struct Environment_Light final: Light {
-		Environment_Light(std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> env_map);
+		Environment_Light(texture::Texture<spectra::Stochastic_Spectrum> const* env_map);
 
 		auto operator()(
 			eval::Context const& ctx
@@ -19,7 +19,7 @@ namespace metatron::light {
 		auto flags() const -> Flags;
 
 	private:
-		std::unique_ptr<texture::Texture<spectra::Stochastic_Spectrum>> env_map;
+		texture::Texture<spectra::Stochastic_Spectrum> const* env_map;
 		math::Cosine_Hemisphere_Distribution surface_distr;
 		math::Sphere_Distribution volume_distr;
 	};

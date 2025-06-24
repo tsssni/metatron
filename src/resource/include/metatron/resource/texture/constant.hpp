@@ -8,14 +8,14 @@ namespace metatron::texture {
 
 	template<>
 	struct Constant_Texture<spectra::Stochastic_Spectrum> final: Texture<spectra::Stochastic_Spectrum> {
-		Constant_Texture(std::unique_ptr<spectra::Spectrum> x);
+		Constant_Texture(spectra::Spectrum const* x);
 		auto sample(
 			eval::Context const& ctx,
 			Coordinate const& coord
 		) const -> spectra::Stochastic_Spectrum;
 
 	private:
-		std::unique_ptr<spectra::Spectrum> x;
+		spectra::Spectrum const* x;
 	};
 
 	template<>

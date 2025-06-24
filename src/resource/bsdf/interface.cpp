@@ -22,7 +22,7 @@ namespace metatron::bsdf {
 
 	auto Interface_Bsdf::clone(Attribute const& attr) const -> std::unique_ptr<Bsdf> {
 		auto bsdf = std::make_unique<Interface_Bsdf>();
-		bsdf->spectrum = attr.spectrum;
+		bsdf->spectrum = attr.spectra.at("spectrum");
 		return bsdf;
 	}
 

@@ -31,8 +31,8 @@ namespace metatron::bsdf {
 			math::Vector<f32, 3> const& wm
 		) const -> std::optional<Interaction>;
 
-		f32 alpha_x;
-		f32 alpha_y;
+		f32 alpha_u;
+		f32 alpha_v;
 		spectra::Stochastic_Spectrum eta;
 		spectra::Stochastic_Spectrum k;
 	};

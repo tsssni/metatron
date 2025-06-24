@@ -3,18 +3,14 @@
 #include <metatron/resource/eval/context.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <memory>
+#include <unordered_map>
 
 namespace metatron::bsdf {
 	using Spectrum = spectra::Stochastic_Spectrum;
 
 	struct Attribute final {
-		spectra::Stochastic_Spectrum spectrum;
-		spectra::Stochastic_Spectrum reflectance;
-		spectra::Stochastic_Spectrum transmittance;
-		spectra::Stochastic_Spectrum eta;
-		spectra::Stochastic_Spectrum k;
-		f32 u_roughness;
-		f32 v_roughness;
+		std::unordered_map<std::string, spectra::Stochastic_Spectrum> spectra;
+		std::unordered_map<std::string, math::Vector<f32, 4>> vectors;
 		bool inside;
 	};
 

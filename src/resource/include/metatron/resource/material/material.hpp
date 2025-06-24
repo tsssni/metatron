@@ -3,6 +3,7 @@
 #include <metatron/resource/bsdf/bsdf.hpp>
 #include <metatron/resource/media/medium.hpp>
 #include <memory>
+#include <unordered_map>
 
 namespace metatron::material {
 	struct Interaction final {
@@ -14,15 +15,17 @@ namespace metatron::material {
 
 	struct Material final {
 		bsdf::Bsdf const* bsdf;
-		spectra::Spectrum const* eta;
-		spectra::Spectrum const* k;
-		texture::Texture<spectra::Stochastic_Spectrum> const* reflectance;
-		texture::Texture<spectra::Stochastic_Spectrum> const* transmittance;
-		texture::Texture<spectra::Stochastic_Spectrum> const* emission;
-		texture::Texture<math::Vector<f32, 4>> const* u_roughness;
-		texture::Texture<math::Vector<f32, 4>> const* v_roughness;
-		texture::Texture<math::Vector<f32, 4>> const* nomral;
 		
+		std::unordered_map<
+			std::string,
+			texture::Texture<spectra::Stochastic_Spectrum> const*
+		> spectrum_textures;
+
+		std::unordered_map<
+			std::string,
+			texture::Texture<math::Vector<f32, 4>> const*
+		> vector_textures;
+
 		auto sample(
 			eval::Context const& ctx,
 			texture::Coordinate const& coord
