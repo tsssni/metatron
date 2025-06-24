@@ -35,8 +35,8 @@ namespace metatron::monte_carlo {
 		trace_ctx.spec = emission;
 
 		auto acc_opt = std::optional<accel::Interaction>{};
-		auto medium = (media::Medium const*)nullptr;
-		auto medium_to_world = (math::Transform const*)nullptr;
+		auto medium = initial_status.medium;
+		auto medium_to_world = initial_status.local_to_world;
 		auto& rdiff = initial_status.ray_differential;
 		auto& ddiff = initial_status.default_differential;
 		auto& rt = *initial_status.world_to_render;
@@ -143,8 +143,8 @@ namespace metatron::monte_carlo {
 						imtr.p = rt | lt | math::expand(imtr.p, 1.f);
 						imtr.n = math::normalize(rt | lt | imtr.n);
 						direct_ctx.inside = math::dot(-direct_ctx.r.d, imtr.n) < 0.f;
-						dedium = direct_ctx.inside ? dim.material->interior_medium : dim.material->exterior_medium;
-						direct_to_world = direct_ctx.inside ? dim.interior_to_world : dim.exterior_to_world;
+						dedium = direct_ctx.inside ? dim.medium : initial_status.medium;
+						direct_to_world = direct_ctx.inside ? dim.medium_to_world : initial_status.local_to_world;
 						imtr.n *= direct_ctx.inside ? -1.f : 1.f;
 
 						auto close_to_light = math::length(imtr.p - l_intr.p) < 0.001f;
@@ -236,8 +236,8 @@ namespace metatron::monte_carlo {
 				intr.p = rt | lt | math::expand(intr.p, 1.f);
 				intr.n = math::normalize(rt | lt | intr.n);
 				trace_ctx.inside = math::dot(-trace_ctx.r.d, intr.n) < 0.f;
-				medium = trace_ctx.inside ? div->material->interior_medium : div->material->exterior_medium;
-				medium_to_world = trace_ctx.inside ? div->interior_to_world : div->exterior_to_world;
+				medium = trace_ctx.inside ? div->medium : initial_status.medium;
+				medium_to_world = trace_ctx.inside ? div->medium_to_world : initial_status.local_to_world;
 
 				auto flip_n = trace_ctx.inside ? -1.f : 1.f;
 				intr.n *= flip_n;

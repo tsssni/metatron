@@ -46,7 +46,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 16uz;
+	auto spp = 256uz;
 	auto depth = 64uz;
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
@@ -68,10 +68,10 @@ auto main() -> int {
 	auto halton = math::Halton_Sampler{seed};
 
 	auto identity = math::Transform{};
-	auto world_to_render = math::Transform{{-2.5f, -0.6f, 2.5f}};
-	// auto world_to_render = math::Transform{{0.f, 0.f, 1000.f}};
+	// auto world_to_render = math::Transform{{-2.5f, -0.6f, 2.5f}};
+	auto world_to_render = math::Transform{{0.f, 0.f, 1000.f}};
 	auto render_to_camera = math::Transform{{0.f, 0.f, 0.f}, {1.f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
+		// math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
 	};
 
 	auto sphere_to_world = math::Transform{{}, {200.f}};
@@ -87,12 +87,12 @@ auto main() -> int {
 	auto base_to_world = math::Transform{{0.0571719, 0.213656, -0.0682078}, {0.482906f},
 		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 0.f / 1.f),
 	};
-	auto bound_to_world = math::Transform{{}, {500.f}};
-	auto medium_to_world = math::Transform{{}, {1.0f},
+	auto bound_to_world = math::Transform{{}, {500.0f}};
+	auto medium_to_world = math::Transform{{}, {1.f},
 		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 2.f),
 	};
 	auto light_to_world = math::Transform{{}, {1.0f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 1.f),
+		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 0.f / 1.f),
 	};
 	auto parallel_to_world = math::Transform{{}, {1.f},
 		math::Quaternion<f32>::from_rotation_between(
@@ -200,8 +200,6 @@ auto main() -> int {
 	
 	auto diffuse_material = material::Material{
 		.bsdf = &lambertian,
-		.interior_medium = &vaccum_medium,
-		.exterior_medium = &vaccum_medium,
 		.eta = &eta,
 		.k = &k,
 		.reflectance = &diffuse_reflectance,
@@ -209,8 +207,6 @@ auto main() -> int {
 	};
 	auto test_material = material::Material{
 		.bsdf = &microfacet,
-		.interior_medium = &vaccum_medium,
-		.exterior_medium = &vaccum_medium,
 		.eta = spectra::Spectrum::Au_eta.get(),
 		.k = spectra::Spectrum::Au_k.get(),
 		.u_roughness = &u_roughness,
@@ -218,8 +214,6 @@ auto main() -> int {
 	};
 	auto interface_material = material::Material{
 		.bsdf = &interface,
-		.interior_medium = &cloud_medium,
-		.exterior_medium = &vaccum_medium,
 	};
 
 	auto env_map = std::make_unique<texture::Image_Texture<spectra::Stochastic_Spectrum>>(
@@ -268,14 +262,14 @@ auto main() -> int {
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
 	auto dividers = std::vector<accel::Divider>{
-		// {
-		// 	.shape = &sphere,
-		// 	.material = &interface_material,
-		// 	.light = nullptr,
-		// 	.local_to_world = &bound_to_world,
-		// 	.interior_to_world = &medium_to_world,
-		// 	.exterior_to_world = &identity,
-		// },
+		{
+			.shape = &sphere,
+			.medium = &cloud_medium,
+			.material = &interface_material,
+			.light = nullptr,
+			.local_to_world = &bound_to_world,
+			.medium_to_world = &medium_to_world,
+		},
 	};
 
 	auto assimp_loader = loader::Assimp_Loader{};
@@ -283,45 +277,45 @@ auto main() -> int {
 	auto kernel = assimp_loader.from_path("../metatron-assets/material/mesh/kernel.ply");
 	auto base = assimp_loader.from_path("../metatron-assets/material/mesh/base.ply");
 
-	for (auto& mesh: shell) {
-		for (auto i = 0uz; i < mesh->size(); i++) {
-			dividers.push_back({
-				.shape = mesh.get(),
-				.material = &test_material,
-				.light = nullptr,
-				.local_to_world = &shell_to_world,
-				.interior_to_world = &identity,
-				.exterior_to_world = &identity,
-				.primitive = i,
-			});
-		}
-	}
-	for (auto& mesh: kernel) {
-		for (auto i = 0uz; i < mesh->size(); i++) {
-			dividers.push_back({
-				.shape = mesh.get(),
-				.material = &diffuse_material,
-				.light = nullptr,
-				.local_to_world = &kernel_to_world,
-				.interior_to_world = &identity,
-				.exterior_to_world = &identity,
-				.primitive = i,
-			});
-		}
-	}
-	for (auto& mesh: base) {
-		for (auto i = 0uz; i < mesh->size(); i++) {
-			dividers.push_back({
-				.shape = mesh.get(),
-				.material = &test_material,
-				.light = nullptr,
-				.local_to_world = &base_to_world,
-				.interior_to_world = &identity,
-				.exterior_to_world = &identity,
-				.primitive = i,
-			});
-		}
-	}
+	// for (auto& mesh: shell) {
+	// 	for (auto i = 0uz; i < mesh->size(); i++) {
+	// 		dividers.push_back({
+	// 			.shape = mesh.get(),
+	// 			.medium = &vaccum_medium,
+	// 			.material = &test_material,
+	// 			.light = nullptr,
+	// 			.local_to_world = &shell_to_world,
+	// 			.medium_to_world = &identity,
+	// 			.primitive = i,
+	// 		});
+	// 	}
+	// }
+	// for (auto& mesh: kernel) {
+	// 	for (auto i = 0uz; i < mesh->size(); i++) {
+	// 		dividers.push_back({
+	// 			.shape = mesh.get(),
+	// 			.medium = &vaccum_medium,
+	// 			.material = &diffuse_material,
+	// 			.light = nullptr,
+	// 			.local_to_world = &kernel_to_world,
+	// 			.medium_to_world = &identity,
+	// 			.primitive = i,
+	// 		});
+	// 	}
+	// }
+	// for (auto& mesh: base) {
+	// 	for (auto i = 0uz; i < mesh->size(); i++) {
+	// 		dividers.push_back({
+	// 			.shape = mesh.get(),
+	// 			.medium = &vaccum_medium,
+	// 			.material = &test_material,
+	// 			.light = nullptr,
+	// 			.local_to_world = &base_to_world,
+	// 			.medium_to_world = &identity,
+	// 			.primitive = i,
+	// 		});
+	// 	}
+	// }
 	auto bvh = accel::LBVH{std::move(dividers), &world_to_render};
 	auto integrator = monte_carlo::Volume_Path_Integrator{};
 
@@ -337,8 +331,10 @@ auto main() -> int {
 				{
 					s.ray_differential,
 					s.default_differential,
+					&identity,
 					&world_to_render,
 					&render_to_camera,
+					&vaccum_medium,
 					px,
 					n,
 					depth,

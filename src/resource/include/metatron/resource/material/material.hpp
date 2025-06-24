@@ -14,8 +14,6 @@ namespace metatron::material {
 
 	struct Material final {
 		bsdf::Bsdf const* bsdf;
-		media::Medium const* interior_medium;
-		media::Medium const* exterior_medium;
 		spectra::Spectrum const* eta;
 		spectra::Spectrum const* k;
 		texture::Texture<spectra::Stochastic_Spectrum> const* reflectance;

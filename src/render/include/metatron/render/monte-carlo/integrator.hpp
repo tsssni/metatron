@@ -10,8 +10,10 @@ namespace metatron::monte_carlo {
 	struct Status final {
 		math::Ray_Differential ray_differential;
 		math::Ray_Differential default_differential;
+		math::Transform const* local_to_world;
 		math::Transform const* world_to_render;
 		math::Transform const* render_to_camera;
+		media::Medium const* medium;
 		math::Vector<usize, 2> pixel;
 		usize sample_index;
 		usize max_depth;
