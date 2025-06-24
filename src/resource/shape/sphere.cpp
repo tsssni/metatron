@@ -63,7 +63,20 @@ namespace metatron::shape {
 		auto dndu = dpdu;
 		auto dndv = dpdv;
 
-		return Interaction{p, n, uv, t, dpdu, dpdv, dndu, dndv, 1.f};
+		auto tn = math::normalize(dpdu);
+		tn = math::gram_schmidt(tn, n);
+		auto bn = math::cross(tn, n);
+
+		auto pdf = 1.f;
+		auto d = math::length(r.o);
+		if (d < 1.f) {
+			pdf = math::Sphere_Distribution{}.pdf();
+		} else {
+			auto cos_theta_max = math::sqrt(1.f - 1.f / (d * d));
+			pdf = math::Cone_Distribution{cos_theta_max}.pdf();
+		}
+
+		return Interaction{p, n, tn, bn, uv, t, dpdu, dpdv, dndu, dndv, pdf};
 	}
 
 	auto Sphere::sample(
@@ -78,7 +91,6 @@ namespace metatron::shape {
 			auto dir = math::normalize(p - ctx.r.o);
 
 			METATRON_OPT_OR_RETURN(intr, (*this)({ctx.r.o, dir}), {});
-			intr.pdf = distr.pdf();
 			return intr;
 		} else {
 			auto cos_theta_max = math::sqrt(1.f - 1.f / (d * d));
@@ -90,7 +102,6 @@ namespace metatron::shape {
 			sdir = math::rotate(math::expand(sdir, 0.f), rot);
 
 			METATRON_OPT_OR_RETURN(intr, (*this)({ctx.r.o, sdir}), {});
-			intr.pdf = distr.pdf();
 			return intr;
 		}
 	}

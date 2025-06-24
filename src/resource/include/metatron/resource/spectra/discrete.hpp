@@ -8,10 +8,10 @@ namespace metatron::spectra {
 		Discrete_Spectrum(std::array<f32, n>&& lambda, std::array<f32, n>&& data)
 			: lambda(std::move(lambda)), data(std::move(data)) {}
 
-		Discrete_Spectrum(std::array<f32, 2uz * n>&& interleaved) {
+		Discrete_Spectrum(std::array<math::Vector<f32, 2>, n>&& interleaved) {
 			for (auto i = 0uz; i < n; i++) {
-				lambda[i] = interleaved[i * 2uz];
-				data[i] = interleaved[i * 2uz + 1uz];
+				lambda[i] = interleaved[i][0];
+				data[i] = interleaved[i][1];
 			}
 		}
 
@@ -29,7 +29,7 @@ namespace metatron::spectra {
 				) - this->lambda.begin() - 1uz
 			));
 			auto alpha = (lambda - this->lambda[idx]) / (this->lambda[idx + 1] - this->lambda[idx]);
-			return std::lerp(data[idx], data[idx + 1], alpha);
+			return math::lerp(data[idx], data[idx + 1], alpha);
 		}
 
 	private:

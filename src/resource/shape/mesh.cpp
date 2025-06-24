@@ -1,6 +1,6 @@
 #include <metatron/resource/shape/mesh.hpp>
 #include <metatron/core/math/transform.hpp>
-#include <metatron/core/math/distribution/bilinear.hpp>
+#include <metatron/core/math/distribution/linear.hpp>
 #include <metatron/core/stl/optional.hpp>
 
 namespace metatron::shape {
@@ -19,7 +19,7 @@ namespace metatron::shape {
 		dndu.resize(this->indices.size());
 		dndv.resize(this->indices.size());
 
-		for (auto i = 0uz; i < indices.size(); i++) {
+		for (auto i = 0uz; i < this->indices.size(); i++) {
 			auto prim = this->indices[i];
 			auto v = math::Vector<math::Vector<f32, 3>, 3>{
 				this->vertices[prim[0]],
@@ -104,7 +104,7 @@ namespace metatron::shape {
 			math::Vector<f32, 2> v0,
 			math::Vector<f32, 2> v1
 		) -> f32 {
-			return math::determinant(math::Matrix<f32, 2, 2>{p - v0, v1 - v0});
+			return math::determinant(math::Matrix<f32, 2, 2>{v1 - v0, p - v0});
 		};
 		auto e = math::Vector<f32, 3>{
 			ef({0.f}, v[1], v[2]),
@@ -112,10 +112,10 @@ namespace metatron::shape {
 			ef({0.f}, v[0], v[1]),
 		};
 		auto det = math::sum(e);
-		auto bary = math::guarded_div(e, det);
+		auto bary = e / det;
 
 		if (false
-		|| std::abs(det) < math::epsilon<f32>
+		|| math::abs(det) < math::epsilon<f32>
 		|| std::signbit(e[0]) != std::signbit(e[1])
 		|| std::signbit(e[1]) != std::signbit(e[2])
 		) {
@@ -124,8 +124,10 @@ namespace metatron::shape {
 
 		auto p = blerp(vertices, bary, idx);
 		auto n = math::normalize(blerp(normals, bary, idx));
+		auto tn = math::gram_schmidt(math::normalize(dpdu[idx]), n);
+		auto bn = math::cross(tn, n);
 		auto uv = blerp(uvs, bary, idx);
-		auto t = math::guarded_div(math::blerp(v, e)[2], det);
+		auto t = math::blerp(v, bary)[2];
 		if (t < math::epsilon<f32>) {
 			return {};
 		}
@@ -179,14 +181,9 @@ namespace metatron::shape {
 		}
 
 		return shape::Interaction{
-			p,
-			n,
-			uv,
-			t,
-			dpdu[idx],
-			dpdv[idx],
-			dndu[idx],
-			dndv[idx],
+			p, n, tn, bn, uv, t,
+			dpdu[idx], dpdv[idx],
+			dndu[idx], dndv[idx],
 			pdf,
 		};
 	}
@@ -239,7 +236,7 @@ namespace metatron::shape {
 		}
 
 		auto A_pi = alpha + beta + gamma;
-		auto A_1_pi = std::lerp(math::pi, A_pi, u[0]);
+		auto A_1_pi = math::lerp(math::pi, A_pi, u[0]);
 
 		auto phi = A_1_pi - alpha;
 		auto cos_a = std::cos(alpha);
@@ -279,15 +276,16 @@ namespace metatron::shape {
 		}
 		auto bary = math::Vector<f32, 3>{1.f - b_1 - b_2, b_1, b_2};
 
-		return Interaction{
-			ctx.r.o + t * d,
-			math::normalize(blerp(normals, b, idx)),
-			blerp(uvs, bary, idx),
-			t,
-			dpdu[idx],
-			dpdv[idx],
-			dndu[idx],
-			dndv[idx],
+		auto p = ctx.r.o + t * d;
+		auto n = math::normalize(blerp(normals, bary, idx));
+		auto tn = math::gram_schmidt(math::normalize(dpdu[idx]), n);
+		auto bn = math::cross(tn, n);
+		auto uv = blerp(uvs, bary, idx);
+
+		return shape::Interaction{
+			p, n, tn, bn, uv, t,
+			dpdu[idx], dpdv[idx],
+			dndu[idx], dndv[idx],
 			math::guarded_div(
 				math::guarded_div(pdf, (A_pi - math::pi)),
 				(1.f - cos_bc1)

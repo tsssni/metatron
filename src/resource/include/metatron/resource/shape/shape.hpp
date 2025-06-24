@@ -8,6 +8,8 @@ namespace metatron::shape {
 	struct Interaction final {
 		math::Vector<f32, 3> p;
 		math::Vector<f32, 3> n;
+		math::Vector<f32, 3> tn;
+		math::Vector<f32, 3> bn;
 		math::Vector<f32, 2> uv;
 		f32 t;
 

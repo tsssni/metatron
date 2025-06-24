@@ -4,27 +4,25 @@
 #include <metatron/core/stl/optional.hpp>
 
 namespace metatron::media {
-	std::unordered_map<Grid_Medium const*, Grid_Medium::Cache> thread_local Grid_Medium::thread_caches;
+	std::unordered_map<Grid_Medium const*, Grid_Medium::Cache> thread_local Grid_Medium::thread_cache;
 
     Grid_Medium::Grid_Medium(
         Medium_Grid const* grid,
-        std::unique_ptr<spectra::Spectrum> sigma_a,
-        std::unique_ptr<spectra::Spectrum> sigma_s,
-        std::unique_ptr<spectra::Spectrum> L,
-		f32 g,
+		phase::Phase_Function const* phase,
+		spectra::Spectrum const* sigma_a,
+		spectra::Spectrum const* sigma_s,
+		spectra::Spectrum const* emission,
         f32 density_scale
     ):
 	grid(grid),
-	sigma_a(std::move(sigma_a)),
-	sigma_s(std::move(sigma_s)),
-	L(std::move(L)),
-	g(g),
-	density_scale(density_scale) {
-		auto& cache = thread_caches[this];
-	}
+	phase(phase),
+	sigma_a(sigma_a),
+	sigma_s(sigma_s),
+	emission(emission),
+	density_scale(density_scale) {}
 
 	Grid_Medium::~Grid_Medium() {
-		thread_caches.erase(this);
+		thread_cache.erase(this);
 	}
     
     auto Grid_Medium::sample(
@@ -32,10 +30,10 @@ namespace metatron::media {
         f32 t_max, 
         f32 u
     ) const -> std::optional<Interaction> {
-		auto& cache = thread_caches[this];
+		auto& cache = thread_cache[this];
 		
-		auto sigma_a = (ctx.L & (*this->sigma_a)) * density_scale;
-		auto sigma_s = (ctx.L & (*this->sigma_s)) * density_scale;
+		auto sigma_a = (ctx.spec & (*this->sigma_a)) * density_scale;
+		auto sigma_s = (ctx.spec & (*this->sigma_s)) * density_scale;
 		auto sigma_t = sigma_a + sigma_s;
 
 		auto update_majorant = [&](f32 t_max) -> void {
@@ -43,7 +41,7 @@ namespace metatron::media {
 			cache.t_max = math::hit(cache.r, cache.bbox).value_or(t_max);
 			cache.density_maj = (*grid)[grid->to_index(cache.r.o)];
 			cache.sigma_maj = cache.density_maj * sigma_t;
-			cache.distr = math::Exponential_Distribution(cache.sigma_maj.value.front());
+			cache.distr = math::Exponential_Distribution(cache.sigma_maj.value[0]);
 		};
 
 		if (false 
@@ -56,31 +54,28 @@ namespace metatron::media {
 		auto t_boundary = t_max;
 		auto t_offset = 0.005f / math::length(cache.r.d);
 		auto t_transmitted = 0.f;
-		auto transmittance = ctx.L;
-		transmittance.value = std::vector<f32>(ctx.L.lambda.size(), 1.f);
+		auto transmittance = ctx.spec;
+		transmittance = 1.f;
+
 		auto update_transmittance = [&](f32 t) -> void {
 			t_transmitted += t;
 			t_boundary -= t;
 			cache.t_max -= t;
 			cache.r.o += t * cache.r.d;
-			for (auto i = 0uz; i < transmittance.lambda.size(); i++) {
-				transmittance.value[i] *= std::exp(-cache.sigma_maj.value[i] * t);
-			}
+			transmittance.value *= math::foreach([&](f32 value, usize i) {
+				return std::exp(-value * t);
+			}, cache.sigma_maj.value);
 		};
 
 		while (true) {
-			if (!transmittance) {
-				return {};
-			}
-
 			auto t_u = cache.distr.sample(u);
 			if (t_boundary <= cache.t_max && (cache.density_maj < math::epsilon<f32> || t_u >= t_boundary)) {
 				update_transmittance(t_boundary + t_offset);
 				return Interaction{
 					cache.r.o,
-					std::make_unique<phase::Henyey_Greenstein_Phase_Function>(g),
+					phase->clone({ctx.spec}),
 					t_max,
-					transmittance.value.front(),
+					transmittance.value[0],
 					transmittance,
 					transmittance,
 					{}, {}, {}, {}, {}
@@ -95,16 +90,16 @@ namespace metatron::media {
 
 				return Interaction{
 					cache.r.o,
-					std::make_unique<phase::Henyey_Greenstein_Phase_Function>(g),
+					phase->clone({ctx.spec}),
 					t_transmitted,
-					spectra_pdf.value.front(),
+					spectra_pdf.value[0],
 					spectra_pdf,
 					transmittance,
 					density * sigma_a,
 					density * sigma_s,
 					cache.sigma_maj - density * sigma_t,
 					cache.sigma_maj,
-					density * (ctx.L & *L),
+					density * (ctx.spec & *emission)
 				};
 			}
 		}

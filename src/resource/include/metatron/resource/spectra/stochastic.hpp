@@ -1,17 +1,17 @@
 #pragma once
 #include <metatron/resource/spectra/spectrum.hpp>
-#include <vector>
+#include <metatron/core/math/vector.hpp>
 
 namespace metatron::spectra {
 	auto constexpr stochastic_samples = 4uz;
 
 	struct Stochastic_Spectrum final: Spectrum {
-		std::vector<f32> lambda{};
-		std::vector<f32> pdf{};
-		std::vector<f32> value{};
+		math::Vector<f32, stochastic_samples> lambda{};
+		math::Vector<f32, stochastic_samples> pdf{};
+		math::Vector<f32, stochastic_samples> value{};
 
 		Stochastic_Spectrum() = default;
-		Stochastic_Spectrum(usize n, f32 u, f32 v = 0.f);
+		Stochastic_Spectrum(f32 u, f32 v = 0.f);
 
 		auto operator()(f32 lambda) const -> f32;
 		auto operator()(Spectrum const& spectrum) const -> f32;
@@ -30,6 +30,7 @@ namespace metatron::spectra {
 		auto operator+(f32 s) const -> Stochastic_Spectrum;
 		auto operator+=(f32 s) -> Stochastic_Spectrum&;
 		auto operator-(f32 s) const -> Stochastic_Spectrum;
+		auto operator-() const -> Stochastic_Spectrum;
 		auto operator-=(f32 s) -> Stochastic_Spectrum&;
 		auto operator*(f32 s) const -> Stochastic_Spectrum;
 		auto operator*=(f32 s) -> Stochastic_Spectrum&;
@@ -47,5 +48,8 @@ namespace metatron::spectra {
 	auto min(Stochastic_Spectrum const& spectrum) -> f32;
 	auto max(Stochastic_Spectrum const& spectrum) -> f32;
 	auto avg(Stochastic_Spectrum const& spectrum) -> f32;
-	auto clear(Stochastic_Spectrum& spectrum, f32 v = 0.f) -> void;
+
+	auto constant(Stochastic_Spectrum const& spectrum) -> bool;
+	auto coherent(Stochastic_Spectrum const& spectrum) -> bool;
+	auto degrade(Stochastic_Spectrum& spectrum) -> void;
 }

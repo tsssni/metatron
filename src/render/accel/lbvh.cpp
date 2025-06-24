@@ -47,10 +47,10 @@ namespace metatron::accel {
 		for (auto& div: lbvh_divs) {
 			auto extent = render_bbox.p_max - render_bbox.p_min;
 			auto pos = math::lerp(div.bbox.p_min, div.bbox.p_max, 0.5f) - render_bbox.p_min;
-			auto voxel = math::Vector<u32, 3>{math::guarded_div(pos, extent) * 1024};
+			auto voxel = math::Vector<u32, 3>{pos / extent * 1024};
 			div.morton_code = math::morton_encode(voxel);
 		}
-		std::ranges::sort(lbvh_divs, [](LBVH_Divider const& a, LBVH_Divider const& b) {
+		std::ranges::sort(lbvh_divs, [](auto& a, auto& b) {
 			return a.morton_code < b.morton_code;
 		});
 
@@ -73,7 +73,7 @@ namespace metatron::accel {
 				node->div_idx = start;
 				node->num_prims = n;
 				node->bbox = math::Bounding_Box{};
-				for (auto i = start; i < start + n; i++) {
+				for (auto i = start; i < end; i++) {
 					node->bbox = math::merge(node->bbox, lbvh_divs[i].bbox);
 				}
 				return node;
@@ -103,7 +103,7 @@ namespace metatron::accel {
 		auto lbvh_nodes = std::vector<std::unique_ptr<LBVH_Node>>(intervals.size());
 		stl::Dispatcher::instance().sync_parallel(
 			math::Vector<usize, 1>{intervals.size()},
-			[&](auto const& idx) {
+			[&](auto idx) {
 				auto [i] = idx;
 				auto& interval = intervals[i];
 				lbvh_nodes[i] = morton_split(interval, 29 - 12);
@@ -134,8 +134,8 @@ namespace metatron::accel {
 				auto c = math::lerp(node->bbox.p_min, node->bbox.p_max, 0.5f);
 				auto b = std::min(num_buckets - 1, i32(num_buckets
 					* (c[root->split_axis] - cbox.p_min[root->split_axis])
-					/ (cbox.p_max[root->split_axis] - cbox.p_min[root->split_axis]))
-				);
+					/ (cbox.p_max[root->split_axis] - cbox.p_min[root->split_axis])
+				));
 				auto& [bbox, count] = buckets[b];
 				bbox = math::merge(bbox, node->bbox);
 				count++;
@@ -229,9 +229,6 @@ namespace metatron::accel {
 			candidates.pop();
 			auto node = &bvh[idx];
 			METATRON_OPT_OR_CONTINUE(t_bbox, math::hit(r, node->bbox));
-			if (intr_opt && t_bbox >= intr_opt.value().t) {
-				continue;
-			}
 
 			if (node->num_prims > 0) {
 				for (auto i = 0u; i < node->num_prims; i++) {

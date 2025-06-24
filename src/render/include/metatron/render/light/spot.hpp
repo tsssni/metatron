@@ -16,6 +16,7 @@ namespace metatron::light {
 			eval::Context const& ctx,
 			math::Vector<f32, 2> const& u
 		) const -> std::optional<Interaction>;
+		auto flags() const -> Flags;
 
 	private:
 		std::unique_ptr<spectra::Spectrum> L;

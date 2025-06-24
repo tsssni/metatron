@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/core/math/constant.hpp>
+#include <metatron/core/math/arithmetic.hpp>
 #include <algorithm>
 #include <array>
 #include <span>
@@ -100,11 +101,24 @@ namespace metatron::math {
 		constexpr Matrix(Matrix<U, rhs_first_dim, rest_dims...> const& rhs, Args&&... rest) {
 			*this = rhs;
 			if constexpr (first_dim > rhs_first_dim) {
-				[this, rest...]<usize... idxs>(std::index_sequence<idxs...>) {
-						((data[rhs_first_dim + idxs] = rest), ...);
+				[this, &rest...]<usize... idxs>(std::index_sequence<idxs...>) {
+						((data[rhs_first_dim + idxs] = std::forward<Args>(rest)), ...);
 				}(std::make_index_sequence<std::min(sizeof...(rest), first_dim - rhs_first_dim)>{});
 			}
+		}
 
+		template<typename U, typename... Args, usize rhs_first_dim>
+		requires (true
+			&& std::is_convertible_v<U, T>
+			&& (std::is_convertible_v<Args, Element> && ...)
+		)
+		constexpr Matrix(Matrix<U, rhs_first_dim, rest_dims...>&& rhs, Args&&... rest) {
+			*this = std::move(rhs);
+			if constexpr (first_dim > rhs_first_dim) {
+				[this, &rest...]<usize... idxs>(std::index_sequence<idxs...>) {
+						((data[rhs_first_dim + idxs] = std::forward<Args>(rest)), ...);
+				}(std::make_index_sequence<std::min(sizeof...(rest), first_dim - rhs_first_dim)>{});
+			}
 		}
 
 		template<usize rhs_first_dim0, usize rhs_first_dim1>
@@ -118,12 +132,32 @@ namespace metatron::math {
 			}
 		}
 
+		template<usize rhs_first_dim0, usize rhs_first_dim1>
+		constexpr Matrix(
+			Matrix<T, rhs_first_dim0, rest_dims...>&& rhs0,
+			Matrix<T, rhs_first_dim1, rest_dims...>&& rhs1
+		) {
+			*this = std::move(rhs0);
+			if constexpr (first_dim > rhs_first_dim0) {
+				std::move(rhs1.data.begin(), rhs1.data.begin() + (std::min(first_dim, rhs_first_dim1) - rhs_first_dim0), data.begin() + rhs_first_dim0);
+			}
+		}
+
 		template<typename U, usize rhs_first_dim, usize... rhs_rest_dims>
 		requires true
 			&& std::is_convertible_v<U, T>
 			&& (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
 		auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...> const& rhs) -> Matrix& {
 			std::copy_n(rhs.data.begin(), std::min(first_dim, rhs_first_dim), data.begin());
+			return *this;
+		}
+
+		template<typename U, usize rhs_first_dim, usize... rhs_rest_dims>
+		requires true
+			&& std::is_convertible_v<U, T>
+			&& (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
+		auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...>&& rhs) -> Matrix& {
+			std::move(rhs.data.begin(), rhs.data.begin() + std::min(first_dim, rhs_first_dim), data.begin());
 			return *this;
 		}
 
@@ -150,7 +184,7 @@ namespace metatron::math {
 			&& (false
 				|| i32(l_n) - i32(r_n) < 2
 				|| i32(r_n) - i32(l_n) < 2
-			) // clangd could not use std::abs
+			) // clangd could not use math::abs
 			&& []() -> bool {
 				return std::equal(
 					lds.begin(), lds.begin() + higher_n,
@@ -300,7 +334,7 @@ namespace metatron::math {
 		auto constexpr operator/(Matrix const& rhs) const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = data[i] / rhs[i];
+				result[i] = math::guarded_div(data[i], rhs[i]);
 			}
 			return result;
 		}
@@ -313,7 +347,7 @@ namespace metatron::math {
 		auto constexpr operator/(T const& rhs) const -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = data[i] / rhs;
+				result[i] = math::guarded_div(data[i], rhs);
 			}
 			return result;
 		}
@@ -329,16 +363,16 @@ namespace metatron::math {
 			return data;
 		};
 
-		template<usize I>
+		template<usize idx>
 		auto constexpr get() const -> Element const& {
-			static_assert(I < first_dim, "index out of bounds");
-			return data[I];
+			static_assert(idx < first_dim, "index out of bounds");
+			return data[idx];
 		}
 
-		template<usize I>
+		template<usize idx>
 		auto constexpr get() -> Element& {
-			static_assert(I < first_dim, "index out of bounds");
-			return data[I];
+			static_assert(idx < first_dim, "index out of bounds");
+			return data[idx];
 		}
 
 	private:
@@ -363,16 +397,21 @@ namespace metatron::math {
 		return rhs * lhs;
 	}
 
-	template<usize I, typename T, usize first_dim, usize... rest_dims>
-	auto inline constexpr get(Matrix<T, first_dim, rest_dims...> const& m) 
-		-> typename Matrix<T, first_dim, rest_dims...>::Element const& {
-		return m.template get<I>();
+	template<typename T, usize... dims>
+	auto constexpr operator/(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
+		return Matrix<T, dims...>{lhs} / rhs;
 	}
 
-	template<usize I, typename T, usize first_dim, usize... rest_dims>
+	template<usize idx, typename T, usize first_dim, usize... rest_dims>
+	auto constexpr get(Matrix<T, first_dim, rest_dims...> const& m) 
+		-> typename Matrix<T, first_dim, rest_dims...>::Element const& {
+		return m.template get<idx>();
+	}
+
+	template<usize idx, typename T, usize first_dim, usize... rest_dims>
 	auto constexpr get(Matrix<T, first_dim, rest_dims...>& m) 
 		-> typename Matrix<T, first_dim, rest_dims...>::Element& {
-		return m.template get<I>();
+		return m.template get<idx>();
 	}
 
 	template<typename T, usize h, usize w>
@@ -405,10 +444,10 @@ namespace metatron::math {
 			
 			for (usize i = 0; i < n; i++) {
 				usize pivot_row = i;
-				T max_val = std::abs(u[i][i]);
+				T max_val = math::abs(u[i][i]);
 				
 				for (usize j = i + 1; j < n; j++) {
-					if (auto curr_val = std::abs(u[j][i]); curr_val > max_val) {
+					if (auto curr_val = math::abs(u[j][i]); curr_val > max_val) {
 						max_val = curr_val;
 						pivot_row = j;
 					}
@@ -451,10 +490,10 @@ namespace metatron::math {
 		// Gaussian-Jordan
 		for (usize i = 0; i < h; i++) {
 			auto pivot_row = i;
-			auto max_val = std::abs(augmented[i][i]);
+			auto max_val = math::abs(augmented[i][i]);
 			
 			for (usize j = i + 1; j < h; j++) {
-				if (auto curr_val = std::abs(augmented[j][i]); curr_val > max_val) {
+				if (auto curr_val = math::abs(augmented[j][i]); curr_val > max_val) {
 					max_val = curr_val;
 					pivot_row = j;
 				}
@@ -498,7 +537,7 @@ namespace metatron::math {
 		Matrix<T, n> const& b
 	) -> std::optional<Matrix<T, n>> {
 		T det_a = determinant(a);
-		if (std::abs(det_a) < epsilon<T>) {
+		if (math::abs(det_a) < epsilon<T>) {
 			return {};
 		}
 
@@ -521,7 +560,7 @@ namespace metatron::math {
 		Matrix<T, n, m> const& b
 	) -> std::optional<Matrix<T, n, m>> {
 		T det_a = determinant(a);
-		if (std::abs(det_a) < epsilon<T>) {
+		if (math::abs(det_a) < 1e-12f) {
 			return {};
 		}
 
@@ -556,4 +595,4 @@ namespace std {
 	struct tuple_element<I, math::Matrix<T, first_dim, rest_dims...>> {
 		using type = typename math::Matrix<T, first_dim, rest_dims...>::Element;
 	};
-};
+}

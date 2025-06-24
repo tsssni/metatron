@@ -1,14 +1,14 @@
 #include <metatron/resource/loader/assimp.hpp>
-#include <metatron/resource/material/diffuse.hpp>
 #include <metatron/resource/texture/constant.hpp>
 #include <metatron/core/math/sphere.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 
 namespace metatron::loader {
-	auto Assimp_Loader::from_path(std::string_view path) -> std::vector<Asset> {
+	auto Assimp_Loader::from_path(std::string_view path) -> std::vector<std::unique_ptr<shape::Mesh>> {
 		auto importer = Assimp::Importer{};
 		scene = importer.ReadFile(path.data(), 0
+			| aiProcess_FindDegenerates
 			| aiProcess_FlipUVs
 			| aiProcess_FlipWindingOrder
 			| aiProcess_GenSmoothNormals
@@ -29,12 +29,7 @@ namespace metatron::loader {
 		}
 
 		traverse(scene->mRootNode);
-
-		auto assets = std::vector<Asset>{};
-		for (auto i = 0uz; i < meshes.size(); i++) {
-			assets.emplace_back(std::move(meshes[i]), std::move(materials[i]));
-		}
-		return assets;
+		return std::move(meshes);
 	}
 
 
@@ -57,8 +52,9 @@ namespace metatron::loader {
 		for (auto i = 0uz; i < mesh->mNumFaces; i++) {
 			auto face = mesh->mFaces[i];
 			if (face.mNumIndices != 3) {
-				std::printf("assimp error: mesh %s has non-triangle face\n", mesh->mName.C_Str());
-				std::abort();
+				// std::printf("assimp error: mesh %s has non-triangle face\n", mesh->mName.C_Str());
+				// std::abort();
+				continue;
 			}
 			indices.push_back({
 				face.mIndices[0],
@@ -95,34 +91,5 @@ namespace metatron::loader {
 			std::move(normals),
 			std::move(uvs)
 		));
-
-		load_material(mesh->mMaterialIndex >= 0 ? scene->mMaterials[mesh->mMaterialIndex] : nullptr);
-	}
-
-	auto Assimp_Loader::load_material(aiMaterial const* material) -> void {
-		// TODO: support more materials
-		// if (!material) {
-			materials.push_back(std::make_unique<material::Diffuse_Material>(
-				std::make_unique<texture::Constant_Texture<spectra::Stochastic_Spectrum>>(
-					color::Color_Space::sRGB->to_spectrum(
-						{1.0f, 1.0f, 1.0f},
-						color::Color_Space::Spectrum_Type::albedo
-					)
-				),
-				std::make_unique<texture::Constant_Texture<spectra::Stochastic_Spectrum>>(
-					color::Color_Space::sRGB->to_spectrum(
-						{0.0f, 0.0f, 0.0f},
-						color::Color_Space::Spectrum_Type::albedo
-					)
-				),
-				std::make_unique<texture::Constant_Texture<spectra::Stochastic_Spectrum>>(
-					color::Color_Space::sRGB->to_spectrum(
-						{0.0f, 0.0f, 0.0f},
-						color::Color_Space::Spectrum_Type::illuminant
-					)
-				)
-			));
-			return;
-		// }
 	}
 }

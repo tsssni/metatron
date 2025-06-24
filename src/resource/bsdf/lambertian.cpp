@@ -1,72 +1,61 @@
 #include <metatron/resource/bsdf/lambertian.hpp>
+#include <metatron/resource/spectra/constant.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/sphere.hpp>
-#include <metatron/core/math/distribution/cosine-hemisphere.hpp>
+#include <metatron/core/math/distribution/sphere.hpp>
 
 namespace metatron::bsdf {
-	Lambertian_Bsdf::Lambertian_Bsdf(
-		std::unique_ptr<spectra::Stochastic_Spectrum> R,
-		std::unique_ptr<spectra::Stochastic_Spectrum> T
-	) : R(std::move(R)), T(std::move(T)) {}
-
 	auto Lambertian_Bsdf::operator()(
 		math::Vector<f32, 3> const& wo,
-		math::Vector<f32, 3> const& wi,
-		spectra::Stochastic_Spectrum const& L
+		math::Vector<f32, 3> const& wi
 	) const -> std::optional<Interaction> {
-		auto ru = spectra::max(*R);
-		auto tu = spectra::max(*T);
-		if (std::abs(ru + tu) < math::epsilon<f32>) return {};
-
-		auto f = L;
-		for (auto i = 0uz; i < f.lambda.size(); i++) {
-			if (-wo[1] * wi[1] >= 0.f) {
-				f.value[i] = (*R)(f.lambda[i]);
-			} else {
-				f.value[i] = (*T)(f.lambda[i]);
-			}
+		auto reflective = -wo[1] * wi[1] >= 0.f;
+		auto forward = wi[1] > 0.f;
+		if (!reflective || !forward) {
+			return {};
 		}
 
+		auto f = spectrum;
+		f.value = math::foreach([&](f32 lambda, usize i) {
+			return math::guarded_div(reflectance(lambda), math::pi);
+		}, f.lambda);
+
 		auto distr = math::Cosine_Hemisphere_Distribution{};
-		auto pdf = distr.pdf(std::abs(wi[1]));
-		pdf *= (-wo[1] * wi[1] >= 0.f ? ru : tu) / (ru + tu);
+		auto pdf = distr.pdf(math::abs(wi[1]));
 
 		return Interaction{f, wi, pdf};
 	}
 
-	auto Lambertian_Bsdf::sample(eval::Context const& ctx, math::Vector<f32, 3> const& u) const -> std::optional<Interaction> {
-		auto ru = spectra::max(*R);
-		auto tu = spectra::max(*T);
-		if (std::abs(ru + tu) < math::epsilon<f32>) return {};
-
-		auto rtu = ru / (ru + tu);
-		auto reflected = u[0] < rtu;
-
+	auto Lambertian_Bsdf::sample(
+		eval::Context const& ctx,
+		math::Vector<f32, 3> const& u
+	) const -> std::optional<Interaction> {
 		auto distr = math::Cosine_Hemisphere_Distribution{};
 		auto wi = distr.sample({u[1], u[2]});
 		auto pdf = distr.pdf(wi[1]);
 
-		if (reflected) {
-			pdf *= rtu;
-			if (-ctx.r.d[1] * wi[1] < 0.f) {
-				wi *= -1.f;
-			}
-		} else {
-			pdf *= 1.f - rtu;
-			if (-ctx.r.d[1] * wi[1] >= 0.f) {
-				wi *= -1.f;
-			}
-		}
-
-		auto f = ctx.L;
-		for (auto i = 0uz; i < f.lambda.size(); i++) {
-			if (reflected) {
-				f.value[i] = (*R)(f.lambda[i]);
-			} else {
-				f.value[i] = (*T)(f.lambda[i]);
-			}
-		}
+		auto f = spectrum;
+		f.value = math::foreach([&](f32 lambda, usize i) {
+			return math::guarded_div(reflectance(lambda), math::pi);
+		}, f.lambda);
 
 		return Interaction{f, wi, pdf};
+	}
+
+	auto Lambertian_Bsdf::clone(Attribute const& attr) const -> std::unique_ptr<Bsdf> {
+		auto bsdf = std::make_unique<Lambertian_Bsdf>();
+		bsdf->spectrum = attr.spectra.at("spectrum");
+		bsdf->reflectance = attr.spectra.count("reflectance") > 0
+		? attr.spectra.at("reflectance")
+		: bsdf->spectrum & spectra::Constant_Spectrum{0.f};
+		return bsdf;
+	}
+
+	auto Lambertian_Bsdf::flags() const -> Flags {
+		return Flags::reflective;
+	}
+
+	auto Lambertian_Bsdf::degrade() -> bool {
+		return false;
 	}
 }

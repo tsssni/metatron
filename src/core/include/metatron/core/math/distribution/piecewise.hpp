@@ -29,7 +29,7 @@ namespace metatron::math {
 
 			for (auto i = 0uz; i < first_dim; i++) {
 				if constexpr (n == 1uz) {
-					rows[i] = std::abs(matrix[i]);
+					rows[i] = math::abs(matrix[i]);
 					cdf[i + 1] = rows[i];
 				} else {
 					rows[i] = Element{std::move(matrix[i]), shrink(low), shrink(high)};
@@ -54,7 +54,7 @@ namespace metatron::math {
 			idx--;
 
 			auto t = guarded_div(u[n - 1] - cdf[idx], cdf[idx + 1uz] - cdf[idx]);
-			auto p = std::lerp(low, high, (f32(idx) + t) / f32(first_dim));
+			auto p = math::lerp(low, high, (f32(idx) + t) / f32(first_dim));
 
 			if constexpr (n == 1uz) {
 				return {p};
