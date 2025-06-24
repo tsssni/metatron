@@ -46,7 +46,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 256uz;
+	auto spp = 16uz;
 	auto depth = 64uz;
 
 	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
@@ -202,10 +202,8 @@ auto main() -> int {
 		.bsdf = &lambertian,
 		.interior_medium = &vaccum_medium,
 		.exterior_medium = &vaccum_medium,
-		.interior_eta = &eta,
-		.exterior_eta = &eta,
-		.interior_k = &k,
-		.exterior_k = &k,
+		.eta = &eta,
+		.k = &k,
 		.reflectance = &diffuse_reflectance,
 		.transmittance = &diffuse_transmittance,
 	};
@@ -213,10 +211,8 @@ auto main() -> int {
 		.bsdf = &microfacet,
 		.interior_medium = &vaccum_medium,
 		.exterior_medium = &vaccum_medium,
-		.interior_eta = &test_eta, // spectra::Spectrum::Au_eta.get(),
-		.exterior_eta = &eta,
-		.interior_k = &k, // spectra::Spectrum::Au_k.get(),
-		.exterior_k = &k,
+		.eta = spectra::Spectrum::Au_eta.get(),
+		.k = spectra::Spectrum::Au_k.get(),
 		.u_roughness = &u_roughness,
 		.v_roughness = &v_roughness,
 	};

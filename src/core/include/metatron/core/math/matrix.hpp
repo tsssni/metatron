@@ -397,6 +397,11 @@ namespace metatron::math {
 		return rhs * lhs;
 	}
 
+	template<typename T, usize... dims>
+	auto constexpr operator/(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
+		return Matrix<T, dims...>{lhs} / rhs;
+	}
+
 	template<usize idx, typename T, usize first_dim, usize... rest_dims>
 	auto constexpr get(Matrix<T, first_dim, rest_dims...> const& m) 
 		-> typename Matrix<T, first_dim, rest_dims...>::Element const& {

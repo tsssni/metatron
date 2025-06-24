@@ -11,10 +11,8 @@ namespace metatron::bsdf {
 		spectra::Stochastic_Spectrum spectrum;
 		spectra::Stochastic_Spectrum reflectance;
 		spectra::Stochastic_Spectrum transmittance;
-		spectra::Stochastic_Spectrum interior_eta;
-		spectra::Stochastic_Spectrum exterior_eta;
-		spectra::Stochastic_Spectrum interior_k;
-		spectra::Stochastic_Spectrum exterior_k;
+		spectra::Stochastic_Spectrum eta;
+		spectra::Stochastic_Spectrum k;
 		f32 u_roughness;
 		f32 v_roughness;
 		bool inside;

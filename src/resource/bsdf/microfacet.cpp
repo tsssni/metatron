@@ -3,7 +3,6 @@
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/distribution/disk.hpp>
-#include <utility>
 
 namespace metatron::bsdf {
 	auto Microfacet_Bsdf::operator()(
@@ -98,31 +97,14 @@ namespace metatron::bsdf {
 
 	auto Microfacet_Bsdf::clone(Attribute const& attr) const -> std::unique_ptr<Bsdf> {
 		auto bsdf = std::make_unique<Microfacet_Bsdf>();
-		auto interior_eta = attr.interior_eta;
-		auto exterior_eta = attr.exterior_eta;
-		auto interior_k = attr.interior_k;
-		auto exterior_k = attr.exterior_k;
-
+		bsdf->eta = attr.eta;
+		bsdf->k = attr.k;
 		bsdf->alpha_x = attr.u_roughness;
 		bsdf->alpha_y = attr.v_roughness;
 
 		if (attr.inside) {
-			std::swap(exterior_eta, interior_eta);
-			std::swap(exterior_k, interior_k);
+			bsdf->eta.value = 1.f / bsdf->eta.value;
 		}
-
-		math::foreach([&](f32 lambda, f32 eta_i, f32 k_i, f32 eta_o, f32 k_o, usize i) {
-				auto eta_k = math::Complex<f32>{eta_i, k_i} / math::Complex<f32>{eta_o, k_o};
-				bsdf->eta.lambda[i] = lambda;
-				bsdf->k.lambda[i] = lambda;
-				bsdf->eta.value[i] = eta_k.r;
-				bsdf->k.value[i] = eta_k.i;
-				return 0.f;
-			},
-			interior_eta.lambda,
-			interior_eta.value, interior_k.value,
-			exterior_eta.value, exterior_k.value
-		);
 
 		return bsdf;
 	}
