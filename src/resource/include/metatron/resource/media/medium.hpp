@@ -22,4 +22,8 @@ namespace metatron::media {
 	struct Medium {
 		auto virtual sample(eval::Context const& ctx, f32 t_max, f32 u) const -> std::optional<Interaction> = 0;
 	};
+
+	struct Instance final {
+		Medium const* medium;
+	};
 }
