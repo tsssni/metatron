@@ -1,1 +1,1 @@
-list(APPEND metatron-deps resource)
+list(APPEND metatron-deps scene)
