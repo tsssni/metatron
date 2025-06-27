@@ -39,4 +39,8 @@ namespace metatron::shape {
 			usize idx = 0uz
 		) const -> std::optional<Interaction> = 0;
 	};
+
+	struct Instance final {
+		Shape const* shape;
+	};
 }
