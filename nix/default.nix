@@ -10,6 +10,7 @@
   openimageio,
   openvdb,
   zlib,
+  entt,
 }:
 stdenv.mkDerivation {
   pname = "metatron";
@@ -34,6 +35,7 @@ stdenv.mkDerivation {
     openimageio
     openvdb
     zlib
+	entt
   ];
 
   cmakeFlags = [
