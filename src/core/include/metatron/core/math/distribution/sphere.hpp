@@ -3,7 +3,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/sphere.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Sphere_Distribution final {
 		Sphere_Distribution() = default;
 

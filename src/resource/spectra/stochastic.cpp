@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-namespace metatron::spectra {
+namespace mtt::spectra {
 	Stochastic_Spectrum::Stochastic_Spectrum(f32 u, f32 v) {
 		lambda = math::foreach([&](f32 l, usize i) {
 			auto ui = std::fmod(u + i / f32(stochastic_samples), 1.f);

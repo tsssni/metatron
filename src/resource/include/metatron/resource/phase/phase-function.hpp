@@ -3,7 +3,7 @@
 #include <metatron/resource/eval/context.hpp>
 #include <metatron/core/math/vector.hpp>
 
-namespace metatron::phase {
+namespace mtt::phase {
 	struct Attribute final {
 		spectra::Stochastic_Spectrum spectrum;
 	};

@@ -10,7 +10,7 @@
 #include <nanovdb/math/Ray.h>
 #include <string_view>
 
-namespace metatron::media {
+namespace mtt::media {
 	template<typename T, usize n>
 	auto to_nanovdb(math::Vector<T, n> x) {
 		if constexpr (n == 3) {

@@ -3,7 +3,7 @@
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/number-theory.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	Halton_Sampler::Halton_Sampler(
 		usize seed,
 		Vector<usize, 2> const& scale_exponential

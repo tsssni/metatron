@@ -2,7 +2,7 @@
 #include <metatron/core/math/constant.hpp>
 #include <cmath>
 
-namespace metatron::math {
+namespace mtt::math {
 	template<typename T>
 	auto inline constexpr abs(T x) -> T {
 		return std::abs(x);

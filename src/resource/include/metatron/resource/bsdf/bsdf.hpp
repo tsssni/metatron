@@ -5,7 +5,7 @@
 #include <memory>
 #include <unordered_map>
 
-namespace metatron::bsdf {
+namespace mtt::bsdf {
 	using Spectrum = spectra::Stochastic_Spectrum;
 
 	struct Attribute final {

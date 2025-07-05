@@ -5,7 +5,7 @@
 #include <memory>
 #include <unordered_map>
 
-namespace metatron::material {
+namespace mtt::material {
 	struct Interaction final {
 		std::unique_ptr<bsdf::Bsdf> bsdf;
 		spectra::Stochastic_Spectrum emission;

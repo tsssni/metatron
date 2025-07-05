@@ -2,7 +2,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/sphere.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Cone_Distribution final {
 		Cone_Distribution(f32 cos_theta_max): cos_theta_max(cos_theta_max) {}
 

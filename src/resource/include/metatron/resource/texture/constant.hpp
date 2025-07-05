@@ -2,7 +2,7 @@
 #include <metatron/resource/image/image.hpp>
 #include <metatron/resource/texture/texture.hpp>
 
-namespace metatron::texture {
+namespace mtt::texture {
 	template<typename T>
 	struct Constant_Texture final: Texture<T> {};
 

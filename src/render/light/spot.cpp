@@ -1,6 +1,6 @@
 #include <metatron/render/light/spot.hpp>
 
-namespace metatron::light {
+namespace mtt::light {
 	Spot_Light::Spot_Light(
 		std::unique_ptr<spectra::Spectrum> L,
 		f32 falloff_start_theta,

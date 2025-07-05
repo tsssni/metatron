@@ -2,7 +2,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	auto inline constexpr cartesion_to_unit_sphere(math::Vector<f32, 3> const& d) -> math::Vector<f32, 2> {
 		auto theta = std::acos(d[1]);
 		auto phi = std::atan2(d[2], d[0]);

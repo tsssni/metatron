@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/render/lens/lens.hpp>
 
-namespace metatron::photo {
+namespace mtt::photo {
 	struct Thin_Lens final: Lens {
 		Thin_Lens(
 			f32 aperture,

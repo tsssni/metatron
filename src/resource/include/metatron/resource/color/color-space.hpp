@@ -3,7 +3,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <functional>
 
-namespace metatron::color {
+namespace mtt::color {
 	auto constexpr table_res = 64;
 	struct Color_Space final {
 		using Scale = f32[table_res];

@@ -3,7 +3,7 @@
 #include <metatron/core/math/prime.hpp>
 #include <metatron/core/math/hash.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	auto inline constexpr radical_inverse(usize x, usize b) -> f32 {
 		auto reversed = 0uz;
 		auto limit = (~0uz - b) / b;

@@ -2,7 +2,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Polar_Disk_Distribution final {
 		Polar_Disk_Distribution() = default;
 

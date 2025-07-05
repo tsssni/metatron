@@ -3,7 +3,7 @@
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/math/constant.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Bounding_Box final {
 		Vector<f32, 3> p_min{high<f32>};
 		Vector<f32, 3> p_max{low<f32>};

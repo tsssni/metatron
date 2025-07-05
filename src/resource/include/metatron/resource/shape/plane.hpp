@@ -1,13 +1,13 @@
 #pragma once
 #include <metatron/resource/shape/shape.hpp>
 
-namespace metatron::shape {
+namespace mtt::shape {
 	struct Plane final: Shape {
 		Plane(f32 a, f32 b, f32 c, f32 d);
 		Plane(math::Vector<f32, 3> const& p, math::Vector<f32, 3> const& n);
 		auto size() const -> usize;
 		auto bounding_box(
-			math::Matrix<f32, 4, 4> const* t,
+			math::Matrix<f32, 4, 4> const& t,
 			usize idx
 		) const -> math::Bounding_Box;
 		auto operator()(

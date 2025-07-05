@@ -3,7 +3,7 @@
 #include <metatron/resource/spectra/constant.hpp>
 #include <metatron/core/math/distribution/exponential.hpp>
 
-namespace metatron::media {
+namespace mtt::media {
 	Homogeneous_Medium::Homogeneous_Medium(
 		phase::Phase_Function const* phase,
 		spectra::Spectrum const* sigma_a,

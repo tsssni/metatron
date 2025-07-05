@@ -6,7 +6,7 @@
 #include <metatron/resource/spectra/stochastic.hpp>
 #include <metatron/core/math/sampler/sampler.hpp>
 
-namespace metatron::monte_carlo {
+namespace mtt::monte_carlo {
 	struct Status final {
 		math::Ray_Differential ray_differential;
 		math::Ray_Differential default_differential;

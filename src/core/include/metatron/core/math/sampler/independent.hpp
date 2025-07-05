@@ -2,7 +2,7 @@
 #include <metatron/core/math/sampler/sampler.hpp>
 #include <random>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Independent_Sampler final: Sampler {
 		Independent_Sampler(usize seed = 0);
 

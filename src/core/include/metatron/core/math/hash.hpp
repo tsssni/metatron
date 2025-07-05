@@ -1,6 +1,6 @@
 #pragma once
 
-namespace metatron::math {
+namespace mtt::math {
 	auto inline constexpr mix_bits(u64 x) -> u64 {
 		x ^= (x >> 31);
 		x *= 0x7fb5d329728ea185;

@@ -1,7 +1,7 @@
 #include <metatron/resource/image/image.hpp>
 #include <OpenImageIO/imageio.h>
 
-namespace metatron::image {
+namespace mtt::image {
 	Image::Pixel::Pixel(Image const* image, byte* start)
 	: image(image), start(start) {}
 

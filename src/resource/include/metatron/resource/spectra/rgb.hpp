@@ -3,7 +3,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/polynomial.hpp>
 
-namespace metatron::spectra {
+namespace mtt::spectra {
 	struct Rgb_Spectrum final: Spectrum {
 		Rgb_Spectrum(
 			math::Vector<f32, 3> const& c,

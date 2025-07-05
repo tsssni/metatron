@@ -1,11 +1,11 @@
 #pragma once
 #include <metatron/resource/shape/shape.hpp>
 
-namespace metatron::shape {
+namespace mtt::shape {
 	struct Sphere final: Shape {
 		auto size() const -> usize;
 		auto bounding_box(
-			math::Matrix<f32, 4, 4> const* t,
+			math::Matrix<f32, 4, 4> const& t,
 			usize idx
 		) const -> math::Bounding_Box;
 		auto operator()(

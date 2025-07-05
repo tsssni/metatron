@@ -2,7 +2,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <memory>
 
-namespace metatron::spectra {
+namespace mtt::spectra {
 	auto constexpr visible_lambda = math::Vector<f32, 2>{360.f, 830.f};
 
 	struct Spectrum {

@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include <typeindex>
 
-namespace metatron::light {
+namespace mtt::light {
 	struct Interaction final {
 		spectra::Stochastic_Spectrum L;
 		math::Vector<f32, 3> wi;

@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	namespace filter {
 		struct Interaction final {
 			Vector<f32, 2> p;

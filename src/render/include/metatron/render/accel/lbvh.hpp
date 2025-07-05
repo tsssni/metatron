@@ -1,7 +1,7 @@
 #include <metatron/render/accel/accel.hpp>
 #include <vector>
 
-namespace metatron::accel {
+namespace mtt::accel {
 	struct LBVH final: Acceleration {
 		struct alignas(32) Node final {
 			math::Bounding_Box bbox;

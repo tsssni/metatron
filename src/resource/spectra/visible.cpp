@@ -1,6 +1,6 @@
 #include <metatron/resource/spectra/visible.hpp>
 
-namespace metatron::spectra {
+namespace mtt::spectra {
 	Visible_Spectrum::Visible_Spectrum(std::array<f32, visible_range>&& data): data(std::move(data)) {}
 
 	auto Visible_Spectrum::operator()(f32 lambda) const -> f32 {

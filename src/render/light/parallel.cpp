@@ -1,6 +1,6 @@
 #include <metatron/render/light/parallel.hpp>
 
-namespace metatron::light {
+namespace mtt::light {
 	Parallel_Light::Parallel_Light(std::unique_ptr<spectra::Spectrum> L): L(std::move(L)) {}
 
 	auto Parallel_Light::operator()(

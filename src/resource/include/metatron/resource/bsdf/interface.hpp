@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/resource/bsdf/bsdf.hpp>
 
-namespace metatron::bsdf {
+namespace mtt::bsdf {
 	struct Interface_Bsdf final: Bsdf {
 		auto operator()(
 			math::Vector<f32, 3> const& wo,

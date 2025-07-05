@@ -5,7 +5,7 @@
 #include <string_view>
 #include <memory>
 
-namespace metatron::image {
+namespace mtt::image {
 	struct Image final {
 		struct Pixel final {
 			Pixel(Image const* image, byte* start);

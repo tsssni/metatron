@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Discrete_Distribution final {
 		Discrete_Distribution(std::vector<f32> const& weights): weights(weights) {
 			for (auto w: weights) {

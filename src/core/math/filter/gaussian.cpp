@@ -1,6 +1,6 @@
 #include <metatron/core/math/filter/gaussian.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	Gaussian_Filter::Gaussian_Filter(
 		Vector<f32, 2> const& radius,
 		f32 sigma

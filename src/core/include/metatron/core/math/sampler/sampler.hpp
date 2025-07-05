@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Sampler {
 		virtual ~Sampler() {}
 		auto virtual start(math::Vector<usize, 2> const& pixel, usize idx, usize dim = 0uz) -> void = 0;

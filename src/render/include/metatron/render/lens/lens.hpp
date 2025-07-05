@@ -2,7 +2,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/ray.hpp>
 
-namespace metatron::photo {
+namespace mtt::photo {
 	namespace lens {
 		struct Interaction final {
 			math::Ray r;

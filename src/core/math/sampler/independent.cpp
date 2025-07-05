@@ -1,7 +1,7 @@
 #include <metatron/core/math/sampler/independent.hpp>
 #include <metatron/core/math/constant.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	Independent_Sampler::Independent_Sampler(usize seed)
 		: rng(seed), dist(1e-4, 1.f - 1e-4) {}
 

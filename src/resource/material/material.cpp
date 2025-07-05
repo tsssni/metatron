@@ -2,7 +2,7 @@
 #include <metatron/resource/bsdf/interface.hpp>
 #include <metatron/resource/spectra/constant.hpp>
 
-namespace metatron::material {
+namespace mtt::material {
 	auto Material::sample(
 		eval::Context const& ctx,
 		texture::Coordinate const& coord

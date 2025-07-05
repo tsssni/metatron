@@ -1,7 +1,7 @@
 #include <metatron/resource/bsdf/interface.hpp>
 #include <metatron/core/math/constant.hpp>
 
-namespace metatron::bsdf {
+namespace mtt::bsdf {
 	auto Interface_Bsdf::operator()(
 		math::Vector<f32, 3> const& wo,
 		math::Vector<f32, 3> const& wi

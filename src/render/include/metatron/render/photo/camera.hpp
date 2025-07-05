@@ -6,7 +6,7 @@
 #include <metatron/core/math/sampler/sampler.hpp>
 #include <memory>
 
-namespace metatron::photo {
+namespace mtt::photo {
 	struct Interaction final {
 		math::Ray_Differential ray_differential;
 		math::Ray_Differential default_differential;

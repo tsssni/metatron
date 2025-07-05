@@ -3,7 +3,7 @@
 #include <metatron/resource/color/color-space.hpp>
 #include <metatron/resource/texture/texture.hpp>
 
-namespace metatron::texture {
+namespace mtt::texture {
 	template<typename T>
 	struct Image_Texture final: Texture<T> {};
 

@@ -2,7 +2,7 @@
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <algorithm>
 
-namespace metatron::spectra {
+namespace mtt::spectra {
 	template<usize n>
 	struct Discrete_Spectrum final: Spectrum {
 		Discrete_Spectrum(std::array<f32, n>&& lambda, std::array<f32, n>&& data)

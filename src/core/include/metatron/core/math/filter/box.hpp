@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/core/math/filter/filter.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Box_Filter final: Filter {
 		Box_Filter(Vector<f32, 2> const& radius = {0.5f});
 

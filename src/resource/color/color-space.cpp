@@ -2,7 +2,7 @@
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 
-namespace metatron::color {
+namespace mtt::color {
 	extern color::Color_Space::Scale sRGB_spectrum_z;
 	extern color::Color_Space::Table sRGB_spectrum_table;
 

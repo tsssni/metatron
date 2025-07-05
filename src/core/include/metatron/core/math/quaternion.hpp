@@ -2,7 +2,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <tuple>
 
-namespace metatron::math {
+namespace mtt::math {
     template<typename T>
     requires std::floating_point<T>
     struct Quaternion final {

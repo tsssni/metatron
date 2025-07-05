@@ -1,7 +1,7 @@
 #include <metatron/resource/texture/constant.hpp>
 #include <metatron/resource/spectra/rgb.hpp>
 
-namespace metatron::texture {
+namespace mtt::texture {
 	Constant_Texture<spectra::Stochastic_Spectrum>::Constant_Texture(
 		spectra::Spectrum const* x
 	): x(x) {}

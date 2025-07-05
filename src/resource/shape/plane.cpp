@@ -1,7 +1,7 @@
 #include <metatron/resource/shape/plane.hpp>
 #include <metatron/core/math/constant.hpp>
 
-namespace metatron::shape {
+namespace mtt::shape {
 	Plane::Plane(f32 a, f32 b, f32 c, f32 d):
 		a(a), b(b), c(c), d(d) {}
 
@@ -13,7 +13,7 @@ namespace metatron::shape {
 	}
 
 	auto Plane::bounding_box(
-		math::Matrix<f32, 4, 4> const* t,
+		math::Matrix<f32, 4, 4> const& t,
 		usize idx
 	) const -> math::Bounding_Box {
 		return {};

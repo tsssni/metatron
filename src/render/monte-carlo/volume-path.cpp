@@ -5,7 +5,7 @@
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/optional.hpp>
 
-namespace metatron::monte_carlo {
+namespace mtt::monte_carlo {
 	auto Volume_Path_Integrator::sample(
 		Status initial_status,
 		accel::Acceleration const& accel,
@@ -65,11 +65,11 @@ namespace metatron::monte_carlo {
 				}
 
 				auto direct_ctx = trace_ctx;
-				METATRON_OPT_OR_RETURN(e_intr, emitter.sample(direct_ctx, sampler.generate_1d()));
+				MTT_OPT_OR_RETURN(e_intr, emitter.sample(direct_ctx, sampler.generate_1d()));
 				auto& et = *e_intr.divider->local_to_world;
 
 				auto l_ctx = et ^ rt ^ direct_ctx;
-				METATRON_OPT_OR_RETURN(l_intr, e_intr.divider->light->sample(l_ctx, sampler.generate_2d()));
+				MTT_OPT_OR_RETURN(l_intr, e_intr.divider->light->sample(l_ctx, sampler.generate_2d()));
 
 				l_intr.p = rt | et | math::expand(l_intr.p, 1.f);
 				l_intr.wi = math::normalize(rt | et | math::expand(l_intr.wi, 0.f));
@@ -89,11 +89,11 @@ namespace metatron::monte_carlo {
 					};
 					auto wo = t | math::expand(history_ctx.r.d, 0.f);
 					auto wi = t | math::expand(l_intr.wi, 0.f);
-					METATRON_OPT_OR_RETURN(b_intr, (*bsdf)(wo, wi));
+					MTT_OPT_OR_RETURN(b_intr, (*bsdf)(wo, wi));
 					f = b_intr.f * math::abs(math::dot(l_intr.wi, direct_ctx.n));
 					p_s = b_intr.pdf;
 				} else {
-					METATRON_OPT_OR_RETURN(p_intr, (*phase)(history_ctx.r.d, l_intr.wi));
+					MTT_OPT_OR_RETURN(p_intr, (*phase)(history_ctx.r.d, l_intr.wi));
 					f = p_intr.f;
 					p_s = p_intr.pdf;
 				}
@@ -161,10 +161,10 @@ namespace metatron::monte_carlo {
 
 							auto ldiff = lt ^ rt ^ rd;
 							auto tangent = shape::Plane{imtr.p, imtr.n};
-							METATRON_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, imtr), {
+							MTT_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, imtr), {
 								termenated = true; gamma = 0.f; continue;
 							});
-							METATRON_OPT_OR_CALLBACK(mat_intr, dim.material->sample(direct_ctx, tcoord), {
+							MTT_OPT_OR_CALLBACK(mat_intr, dim.material->sample(direct_ctx, tcoord), {
 								termenated = true; gamma = 0.f; continue;
 							});
 							l_intr.L = mat_intr.emission;
@@ -177,7 +177,7 @@ namespace metatron::monte_carlo {
 
 					auto& mt = *direct_to_world;
 					auto m_ctx = mt ^ rt ^ direct_ctx;
-					METATRON_OPT_OR_CALLBACK(m_intr, dedium->sample(m_ctx, imtr.t, sampler.generate_1d()), {
+					MTT_OPT_OR_CALLBACK(m_intr, dedium->sample(m_ctx, imtr.t, sampler.generate_1d()), {
 						gamma = 0.f;
 						termenated = true;
 						break;
@@ -215,11 +215,11 @@ namespace metatron::monte_carlo {
 			if (!acc_opt || !acc_opt.value().intr_opt) {
 				terminated = true;
 
-				METATRON_OPT_OR_CONTINUE(e_intr, emitter.sample_infinite(trace_ctx, sampler.generate_1d()));
+				MTT_OPT_OR_CONTINUE(e_intr, emitter.sample_infinite(trace_ctx, sampler.generate_1d()));
 				auto& lt = *e_intr.divider->local_to_world;
 
 				auto l_ctx = lt ^ rt ^ trace_ctx;
-				METATRON_OPT_OR_CONTINUE(l_intr, (*e_intr.divider->light)(l_ctx));
+				MTT_OPT_OR_CONTINUE(l_intr, (*e_intr.divider->light)(l_ctx));
 
 				auto p_e = e_intr.pdf * l_intr.pdf;
 				mis_e *= math::guarded_div(p_e, scatter_pdf);
@@ -247,7 +247,7 @@ namespace metatron::monte_carlo {
 
 			auto& mt = *medium_to_world;
 			auto m_ctx = mt ^ rt ^ trace_ctx;
-			METATRON_OPT_OR_CALLBACK(m_intr, medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
+			MTT_OPT_OR_CALLBACK(m_intr, medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
 				terminated = true;
 				continue;
 			});
@@ -279,7 +279,7 @@ namespace metatron::monte_carlo {
 					};
 
 					auto p_ctx = pt | trace_ctx;
-					METATRON_OPT_OR_CALLBACK(p_intr, phase->sample(p_ctx, sampler.generate_2d()), {
+					MTT_OPT_OR_CALLBACK(p_intr, phase->sample(p_ctx, sampler.generate_2d()), {
 						terminated = true;
 						continue;
 					});
@@ -318,15 +318,15 @@ namespace metatron::monte_carlo {
 			rdiff.differentiable = false;
 			auto ldiff = lt ^ rt ^ rdiff;
 
-			METATRON_OPT_OR_BREAK(tcoord, texture::grad(ldiff, intr));
-			METATRON_OPT_OR_BREAK(mat_intr, div->material->sample(trace_ctx, tcoord));
+			MTT_OPT_OR_BREAK(tcoord, texture::grad(ldiff, intr));
+			MTT_OPT_OR_BREAK(mat_intr, div->material->sample(trace_ctx, tcoord));
 
 			[&]() {
 				if (spectra::max(mat_intr.emission) < math::epsilon<f32>) {
 					return;
 				}
 
-				METATRON_OPT_OR_RETURN(e_intr, emitter(trace_ctx, {div->light, div->local_to_world}));
+				MTT_OPT_OR_RETURN(e_intr, emitter(trace_ctx, {div->light, div->local_to_world}));
 				auto& div = *e_intr.divider;
 				auto& lt = *div.local_to_world;
 
@@ -353,7 +353,7 @@ namespace metatron::monte_carlo {
 			auto u = sampler.generate_2d();
 
 			auto b_ctx = bt | trace_ctx;
-			METATRON_OPT_OR_CALLBACK(b_intr, bsdf->sample(b_ctx, {uc, u[0], u[1]}), {
+			MTT_OPT_OR_CALLBACK(b_intr, bsdf->sample(b_ctx, {uc, u[0], u[1]}), {
 				terminated = true;
 				continue;
 			});

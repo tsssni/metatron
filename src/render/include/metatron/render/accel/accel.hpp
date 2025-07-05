@@ -7,7 +7,7 @@
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/math/transform.hpp>
 
-namespace metatron::accel {
+namespace mtt::accel {
 	struct Divider final {
 		shape::Shape const* shape{};
 		media::Medium const* medium;

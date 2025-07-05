@@ -2,7 +2,7 @@
 #include <metatron/core/math/sampler/sampler.hpp>
 #include <metatron/core/math/prime.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Halton_Sampler final: Sampler {
 		Halton_Sampler(
 			usize seed = 0uz,

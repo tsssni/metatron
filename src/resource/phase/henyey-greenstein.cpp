@@ -6,7 +6,7 @@
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/quaternion.hpp>
 
-namespace metatron::phase {
+namespace mtt::phase {
 	Henyey_Greenstein_Phase_Function::Henyey_Greenstein_Phase_Function(f32 g): g(g) {}
 
 	auto Henyey_Greenstein_Phase_Function::operator()(

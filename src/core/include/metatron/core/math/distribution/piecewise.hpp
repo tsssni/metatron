@@ -3,7 +3,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	// forward declaration to support the declaration of 0d piecewise distribution
 	template<usize... dims>
 	struct Piecewise_Distribution;

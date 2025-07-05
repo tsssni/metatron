@@ -2,7 +2,7 @@
 #include <metatron/render/light/light.hpp>
 #include <metatron/resource/shape/shape.hpp>
 
-namespace metatron::light {
+namespace mtt::light {
 	struct Area_Light final: Light {
 		Area_Light(
 			shape::Shape const& shape,

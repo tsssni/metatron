@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/resource/spectra/spectrum.hpp>
 
-namespace metatron::spectra {
+namespace mtt::spectra {
 	struct Constant_Spectrum final: Spectrum {
 		f32 x;
 		Constant_Spectrum(f32 x);

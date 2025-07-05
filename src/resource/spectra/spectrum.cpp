@@ -1,7 +1,7 @@
 #include <metatron/resource/spectra/visible.hpp>
 #include <metatron/resource/spectra/discrete.hpp>
 
-namespace metatron::spectra {
+namespace mtt::spectra {
 	std::unique_ptr<Spectrum> Spectrum::CIE_X;
 	std::unique_ptr<Spectrum> Spectrum::CIE_Y;
 	std::unique_ptr<Spectrum> Spectrum::CIE_Z;

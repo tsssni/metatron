@@ -5,7 +5,7 @@
 #include <metatron/core/math/distribution/sphere.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>
 
-namespace metatron::light {
+namespace mtt::light {
 	struct Environment_Light final: Light {
 		Environment_Light(texture::Texture<spectra::Stochastic_Spectrum> const* env_map);
 

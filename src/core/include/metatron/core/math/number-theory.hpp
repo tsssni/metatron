@@ -2,7 +2,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <tuple>
 
-namespace metatron::math {
+namespace mtt::math {
 	auto inline constexpr gcd(usize a, usize b) -> usize {
 		if (b == 0) {
 			return a;

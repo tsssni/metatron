@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/core/math/arithmetic.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	template <typename T>
 	struct Complex {
 		T r;

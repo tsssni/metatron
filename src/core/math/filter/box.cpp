@@ -1,6 +1,6 @@
 #include <metatron/core/math/filter/box.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	Box_Filter::Box_Filter(math::Vector<f32, 2> const& radius): radius(radius) {}
 
 	auto Box_Filter::operator()(math::Vector<f32, 2> const& p) const -> f32 {

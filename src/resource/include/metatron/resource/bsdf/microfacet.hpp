@@ -2,7 +2,7 @@
 #include <metatron/resource/bsdf/bsdf.hpp>
 #include <metatron/core/math/complex.hpp>
 
-namespace metatron::bsdf {
+namespace mtt::bsdf {
 	struct Microfacet_Bsdf final: Bsdf {
 		auto operator()(
 			math::Vector<f32, 3> const& wo,

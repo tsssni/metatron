@@ -1,6 +1,6 @@
 #include <metatron/core/math/filter/lanczos.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	Lanczos_Filter::Lanczos_Filter(Vector<f32, 2> const& radius, f32 tau): radius(radius), tau(tau) {
 		auto matrix = math::Matrix<f32, 64, 64>{};
 		for (auto i = 0uz; i < 64; i++) {

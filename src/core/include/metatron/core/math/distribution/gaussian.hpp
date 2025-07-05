@@ -3,7 +3,7 @@
 #include <metatron/core/math/arithmetic.hpp>
 #include <cmath>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Gaussian_Distribution final {
 		Gaussian_Distribution(f32 sigma): sigma(sigma) {}
 

@@ -8,7 +8,7 @@
 #include <cassert>
 #include <cmath>
 
-namespace metatron::math {
+namespace mtt::math {
 	// forward declaration to support the declaration of 0d matrix
 	template<typename T, usize... dims>
 	struct Matrix;
@@ -585,7 +585,7 @@ namespace metatron::math {
 }
 
 namespace std {
-	using namespace metatron;
+	using namespace mtt;
 
 	template<typename T, usize first_dim, usize... rest_dims>
 	struct tuple_size<math::Matrix<T, first_dim, rest_dims...>> 

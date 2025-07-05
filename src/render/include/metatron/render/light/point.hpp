@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/render/light/light.hpp>
 
-namespace metatron::light {
+namespace mtt::light {
 	struct Point_Light final: Light {
 		Point_Light(std::unique_ptr<spectra::Spectrum> L);
 

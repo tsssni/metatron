@@ -2,7 +2,7 @@
 #include <metatron/resource/spectra/stochastic.hpp>
 #include <metatron/resource/color/color-space.hpp>
 
-namespace metatron::photo {
+namespace mtt::photo {
 	struct Sensor final {
 		Sensor(color::Color_Space const* color_space);
 

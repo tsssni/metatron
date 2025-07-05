@@ -4,7 +4,7 @@
 #include <metatron/core/stl/thread.hpp>
 #include <bit>
 
-namespace metatron::texture {
+namespace mtt::texture {
 	Image_Texture<math::Vector<f32, 4>>::Image_Texture(std::unique_ptr<image::Image> image) {
 		auto size = math::Vector<usize, 2>{image->size};
 		auto channels = image->size[2];

@@ -3,7 +3,7 @@
 #include <metatron/core/math/distribution/piecewise.hpp>
 #include <metatron/core/math/distribution/gaussian.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Gaussian_Filter final: Filter {
 		Gaussian_Filter(Vector<f32, 2> const& radius = {1.5f}, f32 sigma = 0.5f);
 

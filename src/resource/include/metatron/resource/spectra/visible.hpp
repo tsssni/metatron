@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/resource/spectra/spectrum.hpp>
 
-namespace metatron::spectra {
+namespace mtt::spectra {
 	auto constexpr visible_range = usize(visible_lambda[1] - visible_lambda[0] + 1.f);
 
 	struct Visible_Spectrum final: Spectrum {

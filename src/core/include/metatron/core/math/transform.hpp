@@ -5,7 +5,7 @@
 #include <metatron/core/math/ray.hpp>
 #include <vector>
 
-namespace metatron::math {
+namespace mtt::math {
 	template<typename T>
     concept Transformable = false
 	|| std::is_same_v<std::remove_cvref_t<T>, Vector<f32, 4>>

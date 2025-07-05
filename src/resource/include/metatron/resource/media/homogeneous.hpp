@@ -1,7 +1,7 @@
 #include <metatron/resource/media/medium.hpp>
 #include <metatron/resource/phase/phase-function.hpp>
 
-namespace metatron::media {
+namespace mtt::media {
 	struct Homogeneous_Medium final: Medium {
 		Homogeneous_Medium(
 			phase::Phase_Function const* phase,

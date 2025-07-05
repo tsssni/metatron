@@ -4,7 +4,7 @@
 #include <metatron/resource/eval/context.hpp>
 #include <metatron/core/math/ray.hpp>
 
-namespace metatron::media {
+namespace mtt::media {
 	struct Interaction final {
 		math::Vector<f32, 3> p;
 		std::unique_ptr<phase::Phase_Function> phase;

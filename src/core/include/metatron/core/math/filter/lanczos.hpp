@@ -3,7 +3,7 @@
 #include <metatron/core/math/distribution/piecewise.hpp>
 #include <metatron/core/math/trigonometric.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Lanczos_Filter final: Filter {
 		Lanczos_Filter(Vector<f32, 2> const& radius = {0.5f}, f32 tau = 3.f);
 

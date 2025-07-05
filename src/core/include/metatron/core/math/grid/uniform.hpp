@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/core/math/grid/grid.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	template<typename T, usize x, usize y, usize z>
 	struct Uniform_Grid final: Grid<T, x, y, z> {
 		Uniform_Grid(Bounding_Box const& bbox):

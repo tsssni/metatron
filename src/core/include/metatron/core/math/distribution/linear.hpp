@@ -2,7 +2,7 @@
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/vector.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Linear_Distribution final {
 		Linear_Distribution(f32 a, f32 b)
 		: a(a), b(b) {}

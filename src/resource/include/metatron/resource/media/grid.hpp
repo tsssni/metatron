@@ -5,7 +5,7 @@
 #include <metatron/core/math/grid/grid.hpp>
 #include <unordered_map>
 
-namespace metatron::media {
+namespace mtt::media {
 	auto constexpr grid_size = 64uz;
 	using Medium_Grid = math::Grid<f32, grid_size, grid_size, grid_size>;
 

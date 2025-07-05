@@ -39,7 +39,7 @@
 #include <metatron/render/accel/lbvh.hpp>
 #include <atomic>
 
-using namespace metatron;
+using namespace mtt;
 
 auto main() -> int {
 	spectra::Spectrum::initialize();

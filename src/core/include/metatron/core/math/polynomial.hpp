@@ -2,7 +2,7 @@
 #include <array>
 #include <cmath>
 
-namespace metatron::math {
+namespace mtt::math {
 	template<usize n>
 	struct Polynomial final {
 		Polynomial(std::array<f32, n + 1>&& c): c(c) {}

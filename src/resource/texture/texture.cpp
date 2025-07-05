@@ -2,16 +2,16 @@
 #include <metatron/resource/shape/plane.hpp>
 #include <metatron/core/stl/optional.hpp>
 
-namespace metatron::texture {
+namespace mtt::texture {
 	auto grad(
 		math::Ray_Differential const& diff,
 		shape::Interaction const& intr
 	) -> std::optional<texture::Coordinate> {
 		auto tangent = shape::Plane{intr.p, intr.n};
-		#define METATRON_DSTOP {terminated = true; gamma = 0.f; std::printf("\n===\n"); continue;}
-		METATRON_OPT_OR_RETURN(d_intr, tangent(diff.r), {});
-		METATRON_OPT_OR_RETURN(dx_intr, tangent(diff.rx), {});
-		METATRON_OPT_OR_RETURN(dy_intr, tangent(diff.ry), {});
+		#define MTT_DSTOP {terminated = true; gamma = 0.f; std::printf("\n===\n"); continue;}
+		MTT_OPT_OR_RETURN(d_intr, tangent(diff.r), {});
+		MTT_OPT_OR_RETURN(dx_intr, tangent(diff.rx), {});
+		MTT_OPT_OR_RETURN(dy_intr, tangent(diff.ry), {});
 		
 		auto dpdx = dx_intr.p - d_intr.p;
 		auto dpdy = dy_intr.p - d_intr.p;

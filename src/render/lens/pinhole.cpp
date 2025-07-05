@@ -1,7 +1,7 @@
 #include <metatron/render/lens/pinhole.hpp>
 #include <metatron/core/math/constant.hpp>
 
-namespace metatron::photo {
+namespace mtt::photo {
 	Pinhole_Lens::Pinhole_Lens(f32 focal_length)
 		: focal_length(focal_length) {}
 

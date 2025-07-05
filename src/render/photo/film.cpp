@@ -3,7 +3,7 @@
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/thread.hpp>
 
-namespace metatron::photo {
+namespace mtt::photo {
 	Fixel::Fixel(
 		Film* film,
 		math::Vector<usize, 2> const& pixel,

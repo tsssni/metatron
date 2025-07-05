@@ -3,7 +3,7 @@
 #include <metatron/resource/shape/mesh.hpp>
 #include <metatron/resource/material/material.hpp>
 
-namespace metatron::loader {
+namespace mtt::loader {
 	using Asset = std::tuple<
 		std::unique_ptr<shape::Mesh>,
 		std::unique_ptr<material::Material>

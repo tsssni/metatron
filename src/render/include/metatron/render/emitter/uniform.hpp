@@ -2,7 +2,7 @@
 #include <metatron/render/emitter/emitter.hpp>
 #include <metatron/core/math/distribution/discrete.hpp>
 
-namespace metatron::emitter {
+namespace mtt::emitter {
 	struct Uniform_Emitter final: Emitter {
 		Uniform_Emitter(
 			std::vector<Divider>&& dividers,

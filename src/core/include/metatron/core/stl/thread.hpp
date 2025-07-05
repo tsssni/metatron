@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/core/stl/singleton.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <thread>
 #include <atomic>
@@ -7,8 +8,8 @@
 #include <functional>
 #include <stack>
 
-namespace metatron::stl {
-	struct Dispatcher final {
+namespace mtt::stl {
+	struct Dispatcher final: Singleton<Dispatcher> {
 		Dispatcher(usize num_threads = std::thread::hardware_concurrency() - 1uz) {
 			threads.reserve(num_threads);
 			for (auto i = 0; i < num_threads; ++i) {
@@ -38,11 +39,6 @@ namespace metatron::stl {
 			for (auto& thread : threads) {
 				thread.join();
 			}
-		}
-
-		auto static instance() -> Dispatcher& {
-			auto static dispatcher = Dispatcher{};
-			return dispatcher;
 		}
 
 		template<typename F, usize size>

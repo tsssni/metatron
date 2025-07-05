@@ -3,7 +3,7 @@
 #include <metatron/core/math/distribution/linear.hpp>
 #include <metatron/core/stl/optional.hpp>
 
-namespace metatron::shape {
+namespace mtt::shape {
 	Mesh::Mesh(
 		std::vector<math::Vector<usize, 3>>&& indices,
 		std::vector<math::Vector<f32, 3>>&& vertices,
@@ -42,10 +42,10 @@ namespace metatron::shape {
 				std::abort();
 			};
 			auto A = math::transpose(math::Matrix<f32, 2, 2>{uv[0] - uv[2], uv[1] - uv[2]});
-			METATRON_OPT_OR_CALLBACK(dpduv, math::cramer(A,
+			MTT_OPT_OR_CALLBACK(dpduv, math::cramer(A,
 				math::Matrix<f32, 2, 3>{v[0] - v[2], v[1] - v[2]}
 			), { quit(); });
-			METATRON_OPT_OR_CALLBACK(dnduv, math::cramer(A,
+			MTT_OPT_OR_CALLBACK(dnduv, math::cramer(A,
 				math::Matrix<f32, 2, 3>{n[0] - n[2], n[1] - n[2]}
 			), { quit(); });
 			dpdu[i] = dpduv[0];
@@ -60,14 +60,14 @@ namespace metatron::shape {
 	}
 
 	auto Mesh::bounding_box(
-		math::Matrix<f32, 4, 4> const* t,
+		math::Matrix<f32, 4, 4> const& t,
 		usize idx
 	) const -> math::Bounding_Box {
 		auto prim = indices[idx];
 		auto v = math::Vector<math::Vector<f32, 4>, 3>{
-			*t | math::expand(vertices[prim[0]], 1.f),
-			*t | math::expand(vertices[prim[1]], 1.f),
-			*t | math::expand(vertices[prim[2]], 1.f)
+			t | math::expand(vertices[prim[0]], 1.f),
+			t | math::expand(vertices[prim[1]], 1.f),
+			t | math::expand(vertices[prim[2]], 1.f)
 		};
 		auto p_min = math::min(v[0], v[1], v[2]);
 		auto p_max = math::max(v[0], v[1], v[2]);
@@ -263,7 +263,7 @@ namespace metatron::shape {
 			vertices[prim[1]],
 			vertices[prim[2]],
 		};
-		METATRON_OPT_OR_RETURN(cramer, math::cramer(
+		MTT_OPT_OR_RETURN(cramer, math::cramer(
 			math::transpose(math::Matrix<f32, 3, 3>{-d, v[1] - v[0], v[2] - v[0]}),
 			ctx.r.o - v[0]
 		), {});

@@ -2,7 +2,7 @@
 #include <metatron/core/math/distribution/disk.hpp>
 #include <metatron/core/math/constant.hpp>
 
-namespace metatron::photo {
+namespace mtt::photo {
 	Thin_Lens::Thin_Lens(
 		f32 aperture,
 		f32 focal_length,

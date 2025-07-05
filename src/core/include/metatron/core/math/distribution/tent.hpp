@@ -2,7 +2,7 @@
 #include <metatron/core/math/distribution/linear.hpp>
 #include <cmath>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Tent_Distribution final {
 		Tent_Distribution(f32 r): r(r) {}
 

@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	template<usize n>
 	auto inline constexpr morton_encode(math::Vector<u32, n> x) -> u32 {
 		if constexpr (n == 2) {

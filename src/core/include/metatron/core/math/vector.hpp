@@ -3,7 +3,7 @@
 #include <metatron/core/math/arithmetic.hpp>
 #include <cmath>
 
-namespace metatron::math {
+namespace mtt::math {
 	template<typename T, usize size>
 	using Vector = Matrix<T, size>;
 

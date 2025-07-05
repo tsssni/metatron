@@ -1,6 +1,6 @@
 #include <metatron/render/photo/sensor.hpp>
 
-namespace metatron::photo {
+namespace mtt::photo {
 	Sensor::Sensor(color::Color_Space const* color_space): color_space(color_space) {}
 
 	auto Sensor::operator()(spectra::Stochastic_Spectrum const& spectrum) -> math::Vector<f32, 3> {

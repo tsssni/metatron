@@ -1,7 +1,7 @@
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 
-namespace metatron::spectra {
+namespace mtt::spectra {
 	Rgb_Spectrum::Rgb_Spectrum(
 		math::Vector<f32, 3> const& c,
 		f32 s,

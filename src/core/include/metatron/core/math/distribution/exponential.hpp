@@ -1,7 +1,7 @@
 #pragma once
 #include <cmath>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Exponential_Distribution final {
 		Exponential_Distribution(f32 a): a(a) {}
 

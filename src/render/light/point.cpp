@@ -1,6 +1,6 @@
 #include <metatron/render/light/point.hpp>
 
-namespace metatron::light {
+namespace mtt::light {
 	Point_Light::Point_Light(std::unique_ptr<spectra::Spectrum> L): L(std::move(L)) {}
 
 	auto Point_Light::operator()(

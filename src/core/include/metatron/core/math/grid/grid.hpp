@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/core/math/bounding-box.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	// use i32 to avoid pos out of boundary
 	template<typename T, usize x, usize y, usize z>
 	struct Grid {

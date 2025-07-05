@@ -4,7 +4,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/quaternion.hpp>
 
-namespace metatron::light {
+namespace mtt::light {
 	Environment_Light::Environment_Light(
 		texture::Texture<spectra::Stochastic_Spectrum> const* env_map
 	): env_map(env_map) {}

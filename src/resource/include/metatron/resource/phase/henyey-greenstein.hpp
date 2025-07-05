@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/resource/phase/phase-function.hpp>
 
-namespace metatron::phase {
+namespace mtt::phase {
 	struct Henyey_Greenstein_Phase_Function final: Phase_Function {
 		Henyey_Greenstein_Phase_Function(f32 g);
 		auto operator()(

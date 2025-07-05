@@ -3,7 +3,7 @@
 #include <metatron/resource/spectra/stochastic.hpp>
 #include <metatron/resource/eval/context.hpp>
 
-namespace metatron::texture {
+namespace mtt::texture {
 	struct Coordinate final {
 		math::Vector<f32, 2> uv{};
 		f32 dudx{0.f};

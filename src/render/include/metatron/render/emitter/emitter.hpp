@@ -2,7 +2,7 @@
 #include <metatron/render/light/light.hpp>
 #include <metatron/core/math/transform.hpp>
 
-namespace metatron::emitter {
+namespace mtt::emitter {
 	struct Divider final {
 		light::Light const* light;
 		math::Transform const* local_to_world;

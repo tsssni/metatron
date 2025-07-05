@@ -4,7 +4,7 @@
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>
 
-namespace metatron::bsdf {
+namespace mtt::bsdf {
 	auto Lambertian_Bsdf::operator()(
 		math::Vector<f32, 3> const& wo,
 		math::Vector<f32, 3> const& wi

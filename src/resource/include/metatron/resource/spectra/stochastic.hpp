@@ -2,7 +2,7 @@
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/math/vector.hpp>
 
-namespace metatron::spectra {
+namespace mtt::spectra {
 	auto constexpr stochastic_samples = 4uz;
 
 	struct Stochastic_Spectrum final: Spectrum {

@@ -3,7 +3,7 @@
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/optional.hpp>
 
-namespace metatron::media {
+namespace mtt::media {
 	std::unordered_map<Grid_Medium const*, Grid_Medium::Cache> thread_local Grid_Medium::thread_cache;
 
     Grid_Medium::Grid_Medium(

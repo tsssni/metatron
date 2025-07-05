@@ -6,7 +6,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <memory>
 
-namespace metatron::photo {
+namespace mtt::photo {
 	struct Camera;
 	struct Film;
 

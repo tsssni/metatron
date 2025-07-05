@@ -2,7 +2,7 @@
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/constant.hpp>
 
-namespace metatron::emitter {
+namespace mtt::emitter {
 		Uniform_Emitter::Uniform_Emitter(
 			std::vector<Divider>&& dividers,
 			std::vector<Divider>&& infinite_dividers

@@ -5,7 +5,7 @@
 #include <ranges>
 #include <stack>
 
-namespace metatron::accel {
+namespace mtt::accel {
 	struct LBVH_Divider final {
 		math::Bounding_Box bbox;
 		u32 index;
@@ -35,7 +35,7 @@ namespace metatron::accel {
 			auto& lt = *div.local_to_world;
 			auto t = this->transform->transform | lt.transform;
 			lbvh_divs.push_back(LBVH_Divider{
-				.bbox = div.shape->bounding_box(&t, div.primitive),
+				.bbox = div.shape->bounding_box(t, div.primitive),
 				.index = i,
 			});
 		}
@@ -228,7 +228,7 @@ namespace metatron::accel {
 			auto idx = candidates.top();
 			candidates.pop();
 			auto node = &bvh[idx];
-			METATRON_OPT_OR_CONTINUE(t_bbox, math::hit(r, node->bbox));
+			MTT_OPT_OR_CONTINUE(t_bbox, math::hit(r, node->bbox));
 
 			if (node->num_prims > 0) {
 				for (auto i = 0u; i < node->num_prims; i++) {
@@ -238,7 +238,7 @@ namespace metatron::accel {
 
 					auto lr = lt ^ rt ^ r;
 					auto ln = lt ^ rt ^ n;
-					METATRON_OPT_OR_CONTINUE(div_intr, (*div->shape)(lr, ln, div->primitive));
+					MTT_OPT_OR_CONTINUE(div_intr, (*div->shape)(lr, ln, div->primitive));
 
 					if (!intr_opt || div_intr.t < intr_opt.value().t) {
 						intr_opt = div_intr_opt;

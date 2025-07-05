@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/resource/shape/shape.hpp>
 
-namespace metatron::shape {
+namespace mtt::shape {
 	struct Mesh final: Shape {
 		Mesh(
 			std::vector<math::Vector<usize, 3>>&& indices,
@@ -12,7 +12,7 @@ namespace metatron::shape {
 
 		auto size() const -> usize;
 		auto bounding_box(
-			math::Matrix<f32, 4, 4> const* t,
+			math::Matrix<f32, 4, 4> const& t,
 			usize idx
 		) const -> math::Bounding_Box;
 		auto operator()(

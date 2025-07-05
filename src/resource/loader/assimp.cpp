@@ -4,7 +4,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 
-namespace metatron::loader {
+namespace mtt::loader {
 	auto Assimp_Loader::from_path(std::string_view path) -> std::vector<std::unique_ptr<shape::Mesh>> {
 		auto importer = Assimp::Importer{};
 		scene = importer.ReadFile(path.data(), 0

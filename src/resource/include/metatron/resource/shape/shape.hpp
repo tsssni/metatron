@@ -4,7 +4,7 @@
 #include <metatron/resource/eval/context.hpp>
 #include <optional>
 
-namespace metatron::shape {
+namespace mtt::shape {
 	struct Interaction final {
 		math::Vector<f32, 3> p;
 		math::Vector<f32, 3> n;
@@ -25,7 +25,7 @@ namespace metatron::shape {
 		virtual ~Shape() {}
 		auto virtual size() const -> usize = 0;
 		auto virtual bounding_box(
-			math::Matrix<f32, 4, 4> const* t,
+			math::Matrix<f32, 4, 4> const& t,
 			usize idx = 0uz
 		) const -> math::Bounding_Box = 0;
 		auto virtual operator()(

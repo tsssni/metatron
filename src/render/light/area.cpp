@@ -1,7 +1,7 @@
 #include <metatron/render/light/area.hpp>
 #include <metatron/core/stl/optional.hpp>
 
-namespace metatron::light {
+namespace mtt::light {
 	Area_Light::Area_Light(
 		shape::Shape const& shape,
 		usize primitive
@@ -17,7 +17,7 @@ namespace metatron::light {
 		eval::Context const& ctx,
 		math::Vector<f32, 2> const& u
 	) const -> std::optional<Interaction> {
-		METATRON_OPT_OR_RETURN(s_intr, shape->sample(ctx, u, primitive), {});
+		MTT_OPT_OR_RETURN(s_intr, shape->sample(ctx, u, primitive), {});
 		auto L = ctx.spec; L = 0.f; // delay fetching L in integrator material interaction
 		return Interaction{
 			L,
