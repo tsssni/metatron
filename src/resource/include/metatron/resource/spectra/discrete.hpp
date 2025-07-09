@@ -1,10 +1,10 @@
 #pragma once
-#include <metatron/resource/spectra/spectrum.hpp>
+#include <metatron/core/math/vector.hpp>
 #include <algorithm>
 
 namespace mtt::spectra {
 	template<usize n>
-	struct Discrete_Spectrum final: Spectrum {
+	struct Discrete_Spectrum final {
 		Discrete_Spectrum(std::array<f32, n>&& lambda, std::array<f32, n>&& data)
 			: lambda(std::move(lambda)), data(std::move(data)) {}
 

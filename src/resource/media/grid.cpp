@@ -7,9 +7,9 @@ namespace mtt::media {
     Grid_Medium::Grid_Medium(
         Medium_Grid const* grid,
 		phase::Phase_Function const* phase,
-		spectra::Spectrum const* sigma_a,
-		spectra::Spectrum const* sigma_s,
-		spectra::Spectrum const* emission,
+		pro::proxy_view<spectra::Spectrum> sigma_a,
+		pro::proxy_view<spectra::Spectrum> sigma_s,
+		pro::proxy_view<spectra::Spectrum> emission,
         f32 density_scale
     ):
 	grid(grid),
@@ -24,8 +24,8 @@ namespace mtt::media {
         f32 t_max, 
         f32 u
     ) const -> std::optional<Interaction> {
-		auto sigma_a = (ctx.spec & (*this->sigma_a)) * density_scale;
-		auto sigma_s = (ctx.spec & (*this->sigma_s)) * density_scale;
+		auto sigma_a = (ctx.spec & this->sigma_a) * density_scale;
+		auto sigma_s = (ctx.spec & this->sigma_s) * density_scale;
 		auto sigma_t = sigma_a + sigma_s;
 
 		auto r = ctx.r;
@@ -92,7 +92,7 @@ namespace mtt::media {
 					density * sigma_s,
 					sigma_maj - density * sigma_t,
 					sigma_maj,
-					density * (ctx.spec & *emission)
+					density * (ctx.spec & emission)
 				};
 			}
 		}

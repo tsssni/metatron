@@ -22,7 +22,6 @@ namespace mtt::photo {
 			f32 weight
 		);
 		auto operator=(spectra::Stochastic_Spectrum const& spectrum) -> void;
-		auto operator=(spectra::Spectrum const& spectrum) -> void;
 	private:
 		Film* film;
 	};

@@ -12,7 +12,7 @@ namespace mtt::color {
 		math::Vector<f32, 2> const& r_chroma,
 		math::Vector<f32, 2> const& g_chroma,
 		math::Vector<f32, 2> const& b_chroma,
-		spectra::Spectrum const* white_point,
+		pro::proxy_view<spectra::Spectrum> white_point,
 		std::function<f32(f32)> encode,
 		std::function<f32(f32)> decode,
 		Scale const* scale,
@@ -23,7 +23,7 @@ namespace mtt::color {
 	table(table),
 	encode(encode), 
 	decode(decode) {
-		auto w = ~(*white_point);
+		auto w = ~white_point;
 		auto r= math::Vector<f32, 3>{r_chroma, 1.f - r_chroma[0] - r_chroma[1]};
 		auto g= math::Vector<f32, 3>{g_chroma, 1.f - g_chroma[0] - g_chroma[1]};
 		auto b= math::Vector<f32, 3>{b_chroma, 1.f - b_chroma[0] - b_chroma[1]};
@@ -39,7 +39,7 @@ namespace mtt::color {
 		from_XYZ = math::inverse(to_XYZ);
 	}
 
-	auto Color_Space::to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> std::unique_ptr<spectra::Spectrum> {
+	auto Color_Space::to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> pro::proxy<spectra::Spectrum> {
 		if (false
 		|| math::any([](f32 x, usize i){ return x < 0.f; }, rgb)
 		|| math::any([](f32 x, usize i){ return x > 1.f; }, rgb)) {
@@ -62,7 +62,7 @@ namespace mtt::color {
 		rgb = rgb / s;
 
 		if (rgb[0] == rgb[1] && rgb[1] == rgb[2]) {
-			return std::make_unique<spectra::Rgb_Spectrum>(
+			return pro::make_proxy<spectra::Spectrum, spectra::Rgb_Spectrum>(
 				math::Vector<f32, 3>{
 					(rgb[0] - 0.5f) / math::sqrt(rgb[0] * (1.f - rgb[0])),
 					0.f, 0.f,
@@ -107,7 +107,7 @@ namespace mtt::color {
 			);
 		}
 
-		return std::make_unique<spectra::Rgb_Spectrum>(c, s, w);
+		return pro::make_proxy<spectra::Spectrum, spectra::Rgb_Spectrum>(c, s, w);
 	}
 
 	auto Color_Space::initialize() -> void {
@@ -115,7 +115,7 @@ namespace mtt::color {
 			math::Vector<f32, 2>{0.64f, 0.33f},
 			math::Vector<f32, 2>{0.30f, 0.60f},
 			math::Vector<f32, 2>{0.15f, 0.06f},
-			spectra::Spectrum::CIE_D65.get(),
+			spectra::Spectrum::CIE_D65,
 			[](f32 x) -> f32 {
 				if (x <= 0.0031308f) {
 					return 12.92f * x;

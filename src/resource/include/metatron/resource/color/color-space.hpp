@@ -17,7 +17,7 @@ namespace mtt::color {
 
 		math::Matrix<f32, 3, 3> from_XYZ;
 		math::Matrix<f32, 3, 3> to_XYZ;
-		spectra::Spectrum const* white_point;
+		pro::proxy_view<spectra::Spectrum> white_point;
 		std::function<f32(f32)> encode;
 		std::function<f32(f32)> decode;
 
@@ -25,14 +25,14 @@ namespace mtt::color {
 			math::Vector<f32, 2> const& r,
 			math::Vector<f32, 2> const& g,
 			math::Vector<f32, 2> const& b,
-			spectra::Spectrum const* white_point,
+			pro::proxy_view<spectra::Spectrum> white_point,
 			std::function<f32(f32)> encode,
 			std::function<f32(f32)> decode,
 			Scale const* scale,
 			Table const* table
 		);
 
-		auto to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> std::unique_ptr<spectra::Spectrum>;
+		auto to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> pro::proxy<spectra::Spectrum>;
 
 		std::unique_ptr<Color_Space> static sRGB;
 

@@ -17,7 +17,7 @@ namespace mtt::light {
 		auto v = s[0] / math::pi;
 		auto spec = env_map->sample(ctx, {{u, v}});
 		return Interaction{
-			ctx.spec & spec,
+			ctx.spec & (&spec),
 			{}, {}, {},
 			ctx.n != math::Vector<f32, 3>{0.f}
 			? surface_distr.pdf(math::dot(ctx.n, ctx.r.d))

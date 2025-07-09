@@ -9,24 +9,12 @@ namespace mtt::media {
 	using Medium_Grid = math::Grid<f32, grid_size, grid_size, grid_size>;
 
 	struct Grid_Medium final: Medium {
-		struct Cache final {
-			math::Ray r{
-				{math::maxv<f32>},
-				{0.f}
-			};
-			math::Bounding_Box bbox{};
-			f32 t_max{-1.f};
-			f32 density_maj{0.f};
-			spectra::Stochastic_Spectrum sigma_maj{};
-			math::Exponential_Distribution distr{0.f};
-		};
-
 		Grid_Medium(
 			Medium_Grid const* grid,
 			phase::Phase_Function const* phase,
-			spectra::Spectrum const* sigma_a,
-			spectra::Spectrum const* sigma_s,
-			spectra::Spectrum const* emission,
+			pro::proxy_view<spectra::Spectrum> sigma_a,
+			pro::proxy_view<spectra::Spectrum> sigma_s,
+			pro::proxy_view<spectra::Spectrum> emission,
 			f32 density_scale = 1.0f
 		);
 
@@ -34,9 +22,9 @@ namespace mtt::media {
 		
 	private:
 		phase::Phase_Function const* phase;
-		spectra::Spectrum const* sigma_a;
-		spectra::Spectrum const* sigma_s;
-		spectra::Spectrum const* emission;
+		pro::proxy_view<spectra::Spectrum> sigma_a;
+		pro::proxy_view<spectra::Spectrum> sigma_s;
+		pro::proxy_view<spectra::Spectrum> emission;
 
 		Medium_Grid const* grid;
 		f32 density_scale;

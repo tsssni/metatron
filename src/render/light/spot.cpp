@@ -2,11 +2,11 @@
 
 namespace mtt::light {
 	Spot_Light::Spot_Light(
-		std::unique_ptr<spectra::Spectrum> L,
+		pro::proxy_view<spectra::Spectrum> L,
 		f32 falloff_start_theta,
 		f32 falloff_end_theta
 	):
-	L(std::move(L)),
+	L(L),
 	falloff_start_cos_theta(std::cos(falloff_start_theta)),
 	falloff_end_cos_theta(std::cos(falloff_end_theta)) {}
 
@@ -42,7 +42,7 @@ namespace mtt::light {
 		);
 
 		return Interaction{
-			(ctx.spec & *L) * intensity / (r * r),
+			(ctx.spec & L) * intensity / (r * r),
 			wi,
 			{0.f},
 			r,

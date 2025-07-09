@@ -1,17 +1,24 @@
+#include <metatron/resource/spectra/constant.hpp>
 #include <metatron/resource/spectra/visible.hpp>
 #include <metatron/resource/spectra/discrete.hpp>
 
 namespace mtt::spectra {
-	std::unique_ptr<Spectrum> Spectrum::CIE_X;
-	std::unique_ptr<Spectrum> Spectrum::CIE_Y;
-	std::unique_ptr<Spectrum> Spectrum::CIE_Z;
-	std::unique_ptr<Spectrum> Spectrum::CIE_D65;
+	pro::proxy<Spectrum> Spectrum::zero;
+	pro::proxy<Spectrum> Spectrum::one;
 
-	std::unique_ptr<Spectrum> Spectrum::Au_eta;
-	std::unique_ptr<Spectrum> Spectrum::Au_k;
+	pro::proxy<Spectrum> Spectrum::CIE_X;
+	pro::proxy<Spectrum> Spectrum::CIE_Y;
+	pro::proxy<Spectrum> Spectrum::CIE_Z;
+	pro::proxy<Spectrum> Spectrum::CIE_D65;
+
+	pro::proxy<Spectrum> Spectrum::Au_eta;
+	pro::proxy<Spectrum> Spectrum::Au_k;
 
 	auto Spectrum::initialize() -> void {
-		CIE_X = std::make_unique<Visible_Spectrum>(std::to_array({
+		zero = pro::make_proxy<Spectrum, Constant_Spectrum>(0.f);
+		one = pro::make_proxy<Spectrum, Constant_Spectrum>(1.f);
+
+		CIE_X = pro::make_proxy<Spectrum, Visible_Spectrum>(std::to_array({
 			0.0001299000f,   0.0001458470f,   0.0001638021f,   0.0001840037f,   0.0002066902f,
 			0.0002321000f,   0.0002607280f,   0.0002930750f,   0.0003293880f,   0.0003699140f,
 			0.0004149000f,   0.0004641587f,   0.0005189860f,   0.0005818540f,   0.0006552347f,
@@ -109,7 +116,7 @@ namespace mtt::spectra {
 			0.000001251141f,
 		}));
 
-		CIE_Y = std::make_unique<Visible_Spectrum>(std::to_array({
+		CIE_Y = pro::make_proxy<Spectrum, Visible_Spectrum>(std::to_array({
 			0.000003917000f,  0.000004393581f,  0.000004929604f,  0.000005532136f,  0.000006208245f,
 			0.000006965000f,  0.000007813219f,  0.000008767336f,  0.000009839844f,  0.00001104323f,
 			0.00001239000f,   0.00001388641f,   0.00001555728f,   0.00001744296f,   0.00001958375f,
@@ -207,7 +214,7 @@ namespace mtt::spectra {
 			0.0000004518100f,
 		}));
 
-		CIE_Z = std::make_unique<Visible_Spectrum>(std::to_array({
+		CIE_Z = pro::make_proxy<Spectrum, Visible_Spectrum>(std::to_array({
 			0.0006061000f,   0.0006808792f,   0.0007651456f,   0.0008600124f,   0.0009665928f,
 			0.001086000f,    0.001220586f,    0.001372729f,    0.001543579f,    0.001734286f,
 			0.001946000f,    0.002177777f,    0.002435809f,    0.002731953f,    0.003078064f,
@@ -305,7 +312,7 @@ namespace mtt::spectra {
 			0.000000000000f,
 		}));
 
-		CIE_D65 = std::make_unique<Discrete_Spectrum<107>>(std::to_array<math::Vector<f32, 2>>({
+		CIE_D65 = pro::make_proxy<Spectrum, Discrete_Spectrum<107>>(std::to_array<math::Vector<f32, 2>>({
 			{300.000000f, 0.034100f},   {305.000000f, 1.664300f},   {310.000000f, 3.294500f},
 			{315.000000f, 11.765200f},  {320.000000f, 20.236000f},  {325.000000f, 28.644699f},
 			{330.000000f, 37.053501f},  {335.000000f, 38.501099f},  {340.000000f, 39.948799f},
@@ -344,7 +351,7 @@ namespace mtt::spectra {
 			{825.000000f, 58.876499f},  {830.000000f, 60.312500f},
 		}));
 
-		Au_eta = std::make_unique<Discrete_Spectrum<56>>(std::to_array<math::Vector<f32, 2>>({
+		Au_eta = pro::make_proxy<Spectrum, Discrete_Spectrum<56>>(std::to_array<math::Vector<f32, 2>>({
 			{298.757050, 1.795000}, {302.400421, 1.812000}, {306.133759, 1.822625},
 			{309.960449, 1.830000}, {313.884003, 1.837125}, {317.908142, 1.840000},
 			{322.036835, 1.834250}, {326.274139, 1.824000}, {330.624481, 1.812000},
@@ -366,7 +373,7 @@ namespace mtt::spectra {
 			{855.063293, 0.198125}, {885.601257, 0.210000},
 		}));
 
-		Au_k = std::make_unique<Discrete_Spectrum<56>>(std::to_array<math::Vector<f32, 2>>({
+		Au_k = pro::make_proxy<Spectrum, Discrete_Spectrum<56>>(std::to_array<math::Vector<f32, 2>>({
 			{298.757050, 1.920375}, {302.400421, 1.920000}, {306.133759, 1.918875},
 			{309.960449, 1.916000}, {313.884003, 1.911375}, {317.908142, 1.904000},
 			{322.036835, 1.891375}, {326.274139, 1.878000}, {330.624481, 1.868250},

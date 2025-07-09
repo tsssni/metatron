@@ -3,14 +3,14 @@
 
 namespace mtt::texture {
 	Constant_Texture<spectra::Stochastic_Spectrum>::Constant_Texture(
-		spectra::Spectrum const* x
+		pro::proxy_view<spectra::Spectrum> x
 	): x(x) {}
 
 	auto Constant_Texture<spectra::Stochastic_Spectrum>::sample(
 		eval::Context const& ctx,
 		Coordinate const& coord
 	) const -> spectra::Stochastic_Spectrum {
-		return ctx.spec & (*x);
+		return ctx.spec & x;
 	}
 
 	Constant_Texture<math::Vector<f32, 4>>::Constant_Texture(

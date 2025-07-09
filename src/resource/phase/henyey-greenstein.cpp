@@ -14,8 +14,9 @@ namespace mtt::phase {
 		math::Vector<f32, 3> const& wi
 	) const -> std::optional<Interaction> {
 		auto f = math::guarded_div((1.f - g * g) / (4.f * math::pi), std::pow(1.f + g * g + 2.f * g * math::dot(-wo, wi), 1.5f));
+		auto spec_f = spectra::Constant_Spectrum{f};
 		return Interaction{
-			spectrum & spectra::Constant_Spectrum{f},
+			spectrum & (&spec_f),
 			wi,
 			f
 		};

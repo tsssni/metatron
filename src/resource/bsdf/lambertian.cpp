@@ -47,7 +47,7 @@ namespace mtt::bsdf {
 		bsdf->spectrum = attr.spectra.at("spectrum");
 		bsdf->reflectance = attr.spectra.count("reflectance") > 0
 		? attr.spectra.at("reflectance")
-		: bsdf->spectrum & spectra::Constant_Spectrum{0.f};
+		: bsdf->spectrum & spectra::Spectrum::zero;
 		return bsdf;
 	}
 

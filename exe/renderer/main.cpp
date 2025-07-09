@@ -145,9 +145,9 @@ auto main() -> int {
 	auto cloud_medium = media::Grid_Medium{
 		&nanovdb_grid,
 		&hg_phase,
-		sigma_a.get(),
-		sigma_s.get(),
-		sigma_e.get(),
+		sigma_a,
+		sigma_s,
+		sigma_e,
 		1.f,
 	};
 
@@ -160,13 +160,13 @@ auto main() -> int {
 		color::Color_Space::Spectrum_Type::albedo
 	);
 	auto diffuse_texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
-		diffuse_reflectance.get()
+		diffuse_reflectance
 	};
 	auto eta_texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
-		spectra::Spectrum::Au_eta.get()
+		spectra::Spectrum::Au_eta
 	};
 	auto k_texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
-		spectra::Spectrum::Au_k.get()
+		spectra::Spectrum::Au_k
 	};
 	
 	auto eta = spectra::Constant_Spectrum{1.0f};
@@ -184,7 +184,7 @@ auto main() -> int {
 		{1.f, 1.f, 1.f},
 		color::Color_Space::Spectrum_Type::illuminant
 	);
-	auto illuminance_texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>{illuminance.get()};
+	auto illuminance_texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>{illuminance};
 	
 	auto diffuse_material = material::Material{
 		.bsdf = &lambertian,

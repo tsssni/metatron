@@ -6,9 +6,9 @@
 namespace mtt::media {
 	Homogeneous_Medium::Homogeneous_Medium(
 		phase::Phase_Function const* phase,
-		spectra::Spectrum const* sigma_a,
-		spectra::Spectrum const* sigma_s,
-		spectra::Spectrum const* emission
+		pro::proxy_view<spectra::Spectrum> sigma_a,
+		pro::proxy_view<spectra::Spectrum> sigma_s,
+		pro::proxy_view<spectra::Spectrum> emission
 	):
 	phase{phase},
 	sigma_a{sigma_a},
@@ -16,18 +16,18 @@ namespace mtt::media {
 	emission{emission} {}
 
 	auto Homogeneous_Medium::sample(eval::Context const& ctx, f32 t_max, f32 u) const -> std::optional<Interaction> {
-		auto sigma_a = ctx.spec & (*this->sigma_a);
-		auto sigma_s = ctx.spec & (*this->sigma_s);
+		auto sigma_a = ctx.spec & this->sigma_a;
+		auto sigma_s = ctx.spec & this->sigma_s;
 		auto sigma_t = sigma_a + sigma_s;
 		auto sigma_maj = sigma_t;
-		auto sigma_n = ctx.spec & spectra::Constant_Spectrum{0.f};
+		auto sigma_n = ctx.spec & pro::make_proxy<spectra::Spectrum, spectra::Constant_Spectrum>(0.f);
 
 		auto distr = math::Exponential_Distribution{sigma_t.value[0]};
 		auto t_u = distr.sample(u);
 		auto t = std::min(t_u, t_max);
 		auto pdf = t < t_max ? distr.pdf(t) : distr.pdf(t) / sigma_t.value[0];
 
-		auto emission = ctx.spec & (*this->emission);
+		auto emission = ctx.spec & this->emission;
 		auto transmittance = ctx.spec;
 		transmittance.value = math::foreach([&](f32 value, usize i) {
 			return std::exp(-value * t);

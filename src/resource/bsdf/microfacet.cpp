@@ -97,7 +97,7 @@ namespace mtt::bsdf {
 
 	auto Microfacet_Bsdf::clone(Attribute const& attr) const -> std::unique_ptr<Bsdf> {
 		auto bsdf = std::make_unique<Microfacet_Bsdf>();
-		auto null_spec = attr.spectra.at("spectrum") & spectra::Constant_Spectrum{0.f};
+		auto null_spec = attr.spectra.at("spectrum") & spectra::Spectrum::zero;
 		bsdf->eta = attr.spectra.count("eta") > 0 ? attr.spectra.at("eta") : null_spec;
 		bsdf->k = attr.spectra.count("k") > 0 ? attr.spectra.at("k") : null_spec;
 

@@ -4,7 +4,7 @@
 namespace mtt::light {
 	struct Spot_Light final: Light {
 		Spot_Light(
-			std::unique_ptr<spectra::Spectrum> L,
+			pro::proxy_view<spectra::Spectrum> L,
 			f32 falloff_start_theta,
 			f32 falloff_end_theta
 		);
@@ -19,7 +19,7 @@ namespace mtt::light {
 		auto flags() const -> Flags;
 
 	private:
-		std::unique_ptr<spectra::Spectrum> L;
+		pro::proxy_view<spectra::Spectrum> L;
 		f32 falloff_start_cos_theta;
 		f32 falloff_end_cos_theta;
 	};

@@ -25,66 +25,66 @@ namespace mtt::spectra {
 		std::abort();
 	}
 
-	auto Stochastic_Spectrum::operator()(Spectrum const& spectrum) const -> f32 {
+	auto Stochastic_Spectrum::operator()(pro::proxy_view<Spectrum> spectrum) const -> f32 {
 		return math::sum(math::foreach([&](f32 lambda, f32 value, f32 pdf, usize i) {
-			return value * spectrum(lambda) / pdf;
+			return value * (*spectrum)(lambda) / pdf;
 		}, lambda, value, pdf)) / stochastic_samples;
 	}
 
-	auto Stochastic_Spectrum::operator&(Spectrum const& spectrum) const -> Stochastic_Spectrum {
+	auto Stochastic_Spectrum::operator&(pro::proxy_view<Spectrum> spectrum) const -> Stochastic_Spectrum {
 		auto spec = *this;
 		spec.value = math::foreach([&](f32 lambda, usize i) {
-			return spectrum(lambda);
+			return (*spectrum)(lambda);
 		}, lambda);
 		return spec;
 	}
 
-	auto Stochastic_Spectrum::operator+(Spectrum const& spectrum) const -> Stochastic_Spectrum {
+	auto Stochastic_Spectrum::operator+(Stochastic_Spectrum const& spectrum) const -> Stochastic_Spectrum {
 		auto spec = *this;
 		spec += spectrum;
 		return spec;
 	}
 	
-	auto Stochastic_Spectrum::operator+=(Spectrum const& spectrum) -> Stochastic_Spectrum& {
+	auto Stochastic_Spectrum::operator+=(Stochastic_Spectrum const& spectrum) -> Stochastic_Spectrum& {
 		value += math::foreach([&](f32 lambda, usize i) {
 			return spectrum(lambda);
 		}, lambda);
 		return *this;
 	}
 
-	auto Stochastic_Spectrum::operator-(Spectrum const& spectrum) const -> Stochastic_Spectrum {
+	auto Stochastic_Spectrum::operator-(Stochastic_Spectrum const& spectrum) const -> Stochastic_Spectrum {
 		auto spec = *this;
 		spec -= spectrum;
 		return spec;
 	}
 	
-	auto Stochastic_Spectrum::operator-=(Spectrum const& spectrum) -> Stochastic_Spectrum& {
+	auto Stochastic_Spectrum::operator-=(Stochastic_Spectrum const& spectrum) -> Stochastic_Spectrum& {
 		value -= math::foreach([&](f32 lambda, usize i) {
 			return spectrum(lambda);
 		}, lambda);
 		return *this;
 	}
 
-	auto Stochastic_Spectrum::operator*(Spectrum const& spectrum) const -> Stochastic_Spectrum {
+	auto Stochastic_Spectrum::operator*(Stochastic_Spectrum const& spectrum) const -> Stochastic_Spectrum {
 		auto spec = *this;
 		spec *= spectrum;
 		return spec;
 	}
 	
-	auto Stochastic_Spectrum::operator*=(Spectrum const& spectrum) -> Stochastic_Spectrum& {
+	auto Stochastic_Spectrum::operator*=(Stochastic_Spectrum const& spectrum) -> Stochastic_Spectrum& {
 		value *= math::foreach([&](f32 lambda, usize i) {
 			return spectrum(lambda);
 		}, lambda);
 		return *this;
 	}
 
-	auto Stochastic_Spectrum::operator/(Spectrum const& spectrum) const -> Stochastic_Spectrum {
+	auto Stochastic_Spectrum::operator/(Stochastic_Spectrum const& spectrum) const -> Stochastic_Spectrum {
 		auto spec = *this;
 		spec /= spectrum;
 		return spec;
 	}
 	
-	auto Stochastic_Spectrum::operator/=(Spectrum const& spectrum) -> Stochastic_Spectrum& {
+	auto Stochastic_Spectrum::operator/=(Stochastic_Spectrum const& spectrum) -> Stochastic_Spectrum& {
 		value = math::foreach([&](f32 value, f32 lambda, usize i) {
 			return math::guarded_div(value, spectrum(lambda));
 		}, value, lambda);

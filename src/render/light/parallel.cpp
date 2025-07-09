@@ -1,7 +1,7 @@
 #include <metatron/render/light/parallel.hpp>
 
 namespace mtt::light {
-	Parallel_Light::Parallel_Light(std::unique_ptr<spectra::Spectrum> L): L(std::move(L)) {}
+	Parallel_Light::Parallel_Light(pro::proxy_view<spectra::Spectrum> L): L(L) {}
 
 	auto Parallel_Light::operator()(
 		eval::Context const& ctx
@@ -15,7 +15,7 @@ namespace mtt::light {
 	) const -> std::optional<Interaction> {
 		auto constexpr wi = math::Vector<f32, 3>{0.f, 0.f, -1.f};
 		return Interaction{
-			ctx.spec & *L,
+			ctx.spec & L,
 			wi,
 			ctx.r.o - 65535.f * wi,
 			65535.f,
