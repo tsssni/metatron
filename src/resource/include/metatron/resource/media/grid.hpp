@@ -3,7 +3,6 @@
 #include <metatron/core/math/bounding-box.hpp>
 #include <metatron/core/math/distribution/exponential.hpp>
 #include <metatron/core/math/grid/grid.hpp>
-#include <unordered_map>
 
 namespace mtt::media {
 	auto constexpr grid_size = 64uz;
@@ -31,8 +30,6 @@ namespace mtt::media {
 			f32 density_scale = 1.0f
 		);
 
-		~Grid_Medium();
-		
 		auto sample(eval::Context const& ctx, f32 t_max, f32 u) const -> std::optional<Interaction>;
 		
 	private:
@@ -43,7 +40,5 @@ namespace mtt::media {
 
 		Medium_Grid const* grid;
 		f32 density_scale;
-
-		static thread_local std::unordered_map<Grid_Medium const*, Cache> thread_cache;
 	};
 }

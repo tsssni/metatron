@@ -9,6 +9,7 @@
   assimp,
   openimageio,
   openvdb,
+  proxy,
   zlib,
   entt,
 }:
@@ -34,8 +35,9 @@ stdenv.mkDerivation {
     assimp
     openimageio
     openvdb
+    proxy
     zlib
-	entt
+    entt
   ];
 
   cmakeFlags = [

@@ -3,11 +3,16 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    tsssni = {
+      url = "github:tsssni/tsssni.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
     {
       nixpkgs,
+      tsssni,
       ...
     }:
     let
@@ -25,6 +30,7 @@
         let
           pkgs = import nixpkgs {
             inherit system;
+            overlays = tsssni.pkgs;
           };
         in
         {
