@@ -3,7 +3,7 @@
 
 namespace mtt::light {
 	struct Parallel_Light final: Light {
-		Parallel_Light(pro::proxy_view<spectra::Spectrum> L);
+		Parallel_Light(view<spectra::Spectrum> L);
 
 		auto operator()(
 			eval::Context const& ctx
@@ -15,6 +15,6 @@ namespace mtt::light {
 		auto flags() const -> Flags;
 
 	private:
-		pro::proxy_view<spectra::Spectrum> L;
+		view<spectra::Spectrum> L;
 	};
 }

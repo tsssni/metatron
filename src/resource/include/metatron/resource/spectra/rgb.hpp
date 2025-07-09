@@ -8,13 +8,13 @@ namespace mtt::spectra {
 		Rgb_Spectrum(
 			math::Vector<f32, 3> const& c,
 			f32 s = 1.f,
-			pro::proxy_view<Spectrum> illuminant = nullptr
+			view<Spectrum> illuminant = nullptr
 		);
 		auto operator()(f32 lambda) const -> f32;
 
 	private:
 		math::Polynomial<3> polynomial;
 		f32 s;
-		pro::proxy_view<Spectrum> illuminant;
+		view<Spectrum> illuminant;
 	};
 }

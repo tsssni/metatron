@@ -2,7 +2,7 @@
 
 namespace mtt::light {
 	Spot_Light::Spot_Light(
-		pro::proxy_view<spectra::Spectrum> L,
+		view<spectra::Spectrum> L,
 		f32 falloff_start_theta,
 		f32 falloff_end_theta
 	):

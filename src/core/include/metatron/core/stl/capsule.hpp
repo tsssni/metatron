@@ -3,7 +3,7 @@
 
 namespace mtt::stl {
 	template<typename T>
-	struct Capsule {
+	struct capsule {
 		struct Impl final {
 			template<typename... Args>
 			Impl(Args&&... args): impl(new typename T::Impl(std::forward<Args>(args)...)) {}

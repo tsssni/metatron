@@ -56,7 +56,7 @@ namespace mtt::photo {
 	}
 
 	auto Film::to_path(std::string_view path) -> void {
-		stl::Dispatcher::instance().sync_parallel(
+		stl::dispatcher::instance().sync_parallel(
 			math::Vector<usize, 2>{image.width, image.height},
 			[&](math::Vector<usize, 2> const& px) {
 				auto [i, j] = px;

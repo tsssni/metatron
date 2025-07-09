@@ -1,7 +1,7 @@
 #include <metatron/render/light/point.hpp>
 
 namespace mtt::light {
-	Point_Light::Point_Light(pro::proxy_view<spectra::Spectrum> L): L(L) {}
+	Point_Light::Point_Light(view<spectra::Spectrum> L): L(L) {}
 
 	auto Point_Light::operator()(
 		eval::Context const& ctx

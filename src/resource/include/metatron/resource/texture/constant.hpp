@@ -8,14 +8,14 @@ namespace mtt::texture {
 
 	template<>
 	struct Constant_Texture<spectra::Stochastic_Spectrum> final: Texture<spectra::Stochastic_Spectrum> {
-		Constant_Texture(pro::proxy_view<spectra::Spectrum> x);
+		Constant_Texture(view<spectra::Spectrum> x);
 		auto sample(
 			eval::Context const& ctx,
 			Coordinate const& coord
 		) const -> spectra::Stochastic_Spectrum;
 
 	private:
-		pro::proxy_view<spectra::Spectrum> x;
+		view<spectra::Spectrum> x;
 	};
 
 	template<>

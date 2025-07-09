@@ -1,7 +1,7 @@
 #include <metatron/render/light/parallel.hpp>
 
 namespace mtt::light {
-	Parallel_Light::Parallel_Light(pro::proxy_view<spectra::Spectrum> L): L(L) {}
+	Parallel_Light::Parallel_Light(view<spectra::Spectrum> L): L(L) {}
 
 	auto Parallel_Light::operator()(
 		eval::Context const& ctx

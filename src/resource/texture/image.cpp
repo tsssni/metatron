@@ -26,7 +26,7 @@ namespace mtt::texture {
 			auto& image = *images[mip];
 			auto& upper = *images[mip - 1];
 
-			stl::Dispatcher::instance().sync_parallel(size, [&](math::Vector<usize, 2> const& px) {
+			stl::dispatcher::instance().sync_parallel(size, [&](math::Vector<usize, 2> const& px) {
 				auto [i, j] = px;
 				image[i, j] = 0.25f * (math::Vector<f32, 4>{0.f}
 					+ math::Vector<f32, 4>{upper[i * 2uz + 0, j * 2uz + 0]}

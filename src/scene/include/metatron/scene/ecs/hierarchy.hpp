@@ -4,7 +4,7 @@
 #include <metatron/core/stl/capsule.hpp>
 
 namespace mtt::ecs {
-	struct Hierarchy final: stl::Capsule<Hierarchy> {
+	struct Hierarchy final: stl::capsule<Hierarchy> {
 		struct Impl;
 		Hierarchy();
 

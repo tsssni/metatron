@@ -9,21 +9,21 @@ namespace mtt::spectra {
 					 ::support<pro::skills::as_view>
 					 ::build {
 
-		pro::proxy<Spectrum> static one;
-		pro::proxy<Spectrum> static zero;
+		poly<Spectrum> static one;
+		poly<Spectrum> static zero;
 
-		pro::proxy<Spectrum> static CIE_X;
-		pro::proxy<Spectrum> static CIE_Y;
-		pro::proxy<Spectrum> static CIE_Z;
-		pro::proxy<Spectrum> static CIE_D65;
+		poly<Spectrum> static CIE_X;
+		poly<Spectrum> static CIE_Y;
+		poly<Spectrum> static CIE_Z;
+		poly<Spectrum> static CIE_D65;
 
-		pro::proxy<Spectrum> static Au_eta;
-		pro::proxy<Spectrum> static Au_k;
+		poly<Spectrum> static Au_eta;
+		poly<Spectrum> static Au_k;
 
 		auto static initialize() -> void;
 	};
 
-	auto inline operator|(pro::proxy_view<Spectrum> x, pro::proxy_view<Spectrum> y) -> f32 {
+	auto inline operator|(view<Spectrum> x, view<Spectrum> y) -> f32 {
 		auto integral = 0.f;
 		for (auto lambda = visible_lambda[0]; lambda <= visible_lambda[1]; lambda++) {
 			integral += (*x)(lambda) * (*y)(lambda);
@@ -31,7 +31,7 @@ namespace mtt::spectra {
 		return integral;
 	}
 
-	auto inline operator~(pro::proxy_view<Spectrum> s) -> math::Vector<f32, 3> {
+	auto inline operator~(view<Spectrum> s) -> math::Vector<f32, 3> {
 		return {
 			Spectrum::CIE_X | s,
 			Spectrum::CIE_Y | s,

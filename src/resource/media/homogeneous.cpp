@@ -6,9 +6,9 @@
 namespace mtt::media {
 	Homogeneous_Medium::Homogeneous_Medium(
 		phase::Phase_Function const* phase,
-		pro::proxy_view<spectra::Spectrum> sigma_a,
-		pro::proxy_view<spectra::Spectrum> sigma_s,
-		pro::proxy_view<spectra::Spectrum> emission
+		view<spectra::Spectrum> sigma_a,
+		view<spectra::Spectrum> sigma_s,
+		view<spectra::Spectrum> emission
 	):
 	phase{phase},
 	sigma_a{sigma_a},

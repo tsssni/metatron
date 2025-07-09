@@ -5,16 +5,16 @@ namespace mtt::media {
 	struct Homogeneous_Medium final: Medium {
 		Homogeneous_Medium(
 			phase::Phase_Function const* phase,
-			pro::proxy_view<spectra::Spectrum> sigma_a,
-			pro::proxy_view<spectra::Spectrum> sigma_s,
-			pro::proxy_view<spectra::Spectrum> emission
+			view<spectra::Spectrum> sigma_a,
+			view<spectra::Spectrum> sigma_s,
+			view<spectra::Spectrum> emission
 		);
 		auto sample(eval::Context const& ctx, f32 t_max, f32 u) const -> std::optional<Interaction>;
 
 	private:
 		phase::Phase_Function const* phase;
-		pro::proxy_view<spectra::Spectrum> sigma_a;
-		pro::proxy_view<spectra::Spectrum> sigma_s;
-		pro::proxy_view<spectra::Spectrum> emission;
+		view<spectra::Spectrum> sigma_a;
+		view<spectra::Spectrum> sigma_s;
+		view<spectra::Spectrum> emission;
 	};
 }

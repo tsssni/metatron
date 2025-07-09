@@ -7,9 +7,9 @@ namespace mtt::media {
     Grid_Medium::Grid_Medium(
         Medium_Grid const* grid,
 		phase::Phase_Function const* phase,
-		pro::proxy_view<spectra::Spectrum> sigma_a,
-		pro::proxy_view<spectra::Spectrum> sigma_s,
-		pro::proxy_view<spectra::Spectrum> emission,
+		view<spectra::Spectrum> sigma_a,
+		view<spectra::Spectrum> sigma_s,
+		view<spectra::Spectrum> emission,
         f32 density_scale
     ):
 	grid(grid),

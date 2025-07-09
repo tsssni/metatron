@@ -208,23 +208,22 @@ auto main() -> int {
 
 	auto env_light = light::Environment_Light{&env_map};
 	auto const_env_light = light::Environment_Light{&illuminance_texture};
-	auto parallel_light = light::Parallel_Light{
-		color::Color_Space::sRGB->to_spectrum(
-			{2.6f, 2.5f, 2.3f},
-			color::Color_Space::Spectrum_Type::illuminant
-		),
-	};
-	auto point_light = light::Point_Light{
-		color::Color_Space::sRGB->to_spectrum(
-			{0.0f, 0.6f, 1.0f},
-			color::Color_Space::Spectrum_Type::illuminant
-		)
-	};
+	auto parallel_illuminance =  color::Color_Space::sRGB->to_spectrum(
+		{2.6f, 2.5f, 2.3f},
+		color::Color_Space::Spectrum_Type::illuminant
+	);
+	auto parallel_light = light::Parallel_Light{parallel_illuminance};
+	auto point_illuminance = color::Color_Space::sRGB->to_spectrum(
+		{0.0f, 0.6f, 1.0f},
+		color::Color_Space::Spectrum_Type::illuminant
+	);
+	auto point_light = light::Point_Light{point_illuminance};
+	auto spot_illuminance = color::Color_Space::sRGB->to_spectrum(
+		{0.0f, 0.6f, 1.0f},
+		color::Color_Space::Spectrum_Type::illuminant
+	);
 	auto spot_light = light::Spot_Light{
-		color::Color_Space::sRGB->to_spectrum(
-			{0.0f, 0.6f, 1.0f},
-			color::Color_Space::Spectrum_Type::illuminant
-		),
+		spot_illuminance,
 		math::pi * 1.f / 16.f,
 		math::pi * 1.f / 4.f
 	};
@@ -300,7 +299,7 @@ auto main() -> int {
 	auto integrator = monte_carlo::Volume_Path_Integrator{};
 
 	auto atomic_count = std::atomic<usize>{0uz};
-	auto future = stl::Dispatcher::instance().async_parallel(size, [&](math::Vector<usize, 2> const& px) {
+	auto future = stl::dispatcher::instance().async_parallel(size, [&](math::Vector<usize, 2> const& px) {
 		auto sampler = halton;
 		for (auto n = 0uz; n < spp; n++) {
 			auto sample = camera.sample(px, n, sampler);

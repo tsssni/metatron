@@ -12,7 +12,7 @@ namespace mtt::color {
 		math::Vector<f32, 2> const& r_chroma,
 		math::Vector<f32, 2> const& g_chroma,
 		math::Vector<f32, 2> const& b_chroma,
-		pro::proxy_view<spectra::Spectrum> white_point,
+		view<spectra::Spectrum> white_point,
 		std::function<f32(f32)> encode,
 		std::function<f32(f32)> decode,
 		Scale const* scale,
@@ -39,7 +39,7 @@ namespace mtt::color {
 		from_XYZ = math::inverse(to_XYZ);
 	}
 
-	auto Color_Space::to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> pro::proxy<spectra::Spectrum> {
+	auto Color_Space::to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> poly<spectra::Spectrum> {
 		if (false
 		|| math::any([](f32 x, usize i){ return x < 0.f; }, rgb)
 		|| math::any([](f32 x, usize i){ return x > 1.f; }, rgb)) {

@@ -5,7 +5,7 @@ namespace mtt::spectra {
 	Rgb_Spectrum::Rgb_Spectrum(
 		math::Vector<f32, 3> const& c,
 		f32 s,
-		pro::proxy_view<Spectrum> illuminant
+		view<Spectrum> illuminant
 	): polynomial({c[0], c[1], c[2]}), s(s), illuminant(illuminant) {}
 
 	auto Rgb_Spectrum::operator()(f32 lambda) const -> f32 {

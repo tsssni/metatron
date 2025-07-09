@@ -3,16 +3,16 @@
 #include <metatron/resource/spectra/discrete.hpp>
 
 namespace mtt::spectra {
-	pro::proxy<Spectrum> Spectrum::zero;
-	pro::proxy<Spectrum> Spectrum::one;
+	poly<Spectrum> Spectrum::zero;
+	poly<Spectrum> Spectrum::one;
 
-	pro::proxy<Spectrum> Spectrum::CIE_X;
-	pro::proxy<Spectrum> Spectrum::CIE_Y;
-	pro::proxy<Spectrum> Spectrum::CIE_Z;
-	pro::proxy<Spectrum> Spectrum::CIE_D65;
+	poly<Spectrum> Spectrum::CIE_X;
+	poly<Spectrum> Spectrum::CIE_Y;
+	poly<Spectrum> Spectrum::CIE_Z;
+	poly<Spectrum> Spectrum::CIE_D65;
 
-	pro::proxy<Spectrum> Spectrum::Au_eta;
-	pro::proxy<Spectrum> Spectrum::Au_k;
+	poly<Spectrum> Spectrum::Au_eta;
+	poly<Spectrum> Spectrum::Au_k;
 
 	auto Spectrum::initialize() -> void {
 		zero = pro::make_proxy<Spectrum, Constant_Spectrum>(0.f);
