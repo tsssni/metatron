@@ -4,11 +4,12 @@
 #include <metatron/resource/material/material.hpp>
 
 namespace mtt::loader {
-	using Asset = std::tuple<
-		std::unique_ptr<shape::Mesh>,
-		std::unique_ptr<material::Material>
-	>;
-	struct Loader {
-		auto virtual from_path(std::string_view path) -> std::vector<std::unique_ptr<shape::Mesh>> = 0;
-	};
+	MTT_POLY_METHOD(loader_from_path, from_path);
+
+	struct Loader final: pro::facade_builder
+	::add_convention<loader_from_path, auto (
+		std::string_view path
+	) const noexcept -> std::vector<std::unique_ptr<shape::Mesh>>>
+	::support<pro::skills::as_view>
+	::build {};
 }

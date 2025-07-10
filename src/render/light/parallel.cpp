@@ -1,18 +1,18 @@
 #include <metatron/render/light/parallel.hpp>
 
 namespace mtt::light {
-	Parallel_Light::Parallel_Light(view<spectra::Spectrum> L): L(L) {}
+	Parallel_Light::Parallel_Light(view<spectra::Spectrum> L) noexcept: L(L) {}
 
 	auto Parallel_Light::operator()(
 		eval::Context const& ctx
-	) const -> std::optional<Interaction> {
+	) const noexcept -> std::optional<Interaction> {
 		return {};
 	}
 
 	auto Parallel_Light::sample(
 		eval::Context const& ctx,
 		math::Vector<f32, 2> const& u
-	) const -> std::optional<Interaction> {
+	) const noexcept -> std::optional<Interaction> {
 		auto constexpr wi = math::Vector<f32, 3>{0.f, 0.f, -1.f};
 		return Interaction{
 			ctx.spec & L,
@@ -23,7 +23,7 @@ namespace mtt::light {
 		};
 	}
 
-	auto Parallel_Light::flags() const -> Flags {
+	auto Parallel_Light::flags() const noexcept -> Flags {
 		return delta;
 	}
 }

@@ -5,13 +5,13 @@
 
 namespace mtt::media {
     Grid_Medium::Grid_Medium(
-        Medium_Grid const* grid,
-		phase::Phase_Function const* phase,
+        view<Medium_Grid> grid,
+		poly<phase::Phase_Function> phase,
 		view<spectra::Spectrum> sigma_a,
 		view<spectra::Spectrum> sigma_s,
 		view<spectra::Spectrum> emission,
         f32 density_scale
-    ):
+    ) noexcept:
 	grid(grid),
 	phase(phase),
 	sigma_a(sigma_a),
@@ -23,7 +23,7 @@ namespace mtt::media {
         eval::Context const& ctx, 
         f32 t_max, 
         f32 u
-    ) const -> std::optional<Interaction> {
+    ) const noexcept -> std::optional<Interaction> {
 		auto sigma_a = (ctx.spec & this->sigma_a) * density_scale;
 		auto sigma_s = (ctx.spec & this->sigma_s) * density_scale;
 		auto sigma_t = sigma_a + sigma_s;
@@ -64,9 +64,11 @@ namespace mtt::media {
 			auto t_u = distr.sample(u);
 			if (t_boundary <= t_next && (density_maj < math::epsilon<f32> || t_u >= t_boundary)) {
 				update_transmittance(t_boundary + t_offset);
+				auto phase = this->phase;
+				phase->configure({ctx.spec});
 				return Interaction{
 					r.o,
-					phase->clone({ctx.spec}),
+					phase,
 					t_max,
 					transmittance.value[0],
 					transmittance,
@@ -81,9 +83,11 @@ namespace mtt::media {
 				auto spectra_pdf = sigma_maj * transmittance;
 				auto density = (*grid)(r.o);
 
+				auto phase = this->phase;
+				phase->configure({ctx.spec});
 				return Interaction{
 					r.o,
-					phase->clone({ctx.spec}),
+					phase,
 					t_transmitted,
 					spectra_pdf.value[0],
 					spectra_pdf,

@@ -14,7 +14,7 @@ namespace mtt::spectra {
 	poly<Spectrum> Spectrum::Au_eta;
 	poly<Spectrum> Spectrum::Au_k;
 
-	auto Spectrum::initialize() -> void {
+	auto Spectrum::initialize() noexcept -> void {
 		zero = pro::make_proxy<Spectrum, Constant_Spectrum>(0.f);
 		one = pro::make_proxy<Spectrum, Constant_Spectrum>(1.f);
 

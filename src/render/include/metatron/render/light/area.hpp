@@ -3,23 +3,23 @@
 #include <metatron/resource/shape/shape.hpp>
 
 namespace mtt::light {
-	struct Area_Light final: Light {
+	struct Area_Light final {
 		Area_Light(
-			shape::Shape const& shape,
+			view<shape::Shape> shape,
 			usize primitive = 0uz
-		);
+		) noexcept;
 
 		auto operator()(
 			eval::Context const& ctx
-		) const -> std::optional<Interaction>;
+		) const noexcept -> std::optional<Interaction>;
 		auto sample(
 			eval::Context const& ctx,
 			math::Vector<f32, 2> const& u
-		) const -> std::optional<Interaction>;
-		auto flags() const -> Flags;
+		) const noexcept -> std::optional<Interaction>;
+		auto flags() const noexcept -> Flags;
 
 	private:
-		shape::Shape const* shape;
+		view<shape::Shape> shape;
 		usize primitive;
 	};
 }

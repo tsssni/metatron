@@ -7,7 +7,7 @@
 namespace mtt::media {
 	struct Interaction final {
 		math::Vector<f32, 3> p;
-		std::unique_ptr<phase::Phase_Function> phase;
+		pro::proxy<phase::Phase_Function> phase;
 		f32 t;
 		f32 pdf;
 		spectra::Stochastic_Spectrum spectra_pdf;
@@ -19,7 +19,12 @@ namespace mtt::media {
 		spectra::Stochastic_Spectrum L;
 	};
 
-	struct Medium {
-		auto virtual sample(eval::Context const& ctx, f32 t_max, f32 u) const -> std::optional<Interaction> = 0;
-	};
+	MTT_POLY_METHOD(medium_sample, sample);
+
+	struct Medium final: pro::facade_builder
+	::add_convention<medium_sample, auto (
+		eval::Context const& ctx, f32 t_max, f32 u
+	) const noexcept -> std::optional<Interaction>>
+	::support<pro::skills::as_view>
+	::build {};
 }

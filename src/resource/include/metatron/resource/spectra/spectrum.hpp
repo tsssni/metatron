@@ -4,10 +4,10 @@
 namespace mtt::spectra {
 	auto constexpr visible_lambda = math::Vector<f32, 2>{360.f, 830.f};
 
-	struct Spectrum: pro::facade_builder
-					 ::add_convention<pro::operator_dispatch<"()">, f32(f32) const>
-					 ::support<pro::skills::as_view>
-					 ::build {
+	struct Spectrum final: pro::facade_builder
+	::add_convention<pro::operator_dispatch<"()">, auto (f32) const noexcept -> f32>
+	::support<pro::skills::as_view>
+	::build {
 
 		poly<Spectrum> static one;
 		poly<Spectrum> static zero;
@@ -20,10 +20,10 @@ namespace mtt::spectra {
 		poly<Spectrum> static Au_eta;
 		poly<Spectrum> static Au_k;
 
-		auto static initialize() -> void;
+		auto static initialize() noexcept -> void;
 	};
 
-	auto inline operator|(view<Spectrum> x, view<Spectrum> y) -> f32 {
+	auto inline operator|(view<Spectrum> x, view<Spectrum> y) noexcept -> f32 {
 		auto integral = 0.f;
 		for (auto lambda = visible_lambda[0]; lambda <= visible_lambda[1]; lambda++) {
 			integral += (*x)(lambda) * (*y)(lambda);
@@ -31,7 +31,7 @@ namespace mtt::spectra {
 		return integral;
 	}
 
-	auto inline operator~(view<Spectrum> s) -> math::Vector<f32, 3> {
+	auto inline operator~(view<Spectrum> s) noexcept -> math::Vector<f32, 3> {
 		return {
 			Spectrum::CIE_X | s,
 			Spectrum::CIE_Y | s,

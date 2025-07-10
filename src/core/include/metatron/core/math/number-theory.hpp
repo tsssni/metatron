@@ -3,14 +3,14 @@
 #include <tuple>
 
 namespace mtt::math {
-	auto inline constexpr gcd(usize a, usize b) -> usize {
+	auto inline constexpr gcd(usize a, usize b) noexcept -> usize {
 		if (b == 0) {
 			return a;
 		}
 		return gcd(b, a % b);
 	}
 
-	auto inline constexpr extended_gcd(usize a, usize b) -> std::tuple<usize, usize, usize> {
+	auto inline constexpr extended_gcd(usize a, usize b) noexcept -> std::tuple<usize, usize, usize> {
 		if (b == 0) {
 			return {a, 1uz, 0uz};
 		}
@@ -21,7 +21,7 @@ namespace mtt::math {
 		return {gcd, y, x - (a / b) * y};
 	}
 
-	auto inline constexpr multiplicative_inverse(usize a, usize b) -> usize {
+	auto inline constexpr multiplicative_inverse(usize a, usize b) noexcept -> usize {
 		auto [gcd, x, y] = extended_gcd(a, b);
 		return x;
 	}
@@ -30,7 +30,7 @@ namespace mtt::math {
 	auto inline constexpr chinese_remainder_theorem(
 		Vector<usize, n> const& a,
 		Vector<usize, n> const& b
-	) -> usize {
+	) noexcept -> usize {
 		// M = sum(b)
 		// m_i = M / b_i
 		// c_i = m_i * m_i^(-1)

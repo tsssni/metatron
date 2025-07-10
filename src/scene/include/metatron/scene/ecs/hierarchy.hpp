@@ -9,39 +9,39 @@ namespace mtt::ecs {
 		Hierarchy();
 
 		template<typename T>
-		auto monitor(Daemon& daemon) -> void {
+		auto monitor(view<Daemon> daemon) noexcept -> void {
 			registry.on_construct<T>().connect([this, &daemon](Registry &reg, Entity entity) {
-				daemon.attach(*this, entity);
+				daemon->attach(*this, entity);
 			});
 			registry.on_update<T>().connect([this, &daemon](Registry &reg, Entity entity) {
-				daemon.mutate(*this, entity);
+				daemon->mutate(*this, entity);
 			});
 			registry.on_destroy<T>().connect([this, &daemon](Registry &reg, Entity entity) {
-				daemon.detach(*this, entity);
+				daemon->detach(*this, entity);
 			});
 		};
 
-		auto create(std::string const& name) -> Entity;
-		auto entity(std::string const& name) const -> Entity;
-		auto parent(Entity entity) const -> Entity;
+		auto create(std::string const& name) noexcept -> Entity;
+		auto entity(std::string const& name) const noexcept -> Entity;
+		auto parent(Entity entity) const noexcept -> Entity;
 
 		template<typename T>
-		auto attach(Entity entity) -> void {
+		auto attach(Entity entity) noexcept -> void {
 			registry.emplace<T>(entity);
 		}
 
 		template<typename T>
-		auto mutate(Entity entity) -> T& {
+		auto mutate(Entity entity) noexcept -> T& {
 			return registry.get<T>(entity);
 		}
 
 		template<typename T>
-		auto fetch(Entity entity) const -> T const& {
+		auto fetch(Entity entity) const noexcept -> T const& {
 			return registry.get<T const>(entity);
 		}
 
 		template<typename T>
-		auto detach(Entity entity) -> void {
+		auto detach(Entity entity) noexcept -> void {
 			registry.erase<T>(entity);
 		}
 

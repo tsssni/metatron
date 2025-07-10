@@ -10,7 +10,7 @@
 
 namespace mtt::stl {
 	struct dispatcher final: singleton<dispatcher> {
-		dispatcher(usize num_threads = std::thread::hardware_concurrency() - 1uz) {
+		dispatcher(usize num_threads = std::thread::hardware_concurrency() - 1uz) noexcept {
 			threads.reserve(num_threads);
 			for (auto i = 0; i < num_threads; ++i) {
 				threads.emplace_back([this]() {
@@ -30,7 +30,7 @@ namespace mtt::stl {
 			}
 		}
 
-		~dispatcher() {
+		~dispatcher() noexcept {
 			{
 				auto lock = std::lock_guard{mutex};
 				stop = true;
@@ -46,7 +46,7 @@ namespace mtt::stl {
 		auto sync_parallel(
 			math::Vector<usize, size> const& grid,
 			F&& f
-		) -> void {
+		) noexcept -> void {
 			auto future = parallel(grid, std::forward<F>(f), true);
 			future.wait();
 		}
@@ -56,7 +56,7 @@ namespace mtt::stl {
 		auto async_parallel(
 			math::Vector<usize, size> const& grid,
 			F&& f
-		) -> std::shared_future<void> {
+		) noexcept -> std::shared_future<void> {
 			return parallel(grid, std::forward<F>(f), false);
 		}
 
@@ -68,7 +68,7 @@ namespace mtt::stl {
 		auto async_dispatch(
 			math::Vector<usize, size> const& grid,
 			F&& f
-		) {
+		) noexcept {
 			using R = std::invoke_result_t<F, math::Vector<usize, size>>;
 			auto promise = std::make_shared<std::promise<R>>();
 			auto future = promise->get_future().share();
@@ -102,7 +102,7 @@ namespace mtt::stl {
 			math::Vector<usize, size> const& grid,
 			F&& f,
 			bool sync
-		) -> std::shared_future<void> {
+		) noexcept -> std::shared_future<void> {
 			auto promise = std::make_shared<std::promise<void>>();
 			auto future = promise->get_future().share();
 			auto n = math::prod(grid);

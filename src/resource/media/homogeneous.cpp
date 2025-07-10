@@ -5,17 +5,17 @@
 
 namespace mtt::media {
 	Homogeneous_Medium::Homogeneous_Medium(
-		phase::Phase_Function const* phase,
+		poly<phase::Phase_Function> phase,
 		view<spectra::Spectrum> sigma_a,
 		view<spectra::Spectrum> sigma_s,
 		view<spectra::Spectrum> emission
-	):
+	) noexcept:
 	phase{phase},
 	sigma_a{sigma_a},
 	sigma_s{sigma_s},
 	emission{emission} {}
 
-	auto Homogeneous_Medium::sample(eval::Context const& ctx, f32 t_max, f32 u) const -> std::optional<Interaction> {
+	auto Homogeneous_Medium::sample(eval::Context const& ctx, f32 t_max, f32 u) const noexcept -> std::optional<Interaction> {
 		auto sigma_a = ctx.spec & this->sigma_a;
 		auto sigma_s = ctx.spec & this->sigma_s;
 		auto sigma_t = sigma_a + sigma_s;
@@ -33,9 +33,11 @@ namespace mtt::media {
 			return std::exp(-value * t);
 		}, transmittance.value);
 
+		auto phase = this->phase;
+		phase->configure({ctx.spec});
 		return Interaction{
 			ctx.r.o + ctx.r.d * t,
-			phase->clone({ctx.spec}),
+			phase,
 			t,
 			pdf,
 			t < t_max ? sigma_maj * transmittance : transmittance,

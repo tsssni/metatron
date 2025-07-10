@@ -1,9 +1,9 @@
 #include <metatron/resource/media/vaccum.hpp>
 
 namespace mtt::media {
-	Vaccum_Medium::Vaccum_Medium() {}
-
-	auto Vaccum_Medium::sample(eval::Context const& ctx, f32 t_max, f32 u) const -> std::optional<Interaction> {
+	auto Vaccum_Medium::sample(
+		eval::Context const& ctx, f32 t_max, f32 u
+	) const noexcept -> std::optional<Interaction> {
 		auto transmittance = ctx.spec;
 		transmittance = 1.f;
 

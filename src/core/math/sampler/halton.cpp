@@ -7,7 +7,7 @@ namespace mtt::math {
 	Halton_Sampler::Halton_Sampler(
 		usize seed,
 		Vector<usize, 2> const& scale_exponential
-	):
+	) noexcept:
 	exponential(scale_exponential),
 	scale({1uz << scale_exponential[0], math::pow(3uz, scale_exponential[1])}),
 	seed(seed) {
@@ -18,7 +18,7 @@ namespace mtt::math {
 		};
 	}
 
-	auto Halton_Sampler::start(math::Vector<usize, 2> const& pixel, usize idx, usize dim) -> void {
+	auto Halton_Sampler::start(math::Vector<usize, 2> const& pixel, usize idx, usize dim) noexcept -> void {
 		this->pixel = pixel;
 		this->idx = idx;
 		this->dim = std::clamp(dim, 2uz, primes.size() - 1uz);
@@ -38,7 +38,7 @@ namespace mtt::math {
 		halton_idx += idx * stride;
 	}
 
-	auto Halton_Sampler::generate_1d() const -> f32 {
+	auto Halton_Sampler::generate_1d() const noexcept -> f32 {
 		if (dim >= primes.size()) {
 			dim = 2uz;
 		}
@@ -49,11 +49,11 @@ namespace mtt::math {
 		return scrambled;
 	}
 
-	auto Halton_Sampler::generate_2d() const -> math::Vector<f32, 2> {
+	auto Halton_Sampler::generate_2d() const noexcept -> math::Vector<f32, 2> {
 		return {generate_1d(), generate_1d()};
 	}
 
-	auto Halton_Sampler::generate_pixel_2d() const -> math::Vector<f32, 2> {
+	auto Halton_Sampler::generate_pixel_2d() const noexcept -> math::Vector<f32, 2> {
 		// remove integer part by dividing scale
 		return {
 			radical_inverse(halton_idx >> exponential[0], primes[0]),

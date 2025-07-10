@@ -10,8 +10,12 @@ namespace mtt::photo {
 		};
 	}
 
-	struct Lens {
-		virtual ~Lens() {}
-		auto virtual sample(math::Vector<f32, 3> o, math::Vector<f32, 2> u) -> std::optional<lens::Interaction> = 0;
-	};
+	MTT_POLY_METHOD(lens_sample, sample);
+
+	struct Lens final: pro::facade_builder
+	::add_convention<lens_sample, auto (
+		math::Vector<f32, 3> o, math::Vector<f32, 2> u
+	) const noexcept -> std::optional<lens::Interaction>>
+	::support<pro::skills::as_view>
+	::build {};
 }

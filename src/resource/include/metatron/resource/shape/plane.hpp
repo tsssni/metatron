@@ -2,24 +2,24 @@
 #include <metatron/resource/shape/shape.hpp>
 
 namespace mtt::shape {
-	struct Plane final: Shape {
-		Plane(f32 a, f32 b, f32 c, f32 d);
+	struct Plane final {
+		Plane(f32 a, f32 b, f32 c, f32 d) noexcept;
 		Plane(math::Vector<f32, 3> const& p, math::Vector<f32, 3> const& n);
-		auto size() const -> usize;
+		auto size() const noexcept -> usize;
 		auto bounding_box(
 			math::Matrix<f32, 4, 4> const& t,
 			usize idx
-		) const -> math::Bounding_Box;
+		) const noexcept -> math::Bounding_Box;
 		auto operator()(
 			math::Ray const& r,
 			math::Vector<f32, 3> const& np = {},
 			usize idx = 0uz
-		) const -> std::optional<Interaction>;
+		) const noexcept -> std::optional<Interaction>;
 		auto sample(
 			eval::Context const& ctx,
 			math::Vector<f32, 2> const& u,
 			usize idxuz
-		) const -> std::optional<Interaction>;
+		) const noexcept -> std::optional<Interaction>;
 	
 	private:
 		f32 a;

@@ -12,18 +12,19 @@ namespace mtt::texture {
 		f32 dvdy{0.f};
 	};
 
+	MTT_POLY_METHOD(texture_sample, sample);
+
 	template<typename T>
-	struct Texture {
-		virtual ~Texture() {}
-		auto virtual sample(
-			eval::Context const& ctx,
-			Coordinate const& coord
-		) const -> T = 0;
-	};
+	struct Texture final: pro::facade_builder
+	::add_convention<texture_sample, auto (
+		eval::Context const& ctx,
+		Coordinate const& coord
+	) const noexcept -> T>
+	::template support<pro::skills::as_view>
+	::build {};
 
 	auto grad(
 		math::Ray_Differential const& diff,
 		shape::Interaction const& intr
-	) -> std::optional<texture::Coordinate>;
-
+	) noexcept -> std::optional<texture::Coordinate>;
 }

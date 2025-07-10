@@ -4,7 +4,6 @@
 #include <metatron/resource/color/color-space.hpp>
 #include <metatron/core/math/filter/filter.hpp>
 #include <metatron/core/math/vector.hpp>
-#include <memory>
 
 namespace mtt::photo {
 	struct Camera;
@@ -20,8 +19,8 @@ namespace mtt::photo {
 			math::Vector<usize, 2> const& pixel,
 			math::Vector<f32, 2> const& position,
 			f32 weight
-		);
-		auto operator=(spectra::Stochastic_Spectrum const& spectrum) -> void;
+		) noexcept;
+		auto operator=(spectra::Stochastic_Spectrum const& spectrum) noexcept -> void;
 	private:
 		Film* film;
 	};
@@ -33,20 +32,20 @@ namespace mtt::photo {
 		Film(
 			math::Vector<f32, 2> const& film_size,
 			math::Vector<usize, 2> const& image_size,
-			std::unique_ptr<Sensor> sensor,
-			std::unique_ptr<math::Filter> filter,
+			view<math::Filter> filter,
+			Sensor const* sensor,
 			color::Color_Space const* color_space
-		);
+		) noexcept;
 		auto operator()(
 			math::Vector<usize, 2> pixel,
 			math::Vector<f32, 2> u
-		) -> Fixel;
-		auto to_path(std::string_view path) -> void;
+		) noexcept -> Fixel;
+		auto to_path(std::string_view path) noexcept -> void;
 
 	private:
 		friend Fixel;
 		image::Image image;
-		std::unique_ptr<Sensor> sensor;
-		std::unique_ptr<math::Filter> filter;
+		view<math::Filter> filter;
+		Sensor const* sensor;
 	};
 }

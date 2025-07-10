@@ -5,9 +5,9 @@
 
 namespace mtt::math {
 	struct Gaussian_Distribution final {
-		Gaussian_Distribution(f32 sigma): sigma(sigma) {}
+		Gaussian_Distribution(f32 sigma) noexcept: sigma(sigma) {}
 
-		auto pdf(f32 x) const -> f32 {
+		auto pdf(f32 x) const noexcept -> f32 {
 			return std::exp(-x * x / (2.f * sigma * sigma)) / (math::sqrt(2.f * pi) * sigma);
 		}
 

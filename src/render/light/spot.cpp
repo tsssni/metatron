@@ -5,21 +5,21 @@ namespace mtt::light {
 		view<spectra::Spectrum> L,
 		f32 falloff_start_theta,
 		f32 falloff_end_theta
-	):
+	) noexcept:
 	L(L),
 	falloff_start_cos_theta(std::cos(falloff_start_theta)),
 	falloff_end_cos_theta(std::cos(falloff_end_theta)) {}
 
 	auto Spot_Light::operator()(
 		eval::Context const& ctx
-	) const -> std::optional<Interaction> {
+	) const noexcept -> std::optional<Interaction> {
 		return {};
 	}
 
 	auto Spot_Light::sample(
 		eval::Context const& ctx,
 		math::Vector<f32, 2> const& u
-	) const -> std::optional<Interaction> {
+	) const noexcept -> std::optional<Interaction> {
 		auto smoothstep = [](f32 start, f32 end, f32 x) -> f32 {
 			if (x < start) {
 				return 0.f;
@@ -50,7 +50,7 @@ namespace mtt::light {
 		};
 	}
 
-	auto Spot_Light::flags() const -> Flags {
+	auto Spot_Light::flags() const noexcept -> Flags {
 		return delta;
 	}
 }

@@ -5,7 +5,9 @@
 #include <assimp/postprocess.h>
 
 namespace mtt::loader {
-	auto Assimp_Loader::from_path(std::string_view path) -> std::vector<std::unique_ptr<shape::Mesh>> {
+	auto Assimp_Loader::from_path(
+		std::string_view path
+	) noexcept -> std::vector<std::unique_ptr<shape::Mesh>> {
 		auto importer = Assimp::Importer{};
 		scene = importer.ReadFile(path.data(), 0
 			| aiProcess_FindDegenerates
@@ -33,7 +35,7 @@ namespace mtt::loader {
 	}
 
 
-	auto Assimp_Loader::traverse(aiNode const* node) -> void {
+	auto Assimp_Loader::traverse(aiNode const* node) noexcept -> void {
 		for (auto i = 0uz; i < node->mNumMeshes; i++) {
 			auto mesh = scene->mMeshes[node->mMeshes[i]];
 			load_mesh(mesh);
@@ -43,7 +45,7 @@ namespace mtt::loader {
 		}
 	}
 
-	auto Assimp_Loader::load_mesh(aiMesh const* mesh) -> void {
+	auto Assimp_Loader::load_mesh(aiMesh const* mesh) noexcept -> void {
 		auto indices = std::vector<math::Vector<usize, 3>>{};
 		auto vertices = std::vector<math::Vector<f32, 3>>{};
 		auto normals = std::vector<math::Vector<f32, 3>>{};

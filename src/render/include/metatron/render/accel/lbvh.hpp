@@ -2,7 +2,7 @@
 #include <vector>
 
 namespace mtt::accel {
-	struct LBVH final: Acceleration {
+	struct LBVH final {
 		struct alignas(32) Node final {
 			math::Bounding_Box bbox;
 			union {
@@ -17,11 +17,11 @@ namespace mtt::accel {
 			std::vector<Divider>&& dividers,
 			math::Transform const* transform,
 			usize num_guide_leaf_prims = 4
-		);
+		) noexcept;
 		auto operator()(
 			math::Ray const& r,
 			math::Vector<f32, 3> const& n = {}
-		) const -> std::optional<Interaction>;
+		) const noexcept -> std::optional<Interaction>;
 
 	private:
 		std::vector<Node> bvh;

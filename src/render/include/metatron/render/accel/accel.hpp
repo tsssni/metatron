@@ -9,10 +9,10 @@
 
 namespace mtt::accel {
 	struct Divider final {
-		shape::Shape const* shape{};
-		media::Medium const* medium;
+		view<shape::Shape> shape{};
+		view<media::Medium> medium;
+		view<light::Light> light{};
 		material::Material const* material{};
-		light::Light const* light{};
 		math::Transform const* local_to_world{};
 		math::Transform const* medium_to_world{};
 		usize primitive{0uz};
@@ -23,11 +23,11 @@ namespace mtt::accel {
 		std::optional<shape::Interaction> intr_opt;
 	};
 
-	struct Acceleration {
-		virtual ~Acceleration() {}
-		auto virtual operator()(
-			math::Ray const& r,
-			math::Vector<f32, 3> const& np = {}
-		) const -> std::optional<Interaction> = 0;
-	};
+	struct Acceleration final: pro::facade_builder
+	::add_convention<pro::operator_dispatch<"()">, auto (
+		math::Ray const& r,
+		math::Vector<f32, 3> const& np
+	) const noexcept -> std::optional<Interaction>>
+	::support<pro::skills::as_view>
+	::build {};
 }

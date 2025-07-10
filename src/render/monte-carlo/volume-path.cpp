@@ -8,11 +8,11 @@
 namespace mtt::monte_carlo {
 	auto Volume_Path_Integrator::sample(
 		Status initial_status,
-		accel::Acceleration const& accel,
-		emitter::Emitter const& emitter,
-		math::Sampler const& sampler
-	) const -> std::optional<spectra::Stochastic_Spectrum> {
-		auto lambda_u = sampler.generate_1d();
+		view<accel::Acceleration> accel,
+		view<emitter::Emitter> emitter,
+		view<math::Sampler> sampler
+	) const noexcept -> std::optional<spectra::Stochastic_Spectrum> {
+		auto lambda_u = sampler->generate_1d();
 		auto emission = spectra::Stochastic_Spectrum{lambda_u};
 		auto beta = emission; beta = 1.f;
 		auto mis_s = emission; mis_s = 1.f;
@@ -27,8 +27,8 @@ namespace mtt::monte_carlo {
 		auto scatter_pdf = 0.f;
 		auto scatter_f = emission;
 
-		auto bsdf = std::unique_ptr<bsdf::Bsdf>{};
-		auto phase = std::unique_ptr<phase::Phase_Function>{};
+		auto bsdf = poly<bsdf::Bsdf>{};
+		auto phase = poly<phase::Phase_Function>{};
 		auto trace_ctx = eval::Context{};
 		auto history_ctx = eval::Context{};
 		trace_ctx.r = initial_status.ray_differential.r;
@@ -50,7 +50,7 @@ namespace mtt::monte_carlo {
 
 			auto q = spectra::max(beta * math::guarded_div(1.f, spectra::avg(mis_s)));
 			if (q < 1.f && depth > 1uz) {
-				auto rr_u = sampler.generate_1d();
+				auto rr_u = sampler->generate_1d();
 				if (rr_u > q) {
 					terminated = true;
 					continue;
@@ -65,11 +65,11 @@ namespace mtt::monte_carlo {
 				}
 
 				auto direct_ctx = trace_ctx;
-				MTT_OPT_OR_RETURN(e_intr, emitter.sample(direct_ctx, sampler.generate_1d()));
+				MTT_OPT_OR_RETURN(e_intr, emitter->sample(direct_ctx, sampler->generate_1d()));
 				auto& et = *e_intr.divider->local_to_world;
 
 				auto l_ctx = et ^ rt ^ direct_ctx;
-				MTT_OPT_OR_RETURN(l_intr, e_intr.divider->light->sample(l_ctx, sampler.generate_2d()));
+				MTT_OPT_OR_RETURN(l_intr, e_intr.divider->light->sample(l_ctx, sampler->generate_2d()));
 
 				l_intr.p = rt | et | math::expand(l_intr.p, 1.f);
 				l_intr.wi = math::normalize(rt | et | math::expand(l_intr.wi, 0.f));
@@ -105,7 +105,7 @@ namespace mtt::monte_carlo {
 				auto dedium = medium;
 				auto direct_to_world = medium_to_world;
 				auto gamma = beta * (f / p_e) / (scatter_f / scatter_pdf);
-				auto mis_d = mis_s * p_s / p_e * f32(!(e_intr.divider->light->flags() & light::Light::delta));
+				auto mis_d = mis_s * p_s / p_e * f32(!(e_intr.divider->light->flags() & light::Flags::delta));
 				auto mis_l = mis_s;
 
 				while (true) {
@@ -115,7 +115,7 @@ namespace mtt::monte_carlo {
 
 					if (spectra::max(gamma * math::guarded_div(1.f, spectra::avg(mis_d + mis_l))) < 0.05f) {
 						auto q = 0.25f;
-						if (sampler.generate_1d() > q) {
+						if (sampler->generate_1d() > q) {
 							gamma = 0.f;
 							termenated = true;
 							continue;
@@ -125,7 +125,7 @@ namespace mtt::monte_carlo {
 					}
 
 					if (crommed) {
-						amm_opt = accel(direct_ctx.r, direct_ctx.n);
+						amm_opt = (*accel)(direct_ctx.r, direct_ctx.n);
 						if (!amm_opt) {
 							termenated = true;
 							continue;
@@ -148,7 +148,7 @@ namespace mtt::monte_carlo {
 						imtr.n *= direct_ctx.inside ? -1.f : 1.f;
 
 						auto close_to_light = math::length(imtr.p - l_intr.p) < 0.001f;
-						if (!close_to_light && !(dim.material->bsdf->flags() & bsdf::Bsdf::interface)) {
+						if (!close_to_light && !(dim.material->bsdf->flags() & bsdf::Flags::interface)) {
 							termenated = true;
 							gamma = 0.f;
 							continue;
@@ -177,7 +177,7 @@ namespace mtt::monte_carlo {
 
 					auto& mt = *direct_to_world;
 					auto m_ctx = mt ^ rt ^ direct_ctx;
-					MTT_OPT_OR_CALLBACK(m_intr, dedium->sample(m_ctx, imtr.t, sampler.generate_1d()), {
+					MTT_OPT_OR_CALLBACK(m_intr, dedium->sample(m_ctx, imtr.t, sampler->generate_1d()), {
 						gamma = 0.f;
 						termenated = true;
 						break;
@@ -209,13 +209,13 @@ namespace mtt::monte_carlo {
 			}();
 
 			if (scattered || crossed) {
-				acc_opt = accel(trace_ctx.r, trace_ctx.n);
+				acc_opt = (*accel)(trace_ctx.r, trace_ctx.n);
 			}
 
 			if (!acc_opt || !acc_opt.value().intr_opt) {
 				terminated = true;
 
-				MTT_OPT_OR_CONTINUE(e_intr, emitter.sample_infinite(trace_ctx, sampler.generate_1d()));
+				MTT_OPT_OR_CONTINUE(e_intr, emitter->sample_infinite(trace_ctx, sampler->generate_1d()));
 				auto& lt = *e_intr.divider->local_to_world;
 
 				auto l_ctx = lt ^ rt ^ trace_ctx;
@@ -247,7 +247,7 @@ namespace mtt::monte_carlo {
 
 			auto& mt = *medium_to_world;
 			auto m_ctx = mt ^ rt ^ trace_ctx;
-			MTT_OPT_OR_CALLBACK(m_intr, medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
+			MTT_OPT_OR_CALLBACK(m_intr, medium->sample(m_ctx, intr.t, sampler->generate_1d()), {
 				terminated = true;
 				continue;
 			});
@@ -267,7 +267,7 @@ namespace mtt::monte_carlo {
 				auto p_s = math::guarded_div(m_intr.sigma_s.value[0], m_intr.sigma_maj.value[0]);
 				auto p_n = math::guarded_div(m_intr.sigma_n.value[0], m_intr.sigma_maj.value[0]);
 
-				auto u = sampler.generate_1d();
+				auto u = sampler->generate_1d();
 				auto mode = math::Discrete_Distribution{{p_a, p_s, p_n}}.sample(u);
 				if (mode == 0uz) {
 					beta *= m_intr.sigma_a / p_a;
@@ -279,7 +279,7 @@ namespace mtt::monte_carlo {
 					};
 
 					auto p_ctx = pt | trace_ctx;
-					MTT_OPT_OR_CALLBACK(p_intr, phase->sample(p_ctx, sampler.generate_2d()), {
+					MTT_OPT_OR_CALLBACK(p_intr, phase->sample(p_ctx, sampler->generate_2d()), {
 						terminated = true;
 						continue;
 					});
@@ -326,7 +326,7 @@ namespace mtt::monte_carlo {
 					return;
 				}
 
-				MTT_OPT_OR_RETURN(e_intr, emitter(trace_ctx, {div->light, div->local_to_world}));
+				MTT_OPT_OR_RETURN(e_intr, (*emitter)(trace_ctx, {div->light, div->local_to_world}));
 				auto& div = *e_intr.divider;
 				auto& lt = *div.local_to_world;
 
@@ -349,8 +349,8 @@ namespace mtt::monte_carlo {
 			auto bt = math::Transform{{}, {1.f},
 				math::Quaternion<f32>::from_rotation_between(intr.n, {0.f, 1.f, 0.f})
 			};
-			auto uc = sampler.generate_1d();
-			auto u = sampler.generate_2d();
+			auto uc = sampler->generate_1d();
+			auto u = sampler->generate_2d();
 
 			auto b_ctx = bt | trace_ctx;
 			MTT_OPT_OR_CALLBACK(b_intr, bsdf->sample(b_ctx, {uc, u[0], u[1]}), {

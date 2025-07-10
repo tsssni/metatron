@@ -23,13 +23,13 @@ namespace mtt::math {
 		} config;
 
 		struct Chain final {
-			auto operator|(Transform const& t) -> Chain& {
+			auto operator|(Transform const& t) noexcept -> Chain& {
 				store(t);
 				ops.push_back(0);
 				return *this;
 			}
 
-			auto operator^(Transform const& t) -> Chain& {
+			auto operator^(Transform const& t) noexcept -> Chain& {
 				store(t);
 				ops.push_back(1);
 				return *this;
@@ -64,12 +64,12 @@ namespace mtt::math {
 				store(t);
 			}
 
-			auto store(Transform const& t) -> void {
+			auto store(Transform const& t) noexcept -> void {
 				transforms.push_back(&t);
 			}
 
 			template<Transformable T, typename Type = std::remove_cvref_t<T>>
-			auto dechain(T const& rhs) -> Type {
+			auto dechain(T const& rhs) noexcept -> Type {
 				auto ret = rhs;
 				for (auto i = i32(transforms.size()) - 1; i >= 0; i--) {
 					if (ops[i] == 0) {
@@ -99,7 +99,7 @@ namespace mtt::math {
 			update();
 		}
 
-		auto update() const -> void {
+		auto update() const noexcept -> void {
 			auto translation = math::Matrix<f32, 4, 4>{
 				{1.f, 0.f, 0.f, config.translation[0]},
 				{0.f, 1.f, 0.f, config.translation[1]},
@@ -139,7 +139,7 @@ namespace mtt::math {
 			}
 		}
 
-		auto operator|(Transform const& rhs) const -> Chain {
+		auto operator|(Transform const& rhs) const noexcept -> Chain {
 			return std::move(Chain{*this} | rhs);
 		}
 
@@ -165,7 +165,7 @@ namespace mtt::math {
 
 		template<typename T>
 		requires std::is_same_v<std::remove_cvref_t<T>, Transform>
-		auto operator^(T&& rhs) const -> Chain {
+		auto operator^(T&& rhs) const noexcept -> Chain {
 			return std::move(Chain{*this} ^ rhs);
 		}
 	};

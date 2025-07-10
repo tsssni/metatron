@@ -2,8 +2,6 @@
 #include <metatron/resource/eval/context.hpp>
 #include <metatron/resource/spectra/stochastic.hpp>
 #include <metatron/core/math/ray.hpp>
-#include <unordered_set>
-#include <typeindex>
 
 namespace mtt::light {
 	struct Interaction final {
@@ -14,23 +12,22 @@ namespace mtt::light {
 		f32 pdf;
 	};
 
-	struct Light {
-		enum Flags {
-			delta = 1 << 0,
-		};
-
-		auto virtual operator()(
-			eval::Context const& ctx
-		) const -> std::optional<Interaction> = 0;
-		auto virtual sample(
-			eval::Context const& ctx,
-			math::Vector<f32, 2> const& u
-		) const -> std::optional<Interaction> = 0;
-		auto virtual flags() const -> Flags = 0;
-
-		auto static initialize() -> void;
-
-	private:
-		static std::unordered_set<std::type_index> delta_lights;
+	enum Flags {
+		delta = 1 << 0,
 	};
+
+	MTT_POLY_METHOD(light_sample, sample);
+	MTT_POLY_METHOD(light_flags, flags);
+
+	struct Light final: pro::facade_builder
+	::add_convention<pro::operator_dispatch<"()">, auto (
+		eval::Context const& ctx
+	) const noexcept -> std::optional<Interaction>>
+	::add_convention<light_sample, auto (
+		eval::Context const& ctx,
+		math::Vector<f32, 2> const& u
+	) const noexcept -> std::optional<Interaction>>
+	::add_convention<light_flags, auto () const noexcept -> Flags>
+	::support<pro::skills::as_view>
+	::build {};
 }

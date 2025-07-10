@@ -7,56 +7,53 @@ namespace mtt::math {
 		T r;
 		T i;
 
-		Complex() = default;
-		Complex(T r, T i = T{0}): r(r), i(i) {}
-
-		auto constexpr operator+(Complex const& rhs) const -> Complex {
+		auto constexpr operator+(Complex const& rhs) const noexcept -> Complex {
 			return {r + rhs.r, i + rhs.i};
 		}
 
-		auto constexpr operator+=(Complex const& rhs) -> Complex& {
+		auto constexpr operator+=(Complex const& rhs) noexcept -> Complex& {
 			*this = *this + rhs;
 			return *this;
 		}
 
-		auto constexpr operator+(T const& rhs) const -> Complex {
+		auto constexpr operator+(T const& rhs) const noexcept -> Complex {
 			return *this + Complex{rhs};
 		}
 
-		auto constexpr operator-(const Complex& rhs) const -> Complex {
+		auto constexpr operator-(const Complex& rhs) const noexcept -> Complex {
 			return {r - rhs.r, i - rhs.i};
 		}
 
-		auto constexpr operator-=(const Complex& rhs) -> Complex& {
+		auto constexpr operator-=(const Complex& rhs) noexcept -> Complex& {
 			*this = *this - rhs;
 			return *this;
 		}
 
-		auto constexpr operator-(T const& rhs) const -> Complex {
+		auto constexpr operator-(T const& rhs) const noexcept -> Complex {
 			return *this - Complex{rhs};
 		}
 
-		auto constexpr operator-() const -> Complex {
+		auto constexpr operator-() const noexcept -> Complex {
 			return {-r, -i};
 		}
 
-		auto constexpr operator*(const Complex& rhs) const -> Complex {
+		auto constexpr operator*(const Complex& rhs) const noexcept -> Complex {
 			return {
 				r * rhs.r - i * rhs.i,
 			    r * rhs.i + i * rhs.r,
 			};
 		}
 
-		auto constexpr operator*=(const Complex& rhs) -> Complex& {
+		auto constexpr operator*=(const Complex& rhs) noexcept -> Complex& {
 			*this = *this * rhs;
 			return *this;
 		}
 
-		auto constexpr operator*(T const& rhs) const -> Complex {
+		auto constexpr operator*(T const& rhs) const noexcept -> Complex {
 			return *this * Complex{rhs};
 		}
 
-		auto constexpr operator/(const Complex& rhs) const -> Complex {
+		auto constexpr operator/(const Complex& rhs) const noexcept -> Complex {
 			auto denom = rhs.r * rhs.r + rhs.i * rhs.i;
 			return {
 				math::guarded_div(r * rhs.r + i * rhs.i, denom),
@@ -64,17 +61,17 @@ namespace mtt::math {
 			};
 		}
 
-		auto constexpr operator/=(const Complex& rhs) -> Complex& {
+		auto constexpr operator/=(const Complex& rhs) noexcept -> Complex& {
 			*this = *this / rhs;
 			return *this;
 		}
 
-		auto constexpr operator/(T const& rhs) const -> Complex {
+		auto constexpr operator/(T const& rhs) const noexcept -> Complex {
 			return *this / Complex{rhs};
 		}
 
 		template<usize idx>
-		auto constexpr get() const -> T const& {
+		auto constexpr get() const noexcept -> T const& {
 			static_assert(idx < 2, "index out of bounds");
 			if constexpr (idx == 0) {
 				return r;
@@ -84,7 +81,7 @@ namespace mtt::math {
 		}
 
 		template<usize idx>
-		auto constexpr get() -> T& {
+		auto constexpr get() noexcept -> T& {
 			static_assert(idx < 2, "index out of bounds");
 			if constexpr (idx == 0) {
 				return r;
@@ -95,50 +92,50 @@ namespace mtt::math {
 	};
 
 	template <typename T>
-	auto constexpr operator+(T const& lhs, Complex<T> const& rhs) -> Complex<T> {
+	auto constexpr operator+(T const& lhs, Complex<T> const& rhs) noexcept -> Complex<T> {
 		return rhs + lhs;
 	}
 
 	template <typename T>
-	auto constexpr operator-(T const& lhs, Complex<T> const& rhs) -> Complex<T> {
+	auto constexpr operator-(T const& lhs, Complex<T> const& rhs) noexcept -> Complex<T> {
 		return -rhs + lhs;
 	}
 
 	template <typename T>
-	auto constexpr operator*(T const& lhs, Complex<T> const& rhs) -> Complex<T> {
+	auto constexpr operator*(T const& lhs, Complex<T> const& rhs) noexcept -> Complex<T> {
 		return rhs * lhs;
 	}
 
 	template <typename T>
-	auto constexpr operator/(T const& lhs, Complex<T> const& rhs) -> Complex<T> {
+	auto constexpr operator/(T const& lhs, Complex<T> const& rhs) noexcept -> Complex<T> {
 		return Complex<T>{lhs} / rhs;
 	}
 
 	template<usize idx, typename T>
-	auto constexpr get(Complex<T> const& z)  -> T const& {
+	auto constexpr get(Complex<T> const& z)  noexcept -> T const& {
 		return z.template get<idx>();
 	}
 
 	template<usize idx, typename T>
-	auto constexpr get(Complex<T>& z) -> T& {
+	auto constexpr get(Complex<T>& z) noexcept -> T& {
 		return z.template get<idx>();
 	}
 
 	template <typename T>
 	requires std::floating_point<T>
-	auto constexpr norm(Complex<T> const& z) -> T {
+	auto constexpr norm(Complex<T> const& z) noexcept -> T {
 		return z.r * z.r + z.i * z.i;
 	}
 
 	template <typename T>
 	requires std::floating_point<T>
-	auto constexpr abs(Complex<T> const& z) -> T {
+	auto constexpr abs(Complex<T> const& z) noexcept -> T {
 		return math::sqrt(norm(z));
 	}
 
 	template <typename T>
 	requires std::floating_point<T>
-	auto constexpr sqrt(Complex<T> const& z) -> Complex<T> {
+	auto constexpr sqrt(Complex<T> const& z) noexcept -> Complex<T> {
 		// z = a + bi, w = u + vi = sqrt(z)
 		// u^2 - v^2 = a, 2uv = b
 		auto [a, b] = z;
@@ -159,7 +156,7 @@ namespace mtt::math {
 
 	template <typename T>
 	requires std::floating_point<T>
-	auto constexpr sqr(Complex<T> const& z) -> Complex<T> {
+	auto constexpr sqr(Complex<T> const& z) noexcept -> Complex<T> {
 		return z * z;
 	}
 }

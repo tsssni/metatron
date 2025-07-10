@@ -6,18 +6,18 @@ namespace mtt::stl {
 	struct capsule {
 		struct Impl final {
 			template<typename... Args>
-			Impl(Args&&... args): impl(new typename T::Impl(std::forward<Args>(args)...)) {}
-			~Impl() {
+			Impl(Args&&... args) noexcept: impl(new typename T::Impl(std::forward<Args>(args)...)) {}
+			~Impl() noexcept {
 				if (impl) {
 					delete this->operator->();
 				}
 			}
 
-			Impl(Impl&& impl) {
+			Impl(Impl&& impl) noexcept {
 				*this = std::move(impl);
 			}
 
-			auto operator=(Impl&& impl) {
+			auto operator=(Impl&& impl) noexcept {
 				if (impl) {
 					delete this->operator->();
 				}
@@ -26,19 +26,19 @@ namespace mtt::stl {
 				return *this;
 			}
 
-			auto operator->() {
+			auto operator->() noexcept {
 				return (typename T::Impl*)impl;
 			}
 
-			auto operator->() const {
+			auto operator->() const noexcept {
 				return (typename T::Impl const*)impl;
 			}
 
-			auto operator*() {
+			auto operator*() noexcept {
 				return *this->operator->();
 			}
 
-			auto operator*() const {
+			auto operator*() const noexcept {
 				return *this->operator->();
 			}
 

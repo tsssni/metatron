@@ -46,22 +46,23 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 16uz;
+	auto spp = 256uz;
 	auto depth = 64uz;
 
-	auto sensor = std::make_unique<photo::Sensor>(color::Color_Space::sRGB.get());
-	auto lens = std::make_unique<photo::Thin_Lens>(5.6f, 0.05f, 10.f);
-	auto film = std::make_unique<photo::Film>(
+	auto sensor = photo::Sensor{color::Color_Space::sRGB.get()};
+	auto lens = photo::Thin_Lens{5.6f, 0.05f, 10.f};
+	auto filter = math::Lanczos_Filter{};
+	auto film = photo::Film{
 		math::Vector<f32, 2>{0.036f, 0.024f},
 		size,
-		std::move(sensor),
-		std::make_unique<math::Lanczos_Filter>(),
+		&filter,
+		&sensor,
 		color::Color_Space::sRGB.get()
-	);
+	};
 
 	auto camera = photo::Camera{
-		std::move(film),
-		std::move(lens)
+		&lens,
+		&film
 	};
 	auto rd = std::random_device{};
 	auto seed = rd();
@@ -144,7 +145,7 @@ auto main() -> int {
 	};
 	auto cloud_medium = media::Grid_Medium{
 		&nanovdb_grid,
-		&hg_phase,
+		pro::make_proxy<phase::Phase_Function>(hg_phase),
 		sigma_a,
 		sigma_s,
 		sigma_e,
@@ -187,13 +188,13 @@ auto main() -> int {
 	auto illuminance_texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>{illuminance};
 	
 	auto diffuse_material = material::Material{
-		.bsdf = &lambertian,
+		.bsdf = pro::make_proxy<bsdf::Bsdf>(lambertian),
 		.spectrum_textures = {
 			{"reflectance", &diffuse_texture},
 		},
 	};
 	auto test_material = material::Material{
-		.bsdf = &microfacet,
+		.bsdf = pro::make_proxy<bsdf::Bsdf>(microfacet),
 		.spectrum_textures = {
 			{"eta", &eta_texture},
 			{"k", &k_texture},
@@ -203,7 +204,7 @@ auto main() -> int {
 		},
 	};
 	auto interface_material = material::Material{
-		.bsdf = &interface,
+		.bsdf = pro::make_proxy<bsdf::Bsdf>(interface),
 	};
 
 	auto env_light = light::Environment_Light{&env_map};
@@ -227,7 +228,7 @@ auto main() -> int {
 		math::pi * 1.f / 16.f,
 		math::pi * 1.f / 4.f
 	};
-	auto area_light = light::Area_Light{sphere};
+	auto area_light = light::Area_Light{&sphere};
 	auto lights = std::vector<emitter::Divider>{
 		// {&parallel_light, &parallel_to_world},
 		// {&point_light, &point_to_world},
@@ -244,8 +245,8 @@ auto main() -> int {
 		{
 			.shape = &sphere,
 			.medium = &cloud_medium,
-			.material = &interface_material,
 			.light = nullptr,
+			.material = &interface_material,
 			.local_to_world = &bound_to_world,
 			.medium_to_world = &medium_to_world,
 		},
@@ -261,8 +262,8 @@ auto main() -> int {
 	// 		dividers.push_back({
 	// 			.shape = mesh.get(),
 	// 			.medium = &vaccum_medium,
-	// 			.material = &test_material,
 	// 			.light = nullptr,
+	// 			.material = &test_material,
 	// 			.local_to_world = &shell_to_world,
 	// 			.medium_to_world = &identity,
 	// 			.primitive = i,
@@ -274,8 +275,8 @@ auto main() -> int {
 	// 		dividers.push_back({
 	// 			.shape = mesh.get(),
 	// 			.medium = &vaccum_medium,
-	// 			.material = &diffuse_material,
 	// 			.light = nullptr,
+	// 			.material = &diffuse_material,
 	// 			.local_to_world = &kernel_to_world,
 	// 			.medium_to_world = &identity,
 	// 			.primitive = i,
@@ -287,8 +288,8 @@ auto main() -> int {
 	// 		dividers.push_back({
 	// 			.shape = mesh.get(),
 	// 			.medium = &vaccum_medium,
-	// 			.material = &test_material,
 	// 			.light = nullptr,
+	// 			.material = &test_material,
 	// 			.local_to_world = &base_to_world,
 	// 			.medium_to_world = &identity,
 	// 			.primitive = i,
@@ -300,7 +301,7 @@ auto main() -> int {
 
 	auto atomic_count = std::atomic<usize>{0uz};
 	auto future = stl::dispatcher::instance().async_parallel(size, [&](math::Vector<usize, 2> const& px) {
-		auto sampler = halton;
+		auto sampler = view<math::Sampler>(&halton);
 		for (auto n = 0uz; n < spp; n++) {
 			auto sample = camera.sample(px, n, sampler);
 			sample->ray_differential = render_to_camera ^ sample->ray_differential;
@@ -318,8 +319,8 @@ auto main() -> int {
 					n,
 					depth,
 				},
-				bvh,
-				emitter,
+				&bvh,
+				&emitter,
 				sampler
 			);
 

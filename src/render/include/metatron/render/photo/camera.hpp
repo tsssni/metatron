@@ -4,7 +4,6 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/math/sampler/sampler.hpp>
-#include <memory>
 
 namespace mtt::photo {
 	struct Interaction final {
@@ -15,19 +14,19 @@ namespace mtt::photo {
 
 	struct Camera final {
 		Camera(
-			std::unique_ptr<Film> film,
-			std::unique_ptr<Lens> lens
-		);
+			view<Lens> lens,
+			Film* film
+		) noexcept;
 		auto sample(
 			math::Vector<usize, 2> pixel,
 			usize idx,
-			math::Sampler& sampler
-		) -> std::optional<Interaction>;
+			view<math::Sampler> sampler
+		) const noexcept -> std::optional<Interaction>;
 		auto to_path(std::string_view path) -> void;
 
 	private:
-		std::unique_ptr<Film> film;
-		std::unique_ptr<Lens> lens;
+		view<Lens> lens;
+		Film* film;
 		math::Ray_Differential default_differential;
 	};
 }

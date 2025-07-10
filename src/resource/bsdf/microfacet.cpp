@@ -8,7 +8,7 @@ namespace mtt::bsdf {
 	auto Microfacet_Bsdf::operator()(
 		math::Vector<f32, 3> const& wo,
 		math::Vector<f32, 3> const& wi
-	) const -> std::optional<Interaction> {
+	) const noexcept -> std::optional<Interaction> {
 		if (false
 		|| math::abs(wo[1]) < math::epsilon<f32>
 		|| math::abs(wi[1]) < math::epsilon<f32>
@@ -40,8 +40,8 @@ namespace mtt::bsdf {
 		auto pr = F.value[0];
 		auto pt = 1.f - F.value[0];
 		auto flags = this->flags();
-		pr *= bool(flags & bsdf::Bsdf::reflective);
-		pt *= bool(flags & bsdf::Bsdf::transmissive);
+		pr *= bool(flags & Flags::reflective);
+		pt *= bool(flags & Flags::transmissive);
 		if (pr == 0.f && pt == 0.f) {
 			return {};
 		}
@@ -52,7 +52,7 @@ namespace mtt::bsdf {
 	auto Microfacet_Bsdf::sample(
 		eval::Context const& ctx,
 		math::Vector<f32, 3> const& u
-	) const -> std::optional<Interaction> {
+	) const noexcept -> std::optional<Interaction> {
 		auto wo = ctx.r.d;
 		auto wy = math::normalize(-wo * math::Vector<f32, 3>{alpha_u, 1.f, alpha_v});
 		auto wx = wy[1] < 1.f - math::epsilon<f32>
@@ -80,8 +80,8 @@ namespace mtt::bsdf {
 		auto pr = F.value[0];
 		auto pt = 1.f - F.value[0];
 		auto flags = this->flags();
-		pr *= bool(flags & bsdf::Bsdf::reflective);
-		pt *= bool(flags & bsdf::Bsdf::transmissive);
+		pr *= bool(flags & Flags::reflective);
+		pt *= bool(flags & Flags::transmissive);
 		if (pr == 0.f && pt == 0.f) {
 			return {};
 		}
@@ -95,27 +95,24 @@ namespace mtt::bsdf {
 		: torrance_sparrow(reflective, pr, pt, F, D, G, wo, wi, wm);
 	}
 
-	auto Microfacet_Bsdf::clone(Attribute const& attr) const -> std::unique_ptr<Bsdf> {
-		auto bsdf = std::make_unique<Microfacet_Bsdf>();
+	auto Microfacet_Bsdf::configure(Attribute const& attr) noexcept -> void {
 		auto null_spec = attr.spectra.at("spectrum") & spectra::Spectrum::zero;
-		bsdf->eta = attr.spectra.count("eta") > 0 ? attr.spectra.at("eta") : null_spec;
-		bsdf->k = attr.spectra.count("k") > 0 ? attr.spectra.at("k") : null_spec;
+		eta = attr.spectra.count("eta") > 0 ? attr.spectra.at("eta") : null_spec;
+		k = attr.spectra.count("k") > 0 ? attr.spectra.at("k") : null_spec;
 
 		auto alpha = attr.vectors.count("alpha") > 0
 		? attr.vectors.at("alpha")[0] : 1.f;
-		bsdf->alpha_u = attr.vectors.count("alpha_u") > 0
+		alpha_u = attr.vectors.count("alpha_u") > 0
 		? attr.vectors.at("alpha_u")[0] : alpha;
-		bsdf->alpha_v = attr.vectors.count("alpha_v") > 0
+		alpha_v = attr.vectors.count("alpha_v") > 0
 		? attr.vectors.at("alpha_v")[0] : alpha;
 
 		if (attr.inside) {
-			bsdf->eta.value = 1.f / bsdf->eta.value;
+			eta.value = 1.f / eta.value;
 		}
-
-		return bsdf;
 	}
 
-	auto Microfacet_Bsdf::degrade() -> bool {
+	auto Microfacet_Bsdf::degrade() noexcept -> bool {
 		if (spectra::max(k) == 0.f && !spectra::constant(eta)) {
 			spectra::degrade(eta);
 			spectra::degrade(k);
@@ -125,20 +122,20 @@ namespace mtt::bsdf {
 		}
 	}
 
-	auto Microfacet_Bsdf::flags() const -> Flags {
+	auto Microfacet_Bsdf::flags() const noexcept -> Flags {
 		auto flags = 0;
 		if (spectra::max(k) > 0.f) {
-			flags |= bsdf::Bsdf::reflective;
+			flags |= Flags::reflective;
 		} else if (spectra::constant(eta) && eta.value[0] == 1.f) {
-			flags |= bsdf::Bsdf::transmissive;
+			flags |= Flags::transmissive;
 		} else {
-			flags |= (bsdf::Bsdf::transmissive | bsdf::Bsdf::reflective);
+			flags |= (Flags::transmissive | Flags::reflective);
 		}
 		return Flags(flags);
 	}
 
 
-	auto Microfacet_Bsdf::fresnel(f32 cos_theta_i) const -> spectra::Stochastic_Spectrum {
+	auto Microfacet_Bsdf::fresnel(f32 cos_theta_i) const noexcept -> spectra::Stochastic_Spectrum {
 		auto F = eta;
 		F.value = math::foreach([&](f32 lambda, usize i) {
 			auto eta_k = math::Complex<f32>{eta.value[i], k.value[i]};
@@ -163,7 +160,7 @@ namespace mtt::bsdf {
 		return F;
 	}
 
-	auto Microfacet_Bsdf::trowbridge_reitz(math::Vector<f32, 3> const& wm) const -> f32 {
+	auto Microfacet_Bsdf::trowbridge_reitz(math::Vector<f32, 3> const& wm) const noexcept -> f32 {
 		auto tan2_theta = math::unit_to_tan2_theta(wm);
 		if (std::isinf(tan2_theta)) {
 			return 0.f;
@@ -184,7 +181,7 @@ namespace mtt::bsdf {
 		return 1.f / (math::pi * alpha_u * alpha_v * cos4_theta * math::sqr(1.f + e));
 	}
 
-	auto Microfacet_Bsdf::visible_trowbridge_reitz(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wm) const -> f32 {
+	auto Microfacet_Bsdf::visible_trowbridge_reitz(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wm) const noexcept -> f32 {
 		return 1.f
 		* trowbridge_reitz(wm)
 		* smith_mask(-wo)
@@ -192,7 +189,7 @@ namespace mtt::bsdf {
 		/ math::abs(math::unit_to_cos_theta(-wo));
 	}
 
-	auto Microfacet_Bsdf::lambda(math::Vector<f32, 3> const& wo) const -> f32 {
+	auto Microfacet_Bsdf::lambda(math::Vector<f32, 3> const& wo) const noexcept -> f32 {
 		auto tan2_theta = math::unit_to_tan2_theta(wo);
 		if (std::isinf(tan2_theta)) {
 			return 0.f;
@@ -203,11 +200,11 @@ namespace mtt::bsdf {
 		return (math::sqrt(1.f + alpha2 * tan2_theta) - 1.f) / 2.f;
 	}
 
-	auto Microfacet_Bsdf::smith_mask(math::Vector<f32, 3> const& wo) const -> f32 {
+	auto Microfacet_Bsdf::smith_mask(math::Vector<f32, 3> const& wo) const noexcept -> f32 {
 		return 1.f / (1.f + lambda(-wo));
 	}
 
-	auto Microfacet_Bsdf::smith_shadow(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wi) const -> f32 {
+	auto Microfacet_Bsdf::smith_shadow(math::Vector<f32, 3> const& wo, math::Vector<f32, 3> const& wi) const noexcept -> f32 {
 		return 1.f / (1.f + lambda(-wo) + lambda(wi));
 	}
 
@@ -217,7 +214,7 @@ namespace mtt::bsdf {
 		math::Vector<f32, 3> const& wo,
 		math::Vector<f32, 3> const& wi,
 		math::Vector<f32, 3> const& wm
-	) const -> std::optional<Interaction> {
+	) const noexcept -> std::optional<Interaction> {
 		auto cos_theta_o = math::unit_to_cos_theta(-wo);
 		auto cos_theta_i = math::unit_to_cos_theta(wi);
 		auto cos_theta_om = math::dot(-wo, wm);

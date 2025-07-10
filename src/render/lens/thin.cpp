@@ -7,12 +7,12 @@ namespace mtt::photo {
 		f32 aperture,
 		f32 focal_length,
 		f32 focus_distance
-	):
+	) noexcept:
 	aperture(aperture),
 	focal_length(focal_length),
 	focus_distance(focus_distance) {}
 
-	auto Thin_Lens::sample(math::Vector<f32, 3> o, math::Vector<f32, 2> u) -> std::optional<lens::Interaction> {
+	auto Thin_Lens::sample(math::Vector<f32, 3> o, math::Vector<f32, 2> u) const noexcept -> std::optional<lens::Interaction> {
 		auto center = math::Vector<f32, 3>{0.f, 0.f, focal_length};
 		auto focused = center + (center - o) * focus_distance / focal_length;
 		

@@ -9,8 +9,8 @@ namespace mtt::spectra {
 			math::Vector<f32, 3> const& c,
 			f32 s = 1.f,
 			view<Spectrum> illuminant = nullptr
-		);
-		auto operator()(f32 lambda) const -> f32;
+		) noexcept;
+		auto operator()(f32 lambda) const noexcept -> f32;
 
 	private:
 		math::Polynomial<3> polynomial;

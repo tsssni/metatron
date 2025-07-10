@@ -9,7 +9,7 @@ namespace mtt::shape {
 		std::vector<math::Vector<f32, 3>>&& vertices,
 		std::vector<math::Vector<f32, 3>>&& normals,
 		std::vector<math::Vector<f32, 2>>&& uvs
-	):
+	) noexcept :
 	indices{std::move(indices)},
 	vertices{std::move(vertices)},
 	normals{std::move(normals)},
@@ -55,14 +55,14 @@ namespace mtt::shape {
 		}
 	}
 
-	auto Mesh::size() const -> usize {
+	auto Mesh::size() const noexcept -> usize {
 		return indices.size();
 	}
 
 	auto Mesh::bounding_box(
 		math::Matrix<f32, 4, 4> const& t,
 		usize idx
-	) const -> math::Bounding_Box {
+	) const noexcept -> math::Bounding_Box {
 		auto prim = indices[idx];
 		auto v = math::Vector<math::Vector<f32, 4>, 3>{
 			t | math::expand(vertices[prim[0]], 1.f),
@@ -78,7 +78,7 @@ namespace mtt::shape {
 		math::Ray const& r,
 		math::Vector<f32, 3> const& np,
 		usize idx
-	) const -> std::optional<Interaction> {
+	) const noexcept -> std::optional<Interaction> {
 		auto T = math::Matrix<f32, 4, 4>{math::Transform{-r.o}};
 		auto P = math::Matrix<f32, 4, 4>{1.f};
 		
@@ -192,7 +192,7 @@ namespace mtt::shape {
 		eval::Context const& ctx,
 		math::Vector<f32, 2> const& u_0,
 		usize idx
-	) const -> std::optional<Interaction> {
+	) const noexcept -> std::optional<Interaction> {
 		auto prim = indices[idx];
 		auto validate_vector = [](math::Vector<f32, 3> const& v) -> bool {
 			return math::dot(v, v) >= math::epsilon<f32>;

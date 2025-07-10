@@ -9,7 +9,7 @@ namespace mtt::math {
 		Vector<f32, 3> p_max{low<f32>};
 	};
 
-	auto inline constexpr inside(math::Vector<f32, 3> const& p, Bounding_Box const& bbox) -> bool {
+	auto inline constexpr inside(math::Vector<f32, 3> const& p, Bounding_Box const& bbox) noexcept -> bool {
 		auto in = true;
 		for (auto i = 0uz; i < 3; i++) {
 			in = in
@@ -19,7 +19,7 @@ namespace mtt::math {
 		return in;
 	}
 
-	auto inline constexpr hit(Ray const& r, Bounding_Box const& bbox) -> std::optional<f32> {
+	auto inline constexpr hit(Ray const& r, Bounding_Box const& bbox) noexcept -> std::optional<f32> {
 		auto hit_min = (bbox.p_min - r.o) / r.d;
 		auto hit_max = (bbox.p_max - r.o) / r.d;
 		for (auto i = 0uz; i < 3uz; i++) {
@@ -45,14 +45,14 @@ namespace mtt::math {
 	auto inline constexpr merge(
 		Bounding_Box const& a,
 		Bounding_Box const& b
-	) -> Bounding_Box {
+	) noexcept -> Bounding_Box {
 		return Bounding_Box{
 			.p_min = math::min(a.p_min, b.p_min),
 			.p_max = math::max(a.p_max, b.p_max)
 		};
 	}
 
-	auto inline constexpr area(Bounding_Box const& bbox) -> f32 {
+	auto inline constexpr area(Bounding_Box const& bbox) noexcept -> f32 {
 		if(math::any([](f32 x, f32 y, usize) {
 				return x >= y;
 			}, bbox.p_min, bbox.p_max)

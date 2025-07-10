@@ -4,9 +4,9 @@
 
 namespace mtt::math {
 	struct Tent_Distribution final {
-		Tent_Distribution(f32 r): r(r) {}
+		Tent_Distribution(f32 r) noexcept: r(r) {}
 
-		auto sample(f32 u) const -> f32 {
+		auto sample(f32 u) const noexcept -> f32 {
 			if (u < 0.5) {
 				return math::lerp(-r, 0.f, Linear_Distribution{0.f, 1.f / r}.sample(u / 0.5f));
 			} else {
@@ -14,7 +14,7 @@ namespace mtt::math {
 			}
 		}
 
-		auto pdf(f32 x) const -> f32 {
+		auto pdf(f32 x) const noexcept -> f32 {
 			return 1.f / r - math::abs(x) / (r * r);
 		}
 

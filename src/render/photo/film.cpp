@@ -9,7 +9,7 @@ namespace mtt::photo {
 		math::Vector<usize, 2> const& pixel,
 		math::Vector<f32, 2> const& position,
 		f32 weight
-	):
+	) noexcept:
 	film(film),
 	pixel(pixel),
 	position(position),
@@ -19,7 +19,7 @@ namespace mtt::photo {
 	) * film->dxdy),
 	weight(weight) {}
 
-	auto Fixel::operator=(spectra::Stochastic_Spectrum const& spectrum) -> void {
+	auto Fixel::operator=(spectra::Stochastic_Spectrum const& spectrum) noexcept -> void {
 		auto rgb = (*film->sensor)(spectrum);
 		film->image[pixel[0], pixel[1]] += {rgb * weight, 1.f};
 		// film->image[pixel[0], pixel[1]] += {math::Vector<f32, 3>{spectrum.value}, 1.f};
@@ -28,20 +28,20 @@ namespace mtt::photo {
 	Film::Film(
 		math::Vector<f32, 2> const& film_size,
 		math::Vector<usize, 2> const& image_size,
-		std::unique_ptr<Sensor> sensor,
-		std::unique_ptr<math::Filter> filter,
+		view<math::Filter> filter,
+		Sensor const* sensor,
 		color::Color_Space const* color_space
-	):
+	) noexcept:
 	size(film_size),
 	dxdy(film_size / image_size),
 	image({image_size, 4uz, 4uz}, color_space),
-	sensor(std::move(sensor)),
-	filter(std::move(filter)) {}
+	filter(filter),
+	sensor(sensor) {}
 
 	auto Film::operator()(
 		math::Vector<usize, 2> pixel,
 		math::Vector<f32, 2> u
-	) -> Fixel {
+	) noexcept -> Fixel {
 		auto f_intr = filter->sample(u).value();
 		auto pixel_position = math::Vector<f32, 2>{pixel} + 0.5f + f_intr.p;
 		auto uv = pixel_position / image.size;
@@ -55,7 +55,7 @@ namespace mtt::photo {
 		};
 	}
 
-	auto Film::to_path(std::string_view path) -> void {
+	auto Film::to_path(std::string_view path) noexcept -> void {
 		stl::dispatcher::instance().sync_parallel(
 			math::Vector<usize, 2>{image.width, image.height},
 			[&](math::Vector<usize, 2> const& px) {

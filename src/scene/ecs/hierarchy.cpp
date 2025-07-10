@@ -12,7 +12,7 @@ namespace mtt::ecs {
 		impl->parents[impl->entities["/"]] = ecs::null;
 	}
 
-	auto Hierarchy::create(std::string const& name) -> Entity {
+	auto Hierarchy::create(std::string const& name) noexcept -> Entity {
 		if (impl->entities.find(name) != impl->entities.end()) {
 			return impl->entities[name];
 		}
@@ -31,7 +31,7 @@ namespace mtt::ecs {
 		return impl->entities[name];
 	}
 
-	auto Hierarchy::entity(std::string const& name) const -> Entity {
+	auto Hierarchy::entity(std::string const& name) const noexcept -> Entity {
 		auto it = impl->entities.find(name);
 		if (it != impl->entities.end()) {
 			return it->second;
@@ -41,7 +41,7 @@ namespace mtt::ecs {
 		}
 	}
 
-	auto Hierarchy::parent(Entity entity) const -> Entity {
+	auto Hierarchy::parent(Entity entity) const noexcept -> Entity {
 		auto it = impl->parents.find(entity);
 		if (it != impl->parents.end()) {
 			return it->second;

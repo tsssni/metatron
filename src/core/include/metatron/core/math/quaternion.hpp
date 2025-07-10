@@ -11,7 +11,7 @@ namespace mtt::math {
         Quaternion(T x, T y, T z, T w): data{x, y, z, w} {}
         explicit Quaternion(Vector<T, 4> const& v): data{v} {}
 
-		auto static from_axis_angle(Vector<T, 3> const& axis, T const& angle) -> Quaternion<T> {
+		auto static from_axis_angle(Vector<T, 3> const& axis, T const& angle) noexcept -> Quaternion<T> {
 			auto half_angle = angle * T{0.5};
 			auto sin_half = std::sin(half_angle);
 			auto cos_half = std::cos(half_angle);
@@ -23,21 +23,21 @@ namespace mtt::math {
 			};
 		}
 
-		auto static from_rotation_between(Vector<T, 3> const& from, Vector<T, 3> const& to) -> Quaternion<T> {
+		auto static from_rotation_between(Vector<T, 3> const& from, Vector<T, 3> const& to) noexcept -> Quaternion<T> {
 			auto axis = math::normalize(cross(from, to));
 			auto rad = angle(from, to);
 			return from_axis_angle(axis, rad);
 		}
 
-		auto operator[](usize idx) -> T& {
+		auto operator[](usize idx) noexcept -> T& {
 			return data[idx];
 		}
 
-		auto operator[](usize idx) const -> T const& {
+		auto operator[](usize idx) const noexcept -> T const& {
 			return data[idx];
 		}
         
-        auto operator*(Quaternion const& rhs) const -> Quaternion {
+        auto operator*(Quaternion const& rhs) const noexcept -> Quaternion {
 			// Hamilton
 			auto [x, y, z, w] = std::make_tuple(data[0], data[1], data[2], data[3]);
 			auto [rx, ry, rz, rw] = std::make_tuple(rhs.data[0], rhs.data[1], rhs.data[2], rhs.data[3]);
@@ -49,15 +49,15 @@ namespace mtt::math {
             };
         }
 
-        auto operator*(T const& scalar) const -> Quaternion<T> {
+        auto operator*(T const& scalar) const noexcept -> Quaternion<T> {
             return Quaternion{data * scalar};
         }
 
-        auto operator+(Quaternion const& rhs) const -> Quaternion<T> {
+        auto operator+(Quaternion const& rhs) const noexcept -> Quaternion<T> {
             return Quaternion{data + rhs.data};
         }
 
-        auto operator-() const -> Quaternion<T> {
+        auto operator-() const noexcept -> Quaternion<T> {
             return Quaternion{-data};
         }
 
@@ -83,7 +83,7 @@ namespace mtt::math {
 
     template<typename T>
     requires std::floating_point<T>
-	auto constexpr slerp(Quaternion<T> const& q0, Quaternion<T> const& q1, T const& t) -> Quaternion<T> {
+	auto constexpr slerp(Quaternion<T> const& q0, Quaternion<T> const& q1, T const& t) noexcept -> Quaternion<T> {
 		// quaternion fits x^2 + y^2 + z^2 + w^2 = 1, so it's 4D sphere which could use slerp
 
 		auto q0v = Vector<T, 4>{q0};
@@ -113,13 +113,13 @@ namespace mtt::math {
 
     template<typename T>
     requires std::floating_point<T>
-	auto constexpr conj(Quaternion<T> const& q) -> Quaternion<T> {
+	auto constexpr conj(Quaternion<T> const& q) noexcept -> Quaternion<T> {
 		return {-q[0], -q[1], -q[2], q[3]};
 	}
 
     template<typename T>
     requires std::floating_point<T>
-	auto constexpr rotate(Vector<T, 4> const& x, Quaternion<T> const& q) -> math::Vector<T, 4> {
+	auto constexpr rotate(Vector<T, 4> const& x, Quaternion<T> const& q) noexcept -> math::Vector<T, 4> {
 		auto p = Quaternion{x[0], x[1], x[2], T{0}};
 		auto r = q * p * conj(q);
 		return {r[0], r[1], r[2], T{0}};

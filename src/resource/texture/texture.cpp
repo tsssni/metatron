@@ -6,7 +6,7 @@ namespace mtt::texture {
 	auto grad(
 		math::Ray_Differential const& diff,
 		shape::Interaction const& intr
-	) -> std::optional<texture::Coordinate> {
+	) noexcept -> std::optional<texture::Coordinate> {
 		auto tangent = shape::Plane{intr.p, intr.n};
 		#define MTT_DSTOP {terminated = true; gamma = 0.f; std::printf("\n===\n"); continue;}
 		MTT_OPT_OR_RETURN(d_intr, tangent(diff.r), {});

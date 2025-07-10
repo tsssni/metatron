@@ -26,7 +26,7 @@ namespace mtt::accel {
 		std::vector<Divider>&& dividers,
 		math::Transform const* transform,
 		usize num_guide_left_prims
-	):
+	) noexcept:
 	dividers(std::move(dividers)),
 	transform(transform) {
 		std::vector<LBVH_Divider> lbvh_divs;
@@ -217,7 +217,7 @@ namespace mtt::accel {
 	auto LBVH::operator()(
 		math::Ray const& r,
 		math::Vector<f32, 3> const& n
-	) const -> std::optional<Interaction> {
+	) const noexcept -> std::optional<Interaction> {
 		auto& rt = *transform;
 		auto intr_div = (Divider const*)nullptr;
 		auto intr_opt = std::optional<shape::Interaction>{};
