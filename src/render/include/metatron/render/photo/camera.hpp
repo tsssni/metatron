@@ -20,7 +20,7 @@ namespace mtt::photo {
 		auto sample(
 			math::Vector<usize, 2> pixel,
 			usize idx,
-			view<math::Sampler> sampler
+			mut<math::Sampler> sampler
 		) const noexcept -> std::optional<Interaction>;
 		auto to_path(std::string_view path) -> void;
 

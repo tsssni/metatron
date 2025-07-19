@@ -7,7 +7,7 @@
 namespace mtt::loader {
 	auto Assimp_Loader::from_path(
 		std::string_view path
-	) noexcept -> std::vector<std::unique_ptr<shape::Mesh>> {
+	) noexcept -> std::vector<poly<shape::Mesh>> {
 		auto importer = Assimp::Importer{};
 		scene = importer.ReadFile(path.data(), 0
 			| aiProcess_FindDegenerates
@@ -87,7 +87,7 @@ namespace mtt::loader {
 			);
 		}
 
-		meshes.push_back(std::make_unique<shape::Mesh>(
+		meshes.push_back(make_poly<shape::Mesh>(
 			std::move(indices),
 			std::move(vertices),
 			std::move(normals),

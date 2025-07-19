@@ -46,7 +46,7 @@ auto main() -> int {
 	color::Color_Space::initialize();
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
-	auto spp = 256uz;
+	auto spp = 16uz;
 	auto depth = 64uz;
 
 	auto sensor = photo::Sensor{color::Color_Space::sRGB.get()};
@@ -145,7 +145,7 @@ auto main() -> int {
 	};
 	auto cloud_medium = media::Grid_Medium{
 		&nanovdb_grid,
-		pro::make_proxy<phase::Phase_Function>(hg_phase),
+		make_poly<phase::Phase_Function>(hg_phase),
 		sigma_a,
 		sigma_s,
 		sigma_e,
@@ -188,13 +188,13 @@ auto main() -> int {
 	auto illuminance_texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>{illuminance};
 	
 	auto diffuse_material = material::Material{
-		.bsdf = pro::make_proxy<bsdf::Bsdf>(lambertian),
+		.bsdf = make_poly<bsdf::Bsdf>(lambertian),
 		.spectrum_textures = {
 			{"reflectance", &diffuse_texture},
 		},
 	};
 	auto test_material = material::Material{
-		.bsdf = pro::make_proxy<bsdf::Bsdf>(microfacet),
+		.bsdf = make_poly<bsdf::Bsdf>(microfacet),
 		.spectrum_textures = {
 			{"eta", &eta_texture},
 			{"k", &k_texture},
@@ -204,7 +204,7 @@ auto main() -> int {
 		},
 	};
 	auto interface_material = material::Material{
-		.bsdf = pro::make_proxy<bsdf::Bsdf>(interface),
+		.bsdf = make_poly<bsdf::Bsdf>(interface),
 	};
 
 	auto env_light = light::Environment_Light{&env_map};

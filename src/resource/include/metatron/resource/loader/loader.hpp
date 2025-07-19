@@ -9,7 +9,7 @@ namespace mtt::loader {
 	struct Loader final: pro::facade_builder
 	::add_convention<loader_from_path, auto (
 		std::string_view path
-	) const noexcept -> std::vector<std::unique_ptr<shape::Mesh>>>
+	) const noexcept -> std::vector<poly<shape::Mesh>>>
 	::support<pro::skills::as_view>
 	::build {};
 }

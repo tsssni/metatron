@@ -86,7 +86,7 @@ namespace mtt::image {
 		}
 	}
 
-	auto Image::from_path(std::string_view path, bool linear) noexcept -> std::unique_ptr<Image> {
+	auto Image::from_path(std::string_view path, bool linear) noexcept -> poly<Image> {
 		auto in = OIIO::ImageInput::open(std::string{path});
 		if (!in) {
 			std::printf("cannot find image %s\n", path.data());
@@ -97,7 +97,7 @@ namespace mtt::image {
 		auto cs_name = spec.get_string_attribute("oiio:ColorSpace");
 		auto color_space = (color::Color_Space*)nullptr;
 
-		auto image = std::make_unique<Image>(
+		auto image = make_poly<Image>(
 			math::Vector<usize, 4>{
 				usize(spec.width),
 				usize(spec.height),

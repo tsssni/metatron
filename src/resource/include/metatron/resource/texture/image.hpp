@@ -9,9 +9,9 @@ namespace mtt::texture {
 
 	template<>
 	struct Image_Texture<math::Vector<f32, 4>> final {
-		std::vector<std::unique_ptr<image::Image>> images;
+		std::vector<poly<image::Image>> images;
 
-		Image_Texture(std::unique_ptr<image::Image> image) noexcept;
+		Image_Texture(poly<image::Image> image) noexcept;
 
 		auto sample(
 			eval::Context const& ctx,
@@ -24,7 +24,7 @@ namespace mtt::texture {
 		color::Color_Space::Spectrum_Type spectrum_type;
 
 		Image_Texture(
-			std::unique_ptr<image::Image> image,
+			poly<image::Image> image,
 			color::Color_Space::Spectrum_Type spectrum_type
 		) noexcept;
 

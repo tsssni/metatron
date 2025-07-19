@@ -6,7 +6,7 @@ namespace mtt::loader {
 	struct Assimp_Loader final {
 		auto from_path(
 			std::string_view path
-		) noexcept -> std::vector<std::unique_ptr<shape::Mesh>>;
+		) noexcept -> std::vector<poly<shape::Mesh>>;
 	
 	private:
 		auto traverse(aiNode const* node) noexcept -> void;
@@ -14,6 +14,6 @@ namespace mtt::loader {
 		auto load_material(aiMaterial const* material) noexcept -> void;
 
 		aiScene const* scene{};
-		std::vector<std::unique_ptr<shape::Mesh>> meshes{};
+		std::vector<poly<shape::Mesh>> meshes{};
 	};
 }

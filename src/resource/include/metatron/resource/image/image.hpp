@@ -3,7 +3,6 @@
 #include <metatron/resource/color/color-space.hpp>
 #include <vector>
 #include <string_view>
-#include <memory>
 
 namespace mtt::image {
 	struct Image final {
@@ -39,7 +38,7 @@ namespace mtt::image {
 		auto operator[](usize x, usize y) noexcept -> Pixel;
 		auto operator[](usize x, usize y) const noexcept -> Pixel const;
 
-		auto static from_path(std::string_view path, bool linear = false) noexcept -> std::unique_ptr<Image>;
+		auto static from_path(std::string_view path, bool linear = false) noexcept -> poly<Image>;
 		auto to_path(std::string_view path) const noexcept -> void;
 
 	private:

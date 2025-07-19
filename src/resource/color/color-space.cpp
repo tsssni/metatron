@@ -6,7 +6,7 @@ namespace mtt::color {
 	extern color::Color_Space::Scale sRGB_spectrum_z;
 	extern color::Color_Space::Table sRGB_spectrum_table;
 
-	std::unique_ptr<Color_Space> Color_Space::sRGB;
+	poly<Color_Space> Color_Space::sRGB;
 
 	Color_Space::Color_Space(
 		math::Vector<f32, 2> const& r_chroma,
@@ -15,8 +15,8 @@ namespace mtt::color {
 		view<spectra::Spectrum> white_point,
 		std::function<f32(f32)> encode,
 		std::function<f32(f32)> decode,
-		Scale const* scale,
-		Table const* table
+		view<Scale> scale,
+		view<Table> table
 	): 
 	white_point(white_point),
 	scale(scale),
@@ -62,7 +62,7 @@ namespace mtt::color {
 		rgb = rgb / s;
 
 		if (rgb[0] == rgb[1] && rgb[1] == rgb[2]) {
-			return pro::make_proxy<spectra::Spectrum, spectra::Rgb_Spectrum>(
+			return make_poly<spectra::Spectrum, spectra::Rgb_Spectrum>(
 				math::Vector<f32, 3>{
 					(rgb[0] - 0.5f) / math::sqrt(rgb[0] * (1.f - rgb[0])),
 					0.f, 0.f,
@@ -107,11 +107,12 @@ namespace mtt::color {
 			);
 		}
 
-		return pro::make_proxy<spectra::Spectrum, spectra::Rgb_Spectrum>(c, s, w);
+		return make_poly<spectra::Spectrum, spectra::Rgb_Spectrum>(c, s, w);
 	}
 
 	auto Color_Space::initialize() -> void {
-		sRGB = std::make_unique<Color_Space>(
+		view<spectra::Spectrum> cie = spectra::Spectrum::CIE_D65;
+		sRGB = make_poly<Color_Space>(
 			math::Vector<f32, 2>{0.64f, 0.33f},
 			math::Vector<f32, 2>{0.30f, 0.60f},
 			math::Vector<f32, 2>{0.15f, 0.06f},

@@ -9,7 +9,7 @@ namespace mtt::ecs {
 		Hierarchy();
 
 		template<typename T>
-		auto monitor(view<Daemon> daemon) noexcept -> void {
+		auto monitor(mut<Daemon> daemon) noexcept -> void {
 			registry.on_construct<T>().connect([this, &daemon](Registry &reg, Entity entity) {
 				daemon->attach(*this, entity);
 			});

@@ -14,8 +14,8 @@ namespace mtt::accel {
 
 	struct LBVH_Node final {
 		math::Bounding_Box bbox;
-		std::unique_ptr<LBVH_Node> left;
-		std::unique_ptr<LBVH_Node> right;
+		poly<LBVH_Node> left;
+		poly<LBVH_Node> right;
 		u32 morton_code;
 		u32 split_axis;
 		u32 div_idx;
@@ -65,11 +65,11 @@ namespace mtt::accel {
 			}
 		}
 
-		auto morton_split = [&](this auto self, math::Vector<u32, 2> interval, i32 bit) -> std::unique_ptr<LBVH_Node> {
+		auto morton_split = [&](this auto self, math::Vector<u32, 2> interval, i32 bit) -> poly<LBVH_Node> {
 			auto [start, end] = interval;
 			auto n = end - start;
 			if (n <= num_guide_left_prims || bit < 0) {
-				auto node = std::make_unique<LBVH_Node>();
+				auto node = make_poly<LBVH_Node>();
 				node->div_idx = start;
 				node->num_prims = n;
 				node->bbox = math::Bounding_Box{};
@@ -92,7 +92,7 @@ namespace mtt::accel {
 					return self(interval, bit - 1);
 				}
 
-				auto node = std::make_unique<LBVH_Node>();
+				auto node = make_poly<LBVH_Node>();
 				node->left = self({start, split}, bit - 1);
 				node->right = self({split, end}, bit - 1);
 				node->bbox = math::merge(node->left->bbox, node->right->bbox);
@@ -100,7 +100,7 @@ namespace mtt::accel {
 				return node;
 			}
 		};
-		auto lbvh_nodes = std::vector<std::unique_ptr<LBVH_Node>>(intervals.size());
+		auto lbvh_nodes = std::vector<poly<LBVH_Node>>(intervals.size());
 		stl::dispatcher::instance().sync_parallel(
 			math::Vector<usize, 1>{intervals.size()},
 			[&](auto idx) {
@@ -110,12 +110,12 @@ namespace mtt::accel {
 			}
 		);
 
-		auto area_split = [&](this auto self, std::vector<std::unique_ptr<LBVH_Node>>&& nodes) -> std::unique_ptr<LBVH_Node> {
+		auto area_split = [&](this auto self, std::vector<poly<LBVH_Node>>&& nodes) -> poly<LBVH_Node> {
 			if (nodes.size() == 1) {
 				return std::move(nodes.front());
 			}
 
-			auto root = std::make_unique<LBVH_Node>();
+			auto root = make_poly<LBVH_Node>();
 			root->bbox = math::Bounding_Box{};
 			for (auto& node: nodes) {
 				root->bbox = math::merge(root->bbox, node->bbox);
@@ -174,7 +174,7 @@ namespace mtt::accel {
 			auto range_split = [](auto&& begin, auto&& end){
 				return std::ranges::subrange(begin, end)
 					 | std::views::transform([](auto& n) { return std::move(n); })
-					 | std::ranges::to<std::vector<std::unique_ptr<LBVH_Node>>>();
+					 | std::ranges::to<std::vector<poly<LBVH_Node>>>();
 			};
 			auto left = range_split(std::ranges::begin(nodes), std::ranges::begin(splitted_iter));
 			auto right = range_split(std::ranges::begin(splitted_iter), std::ranges::end(nodes));
@@ -207,9 +207,10 @@ namespace mtt::accel {
 		};
 		traverse(root.get());
 
-		auto divs = std::vector<Divider>(lbvh_divs.size());
+		auto divs = std::vector<Divider>();
+		divs.reserve(lbvh_divs.size());
 		for (auto i = 0u; i < lbvh_divs.size(); i++) {
-			divs[i] = this->dividers[lbvh_divs[i].index];
+			divs.emplace_back(this->dividers[lbvh_divs[i].index]);
 		}
 		std::swap(divs, this->dividers);
 	}

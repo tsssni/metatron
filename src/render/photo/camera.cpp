@@ -24,7 +24,7 @@ namespace mtt::photo {
 	auto Camera::sample(
 		math::Vector<usize, 2> pixel,
 		usize idx,
-		view<math::Sampler> sampler
+		mut<math::Sampler> sampler
 	) const noexcept -> std::optional<Interaction> {
 		sampler->start(pixel, idx, 0);
 		auto fixel = (*film)(pixel, sampler->generate_pixel_2d());

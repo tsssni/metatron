@@ -5,7 +5,7 @@
 #include <bit>
 
 namespace mtt::texture {
-	Image_Texture<math::Vector<f32, 4>>::Image_Texture(std::unique_ptr<image::Image> image) noexcept {
+	Image_Texture<math::Vector<f32, 4>>::Image_Texture(poly<image::Image> image) noexcept {
 		auto size = math::Vector<usize, 2>{image->size};
 		auto channels = image->size[2];
 		auto stride = image->size[3];
@@ -18,7 +18,7 @@ namespace mtt::texture {
 			size[0] = std::max(1uz, size[0] >> 1uz);
 			size[1] = std::max(1uz, size[1] >> 1uz);
 
-			images.push_back(std::make_unique<image::Image>(
+			images.push_back(make_poly<image::Image>(
 				math::Vector<usize, 4>{size, channels, stride},
 				images.front()->color_space,
 				images.front()->linear
@@ -132,7 +132,7 @@ namespace mtt::texture {
 
 
 	Image_Texture<spectra::Stochastic_Spectrum>::Image_Texture(
-		std::unique_ptr<image::Image> image,
+		poly<image::Image> image,
 		color::Color_Space::Spectrum_Type spectrum_type
 	) noexcept: image_tex(std::move(image)), spectrum_type(spectrum_type) {}
 

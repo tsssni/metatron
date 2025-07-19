@@ -28,13 +28,13 @@ namespace mtt::color {
 			view<spectra::Spectrum> white_point,
 			std::function<f32(f32)> encode,
 			std::function<f32(f32)> decode,
-			Scale const* scale,
-			Table const* table
+			view<Scale> scale,
+			view<Table> table
 		);
 
 		auto to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> poly<spectra::Spectrum>;
 
-		std::unique_ptr<Color_Space> static sRGB;
+		poly<Color_Space> static sRGB;
 
 		auto static initialize() -> void;
 
