@@ -1,25 +1,13 @@
 #pragma once
 #include <metatron/scene/ecs/entity.hpp>
-#include <metatron/scene/ecs/daemon/daemon.hpp>
 #include <metatron/core/stl/capsule.hpp>
 
 namespace mtt::ecs {
 	struct Hierarchy final: stl::capsule<Hierarchy> {
 		struct Impl;
-		Hierarchy();
 
-		template<typename T>
-		auto monitor(mut<Daemon> daemon) noexcept -> void {
-			registry.on_construct<T>().connect([this, &daemon](Registry &reg, Entity entity) {
-				daemon->attach(*this, entity);
-			});
-			registry.on_update<T>().connect([this, &daemon](Registry &reg, Entity entity) {
-				daemon->mutate(*this, entity);
-			});
-			registry.on_destroy<T>().connect([this, &daemon](Registry &reg, Entity entity) {
-				daemon->detach(*this, entity);
-			});
-		};
+		Registry registry;
+		Hierarchy() noexcept;
 
 		auto create(std::string const& name) noexcept -> Entity;
 		auto entity(std::string const& name) const noexcept -> Entity;
@@ -44,9 +32,5 @@ namespace mtt::ecs {
 		auto detach(Entity entity) noexcept -> void {
 			registry.erase<T>(entity);
 		}
-
-	private:
-		friend Daemon;
-		Registry registry;
 	};
 }
