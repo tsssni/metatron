@@ -1,15 +1,20 @@
 #pragma once
-#include <utility>
+#include <functional>
 
 namespace mtt::stl {
 	template<typename T>
 	struct capsule {
 		struct Impl final {
 			template<typename... Args>
-			Impl(Args&&... args) noexcept: impl(new typename T::Impl(std::forward<Args>(args)...)) {}
+			Impl(Args&&... args) noexcept :
+			impl(new typename T::Impl(std::forward<Args>(args)...)),
+			deleter([](void* impl) {
+				delete (typename T::Impl*)impl;
+			}) {}
+
 			~Impl() noexcept {
 				if (impl) {
-					delete this->operator->();
+					deleter(impl);
 				}
 			}
 
@@ -19,7 +24,7 @@ namespace mtt::stl {
 
 			auto operator=(Impl&& impl) noexcept {
 				if (impl) {
-					delete this->operator->();
+					deleter(impl);
 				}
 				impl = impl.impl;
 				impl.impl = nullptr;
@@ -44,6 +49,7 @@ namespace mtt::stl {
 
 		private:
 			void* impl;
+			std::function<void(void*)> deleter;
 		};
 
 	protected:
