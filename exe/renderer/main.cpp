@@ -46,7 +46,7 @@ using namespace mtt;
 auto main() -> int {
 	spectra::Spectrum::initialize();
 	color::Color_Space::initialize();
-	auto hierarchy = ecs::Hierarchy{{}};
+	auto hierarchy = ecs::Hierarchy{};
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
 	auto spp = 16uz;

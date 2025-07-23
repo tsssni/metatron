@@ -5,7 +5,6 @@
 namespace mtt::ecs {
 	struct Hierarchy::Impl final {
 		mut<Hierarchy> hierarchy;
-		std::vector<mut<Stage>> stages;
 
 		std::unordered_map<std::string, Entity> entities;
 		std::unordered_map<Entity, Entity> fathers;
@@ -49,16 +48,9 @@ namespace mtt::ecs {
 				std::abort();
 			}
 		}
-
-		auto update() noexcept -> void {
-			for (auto stage: stages) {
-				stage->update(*hierarchy);
-			}
-		}
 	};
 
-	Hierarchy::Hierarchy(std::vector<mut<Stage>>&& stages) noexcept {
-		impl->stages = std::move(stages);
+	Hierarchy::Hierarchy() noexcept {
 		impl->hierarchy = this;
 		impl->plant();
 	}
@@ -80,6 +72,8 @@ namespace mtt::ecs {
 	}
 
 	auto Hierarchy::update() noexcept -> void {
-		return impl->update();
+		for (auto& stage: stages) {
+			stage->update(*this);
+		}
 	}
 }

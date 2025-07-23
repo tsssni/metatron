@@ -1,14 +1,14 @@
 #pragma once
 #include <metatron/scene/ecs/entity.hpp>
+#include <metatron/scene/ecs/stage.hpp>
 #include <metatron/core/stl/capsule.hpp>
 
 namespace mtt::ecs {
-	struct Stage;
-
 	struct Hierarchy final: stl::capsule<Hierarchy> {
 		struct Impl;
 		Registry registry;
-		Hierarchy(std::vector<mut<Stage>>&& stages) noexcept;
+		std::vector<poly<Stage>> stages;
+		Hierarchy() noexcept;
 
 		auto create(std::string const& name) noexcept -> Entity;
 		auto entity(std::string const& name) const noexcept -> Entity;

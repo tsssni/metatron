@@ -4,13 +4,10 @@
 #include <vector>
 
 namespace mtt::ecs {
-	struct Daemon;
 	struct Hierarchy;
 
 	struct Stage final: stl::capsule<Stage> {
-		struct Impl;
-		Stage(std::vector<mut<Daemon>>&& daemons) noexcept;
-
+		std::vector<poly<Daemon>> daemons;
 		auto update(Hierarchy const&) noexcept -> void;
 	};
 }
