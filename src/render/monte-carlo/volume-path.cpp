@@ -84,9 +84,9 @@ namespace mtt::monte_carlo {
 
 				if (direct_ctx.n != math::Vector<f32, 3>{0.f}) {
 					auto flip_n = math::dot(-history_ctx.r.d, direct_ctx.n) < 0.f ? -1.f : 1.f;
-					auto t = math::Transform{{}, {1.f},
+					auto t = math::Transform{math::Matrix<f32, 4, 4>{
 						math::Quaternion<f32>::from_rotation_between(flip_n * direct_ctx.n, {0.f, 1.f, 0.f})
-					};
+					}};
 					auto wo = t | math::expand(history_ctx.r.d, 0.f);
 					auto wi = t | math::expand(l_intr.wi, 0.f);
 					MTT_OPT_OR_RETURN(b_intr, (*bsdf)(wo, wi));
@@ -154,9 +154,9 @@ namespace mtt::monte_carlo {
 							continue;
 						} else if (close_to_light) {
 							auto rd = ct ^ ddiff;
-							auto st = math::Transform{{}, {1.f},
+							auto st = math::Transform{math::Matrix<f32, 4, 4>{
 								math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(imtr.p))
-							};
+							}};
 							rd = st | rd;
 
 							auto ldiff = lt ^ rt ^ rd;
@@ -274,9 +274,9 @@ namespace mtt::monte_carlo {
 					terminated = true;
 				} else if (mode == 1uz) {
 					phase = std::move(m_intr.phase);
-					auto pt = math::Transform{{}, {1.f},
+					auto pt = math::Transform{math::Matrix<f32, 4, 4>{
 						math::Quaternion<f32>::from_rotation_between(-trace_ctx.r.d, {0.f, 1.f, 0.f})
-					};
+					}};
 
 					auto p_ctx = pt | trace_ctx;
 					MTT_OPT_OR_CALLBACK(p_intr, phase->sample(p_ctx, sampler->generate_2d()), {
@@ -310,9 +310,9 @@ namespace mtt::monte_carlo {
 
 			if (!rdiff.differentiable) {
 				auto rd = ct ^ ddiff;
-				auto st = math::Transform{{}, {1.f},
+				auto st = math::Transform{math::Matrix<f32, 4, 4>{
 					math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(intr.p))
-				};
+				}};
 				rdiff = st | rd;
 			}
 			rdiff.differentiable = false;
@@ -346,9 +346,9 @@ namespace mtt::monte_carlo {
 			}
 
 			bsdf = std::move(mat_intr.bsdf);
-			auto bt = math::Transform{{}, {1.f},
+			auto bt = math::Transform{math::Matrix<f32, 4, 4>{
 				math::Quaternion<f32>::from_rotation_between(intr.n, {0.f, 1.f, 0.f})
-			};
+			}};
 			auto uc = sampler->generate_1d();
 			auto u = sampler->generate_2d();
 

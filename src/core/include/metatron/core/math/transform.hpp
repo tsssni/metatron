@@ -14,14 +14,6 @@ namespace mtt::math {
 	|| std::is_same_v<std::remove_cvref_t<T>, Ray_Differential>;
 
 	struct Transform final {
-		struct Config final {
-			Vector<f32, 3> translation{};
-			Vector<f32, 3> scaling{1.f};
-			Quaternion<f32> rotation{0.f, 0.f, 0.f, 1.f};
-
-			auto operator<=>(Config const& rhs) const = default;
-		} config;
-
 		struct Chain final {
 			auto operator|(Transform const& t) noexcept -> Chain& {
 				store(t);
@@ -91,29 +83,8 @@ namespace mtt::math {
 		mutable Matrix<f32, 4, 4> transform;
 		mutable Matrix<f32, 4, 4> inv_transform;
 
-		Transform(
-			Vector<f32, 3> translation = {},
-			Vector<f32, 3> scaling = {1.f},
-			Quaternion<f32> rotation = {0.f, 0.f, 0.f, 1.f}
-		): config(translation, scaling, rotation) {
-			update();
-		}
-
-		auto update() const noexcept -> void {
-			auto translation = math::Matrix<f32, 4, 4>{
-				{1.f, 0.f, 0.f, config.translation[0]},
-				{0.f, 1.f, 0.f, config.translation[1]},
-				{0.f, 0.f, 1.f, config.translation[2]},
-				{0.f, 0.f, 0.f, 1.f}
-			};
-			auto scaling = math::Matrix<f32, 4, 4>{
-				config.scaling[0], config.scaling[1], config.scaling[2], 1.f
-			};
-			auto rotation = math::Matrix<f32, 4, 4>{config.rotation};
-
-			transform = translation | rotation | scaling;
-			inv_transform = math::inverse(transform);
-		}
+		explicit Transform(Matrix<f32, 4, 4> const& m)
+		: transform(m), inv_transform(math::inverse(m)) {}
 
 		explicit operator Matrix<f32, 4, 4>() const {
 			return transform;

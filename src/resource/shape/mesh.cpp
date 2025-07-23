@@ -79,7 +79,13 @@ namespace mtt::shape {
 		math::Vector<f32, 3> const& np,
 		usize idx
 	) const noexcept -> std::optional<Interaction> {
-		auto T = math::Matrix<f32, 4, 4>{math::Transform{-r.o}};
+		auto T = math::Matrix<f32, 4, 4>{
+
+			{1.f, 0.f, 0.f, -r.o[0],},
+			{0.f, 1.f, 0.f, -r.o[1],},
+			{0.f, 0.f, 1.f, -r.o[2],},
+			{0.f, 0.f, 0.f, 1.f,},
+		};
 		auto P = math::Matrix<f32, 4, 4>{1.f};
 		
 		std::swap(P[2], P[math::maxi(math::abs(r.d))]);

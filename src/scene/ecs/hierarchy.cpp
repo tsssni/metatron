@@ -1,20 +1,13 @@
 #include <metatron/scene/ecs/hierarchy.hpp>
-#include <metatron/scene/ecs/daemon/daemon.hpp>
-#include <metatron/scene/ecs/daemon/transform.hpp>
 #include <unordered_map>
 
 namespace mtt::ecs {
 	struct Hierarchy::Impl final {
 		mut<Registry> registry;
-		std::vector<poly<Daemon>> daemons;
 		std::unordered_map<std::string, Entity> entities;
 		std::unordered_map<Entity, Entity> parents;
 
 		auto trigger() noexcept -> void {
-			daemons.push_back(poly<Transform_Daemon>());
-			std::ranges::for_each(daemons, [this](auto& daemon) {
-				daemon->trigger(*registry);
-			});
 		}
 
 		auto plant() noexcept -> void {
