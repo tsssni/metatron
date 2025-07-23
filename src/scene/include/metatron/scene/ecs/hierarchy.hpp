@@ -3,15 +3,17 @@
 #include <metatron/core/stl/capsule.hpp>
 
 namespace mtt::ecs {
+	struct Stage;
+
 	struct Hierarchy final: stl::capsule<Hierarchy> {
 		struct Impl;
-
 		Registry registry;
-		Hierarchy() noexcept;
+		Hierarchy(std::vector<mut<Stage>>&& stages) noexcept;
 
 		auto create(std::string const& name) noexcept -> Entity;
 		auto entity(std::string const& name) const noexcept -> Entity;
 		auto parent(Entity entity) const noexcept -> Entity;
+		auto children(Entity entity) const noexcept -> std::vector<Entity> const&;
 
 		template<typename T>
 		auto attach(Entity entity) noexcept -> void {
@@ -32,5 +34,7 @@ namespace mtt::ecs {
 		auto detach(Entity entity) noexcept -> void {
 			registry.erase<T>(entity);
 		}
+
+		auto update() noexcept -> void;
 	};
 }
