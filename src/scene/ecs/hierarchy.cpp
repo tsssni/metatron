@@ -1,12 +1,14 @@
 #include <metatron/scene/ecs/hierarchy.hpp>
 #include <metatron/scene/ecs/stage.hpp>
 #include <unordered_map>
+#include <print>
 
 namespace mtt::ecs {
 	struct Hierarchy::Impl final {
 		mut<Hierarchy> hierarchy;
 
 		std::unordered_map<std::string, Entity> entities;
+		std::unordered_map<Entity, std::string> names;
 		std::unordered_map<Entity, Entity> fathers;
 		std::unordered_map<Entity, std::vector<Entity>> sons;
 
@@ -22,17 +24,21 @@ namespace mtt::ecs {
 
 			auto slash = name.find_last_of('/');
 			if (slash == std::string::npos) {
-				std::printf("ecs: invalid name");
+				std::println("ecs: invalid name {}", name);
 				std::abort();
 			}
 			
 			auto parent_name = slash == 0 ? "/" : name.substr(0, slash);
 			auto parent = create(parent_name);
 
-			entities[name] = hierarchy->registry.create();
-			fathers[entities[name]] = entities[parent_name];
-			sons[entities[parent_name]].push_back(entities[name]);
-			return entities[name];
+			auto entity = hierarchy->registry.create();
+			fathers[entity] = entities[parent_name];
+			sons[parent].push_back(entity);
+			sons[entity] = {};
+
+			names[entity] = name;
+			entities[name] = entity;
+			return entity;
 		}
 
 		template<typename T, typename U>
@@ -44,7 +50,7 @@ namespace mtt::ecs {
 			if (it != map.end()) {
 				return it->second;
 			} else {
-				std::printf("ecs: invalid key");
+				std::println("ecs: invalid key");
 				std::abort();
 			}
 		}
@@ -61,6 +67,14 @@ namespace mtt::ecs {
 
 	auto Hierarchy::entity(std::string const& name) const noexcept -> Entity {
 		return impl->fetch(impl->entities, name);
+	}
+
+	auto Hierarchy::name(Entity entity) const noexcept -> std::string const& {
+		return impl->fetch(impl->names, entity);
+	}
+
+	auto Hierarchy::root() const noexcept -> Entity {
+		return impl->entities.at("/");
 	}
 
 	auto Hierarchy::parent(Entity entity) const noexcept -> Entity {

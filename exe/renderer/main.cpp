@@ -37,16 +37,18 @@
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/render/accel/lbvh.hpp>
-#include <metatron/scene/asset/transform.hpp>
 #include <metatron/scene/ecs/hierarchy.hpp>
+#include <metatron/scene/ecs/stage.hpp>
+#include <metatron/scene/compo/transform.hpp>
+#include <metatron/scene/daemon/transform.hpp>
 #include <atomic>
+#include <print>
 
 using namespace mtt;
 
 auto main() -> int {
 	spectra::Spectrum::initialize();
 	color::Color_Space::initialize();
-	auto hierarchy = ecs::Hierarchy{};
 
 	auto size = math::Vector<usize, 2>{600uz, 400uz};
 	auto spp = 16uz;
@@ -71,50 +73,65 @@ auto main() -> int {
 	auto seed = rd();
 	auto halton = math::Halton_Sampler{seed};
 
-	auto identity = math::Transform{asset::Transform{}};
-	// auto world_to_render = math::Transform{{-2.5f, -0.6f, 2.5f}};
-	auto world_to_render = math::Transform{asset::Transform{{{0.f, 0.f, 1000.f}}}};
-	auto render_to_camera = math::Transform{asset::Transform{{0.f, 0.f, 0.f}, {1.f},
-		// math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
-	}};
+	auto hierarchy = ecs::Hierarchy{};
+	auto stage = std::make_unique<ecs::Stage>();
+	stage->daemons.push_back(make_poly<ecs::Daemon>(daemon::Transform_Daemon{}));
+	hierarchy.stages.push_back(std::move(stage));
 
-	auto sphere_to_world = math::Transform{asset::Transform{{}, {200.f}}};
-	auto mesh_to_world = math::Transform{asset::Transform{{}, {100.f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 1.f),
-	}};
-	auto shell_to_world = math::Transform{asset::Transform{{0.156382, 0.777229, -0.161698}, {0.482906f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 0.f / 1.f),
-	}};
-	auto kernel_to_world = math::Transform{asset::Transform{{0.110507, 0.494301, -0.126194}, {0.482906f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 0.f / 1.f),
-	}};
-	auto base_to_world = math::Transform{asset::Transform{{0.0571719, 0.213656, -0.0682078}, {0.482906f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 0.f / 1.f),
-	}};
-	auto bound_to_world = math::Transform{asset::Transform{{}, {500.0f}}};
-	auto medium_to_world = math::Transform{asset::Transform{{}, {1.f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 2.f),
-	}};
-	auto light_to_world = math::Transform{asset::Transform{{}, {1.0f},
-		math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 0.f / 1.f),
-	}};
-	auto parallel_to_world = math::Transform{asset::Transform{{}, {1.f},
-		math::Quaternion<f32>::from_rotation_between(
+	hierarchy.attach(hierarchy.create("/render"), compo::Transform{
+		.translation = {0.f, 0.f, 1000.f},
+		// .translation = math::Transform{{-2.5f, -0.6f, 2.5f}};
+	});
+	hierarchy.attach(hierarchy.create("/camera"),compo::Transform{
+		.translation = {0.f, 0.f, 0.f},
+		// .rotation = math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 4.f),
+	});
+	hierarchy.attach(hierarchy.create("/hierarchy"), compo::Transform{});
+	hierarchy.attach(hierarchy.create("/hierarchy/shape"), compo::Transform{});
+	hierarchy.attach(hierarchy.create("/hierarchy/shape/sphere"), compo::Transform{
+		.scaling = {200.f},
+	});
+	hierarchy.attach(hierarchy.create("/hierarchy/shape/shell"), compo::Transform{
+		.translation = {0.156382, 0.777229, -0.161698},
+		.scaling = {0.482906f},
+	});
+	hierarchy.attach(hierarchy.create("/hierarchy/shape/kernel"), compo::Transform{
+		.translation = {0.110507, 0.494301, -0.126194},
+		.scaling = {0.482906f},
+	});
+	hierarchy.attach(hierarchy.create("/hierarchy/shape/base"), compo::Transform{
+		.translation = {0.0571719, 0.213656, -0.0682078},
+		.scaling = {0.482906f},
+	});
+	hierarchy.attach(hierarchy.create("/hierarchy/shape/bound"), compo::Transform{
+		.scaling = {500.0f},
+	});
+	hierarchy.attach(hierarchy.create("/hierarchy/medium"), compo::Transform{});
+	hierarchy.attach(hierarchy.create("/hierarchy/medium/cloud"), compo::Transform{
+		.rotation = math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 2.f),
+	});
+	hierarchy.attach(hierarchy.create("/hierarchy/light"), compo::Transform{});
+	hierarchy.attach(hierarchy.create("/hierarchy/light/environment"), compo::Transform{
+		// .rotation = math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f),
+	});
+	hierarchy.attach(hierarchy.create("/hierarchy/light/parallel"), compo::Transform{
+		.rotation = math::Quaternion<f32>::from_rotation_between(
 			{0.f, 0.f, 1.f},
 			math::unit_sphere_to_cartesion({math::pi * 0.6f, math::pi * 0.3f})
 		),
-	}};
-	auto point_to_world = math::Transform{asset::Transform{
-		math::unit_sphere_to_cartesion({math::pi * 1.f / 4.f, math::pi * 4.f / 3.f}) * 1.5f
-	}};
-	auto spot_to_world = math::Transform{asset::Transform{
-		math::unit_sphere_to_cartesion({math::pi * 1.f / 4.f, math::pi * 4.f / 3.f}) * 1.5f,
-		{1.f},
-		math::Quaternion<f32>::from_rotation_between(
+	});
+	hierarchy.attach(hierarchy.create("/hierarchy/light/point"), compo::Transform{
+		.translation = math::unit_sphere_to_cartesion({math::pi * 1.f / 4.f, math::pi * 4.f / 3.f}) * 1.5f,
+	});
+	hierarchy.attach(hierarchy.create("/hierarchy/light/spot"), compo::Transform{
+		.translation = math::unit_sphere_to_cartesion({math::pi * 1.f / 4.f, math::pi * 4.f / 3.f}) * 1.5f,
+		.rotation = math::Quaternion<f32>::from_rotation_between(
 			{0.f, 0.f, 1.f},
 			math::unit_sphere_to_cartesion({math::pi * 3.f / 4.f, math::pi * 1.f / 3.f})
 		),
-	}};
+	});
+
+	hierarchy.update();
 
 	auto sphere = shape::Sphere{};
 	auto triangle = shape::Mesh{
@@ -144,7 +161,7 @@ auto main() -> int {
 		media::grid_size,
 		media::grid_size
 	>{
-		"../metatron-assets/disney-cloud/volume/disney-cloud.nvdb"
+		"../metatron-scenes/disney-cloud/volume/disney-cloud.nvdb"
 	};
 	auto cloud_medium = media::Grid_Medium{
 		&nanovdb_grid,
@@ -181,7 +198,7 @@ auto main() -> int {
 	};
 
 	auto env_map = texture::Image_Texture<spectra::Stochastic_Spectrum>{
-		image::Image::from_path("../metatron-assets/material/texture/sky-on-fire.exr", true),
+		image::Image::from_path("../metatron-scenes/material/texture/sky-on-fire.exr", true),
 		color::Color_Space::Spectrum_Type::illuminant
 	};
 	auto illuminance = color::Color_Space::sRGB->to_spectrum(
@@ -233,14 +250,14 @@ auto main() -> int {
 	};
 	auto area_light = light::Area_Light{&sphere};
 	auto lights = std::vector<emitter::Divider>{
-		// {&parallel_light, &parallel_to_world},
-		// {&point_light, &point_to_world},
-		// {&spot_light, &spot_to_world},
-		// {&area_light, &sphere_to_world}
+		// {&parallel_light, &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/light/parallel"))},
+		// {&point_light, &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/light/parallel"))},
+		// {&spot_light, &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/light/parallel"))},
+		// {&area_light, &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/shape/sphere"))},
 	};
 	auto inf_lights = std::vector<emitter::Divider>{
 		// {&const_env_light, &light_to_world},
-		{&env_light, &light_to_world},
+		{&env_light, &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/light/environment"))},
 	};
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
 
@@ -250,15 +267,15 @@ auto main() -> int {
 			.medium = &cloud_medium,
 			.light = nullptr,
 			.material = &interface_material,
-			.local_to_world = &bound_to_world,
-			.medium_to_world = &medium_to_world,
+			.local_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/shape/bound")),
+			.medium_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/medium/cloud")),
 		},
 	};
 
 	auto assimp_loader = loader::Assimp_Loader{};
-	auto shell = assimp_loader.from_path("../metatron-assets/material/mesh/shell.ply");
-	auto kernel = assimp_loader.from_path("../metatron-assets/material/mesh/kernel.ply");
-	auto base = assimp_loader.from_path("../metatron-assets/material/mesh/base.ply");
+	auto shell = assimp_loader.from_path("../metatron-scenes/material/mesh/shell.ply");
+	auto kernel = assimp_loader.from_path("../metatron-scenes/material/mesh/kernel.ply");
+	auto base = assimp_loader.from_path("../metatron-scenes/material/mesh/base.ply");
 
 	// for (auto& mesh: shell) {
 	// 	for (auto i = 0uz; i < mesh->size(); i++) {
@@ -267,8 +284,8 @@ auto main() -> int {
 	// 			.medium = &vaccum_medium,
 	// 			.light = nullptr,
 	// 			.material = &test_material,
-	// 			.local_to_world = &shell_to_world,
-	// 			.medium_to_world = &identity,
+	// 			.local_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/shape/shell")),
+	// 			.medium_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/medium")),
 	// 			.primitive = i,
 	// 		});
 	// 	}
@@ -280,8 +297,8 @@ auto main() -> int {
 	// 			.medium = &vaccum_medium,
 	// 			.light = nullptr,
 	// 			.material = &diffuse_material,
-	// 			.local_to_world = &kernel_to_world,
-	// 			.medium_to_world = &identity,
+	// 			.local_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/shape/kernel")),
+	// 			.medium_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/medium")),
 	// 			.primitive = i,
 	// 		});
 	// 	}
@@ -293,12 +310,16 @@ auto main() -> int {
 	// 			.medium = &vaccum_medium,
 	// 			.light = nullptr,
 	// 			.material = &test_material,
-	// 			.local_to_world = &base_to_world,
-	// 			.medium_to_world = &identity,
+	// 			.local_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/shape/base")),
+	// 			.medium_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/medium")),
 	// 			.primitive = i,
 	// 		});
 	// 	}
 	// }
+
+	auto& identity = hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy"));
+	auto& world_to_render = hierarchy.fetch<math::Transform>(hierarchy.entity("/render"));
+	auto& render_to_camera = hierarchy.fetch<math::Transform>(hierarchy.entity("/camera"));
 	auto bvh = accel::LBVH{std::move(dividers), &world_to_render};
 	auto integrator = monte_carlo::Volume_Path_Integrator{};
 
@@ -337,8 +358,8 @@ auto main() -> int {
 		auto total = size[0] * size[1] * spp;
 		auto count = atomic_count.load();
 		if (count < total) {
-			std::printf("\r");
-			std::printf("%f", 1.f * count / total);
+			std::print("\r");
+			std::print("{:.6f}", 1.f * count / total);
 		} else {
 			future.wait();
 			break;

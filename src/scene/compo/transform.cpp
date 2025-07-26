@@ -1,6 +1,6 @@
-#include <metatron/scene/asset/transform.hpp>
+#include <metatron/scene/compo/transform.hpp>
 
-namespace mtt::asset {
+namespace mtt::compo {
 	Transform::operator math::Transform() const {
 		auto translation = math::Matrix<f32, 4, 4>{
 			{1.f, 0.f, 0.f, this->translation[0]},

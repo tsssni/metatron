@@ -7,7 +7,7 @@ namespace mtt::ecs {
 
 	struct Daemon final: pro::facade_builder
 	::add_convention<daemon_update, auto (
-		Hierarchy const&
+		Hierarchy&
 	) noexcept -> void>
 	::support<pro::skills::as_view>
 	::build {};

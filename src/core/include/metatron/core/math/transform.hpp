@@ -80,9 +80,10 @@ namespace mtt::math {
 			friend Transform;
 		};
 
-		mutable Matrix<f32, 4, 4> transform;
-		mutable Matrix<f32, 4, 4> inv_transform;
+		Matrix<f32, 4, 4> transform;
+		Matrix<f32, 4, 4> inv_transform;
 
+		Transform() = default;
 		explicit Transform(Matrix<f32, 4, 4> const& m)
 		: transform(m), inv_transform(math::inverse(m)) {}
 

@@ -3,7 +3,7 @@
 #include <metatron/scene/ecs/hierarchy.hpp>
 
 namespace mtt::ecs {
-	auto Stage::update(Hierarchy const& hierarchy) noexcept -> void {
+	auto Stage::update(Hierarchy& hierarchy) noexcept -> void {
 		for (auto& daemon : daemons) {
 			daemon->update(hierarchy);
 		}
