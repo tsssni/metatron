@@ -2,8 +2,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/arithmetic.hpp>
-#include <cstdio>
-#include <cstdlib>
+#include <print>
 
 namespace mtt::spectra {
 	Stochastic_Spectrum::Stochastic_Spectrum(f32 u, f32 v) noexcept {
@@ -21,7 +20,7 @@ namespace mtt::spectra {
 				return value[i];
 			}
 		}
-		std::printf("no matched lambda in stochastic spectrum\n");
+		std::print("spectra: no matched lambda in stochastic spectrum\n");
 		std::abort();
 	}
 

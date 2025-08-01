@@ -1,7 +1,6 @@
 #include <metatron/scene/daemon/transform.hpp>
 #include <metatron/scene/compo/transform.hpp>
 #include <metatron/core/math/transform.hpp>
-#include <print>
 
 namespace mtt::daemon {
 	auto Transform_Daemon::update(ecs::Hierarchy& hierarchy) noexcept -> void {

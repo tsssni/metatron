@@ -50,10 +50,10 @@ namespace mtt::inline prelude {
 	};
 
 	template<typename T>
-	using mut = view_impl<std::remove_cv_t<T>>::type;
+	using mut = view_impl<std::remove_const_t<T>>::type;
 
 	template<typename T>
-	using view = view_impl<std::add_const_t<std::remove_cv_t<T>>>::type;
+	using view = view_impl<std::add_const_t<std::remove_const_t<T>>>::type;
 
 	#define MTT_POLY_METHOD(x, ...) PRO_DEF_MEM_DISPATCH(x, __VA_ARGS__)
 	#define MTT_POLY_FUNCTION(x, ...) PRO_DEF_FREE_DISPATCH(x, __VA_ARGS__)

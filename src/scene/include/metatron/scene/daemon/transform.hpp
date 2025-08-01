@@ -3,8 +3,6 @@
 
 namespace mtt::daemon {
 	struct Transform_Daemon final {
-		struct Impl;
-
 		auto update(ecs::Hierarchy&) noexcept -> void;
 
 	private:

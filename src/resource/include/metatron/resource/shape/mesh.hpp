@@ -26,6 +26,8 @@ namespace mtt::shape {
 			usize idx = 0uz
 		) const noexcept -> std::optional<Interaction>;
 
+		auto static from_path(std::string_view path) noexcept -> Mesh;
+
 	private:
 		template<typename T>
 		auto blerp(

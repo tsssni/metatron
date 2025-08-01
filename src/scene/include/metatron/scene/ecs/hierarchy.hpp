@@ -9,7 +9,7 @@ namespace mtt::ecs {
 
 	struct Hierarchy final: stl::capsule<Hierarchy> {
 		Registry registry;
-		std::vector<poly<Stage>> stages;
+		std::vector<mut<Stage>> stages;
 
 		struct Impl;
 		Hierarchy() noexcept;
@@ -31,14 +31,8 @@ namespace mtt::ecs {
 		}
 
 		template<typename T>
-		auto mutate(Entity entity) noexcept -> T& {
-			registry.emplace<Dirty_Mark<T>>(entity);
+		auto fetch(Entity entity) noexcept -> T& {
 			return registry.get<T>(entity);
-		}
-
-		template<typename T>
-		auto fetch(Entity entity) const noexcept -> T const& {
-			return registry.get<T const>(entity);
 		}
 
 		template<typename T>

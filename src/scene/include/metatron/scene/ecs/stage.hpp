@@ -6,7 +6,7 @@ namespace mtt::ecs {
 	struct Hierarchy;
 
 	struct Stage final {
-		std::vector<poly<Daemon>> daemons;
+		std::vector<mut<Daemon>> daemons;
 		auto update(Hierarchy&) noexcept -> void;
 	};
 }

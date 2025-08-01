@@ -20,7 +20,6 @@
 #include <metatron/resource/bsdf/microfacet.hpp>
 #include <metatron/resource/shape/sphere.hpp>
 #include <metatron/resource/shape/mesh.hpp>
-#include <metatron/resource/loader/assimp.hpp>
 #include <metatron/resource/media/homogeneous.hpp>
 #include <metatron/resource/media/vaccum.hpp>
 #include <metatron/resource/media/grid.hpp>
@@ -40,7 +39,9 @@
 #include <metatron/scene/ecs/hierarchy.hpp>
 #include <metatron/scene/ecs/stage.hpp>
 #include <metatron/scene/compo/transform.hpp>
+#include <metatron/scene/compo/shape.hpp>
 #include <metatron/scene/daemon/transform.hpp>
+#include <metatron/scene/daemon/shape.hpp>
 #include <atomic>
 #include <print>
 
@@ -75,8 +76,11 @@ auto main() -> int {
 
 	auto hierarchy = ecs::Hierarchy{};
 	auto stage = std::make_unique<ecs::Stage>();
-	stage->daemons.push_back(make_poly<ecs::Daemon>(daemon::Transform_Daemon{}));
-	hierarchy.stages.push_back(std::move(stage));
+	auto transform_daemon = make_poly<ecs::Daemon>(daemon::Transform_Daemon{});
+	auto shape_daemon = make_poly<ecs::Daemon>(daemon::Shape_Daemon{});
+	stage->daemons.push_back(transform_daemon);
+	stage->daemons.push_back(shape_daemon);
+	hierarchy.stages.push_back(stage.get());
 
 	hierarchy.attach(hierarchy.create("/render"), compo::Transform{
 		.translation = {0.f, 0.f, 1000.f},
@@ -131,15 +135,30 @@ auto main() -> int {
 		),
 	});
 
-	hierarchy.update();
+	hierarchy.attach<compo::Shape>(hierarchy.create("/shape/sphere"), compo::Sphere{});
+	hierarchy.attach(hierarchy.entity("/hierarchy/shape/bound"), compo::Shape_Instance{
+		.path = hierarchy.entity("/shape/sphere")
+	});
+	hierarchy.attach<compo::Shape>(hierarchy.create("/shape/shell"), compo::Mesh{
+		.path = "../metatron-scenes/material/mesh/shell.ply"
+	});
+	hierarchy.attach(hierarchy.entity("/hierarchy/shape/shell"), compo::Shape_Instance{
+		.path = hierarchy.entity("/shape/shell")
+	});
+	hierarchy.attach<compo::Shape>(hierarchy.create("/shape/kernel"), compo::Mesh{
+		.path = "../metatron-scenes/material/mesh/kernel.ply"
+	});
+	hierarchy.attach(hierarchy.entity("/hierarchy/shape/kernel"), compo::Shape_Instance{
+		.path = hierarchy.entity("/shape/kernel")
+	});
+	hierarchy.attach<compo::Shape>(hierarchy.create("/shape/base"), compo::Mesh{
+		.path = "../metatron-scenes/material/mesh/base.ply"
+	});
+	hierarchy.attach(hierarchy.entity("/hierarchy/shape/base"), compo::Shape_Instance{
+		.path = hierarchy.entity("/shape/base")
+	});
 
-	auto sphere = shape::Sphere{};
-	auto triangle = shape::Mesh{
-		{{0, 1, 2}},
-		{{-1, -1, 0}, {0, 1, 0}, {1, -1, 0}},
-		{{0, 0, -1}, {0, 0, -1}, {0, 0, -1}},
-		{{1, 0}, {0, 0}, {0, 1}},
-	};
+	hierarchy.update();
 
 	auto vaccum_medium = media::Vaccum_Medium{};
 	auto sigma_a = color::Color_Space::sRGB->to_spectrum(
@@ -248,7 +267,11 @@ auto main() -> int {
 		math::pi * 1.f / 16.f,
 		math::pi * 1.f / 4.f
 	};
-	auto area_light = light::Area_Light{&sphere};
+	auto area_light = light::Area_Light{hierarchy.fetch<poly<shape::Shape>>(
+		hierarchy.fetch<compo::Shape_Instance>(
+			hierarchy.entity("/hierarchy/shape/bound")
+		).path
+	)};
 	auto lights = std::vector<emitter::Divider>{
 		// {&parallel_light, &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/light/parallel"))},
 		// {&point_light, &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/light/parallel"))},
@@ -263,7 +286,11 @@ auto main() -> int {
 
 	auto dividers = std::vector<accel::Divider>{
 		{
-			.shape = &sphere,
+			.shape = hierarchy.fetch<poly<shape::Shape>>(
+				hierarchy.fetch<compo::Shape_Instance>(
+					hierarchy.entity("/hierarchy/shape/bound")
+				).path
+			),
 			.medium = &cloud_medium,
 			.light = nullptr,
 			.material = &interface_material,
@@ -272,49 +299,54 @@ auto main() -> int {
 		},
 	};
 
-	auto assimp_loader = loader::Assimp_Loader{};
-	auto shell = assimp_loader.from_path("../metatron-scenes/material/mesh/shell.ply");
-	auto kernel = assimp_loader.from_path("../metatron-scenes/material/mesh/kernel.ply");
-	auto base = assimp_loader.from_path("../metatron-scenes/material/mesh/base.ply");
+	auto& shell = hierarchy.fetch<poly<shape::Shape>>(
+		hierarchy.fetch<compo::Shape_Instance>(
+			hierarchy.entity("/hierarchy/shape/shell")
+		).path
+	);
+	auto& kernel = hierarchy.fetch<poly<shape::Shape>>(
+		hierarchy.fetch<compo::Shape_Instance>(
+			hierarchy.entity("/hierarchy/shape/kernel")
+		).path
+	);
+	auto& base = hierarchy.fetch<poly<shape::Shape>>(
+		hierarchy.fetch<compo::Shape_Instance>(
+			hierarchy.entity("/hierarchy/shape/base")
+		).path
+	);
 
-	// for (auto& mesh: shell) {
-	// 	for (auto i = 0uz; i < mesh->size(); i++) {
-	// 		dividers.push_back({
-	// 			.shape = mesh.get(),
-	// 			.medium = &vaccum_medium,
-	// 			.light = nullptr,
-	// 			.material = &test_material,
-	// 			.local_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/shape/shell")),
-	// 			.medium_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/medium")),
-	// 			.primitive = i,
-	// 		});
-	// 	}
+	// for (auto i = 0uz; i < shell->size(); i++) {
+	// 	dividers.push_back({
+	// 		.shape = shell,
+	// 		.medium = &vaccum_medium,
+	// 		.light = nullptr,
+	// 		.material = &test_material,
+	// 		.local_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/shape/shell")),
+	// 		.medium_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/medium")),
+	// 		.primitive = i,
+	// 	});
 	// }
-	// for (auto& mesh: kernel) {
-	// 	for (auto i = 0uz; i < mesh->size(); i++) {
-	// 		dividers.push_back({
-	// 			.shape = mesh.get(),
-	// 			.medium = &vaccum_medium,
-	// 			.light = nullptr,
-	// 			.material = &diffuse_material,
-	// 			.local_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/shape/kernel")),
-	// 			.medium_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/medium")),
-	// 			.primitive = i,
-	// 		});
-	// 	}
+	// for (auto i = 0uz; i < kernel->size(); i++) {
+	// 	dividers.push_back({
+	// 		.shape = kernel,
+	// 		.medium = &vaccum_medium,
+	// 		.light = nullptr,
+	// 		.material = &diffuse_material,
+	// 		.local_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/shape/kernel")),
+	// 		.medium_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/medium")),
+	// 		.primitive = i,
+	// 	});
 	// }
-	// for (auto& mesh: base) {
-	// 	for (auto i = 0uz; i < mesh->size(); i++) {
-	// 		dividers.push_back({
-	// 			.shape = mesh.get(),
-	// 			.medium = &vaccum_medium,
-	// 			.light = nullptr,
-	// 			.material = &test_material,
-	// 			.local_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/shape/base")),
-	// 			.medium_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/medium")),
-	// 			.primitive = i,
-	// 		});
-	// 	}
+	// for (auto i = 0uz; i < base->size(); i++) {
+	// 	dividers.push_back({
+	// 		.shape = base,
+	// 		.medium = &vaccum_medium,
+	// 		.light = nullptr,
+	// 		.material = &test_material,
+	// 		.local_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/shape/base")),
+	// 		.medium_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/medium")),
+	// 		.primitive = i,
+	// 	});
 	// }
 
 	auto& identity = hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy"));
