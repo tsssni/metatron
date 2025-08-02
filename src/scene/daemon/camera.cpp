@@ -66,7 +66,7 @@ namespace mtt::daemon {
 			}, camera.lens));
 			auto lens = view<photo::Lens>{registry.get<poly<photo::Lens>>(entity)};
 			
-			auto* color_space = compo::to_color_space(camera.color_space);
+			auto* color_space = &registry.get<color::Color_Space>(camera.color_space);
 			registry.emplace<photo::Sensor>(entity, color_space);
 			auto* sensor = &registry.get<photo::Sensor>(entity);
 			auto x = photo::Film{camera.film_size, camera.image_size, filter, sensor, color_space};

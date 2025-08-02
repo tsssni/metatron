@@ -34,9 +34,7 @@ namespace mtt::color {
 
 		auto to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> poly<spectra::Spectrum>;
 
-		poly<Color_Space> static sRGB;
-
-		auto static initialize() -> void;
+		std::unordered_map<std::string, view<Color_Space>> static color_spaces;
 
 	private:
 		Scale const* scale;

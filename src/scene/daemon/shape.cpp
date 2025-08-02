@@ -3,7 +3,6 @@
 #include <metatron/resource/shape/shape.hpp>
 #include <metatron/resource/shape/mesh.hpp>
 #include <metatron/resource/shape/sphere.hpp>
-#include <print>
 
 namespace mtt::daemon {
 	auto Shape_Daemon::update(ecs::Hierarchy& hierarchy) noexcept -> void {

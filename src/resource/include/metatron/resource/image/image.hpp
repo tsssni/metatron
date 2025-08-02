@@ -38,7 +38,10 @@ namespace mtt::image {
 		auto operator[](usize x, usize y) noexcept -> Pixel;
 		auto operator[](usize x, usize y) const noexcept -> Pixel const;
 
-		auto static from_path(std::string_view path, bool linear = false) noexcept -> poly<Image>;
+		auto static from_path(
+			std::string_view path,
+			bool linear = false
+		) noexcept -> poly<Image>;
 		auto to_path(std::string_view path) const noexcept -> void;
 
 	private:

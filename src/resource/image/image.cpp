@@ -66,27 +66,10 @@ namespace mtt::image {
 		return (Pixel const){this, const_cast<byte*>(&pixels[offset])};
 	}
 
-	namespace {
-		auto to_color_space(std::string_view cs) noexcept -> color::Color_Space const* {
-			if (cs == "sRGB") {
-				return color::Color_Space::sRGB.get();
-			} else {
-				// have not supported other color spaces yet
-				return color::Color_Space::sRGB.get();
-			}
-		}
-
-		auto from_color_space(color::Color_Space const* cs) noexcept -> std::string_view {
-			if (cs == color::Color_Space::sRGB.get()) {
-				return "sRGB";
-			} else {
-				// have not supported other color spaces yet
-				return "sRGB";
-			}
-		}
-	}
-
-	auto Image::from_path(std::string_view path, bool linear) noexcept -> poly<Image> {
+	auto Image::from_path(
+		std::string_view path,
+		bool linear
+	) noexcept -> poly<Image> {
 		auto in = OIIO::ImageInput::open(std::string{path});
 		if (!in) {
 			std::printf("cannot find image %s\n", path.data());
@@ -95,7 +78,9 @@ namespace mtt::image {
 
 		auto& spec = in->spec();
 		auto cs_name = spec.get_string_attribute("oiio:ColorSpace");
-		auto color_space = (color::Color_Space*)nullptr;
+		auto* color_space = color::Color_Space::color_spaces.contains(cs_name)
+		? color::Color_Space::color_spaces.at(cs_name)
+		: color::Color_Space::color_spaces.at("sRGB");
 
 		auto image = make_poly<Image>(
 			math::Vector<usize, 4>{
@@ -104,7 +89,7 @@ namespace mtt::image {
 				usize(spec.nchannels),
 				spec.format.size()
 			},
-			to_color_space(spec.get_string_attribute("oiio:ColorSpace")),
+			color_space,
 			linear
 		);
 
@@ -127,8 +112,14 @@ namespace mtt::image {
 			type
 		};
 
+		auto cs_name = std::string{"sRGB"};
+		for (auto const& [name, cs]: color::Color_Space::color_spaces) {
+			if (color_space == cs) {
+				cs_name = name;
+			}
+		}
+		spec.attribute("oiio::ColorSpace", cs_name);
 		spec.attribute("planarconfig", "contig");
-		spec.attribute("oiio::ColorSpace", from_color_space(color_space));
 
 		auto out = OIIO::ImageOutput::create(std::string{path});
 		if (!out || !out->open(std::string{path}, spec)) {

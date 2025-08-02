@@ -3,10 +3,7 @@
 #include <metatron/core/math/arithmetic.hpp>
 
 namespace mtt::color {
-	extern color::Color_Space::Scale sRGB_spectrum_z;
-	extern color::Color_Space::Table sRGB_spectrum_table;
-
-	poly<Color_Space> Color_Space::sRGB;
+	std::unordered_map<std::string, view<Color_Space>> Color_Space::color_spaces;
 
 	Color_Space::Color_Space(
 		math::Vector<f32, 2> const& r_chroma,
@@ -108,31 +105,5 @@ namespace mtt::color {
 		}
 
 		return make_poly<spectra::Spectrum, spectra::Rgb_Spectrum>(c, s, w);
-	}
-
-	auto Color_Space::initialize() -> void {
-		view<spectra::Spectrum> cie = spectra::Spectrum::CIE_D65;
-		sRGB = make_poly<Color_Space>(
-			math::Vector<f32, 2>{0.64f, 0.33f},
-			math::Vector<f32, 2>{0.30f, 0.60f},
-			math::Vector<f32, 2>{0.15f, 0.06f},
-			spectra::Spectrum::CIE_D65,
-			[](f32 x) -> f32 {
-				if (x <= 0.0031308f) {
-					return 12.92f * x;
-				} else {
-					return 1.055f * std::pow(x, 1.f / 2.4f) - 0.055f;
-				}
-			},
-			[](f32 x) -> f32 {
-				if (x <= 0.04045f) {
-					return x / 12.92f;
-				} else {
-					return pow((x + 0.055f) / 1.055f, 2.4f);
-				}
-			},
-			&sRGB_spectrum_z,
-			&sRGB_spectrum_table
-		);
 	}
 }

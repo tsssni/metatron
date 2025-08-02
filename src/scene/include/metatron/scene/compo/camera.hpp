@@ -1,5 +1,6 @@
 #pragma once
-#include <metatron/scene/compo/color-space.hpp>
+#include <metatron/scene/ecs/entity.hpp>
+#include <metatron/core/math/vector.hpp>
 
 namespace mtt::compo {
 	struct Pinhole_Lens final {
@@ -45,6 +46,6 @@ namespace mtt::compo {
 		Lens lens;
 		Sampler sampler;
 		Filter filter;
-		Color_Space color_space;
+		ecs::Entity color_space;
 	};
 }

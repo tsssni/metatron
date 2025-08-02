@@ -30,6 +30,7 @@
 #include <metatron/scene/compo/transform.hpp>
 #include <metatron/scene/compo/shape.hpp>
 #include <metatron/scene/compo/camera.hpp>
+#include <metatron/scene/daemon/color-space.hpp>
 #include <metatron/scene/daemon/transform.hpp>
 #include <metatron/scene/daemon/shape.hpp>
 #include <metatron/scene/daemon/camera.hpp>
@@ -40,20 +41,30 @@ using namespace mtt;
 
 auto main() -> int {
 	spectra::Spectrum::initialize();
-	color::Color_Space::initialize();
 
 	auto spp = 16uz;
 	auto depth = 64uz;
 
 	auto hierarchy = ecs::Hierarchy{};
 	auto stage = std::make_unique<ecs::Stage>();
+	auto color_space_daemon = daemon::Color_Space_Daemon{hierarchy};
 	auto transform_daemon = daemon::Transform_Daemon{};
 	auto shape_daemon = daemon::Shape_Daemon{};
 	auto camera_daemon = daemon::Camera_Daemon{};
+	stage->daemons.push_back(&color_space_daemon);
 	stage->daemons.push_back(&transform_daemon);
 	stage->daemons.push_back(&shape_daemon);
 	stage->daemons.push_back(&camera_daemon);
 	hierarchy.stages.push_back(stage.get());
+
+	auto cs_list = std::to_array<std::string>({"sRGB"});
+	for (auto& name: cs_list) {
+		auto entity = hierarchy.entity("/color-space/" + name);
+		auto* cs = &hierarchy.fetch<color::Color_Space>(entity);
+		color::Color_Space::color_spaces[name] = cs;
+	}
+	auto sRBB_entity = hierarchy.entity("/color-space/sRGB");
+	auto* sRGB = &hierarchy.fetch<color::Color_Space>(sRBB_entity);
 
 	hierarchy.attach(hierarchy.create("/render"), compo::Transform{
 		.translation = {0.f, 0.f, 1000.f},
@@ -141,21 +152,21 @@ auto main() -> int {
 		},
 		.sampler = compo::Halton_Sampler{},
 		.filter = compo::Lanczos_Filter{},
-		.color_space = compo::Color_Space::sRGB,
+		.color_space = sRBB_entity,
 	});
 
 	hierarchy.update();
 
 	auto vaccum_medium = media::Vaccum_Medium{};
-	auto sigma_a = color::Color_Space::sRGB->to_spectrum(
+	auto sigma_a = sRGB->to_spectrum(
 		{0.0f, 0.0f, 0.0f},
 		color::Color_Space::Spectrum_Type::unbounded
 	);
-	auto sigma_s = color::Color_Space::sRGB->to_spectrum(
+	auto sigma_s = sRGB->to_spectrum(
 		{1.0f, 1.0f, 1.0f},
 		color::Color_Space::Spectrum_Type::unbounded
 	);
-	auto sigma_e = color::Color_Space::sRGB->to_spectrum(
+	auto sigma_e = sRGB->to_spectrum(
 		{0.0f, 0.0f, 0.0f},
 		color::Color_Space::Spectrum_Type::illuminant
 	);
@@ -181,7 +192,7 @@ auto main() -> int {
 	auto interface = bsdf::Interface_Bsdf{};
 	auto microfacet = bsdf::Microfacet_Bsdf{};
 
-	auto diffuse_reflectance = color::Color_Space::sRGB->to_spectrum(
+	auto diffuse_reflectance = sRGB->to_spectrum(
 		{1.f, 1.f, 1.f},
 		color::Color_Space::Spectrum_Type::albedo
 	);
@@ -206,7 +217,7 @@ auto main() -> int {
 		image::Image::from_path("../metatron-scenes/material/texture/sky-on-fire.exr", true),
 		color::Color_Space::Spectrum_Type::illuminant
 	};
-	auto illuminance = color::Color_Space::sRGB->to_spectrum(
+	auto illuminance = sRGB->to_spectrum(
 		{1.f, 1.f, 1.f},
 		color::Color_Space::Spectrum_Type::illuminant
 	);
@@ -234,17 +245,17 @@ auto main() -> int {
 
 	auto env_light = light::Environment_Light{&env_map};
 	auto const_env_light = light::Environment_Light{&illuminance_texture};
-	auto parallel_illuminance =  color::Color_Space::sRGB->to_spectrum(
+	auto parallel_illuminance = sRGB->to_spectrum(
 		{2.6f, 2.5f, 2.3f},
 		color::Color_Space::Spectrum_Type::illuminant
 	);
 	auto parallel_light = light::Parallel_Light{parallel_illuminance};
-	auto point_illuminance = color::Color_Space::sRGB->to_spectrum(
+	auto point_illuminance = sRGB->to_spectrum(
 		{0.0f, 0.6f, 1.0f},
 		color::Color_Space::Spectrum_Type::illuminant
 	);
 	auto point_light = light::Point_Light{point_illuminance};
-	auto spot_illuminance = color::Color_Space::sRGB->to_spectrum(
+	auto spot_illuminance = sRGB->to_spectrum(
 		{0.0f, 0.6f, 1.0f},
 		color::Color_Space::Spectrum_Type::illuminant
 	);
