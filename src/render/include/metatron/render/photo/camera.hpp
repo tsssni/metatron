@@ -15,7 +15,7 @@ namespace mtt::photo {
 	struct Camera final {
 		Camera(
 			view<Lens> lens,
-			Film* film
+			mut<Film> film
 		) noexcept;
 		auto sample(
 			math::Vector<usize, 2> pixel,
@@ -26,7 +26,7 @@ namespace mtt::photo {
 
 	private:
 		view<Lens> lens;
-		Film* film;
+		mut<Film> film;
 		math::Ray_Differential default_differential;
 	};
 }

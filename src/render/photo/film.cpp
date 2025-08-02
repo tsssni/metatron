@@ -5,7 +5,7 @@
 
 namespace mtt::photo {
 	Fixel::Fixel(
-		Film* film,
+		mut<Film> film,
 		math::Vector<usize, 2> const& pixel,
 		math::Vector<f32, 2> const& position,
 		f32 weight
@@ -15,7 +15,7 @@ namespace mtt::photo {
 	position(position),
 	dxdy(math::foreach(
 		[](f32 x, usize i){return x < 0.f ? 1.f : -1.f;},
-		position + film->dxdy - film->size / 2.f
+		position + film->dxdy - film->film_size / 2.f
 	) * film->dxdy),
 	weight(weight) {}
 
@@ -29,10 +29,11 @@ namespace mtt::photo {
 		math::Vector<f32, 2> const& film_size,
 		math::Vector<usize, 2> const& image_size,
 		view<math::Filter> filter,
-		Sensor const* sensor,
-		color::Color_Space const* color_space
+		view<Sensor> sensor,
+		view<color::Color_Space> color_space
 	) noexcept:
-	size(film_size),
+	film_size(film_size),
+	image_size(image_size),
 	dxdy(film_size / image_size),
 	image({image_size, 4uz, 4uz}, color_space),
 	filter(filter),
@@ -45,7 +46,7 @@ namespace mtt::photo {
 		auto f_intr = filter->sample(u).value();
 		auto pixel_position = math::Vector<f32, 2>{pixel} + 0.5f + f_intr.p;
 		auto uv = pixel_position / image.size;
-		auto film_position = (uv - 0.5f) * math::Vector<f32, 2>{-1.f, 1.f} * size;
+		auto film_position = (uv - 0.5f) * math::Vector<f32, 2>{-1.f, 1.f} * film_size;
 
 		return {
 			this,

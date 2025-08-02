@@ -5,8 +5,8 @@
 namespace mtt::daemon {
 	auto Transform_Daemon::update(ecs::Hierarchy& hierarchy) noexcept -> void {
 		auto& registry = hierarchy.registry;
-		auto dirty_view = registry.view<ecs::Dirty_Mark<compo::Transform>>();
-		for (auto entity: dirty_view) {
+		auto transform_view = registry.view<ecs::Dirty_Mark<compo::Transform>>();
+		for (auto entity: transform_view) {
 			if (registry.any_of<ecs::Dirty_Mark<math::Transform>>(entity)) {
 				continue;
 			}

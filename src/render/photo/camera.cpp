@@ -4,7 +4,7 @@
 namespace mtt::photo {
 	Camera::Camera(
 		view<Lens> lens,
-		Film* film
+		mut<Film> film
 	) noexcept: lens(lens), film(film) {
 		auto& ray = default_differential;
 		auto r_pos = math::Vector<f32, 3>{0.f};

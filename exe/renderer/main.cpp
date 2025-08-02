@@ -1,11 +1,5 @@
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/complex.hpp>
-#include <metatron/core/math/sphere.hpp>
-#include <metatron/core/math/sampler/independent.hpp>
-#include <metatron/core/math/sampler/halton.hpp>
-#include <metatron/core/math/filter/box.hpp>
-#include <metatron/core/math/filter/gaussian.hpp>
-#include <metatron/core/math/filter/lanczos.hpp>
 #include <metatron/core/math/encode.hpp>
 #include <metatron/core/math/distribution/piecewise.hpp>
 #include <metatron/resource/spectra/stochastic.hpp>
@@ -18,16 +12,11 @@
 #include <metatron/resource/bsdf/lambertian.hpp>
 #include <metatron/resource/bsdf/interface.hpp>
 #include <metatron/resource/bsdf/microfacet.hpp>
-#include <metatron/resource/shape/sphere.hpp>
-#include <metatron/resource/shape/mesh.hpp>
 #include <metatron/resource/media/homogeneous.hpp>
 #include <metatron/resource/media/vaccum.hpp>
 #include <metatron/resource/media/grid.hpp>
 #include <metatron/resource/media/nanovdb.hpp>
 #include <metatron/resource/phase/henyey-greenstein.hpp>
-#include <metatron/render/photo/camera.hpp>
-#include <metatron/render/lens/pinhole.hpp>
-#include <metatron/render/lens/thin.hpp>
 #include <metatron/render/light/environment.hpp>
 #include <metatron/render/light/parallel.hpp>
 #include <metatron/render/light/point.hpp>
@@ -40,8 +29,10 @@
 #include <metatron/scene/ecs/stage.hpp>
 #include <metatron/scene/compo/transform.hpp>
 #include <metatron/scene/compo/shape.hpp>
+#include <metatron/scene/compo/camera.hpp>
 #include <metatron/scene/daemon/transform.hpp>
 #include <metatron/scene/daemon/shape.hpp>
+#include <metatron/scene/daemon/camera.hpp>
 #include <atomic>
 #include <print>
 
@@ -51,35 +42,17 @@ auto main() -> int {
 	spectra::Spectrum::initialize();
 	color::Color_Space::initialize();
 
-	auto size = math::Vector<usize, 2>{600uz, 400uz};
 	auto spp = 16uz;
 	auto depth = 64uz;
 
-	auto sensor = photo::Sensor{color::Color_Space::sRGB.get()};
-	auto lens = photo::Thin_Lens{5.6f, 0.05f, 10.f};
-	auto filter = math::Lanczos_Filter{};
-	auto film = photo::Film{
-		math::Vector<f32, 2>{0.036f, 0.024f},
-		size,
-		&filter,
-		&sensor,
-		color::Color_Space::sRGB.get()
-	};
-
-	auto camera = photo::Camera{
-		&lens,
-		&film
-	};
-	auto rd = std::random_device{};
-	auto seed = rd();
-	auto halton = math::Halton_Sampler{seed};
-
 	auto hierarchy = ecs::Hierarchy{};
 	auto stage = std::make_unique<ecs::Stage>();
-	auto transform_daemon = make_poly<ecs::Daemon>(daemon::Transform_Daemon{});
-	auto shape_daemon = make_poly<ecs::Daemon>(daemon::Shape_Daemon{});
-	stage->daemons.push_back(transform_daemon);
-	stage->daemons.push_back(shape_daemon);
+	auto transform_daemon = daemon::Transform_Daemon{};
+	auto shape_daemon = daemon::Shape_Daemon{};
+	auto camera_daemon = daemon::Camera_Daemon{};
+	stage->daemons.push_back(&transform_daemon);
+	stage->daemons.push_back(&shape_daemon);
+	stage->daemons.push_back(&camera_daemon);
 	hierarchy.stages.push_back(stage.get());
 
 	hierarchy.attach(hierarchy.create("/render"), compo::Transform{
@@ -156,6 +129,19 @@ auto main() -> int {
 	});
 	hierarchy.attach(hierarchy.entity("/hierarchy/shape/base"), compo::Shape_Instance{
 		.path = hierarchy.entity("/shape/base")
+	});
+
+	hierarchy.attach(hierarchy.entity("/camera"), compo::Camera{
+		.film_size = {0.036f, 0.024f},
+		.image_size = {600uz, 400uz},
+		.lens = compo::Thin_Lens{
+			.aperture = 5.6f,
+			.focal_length = 0.05f,
+			.focus_distance = 10.f,
+		},
+		.sampler = compo::Halton_Sampler{},
+		.filter = compo::Lanczos_Filter{},
+		.color_space = compo::Color_Space::sRGB,
 	});
 
 	hierarchy.update();
@@ -356,10 +342,13 @@ auto main() -> int {
 	auto integrator = monte_carlo::Volume_Path_Integrator{};
 
 	auto atomic_count = std::atomic<usize>{0uz};
+	auto sampler = mut<math::Sampler>{hierarchy.fetch<poly<math::Sampler>>(camera_daemon.camera_entity)};
+	auto camera = mut<photo::Camera>{&hierarchy.fetch<photo::Camera>(camera_daemon.camera_entity)};
+	auto size = hierarchy.fetch<photo::Film>(camera_daemon.camera_entity).image_size;
+
 	auto future = stl::dispatcher::instance().async_parallel(size, [&](math::Vector<usize, 2> const& px) {
-		auto sampler = view<math::Sampler>(&halton);
 		for (auto n = 0uz; n < spp; n++) {
-			auto sample = camera.sample(px, n, sampler);
+			auto sample = camera->sample(px, n, sampler);
 			sample->ray_differential = render_to_camera ^ sample->ray_differential;
 			auto& s = sample.value();
 
@@ -398,6 +387,6 @@ auto main() -> int {
 		}
 	}
 
-	camera.to_path("build/test.exr");
+	camera->to_path("build/test.exr");
 	return 0;
 }

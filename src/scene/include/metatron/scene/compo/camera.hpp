@@ -1,0 +1,50 @@
+#pragma once
+#include <metatron/scene/compo/color-space.hpp>
+
+namespace mtt::compo {
+	struct Pinhole_Lens final {
+		f32 focal_length;
+	};
+	struct Thin_Lens final {
+		f32 aperture;
+		f32 focal_length;
+		f32 focus_distance;
+	};
+	using Lens = std::variant<
+		Pinhole_Lens,
+		Thin_Lens
+	>;
+
+	struct Independent_Sampler final {};
+	struct Halton_Sampler final {};
+	using Sampler = std::variant<
+		Independent_Sampler,
+		Halton_Sampler
+	>;
+
+	struct Box_Filter final {
+		math::Vector<f32, 2> radius{0.5f};
+	};
+	struct Gaussian_Filter final {
+		math::Vector<f32, 2> radius{1.5f};
+		f32 sigma{0.5f};
+	};
+	struct Lanczos_Filter final {
+		math::Vector<f32, 2> radius{0.5f};
+		f32 tau{3.f};
+	};
+	using Filter = std::variant<
+		Box_Filter,
+		Gaussian_Filter,
+		Lanczos_Filter
+	>;
+
+	struct Camera final {
+		math::Vector<f32, 2> film_size;
+		math::Vector<usize, 2> image_size;
+		Lens lens;
+		Sampler sampler;
+		Filter filter;
+		Color_Space color_space;
+	};
+}
