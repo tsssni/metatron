@@ -356,8 +356,10 @@ auto main() -> int {
 	auto sampler = mut<math::Sampler>{hierarchy.fetch<poly<math::Sampler>>(camera_daemon.camera_entity)};
 	auto camera = mut<photo::Camera>{&hierarchy.fetch<photo::Camera>(camera_daemon.camera_entity)};
 	auto size = hierarchy.fetch<photo::Film>(camera_daemon.camera_entity).image_size;
-
-	auto future = stl::dispatcher::instance().async_parallel(size, [&](math::Vector<usize, 2> const& px) {
+	auto total = size[0] * size[1] * spp;
+	auto last_percent = -1;
+	
+	stl::dispatcher::instance().sync_parallel(size, [&](math::Vector<usize, 2> const& px) {
 		for (auto n = 0uz; n < spp; n++) {
 			auto sample = camera->sample(px, n, sampler);
 			sample->ray_differential = render_to_camera ^ sample->ray_differential;
@@ -382,22 +384,17 @@ auto main() -> int {
 
 			auto& Li = Li_opt.value();
 			s.fixel = Li;
-			atomic_count.fetch_add(1);
+			auto count = atomic_count.fetch_add(1) + 1;
+			auto percent = static_cast<int>(100.f * count / total);
+			if (percent > last_percent) {
+				last_percent = percent;
+				std::print("\rprogress: {}%", percent);
+				std::flush(std::cout);
+			}
 		}
 	});
 
-	while (true) {
-		auto total = size[0] * size[1] * spp;
-		auto count = atomic_count.load();
-		if (count < total) {
-			std::print("\r");
-			std::print("{:.6f}", 1.f * count / total);
-		} else {
-			future.wait();
-			break;
-		}
-	}
-
+	std::print("\n");
 	camera->to_path("build/test.exr");
 	return 0;
 }
