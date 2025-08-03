@@ -50,7 +50,7 @@ namespace mtt::media {
 			))
 		) {
 			auto& root = nanovdb_grid->tree().root();
-			stl::dispatcher::instance().sync_parallel(
+			stl::scheduler::instance().sync_parallel(
 				majorant_grid.dimensions,
 				[&](math::Vector<usize, 3> const& xyz) {
 					auto ijk = math::Vector<i32, 3>{xyz};

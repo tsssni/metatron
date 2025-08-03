@@ -3,11 +3,12 @@
 
 namespace mtt::daemon {
 	struct Transform_Daemon final {
-		auto update(ecs::Hierarchy&) noexcept -> void;
+		auto init() noexcept -> void;
+		auto update() noexcept -> void;
 
 	private:
-		auto transform(ecs::Hierarchy&, ecs::Entity entity) noexcept -> void;
-		auto up_trace(ecs::Hierarchy&, ecs::Entity entity) noexcept -> bool;
-		auto down_trace(ecs::Hierarchy&, ecs::Entity entity) noexcept -> void;
+		auto transform(ecs::Entity entity) noexcept -> void;
+		auto up_trace(ecs::Entity entity) noexcept -> bool;
+		auto down_trace(ecs::Entity entity) noexcept -> void;
 	};
 }

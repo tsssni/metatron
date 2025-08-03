@@ -12,7 +12,10 @@
 #include <metatron/core/math/filter/lanczos.hpp>
 
 namespace mtt::daemon {
-	auto Camera_Daemon::update(ecs::Hierarchy& hierarchy) noexcept -> void {
+	auto Camera_Daemon::init() noexcept -> void {}
+
+	auto Camera_Daemon::update() noexcept -> void {
+		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
 		auto camera_view = registry.view<ecs::Dirty_Mark<compo::Camera>>();
 		for (auto entity: camera_view) {

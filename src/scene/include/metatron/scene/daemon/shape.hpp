@@ -3,6 +3,7 @@
 
 namespace mtt::daemon {
 	struct Shape_Daemon final {
-		auto update(ecs::Hierarchy& hierarchy) noexcept -> void;
+		auto init() noexcept -> void;
+		auto update() noexcept -> void;
 	};
 }

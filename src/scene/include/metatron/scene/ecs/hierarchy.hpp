@@ -14,6 +14,9 @@ namespace mtt::ecs {
 		struct Impl;
 		Hierarchy() noexcept;
 
+		mut<Hierarchy> static instance;
+		auto activate() noexcept -> void;
+
 		auto create(std::string const& name) noexcept -> Entity;
 		auto entity(std::string const& name) const noexcept -> Entity;
 		auto name(Entity entity) const noexcept -> std::string const&;
@@ -22,6 +25,7 @@ namespace mtt::ecs {
 		auto parent(Entity entity) const noexcept -> Entity;
 		auto children(Entity entity) const noexcept -> std::vector<Entity> const&;
 
+		auto init() noexcept -> void;
 		auto update() noexcept -> void;
 
 		template<typename T>

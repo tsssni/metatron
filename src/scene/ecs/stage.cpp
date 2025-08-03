@@ -3,9 +3,15 @@
 #include <metatron/scene/ecs/hierarchy.hpp>
 
 namespace mtt::ecs {
-	auto Stage::update(Hierarchy& hierarchy) noexcept -> void {
+	auto Stage::init() noexcept -> void {
 		for (auto& daemon : daemons) {
-			daemon->update(hierarchy);
+			daemon->init();
+		}
+	}
+
+	auto Stage::update() noexcept -> void {
+		for (auto& daemon : daemons) {
+			daemon->update();
 		}
 	}
 }

@@ -4,6 +4,8 @@
 #include <print>
 
 namespace mtt::ecs {
+	mut<Hierarchy> Hierarchy::instance{nullptr};
+
 	struct Hierarchy::Impl final {
 		mut<Hierarchy> hierarchy;
 
@@ -61,6 +63,10 @@ namespace mtt::ecs {
 		impl->plant();
 	}
 
+	auto Hierarchy::activate() noexcept -> void {
+		Hierarchy::instance = this;
+	}
+
 	auto Hierarchy::create(std::string const& name) noexcept -> Entity {
 		return impl->create(name);
 	}
@@ -85,9 +91,15 @@ namespace mtt::ecs {
 		return impl->fetch(impl->sons, entity);
 	}
 
+	auto Hierarchy::init() noexcept -> void {
+		for (auto& stage: stages) {
+			stage->init();
+		}
+	}
+
 	auto Hierarchy::update() noexcept -> void {
 		for (auto& stage: stages) {
-			stage->update(*this);
+			stage->update();
 		}
 	}
 }

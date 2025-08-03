@@ -101,7 +101,7 @@ namespace mtt::accel {
 			}
 		};
 		auto lbvh_nodes = std::vector<poly<LBVH_Node>>(intervals.size());
-		stl::dispatcher::instance().sync_parallel(
+		stl::scheduler::instance().sync_parallel(
 			math::Vector<usize, 1>{intervals.size()},
 			[&](auto idx) {
 				auto [i] = idx;

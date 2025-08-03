@@ -3,7 +3,10 @@
 #include <metatron/core/math/transform.hpp>
 
 namespace mtt::daemon {
-	auto Transform_Daemon::update(ecs::Hierarchy& hierarchy) noexcept -> void {
+	auto Transform_Daemon::init() noexcept -> void {}
+
+	auto Transform_Daemon::update() noexcept -> void {
+		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
 		auto transform_view = registry.view<ecs::Dirty_Mark<compo::Transform>>();
 		for (auto entity: transform_view) {
@@ -18,19 +21,20 @@ namespace mtt::daemon {
 				}
 				registry.emplace<ecs::Dirty_Mark<math::Transform>>(entity);
 			} else {
-				dirty = up_trace(hierarchy, entity);
+				dirty = up_trace(entity);
 			}
 
 			if (dirty) {
 				for (auto child: hierarchy.children(entity)) {
-					down_trace(hierarchy, entity);
+					down_trace(entity);
 				}
 			}
 		}
 		registry.clear<ecs::Dirty_Mark<compo::Transform>>();
 	}
 
-	auto Transform_Daemon::transform(ecs::Hierarchy& hierarchy, ecs::Entity entity) noexcept -> void {
+	auto Transform_Daemon::transform(ecs::Entity entity) noexcept -> void {
+		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
 		auto parent = hierarchy.parent(entity);
 		if (!registry.any_of<math::Transform>(entity)) {
@@ -46,7 +50,8 @@ namespace mtt::daemon {
 		registry.emplace<ecs::Dirty_Mark<math::Transform>>(entity);
 	}
 
-	auto Transform_Daemon::up_trace(ecs::Hierarchy& hierarchy, ecs::Entity entity) noexcept -> bool {
+	auto Transform_Daemon::up_trace(ecs::Entity entity) noexcept -> bool {
+		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
 		auto transformed = registry.any_of<ecs::Dirty_Mark<math::Transform>>(entity);
 		auto attached = registry.any_of<compo::Transform>(entity);
@@ -56,22 +61,23 @@ namespace mtt::daemon {
 		}
 
 		auto parent = hierarchy.parent(entity);
-		dirty |= up_trace(hierarchy, parent);
+		dirty |= up_trace(parent);
 		if (dirty) {
-			transform(hierarchy, entity);
+			transform(entity);
 		}
 		return dirty;
 	}
 
-	auto Transform_Daemon::down_trace(ecs::Hierarchy& hierarchy, ecs::Entity entity) noexcept -> void {
+	auto Transform_Daemon::down_trace(ecs::Entity entity) noexcept -> void {
+		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
 		if (!registry.any_of<compo::Transform>(entity)) {
 			return;
 		}
 
-		transform(hierarchy, entity);
+		transform(entity);
 		for (auto child: hierarchy.children(entity)) {
-			down_trace(hierarchy, child);
+			down_trace(child);
 		}
 	}
 }

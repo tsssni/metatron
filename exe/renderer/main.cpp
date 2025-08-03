@@ -47,7 +47,7 @@ auto main() -> int {
 
 	auto hierarchy = ecs::Hierarchy{};
 	auto stage = std::make_unique<ecs::Stage>();
-	auto color_space_daemon = daemon::Color_Space_Daemon{hierarchy};
+	auto color_space_daemon = daemon::Color_Space_Daemon{};
 	auto transform_daemon = daemon::Transform_Daemon{};
 	auto shape_daemon = daemon::Shape_Daemon{};
 	auto camera_daemon = daemon::Camera_Daemon{};
@@ -56,6 +56,8 @@ auto main() -> int {
 	stage->daemons.push_back(&shape_daemon);
 	stage->daemons.push_back(&camera_daemon);
 	hierarchy.stages.push_back(stage.get());
+	hierarchy.activate();
+	hierarchy.init();
 
 	auto cs_list = std::to_array<std::string>({"sRGB"});
 	for (auto& name: cs_list) {
@@ -359,7 +361,7 @@ auto main() -> int {
 	auto total = size[0] * size[1] * spp;
 	auto last_percent = -1;
 	
-	stl::dispatcher::instance().sync_parallel(size, [&](math::Vector<usize, 2> const& px) {
+	stl::scheduler::instance().sync_parallel(size, [&](math::Vector<usize, 2> const& px) {
 		for (auto n = 0uz; n < spp; n++) {
 			auto sample = camera->sample(px, n, sampler);
 			sample->ray_differential = render_to_camera ^ sample->ray_differential;

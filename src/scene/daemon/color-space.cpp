@@ -7,7 +7,8 @@ namespace mtt::color {
 }
 
 namespace mtt::daemon {
-	Color_Space_Daemon::Color_Space_Daemon(ecs::Hierarchy& hierarchy) noexcept {
+	auto Color_Space_Daemon::init() noexcept -> void {
+		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
 		registry.emplace<color::Color_Space>(
 			hierarchy.create("/color-space/sRGB"),
@@ -34,5 +35,5 @@ namespace mtt::daemon {
 		);
 	}
 
-	auto Color_Space_Daemon::update(ecs::Hierarchy& hierarchy) noexcept -> void {}
+	auto Color_Space_Daemon::update() noexcept -> void {}
 }

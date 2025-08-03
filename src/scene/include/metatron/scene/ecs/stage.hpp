@@ -7,6 +7,7 @@ namespace mtt::ecs {
 
 	struct Stage final {
 		std::vector<mut<Daemon>> daemons;
-		auto update(Hierarchy&) noexcept -> void;
+		auto init() noexcept -> void;
+		auto update() noexcept -> void;
 	};
 }

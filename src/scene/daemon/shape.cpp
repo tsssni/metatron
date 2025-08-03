@@ -5,7 +5,10 @@
 #include <metatron/resource/shape/sphere.hpp>
 
 namespace mtt::daemon {
-	auto Shape_Daemon::update(ecs::Hierarchy& hierarchy) noexcept -> void {
+	auto Shape_Daemon::init() noexcept -> void {}
+
+	auto Shape_Daemon::update() noexcept -> void {
+		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
 		auto shape_view = registry.view<ecs::Dirty_Mark<compo::Shape>>();
 		for (auto entity: shape_view) {

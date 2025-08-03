@@ -9,8 +9,8 @@
 #include <stack>
 
 namespace mtt::stl {
-	struct dispatcher final: singleton<dispatcher> {
-		dispatcher(usize num_threads = std::thread::hardware_concurrency() - 1uz) noexcept {
+	struct scheduler final: singleton<scheduler> {
+		scheduler(usize num_threads = std::thread::hardware_concurrency() - 1uz) noexcept {
 			threads.reserve(num_threads);
 			for (auto i = 0; i < num_threads; ++i) {
 				threads.emplace_back([this]() {
@@ -30,7 +30,7 @@ namespace mtt::stl {
 			}
 		}
 
-		~dispatcher() noexcept {
+		~scheduler() noexcept {
 			{
 				auto lock = std::lock_guard{mutex};
 				stop = true;
