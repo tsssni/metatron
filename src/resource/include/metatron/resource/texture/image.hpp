@@ -5,14 +5,12 @@
 
 namespace mtt::texture {
 	template<typename T>
-	struct Image_Texture final: Texture<T> {};
+	struct Image_Texture final {};
 
 	template<>
 	struct Image_Texture<math::Vector<f32, 4>> final {
 		std::vector<poly<image::Image>> images;
-
 		Image_Texture(poly<image::Image> image) noexcept;
-
 		auto sample(
 			eval::Context const& ctx,
 			Coordinate const& coord
@@ -21,13 +19,11 @@ namespace mtt::texture {
 
 	template<>
 	struct Image_Texture<spectra::Stochastic_Spectrum> final {
-		color::Color_Space::Spectrum_Type spectrum_type;
-
+		color::Color_Space::Spectrum_Type type;
 		Image_Texture(
 			poly<image::Image> image,
-			color::Color_Space::Spectrum_Type spectrum_type
+			color::Color_Space::Spectrum_Type type
 		) noexcept;
-
 		auto sample(
 			eval::Context const& ctx,
 			Coordinate const& coord

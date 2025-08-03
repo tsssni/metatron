@@ -7,7 +7,7 @@
 namespace mtt::media {
 	struct Interaction final {
 		math::Vector<f32, 3> p;
-		pro::proxy<phase::Phase_Function> phase;
+		poly<phase::Phase_Function> phase;
 		f32 t;
 		f32 pdf;
 		spectra::Stochastic_Spectrum spectra_pdf;
@@ -25,6 +25,6 @@ namespace mtt::media {
 	::add_convention<medium_sample, auto (
 		eval::Context const& ctx, f32 t_max, f32 u
 	) const noexcept -> std::optional<Interaction>>
-	::support<pro::skills::as_view>
+	::support_view
 	::build {};
 }

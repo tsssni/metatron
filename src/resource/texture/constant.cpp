@@ -2,10 +2,6 @@
 #include <metatron/resource/spectra/rgb.hpp>
 
 namespace mtt::texture {
-	Constant_Texture<spectra::Stochastic_Spectrum>::Constant_Texture(
-		view<spectra::Spectrum> x
-	) noexcept: x(x) {}
-
 	auto Constant_Texture<spectra::Stochastic_Spectrum>::sample(
 		eval::Context const& ctx,
 		Coordinate const& coord

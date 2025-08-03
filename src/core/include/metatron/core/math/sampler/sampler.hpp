@@ -14,6 +14,6 @@ namespace mtt::math {
 	::add_convention<sampler_generate_1d, auto () const noexcept -> f32>
 	::add_convention<sampler_generate_2d, auto () const noexcept -> math::Vector<f32, 2>>
 	::add_convention<sampler_generate_pixel_2d, auto () const noexcept -> math::Vector<f32, 2>>
-	::support<pro::skills::as_view>
+	::support_view
 	::build {};
 }

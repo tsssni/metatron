@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/resource/shape/sphere.hpp>
-#include <metatron/resource/spectra/stochastic.hpp>
 #include <metatron/resource/eval/context.hpp>
 
 namespace mtt::texture {
@@ -20,7 +19,7 @@ namespace mtt::texture {
 		eval::Context const& ctx,
 		Coordinate const& coord
 	) const noexcept -> T>
-	::template support<pro::skills::as_view>
+	::support_view
 	::build {};
 
 	auto grad(

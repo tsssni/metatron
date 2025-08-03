@@ -1,5 +1,6 @@
 #include <metatron/scene/daemon/transform.hpp>
 #include <metatron/scene/compo/transform.hpp>
+#include <metatron/scene/ecs/hierarchy.hpp>
 #include <metatron/core/math/transform.hpp>
 
 namespace mtt::daemon {

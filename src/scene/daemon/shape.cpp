@@ -1,5 +1,6 @@
 #include <metatron/scene/daemon/shape.hpp>
 #include <metatron/scene/compo/shape.hpp>
+#include <metatron/scene/ecs/hierarchy.hpp>
 #include <metatron/resource/shape/shape.hpp>
 #include <metatron/resource/shape/mesh.hpp>
 #include <metatron/resource/shape/sphere.hpp>
@@ -22,9 +23,9 @@ namespace mtt::daemon {
 			std::visit([&](auto&& compo) -> poly<shape::Shape> {
 				using T = std::decay_t<decltype(compo)>;
 				if constexpr (std::is_same_v<T, compo::Mesh>) {
-					return make_poly<shape::Shape>(shape::Mesh::from_path(compo.path));
+					return make_poly<shape::Shape, shape::Mesh>(shape::Mesh::from_path(compo.path));
 				} else if constexpr (std::is_same_v<T, compo::Sphere>) {
-					return make_poly<shape::Shape>(shape::Sphere{});
+					return make_poly<shape::Shape, shape::Sphere>();
 				}
 			},shape));
 		}

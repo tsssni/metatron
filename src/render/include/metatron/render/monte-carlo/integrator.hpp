@@ -28,6 +28,6 @@ namespace mtt::monte_carlo {
 		view<emitter::Emitter> emitter,
 		view<math::Sampler> sampler
 	) const noexcept -> std::optional<spectra::Stochastic_Spectrum>>
-	::support<pro::skills::as_view>
+	::support_view
 	::build {};
 }

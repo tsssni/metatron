@@ -1,5 +1,6 @@
 #include <metatron/scene/daemon/camera.hpp>
 #include <metatron/scene/compo/camera.hpp>
+#include <metatron/scene/ecs/hierarchy.hpp>
 #include <metatron/resource/photo/camera.hpp>
 #include <metatron/resource/lens/pinhole.hpp>
 #include <metatron/resource/lens/thin.hpp>
@@ -36,11 +37,11 @@ namespace mtt::daemon {
 			std::visit([&](auto&& compo) -> poly<math::Filter> {
 				using T = std::decay_t<decltype(compo)>;
 				if constexpr (std::is_same_v<T, compo::Box_Filter>) {
-					return make_poly<math::Filter>(math::Box_Filter{compo.radius});
+					return make_poly<math::Filter, math::Box_Filter>(compo.radius);
 				} else if constexpr (std::is_same_v<T, compo::Gaussian_Filter>) {
-					return make_poly<math::Filter>(math::Gaussian_Filter{compo.radius, compo.sigma});
+					return make_poly<math::Filter, math::Gaussian_Filter>(compo.radius, compo.sigma);
 				} else if constexpr (std::is_same_v<T, compo::Lanczos_Filter>) {
-					return make_poly<math::Filter>(math::Lanczos_Filter{compo.radius, compo.tau});
+					return make_poly<math::Filter, math::Lanczos_Filter>(compo.radius, compo.tau);
 				}
 			}, camera.filter));
 			auto filter = view<math::Filter>{registry.get<poly<math::Filter>>(entity)};
@@ -51,9 +52,9 @@ namespace mtt::daemon {
 			std::visit([&](auto&& compo) -> poly<math::Sampler> {
 				using T = std::decay_t<decltype(compo)>;
 				if constexpr (std::is_same_v<T, compo::Independent_Sampler>) {
-					return make_poly<math::Sampler>(math::Independent_Sampler{seed});
+					return make_poly<math::Sampler, math::Independent_Sampler>(seed);
 				} else if constexpr (std::is_same_v<T, compo::Halton_Sampler>) {
-					return make_poly<math::Sampler>(math::Halton_Sampler{seed});
+					return make_poly<math::Sampler, math::Halton_Sampler>(seed);
 				}
 			}, camera.sampler));
 			auto sampler = view<math::Sampler>{registry.get<poly<math::Sampler>>(entity)};
@@ -62,9 +63,9 @@ namespace mtt::daemon {
 			std::visit([&](auto&& compo) -> poly<photo::Lens> {
 				using T = std::decay_t<decltype(compo)>;
 				if constexpr (std::is_same_v<T, compo::Pinhole_Lens>) {
-					return make_poly<photo::Pinhole_Lens>(compo.focal_length);
+					return make_poly<photo::Lens, photo::Pinhole_Lens>(compo.focal_length);
 				} else if constexpr (std::is_same_v<T, compo::Thin_Lens>) {
-					return make_poly<photo::Thin_Lens>(compo.aperture, compo.focal_length, compo.focus_distance);
+					return make_poly<photo::Lens, photo::Thin_Lens>(compo.aperture, compo.focal_length, compo.focus_distance);
 				}
 			}, camera.lens));
 			auto lens = view<photo::Lens>{registry.get<poly<photo::Lens>>(entity)};

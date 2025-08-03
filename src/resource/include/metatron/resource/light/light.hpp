@@ -28,6 +28,6 @@ namespace mtt::light {
 		math::Vector<f32, 2> const& u
 	) const noexcept -> std::optional<Interaction>>
 	::add_convention<light_flags, auto () const noexcept -> Flags>
-	::support<pro::skills::as_view>
+	::support_view
 	::build {};
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/scene/ecs/hierarchy.hpp>
+#include <metatron/scene/ecs/entity.hpp>
 
 namespace mtt::daemon {
 	struct Transform_Daemon final {

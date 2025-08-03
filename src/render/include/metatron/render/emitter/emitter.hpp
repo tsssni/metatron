@@ -29,6 +29,6 @@ namespace mtt::emitter {
 		eval::Context const& ctx,
 		f32 u
 	) const noexcept -> std::optional<Interaction>>
-	::support<pro::skills::as_view>
+	::support_view
 	::build {};
 }

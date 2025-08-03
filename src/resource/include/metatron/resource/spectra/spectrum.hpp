@@ -7,7 +7,7 @@ namespace mtt::spectra {
 
 	struct Spectrum final: pro::facade_builder
 	::add_convention<pro::operator_dispatch<"()">, auto (f32) const noexcept -> f32>
-	::support<pro::skills::as_view>
+	::support_view
 	::build {
 		std::unordered_map<std::string, view<Spectrum>> static spectra;
 	};

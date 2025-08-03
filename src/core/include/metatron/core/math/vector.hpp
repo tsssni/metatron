@@ -217,6 +217,15 @@ namespace mtt::math {
 	}
 
 	template<typename T, usize size>
+	requires(true
+	&& requires(T a, T b) { a + b; }
+	&& requires(T a) { a / 1uz; }
+	)
+	auto constexpr avg(Vector<T, size> const& x) noexcept -> T {
+		return sum(x) / size;
+	}
+
+	template<typename T, usize size>
 	requires std::floating_point<T> || std::integral<T>
 	auto constexpr mod(T const& x, T const& m) noexcept -> Vector<T, size> {
 		if constexpr (std::floating_point<T>) {

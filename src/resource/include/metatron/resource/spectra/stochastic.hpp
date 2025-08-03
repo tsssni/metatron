@@ -7,7 +7,6 @@ namespace mtt::spectra {
 
 	struct Stochastic_Spectrum final {
 		math::Vector<f32, stochastic_samples> lambda{};
-		math::Vector<f32, stochastic_samples> pdf{};
 		math::Vector<f32, stochastic_samples> value{};
 
 		Stochastic_Spectrum() noexcept = default;

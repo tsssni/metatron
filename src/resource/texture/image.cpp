@@ -133,8 +133,8 @@ namespace mtt::texture {
 
 	Image_Texture<spectra::Stochastic_Spectrum>::Image_Texture(
 		poly<image::Image> image,
-		color::Color_Space::Spectrum_Type spectrum_type
-	) noexcept: image_tex(std::move(image)), spectrum_type(spectrum_type) {}
+		color::Color_Space::Spectrum_Type type
+	) noexcept: image_tex(std::move(image)), type(type) {}
 
 
 	auto Image_Texture<spectra::Stochastic_Spectrum>::sample(
@@ -142,7 +142,7 @@ namespace mtt::texture {
 		Coordinate const& coord
 	) const noexcept -> spectra::Stochastic_Spectrum {
 		auto rgba = image_tex.sample(ctx, coord);
-		auto rgb_spec = image_tex.images.front()->color_space->to_spectrum(rgba, spectrum_type);
+		auto rgb_spec = image_tex.images.front()->color_space->to_spectrum(rgba, type);
 		return ctx.spec & rgb_spec;
 	}
 }

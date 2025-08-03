@@ -41,6 +41,6 @@ namespace mtt::shape {
 		math::Vector<f32, 2> const& u,
 		usize idx
 	) const noexcept -> std::optional<Interaction>>
-	::support<pro::skills::as_view>
+	::support_view
 	::build {};
 }

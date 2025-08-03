@@ -1,4 +1,5 @@
 #include <metatron/scene/daemon/color-space.hpp>
+#include <metatron/scene/ecs/hierarchy.hpp>
 #include <metatron/resource/color/color-space.hpp>
 
 namespace mtt::color {

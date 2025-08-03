@@ -1,5 +1,6 @@
 #include <metatron/scene/daemon/spectrum.hpp>
 #include <metatron/scene/compo/spectrum.hpp>
+#include <metatron/scene/ecs/hierarchy.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/resource/spectra/constant.hpp>
 #include <metatron/resource/spectra/rgb.hpp>
@@ -447,7 +448,7 @@ namespace mtt::daemon {
 			std::visit([&](auto&& compo) -> poly<spectra::Spectrum> {
 				using T = std::decay_t<decltype(compo)>;
 				if constexpr (std::is_same_v<T, compo::Constant_Spectrum>) {
-					return make_poly<spectra::Spectrum>(spectra::Constant_Spectrum{compo.x});
+					return make_poly<spectra::Spectrum, spectra::Constant_Spectrum>(compo.x);
 				} else if constexpr (std::is_same_v<T, compo::Rgb_Spectrum>) {
 					auto* color_space = &registry.get<color::Color_Space>(compo.color_space);
 					return color_space->to_spectrum(compo.c, compo.type);

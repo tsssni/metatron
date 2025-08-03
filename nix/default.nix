@@ -1,6 +1,6 @@
 {
   lib,
-  stdenv,
+  clangStdenv,
   fetchFromGitHub,
   clang-tools,
   cmake,
@@ -13,7 +13,7 @@
   zlib,
   entt,
 }:
-stdenv.mkDerivation {
+clangStdenv.mkDerivation {
   pname = "metatron";
   version = "dev";
 

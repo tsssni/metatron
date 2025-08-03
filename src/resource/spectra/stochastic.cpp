@@ -11,7 +11,6 @@ namespace mtt::spectra {
 			return math::lerp(visible_lambda[0], visible_lambda[1], ui);
 		}, lambda);
 		value = math::Vector<f32, stochastic_samples>{v};
-		pdf = math::Vector<f32, stochastic_samples>{1.f / (visible_lambda[1] - visible_lambda[0])};
 	}
 
 	auto Stochastic_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
@@ -25,9 +24,9 @@ namespace mtt::spectra {
 	}
 
 	auto Stochastic_Spectrum::operator()(view<Spectrum> spectrum) const noexcept -> f32 {
-		return math::sum(math::foreach([&](f32 lambda, f32 value, f32 pdf, usize i) {
-			return value * (*spectrum)(lambda) / pdf;
-		}, lambda, value, pdf)) / stochastic_samples;
+		return math::sum(math::foreach([&](f32 lambda, f32 value, usize i) {
+			return value * (*spectrum)(lambda) / (1.f / (visible_lambda[1] - visible_lambda[0]));
+		}, lambda, value)) / stochastic_samples;
 	}
 
 	auto Stochastic_Spectrum::operator&(view<Spectrum> spectrum) const noexcept -> Stochastic_Spectrum {
