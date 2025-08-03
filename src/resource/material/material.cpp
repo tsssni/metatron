@@ -11,7 +11,7 @@ namespace mtt::material {
 		auto intr = Interaction{};
 		auto spec = ctx.spec;
 
-		auto null_spec = spec & spectra::Spectrum::zero;
+		auto null_spec = spec & spectra::Spectrum::spectra["zero"];
 		auto geometry_normal = math::Vector<f32, 3>{0.f, 0.f, 1.f};
 		attr.spectra["spectrum"] = null_spec;
 		attr.spectra["emission"] = null_spec;

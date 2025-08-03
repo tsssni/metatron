@@ -15,7 +15,7 @@ namespace mtt::daemon {
 			math::Vector<f32, 2>{0.64f, 0.33f},
 			math::Vector<f32, 2>{0.30f, 0.60f},
 			math::Vector<f32, 2>{0.15f, 0.06f},
-			spectra::Spectrum::CIE_D65,
+			spectra::Spectrum::spectra["CIE-D65"],
 			[](f32 x) -> f32 {
 				if (x <= 0.0031308f) {
 					return 12.92f * x;
@@ -33,6 +33,13 @@ namespace mtt::daemon {
 			&color::sRGB_spectrum_z,
 			&color::sRGB_spectrum_table
 		);
+
+		auto cs_list = std::to_array<std::string>({"sRGB"});
+		for (auto& name: cs_list) {
+			auto entity = hierarchy.entity("/color-space/" + name);
+			auto* cs = &hierarchy.fetch<color::Color_Space>(entity);
+			color::Color_Space::color_spaces[name] = cs;
+		}
 	}
 
 	auto Color_Space_Daemon::update() noexcept -> void {}

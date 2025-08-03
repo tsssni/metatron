@@ -46,7 +46,7 @@ namespace mtt::bsdf {
 		spectrum = attr.spectra.at("spectrum");
 		reflectance = attr.spectra.count("reflectance") > 0
 		? attr.spectra.at("reflectance")
-		: spectrum & spectra::Spectrum::zero;
+		: spectrum & spectra::Spectrum::spectra["zero"];
 	}
 
 	auto Lambertian_Bsdf::flags() const noexcept -> Flags {

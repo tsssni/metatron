@@ -27,9 +27,11 @@
 #include <metatron/render/accel/lbvh.hpp>
 #include <metatron/scene/ecs/hierarchy.hpp>
 #include <metatron/scene/ecs/stage.hpp>
+#include <metatron/scene/compo/spectrum.hpp>
 #include <metatron/scene/compo/transform.hpp>
 #include <metatron/scene/compo/shape.hpp>
 #include <metatron/scene/compo/camera.hpp>
+#include <metatron/scene/daemon/spectrum.hpp>
 #include <metatron/scene/daemon/color-space.hpp>
 #include <metatron/scene/daemon/transform.hpp>
 #include <metatron/scene/daemon/shape.hpp>
@@ -40,17 +42,17 @@
 using namespace mtt;
 
 auto main() -> int {
-	spectra::Spectrum::initialize();
-
 	auto spp = 16uz;
 	auto depth = 64uz;
 
 	auto hierarchy = ecs::Hierarchy{};
 	auto stage = std::make_unique<ecs::Stage>();
+	auto spectrum_daemon = daemon::Spectrum_Daemon{};
 	auto color_space_daemon = daemon::Color_Space_Daemon{};
 	auto transform_daemon = daemon::Transform_Daemon{};
 	auto shape_daemon = daemon::Shape_Daemon{};
 	auto camera_daemon = daemon::Camera_Daemon{};
+	stage->daemons.push_back(&spectrum_daemon);
 	stage->daemons.push_back(&color_space_daemon);
 	stage->daemons.push_back(&transform_daemon);
 	stage->daemons.push_back(&shape_daemon);
@@ -59,12 +61,6 @@ auto main() -> int {
 	hierarchy.activate();
 	hierarchy.init();
 
-	auto cs_list = std::to_array<std::string>({"sRGB"});
-	for (auto& name: cs_list) {
-		auto entity = hierarchy.entity("/color-space/" + name);
-		auto* cs = &hierarchy.fetch<color::Color_Space>(entity);
-		color::Color_Space::color_spaces[name] = cs;
-	}
 	auto sRBB_entity = hierarchy.entity("/color-space/sRGB");
 	auto* sRGB = &hierarchy.fetch<color::Color_Space>(sRBB_entity);
 
@@ -157,36 +153,70 @@ auto main() -> int {
 		.color_space = sRBB_entity,
 	});
 
+	hierarchy.attach<compo::Spectrum>(hierarchy.create("/spectrum/sigma-a"), compo::Rgb_Spectrum{
+		.c = {0.0f, 0.0f, 0.0f},
+		.type = color::Color_Space::Spectrum_Type::unbounded,
+		.color_space = sRBB_entity,
+	});
+
+	hierarchy.attach<compo::Spectrum>(hierarchy.create("/spectrum/sigma-s"), compo::Rgb_Spectrum{
+		.c = {1.0f, 1.0f, 1.0f},
+		.type = color::Color_Space::Spectrum_Type::unbounded,
+		.color_space = sRBB_entity,
+	});
+
+	hierarchy.attach<compo::Spectrum>(hierarchy.create("/spectrum/sigma-e"), compo::Rgb_Spectrum{
+		.c = {0.0f, 0.0f, 0.0f},
+		.type = color::Color_Space::Spectrum_Type::illuminant,
+		.color_space = sRBB_entity,
+	});
+
+	hierarchy.attach<compo::Spectrum>(hierarchy.create("/spectrum/diffuse-reflectance"), compo::Rgb_Spectrum{
+		.c = {1.0f, 1.0f, 1.0f},
+		.type = color::Color_Space::Spectrum_Type::albedo,
+		.color_space = sRBB_entity,
+	});
+
+	hierarchy.attach<compo::Spectrum>(hierarchy.create("/spectrum/env"), compo::Rgb_Spectrum{
+		.c = {1.0f, 1.0f, 1.0f},
+		.type = color::Color_Space::Spectrum_Type::illuminant,
+		.color_space = sRBB_entity
+	});
+
+	hierarchy.attach<compo::Spectrum>(hierarchy.create("/spectrum/parallel-illuminance"), compo::Rgb_Spectrum{
+		.c = {2.6f, 2.5f, 2.3f},
+		.type = color::Color_Space::Spectrum_Type::illuminant,
+		.color_space = sRBB_entity,
+	});
+
+	hierarchy.attach<compo::Spectrum>(hierarchy.create("/spectrum/point-illuminance"), compo::Rgb_Spectrum{
+		.c = {0.0f, 0.6f, 1.0f},
+		.type = color::Color_Space::Spectrum_Type::illuminant,
+		.color_space = sRBB_entity,
+	});
+
+	hierarchy.attach<compo::Spectrum>(hierarchy.create("/spectrum/spot-illuminance"), compo::Rgb_Spectrum{
+		.c = {0.0f, 0.6f, 1.0f},
+		.type = color::Color_Space::Spectrum_Type::illuminant,
+		.color_space = sRBB_entity,
+	});
+
 	hierarchy.update();
 
 	auto vaccum_medium = media::Vaccum_Medium{};
-	auto sigma_a = sRGB->to_spectrum(
-		{0.0f, 0.0f, 0.0f},
-		color::Color_Space::Spectrum_Type::unbounded
-	);
-	auto sigma_s = sRGB->to_spectrum(
-		{1.0f, 1.0f, 1.0f},
-		color::Color_Space::Spectrum_Type::unbounded
-	);
-	auto sigma_e = sRGB->to_spectrum(
-		{0.0f, 0.0f, 0.0f},
-		color::Color_Space::Spectrum_Type::illuminant
-	);
 	auto hg_phase = phase::Henyey_Greenstein_Phase_Function{0.877f};
 	auto nanovdb_grid = media::Nanovdb_Grid<
 		f32,
 		media::grid_size,
 		media::grid_size,
 		media::grid_size
-	>{
-		"../metatron-scenes/disney-cloud/volume/disney-cloud.nvdb"
-	};
+	>{"../metatron-scenes/disney-cloud/volume/disney-cloud.nvdb"};
 	auto cloud_medium = media::Grid_Medium{
 		&nanovdb_grid,
 		make_poly<phase::Phase_Function>(hg_phase),
-		sigma_a,
-		sigma_s,
-		sigma_e,
+		hierarchy.fetch<poly<spectra::Spectrum>>(hierarchy.entity("/spectrum/sigma-a")),
+		hierarchy.fetch<poly<spectra::Spectrum>>(hierarchy.entity("/spectrum/sigma-s")),
+		hierarchy.fetch<poly<spectra::Spectrum>>(hierarchy.entity("/spectrum/sigma-e")),
 		1.f,
 	};
 
@@ -194,18 +224,14 @@ auto main() -> int {
 	auto interface = bsdf::Interface_Bsdf{};
 	auto microfacet = bsdf::Microfacet_Bsdf{};
 
-	auto diffuse_reflectance = sRGB->to_spectrum(
-		{1.f, 1.f, 1.f},
-		color::Color_Space::Spectrum_Type::albedo
-	);
 	auto diffuse_texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
-		diffuse_reflectance
+		hierarchy.fetch<poly<spectra::Spectrum>>(hierarchy.entity("/spectrum/diffuse-reflectance")),
 	};
 	auto eta_texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
-		spectra::Spectrum::Au_eta
+		spectra::Spectrum::spectra["eta/Au"]
 	};
 	auto k_texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
-		spectra::Spectrum::Au_k
+		spectra::Spectrum::spectra["k/Au"]
 	};
 	
 	auto eta = spectra::Constant_Spectrum{1.0f};
@@ -219,11 +245,9 @@ auto main() -> int {
 		image::Image::from_path("../metatron-scenes/material/texture/sky-on-fire.exr", true),
 		color::Color_Space::Spectrum_Type::illuminant
 	};
-	auto illuminance = sRGB->to_spectrum(
-		{1.f, 1.f, 1.f},
-		color::Color_Space::Spectrum_Type::illuminant
-	);
-	auto illuminance_texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>{illuminance};
+	auto const_env = texture::Constant_Texture<spectra::Stochastic_Spectrum>{
+		hierarchy.fetch<poly<spectra::Spectrum>>(hierarchy.entity("/spectrum/env")),
+	};
 	
 	auto diffuse_material = material::Material{
 		.bsdf = make_poly<bsdf::Bsdf>(lambertian),
@@ -246,23 +270,15 @@ auto main() -> int {
 	};
 
 	auto env_light = light::Environment_Light{&env_map};
-	auto const_env_light = light::Environment_Light{&illuminance_texture};
-	auto parallel_illuminance = sRGB->to_spectrum(
-		{2.6f, 2.5f, 2.3f},
-		color::Color_Space::Spectrum_Type::illuminant
-	);
-	auto parallel_light = light::Parallel_Light{parallel_illuminance};
-	auto point_illuminance = sRGB->to_spectrum(
-		{0.0f, 0.6f, 1.0f},
-		color::Color_Space::Spectrum_Type::illuminant
-	);
-	auto point_light = light::Point_Light{point_illuminance};
-	auto spot_illuminance = sRGB->to_spectrum(
-		{0.0f, 0.6f, 1.0f},
-		color::Color_Space::Spectrum_Type::illuminant
-	);
+	auto const_env_light = light::Environment_Light{&const_env};
+	auto parallel_light = light::Parallel_Light{
+		hierarchy.fetch<poly<spectra::Spectrum>>(hierarchy.entity("/spectrum/parallel-illuminance")),
+	};
+	auto point_light = light::Point_Light{
+		hierarchy.fetch<poly<spectra::Spectrum>>(hierarchy.entity("/spectrum/point-illuminance")),
+	};
 	auto spot_light = light::Spot_Light{
-		spot_illuminance,
+		hierarchy.fetch<poly<spectra::Spectrum>>(hierarchy.entity("/spectrum/spot-illuminance")),
 		math::pi * 1.f / 16.f,
 		math::pi * 1.f / 4.f
 	};

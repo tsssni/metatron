@@ -96,7 +96,7 @@ namespace mtt::bsdf {
 	}
 
 	auto Microfacet_Bsdf::configure(Attribute const& attr) noexcept -> void {
-		auto null_spec = attr.spectra.at("spectrum") & spectra::Spectrum::zero;
+		auto null_spec = attr.spectra.at("spectrum") & spectra::Spectrum::spectra["zero"];
 		eta = attr.spectra.count("eta") > 0 ? attr.spectra.at("eta") : null_spec;
 		k = attr.spectra.count("k") > 0 ? attr.spectra.at("k") : null_spec;
 

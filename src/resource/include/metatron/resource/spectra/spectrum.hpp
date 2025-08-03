@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
+#include <unordered_map>
 
 namespace mtt::spectra {
 	auto constexpr visible_lambda = math::Vector<f32, 2>{360.f, 830.f};
@@ -8,19 +9,7 @@ namespace mtt::spectra {
 	::add_convention<pro::operator_dispatch<"()">, auto (f32) const noexcept -> f32>
 	::support<pro::skills::as_view>
 	::build {
-
-		poly<Spectrum> static one;
-		poly<Spectrum> static zero;
-
-		poly<Spectrum> static CIE_X;
-		poly<Spectrum> static CIE_Y;
-		poly<Spectrum> static CIE_Z;
-		poly<Spectrum> static CIE_D65;
-
-		poly<Spectrum> static Au_eta;
-		poly<Spectrum> static Au_k;
-
-		auto static initialize() noexcept -> void;
+		std::unordered_map<std::string, view<Spectrum>> static spectra;
 	};
 
 	auto inline operator|(view<Spectrum> x, view<Spectrum> y) noexcept -> f32 {
@@ -33,9 +22,9 @@ namespace mtt::spectra {
 
 	auto inline operator~(view<Spectrum> s) noexcept -> math::Vector<f32, 3> {
 		return {
-			Spectrum::CIE_X | s,
-			Spectrum::CIE_Y | s,
-			Spectrum::CIE_Z | s
+			Spectrum::spectra["CIE-X"] | s,
+			Spectrum::spectra["CIE-Y"] | s,
+			Spectrum::spectra["CIE-Z"] | s
 		};
 	}
 }
