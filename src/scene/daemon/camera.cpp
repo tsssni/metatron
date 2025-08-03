@@ -1,8 +1,8 @@
 #include <metatron/scene/daemon/camera.hpp>
 #include <metatron/scene/compo/camera.hpp>
-#include <metatron/render/photo/camera.hpp>
-#include <metatron/render/lens/pinhole.hpp>
-#include <metatron/render/lens/thin.hpp>
+#include <metatron/resource/photo/camera.hpp>
+#include <metatron/resource/lens/pinhole.hpp>
+#include <metatron/resource/lens/thin.hpp>
 #include <metatron/core/math/sampler/sampler.hpp>
 #include <metatron/core/math/sampler/independent.hpp>
 #include <metatron/core/math/sampler/halton.hpp>

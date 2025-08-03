@@ -1,4 +1,4 @@
-#include <metatron/render/lens/pinhole.hpp>
+#include <metatron/resource/lens/pinhole.hpp>
 #include <metatron/core/math/constant.hpp>
 
 namespace mtt::photo {

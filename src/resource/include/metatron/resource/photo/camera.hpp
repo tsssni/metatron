@@ -1,6 +1,6 @@
 #pragma once
-#include <metatron/render/photo/film.hpp>
-#include <metatron/render/lens/lens.hpp>
+#include <metatron/resource/photo/film.hpp>
+#include <metatron/resource/lens/lens.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/math/sampler/sampler.hpp>

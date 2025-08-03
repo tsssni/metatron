@@ -1,4 +1,4 @@
-#include <metatron/render/photo/sensor.hpp>
+#include <metatron/resource/photo/sensor.hpp>
 
 namespace mtt::photo {
 	Sensor::Sensor(view<color::Color_Space> color_space) noexcept: color_space(color_space) {}

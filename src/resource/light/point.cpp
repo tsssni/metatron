@@ -1,4 +1,4 @@
-#include <metatron/render/light/point.hpp>
+#include <metatron/resource/light/point.hpp>
 
 namespace mtt::light {
 	Point_Light::Point_Light(view<spectra::Spectrum> L) noexcept: L(L) {}

@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/render/light/light.hpp>
+#include <metatron/resource/light/light.hpp>
 #include <metatron/resource/texture/texture.hpp>
 #include <metatron/resource/image/image.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>

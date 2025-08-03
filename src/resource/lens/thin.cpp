@@ -1,4 +1,4 @@
-#include <metatron/render/lens/thin.hpp>
+#include <metatron/resource/lens/thin.hpp>
 #include <metatron/core/math/distribution/disk.hpp>
 #include <metatron/core/math/constant.hpp>
 

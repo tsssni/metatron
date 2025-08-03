@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/render/photo/sensor.hpp>
+#include <metatron/resource/photo/sensor.hpp>
 #include <metatron/resource/image/image.hpp>
 #include <metatron/resource/color/color-space.hpp>
 #include <metatron/core/math/filter/filter.hpp>

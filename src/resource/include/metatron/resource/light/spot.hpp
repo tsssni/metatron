@@ -1,9 +1,13 @@
 #pragma once
-#include <metatron/render/light/light.hpp>
+#include <metatron/resource/light/light.hpp>
 
 namespace mtt::light {
-	struct Parallel_Light final {
-		Parallel_Light(view<spectra::Spectrum> L) noexcept;
+	struct Spot_Light final {
+		Spot_Light(
+			view<spectra::Spectrum> L,
+			f32 falloff_start_theta,
+			f32 falloff_end_theta
+		) noexcept;
 
 		auto operator()(
 			eval::Context const& ctx
@@ -16,5 +20,7 @@ namespace mtt::light {
 
 	private:
 		view<spectra::Spectrum> L;
+		f32 falloff_start_cos_theta;
+		f32 falloff_end_cos_theta;
 	};
 }

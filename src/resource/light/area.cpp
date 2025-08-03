@@ -1,4 +1,4 @@
-#include <metatron/render/light/area.hpp>
+#include <metatron/resource/light/area.hpp>
 #include <metatron/core/stl/optional.hpp>
 
 namespace mtt::light {

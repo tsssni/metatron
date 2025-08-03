@@ -17,11 +17,11 @@
 #include <metatron/resource/media/grid.hpp>
 #include <metatron/resource/media/nanovdb.hpp>
 #include <metatron/resource/phase/henyey-greenstein.hpp>
-#include <metatron/render/light/environment.hpp>
-#include <metatron/render/light/parallel.hpp>
-#include <metatron/render/light/point.hpp>
-#include <metatron/render/light/spot.hpp>
-#include <metatron/render/light/area.hpp>
+#include <metatron/resource/light/environment.hpp>
+#include <metatron/resource/light/parallel.hpp>
+#include <metatron/resource/light/point.hpp>
+#include <metatron/resource/light/spot.hpp>
+#include <metatron/resource/light/area.hpp>
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/render/accel/lbvh.hpp>

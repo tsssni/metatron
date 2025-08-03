@@ -1,4 +1,4 @@
-#include <metatron/render/light/spot.hpp>
+#include <metatron/resource/light/spot.hpp>
 
 namespace mtt::light {
 	Spot_Light::Spot_Light(

@@ -1,4 +1,4 @@
-#include <metatron/render/light/parallel.hpp>
+#include <metatron/resource/light/parallel.hpp>
 
 namespace mtt::light {
 	Parallel_Light::Parallel_Light(view<spectra::Spectrum> L) noexcept: L(L) {}

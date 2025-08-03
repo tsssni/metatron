@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/render/light/light.hpp>
+#include <metatron/resource/light/light.hpp>
 #include <metatron/resource/shape/shape.hpp>
 
 namespace mtt::light {

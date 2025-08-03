@@ -1,4 +1,4 @@
-#include <metatron/render/photo/camera.hpp>
+#include <metatron/resource/photo/camera.hpp>
 #include <metatron/core/stl/optional.hpp>
 
 namespace mtt::photo {

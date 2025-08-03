@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/render/light/light.hpp>
+#include <metatron/resource/light/light.hpp>
 
 namespace mtt::light {
 	struct Point_Light final {
