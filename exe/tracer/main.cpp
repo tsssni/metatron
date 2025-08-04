@@ -97,11 +97,8 @@ auto main() -> int {
 		.color_space = sRBB_entity
 	});
 
-	hierarchy.attach("/render"_et, compo::Transform{
-		.translation = {0.f, 0.f, 1000.f},
-	});
-	hierarchy.attach("/camera"_et,compo::Transform{
-		.translation = {0.f, 0.f, 0.f},
+	hierarchy.attach("/hierarchy/camera"_et,compo::Transform{
+		.translation = {0.f, 0.f, -1000.f},
 	});
 	hierarchy.attach("/hierarchy"_et, compo::Transform{});
 	hierarchy.attach("/hierarchy/shape"_et, compo::Transform{});
@@ -151,7 +148,7 @@ auto main() -> int {
 		.bsdf = compo::Bsdf::interface,
 	});
 
-	hierarchy.attach("/camera"_et, compo::Camera{
+	hierarchy.attach("/hierarchy/camera"_et, compo::Camera{
 		.film_size = {0.036f, 0.024f},
 		.image_size = {600uz, 400uz},
 		.spp = 16,
@@ -193,12 +190,10 @@ auto main() -> int {
 	};
 
 	auto& identity = hierarchy.fetch<math::Transform>("/hierarchy"_et);
-	auto& world_to_render = hierarchy.fetch<math::Transform>("/render"_et);
-	auto& render_to_camera = hierarchy.fetch<math::Transform>("/camera"_et);
 	auto& vaccum_medium = hierarchy.fetch<poly<media::Medium>>(
 		hierarchy.fetch<compo::Medium_Instance>("/hierarchy/medium/vaccum"_et).path
 	);
-	auto bvh = accel::LBVH{std::move(dividers), &world_to_render};
+	auto bvh = accel::LBVH{std::move(dividers), &camera_daemon.world_to_render};
 	auto integrator = monte_carlo::Volume_Path_Integrator{};
 
 	auto atomic_count = std::atomic<usize>{0uz};
@@ -213,7 +208,7 @@ auto main() -> int {
 	stl::scheduler::instance().sync_parallel(size, [&](math::Vector<usize, 2> const& px) {
 		for (auto n = 0uz; n < spp; n++) {
 			auto sample = camera->sample(px, n, sampler);
-			sample->ray_differential = render_to_camera ^ sample->ray_differential;
+			sample->ray_differential = camera_daemon.render_to_camera ^ sample->ray_differential;
 			auto& s = sample.value();
 
 			auto Li_opt = integrator.sample(
@@ -221,8 +216,8 @@ auto main() -> int {
 					s.ray_differential,
 					s.default_differential,
 					&identity,
-					&world_to_render,
-					&render_to_camera,
+					&camera_daemon.world_to_render,
+					&camera_daemon.render_to_camera,
 					vaccum_medium,
 					px,
 					n,

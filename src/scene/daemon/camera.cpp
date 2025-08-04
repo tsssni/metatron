@@ -1,5 +1,6 @@
 #include <metatron/scene/daemon/camera.hpp>
 #include <metatron/scene/compo/camera.hpp>
+#include <metatron/scene/compo/transform.hpp>
 #include <metatron/scene/ecs/hierarchy.hpp>
 #include <metatron/resource/photo/camera.hpp>
 #include <metatron/resource/lens/pinhole.hpp>
@@ -93,6 +94,14 @@ namespace mtt::daemon {
 			);
 			auto* film = &registry.get<photo::Film>(entity);
 			registry.emplace<photo::Camera>(entity, lens, film);
+
+			auto& camera_to_world = registry.get<compo::Transform>(entity);
+			world_to_render = compo::Transform{
+				.translation = - camera_to_world.translation,
+			};
+			render_to_camera = math::inverse(compo::Transform{
+				.rotation = camera_to_world.rotation,
+			});
 
 			registry.clear<ecs::Dirty_Mark<compo::Camera>>();
 		}

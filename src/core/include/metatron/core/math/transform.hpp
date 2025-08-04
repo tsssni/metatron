@@ -141,4 +141,11 @@ namespace mtt::math {
 			return std::move(Chain{*this} ^ rhs);
 		}
 	};
+
+	auto inline inverse(math::Transform const& t) -> math::Transform {
+		auto inv_t = math::Transform{};
+		inv_t.transform = t.inv_transform;
+		inv_t.inv_transform = t.transform;
+		return inv_t;
+	}
 }
