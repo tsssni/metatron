@@ -6,7 +6,7 @@ namespace mtt::light {
 	struct Area_Light final {
 		Area_Light(
 			view<shape::Shape> shape,
-			usize primitive = 0uz
+			usize primitive
 		) noexcept;
 
 		auto operator()(

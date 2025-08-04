@@ -48,9 +48,13 @@ namespace mtt::daemon {
 						using Constant_Texture = texture::Constant_Texture<spectra::Stochastic_Spectrum>;
 						using Image_Texture = texture::Image_Texture<spectra::Stochastic_Spectrum>;
 						if constexpr (std::is_same_v<T, compo::Constant_Spectrum_Texture>) {
-							return make_poly<Spectrum_Texture, Constant_Texture>(registry.get<poly<spectra::Spectrum>>(compo.spectrum));
+							return make_poly<Spectrum_Texture, Constant_Texture>(
+								registry.get<poly<spectra::Spectrum>>(compo.spectrum)
+							);
 						} else if constexpr (std::is_same_v<T, compo::Image_Spectrum_Texture>) {
-							return make_poly<Spectrum_Texture, Image_Texture>(image::Image::from_path(compo.path), compo.type);
+							return make_poly<Spectrum_Texture, Image_Texture>(
+								image::Image::from_path(compo.path), compo.type
+							);
 						}
 					},compo));
 				} else if constexpr (std::is_same_v<T, compo::Vector_Texture>) {
@@ -62,7 +66,9 @@ namespace mtt::daemon {
 						if constexpr (std::is_same_v<T, compo::Constant_Vector_Texture>) {
 							return make_poly<Vector_Texture, Constant_Texture>(compo.x);
 						} else if constexpr (std::is_same_v<T, compo::Image_Vector_Texture>) {
-							return make_poly<Vector_Texture, Image_Texture>(image::Image::from_path(compo.path));
+							return make_poly<Vector_Texture, Image_Texture>(
+								image::Image::from_path(compo.path)
+							);
 						}
 					},compo));
 				}

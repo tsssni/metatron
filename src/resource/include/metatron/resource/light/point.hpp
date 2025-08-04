@@ -3,7 +3,9 @@
 
 namespace mtt::light {
 	struct Point_Light final {
-		Point_Light(view<spectra::Spectrum> L) noexcept;
+		view<spectra::Spectrum> L;
+		// FIXME: could not use single proxy_view to construct
+		// Point_Light(view<spectra::Spectrum> L) noexcept;
 
 		auto operator()(
 			eval::Context const& ctx
@@ -15,6 +17,6 @@ namespace mtt::light {
 		auto flags() const noexcept -> Flags;
 
 	private:
-		view<spectra::Spectrum> L;
+		// view<spectra::Spectrum> L;
 	};
 }

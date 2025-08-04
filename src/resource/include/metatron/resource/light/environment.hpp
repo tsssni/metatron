@@ -7,7 +7,9 @@
 
 namespace mtt::light {
 	struct Environment_Light final {
-		Environment_Light(view<texture::Texture<spectra::Stochastic_Spectrum>> env_map) noexcept;
+		view<texture::Texture<spectra::Stochastic_Spectrum>> env_map;
+		// FIXME: could not use single proxy_view to construct
+		// Environment_Light(view<texture::Texture<spectra::Stochastic_Spectrum>> env_map) noexcept;
 
 		auto operator()(
 			eval::Context const& ctx
@@ -19,8 +21,6 @@ namespace mtt::light {
 		auto flags() const noexcept -> Flags;
 
 	private:
-		view<texture::Texture<spectra::Stochastic_Spectrum>> env_map;
-		math::Cosine_Hemisphere_Distribution surface_distr;
-		math::Sphere_Distribution volume_distr;
+		// view<texture::Texture<spectra::Stochastic_Spectrum>> env_map;
 	};
 }

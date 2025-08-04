@@ -5,9 +5,9 @@
 #include <metatron/core/math/quaternion.hpp>
 
 namespace mtt::light {
-	Environment_Light::Environment_Light(
-		view<texture::Texture<spectra::Stochastic_Spectrum>> env_map
-	) noexcept: env_map(env_map) {}
+	// Environment_Light::Environment_Light(
+	// 	view<texture::Texture<spectra::Stochastic_Spectrum>> env_map
+	// ) noexcept: env_map(env_map) {}
 
 	auto Environment_Light::operator()(
 		eval::Context const& ctx
@@ -20,8 +20,8 @@ namespace mtt::light {
 			ctx.spec & (&spec),
 			{}, {}, {},
 			ctx.n != math::Vector<f32, 3>{0.f}
-			? surface_distr.pdf(math::dot(ctx.n, ctx.r.d))
-			: volume_distr.pdf()
+			? math::Cosine_Hemisphere_Distribution{}.pdf(math::dot(ctx.n, ctx.r.d))
+			: math::Sphere_Distribution{}.pdf()
 		};
 	}
 
@@ -33,10 +33,12 @@ namespace mtt::light {
 		auto n = math::Vector<f32, 3>{0.f};
 		if (ctx.n != n) {
 			auto local_to_render = math::Quaternion<f32>::from_rotation_between({0.f, 1.f, 0.f}, ctx.n);
-			wi = math::Vector<f32, 3>{math::rotate(math::expand(surface_distr.sample(u), 0.f), local_to_render)};
+			wi = math::Vector<f32, 3>{math::rotate(math::expand(
+				math::Cosine_Hemisphere_Distribution{}.sample(u), 0.f
+			), local_to_render)};
 			n = ctx.n;
 		} else {
-			wi = volume_distr.sample(u);
+			wi = math::Sphere_Distribution{}.sample(u);
 		}
 		
 		auto intr = (*this)({{ctx.r.o, wi}, n, ctx.spec}).value();

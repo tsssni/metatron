@@ -63,9 +63,13 @@ namespace mtt::daemon {
 			std::visit([&](auto&& compo) -> poly<photo::Lens> {
 				using T = std::decay_t<decltype(compo)>;
 				if constexpr (std::is_same_v<T, compo::Pinhole_Lens>) {
-					return make_poly<photo::Lens, photo::Pinhole_Lens>(compo.focal_length);
+					return make_poly<photo::Lens, photo::Pinhole_Lens>(
+						compo.focal_length
+					);
 				} else if constexpr (std::is_same_v<T, compo::Thin_Lens>) {
-					return make_poly<photo::Lens, photo::Thin_Lens>(compo.aperture, compo.focal_length, compo.focus_distance);
+					return make_poly<photo::Lens, photo::Thin_Lens>(
+						compo.aperture, compo.focal_length, compo.focus_distance
+					);
 				}
 			}, camera.lens));
 			auto lens = view<photo::Lens>{registry.get<poly<photo::Lens>>(entity)};
@@ -73,7 +77,13 @@ namespace mtt::daemon {
 			auto* color_space = &registry.get<color::Color_Space>(camera.color_space);
 			registry.emplace<photo::Sensor>(entity, color_space);
 			auto* sensor = &registry.get<photo::Sensor>(entity);
-			auto x = photo::Film{camera.film_size, camera.image_size, filter, sensor, color_space};
+			auto x = photo::Film{
+				camera.film_size,
+				camera.image_size,
+				filter,
+				sensor,
+				color_space,
+			};
 			registry.emplace<photo::Film>(entity,
 				camera.film_size,
 				camera.image_size,
