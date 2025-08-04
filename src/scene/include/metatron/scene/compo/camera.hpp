@@ -1,6 +1,7 @@
 #pragma once
 #include <metatron/scene/ecs/entity.hpp>
 #include <metatron/core/math/vector.hpp>
+#include <metatron/core/math/transform.hpp>
 
 namespace mtt::compo {
 	struct Pinhole_Lens final {
@@ -49,5 +50,10 @@ namespace mtt::compo {
 		Sampler sampler;
 		Filter filter;
 		ecs::Entity color_space;
+	};
+
+	struct Camera_Space final {
+		math::Transform world_to_render;
+		math::Transform render_to_camera;
 	};
 }

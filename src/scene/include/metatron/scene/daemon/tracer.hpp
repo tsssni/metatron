@@ -1,10 +1,11 @@
 #pragma once
 #include <metatron/scene/ecs/entity.hpp>
-#include <metatron/core/math/transform.hpp>
+#include <metatron/render/emitter/emitter.hpp>
+#include <metatron/render/accel/accel.hpp>
 
 namespace mtt::daemon {
-	struct Camera_Daemon final {
-		ecs::Entity camera{ecs::null};
+	struct Tracer_Daemon final {
+		ecs::Entity tracer;
 		auto init() noexcept -> void;
 		auto update() noexcept -> void;
 	};

@@ -46,6 +46,6 @@ namespace mtt::daemon {
 				}
 			},light));
 		}
-		registry.clear<ecs::Dirty_Mark<compo::Light>>();
+		// clear after emitter construction
 	}
 }

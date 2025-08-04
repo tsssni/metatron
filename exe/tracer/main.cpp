@@ -13,6 +13,7 @@
 #include <metatron/scene/compo/material.hpp>
 #include <metatron/scene/compo/light.hpp>
 #include <metatron/scene/compo/camera.hpp>
+#include <metatron/scene/compo/tracer.hpp>
 #include <metatron/scene/daemon/spectrum.hpp>
 #include <metatron/scene/daemon/color-space.hpp>
 #include <metatron/scene/daemon/transform.hpp>
@@ -22,6 +23,7 @@
 #include <metatron/scene/daemon/texture.hpp>
 #include <metatron/scene/daemon/material.hpp>
 #include <metatron/scene/daemon/camera.hpp>
+#include <metatron/scene/daemon/tracer.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <atomic>
 #include <print>
@@ -32,10 +34,11 @@ using namespace mtt;
 auto main() -> int {
 	auto hierarchy = ecs::Hierarchy{};
 
-	auto spectrum_stage = std::make_unique<ecs::Stage>();
-	auto resource_stage = std::make_unique<ecs::Stage>();
-	auto material_stage = std::make_unique<ecs::Stage>();
-	auto render_stage = std::make_unique<ecs::Stage>();
+	auto spectrum_stage = make_poly<ecs::Stage>();
+	auto resource_stage = make_poly<ecs::Stage>();
+	auto material_stage = make_poly<ecs::Stage>();
+	auto camera_stage = make_poly<ecs::Stage>();
+	auto render_stage = make_poly<ecs::Stage>();
 
 	auto spectrum_daemon = daemon::Spectrum_Daemon{};
 	auto color_space_daemon = daemon::Color_Space_Daemon{};
@@ -46,6 +49,7 @@ auto main() -> int {
 	auto light_daemon = daemon::Light_Daemon{};
 	auto material_daemon = daemon::Material_Daemon{};
 	auto camera_daemon = daemon::Camera_Daemon{};
+	auto tracer_daemon = daemon::Tracer_Daemon{};
 
 	spectrum_stage->daemons = {
 		&spectrum_daemon,
@@ -60,15 +64,20 @@ auto main() -> int {
 	material_stage->daemons = {
 		&light_daemon,
 		&material_daemon,
+		&camera_daemon,
+	};
+	camera_stage->daemons = {
+		&camera_daemon,
 	};
 	render_stage->daemons = {
-		&camera_daemon,
+		&tracer_daemon,
 	};
 	hierarchy.stages = {
 		spectrum_stage.get(),
 		resource_stage.get(),
 		material_stage.get(),
-		render_stage.get()
+		camera_stage.get(),
+		render_stage.get(),
 	};
 	hierarchy.activate();
 	hierarchy.init();
@@ -163,52 +172,40 @@ auto main() -> int {
 		.color_space = sRBB_entity,
 	});
 
+	hierarchy.attach("/divider/cloud"_et, compo::Divider{
+		.shape = "/hierarchy/shape/bound"_et,
+		.medium = "/hierarchy/medium/cloud"_et,
+		.material = "/material/cloud"_et,
+	});
+	hierarchy.attach("/tracer"_et, compo::Tracer{
+		.emitter = compo::Emitter::uniform,
+		.accel = compo::Acceleration::lbvh,
+	});
+
 	hierarchy.update();
-
-	auto lights = std::vector<emitter::Divider>{};
-	auto inf_lights = std::vector<emitter::Divider>{
-		{
-			hierarchy.fetch<poly<light::Light>>("/hierarchy/light/env"_et),
-			&hierarchy.fetch<math::Transform>("/hierarchy/light/env"_et)
-		},
-	};
-	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
-
-	auto dividers = std::vector<accel::Divider>{
-		{
-			.shape = hierarchy.fetch<poly<shape::Shape>>(
-				hierarchy.fetch<compo::Shape_Instance>("/hierarchy/shape/bound"_et).path
-			),
-			.medium = hierarchy.fetch<poly<media::Medium>>(
-				hierarchy.fetch<compo::Medium_Instance>("/hierarchy/medium/cloud"_et).path
-			),
-			.light = nullptr,
-			.material = &hierarchy.fetch<material::Material>("/material/cloud"_et),
-			.local_to_world = &hierarchy.fetch<math::Transform>("/hierarchy/shape/bound"_et),
-			.medium_to_world = &hierarchy.fetch<math::Transform>("/hierarchy/medium/cloud"_et),
-		},
-	};
 
 	auto& identity = hierarchy.fetch<math::Transform>("/hierarchy"_et);
 	auto& vaccum_medium = hierarchy.fetch<poly<media::Medium>>(
 		hierarchy.fetch<compo::Medium_Instance>("/hierarchy/medium/vaccum"_et).path
 	);
-	auto bvh = accel::LBVH{std::move(dividers), &camera_daemon.world_to_render};
+	auto& camera_space = hierarchy.fetch<compo::Camera_Space>(camera_daemon.camera);
+	auto& accel = hierarchy.fetch<poly<accel::Acceleration>>(tracer_daemon.tracer);
+	auto& emitter = hierarchy.fetch<poly<emitter::Emitter>>(tracer_daemon.tracer);
 	auto integrator = monte_carlo::Volume_Path_Integrator{};
 
 	auto atomic_count = std::atomic<usize>{0uz};
-	auto sampler = mut<math::Sampler>{hierarchy.fetch<poly<math::Sampler>>(camera_daemon.camera_entity)};
-	auto camera = mut<photo::Camera>{&hierarchy.fetch<photo::Camera>(camera_daemon.camera_entity)};
-	auto size = hierarchy.fetch<photo::Film>(camera_daemon.camera_entity).image_size;
-	auto spp = hierarchy.fetch<compo::Camera>(camera_daemon.camera_entity).spp;
-	auto depth = hierarchy.fetch<compo::Camera>(camera_daemon.camera_entity).depth;
+	auto sampler = mut<math::Sampler>{hierarchy.fetch<poly<math::Sampler>>(camera_daemon.camera)};
+	auto camera = mut<photo::Camera>{&hierarchy.fetch<photo::Camera>(camera_daemon.camera)};
+	auto size = hierarchy.fetch<photo::Film>(camera_daemon.camera).image_size;
+	auto spp = hierarchy.fetch<compo::Camera>(camera_daemon.camera).spp;
+	auto depth = hierarchy.fetch<compo::Camera>(camera_daemon.camera).depth;
 	auto total = size[0] * size[1] * spp;
 	auto last_percent = -1;
 	
 	stl::scheduler::instance().sync_parallel(size, [&](math::Vector<usize, 2> const& px) {
 		for (auto n = 0uz; n < spp; n++) {
 			auto sample = camera->sample(px, n, sampler);
-			sample->ray_differential = camera_daemon.render_to_camera ^ sample->ray_differential;
+			sample->ray_differential = camera_space.render_to_camera ^ sample->ray_differential;
 			auto& s = sample.value();
 
 			auto Li_opt = integrator.sample(
@@ -216,15 +213,15 @@ auto main() -> int {
 					s.ray_differential,
 					s.default_differential,
 					&identity,
-					&camera_daemon.world_to_render,
-					&camera_daemon.render_to_camera,
+					&camera_space.world_to_render,
+					&camera_space.render_to_camera,
 					vaccum_medium,
 					px,
 					n,
 					depth,
 				},
-				&bvh,
-				&emitter,
+				accel,
+				emitter,
 				sampler
 			);
 

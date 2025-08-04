@@ -21,17 +21,25 @@ namespace mtt::daemon {
 		auto& registry = hierarchy.registry;
 		auto camera_view = registry.view<ecs::Dirty_Mark<compo::Camera>>();
 		for (auto entity: camera_view) {
-			registry.remove<
-				photo::Camera,
-				photo::Film,
-				poly<photo::Lens>,
-				poly<math::Sampler>,
-				poly<math::Filter>
-			>(entity);
+			auto remove_camera = [&registry](ecs::Entity entity) {
+				registry.remove<
+					compo::Camera_Space,
+					photo::Camera,
+					photo::Film,
+					poly<photo::Lens>,
+					poly<math::Sampler>,
+					poly<math::Filter>
+				>(entity);
+			};
+			remove_camera(entity);
+			if (this->camera != ecs::null) {
+				remove_camera(this->camera);
+				registry.remove<compo::Camera>(this->camera);
+			}
 			if (!registry.any_of<compo::Camera>(entity)) {
 				continue;
 			}
-			camera_entity = entity;
+			this->camera = entity;
 			auto& camera = registry.get<compo::Camera>(entity);
 
 			registry.emplace<poly<math::Filter>>(entity,
@@ -95,11 +103,12 @@ namespace mtt::daemon {
 			auto* film = &registry.get<photo::Film>(entity);
 			registry.emplace<photo::Camera>(entity, lens, film);
 
+			auto& camera_space = registry.emplace_or_replace<compo::Camera_Space>(entity);
 			auto& camera_to_world = registry.get<compo::Transform>(entity);
-			world_to_render = compo::Transform{
+			camera_space.world_to_render = compo::Transform{
 				.translation = - camera_to_world.translation,
 			};
-			render_to_camera = math::inverse(compo::Transform{
+			camera_space.render_to_camera = math::inverse(compo::Transform{
 				.rotation = camera_to_world.rotation,
 			});
 
