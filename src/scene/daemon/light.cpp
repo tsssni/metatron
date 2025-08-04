@@ -39,11 +39,6 @@ namespace mtt::daemon {
 						compo.falloff_start_theta,
 						compo.falloff_end_theta
 					);
-				} else if constexpr (std::is_same_v<T, compo::Area_Light>) {
-					return make_poly<light::Light, light::Area_Light>(
-						registry.get<poly<shape::Shape>>(compo.shape),
-						compo.primitive
-					);
 				} else if constexpr (std::is_same_v<T, compo::Environment_Light>) {
 					return make_poly<light::Light, light::Environment_Light>(
 						registry.get<poly<texture::Texture<spectra::Stochastic_Spectrum>>>(compo.env_map)

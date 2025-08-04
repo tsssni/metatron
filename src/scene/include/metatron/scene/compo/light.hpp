@@ -17,11 +17,6 @@ namespace mtt::compo {
 		f32 falloff_end_theta;
 	};
 
-	struct Area_Light final {
-		ecs::Entity shape;
-		usize primitive;
-	};
-
 	struct Environment_Light final {
 		ecs::Entity env_map;
 	};
@@ -30,7 +25,6 @@ namespace mtt::compo {
 		Parallel_Light,
 		Point_Light,
 		Spot_Light,
-		Area_Light,
 		Environment_Light
 	>;
 }
