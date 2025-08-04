@@ -43,6 +43,8 @@ namespace mtt::compo {
 	struct Camera final {
 		math::Vector<f32, 2> film_size;
 		math::Vector<usize, 2> image_size;
+		usize spp;
+		usize depth;
 		Lens lens;
 		Sampler sampler;
 		Filter filter;

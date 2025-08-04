@@ -1,13 +1,3 @@
-#include <metatron/core/math/quaternion.hpp>
-#include <metatron/core/math/complex.hpp>
-#include <metatron/core/math/encode.hpp>
-#include <metatron/core/math/distribution/piecewise.hpp>
-#include <metatron/resource/spectra/stochastic.hpp>
-#include <metatron/resource/spectra/constant.hpp>
-#include <metatron/resource/spectra/rgb.hpp>
-#include <metatron/resource/color/color-space.hpp>
-#include <metatron/resource/texture/image.hpp>
-#include <metatron/resource/texture/constant.hpp>
 #include <metatron/resource/material/material.hpp>
 #include <metatron/resource/bsdf/lambertian.hpp>
 #include <metatron/resource/bsdf/interface.hpp>
@@ -44,9 +34,6 @@
 using namespace mtt;
 
 auto main() -> int {
-	auto spp = 16uz;
-	auto depth = 64uz;
-
 	auto hierarchy = ecs::Hierarchy{};
 	auto stage = std::make_unique<ecs::Stage>();
 	auto spectrum_daemon = daemon::Spectrum_Daemon{};
@@ -202,6 +189,8 @@ auto main() -> int {
 	hierarchy.attach(hierarchy.entity("/camera"), compo::Camera{
 		.film_size = {0.036f, 0.024f},
 		.image_size = {600uz, 400uz},
+		.spp = 16,
+		.depth = 64,
 		.lens = compo::Thin_Lens{
 			.aperture = 5.6f,
 			.focal_length = 0.05f,
@@ -366,6 +355,8 @@ auto main() -> int {
 	auto sampler = mut<math::Sampler>{hierarchy.fetch<poly<math::Sampler>>(camera_daemon.camera_entity)};
 	auto camera = mut<photo::Camera>{&hierarchy.fetch<photo::Camera>(camera_daemon.camera_entity)};
 	auto size = hierarchy.fetch<photo::Film>(camera_daemon.camera_entity).image_size;
+	auto spp = hierarchy.fetch<compo::Camera>(camera_daemon.camera_entity).spp;
+	auto depth = hierarchy.fetch<compo::Camera>(camera_daemon.camera_entity).depth;
 	auto total = size[0] * size[1] * spp;
 	auto last_percent = -1;
 	

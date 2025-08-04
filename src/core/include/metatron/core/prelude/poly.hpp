@@ -24,14 +24,8 @@ namespace mtt::inline prelude {
 	template<pro::facade F, typename T, typename... Args>
     requires std::is_constructible_v<T, Args...>
 	auto make_poly(Args&&... args) -> poly<F> {
-		return pro::details::make_proxy_impl<F, T>(std::forward<Args>(args)...);
+		return pro::make_proxy<F, T>(std::forward<Args>(args)...);
 	}
-
-	// template<pro::facade F, typename T>
-    // requires std::is_constructible_v<std::decay_t<T>, T>
-	// auto make_poly(T&& value) -> poly<F> {
-	// 	return pro::make_proxy<F, T>(std::forward<T>(value));
-	// }
 
 	template<typename T>
 	struct view_impl final {

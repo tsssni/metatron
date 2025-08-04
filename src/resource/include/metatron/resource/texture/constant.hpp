@@ -1,7 +1,6 @@
 #pragma once
 #include <metatron/resource/image/image.hpp>
 #include <metatron/resource/texture/texture.hpp>
-#include <utility>
 
 namespace mtt::texture {
 	template<typename T>
@@ -9,6 +8,7 @@ namespace mtt::texture {
 
 	template<>
 	struct Constant_Texture<spectra::Stochastic_Spectrum> final {
+		// FIXME: could not use single proxy_view to construct
 		view<spectra::Spectrum> x;
 		// Constant_Texture(view<spectra::Spectrum> x) noexcept;
 
@@ -17,8 +17,8 @@ namespace mtt::texture {
 			Coordinate const& coord
 		) const noexcept -> spectra::Stochastic_Spectrum;
 
-	// private:
-	// 	view<spectra::Spectrum> x;
+	private:
+		// view<spectra::Spectrum> x;
 	};
 
 	template<>
