@@ -49,6 +49,7 @@ namespace mtt::compo {
 		Lens lens;
 		Sampler sampler;
 		Filter filter;
+		ecs::Entity initial_medium;
 		ecs::Entity color_space;
 	};
 

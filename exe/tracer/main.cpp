@@ -1,10 +1,4 @@
-#include <metatron/resource/material/material.hpp>
-#include <metatron/resource/bsdf/interface.hpp>
-#include <metatron/render/emitter/uniform.hpp>
-#include <metatron/render/monte-carlo/volume-path.hpp>
-#include <metatron/render/accel/lbvh.hpp>
 #include <metatron/scene/ecs/hierarchy.hpp>
-#include <metatron/scene/ecs/entity.hpp>
 #include <metatron/scene/compo/spectrum.hpp>
 #include <metatron/scene/compo/transform.hpp>
 #include <metatron/scene/compo/shape.hpp>
@@ -24,10 +18,6 @@
 #include <metatron/scene/daemon/material.hpp>
 #include <metatron/scene/daemon/camera.hpp>
 #include <metatron/scene/daemon/tracer.hpp>
-#include <metatron/core/stl/thread.hpp>
-#include <atomic>
-#include <print>
-#include <iostream>
 
 using namespace mtt;
 
@@ -126,10 +116,6 @@ auto main() -> int {
 		.path = "/shape/sphere"_et,
 	});
 
-	hierarchy.attach<compo::Medium>("/medium/vaccum"_et, compo::Vaccum_Medium{});
-	hierarchy.attach("/hierarchy/medium/vaccum"_et, compo::Medium_Instance{
-		.path = "/medium/vaccum"_et,
-	});
 	hierarchy.attach<compo::Medium>("/medium/cloud"_et, compo::Grid_Medium{
 		.grid = "../metatron-scenes/disney-cloud/volume/disney-cloud.nvdb",
 		.phase = compo::Henyey_Greenstein_Phase_Function{
@@ -169,6 +155,7 @@ auto main() -> int {
 		},
 		.sampler = compo::Halton_Sampler{},
 		.filter = compo::Lanczos_Filter{},
+		.initial_medium = "/hierarchy/medium/vaccum"_et,
 		.color_space = sRBB_entity,
 	});
 
@@ -183,61 +170,6 @@ auto main() -> int {
 	});
 
 	hierarchy.update();
-
-	auto& identity = hierarchy.fetch<math::Transform>("/hierarchy"_et);
-	auto& vaccum_medium = hierarchy.fetch<poly<media::Medium>>(
-		hierarchy.fetch<compo::Medium_Instance>("/hierarchy/medium/vaccum"_et).path
-	);
-	auto& camera_space = hierarchy.fetch<compo::Camera_Space>(camera_daemon.camera);
-	auto& accel = hierarchy.fetch<poly<accel::Acceleration>>(tracer_daemon.tracer);
-	auto& emitter = hierarchy.fetch<poly<emitter::Emitter>>(tracer_daemon.tracer);
-	auto integrator = monte_carlo::Volume_Path_Integrator{};
-
-	auto atomic_count = std::atomic<usize>{0uz};
-	auto sampler = mut<math::Sampler>{hierarchy.fetch<poly<math::Sampler>>(camera_daemon.camera)};
-	auto camera = mut<photo::Camera>{&hierarchy.fetch<photo::Camera>(camera_daemon.camera)};
-	auto size = hierarchy.fetch<photo::Film>(camera_daemon.camera).image_size;
-	auto spp = hierarchy.fetch<compo::Camera>(camera_daemon.camera).spp;
-	auto depth = hierarchy.fetch<compo::Camera>(camera_daemon.camera).depth;
-	auto total = size[0] * size[1] * spp;
-	auto last_percent = -1;
-	
-	stl::scheduler::instance().sync_parallel(size, [&](math::Vector<usize, 2> const& px) {
-		for (auto n = 0uz; n < spp; n++) {
-			auto sample = camera->sample(px, n, sampler);
-			sample->ray_differential = camera_space.render_to_camera ^ sample->ray_differential;
-			auto& s = sample.value();
-
-			auto Li_opt = integrator.sample(
-				{
-					s.ray_differential,
-					s.default_differential,
-					&identity,
-					&camera_space.world_to_render,
-					&camera_space.render_to_camera,
-					vaccum_medium,
-					px,
-					n,
-					depth,
-				},
-				accel,
-				emitter,
-				sampler
-			);
-
-			auto& Li = Li_opt.value();
-			s.fixel = Li;
-			auto count = atomic_count.fetch_add(1) + 1;
-			auto percent = static_cast<int>(100.f * count / total);
-			if (percent > last_percent) {
-				last_percent = percent;
-				std::print("\rprogress: {}%", percent);
-				std::flush(std::cout);
-			}
-		}
-	});
-
-	std::print("\n");
-	camera->to_path("build/test.exr");
+	tracer_daemon.render("build/test.exr");
 	return 0;
 }

@@ -16,8 +16,13 @@ namespace mtt::compo {
 		lbvh,
 	};
 
+	enum struct Integrator: i32 {
+		volume_path,
+	};
+
 	struct Tracer final {
 		Emitter emitter;
 		Acceleration accel;
+		Integrator integrator;
 	};
 }

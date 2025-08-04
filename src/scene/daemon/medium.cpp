@@ -1,5 +1,6 @@
 #include <metatron/scene/daemon/medium.hpp>
 #include <metatron/scene/compo/medium.hpp>
+#include <metatron/scene/compo/transform.hpp>
 #include <metatron/scene/ecs/hierarchy.hpp>
 #include <metatron/resource/media/medium.hpp>
 #include <metatron/resource/media/vaccum.hpp>
@@ -9,7 +10,14 @@
 #include <metatron/resource/phase/henyey-greenstein.hpp>
 
 namespace mtt::daemon {
-	auto Medium_Daemon::init() noexcept -> void {}
+	auto Medium_Daemon::init() noexcept -> void {
+		auto& hierarchy = *ecs::Hierarchy::instance;
+		hierarchy.attach<compo::Medium>("/medium/vaccum"_et, compo::Vaccum_Medium{});
+		hierarchy.attach("/hierarchy/medium/vaccum"_et, compo::Medium_Instance{
+			.path = "/medium/vaccum"_et,
+		});
+		hierarchy.attach("/hierarchy/medium/vaccum"_et, compo::Transform{});
+	}
 
 	auto Medium_Daemon::update() noexcept -> void {
 		auto& hierarchy = *ecs::Hierarchy::instance;
