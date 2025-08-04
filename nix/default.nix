@@ -1,6 +1,6 @@
 {
   lib,
-  stdenv,
+  clangStdenv,
   fetchFromGitHub,
   clang-tools,
   cmake,
@@ -9,9 +9,11 @@
   assimp,
   openimageio,
   openvdb,
+  proxy,
   zlib,
+  entt,
 }:
-stdenv.mkDerivation {
+clangStdenv.mkDerivation {
   pname = "metatron";
   version = "dev";
 
@@ -33,7 +35,9 @@ stdenv.mkDerivation {
     assimp
     openimageio
     openvdb
+    proxy
     zlib
+    entt
   ];
 
   cmakeFlags = [

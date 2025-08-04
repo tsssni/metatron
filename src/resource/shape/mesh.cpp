@@ -1,15 +1,20 @@
 #include <metatron/resource/shape/mesh.hpp>
 #include <metatron/core/math/transform.hpp>
+#include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/distribution/linear.hpp>
 #include <metatron/core/stl/optional.hpp>
+#include <assimp/scene.h>
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
+#include <print>
 
-namespace metatron::shape {
+namespace mtt::shape {
 	Mesh::Mesh(
 		std::vector<math::Vector<usize, 3>>&& indices,
 		std::vector<math::Vector<f32, 3>>&& vertices,
 		std::vector<math::Vector<f32, 3>>&& normals,
 		std::vector<math::Vector<f32, 2>>&& uvs
-	):
+	) noexcept :
 	indices{std::move(indices)},
 	vertices{std::move(vertices)},
 	normals{std::move(normals)},
@@ -42,10 +47,10 @@ namespace metatron::shape {
 				std::abort();
 			};
 			auto A = math::transpose(math::Matrix<f32, 2, 2>{uv[0] - uv[2], uv[1] - uv[2]});
-			METATRON_OPT_OR_CALLBACK(dpduv, math::cramer(A,
+			MTT_OPT_OR_CALLBACK(dpduv, math::cramer(A,
 				math::Matrix<f32, 2, 3>{v[0] - v[2], v[1] - v[2]}
 			), { quit(); });
-			METATRON_OPT_OR_CALLBACK(dnduv, math::cramer(A,
+			MTT_OPT_OR_CALLBACK(dnduv, math::cramer(A,
 				math::Matrix<f32, 2, 3>{n[0] - n[2], n[1] - n[2]}
 			), { quit(); });
 			dpdu[i] = dpduv[0];
@@ -55,19 +60,19 @@ namespace metatron::shape {
 		}
 	}
 
-	auto Mesh::size() const -> usize {
+	auto Mesh::size() const noexcept -> usize {
 		return indices.size();
 	}
 
 	auto Mesh::bounding_box(
-		math::Matrix<f32, 4, 4> const* t,
+		math::Matrix<f32, 4, 4> const& t,
 		usize idx
-	) const -> math::Bounding_Box {
+	) const noexcept -> math::Bounding_Box {
 		auto prim = indices[idx];
 		auto v = math::Vector<math::Vector<f32, 4>, 3>{
-			*t | math::expand(vertices[prim[0]], 1.f),
-			*t | math::expand(vertices[prim[1]], 1.f),
-			*t | math::expand(vertices[prim[2]], 1.f)
+			t | math::expand(vertices[prim[0]], 1.f),
+			t | math::expand(vertices[prim[1]], 1.f),
+			t | math::expand(vertices[prim[2]], 1.f)
 		};
 		auto p_min = math::min(v[0], v[1], v[2]);
 		auto p_max = math::max(v[0], v[1], v[2]);
@@ -78,8 +83,14 @@ namespace metatron::shape {
 		math::Ray const& r,
 		math::Vector<f32, 3> const& np,
 		usize idx
-	) const -> std::optional<Interaction> {
-		auto T = math::Matrix<f32, 4, 4>{math::Transform{-r.o}};
+	) const noexcept -> std::optional<Interaction> {
+		auto T = math::Matrix<f32, 4, 4>{
+
+			{1.f, 0.f, 0.f, -r.o[0],},
+			{0.f, 1.f, 0.f, -r.o[1],},
+			{0.f, 0.f, 1.f, -r.o[2],},
+			{0.f, 0.f, 0.f, 1.f,},
+		};
 		auto P = math::Matrix<f32, 4, 4>{1.f};
 		
 		std::swap(P[2], P[math::maxi(math::abs(r.d))]);
@@ -192,7 +203,7 @@ namespace metatron::shape {
 		eval::Context const& ctx,
 		math::Vector<f32, 2> const& u_0,
 		usize idx
-	) const -> std::optional<Interaction> {
+	) const noexcept -> std::optional<Interaction> {
 		auto prim = indices[idx];
 		auto validate_vector = [](math::Vector<f32, 3> const& v) -> bool {
 			return math::dot(v, v) >= math::epsilon<f32>;
@@ -263,7 +274,7 @@ namespace metatron::shape {
 			vertices[prim[1]],
 			vertices[prim[2]],
 		};
-		METATRON_OPT_OR_RETURN(cramer, math::cramer(
+		MTT_OPT_OR_RETURN(cramer, math::cramer(
 			math::transpose(math::Matrix<f32, 3, 3>{-d, v[1] - v[0], v[2] - v[0]}),
 			ctx.r.o - v[0]
 		), {});
@@ -292,4 +303,77 @@ namespace metatron::shape {
 			),
 		};
 	}
+
+	auto Mesh::from_path(std::string_view path) noexcept -> Mesh {
+		auto importer = Assimp::Importer{};
+		auto* scene = importer.ReadFile(path.data(), 0
+			| aiProcess_FindDegenerates
+			| aiProcess_FlipUVs
+			| aiProcess_FlipWindingOrder
+			| aiProcess_GenSmoothNormals
+			| aiProcess_GenUVCoords
+			| aiProcess_ImproveCacheLocality
+			| aiProcess_JoinIdenticalVertices
+			| aiProcess_MakeLeftHanded
+			| aiProcess_OptimizeGraph
+			| aiProcess_OptimizeMeshes
+			| aiProcess_RemoveRedundantMaterials
+			| aiProcess_TransformUVCoords
+			| aiProcess_Triangulate
+		);
+
+		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->HasMeshes()) {
+			std::print("assimp error: while loading %s: %s\n", path.data(), importer.GetErrorString());
+			std::abort();
+		}
+		auto* mesh = scene->mMeshes[0];
+
+		auto indices = std::vector<math::Vector<usize, 3>>{};
+		auto vertices = std::vector<math::Vector<f32, 3>>{};
+		auto normals = std::vector<math::Vector<f32, 3>>{};
+		auto uvs = std::vector<math::Vector<f32, 2>>{};
+
+		for (auto i = 0uz; i < mesh->mNumFaces; i++) {
+			auto face = mesh->mFaces[i];
+			if (face.mNumIndices != 3) {
+				// std::printf("assimp error: mesh %s has non-triangle face\n", mesh->mName.C_Str());
+				// std::abort();
+				continue;
+			}
+			indices.push_back({
+				face.mIndices[0],
+				face.mIndices[1],
+				face.mIndices[2]
+			});
+		}
+
+		for (auto i = 0uz; i < mesh->mNumVertices; i++) {
+			vertices.push_back({
+				mesh->mVertices[i].x,
+				mesh->mVertices[i].y,
+				mesh->mVertices[i].z
+			});
+			normals.push_back({
+				mesh->mNormals[i].x,
+				mesh->mNormals[i].y,
+				mesh->mNormals[i].z
+			});
+			uvs.push_back(mesh->mTextureCoords[0]
+				? math::Vector<f32, 2>{
+					mesh->mTextureCoords[0][i].x,
+					mesh->mTextureCoords[0][i].y
+				}
+				: 1.f
+				* math::cartesion_to_unit_sphere(math::normalize(vertices.back()))
+				/ math::Vector<f32, 2>{math::pi, 2.f * math::pi}
+			);
+		}
+
+		return shape::Mesh{
+			std::move(indices),
+			std::move(vertices),
+			std::move(normals),
+			std::move(uvs)
+		};
+	};
 }

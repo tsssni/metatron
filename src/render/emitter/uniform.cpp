@@ -2,7 +2,7 @@
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/constant.hpp>
 
-namespace metatron::emitter {
+namespace mtt::emitter {
 		Uniform_Emitter::Uniform_Emitter(
 			std::vector<Divider>&& dividers,
 			std::vector<Divider>&& infinite_dividers
@@ -21,7 +21,7 @@ namespace metatron::emitter {
 		auto Uniform_Emitter::operator()(
 			eval::Context const& ctx,
 			Divider const& divider
-		) const -> std::optional<emitter::Interaction> {
+		) const noexcept -> std::optional<emitter::Interaction> {
 			return emitter::Interaction{
 				&divider,
 				math::guarded_div(1.f, f32(dividers.size() + inf_dividers.size()))
@@ -31,7 +31,7 @@ namespace metatron::emitter {
 		auto Uniform_Emitter::sample(
 			eval::Context const& ctx,
 			f32 u
-		) const -> std::optional<emitter::Interaction> {
+		) const noexcept -> std::optional<emitter::Interaction> {
 			if (dividers.empty() && inf_dividers.empty()) {
 				return {};
 			}
@@ -48,7 +48,7 @@ namespace metatron::emitter {
 		auto Uniform_Emitter::sample_infinite(
 			eval::Context const& ctx,
 			f32 u
-		) const -> std::optional<emitter::Interaction> {
+		) const noexcept -> std::optional<emitter::Interaction> {
 			if (inf_dividers.empty()) {
 				return {};
 			}

@@ -1,11 +1,11 @@
 #include <metatron/resource/image/image.hpp>
 #include <OpenImageIO/imageio.h>
 
-namespace metatron::image {
-	Image::Pixel::Pixel(Image const* image, byte* start)
+namespace mtt::image {
+	Image::Pixel::Pixel(Image const* image, byte* start) noexcept
 	: image(image), start(start) {}
 
-	Image::Pixel::operator math::Vector<f32, 4>() const {
+	Image::Pixel::operator math::Vector<f32, 4>() const noexcept {
 		auto pixel = math::Vector<f32, 4>{};
 		for (auto i = 0; i < image->size[2]; i++) {
 			switch (image->size[3]) {
@@ -24,7 +24,7 @@ namespace metatron::image {
 		return pixel;
 	}
 
-	auto Image::Pixel::operator=(math::Vector<f32, 4> const& v) -> void {
+	auto Image::Pixel::operator=(math::Vector<f32, 4> const& v) noexcept -> void {
 		for (auto i = 0; i < image->size[2]; i++) {
 			auto* pixel = start + image->size[3] * i; 
 			switch (image->size[3]) {
@@ -42,7 +42,7 @@ namespace metatron::image {
 		}
 	}
 
-	auto Image::Pixel::operator+=(math::Vector<f32, 4> const& v) -> void {
+	auto Image::Pixel::operator+=(math::Vector<f32, 4> const& v) noexcept -> void {
 		*this = math::Vector<f32, 4>(*this) + v;
 	}
 
@@ -50,43 +50,26 @@ namespace metatron::image {
 		math::Vector<usize, 4> const& size,
 		color::Color_Space const* color_space,
 		bool linear
-	):
+	) noexcept:
 	size(size),
 	pixels(size[0] * size[1] * size[2] * size[3]),
 	color_space(color_space),
 	linear(linear) {}
 
-	auto Image::operator[](usize x, usize y) -> Pixel {
+	auto Image::operator[](usize x, usize y) noexcept -> Pixel {
 		auto offset = (y * width + x) * channels * stride;
 		return Pixel{this, &pixels[offset]};
 	}
 
-	auto Image::operator[](usize x, usize y) const -> Pixel const {
+	auto Image::operator[](usize x, usize y) const noexcept -> Pixel const {
 		auto offset = (y * width + x) * channels * stride;
 		return (Pixel const){this, const_cast<byte*>(&pixels[offset])};
 	}
 
-	namespace {
-		auto to_color_space(std::string_view cs) -> color::Color_Space const* {
-			if (cs == "sRGB") {
-				return color::Color_Space::sRGB.get();
-			} else {
-				// have not supported other color spaces yet
-				return color::Color_Space::sRGB.get();
-			}
-		}
-
-		auto from_color_space(color::Color_Space const* cs) -> std::string_view {
-			if (cs == color::Color_Space::sRGB.get()) {
-				return "sRGB";
-			} else {
-				// have not supported other color spaces yet
-				return "sRGB";
-			}
-		}
-	}
-
-	auto Image::from_path(std::string_view path, bool linear) -> std::unique_ptr<Image> {
+	auto Image::from_path(
+		std::string_view path,
+		bool linear
+	) noexcept -> poly<Image> {
 		auto in = OIIO::ImageInput::open(std::string{path});
 		if (!in) {
 			std::printf("cannot find image %s\n", path.data());
@@ -95,16 +78,18 @@ namespace metatron::image {
 
 		auto& spec = in->spec();
 		auto cs_name = spec.get_string_attribute("oiio:ColorSpace");
-		auto color_space = (color::Color_Space*)nullptr;
+		auto* color_space = color::Color_Space::color_spaces.contains(cs_name)
+		? color::Color_Space::color_spaces.at(cs_name)
+		: color::Color_Space::color_spaces.at("sRGB");
 
-		auto image = std::make_unique<Image>(
+		auto image = make_poly<Image>(
 			math::Vector<usize, 4>{
 				usize(spec.width),
 				usize(spec.height),
 				usize(spec.nchannels),
 				spec.format.size()
 			},
-			to_color_space(spec.get_string_attribute("oiio:ColorSpace")),
+			color_space,
 			linear
 		);
 
@@ -118,7 +103,7 @@ namespace metatron::image {
 		return image;
 	}
 
-	auto Image::to_path(std::string_view path) -> void {
+	auto Image::to_path(std::string_view path) const noexcept -> void {
 		auto type = stride == 1 ? OIIO::TypeDesc::UINT8 : OIIO::TypeDesc::FLOAT;
 		auto spec = OIIO::ImageSpec{
 			i32(width),
@@ -127,8 +112,14 @@ namespace metatron::image {
 			type
 		};
 
+		auto cs_name = std::string{"sRGB"};
+		for (auto const& [name, cs]: color::Color_Space::color_spaces) {
+			if (color_space == cs) {
+				cs_name = name;
+			}
+		}
+		spec.attribute("oiio::ColorSpace", cs_name);
 		spec.attribute("planarconfig", "contig");
-		spec.attribute("oiio::ColorSpace", from_color_space(color_space));
 
 		auto out = OIIO::ImageOutput::create(std::string{path});
 		if (!out || !out->open(std::string{path}, spec)) {

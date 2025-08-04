@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	namespace filter {
 		struct Interaction final {
 			Vector<f32, 2> p;
@@ -10,9 +10,15 @@ namespace metatron::math {
 		};
 	}
 
-	struct Filter {
-		virtual ~Filter() {}
-		auto virtual operator()(Vector<f32, 2> const& p) const -> f32 = 0;
-		auto virtual sample(Vector<f32, 2> const& u) const -> std::optional<filter::Interaction> = 0;
-	};
+	MTT_POLY_METHOD(filter_sample, sample);
+
+	struct Filter final: pro::facade_builder
+	::add_convention<pro::operator_dispatch<"()">, auto (
+		Vector<f32, 2> const& p
+	) const noexcept -> f32>
+	::add_convention<filter_sample, auto (
+		Vector<f32, 2> const& u
+	) const -> std::optional<filter::Interaction>>
+	::support_view
+	::build {};
 }

@@ -1,12 +1,19 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
 
-namespace metatron::math {
-	struct Sampler {
-		virtual ~Sampler() {}
-		auto virtual start(math::Vector<usize, 2> const& pixel, usize idx, usize dim = 0uz) -> void = 0;
-		auto virtual generate_1d() const -> f32 = 0;
-		auto virtual generate_2d() const -> math::Vector<f32, 2> = 0;
-		auto virtual generate_pixel_2d() const -> math::Vector<f32, 2> = 0;
-	};
+namespace mtt::math {
+	MTT_POLY_METHOD(sampler_start, start);
+	MTT_POLY_METHOD(sampler_generate_1d, generate_1d);
+	MTT_POLY_METHOD(sampler_generate_2d, generate_2d);
+	MTT_POLY_METHOD(sampler_generate_pixel_2d, generate_pixel_2d);
+
+	struct Sampler final: pro::facade_builder
+	::add_convention<sampler_start, auto (
+		math::Vector<usize, 2> const& pixel, usize idx, usize dim
+	) noexcept -> void>
+	::add_convention<sampler_generate_1d, auto () const noexcept -> f32>
+	::add_convention<sampler_generate_2d, auto () const noexcept -> math::Vector<f32, 2>>
+	::add_convention<sampler_generate_pixel_2d, auto () const noexcept -> math::Vector<f32, 2>>
+	::support_view
+	::build {};
 }

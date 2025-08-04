@@ -1,7 +1,7 @@
 #pragma once
 
-namespace metatron::math {
-	auto inline constexpr mix_bits(u64 x) -> u64 {
+namespace mtt::math {
+	auto inline constexpr mix_bits(u64 x) noexcept -> u64 {
 		x ^= (x >> 31);
 		x *= 0x7fb5d329728ea185;
 		x ^= (x >> 27);
@@ -10,7 +10,7 @@ namespace metatron::math {
 		return x;
 	}
 
-	auto inline constexpr biject_permute(u32 i, u32 n, u32 seed) -> u32 {
+	auto inline constexpr biject_permute(u32 i, u32 n, u32 seed) noexcept -> u32 {
 		// set 1 for bits below highest 1
 		auto w = n - 1;
 		w |= w >> 1;

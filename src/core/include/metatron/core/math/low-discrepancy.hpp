@@ -3,8 +3,8 @@
 #include <metatron/core/math/prime.hpp>
 #include <metatron/core/math/hash.hpp>
 
-namespace metatron::math {
-	auto inline constexpr radical_inverse(usize x, usize b) -> f32 {
+namespace mtt::math {
+	auto inline constexpr radical_inverse(usize x, usize b) noexcept -> f32 {
 		auto reversed = 0uz;
 		auto limit = (~0uz - b) / b;
 		auto inv_b = 1uz;
@@ -21,7 +21,7 @@ namespace metatron::math {
 		return std::min(reversed / f32(inv_b), 1.f - epsilon<f32>);
 	};
 
-	auto inline constexpr inverse_radical(usize reversed, usize b, usize n) -> usize {
+	auto inline constexpr inverse_radical(usize reversed, usize b, usize n) noexcept -> usize {
 		auto idx = 0uz;
 		for (auto i = 0uz; i < n; i++) {
 			auto digit = reversed % b;
@@ -31,7 +31,7 @@ namespace metatron::math {
 		return idx;
 	}
 
-	auto inline constexpr owen_scrambled_radical_inverse(usize x, usize b, usize hash) -> f32 {
+	auto inline constexpr owen_scrambled_radical_inverse(usize x, usize b, usize hash) noexcept -> f32 {
 		auto reversed = 0uz;
 		auto limit = (~0uz - b) / b;
 		auto inv_b = 1uz;

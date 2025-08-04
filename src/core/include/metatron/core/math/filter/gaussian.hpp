@@ -3,12 +3,12 @@
 #include <metatron/core/math/distribution/piecewise.hpp>
 #include <metatron/core/math/distribution/gaussian.hpp>
 
-namespace metatron::math {
-	struct Gaussian_Filter final: Filter {
-		Gaussian_Filter(Vector<f32, 2> const& radius = {1.5f}, f32 sigma = 0.5f);
+namespace mtt::math {
+	struct Gaussian_Filter final {
+		Gaussian_Filter(Vector<f32, 2> const& radius = {1.5f}, f32 sigma = 0.5f) noexcept;
 
-		auto operator()(Vector<f32, 2> const& p) const -> f32;
-		auto sample(Vector<f32, 2> const& u) const -> std::optional<filter::Interaction>;
+		auto operator()(Vector<f32, 2> const& p) const noexcept -> f32;
+		auto sample(Vector<f32, 2> const& u) const noexcept -> std::optional<filter::Interaction>;
 
 	private:
 		Piecewise_Distribution<64, 64> piecewise;

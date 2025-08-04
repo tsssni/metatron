@@ -4,8 +4,8 @@
 #include <metatron/core/stl/thread.hpp>
 #include <bit>
 
-namespace metatron::texture {
-	Image_Texture<math::Vector<f32, 4>>::Image_Texture(std::unique_ptr<image::Image> image) {
+namespace mtt::texture {
+	Image_Texture<math::Vector<f32, 4>>::Image_Texture(poly<image::Image> image) noexcept {
 		auto size = math::Vector<usize, 2>{image->size};
 		auto channels = image->size[2];
 		auto stride = image->size[3];
@@ -18,7 +18,7 @@ namespace metatron::texture {
 			size[0] = std::max(1uz, size[0] >> 1uz);
 			size[1] = std::max(1uz, size[1] >> 1uz);
 
-			images.push_back(std::make_unique<image::Image>(
+			images.push_back(make_poly<image::Image>(
 				math::Vector<usize, 4>{size, channels, stride},
 				images.front()->color_space,
 				images.front()->linear
@@ -26,7 +26,7 @@ namespace metatron::texture {
 			auto& image = *images[mip];
 			auto& upper = *images[mip - 1];
 
-			stl::Dispatcher::instance().sync_parallel(size, [&](math::Vector<usize, 2> const& px) {
+			stl::scheduler::instance().sync_parallel(size, [&](math::Vector<usize, 2> const& px) {
 				auto [i, j] = px;
 				image[i, j] = 0.25f * (math::Vector<f32, 4>{0.f}
 					+ math::Vector<f32, 4>{upper[i * 2uz + 0, j * 2uz + 0]}
@@ -41,7 +41,7 @@ namespace metatron::texture {
 	auto Image_Texture<math::Vector<f32, 4>>::sample(
 		eval::Context const& ctx,
 		Coordinate const& coord
-	) const -> math::Vector<f32, 4> {
+	) const noexcept -> math::Vector<f32, 4> {
 		auto mip = std::min(0uz, images.size() - 1uz);
 		auto& image = *images[mip];
 
@@ -132,17 +132,17 @@ namespace metatron::texture {
 
 
 	Image_Texture<spectra::Stochastic_Spectrum>::Image_Texture(
-		std::unique_ptr<image::Image> image,
-		color::Color_Space::Spectrum_Type spectrum_type
-	): image_tex(std::move(image)), spectrum_type(spectrum_type) {}
+		poly<image::Image> image,
+		color::Color_Space::Spectrum_Type type
+	) noexcept: image_tex(std::move(image)), type(type) {}
 
 
 	auto Image_Texture<spectra::Stochastic_Spectrum>::sample(
 		eval::Context const& ctx,
 		Coordinate const& coord
-	) const -> spectra::Stochastic_Spectrum {
+	) const noexcept -> spectra::Stochastic_Spectrum {
 		auto rgba = image_tex.sample(ctx, coord);
-		auto rgb_spec = image_tex.images.front()->color_space->to_spectrum(rgba, spectrum_type);
-		return ctx.spec & *rgb_spec;
+		auto rgb_spec = image_tex.images.front()->color_space->to_spectrum(rgba, type);
+		return ctx.spec & rgb_spec;
 	}
 }

@@ -1,10 +1,10 @@
 #pragma once
-#include <metatron/render/light/light.hpp>
+#include <metatron/resource/light/light.hpp>
 #include <metatron/core/math/transform.hpp>
 
-namespace metatron::emitter {
+namespace mtt::emitter {
 	struct Divider final {
-		light::Light const* light;
+		view<light::Light> light;
 		math::Transform const* local_to_world;
 	};
 
@@ -13,18 +13,22 @@ namespace metatron::emitter {
 		f32 pdf{0.f};
 	};
 
-	struct Emitter {
-		auto virtual operator()(
-			eval::Context const& ctx,
-			Divider const& divider
-		) const -> std::optional<emitter::Interaction> = 0;
-		auto virtual sample(
-			eval::Context const& ctx,
-			f32 u
-		) const -> std::optional<emitter::Interaction> = 0;
-		auto virtual sample_infinite(
-			eval::Context const& ctx,
-			f32 u
-		) const -> std::optional<emitter::Interaction> = 0;
-	};
+	MTT_POLY_METHOD(emitter_sample, sample);
+	MTT_POLY_METHOD(emitter_sample_infinite, sample_infinite);
+
+	struct Emitter final: pro::facade_builder
+	::add_convention<pro::operator_dispatch<"()">, auto (
+		eval::Context const& ctx,
+		Divider const& divider
+	) const noexcept -> std::optional<Interaction>>
+	::add_convention<emitter_sample, auto (
+		eval::Context const& ctx,
+		f32 u
+	) const noexcept -> std::optional<Interaction>>
+	::add_convention<emitter_sample_infinite, auto (
+		eval::Context const& ctx,
+		f32 u
+	) const noexcept -> std::optional<Interaction>>
+	::support_view
+	::build {};
 }

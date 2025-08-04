@@ -2,16 +2,16 @@
 #include <metatron/resource/bsdf/interface.hpp>
 #include <metatron/resource/spectra/constant.hpp>
 
-namespace metatron::material {
+namespace mtt::material {
 	auto Material::sample(
 		eval::Context const& ctx,
 		texture::Coordinate const& coord
-	) const -> std::optional<Interaction> {
+	) const noexcept -> std::optional<Interaction> {
 		auto attr = bsdf::Attribute{};
 		auto intr = Interaction{};
 		auto spec = ctx.spec;
 
-		auto null_spec = spec & spectra::Constant_Spectrum{0.f};
+		auto null_spec = spec & spectra::Spectrum::spectra["zero"];
 		auto geometry_normal = math::Vector<f32, 3>{0.f, 0.f, 1.f};
 		attr.spectra["spectrum"] = null_spec;
 		attr.spectra["emission"] = null_spec;
@@ -29,7 +29,7 @@ namespace metatron::material {
 		intr.normal = attr.vectors["normal"];
 
 		attr.inside = ctx.inside;
-		intr.bsdf = bsdf->clone(attr);
+		intr.bsdf = bsdf; intr.bsdf->configure(attr);
 		intr.degraded = intr.bsdf->degrade();
 
 		return intr;

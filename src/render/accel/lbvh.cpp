@@ -5,7 +5,7 @@
 #include <ranges>
 #include <stack>
 
-namespace metatron::accel {
+namespace mtt::accel {
 	struct LBVH_Divider final {
 		math::Bounding_Box bbox;
 		u32 index;
@@ -14,8 +14,8 @@ namespace metatron::accel {
 
 	struct LBVH_Node final {
 		math::Bounding_Box bbox;
-		std::unique_ptr<LBVH_Node> left;
-		std::unique_ptr<LBVH_Node> right;
+		poly<LBVH_Node> left;
+		poly<LBVH_Node> right;
 		u32 morton_code;
 		u32 split_axis;
 		u32 div_idx;
@@ -26,7 +26,7 @@ namespace metatron::accel {
 		std::vector<Divider>&& dividers,
 		math::Transform const* transform,
 		usize num_guide_left_prims
-	):
+	) noexcept:
 	dividers(std::move(dividers)),
 	transform(transform) {
 		std::vector<LBVH_Divider> lbvh_divs;
@@ -35,7 +35,7 @@ namespace metatron::accel {
 			auto& lt = *div.local_to_world;
 			auto t = this->transform->transform | lt.transform;
 			lbvh_divs.push_back(LBVH_Divider{
-				.bbox = div.shape->bounding_box(&t, div.primitive),
+				.bbox = div.shape->bounding_box(t, div.primitive),
 				.index = i,
 			});
 		}
@@ -65,11 +65,11 @@ namespace metatron::accel {
 			}
 		}
 
-		auto morton_split = [&](this auto self, math::Vector<u32, 2> interval, i32 bit) -> std::unique_ptr<LBVH_Node> {
+		auto morton_split = [&](this auto self, math::Vector<u32, 2> interval, i32 bit) -> poly<LBVH_Node> {
 			auto [start, end] = interval;
 			auto n = end - start;
 			if (n <= num_guide_left_prims || bit < 0) {
-				auto node = std::make_unique<LBVH_Node>();
+				auto node = make_poly<LBVH_Node>();
 				node->div_idx = start;
 				node->num_prims = n;
 				node->bbox = math::Bounding_Box{};
@@ -92,7 +92,7 @@ namespace metatron::accel {
 					return self(interval, bit - 1);
 				}
 
-				auto node = std::make_unique<LBVH_Node>();
+				auto node = make_poly<LBVH_Node>();
 				node->left = self({start, split}, bit - 1);
 				node->right = self({split, end}, bit - 1);
 				node->bbox = math::merge(node->left->bbox, node->right->bbox);
@@ -100,8 +100,8 @@ namespace metatron::accel {
 				return node;
 			}
 		};
-		auto lbvh_nodes = std::vector<std::unique_ptr<LBVH_Node>>(intervals.size());
-		stl::Dispatcher::instance().sync_parallel(
+		auto lbvh_nodes = std::vector<poly<LBVH_Node>>(intervals.size());
+		stl::scheduler::instance().sync_parallel(
 			math::Vector<usize, 1>{intervals.size()},
 			[&](auto idx) {
 				auto [i] = idx;
@@ -110,12 +110,12 @@ namespace metatron::accel {
 			}
 		);
 
-		auto area_split = [&](this auto self, std::vector<std::unique_ptr<LBVH_Node>>&& nodes) -> std::unique_ptr<LBVH_Node> {
+		auto area_split = [&](this auto self, std::vector<poly<LBVH_Node>>&& nodes) -> poly<LBVH_Node> {
 			if (nodes.size() == 1) {
 				return std::move(nodes.front());
 			}
 
-			auto root = std::make_unique<LBVH_Node>();
+			auto root = make_poly<LBVH_Node>();
 			root->bbox = math::Bounding_Box{};
 			for (auto& node: nodes) {
 				root->bbox = math::merge(root->bbox, node->bbox);
@@ -174,7 +174,7 @@ namespace metatron::accel {
 			auto range_split = [](auto&& begin, auto&& end){
 				return std::ranges::subrange(begin, end)
 					 | std::views::transform([](auto& n) { return std::move(n); })
-					 | std::ranges::to<std::vector<std::unique_ptr<LBVH_Node>>>();
+					 | std::ranges::to<std::vector<poly<LBVH_Node>>>();
 			};
 			auto left = range_split(std::ranges::begin(nodes), std::ranges::begin(splitted_iter));
 			auto right = range_split(std::ranges::begin(splitted_iter), std::ranges::end(nodes));
@@ -207,9 +207,10 @@ namespace metatron::accel {
 		};
 		traverse(root.get());
 
-		auto divs = std::vector<Divider>(lbvh_divs.size());
+		auto divs = std::vector<Divider>();
+		divs.reserve(lbvh_divs.size());
 		for (auto i = 0u; i < lbvh_divs.size(); i++) {
-			divs[i] = this->dividers[lbvh_divs[i].index];
+			divs.emplace_back(this->dividers[lbvh_divs[i].index]);
 		}
 		std::swap(divs, this->dividers);
 	}
@@ -217,7 +218,7 @@ namespace metatron::accel {
 	auto LBVH::operator()(
 		math::Ray const& r,
 		math::Vector<f32, 3> const& n
-	) const -> std::optional<Interaction> {
+	) const noexcept -> std::optional<Interaction> {
 		auto& rt = *transform;
 		auto intr_div = (Divider const*)nullptr;
 		auto intr_opt = std::optional<shape::Interaction>{};
@@ -228,7 +229,7 @@ namespace metatron::accel {
 			auto idx = candidates.top();
 			candidates.pop();
 			auto node = &bvh[idx];
-			METATRON_OPT_OR_CONTINUE(t_bbox, math::hit(r, node->bbox));
+			MTT_OPT_OR_CONTINUE(t_bbox, math::hit(r, node->bbox));
 
 			if (node->num_prims > 0) {
 				for (auto i = 0u; i < node->num_prims; i++) {
@@ -238,7 +239,7 @@ namespace metatron::accel {
 
 					auto lr = lt ^ rt ^ r;
 					auto ln = lt ^ rt ^ n;
-					METATRON_OPT_OR_CONTINUE(div_intr, (*div->shape)(lr, ln, div->primitive));
+					MTT_OPT_OR_CONTINUE(div_intr, (*div->shape)(lr, ln, div->primitive));
 
 					if (!intr_opt || div_intr.t < intr_opt.value().t) {
 						intr_opt = div_intr_opt;

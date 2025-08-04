@@ -4,15 +4,15 @@
 #include <metatron/core/math/transform.hpp>
 #include <metatron/resource/spectra/stochastic.hpp>
 
-namespace metatron::bsdf {
+namespace mtt::bsdf {
 	struct Bsdf;
 }
 
-namespace metatron::phase {
+namespace mtt::phase {
 	struct Phase_Function;
 }
 
-namespace metatron::eval {
+namespace mtt::eval {
 	struct Context final {
 		math::Ray r{};
 		math::Vector<f32, 3> n{};

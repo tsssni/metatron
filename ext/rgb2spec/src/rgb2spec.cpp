@@ -880,7 +880,7 @@ int main(int argc, char **argv) {
     FILE *f = fopen(argv[2], "w");
     if (f == nullptr)
         throw std::runtime_error("Could not create file!");
-    fprintf(f, "namespace metatron::color {\n");
+    fprintf(f, "namespace mtt::color {\n");
     fprintf(f, "extern const int %s_spectrum_res = %d;\n", argv[3], res);
     fprintf(f, "extern const float %s_spectrum_z[%d] = {\n", argv[3], res);
     for (int i = 0; i < res; ++i)

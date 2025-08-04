@@ -1,15 +1,15 @@
 #pragma once
 #include <vector>
 
-namespace metatron::math {
+namespace mtt::math {
 	struct Discrete_Distribution final {
-		Discrete_Distribution(std::vector<f32> const& weights): weights(weights) {
+		Discrete_Distribution(std::vector<f32> const& weights) noexcept: weights(weights) {
 			for (auto w: weights) {
 				sum_w += w;
 			}
 		}
 
-		auto sample(f32 u) const -> usize {
+		auto sample(f32 u) const noexcept -> usize {
 			u *= sum_w;
 			auto sum = 0.f;
 			auto i = 0uz;

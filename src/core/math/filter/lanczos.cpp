@@ -1,7 +1,8 @@
 #include <metatron/core/math/filter/lanczos.hpp>
 
-namespace metatron::math {
-	Lanczos_Filter::Lanczos_Filter(Vector<f32, 2> const& radius, f32 tau): radius(radius), tau(tau) {
+namespace mtt::math {
+	Lanczos_Filter::Lanczos_Filter(Vector<f32, 2> const& radius, f32 tau) noexcept
+	: radius(radius), tau(tau) {
 		auto matrix = math::Matrix<f32, 64, 64>{};
 		for (auto i = 0uz; i < 64; i++) {
 			auto x = math::lerp(-radius[0], radius[0], (f32(i) + 0.5f) / 64.f);
@@ -17,14 +18,14 @@ namespace metatron::math {
 		};
 	}
 
-	auto Lanczos_Filter::operator()(Vector<f32, 2> const& p) const -> f32 {
+	auto Lanczos_Filter::operator()(Vector<f32, 2> const& p) const noexcept -> f32 {
 		auto v = foreach([&](f32 x, usize i) -> f32 {
 			return math::abs(x) >= radius[i] ? 0.f : windowed_sinc(x, tau);
 		}, p);
 		return prod(v);
 	}
 
-	auto Lanczos_Filter::sample(Vector<f32, 2> const& u) const -> std::optional<filter::Interaction> {
+	auto Lanczos_Filter::sample(Vector<f32, 2> const& u) const noexcept -> std::optional<filter::Interaction> {
 		auto p = distribution.sample(u);
 		auto w = (*this)(p);
 		auto pdf = distribution.pdf(p);

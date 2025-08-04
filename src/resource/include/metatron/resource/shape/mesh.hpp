@@ -1,30 +1,32 @@
 #pragma once
 #include <metatron/resource/shape/shape.hpp>
 
-namespace metatron::shape {
-	struct Mesh final: Shape {
+namespace mtt::shape {
+	struct Mesh final {
 		Mesh(
 			std::vector<math::Vector<usize, 3>>&& indices,
 			std::vector<math::Vector<f32, 3>>&& vertices,
 			std::vector<math::Vector<f32, 3>>&& normals,
 			std::vector<math::Vector<f32, 2>>&& uvs
-		);
+		) noexcept;
 
-		auto size() const -> usize;
+		auto size() const noexcept -> usize;
 		auto bounding_box(
-			math::Matrix<f32, 4, 4> const* t,
+			math::Matrix<f32, 4, 4> const& t,
 			usize idx
-		) const -> math::Bounding_Box;
+		) const noexcept -> math::Bounding_Box;
 		auto operator()(
 			math::Ray const& r,
 			math::Vector<f32, 3> const& np = {},
 			usize idx = 0uz
-		) const -> std::optional<Interaction>;
+		) const noexcept -> std::optional<Interaction>;
 		auto sample(
 			eval::Context const& ctx,
 			math::Vector<f32, 2> const& u,
 			usize idx = 0uz
-		) const -> std::optional<Interaction>;
+		) const noexcept -> std::optional<Interaction>;
+
+		auto static from_path(std::string_view path) noexcept -> Mesh;
 
 	private:
 		template<typename T>
@@ -32,7 +34,7 @@ namespace metatron::shape {
 			std::vector<T> const& traits,
 			math::Vector<f32, 3> const& b,
 			usize idx
-		) const -> T {
+		) const noexcept -> T {
 			if (traits.empty()) {
 				return {};
 			}

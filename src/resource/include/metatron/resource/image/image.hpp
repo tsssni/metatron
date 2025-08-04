@@ -3,15 +3,14 @@
 #include <metatron/resource/color/color-space.hpp>
 #include <vector>
 #include <string_view>
-#include <memory>
 
-namespace metatron::image {
+namespace mtt::image {
 	struct Image final {
 		struct Pixel final {
-			Pixel(Image const* image, byte* start);
-			explicit operator math::Vector<f32, 4>() const;
-			auto operator=(math::Vector<f32, 4> const& v) -> void;
-			auto operator+=(math::Vector<f32, 4> const& v) -> void;
+			Pixel(Image const* image, byte* start) noexcept;
+			explicit operator math::Vector<f32, 4>() const noexcept;
+			auto operator=(math::Vector<f32, 4> const& v) noexcept -> void;
+			auto operator+=(math::Vector<f32, 4> const& v) noexcept -> void;
 		private:
 			Image const* image;
 			byte* start;
@@ -34,13 +33,16 @@ namespace metatron::image {
 			math::Vector<usize, 4> const& size,
 			color::Color_Space const* color_space,
 			bool linear = false
-		);
+		) noexcept;
 
-		auto operator[](usize x, usize y) -> Pixel;
-		auto operator[](usize x, usize y) const -> Pixel const;
+		auto operator[](usize x, usize y) noexcept -> Pixel;
+		auto operator[](usize x, usize y) const noexcept -> Pixel const;
 
-		auto static from_path(std::string_view path, bool linear = false) -> std::unique_ptr<Image>;
-		auto to_path(std::string_view path) -> void;
+		auto static from_path(
+			std::string_view path,
+			bool linear = false
+		) noexcept -> poly<Image>;
+		auto to_path(std::string_view path) const noexcept -> void;
 
 	private:
 		friend Pixel;

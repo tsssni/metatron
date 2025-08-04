@@ -2,17 +2,17 @@
 #include <metatron/core/math/sampler/sampler.hpp>
 #include <metatron/core/math/prime.hpp>
 
-namespace metatron::math {
-	struct Halton_Sampler final: Sampler {
+namespace mtt::math {
+	struct Halton_Sampler final {
 		Halton_Sampler(
 			usize seed = 0uz,
 			Vector<usize, 2> const& scale_exponential = {7uz, 4uz}
-		);
+		) noexcept;
 
-		auto start(math::Vector<usize, 2> const& pixel, usize idx, usize dim = 2uz) -> void;
-		auto generate_1d() const -> f32;
-		auto generate_2d() const -> math::Vector<f32, 2>;
-		auto generate_pixel_2d() const -> math::Vector<f32, 2>;
+		auto start(math::Vector<usize, 2> const& pixel, usize idx, usize dim = 2uz) noexcept -> void;
+		auto generate_1d() const noexcept -> f32;
+		auto generate_2d() const noexcept -> math::Vector<f32, 2>;
+		auto generate_pixel_2d() const noexcept -> math::Vector<f32, 2>;
 	
 	private:
 		Vector<usize, 2> pixel;

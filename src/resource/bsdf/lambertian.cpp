@@ -4,11 +4,11 @@
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>
 
-namespace metatron::bsdf {
+namespace mtt::bsdf {
 	auto Lambertian_Bsdf::operator()(
 		math::Vector<f32, 3> const& wo,
 		math::Vector<f32, 3> const& wi
-	) const -> std::optional<Interaction> {
+	) const noexcept -> std::optional<Interaction> {
 		auto reflective = -wo[1] * wi[1] >= 0.f;
 		auto forward = wi[1] > 0.f;
 		if (!reflective || !forward) {
@@ -29,7 +29,7 @@ namespace metatron::bsdf {
 	auto Lambertian_Bsdf::sample(
 		eval::Context const& ctx,
 		math::Vector<f32, 3> const& u
-	) const -> std::optional<Interaction> {
+	) const noexcept -> std::optional<Interaction> {
 		auto distr = math::Cosine_Hemisphere_Distribution{};
 		auto wi = distr.sample({u[1], u[2]});
 		auto pdf = distr.pdf(wi[1]);
@@ -42,20 +42,18 @@ namespace metatron::bsdf {
 		return Interaction{f, wi, pdf};
 	}
 
-	auto Lambertian_Bsdf::clone(Attribute const& attr) const -> std::unique_ptr<Bsdf> {
-		auto bsdf = std::make_unique<Lambertian_Bsdf>();
-		bsdf->spectrum = attr.spectra.at("spectrum");
-		bsdf->reflectance = attr.spectra.count("reflectance") > 0
+	auto Lambertian_Bsdf::configure(Attribute const& attr) noexcept -> void {
+		spectrum = attr.spectra.at("spectrum");
+		reflectance = attr.spectra.count("reflectance") > 0
 		? attr.spectra.at("reflectance")
-		: bsdf->spectrum & spectra::Constant_Spectrum{0.f};
-		return bsdf;
+		: spectrum & spectra::Spectrum::spectra["zero"];
 	}
 
-	auto Lambertian_Bsdf::flags() const -> Flags {
+	auto Lambertian_Bsdf::flags() const noexcept -> Flags {
 		return Flags::reflective;
 	}
 
-	auto Lambertian_Bsdf::degrade() -> bool {
+	auto Lambertian_Bsdf::degrade() noexcept -> bool {
 		return false;
 	}
 }

@@ -8,7 +8,7 @@
 #include <cassert>
 #include <cmath>
 
-namespace metatron::math {
+namespace mtt::math {
 	// forward declaration to support the declaration of 0d matrix
 	template<typename T, usize... dims>
 	struct Matrix;
@@ -19,10 +19,10 @@ namespace metatron::math {
 		using Element = std::conditional_t<sizeof...(rest_dims) == 0, T, Matrix<T, rest_dims...>>;
 		auto static constexpr dimensions = std::array<usize, 1 + sizeof...(rest_dims)>{first_dim, rest_dims...};
 
-		Matrix() = default;
+		Matrix() noexcept = default;
 
 		// directly use Element instead of template type to enable auto inference
-		constexpr Matrix(std::initializer_list<Element const> initializer_list) {
+		constexpr Matrix(std::initializer_list<Element const> initializer_list) noexcept {
 			if (initializer_list.size() > 1) {
 				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), data.begin());
 			} else {
@@ -35,7 +35,7 @@ namespace metatron::math {
 		// make convertible elements accepatable by 1d matrix intialization
 		template<typename E>
 		requires (dimensions.size() == 1uz && std::is_convertible_v<E, Element>)
-		constexpr Matrix(std::initializer_list<E const> initializer_list) {
+		constexpr Matrix(std::initializer_list<E const> initializer_list) noexcept {
 			if (initializer_list.size() > 1) {
 				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), data.begin());
 			} else {
@@ -47,7 +47,7 @@ namespace metatron::math {
 
 		template<typename E>
 		requires std::is_convertible_v<E, Element>
-		constexpr Matrix(std::span<E const> initializer_list)
+		constexpr Matrix(std::span<E const> initializer_list) noexcept
 		{
 			if (initializer_list.size() > 1) {
 				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), data.begin());
@@ -60,7 +60,7 @@ namespace metatron::math {
 
 		template<typename U>
 		requires std::is_convertible_v<U, T>
-		explicit constexpr Matrix(U&& scalar) {
+		explicit constexpr Matrix(U&& scalar) noexcept {
 			if constexpr (dimensions.size() == 1) {
 				data.fill(scalar);
 			} else if constexpr (dimensions.size() == 2) {
@@ -81,7 +81,7 @@ namespace metatron::math {
 			&& dimensions.size() > 1
 			&& sizeof...(Args) <= std::min(*(dimensions.end() - 2), *(dimensions.end() - 1))
 		)
-		explicit constexpr Matrix(Args&&... args) {
+		explicit constexpr Matrix(Args&&... args) noexcept {
 			if constexpr (dimensions.size() > 2) {
 				for (auto& line: data) {
 					line = {args...};
@@ -98,7 +98,7 @@ namespace metatron::math {
 			&& std::is_convertible_v<U, T>
 			&& (std::is_convertible_v<Args, Element> && ...)
 		)
-		constexpr Matrix(Matrix<U, rhs_first_dim, rest_dims...> const& rhs, Args&&... rest) {
+		constexpr Matrix(Matrix<U, rhs_first_dim, rest_dims...> const& rhs, Args&&... rest) noexcept {
 			*this = rhs;
 			if constexpr (first_dim > rhs_first_dim) {
 				[this, &rest...]<usize... idxs>(std::index_sequence<idxs...>) {
@@ -112,7 +112,7 @@ namespace metatron::math {
 			&& std::is_convertible_v<U, T>
 			&& (std::is_convertible_v<Args, Element> && ...)
 		)
-		constexpr Matrix(Matrix<U, rhs_first_dim, rest_dims...>&& rhs, Args&&... rest) {
+		constexpr Matrix(Matrix<U, rhs_first_dim, rest_dims...>&& rhs, Args&&... rest) noexcept {
 			*this = std::move(rhs);
 			if constexpr (first_dim > rhs_first_dim) {
 				[this, &rest...]<usize... idxs>(std::index_sequence<idxs...>) {
@@ -125,7 +125,7 @@ namespace metatron::math {
 		constexpr Matrix(
 			Matrix<T, rhs_first_dim0, rest_dims...> const& rhs0,
 			Matrix<T, rhs_first_dim1, rest_dims...> const& rhs1
-		) {
+		) noexcept {
 			*this = rhs0;
 			if constexpr (first_dim > rhs_first_dim0) {
 				std::copy_n(rhs1.data.begin(), std::min(first_dim, rhs_first_dim1) - rhs_first_dim0, data.begin() + rhs_first_dim0);
@@ -147,7 +147,7 @@ namespace metatron::math {
 		requires true
 			&& std::is_convertible_v<U, T>
 			&& (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
-		auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...> const& rhs) -> Matrix& {
+		auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...> const& rhs) noexcept -> Matrix& {
 			std::copy_n(rhs.data.begin(), std::min(first_dim, rhs_first_dim), data.begin());
 			return *this;
 		}
@@ -156,16 +156,16 @@ namespace metatron::math {
 		requires true
 			&& std::is_convertible_v<U, T>
 			&& (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
-		auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...>&& rhs) -> Matrix& {
+		auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...>&& rhs) noexcept -> Matrix& {
 			std::move(rhs.data.begin(), rhs.data.begin() + std::min(first_dim, rhs_first_dim), data.begin());
 			return *this;
 		}
 
-		auto constexpr operator[](usize idx) -> Element& {
+		auto constexpr operator[](usize idx) noexcept -> Element& {
 			return data[idx];
 		}
 
-		auto constexpr operator[](usize idx) const -> Element const& {
+		auto constexpr operator[](usize idx) const noexcept -> Element const& {
 			return data[idx];
 		}
 
@@ -185,19 +185,19 @@ namespace metatron::math {
 				|| i32(l_n) - i32(r_n) < 2
 				|| i32(r_n) - i32(l_n) < 2
 			) // clangd could not use math::abs
-			&& []() -> bool {
+			&& []() noexcept -> bool {
 				return std::equal(
 					lds.begin(), lds.begin() + higher_n,
 					rds.begin(), rds.begin() + higher_n
 				);
 			}()
-			&& []() -> bool {
+			&& []() noexcept -> bool {
 				return lds[higher_n + (l_n > 1 ? 1 : 0)] == rds[higher_n];
 			}()
 		)
 		auto constexpr operator|(
 			Matrix<T, rhs_dims...> const& rhs
-		) const {
+		) const noexcept {
 			using Product_Matrix = decltype([]<usize... dims>(std::index_sequence<dims...>) {
 				return Matrix<T, (
 					dims < higher_n ? lds[dims] : 
@@ -241,7 +241,7 @@ namespace metatron::math {
 			return product;
 		}
 
-		auto constexpr operator+(Matrix const& rhs) const -> Matrix {
+		auto constexpr operator+(Matrix const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = data[i] + rhs[i];
@@ -249,12 +249,12 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto constexpr operator+=(Matrix const& rhs) -> Matrix& {
+		auto constexpr operator+=(Matrix const& rhs) noexcept -> Matrix& {
 			*this = *this + rhs;
 			return *this;
 		}
 
-		auto constexpr operator+(T const& rhs) const -> Matrix {
+		auto constexpr operator+(T const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = data[i] + rhs;
@@ -262,16 +262,16 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto constexpr operator+=(T const& rhs) -> Matrix& {
+		auto constexpr operator+=(T const& rhs) noexcept -> Matrix& {
 			*this = *this + rhs;
 			return *this;
 		}
 
-		auto constexpr operator+() -> Matrix {
+		auto constexpr operator+() noexcept -> Matrix {
 			return *this;
 		}
 
-		auto constexpr operator-(Matrix const& rhs) const -> Matrix {
+		auto constexpr operator-(Matrix const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = data[i] - rhs[i];
@@ -279,12 +279,12 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto constexpr operator-=(Matrix const& rhs) -> Matrix& {
+		auto constexpr operator-=(Matrix const& rhs) noexcept -> Matrix& {
 			*this = *this - rhs;
 			return *this;
 		}
 
-		auto constexpr operator-(T const& rhs) const -> Matrix {
+		auto constexpr operator-(T const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = data[i] - rhs;
@@ -292,12 +292,12 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto constexpr operator-=(T const& rhs) -> Matrix& {
+		auto constexpr operator-=(T const& rhs) noexcept -> Matrix& {
 			*this = *this - rhs;
 			return *this;
 		}
 
-		auto constexpr operator-() const -> Matrix {
+		auto constexpr operator-() const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = -data[i];
@@ -305,7 +305,7 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto constexpr operator*(Matrix const& rhs) const -> Matrix {
+		auto constexpr operator*(Matrix const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = data[i] * rhs[i];
@@ -313,12 +313,12 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto constexpr operator*=(Matrix const& rhs) -> Matrix& {
+		auto constexpr operator*=(Matrix const& rhs) noexcept -> Matrix& {
 			*this = *this * rhs;
 			return *this;
 		}
 
-		auto constexpr operator*(T const& rhs) const -> Matrix {
+		auto constexpr operator*(T const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = data[i] * rhs;
@@ -326,12 +326,12 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto constexpr operator*=(T const& rhs) -> Matrix& {
+		auto constexpr operator*=(T const& rhs) noexcept -> Matrix& {
 			*this = *this * rhs;
 			return *this;
 		}
 
-		auto constexpr operator/(Matrix const& rhs) const -> Matrix {
+		auto constexpr operator/(Matrix const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = math::guarded_div(data[i], rhs[i]);
@@ -339,12 +339,12 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto constexpr operator/=(Matrix const& rhs) -> Matrix& {
+		auto constexpr operator/=(Matrix const& rhs) noexcept -> Matrix& {
 			*this = *this / rhs;
 			return *this;
 		}
 
-		auto constexpr operator/(T const& rhs) const -> Matrix {
+		auto constexpr operator/(T const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
 				result[i] = math::guarded_div(data[i], rhs);
@@ -352,7 +352,7 @@ namespace metatron::math {
 			return result;
 		}
 
-		auto constexpr operator/=(T const& rhs) -> Matrix& {
+		auto constexpr operator/=(T const& rhs) noexcept -> Matrix& {
 			*this = *this / rhs;
 			return *this;
 		}
@@ -364,13 +364,13 @@ namespace metatron::math {
 		};
 
 		template<usize idx>
-		auto constexpr get() const -> Element const& {
+		auto constexpr get() const noexcept -> Element const& {
 			static_assert(idx < first_dim, "index out of bounds");
 			return data[idx];
 		}
 
 		template<usize idx>
-		auto constexpr get() -> Element& {
+		auto constexpr get() noexcept -> Element& {
 			static_assert(idx < first_dim, "index out of bounds");
 			return data[idx];
 		}
@@ -383,39 +383,39 @@ namespace metatron::math {
 	};
 
 	template<typename T, usize... dims>
-	auto constexpr operator+(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
+	auto constexpr operator+(T const& lhs, Matrix<T, dims...> const& rhs) noexcept -> Matrix<T, dims...> {
 		return rhs + lhs;
 	}
 
 	template<typename T, usize... dims>
-	auto constexpr operator-(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
+	auto constexpr operator-(T const& lhs, Matrix<T, dims...> const& rhs) noexcept -> Matrix<T, dims...> {
 		return -rhs + lhs;
 	}
 
 	template<typename T, usize... dims>
-	auto constexpr operator*(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
+	auto constexpr operator*(T const& lhs, Matrix<T, dims...> const& rhs) noexcept -> Matrix<T, dims...> {
 		return rhs * lhs;
 	}
 
 	template<typename T, usize... dims>
-	auto constexpr operator/(T const& lhs, Matrix<T, dims...> const& rhs) -> Matrix<T, dims...> {
+	auto constexpr operator/(T const& lhs, Matrix<T, dims...> const& rhs) noexcept -> Matrix<T, dims...> {
 		return Matrix<T, dims...>{lhs} / rhs;
 	}
 
 	template<usize idx, typename T, usize first_dim, usize... rest_dims>
 	auto constexpr get(Matrix<T, first_dim, rest_dims...> const& m) 
-		-> typename Matrix<T, first_dim, rest_dims...>::Element const& {
+		noexcept -> typename Matrix<T, first_dim, rest_dims...>::Element const& {
 		return m.template get<idx>();
 	}
 
 	template<usize idx, typename T, usize first_dim, usize... rest_dims>
 	auto constexpr get(Matrix<T, first_dim, rest_dims...>& m) 
-		-> typename Matrix<T, first_dim, rest_dims...>::Element& {
+		noexcept -> typename Matrix<T, first_dim, rest_dims...>::Element& {
 		return m.template get<idx>();
 	}
 
 	template<typename T, usize h, usize w>
-	auto constexpr transpose(Matrix<T, h, w> const& m) -> Matrix<T, w, h> {
+	auto constexpr transpose(Matrix<T, h, w> const& m) noexcept -> Matrix<T, w, h> {
 		auto result = Matrix<T, w, h>{};
 		for (auto i = 0; i < w; i++) {
 			for (auto j = 0; j < h; j++) {
@@ -427,7 +427,7 @@ namespace metatron::math {
 
 	template<typename T, usize n>
 	requires std::floating_point<T>
-	auto constexpr determinant(Matrix<T, n, n> const& m) -> T {
+	auto constexpr determinant(Matrix<T, n, n> const& m) noexcept -> T {
 		if constexpr (n == 1) {
 			return m[0][0];
 		} else if constexpr (n == 2) {
@@ -476,7 +476,7 @@ namespace metatron::math {
 
 	template<typename T, usize h>
 	requires std::floating_point<T>
-	auto constexpr inverse(Matrix<T, h, h> const& m) -> Matrix<T, h, h> {
+	auto constexpr inverse(Matrix<T, h, h> const& m) noexcept -> Matrix<T, h, h> {
 		auto augmented = Matrix<T, h, h * 2>{};
 		for (usize i = 0; i < h; i++) {
 			for (usize j = 0; j < h; j++) {
@@ -525,7 +525,7 @@ namespace metatron::math {
 
 	template<typename T, usize h, usize w>
 	requires std::floating_point<T>
-	auto constexpr least_squares(Matrix<T, h, w> const& a, Matrix<T, h> const& b) -> Matrix<T, w> {
+	auto constexpr least_squares(Matrix<T, h, w> const& a, Matrix<T, h> const& b) noexcept -> Matrix<T, w> {
 		auto a_t = math::transpose(a);
 		return math::inverse(a_t | a) | (a_t | b);
 	}
@@ -535,7 +535,7 @@ namespace metatron::math {
 	auto constexpr cramer(
 		Matrix<T, n, n> const& a, 
 		Matrix<T, n> const& b
-	) -> std::optional<Matrix<T, n>> {
+	) noexcept -> std::optional<Matrix<T, n>> {
 		T det_a = determinant(a);
 		if (math::abs(det_a) < epsilon<T>) {
 			return {};
@@ -558,7 +558,7 @@ namespace metatron::math {
 	auto constexpr cramer(
 		Matrix<T, n, n> const& a, 
 		Matrix<T, n, m> const& b
-	) -> std::optional<Matrix<T, n, m>> {
+	) noexcept -> std::optional<Matrix<T, n, m>> {
 		T det_a = determinant(a);
 		if (math::abs(det_a) < 1e-12f) {
 			return {};
@@ -585,7 +585,7 @@ namespace metatron::math {
 }
 
 namespace std {
-	using namespace metatron;
+	using namespace mtt;
 
 	template<typename T, usize first_dim, usize... rest_dims>
 	struct tuple_size<math::Matrix<T, first_dim, rest_dims...>> 

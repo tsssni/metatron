@@ -5,14 +5,14 @@
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/optional.hpp>
 
-namespace metatron::monte_carlo {
+namespace mtt::monte_carlo {
 	auto Volume_Path_Integrator::sample(
 		Status initial_status,
-		accel::Acceleration const& accel,
-		emitter::Emitter const& emitter,
-		math::Sampler const& sampler
-	) const -> std::optional<spectra::Stochastic_Spectrum> {
-		auto lambda_u = sampler.generate_1d();
+		view<accel::Acceleration> accel,
+		view<emitter::Emitter> emitter,
+		view<math::Sampler> sampler
+	) const noexcept -> std::optional<spectra::Stochastic_Spectrum> {
+		auto lambda_u = sampler->generate_1d();
 		auto emission = spectra::Stochastic_Spectrum{lambda_u};
 		auto beta = emission; beta = 1.f;
 		auto mis_s = emission; mis_s = 1.f;
@@ -27,8 +27,8 @@ namespace metatron::monte_carlo {
 		auto scatter_pdf = 0.f;
 		auto scatter_f = emission;
 
-		auto bsdf = std::unique_ptr<bsdf::Bsdf>{};
-		auto phase = std::unique_ptr<phase::Phase_Function>{};
+		auto bsdf = poly<bsdf::Bsdf>{};
+		auto phase = poly<phase::Phase_Function>{};
 		auto trace_ctx = eval::Context{};
 		auto history_ctx = eval::Context{};
 		trace_ctx.r = initial_status.ray_differential.r;
@@ -50,7 +50,7 @@ namespace metatron::monte_carlo {
 
 			auto q = spectra::max(beta * math::guarded_div(1.f, spectra::avg(mis_s)));
 			if (q < 1.f && depth > 1uz) {
-				auto rr_u = sampler.generate_1d();
+				auto rr_u = sampler->generate_1d();
 				if (rr_u > q) {
 					terminated = true;
 					continue;
@@ -65,11 +65,11 @@ namespace metatron::monte_carlo {
 				}
 
 				auto direct_ctx = trace_ctx;
-				METATRON_OPT_OR_RETURN(e_intr, emitter.sample(direct_ctx, sampler.generate_1d()));
+				MTT_OPT_OR_RETURN(e_intr, emitter->sample(direct_ctx, sampler->generate_1d()));
 				auto& et = *e_intr.divider->local_to_world;
 
 				auto l_ctx = et ^ rt ^ direct_ctx;
-				METATRON_OPT_OR_RETURN(l_intr, e_intr.divider->light->sample(l_ctx, sampler.generate_2d()));
+				MTT_OPT_OR_RETURN(l_intr, e_intr.divider->light->sample(l_ctx, sampler->generate_2d()));
 
 				l_intr.p = rt | et | math::expand(l_intr.p, 1.f);
 				l_intr.wi = math::normalize(rt | et | math::expand(l_intr.wi, 0.f));
@@ -84,16 +84,16 @@ namespace metatron::monte_carlo {
 
 				if (direct_ctx.n != math::Vector<f32, 3>{0.f}) {
 					auto flip_n = math::dot(-history_ctx.r.d, direct_ctx.n) < 0.f ? -1.f : 1.f;
-					auto t = math::Transform{{}, {1.f},
+					auto t = math::Transform{math::Matrix<f32, 4, 4>{
 						math::Quaternion<f32>::from_rotation_between(flip_n * direct_ctx.n, {0.f, 1.f, 0.f})
-					};
+					}};
 					auto wo = t | math::expand(history_ctx.r.d, 0.f);
 					auto wi = t | math::expand(l_intr.wi, 0.f);
-					METATRON_OPT_OR_RETURN(b_intr, (*bsdf)(wo, wi));
+					MTT_OPT_OR_RETURN(b_intr, (*bsdf)(wo, wi));
 					f = b_intr.f * math::abs(math::dot(l_intr.wi, direct_ctx.n));
 					p_s = b_intr.pdf;
 				} else {
-					METATRON_OPT_OR_RETURN(p_intr, (*phase)(history_ctx.r.d, l_intr.wi));
+					MTT_OPT_OR_RETURN(p_intr, (*phase)(history_ctx.r.d, l_intr.wi));
 					f = p_intr.f;
 					p_s = p_intr.pdf;
 				}
@@ -105,7 +105,7 @@ namespace metatron::monte_carlo {
 				auto dedium = medium;
 				auto direct_to_world = medium_to_world;
 				auto gamma = beta * (f / p_e) / (scatter_f / scatter_pdf);
-				auto mis_d = mis_s * p_s / p_e * f32(!(e_intr.divider->light->flags() & light::Light::delta));
+				auto mis_d = mis_s * p_s / p_e * f32(!(e_intr.divider->light->flags() & light::Flags::delta));
 				auto mis_l = mis_s;
 
 				while (true) {
@@ -115,7 +115,7 @@ namespace metatron::monte_carlo {
 
 					if (spectra::max(gamma * math::guarded_div(1.f, spectra::avg(mis_d + mis_l))) < 0.05f) {
 						auto q = 0.25f;
-						if (sampler.generate_1d() > q) {
+						if (sampler->generate_1d() > q) {
 							gamma = 0.f;
 							termenated = true;
 							continue;
@@ -125,7 +125,7 @@ namespace metatron::monte_carlo {
 					}
 
 					if (crommed) {
-						amm_opt = accel(direct_ctx.r, direct_ctx.n);
+						amm_opt = (*accel)(direct_ctx.r, direct_ctx.n);
 						if (!amm_opt) {
 							termenated = true;
 							continue;
@@ -148,23 +148,23 @@ namespace metatron::monte_carlo {
 						imtr.n *= direct_ctx.inside ? -1.f : 1.f;
 
 						auto close_to_light = math::length(imtr.p - l_intr.p) < 0.001f;
-						if (!close_to_light && !(dim.material->bsdf->flags() & bsdf::Bsdf::interface)) {
+						if (!close_to_light && !(dim.material->bsdf->flags() & bsdf::Flags::interface)) {
 							termenated = true;
 							gamma = 0.f;
 							continue;
 						} else if (close_to_light) {
 							auto rd = ct ^ ddiff;
-							auto st = math::Transform{{}, {1.f},
+							auto st = math::Transform{math::Matrix<f32, 4, 4>{
 								math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(imtr.p))
-							};
+							}};
 							rd = st | rd;
 
 							auto ldiff = lt ^ rt ^ rd;
 							auto tangent = shape::Plane{imtr.p, imtr.n};
-							METATRON_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, imtr), {
+							MTT_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, imtr), {
 								termenated = true; gamma = 0.f; continue;
 							});
-							METATRON_OPT_OR_CALLBACK(mat_intr, dim.material->sample(direct_ctx, tcoord), {
+							MTT_OPT_OR_CALLBACK(mat_intr, dim.material->sample(direct_ctx, tcoord), {
 								termenated = true; gamma = 0.f; continue;
 							});
 							l_intr.L = mat_intr.emission;
@@ -177,7 +177,7 @@ namespace metatron::monte_carlo {
 
 					auto& mt = *direct_to_world;
 					auto m_ctx = mt ^ rt ^ direct_ctx;
-					METATRON_OPT_OR_CALLBACK(m_intr, dedium->sample(m_ctx, imtr.t, sampler.generate_1d()), {
+					MTT_OPT_OR_CALLBACK(m_intr, dedium->sample(m_ctx, imtr.t, sampler->generate_1d()), {
 						gamma = 0.f;
 						termenated = true;
 						break;
@@ -209,17 +209,17 @@ namespace metatron::monte_carlo {
 			}();
 
 			if (scattered || crossed) {
-				acc_opt = accel(trace_ctx.r, trace_ctx.n);
+				acc_opt = (*accel)(trace_ctx.r, trace_ctx.n);
 			}
 
 			if (!acc_opt || !acc_opt.value().intr_opt) {
 				terminated = true;
 
-				METATRON_OPT_OR_CONTINUE(e_intr, emitter.sample_infinite(trace_ctx, sampler.generate_1d()));
+				MTT_OPT_OR_CONTINUE(e_intr, emitter->sample_infinite(trace_ctx, sampler->generate_1d()));
 				auto& lt = *e_intr.divider->local_to_world;
 
 				auto l_ctx = lt ^ rt ^ trace_ctx;
-				METATRON_OPT_OR_CONTINUE(l_intr, (*e_intr.divider->light)(l_ctx));
+				MTT_OPT_OR_CONTINUE(l_intr, (*e_intr.divider->light)(l_ctx));
 
 				auto p_e = e_intr.pdf * l_intr.pdf;
 				mis_e *= math::guarded_div(p_e, scatter_pdf);
@@ -247,7 +247,7 @@ namespace metatron::monte_carlo {
 
 			auto& mt = *medium_to_world;
 			auto m_ctx = mt ^ rt ^ trace_ctx;
-			METATRON_OPT_OR_CALLBACK(m_intr, medium->sample(m_ctx, intr.t, sampler.generate_1d()), {
+			MTT_OPT_OR_CALLBACK(m_intr, medium->sample(m_ctx, intr.t, sampler->generate_1d()), {
 				terminated = true;
 				continue;
 			});
@@ -261,25 +261,25 @@ namespace metatron::monte_carlo {
 
 			if (!hit) {
 				auto mis_a = math::guarded_div(1.f, spectra::avg(mis_s));
-				emission += mis_a * beta * m_intr.sigma_a * m_intr.L;
+				emission += mis_a * beta * m_intr.sigma_a * m_intr.sigma_e;
 
 				auto p_a = math::guarded_div(m_intr.sigma_a.value[0], m_intr.sigma_maj.value[0]);
 				auto p_s = math::guarded_div(m_intr.sigma_s.value[0], m_intr.sigma_maj.value[0]);
 				auto p_n = math::guarded_div(m_intr.sigma_n.value[0], m_intr.sigma_maj.value[0]);
 
-				auto u = sampler.generate_1d();
+				auto u = sampler->generate_1d();
 				auto mode = math::Discrete_Distribution{{p_a, p_s, p_n}}.sample(u);
 				if (mode == 0uz) {
 					beta *= m_intr.sigma_a / p_a;
 					terminated = true;
 				} else if (mode == 1uz) {
 					phase = std::move(m_intr.phase);
-					auto pt = math::Transform{{}, {1.f},
+					auto pt = math::Transform{math::Matrix<f32, 4, 4>{
 						math::Quaternion<f32>::from_rotation_between(-trace_ctx.r.d, {0.f, 1.f, 0.f})
-					};
+					}};
 
 					auto p_ctx = pt | trace_ctx;
-					METATRON_OPT_OR_CALLBACK(p_intr, phase->sample(p_ctx, sampler.generate_2d()), {
+					MTT_OPT_OR_CALLBACK(p_intr, phase->sample(p_ctx, sampler->generate_2d()), {
 						terminated = true;
 						continue;
 					});
@@ -310,23 +310,23 @@ namespace metatron::monte_carlo {
 
 			if (!rdiff.differentiable) {
 				auto rd = ct ^ ddiff;
-				auto st = math::Transform{{}, {1.f},
+				auto st = math::Transform{math::Matrix<f32, 4, 4>{
 					math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(intr.p))
-				};
+				}};
 				rdiff = st | rd;
 			}
 			rdiff.differentiable = false;
 			auto ldiff = lt ^ rt ^ rdiff;
 
-			METATRON_OPT_OR_BREAK(tcoord, texture::grad(ldiff, intr));
-			METATRON_OPT_OR_BREAK(mat_intr, div->material->sample(trace_ctx, tcoord));
+			MTT_OPT_OR_BREAK(tcoord, texture::grad(ldiff, intr));
+			MTT_OPT_OR_BREAK(mat_intr, div->material->sample(trace_ctx, tcoord));
 
 			[&]() {
 				if (spectra::max(mat_intr.emission) < math::epsilon<f32>) {
 					return;
 				}
 
-				METATRON_OPT_OR_RETURN(e_intr, emitter(trace_ctx, {div->light, div->local_to_world}));
+				MTT_OPT_OR_RETURN(e_intr, (*emitter)(trace_ctx, {div->light, div->local_to_world}));
 				auto& div = *e_intr.divider;
 				auto& lt = *div.local_to_world;
 
@@ -346,14 +346,14 @@ namespace metatron::monte_carlo {
 			}
 
 			bsdf = std::move(mat_intr.bsdf);
-			auto bt = math::Transform{{}, {1.f},
+			auto bt = math::Transform{math::Matrix<f32, 4, 4>{
 				math::Quaternion<f32>::from_rotation_between(intr.n, {0.f, 1.f, 0.f})
-			};
-			auto uc = sampler.generate_1d();
-			auto u = sampler.generate_2d();
+			}};
+			auto uc = sampler->generate_1d();
+			auto u = sampler->generate_2d();
 
 			auto b_ctx = bt | trace_ctx;
-			METATRON_OPT_OR_CALLBACK(b_intr, bsdf->sample(b_ctx, {uc, u[0], u[1]}), {
+			MTT_OPT_OR_CALLBACK(b_intr, bsdf->sample(b_ctx, {uc, u[0], u[1]}), {
 				terminated = true;
 				continue;
 			});

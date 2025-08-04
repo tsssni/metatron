@@ -5,7 +5,7 @@
 #include <metatron/core/math/ray.hpp>
 #include <vector>
 
-namespace metatron::math {
+namespace mtt::math {
 	template<typename T>
     concept Transformable = false
 	|| std::is_same_v<std::remove_cvref_t<T>, Vector<f32, 4>>
@@ -14,22 +14,14 @@ namespace metatron::math {
 	|| std::is_same_v<std::remove_cvref_t<T>, Ray_Differential>;
 
 	struct Transform final {
-		struct Config final {
-			Vector<f32, 3> translation{};
-			Vector<f32, 3> scaling{1.f};
-			Quaternion<f32> rotation{0.f, 0.f, 0.f, 1.f};
-
-			auto operator<=>(Config const& rhs) const = default;
-		} config;
-
 		struct Chain final {
-			auto operator|(Transform const& t) -> Chain& {
+			auto operator|(Transform const& t) noexcept -> Chain& {
 				store(t);
 				ops.push_back(0);
 				return *this;
 			}
 
-			auto operator^(Transform const& t) -> Chain& {
+			auto operator^(Transform const& t) noexcept -> Chain& {
 				store(t);
 				ops.push_back(1);
 				return *this;
@@ -64,12 +56,12 @@ namespace metatron::math {
 				store(t);
 			}
 
-			auto store(Transform const& t) -> void {
+			auto store(Transform const& t) noexcept -> void {
 				transforms.push_back(&t);
 			}
 
 			template<Transformable T, typename Type = std::remove_cvref_t<T>>
-			auto dechain(T const& rhs) -> Type {
+			auto dechain(T const& rhs) noexcept -> Type {
 				auto ret = rhs;
 				for (auto i = i32(transforms.size()) - 1; i >= 0; i--) {
 					if (ops[i] == 0) {
@@ -88,32 +80,12 @@ namespace metatron::math {
 			friend Transform;
 		};
 
-		mutable Matrix<f32, 4, 4> transform;
-		mutable Matrix<f32, 4, 4> inv_transform;
+		Matrix<f32, 4, 4> transform;
+		Matrix<f32, 4, 4> inv_transform;
 
-		Transform(
-			Vector<f32, 3> translation = {},
-			Vector<f32, 3> scaling = {1.f},
-			Quaternion<f32> rotation = {0.f, 0.f, 0.f, 1.f}
-		): config(translation, scaling, rotation) {
-			update();
-		}
-
-		auto update() const -> void {
-			auto translation = math::Matrix<f32, 4, 4>{
-				{1.f, 0.f, 0.f, config.translation[0]},
-				{0.f, 1.f, 0.f, config.translation[1]},
-				{0.f, 0.f, 1.f, config.translation[2]},
-				{0.f, 0.f, 0.f, 1.f}
-			};
-			auto scaling = math::Matrix<f32, 4, 4>{
-				config.scaling[0], config.scaling[1], config.scaling[2], 1.f
-			};
-			auto rotation = math::Matrix<f32, 4, 4>{config.rotation};
-
-			transform = translation | rotation | scaling;
-			inv_transform = math::inverse(transform);
-		}
+		Transform() = default;
+		explicit Transform(Matrix<f32, 4, 4> const& m)
+		: transform(m), inv_transform(math::inverse(m)) {}
 
 		explicit operator Matrix<f32, 4, 4>() const {
 			return transform;
@@ -139,7 +111,7 @@ namespace metatron::math {
 			}
 		}
 
-		auto operator|(Transform const& rhs) const -> Chain {
+		auto operator|(Transform const& rhs) const noexcept -> Chain {
 			return std::move(Chain{*this} | rhs);
 		}
 
@@ -165,8 +137,15 @@ namespace metatron::math {
 
 		template<typename T>
 		requires std::is_same_v<std::remove_cvref_t<T>, Transform>
-		auto operator^(T&& rhs) const -> Chain {
+		auto operator^(T&& rhs) const noexcept -> Chain {
 			return std::move(Chain{*this} ^ rhs);
 		}
 	};
+
+	auto inline inverse(math::Transform const& t) -> math::Transform {
+		auto inv_t = math::Transform{};
+		inv_t.transform = t.inv_transform;
+		inv_t.inv_transform = t.transform;
+		return inv_t;
+	}
 }

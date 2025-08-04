@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/core/stl/singleton.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <thread>
 #include <atomic>
@@ -7,9 +8,9 @@
 #include <functional>
 #include <stack>
 
-namespace metatron::stl {
-	struct Dispatcher final {
-		Dispatcher(usize num_threads = std::thread::hardware_concurrency() - 1uz) {
+namespace mtt::stl {
+	struct scheduler final: singleton<scheduler> {
+		scheduler(usize num_threads = std::thread::hardware_concurrency() - 1uz) noexcept {
 			threads.reserve(num_threads);
 			for (auto i = 0; i < num_threads; ++i) {
 				threads.emplace_back([this]() {
@@ -29,7 +30,7 @@ namespace metatron::stl {
 			}
 		}
 
-		~Dispatcher() {
+		~scheduler() noexcept {
 			{
 				auto lock = std::lock_guard{mutex};
 				stop = true;
@@ -40,17 +41,12 @@ namespace metatron::stl {
 			}
 		}
 
-		auto static instance() -> Dispatcher& {
-			auto static dispatcher = Dispatcher{};
-			return dispatcher;
-		}
-
 		template<typename F, usize size>
 		requires (std::is_invocable_v<F, math::Vector<usize, size>> && size >= 1 && size <= 3)
 		auto sync_parallel(
 			math::Vector<usize, size> const& grid,
 			F&& f
-		) -> void {
+		) noexcept -> void {
 			auto future = parallel(grid, std::forward<F>(f), true);
 			future.wait();
 		}
@@ -60,7 +56,7 @@ namespace metatron::stl {
 		auto async_parallel(
 			math::Vector<usize, size> const& grid,
 			F&& f
-		) -> std::shared_future<void> {
+		) noexcept -> std::shared_future<void> {
 			return parallel(grid, std::forward<F>(f), false);
 		}
 
@@ -72,7 +68,7 @@ namespace metatron::stl {
 		auto async_dispatch(
 			math::Vector<usize, size> const& grid,
 			F&& f
-		) {
+		) noexcept {
 			using R = std::invoke_result_t<F, math::Vector<usize, size>>;
 			auto promise = std::make_shared<std::promise<R>>();
 			auto future = promise->get_future().share();
@@ -106,7 +102,7 @@ namespace metatron::stl {
 			math::Vector<usize, size> const& grid,
 			F&& f,
 			bool sync
-		) -> std::shared_future<void> {
+		) noexcept -> std::shared_future<void> {
 			auto promise = std::make_shared<std::promise<void>>();
 			auto future = promise->get_future().share();
 			auto n = math::prod(grid);

@@ -10,7 +10,7 @@
 #include <nanovdb/math/Ray.h>
 #include <string_view>
 
-namespace metatron::media {
+namespace mtt::media {
 	template<typename T, usize n>
 	auto to_nanovdb(math::Vector<T, n> x) {
 		if constexpr (n == 3) {
@@ -34,10 +34,12 @@ namespace metatron::media {
 	using Nanovdb_Sampler = nanovdb::math::SampleFromVoxels<nanovdb::NanoTree<T>, 1, false>;
 
 	template<typename T, usize x, usize y, usize z>
-	struct Nanovdb_Grid final: math::Grid<f32, x, y, z> {
+	struct Nanovdb_Grid final {
+		auto static constexpr dimensions = math::Vector<usize, 3>{x, y, z};
+
 		Nanovdb_Grid(
 			std::string_view path
-		):
+		) noexcept:
 		handle(nanovdb::io::readGrid(std::string{path})),
 		nanovdb_grid(handle.grid<T>()),
 		sampler(nanovdb_grid->tree()),
@@ -48,7 +50,7 @@ namespace metatron::media {
 			))
 		) {
 			auto& root = nanovdb_grid->tree().root();
-			stl::Dispatcher::instance().sync_parallel(
+			stl::scheduler::instance().sync_parallel(
 				majorant_grid.dimensions,
 				[&](math::Vector<usize, 3> const& xyz) {
 					auto ijk = math::Vector<i32, 3>{xyz};
@@ -72,23 +74,23 @@ namespace metatron::media {
 			);
 		}
 
-		auto virtual to_local(math::Vector<i32, 3> const& ijk) const -> math::Vector<f32, 3> { return majorant_grid.to_local(ijk); }
-		auto virtual to_index(math::Vector<f32, 3> const& pos) const -> math::Vector<i32, 3> { return majorant_grid.to_index(pos); }
-		auto virtual bounding_box() const -> math::Bounding_Box { return majorant_grid.bounding_box(); }
-		auto virtual bounding_box(math::Vector<f32, 3> const& pos) const -> math::Bounding_Box { return majorant_grid.bounding_box(pos); }
-		auto virtual bounding_box(math::Vector<i32, 3> const& ijk) const -> math::Bounding_Box { return majorant_grid.bounding_box(ijk); }
+		auto to_local(math::Vector<i32, 3> const& ijk) const noexcept -> math::Vector<f32, 3> { return majorant_grid.to_local(ijk); }
+		auto to_index(math::Vector<f32, 3> const& pos) const noexcept -> math::Vector<i32, 3> { return majorant_grid.to_index(pos); }
+		auto bounding_box() const noexcept -> math::Bounding_Box { return majorant_grid.bounding_box(); }
+		auto bounding_box(math::Vector<f32, 3> const& pos) const noexcept -> math::Bounding_Box { return majorant_grid.bounding_box(pos); }
+		auto bounding_box(math::Vector<i32, 3> const& ijk) const noexcept -> math::Bounding_Box { return majorant_grid.bounding_box(ijk); }
 
-		auto virtual operator()(math::Vector<f32, 3> const& pos) const -> T {
+		auto operator()(math::Vector<f32, 3> const& pos) const noexcept -> T {
 			return sampler(nanovdb_grid->worldToIndex(to_nanovdb(pos)));
 		}
-		auto virtual operator[](math::Vector<i32, 3> const& ijk) -> T& {
+		auto operator[](math::Vector<i32, 3> const& ijk) noexcept -> T& {
 			if (ijk == clamp(ijk, math::Vector<i32, 3>{0}, math::Vector<i32, 3>{x - 1, y - 1, z - 1})) {
 				return majorant_grid[ijk];
 			} else {
 				return background;
 			}
 		}
-		auto virtual operator[](math::Vector<i32, 3> const& ijk) const -> T const& {
+		auto operator[](math::Vector<i32, 3> const& ijk) const noexcept -> T const& {
 			return const_cast<Nanovdb_Grid&>(*this)[ijk];
 		}
 

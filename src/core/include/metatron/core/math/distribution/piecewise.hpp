@@ -3,7 +3,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 
-namespace metatron::math {
+namespace mtt::math {
 	// forward declaration to support the declaration of 0d piecewise distribution
 	template<usize... dims>
 	struct Piecewise_Distribution;
@@ -15,13 +15,13 @@ namespace metatron::math {
 		auto static constexpr dimensions = std::array<usize, 1 + sizeof...(rest_dims)>{first_dim, rest_dims...};
 		auto static constexpr n = dimensions.size();
 
-		Piecewise_Distribution() = default;
+		Piecewise_Distribution() noexcept = default;
 
 		Piecewise_Distribution(
 			Matrix<f32, first_dim, rest_dims...>&& matrix, 
 			Vector<f32, n>&& low,
 			Vector<f32, n>&& high
-		) {
+		) noexcept {
 			cdf[0] = 0.f;
 			integral = 0.f;
 			this->low = low[n - 1];
@@ -48,7 +48,7 @@ namespace metatron::math {
 			}
 		}
 
-		auto sample(Vector<f32, dimensions.size()> const& u) const -> Vector<f32, dimensions.size()> {
+		auto sample(Vector<f32, dimensions.size()> const& u) const noexcept -> Vector<f32, dimensions.size()> {
 			auto idx = 1uz;
 			for (; idx < first_dim && cdf[idx] <= u[n - 1]; idx++) {}
 			idx--;
@@ -63,7 +63,7 @@ namespace metatron::math {
 			}
 		}
 
-		auto pdf(Vector<f32, dimensions.size()> const& p) const -> f32 {
+		auto pdf(Vector<f32, dimensions.size()> const& p) const noexcept -> f32 {
 			auto idx = usize((p[n - 1] - low) / (high - low) * f32(first_dim));
 			auto prob = (cdf[idx + 1] - cdf[idx]) * f32(first_dim) / (high - low);
 			if constexpr (n == 1uz) {
