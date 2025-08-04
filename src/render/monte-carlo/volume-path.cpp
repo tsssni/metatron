@@ -261,7 +261,7 @@ namespace mtt::monte_carlo {
 
 			if (!hit) {
 				auto mis_a = math::guarded_div(1.f, spectra::avg(mis_s));
-				emission += mis_a * beta * m_intr.sigma_a * m_intr.L;
+				emission += mis_a * beta * m_intr.sigma_a * m_intr.sigma_e;
 
 				auto p_a = math::guarded_div(m_intr.sigma_a.value[0], m_intr.sigma_maj.value[0]);
 				auto p_s = math::guarded_div(m_intr.sigma_s.value[0], m_intr.sigma_maj.value[0]);

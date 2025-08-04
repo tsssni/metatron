@@ -19,7 +19,7 @@ namespace mtt::compo {
 
 	struct Area_Light final {
 		ecs::Entity shape;
-		usize primitive = 0uz;
+		usize primitive;
 	};
 
 	struct Environment_Light final {

@@ -1,25 +1,18 @@
 #include <metatron/resource/material/material.hpp>
-#include <metatron/resource/bsdf/lambertian.hpp>
 #include <metatron/resource/bsdf/interface.hpp>
-#include <metatron/resource/bsdf/microfacet.hpp>
-#include <metatron/resource/media/homogeneous.hpp>
 #include <metatron/resource/media/vaccum.hpp>
 #include <metatron/resource/media/grid.hpp>
 #include <metatron/resource/media/nanovdb.hpp>
 #include <metatron/resource/phase/henyey-greenstein.hpp>
-#include <metatron/resource/light/environment.hpp>
-#include <metatron/resource/light/parallel.hpp>
-#include <metatron/resource/light/point.hpp>
-#include <metatron/resource/light/spot.hpp>
-#include <metatron/resource/light/area.hpp>
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/render/accel/lbvh.hpp>
 #include <metatron/scene/ecs/hierarchy.hpp>
-#include <metatron/scene/ecs/stage.hpp>
+#include <metatron/scene/ecs/entity.hpp>
 #include <metatron/scene/compo/spectrum.hpp>
 #include <metatron/scene/compo/transform.hpp>
 #include <metatron/scene/compo/shape.hpp>
+#include <metatron/scene/compo/medium.hpp>
 #include <metatron/scene/compo/texture.hpp>
 #include <metatron/scene/compo/light.hpp>
 #include <metatron/scene/compo/camera.hpp>
@@ -27,6 +20,7 @@
 #include <metatron/scene/daemon/color-space.hpp>
 #include <metatron/scene/daemon/transform.hpp>
 #include <metatron/scene/daemon/shape.hpp>
+#include <metatron/scene/daemon/medium.hpp>
 #include <metatron/scene/daemon/texture.hpp>
 #include <metatron/scene/daemon/light.hpp>
 #include <metatron/scene/daemon/camera.hpp>
@@ -42,6 +36,7 @@ auto main() -> int {
 	auto color_space_daemon = daemon::Color_Space_Daemon{};
 	auto transform_daemon = daemon::Transform_Daemon{};
 	auto shape_daemon = daemon::Shape_Daemon{};
+	auto medium_daemon = daemon::Medium_Daemon{};
 	auto texture_daemon = daemon::Texture_Daemon{};
 	auto light_daemon = daemon::Light_Daemon{};
 	auto camera_daemon = daemon::Camera_Daemon{};
@@ -49,6 +44,7 @@ auto main() -> int {
 	stage->daemons.push_back(&color_space_daemon);
 	stage->daemons.push_back(&transform_daemon);
 	stage->daemons.push_back(&shape_daemon);
+	stage->daemons.push_back(&medium_daemon);
 	stage->daemons.push_back(&texture_daemon);
 	stage->daemons.push_back(&light_daemon);
 	stage->daemons.push_back(&camera_daemon);
@@ -58,29 +54,6 @@ auto main() -> int {
 
 	auto sRBB_entity = hierarchy.entity("/color-space/sRGB");
 	auto* sRGB = &hierarchy.fetch<color::Color_Space>(sRBB_entity);
-
-	hierarchy.attach(hierarchy.create("/render"), compo::Transform{
-		.translation = {0.f, 0.f, 1000.f},
-	});
-	hierarchy.attach(hierarchy.create("/camera"),compo::Transform{
-		.translation = {0.f, 0.f, 0.f},
-	});
-	hierarchy.attach(hierarchy.create("/hierarchy"), compo::Transform{});
-	hierarchy.attach(hierarchy.create("/hierarchy/shape"), compo::Transform{});
-	hierarchy.attach(hierarchy.create("/hierarchy/shape/bound"), compo::Transform{
-		.scaling = {500.0f},
-	});
-	hierarchy.attach(hierarchy.create("/hierarchy/medium"), compo::Transform{});
-	hierarchy.attach(hierarchy.create("/hierarchy/medium/cloud"), compo::Transform{
-		.rotation = math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 2.f),
-	});
-	hierarchy.attach(hierarchy.create("/hierarchy/light"), compo::Transform{});
-	hierarchy.attach(hierarchy.create("/hierarchy/light/env"), compo::Transform{});
-
-	hierarchy.attach<compo::Shape>(hierarchy.create("/shape/sphere"), compo::Sphere{});
-	hierarchy.attach(hierarchy.entity("/hierarchy/shape/bound"), compo::Shape_Instance{
-		.path = hierarchy.entity("/shape/sphere")
-	});
 
 	hierarchy.attach<compo::Spectrum>(hierarchy.create("/spectrum/sigma-a"), compo::Rgb_Spectrum{
 		.c = {0.0f, 0.0f, 0.0f},
@@ -103,13 +76,54 @@ auto main() -> int {
 		.color_space = sRBB_entity
 	});
 
+	hierarchy.attach(hierarchy.create("/render"), compo::Transform{
+		.translation = {0.f, 0.f, 1000.f},
+	});
+	hierarchy.attach(hierarchy.create("/camera"),compo::Transform{
+		.translation = {0.f, 0.f, 0.f},
+	});
+	hierarchy.attach(hierarchy.create("/hierarchy"), compo::Transform{});
+	hierarchy.attach(hierarchy.create("/hierarchy/shape"), compo::Transform{});
+	hierarchy.attach(hierarchy.create("/hierarchy/shape/bound"), compo::Transform{
+		.scaling = {500.0f},
+	});
+	hierarchy.attach(hierarchy.create("/hierarchy/medium"), compo::Transform{});
+	hierarchy.attach(hierarchy.create("/hierarchy/medium/cloud"), compo::Transform{
+		.rotation = math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 2.f),
+	});
+	hierarchy.attach(hierarchy.create("/hierarchy/light"), compo::Transform{});
+	hierarchy.attach(hierarchy.create("/hierarchy/light/env"), compo::Transform{});
+
+	hierarchy.attach<compo::Shape>(hierarchy.create("/shape/sphere"), compo::Sphere{});
+	hierarchy.attach(hierarchy.entity("/hierarchy/shape/bound"), compo::Shape_Instance{
+		.path = "/shape/sphere"_et,
+	});
+
+	hierarchy.attach<compo::Medium>(hierarchy.create("/medium/vaccum"), compo::Vaccum_Medium{});
+	hierarchy.attach(hierarchy.create("/hierarchy/medium/vaccum"), compo::Medium_Instance{
+		.path = "/medium/vaccum"_et,
+	});
+	hierarchy.attach<compo::Medium>(hierarchy.create("/medium/cloud"), compo::Grid_Medium{
+		.grid = "../metatron-scenes/disney-cloud/volume/disney-cloud.nvdb",
+		.phase = compo::Henyey_Greenstein_Phase_Function{
+			.g = 0.877f
+		},
+		.sigma_a = "/spectrum/sigma-a"_et,
+		.sigma_s = "/spectrum/sigma-s"_et,
+		.sigma_e = "/spectrum/sigma-e"_et,
+		.density_scale = 1.f,
+	});
+	hierarchy.attach(hierarchy.create("/hierarchy/medium/cloud"), compo::Medium_Instance{
+		.path = "/medium/cloud"_et,
+	});
+
 	hierarchy.attach<compo::Texture>(hierarchy.create("/texture/env-map"), compo::Image_Spectrum_Texture{
 		.path = "../metatron-scenes/material/texture/sky-on-fire.exr",
 		.type = color::Color_Space::Spectrum_Type::illuminant,
 	});
 
 	hierarchy.attach<compo::Light>(hierarchy.create("/hierarchy/light/env"), compo::Environment_Light{
-		.env_map = hierarchy.entity("/texture/env-map"),
+		.env_map = "/texture/env-map"_et,
 	});
 
 	hierarchy.attach(hierarchy.entity("/camera"), compo::Camera{
@@ -127,25 +141,7 @@ auto main() -> int {
 		.color_space = sRBB_entity,
 	});
 
-
 	hierarchy.update();
-
-	auto vaccum_medium = media::Vaccum_Medium{};
-	auto hg_phase = phase::Henyey_Greenstein_Phase_Function{0.877f};
-	auto nanovdb_grid = media::Nanovdb_Grid<
-		f32,
-		media::grid_size,
-		media::grid_size,
-		media::grid_size
-	>{"../metatron-scenes/disney-cloud/volume/disney-cloud.nvdb"};
-	auto cloud_medium = media::Grid_Medium{
-		&nanovdb_grid,
-		make_poly<phase::Phase_Function, phase::Henyey_Greenstein_Phase_Function>(0.877f),
-		hierarchy.fetch<poly<spectra::Spectrum>>(hierarchy.entity("/spectrum/sigma-a")),
-		hierarchy.fetch<poly<spectra::Spectrum>>(hierarchy.entity("/spectrum/sigma-s")),
-		hierarchy.fetch<poly<spectra::Spectrum>>(hierarchy.entity("/spectrum/sigma-e")),
-		1.f,
-	};
 
 	auto interface_material = material::Material{
 		.bsdf = make_poly<bsdf::Bsdf, bsdf::Interface_Bsdf>(),
@@ -163,11 +159,11 @@ auto main() -> int {
 	auto dividers = std::vector<accel::Divider>{
 		{
 			.shape = hierarchy.fetch<poly<shape::Shape>>(
-				hierarchy.fetch<compo::Shape_Instance>(
-					hierarchy.entity("/hierarchy/shape/bound")
-				).path
+				hierarchy.fetch<compo::Shape_Instance>("/hierarchy/shape/bound"_et).path
 			),
-			.medium = &cloud_medium,
+			.medium = hierarchy.fetch<poly<media::Medium>>(
+				hierarchy.fetch<compo::Medium_Instance>("/hierarchy/medium/cloud"_et).path
+			),
 			.light = nullptr,
 			.material = &interface_material,
 			.local_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/shape/bound")),
@@ -178,6 +174,9 @@ auto main() -> int {
 	auto& identity = hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy"));
 	auto& world_to_render = hierarchy.fetch<math::Transform>(hierarchy.entity("/render"));
 	auto& render_to_camera = hierarchy.fetch<math::Transform>(hierarchy.entity("/camera"));
+	auto& vaccum_medium = hierarchy.fetch<poly<media::Medium>>(
+		hierarchy.fetch<compo::Medium_Instance>("/hierarchy/medium/vaccum"_et).path
+	);
 	auto bvh = accel::LBVH{std::move(dividers), &world_to_render};
 	auto integrator = monte_carlo::Volume_Path_Integrator{};
 
@@ -203,7 +202,7 @@ auto main() -> int {
 					&identity,
 					&world_to_render,
 					&render_to_camera,
-					&vaccum_medium,
+					vaccum_medium,
 					px,
 					n,
 					depth,

@@ -8,12 +8,12 @@ namespace mtt::media {
 		poly<phase::Phase_Function> phase,
 		view<spectra::Spectrum> sigma_a,
 		view<spectra::Spectrum> sigma_s,
-		view<spectra::Spectrum> emission
+		view<spectra::Spectrum> sigma_e
 	) noexcept:
 	phase{phase},
 	sigma_a{sigma_a},
 	sigma_s{sigma_s},
-	emission{emission} {}
+	sigma_e{sigma_e} {}
 
 	auto Homogeneous_Medium::sample(eval::Context const& ctx, f32 t_max, f32 u) const noexcept -> std::optional<Interaction> {
 		auto sigma_a = ctx.spec & this->sigma_a;
@@ -27,7 +27,7 @@ namespace mtt::media {
 		auto t = std::min(t_u, t_max);
 		auto pdf = t < t_max ? distr.pdf(t) : distr.pdf(t) / sigma_t.value[0];
 
-		auto emission = ctx.spec & this->emission;
+		auto sigma_e = ctx.spec & this->sigma_e;
 		auto transmittance = ctx.spec;
 		transmittance.value = math::foreach([&](f32 value, usize i) {
 			return std::exp(-value * t);
@@ -46,7 +46,7 @@ namespace mtt::media {
 			sigma_s,
 			sigma_n,
 			sigma_maj,
-			emission
+			sigma_e
 		};
 	}
 }

@@ -16,7 +16,7 @@ namespace mtt::media {
 		spectra::Stochastic_Spectrum sigma_s;
 		spectra::Stochastic_Spectrum sigma_n;
 		spectra::Stochastic_Spectrum sigma_maj;
-		spectra::Stochastic_Spectrum L;
+		spectra::Stochastic_Spectrum sigma_e;
 	};
 
 	MTT_POLY_METHOD(medium_sample, sample);

@@ -17,6 +17,6 @@ namespace mtt::media {
 		poly<phase::Phase_Function> phase;
 		view<spectra::Spectrum> sigma_a;
 		view<spectra::Spectrum> sigma_s;
-		view<spectra::Spectrum> emission;
+		view<spectra::Spectrum> sigma_e;
 	};
 }
