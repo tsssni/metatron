@@ -13,16 +13,16 @@ namespace mtt::daemon {
 		auto& registry = hierarchy.registry;
 
 		registry.emplace<poly<spectra::Spectrum>>(
-			hierarchy.create("/spectrum/zero"),
+			"/spectrum/zero"_et,
 			make_poly<spectra::Spectrum, spectra::Constant_Spectrum>(0.f)
 		);
 		registry.emplace<poly<spectra::Spectrum>>(
-			hierarchy.create("/spectrum/one"),
+			"/spectrum/one"_et,
 			make_poly<spectra::Spectrum, spectra::Constant_Spectrum>(1.f)
 		);
 
 		registry.emplace<poly<spectra::Spectrum>>(
-			hierarchy.create("/spectrum/CIE-X"),
+			"/spectrum/CIE-X"_et,
 			make_poly<spectra::Spectrum, spectra::Visible_Spectrum>(std::to_array({
 				0.0001299000f,   0.0001458470f,   0.0001638021f,   0.0001840037f,   0.0002066902f,
 				0.0002321000f,   0.0002607280f,   0.0002930750f,   0.0003293880f,   0.0003699140f,
@@ -123,7 +123,7 @@ namespace mtt::daemon {
 		);
 
 		registry.emplace<poly<spectra::Spectrum>>(
-			hierarchy.create("/spectrum/CIE-Y"),
+			"/spectrum/CIE-Y"_et,
 			make_poly<spectra::Spectrum, spectra::Visible_Spectrum>(std::to_array({
 				0.000003917000f,  0.000004393581f,  0.000004929604f,  0.000005532136f,  0.000006208245f,
 				0.000006965000f,  0.000007813219f,  0.000008767336f,  0.000009839844f,  0.00001104323f,
@@ -224,7 +224,7 @@ namespace mtt::daemon {
 		);
 
 		registry.emplace<poly<spectra::Spectrum>>(
-			hierarchy.create("/spectrum/CIE-Z"),
+			"/spectrum/CIE-Z"_et,
 			make_poly<spectra::Spectrum, spectra::Visible_Spectrum>(std::to_array({
 				0.0006061000f,   0.0006808792f,   0.0007651456f,   0.0008600124f,   0.0009665928f,
 				0.001086000f,    0.001220586f,    0.001372729f,    0.001543579f,    0.001734286f,
@@ -325,7 +325,7 @@ namespace mtt::daemon {
 		);
 
 		registry.emplace<poly<spectra::Spectrum>>(
-			hierarchy.create("/spectrum/CIE-D65"),
+			"/spectrum/CIE-D65"_et,
 			make_poly<spectra::Spectrum, spectra::Discrete_Spectrum<107>>(std::to_array<math::Vector<f32, 2>>({
 				{300.000000f, 0.034100f},   {305.000000f, 1.664300f},   {310.000000f, 3.294500f},
 				{315.000000f, 11.765200f},  {320.000000f, 20.236000f},  {325.000000f, 28.644699f},
@@ -392,7 +392,7 @@ namespace mtt::daemon {
 		);
 
 		registry.emplace<poly<spectra::Spectrum>>(
-			hierarchy.create("/spectrum/k/Au"),
+			"/spectrum/k/Au"_et,
 			make_poly<spectra::Spectrum, spectra::Discrete_Spectrum<56>>(std::to_array<math::Vector<f32, 2>>({
 				{298.757050, 1.920375}, {302.400421, 1.920000}, {306.133759, 1.918875},
 				{309.960449, 1.916000}, {313.884003, 1.911375}, {317.908142, 1.904000},

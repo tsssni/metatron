@@ -3,6 +3,6 @@
 
 namespace mtt {
 	auto operator"" _et(view<char> path, usize size) -> ecs::Entity {
-		return ecs::Hierarchy::instance->entity(path);
+		return ecs::Hierarchy::instance->create(path);
 	}
 }

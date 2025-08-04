@@ -12,7 +12,7 @@ namespace mtt::daemon {
 		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
 		registry.emplace<color::Color_Space>(
-			hierarchy.create("/color-space/sRGB"),
+			"/color-space/sRGB"_et,
 			math::Vector<f32, 2>{0.64f, 0.33f},
 			math::Vector<f32, 2>{0.30f, 0.60f},
 			math::Vector<f32, 2>{0.15f, 0.06f},

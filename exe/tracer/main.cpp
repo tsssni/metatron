@@ -73,58 +73,58 @@ auto main() -> int {
 	hierarchy.activate();
 	hierarchy.init();
 
-	auto sRBB_entity = hierarchy.entity("/color-space/sRGB");
+	auto sRBB_entity = "/color-space/sRGB"_et;
 	auto* sRGB = &hierarchy.fetch<color::Color_Space>(sRBB_entity);
 
-	hierarchy.attach<compo::Spectrum>(hierarchy.create("/spectrum/sigma-a"), compo::Rgb_Spectrum{
+	hierarchy.attach<compo::Spectrum>("/spectrum/sigma-a"_et, compo::Rgb_Spectrum{
 		.c = {0.0f, 0.0f, 0.0f},
 		.type = color::Color_Space::Spectrum_Type::unbounded,
 		.color_space = sRBB_entity,
 	});
-	hierarchy.attach<compo::Spectrum>(hierarchy.create("/spectrum/sigma-s"), compo::Rgb_Spectrum{
+	hierarchy.attach<compo::Spectrum>("/spectrum/sigma-s"_et, compo::Rgb_Spectrum{
 		.c = {1.0f, 1.0f, 1.0f},
 		.type = color::Color_Space::Spectrum_Type::unbounded,
 		.color_space = sRBB_entity,
 	});
-	hierarchy.attach<compo::Spectrum>(hierarchy.create("/spectrum/sigma-e"), compo::Rgb_Spectrum{
+	hierarchy.attach<compo::Spectrum>("/spectrum/sigma-e"_et, compo::Rgb_Spectrum{
 		.c = {0.0f, 0.0f, 0.0f},
 		.type = color::Color_Space::Spectrum_Type::illuminant,
 		.color_space = sRBB_entity,
 	});
-	hierarchy.attach<compo::Spectrum>(hierarchy.create("/spectrum/env"), compo::Rgb_Spectrum{
+	hierarchy.attach<compo::Spectrum>("/spectrum/env"_et, compo::Rgb_Spectrum{
 		.c = {0.03f, 0.07f, 0.23f},
 		.type = color::Color_Space::Spectrum_Type::illuminant,
 		.color_space = sRBB_entity
 	});
 
-	hierarchy.attach(hierarchy.create("/render"), compo::Transform{
+	hierarchy.attach("/render"_et, compo::Transform{
 		.translation = {0.f, 0.f, 1000.f},
 	});
-	hierarchy.attach(hierarchy.create("/camera"),compo::Transform{
+	hierarchy.attach("/camera"_et,compo::Transform{
 		.translation = {0.f, 0.f, 0.f},
 	});
-	hierarchy.attach(hierarchy.create("/hierarchy"), compo::Transform{});
-	hierarchy.attach(hierarchy.create("/hierarchy/shape"), compo::Transform{});
-	hierarchy.attach(hierarchy.create("/hierarchy/shape/bound"), compo::Transform{
+	hierarchy.attach("/hierarchy"_et, compo::Transform{});
+	hierarchy.attach("/hierarchy/shape"_et, compo::Transform{});
+	hierarchy.attach("/hierarchy/shape/bound"_et, compo::Transform{
 		.scaling = {500.0f},
 	});
-	hierarchy.attach(hierarchy.create("/hierarchy/medium"), compo::Transform{});
-	hierarchy.attach(hierarchy.create("/hierarchy/medium/cloud"), compo::Transform{
+	hierarchy.attach("/hierarchy/medium"_et, compo::Transform{});
+	hierarchy.attach("/hierarchy/medium/cloud"_et, compo::Transform{
 		.rotation = math::Quaternion<f32>::from_axis_angle({0.f, 1.f, 0.f}, math::pi * 1.f / 2.f),
 	});
-	hierarchy.attach(hierarchy.create("/hierarchy/light"), compo::Transform{});
-	hierarchy.attach(hierarchy.create("/hierarchy/light/env"), compo::Transform{});
+	hierarchy.attach("/hierarchy/light"_et, compo::Transform{});
+	hierarchy.attach("/hierarchy/light/env"_et, compo::Transform{});
 
-	hierarchy.attach<compo::Shape>(hierarchy.create("/shape/sphere"), compo::Sphere{});
-	hierarchy.attach(hierarchy.entity("/hierarchy/shape/bound"), compo::Shape_Instance{
+	hierarchy.attach<compo::Shape>("/shape/sphere"_et, compo::Sphere{});
+	hierarchy.attach("/hierarchy/shape/bound"_et, compo::Shape_Instance{
 		.path = "/shape/sphere"_et,
 	});
 
-	hierarchy.attach<compo::Medium>(hierarchy.create("/medium/vaccum"), compo::Vaccum_Medium{});
-	hierarchy.attach(hierarchy.create("/hierarchy/medium/vaccum"), compo::Medium_Instance{
+	hierarchy.attach<compo::Medium>("/medium/vaccum"_et, compo::Vaccum_Medium{});
+	hierarchy.attach("/hierarchy/medium/vaccum"_et, compo::Medium_Instance{
 		.path = "/medium/vaccum"_et,
 	});
-	hierarchy.attach<compo::Medium>(hierarchy.create("/medium/cloud"), compo::Grid_Medium{
+	hierarchy.attach<compo::Medium>("/medium/cloud"_et, compo::Grid_Medium{
 		.grid = "../metatron-scenes/disney-cloud/volume/disney-cloud.nvdb",
 		.phase = compo::Henyey_Greenstein_Phase_Function{
 			.g = 0.877f
@@ -134,24 +134,24 @@ auto main() -> int {
 		.sigma_e = "/spectrum/sigma-e"_et,
 		.density_scale = 1.f,
 	});
-	hierarchy.attach(hierarchy.create("/hierarchy/medium/cloud"), compo::Medium_Instance{
+	hierarchy.attach("/hierarchy/medium/cloud"_et, compo::Medium_Instance{
 		.path = "/medium/cloud"_et,
 	});
 
-	hierarchy.attach<compo::Texture>(hierarchy.create("/texture/env-map"), compo::Image_Spectrum_Texture{
+	hierarchy.attach<compo::Texture>("/texture/env-map"_et, compo::Image_Spectrum_Texture{
 		.path = "../metatron-scenes/material/texture/sky-on-fire.exr",
 		.type = color::Color_Space::Spectrum_Type::illuminant,
 	});
 
-	hierarchy.attach<compo::Light>(hierarchy.create("/hierarchy/light/env"), compo::Environment_Light{
+	hierarchy.attach<compo::Light>("/hierarchy/light/env"_et, compo::Environment_Light{
 		.env_map = "/texture/env-map"_et,
 	});
 
-	hierarchy.attach(hierarchy.create("/material/cloud"), compo::Material{
+	hierarchy.attach("/material/cloud"_et, compo::Material{
 		.bsdf = compo::Bsdf::interface,
 	});
 
-	hierarchy.attach(hierarchy.entity("/camera"), compo::Camera{
+	hierarchy.attach("/camera"_et, compo::Camera{
 		.film_size = {0.036f, 0.024f},
 		.image_size = {600uz, 400uz},
 		.spp = 16,
@@ -171,8 +171,8 @@ auto main() -> int {
 	auto lights = std::vector<emitter::Divider>{};
 	auto inf_lights = std::vector<emitter::Divider>{
 		{
-			hierarchy.fetch<poly<light::Light>>(hierarchy.entity("/hierarchy/light/env")),
-			&hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/light/env"))
+			hierarchy.fetch<poly<light::Light>>("/hierarchy/light/env"_et),
+			&hierarchy.fetch<math::Transform>("/hierarchy/light/env"_et)
 		},
 	};
 	auto emitter = emitter::Uniform_Emitter{std::move(lights), std::move(inf_lights)};
@@ -187,14 +187,14 @@ auto main() -> int {
 			),
 			.light = nullptr,
 			.material = &hierarchy.fetch<material::Material>("/material/cloud"_et),
-			.local_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/shape/bound")),
-			.medium_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/medium/cloud")),
+			.local_to_world = &hierarchy.fetch<math::Transform>("/hierarchy/shape/bound"_et),
+			.medium_to_world = &hierarchy.fetch<math::Transform>("/hierarchy/medium/cloud"_et),
 		},
 	};
 
-	auto& identity = hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy"));
-	auto& world_to_render = hierarchy.fetch<math::Transform>(hierarchy.entity("/render"));
-	auto& render_to_camera = hierarchy.fetch<math::Transform>(hierarchy.entity("/camera"));
+	auto& identity = hierarchy.fetch<math::Transform>("/hierarchy"_et);
+	auto& world_to_render = hierarchy.fetch<math::Transform>("/render"_et);
+	auto& render_to_camera = hierarchy.fetch<math::Transform>("/camera"_et);
 	auto& vaccum_medium = hierarchy.fetch<poly<media::Medium>>(
 		hierarchy.fetch<compo::Medium_Instance>("/hierarchy/medium/vaccum"_et).path
 	);
