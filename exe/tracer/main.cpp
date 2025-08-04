@@ -1,9 +1,5 @@
 #include <metatron/resource/material/material.hpp>
 #include <metatron/resource/bsdf/interface.hpp>
-#include <metatron/resource/media/vaccum.hpp>
-#include <metatron/resource/media/grid.hpp>
-#include <metatron/resource/media/nanovdb.hpp>
-#include <metatron/resource/phase/henyey-greenstein.hpp>
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/render/accel/lbvh.hpp>
@@ -14,6 +10,7 @@
 #include <metatron/scene/compo/shape.hpp>
 #include <metatron/scene/compo/medium.hpp>
 #include <metatron/scene/compo/texture.hpp>
+#include <metatron/scene/compo/material.hpp>
 #include <metatron/scene/compo/light.hpp>
 #include <metatron/scene/compo/camera.hpp>
 #include <metatron/scene/daemon/spectrum.hpp>
@@ -21,17 +18,25 @@
 #include <metatron/scene/daemon/transform.hpp>
 #include <metatron/scene/daemon/shape.hpp>
 #include <metatron/scene/daemon/medium.hpp>
-#include <metatron/scene/daemon/texture.hpp>
 #include <metatron/scene/daemon/light.hpp>
+#include <metatron/scene/daemon/texture.hpp>
+#include <metatron/scene/daemon/material.hpp>
 #include <metatron/scene/daemon/camera.hpp>
+#include <metatron/core/stl/thread.hpp>
 #include <atomic>
 #include <print>
+#include <iostream>
 
 using namespace mtt;
 
 auto main() -> int {
 	auto hierarchy = ecs::Hierarchy{};
-	auto stage = std::make_unique<ecs::Stage>();
+
+	auto spectrum_stage = std::make_unique<ecs::Stage>();
+	auto resource_stage = std::make_unique<ecs::Stage>();
+	auto material_stage = std::make_unique<ecs::Stage>();
+	auto render_stage = std::make_unique<ecs::Stage>();
+
 	auto spectrum_daemon = daemon::Spectrum_Daemon{};
 	auto color_space_daemon = daemon::Color_Space_Daemon{};
 	auto transform_daemon = daemon::Transform_Daemon{};
@@ -39,16 +44,32 @@ auto main() -> int {
 	auto medium_daemon = daemon::Medium_Daemon{};
 	auto texture_daemon = daemon::Texture_Daemon{};
 	auto light_daemon = daemon::Light_Daemon{};
+	auto material_daemon = daemon::Material_Daemon{};
 	auto camera_daemon = daemon::Camera_Daemon{};
-	stage->daemons.push_back(&spectrum_daemon);
-	stage->daemons.push_back(&color_space_daemon);
-	stage->daemons.push_back(&transform_daemon);
-	stage->daemons.push_back(&shape_daemon);
-	stage->daemons.push_back(&medium_daemon);
-	stage->daemons.push_back(&texture_daemon);
-	stage->daemons.push_back(&light_daemon);
-	stage->daemons.push_back(&camera_daemon);
-	hierarchy.stages.push_back(stage.get());
+
+	spectrum_stage->daemons = {
+		&spectrum_daemon,
+		&color_space_daemon,
+	};
+	resource_stage->daemons = {
+		&transform_daemon,
+		&shape_daemon,
+		&medium_daemon,
+		&texture_daemon,
+	};
+	material_stage->daemons = {
+		&light_daemon,
+		&material_daemon,
+	};
+	render_stage->daemons = {
+		&camera_daemon,
+	};
+	hierarchy.stages = {
+		spectrum_stage.get(),
+		resource_stage.get(),
+		material_stage.get(),
+		render_stage.get()
+	};
 	hierarchy.activate();
 	hierarchy.init();
 
@@ -126,6 +147,10 @@ auto main() -> int {
 		.env_map = "/texture/env-map"_et,
 	});
 
+	hierarchy.attach(hierarchy.create("/material/cloud"), compo::Material{
+		.bsdf = compo::Bsdf::interface,
+	});
+
 	hierarchy.attach(hierarchy.entity("/camera"), compo::Camera{
 		.film_size = {0.036f, 0.024f},
 		.image_size = {600uz, 400uz},
@@ -142,10 +167,6 @@ auto main() -> int {
 	});
 
 	hierarchy.update();
-
-	auto interface_material = material::Material{
-		.bsdf = make_poly<bsdf::Bsdf, bsdf::Interface_Bsdf>(),
-	};
 
 	auto lights = std::vector<emitter::Divider>{};
 	auto inf_lights = std::vector<emitter::Divider>{
@@ -165,7 +186,7 @@ auto main() -> int {
 				hierarchy.fetch<compo::Medium_Instance>("/hierarchy/medium/cloud"_et).path
 			),
 			.light = nullptr,
-			.material = &interface_material,
+			.material = &hierarchy.fetch<material::Material>("/material/cloud"_et),
 			.local_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/shape/bound")),
 			.medium_to_world = &hierarchy.fetch<math::Transform>(hierarchy.entity("/hierarchy/medium/cloud")),
 		},

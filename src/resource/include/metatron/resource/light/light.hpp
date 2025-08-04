@@ -14,6 +14,7 @@ namespace mtt::light {
 
 	enum Flags {
 		delta = 1 << 0,
+		inf = 1 << 1,
 	};
 
 	MTT_POLY_METHOD(light_sample, sample);

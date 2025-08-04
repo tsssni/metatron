@@ -49,6 +49,6 @@ namespace mtt::light {
 	}
 
 	auto Environment_Light::flags() const noexcept -> Flags {
-		return Flags(0);
+		return Flags::inf;
 	}
 }
