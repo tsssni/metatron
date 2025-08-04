@@ -184,7 +184,7 @@ namespace mtt::daemon {
 				}
 			}
 		});
-		std::print("\n");
+		std::println();
 		camera.to_path(path);
 	}
 }

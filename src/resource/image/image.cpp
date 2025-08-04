@@ -1,5 +1,6 @@
 #include <metatron/resource/image/image.hpp>
 #include <OpenImageIO/imageio.h>
+#include <print>
 
 namespace mtt::image {
 	Image::Pixel::Pixel(Image const* image, byte* start) noexcept
@@ -72,7 +73,7 @@ namespace mtt::image {
 	) noexcept -> poly<Image> {
 		auto in = OIIO::ImageInput::open(std::string{path});
 		if (!in) {
-			std::printf("cannot find image %s\n", path.data());
+			std::println("cannot find image {}", path);
 			std::abort();
 		}
 
@@ -95,7 +96,7 @@ namespace mtt::image {
 
 		auto success = in->read_image(0, 0, 0, spec.nchannels, spec.format, image->pixels.data());
 		if (!success) {
-			std::printf("can not read image %s\n", path.data());
+			std::println("can not read image {}", path);
 			std::abort();
 		}
 
@@ -123,13 +124,13 @@ namespace mtt::image {
 
 		auto out = OIIO::ImageOutput::create(std::string{path});
 		if (!out || !out->open(std::string{path}, spec)) {
-			std::printf("can not create image file %s\n", path.data());
+			std::println("can not create image file {}", path);
 			std::abort();
 		}
 
 		auto success = out->write_image(type, pixels.data());
 		if (!success) {
-			std::printf("can not write image %s\n", path.data());
+			std::println("can not write image {}", path);
 			std::abort();
 		}
 

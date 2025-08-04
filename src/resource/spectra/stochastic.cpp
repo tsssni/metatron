@@ -19,7 +19,7 @@ namespace mtt::spectra {
 				return value[i];
 			}
 		}
-		std::print("spectra: no matched lambda in stochastic spectrum\n");
+		std::println("spectra: no matched lambda in stochastic spectrum");
 		std::abort();
 	}
 

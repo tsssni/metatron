@@ -5,6 +5,7 @@
 #include <metatron/resource/bsdf/interface.hpp>
 #include <metatron/resource/bsdf/lambertian.hpp>
 #include <metatron/resource/bsdf/microfacet.hpp>
+#include <print>
 
 namespace mtt::daemon {
 	auto Material_Daemon::init() noexcept -> void {}
@@ -35,7 +36,7 @@ namespace mtt::daemon {
 			using Specrum_Texture = texture::Texture<spectra::Stochastic_Spectrum>;
 			for (auto& [name, entity]: compo.spectrum_textures) {
 				if (!registry.any_of<poly<Specrum_Texture>>(entity)) {
-					std::print("no spectrum texture {} in entity {}\n", name, hierarchy.name(entity));
+					std::println("no spectrum texture {} in entity {}", name, hierarchy.name(entity));
 					std::abort();
 				}
 				material.spectrum_textures.emplace(
@@ -47,7 +48,7 @@ namespace mtt::daemon {
 			using Vector_Texture = texture::Texture<math::Vector<f32, 4>>;
 			for (auto& [name, entity]: compo.vector_textures) {
 				if (!registry.any_of<poly<Vector_Texture>>(entity)) {
-					std::print("no vector texture {} in entity {}\n", name, hierarchy.name(entity));
+					std::println("no vector texture {} in entity {}", name, hierarchy.name(entity));
 					std::abort();
 				}
 				material.vector_textures.emplace(

@@ -43,7 +43,7 @@ namespace mtt::shape {
 			};
 
 			auto quit = []{
-				std::printf("mesh: degenerate\n");
+				std::println("mesh: degenerate");
 				std::abort();
 			};
 			auto A = math::transpose(math::Matrix<f32, 2, 2>{uv[0] - uv[2], uv[1] - uv[2]});
@@ -323,7 +323,7 @@ namespace mtt::shape {
 		);
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->HasMeshes()) {
-			std::print("assimp error: while loading %s: %s\n", path.data(), importer.GetErrorString());
+			std::println("assimp error: while loading {}: {}", path, importer.GetErrorString());
 			std::abort();
 		}
 		auto* mesh = scene->mMeshes[0];
@@ -336,7 +336,7 @@ namespace mtt::shape {
 		for (auto i = 0uz; i < mesh->mNumFaces; i++) {
 			auto face = mesh->mFaces[i];
 			if (face.mNumIndices != 3) {
-				// std::printf("assimp error: mesh %s has non-triangle face\n", mesh->mName.C_Str());
+				// std::println("assimp error: mesh {} has non-triangle face", mesh->mName.C_Str());
 				// std::abort();
 				continue;
 			}

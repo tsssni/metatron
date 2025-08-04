@@ -8,7 +8,6 @@ namespace mtt::texture {
 		shape::Interaction const& intr
 	) noexcept -> std::optional<texture::Coordinate> {
 		auto tangent = shape::Plane{intr.p, intr.n};
-		#define MTT_DSTOP {terminated = true; gamma = 0.f; std::printf("\n===\n"); continue;}
 		MTT_OPT_OR_RETURN(d_intr, tangent(diff.r), {});
 		MTT_OPT_OR_RETURN(dx_intr, tangent(diff.rx), {});
 		MTT_OPT_OR_RETURN(dy_intr, tangent(diff.ry), {});
