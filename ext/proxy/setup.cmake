@@ -1,2 +1,2 @@
-extend(proxy)
-list(APPEND metatron-deps msft_proxy)
+extend(msft_proxy4)
+list(APPEND metatron-deps msft_proxy4::proxy)

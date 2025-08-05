@@ -25,6 +25,6 @@ namespace mtt::media {
 	::add_convention<medium_sample, auto (
 		eval::Context const& ctx, f32 t_max, f32 u
 	) const noexcept -> std::optional<Interaction>>
-	::support_view
+	::add_skill<pro::skills::as_view>
 	::build {};
 }

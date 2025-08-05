@@ -16,6 +16,6 @@ namespace mtt::photo {
 	::add_convention<lens_sample, auto (
 		math::Vector<f32, 3> o, math::Vector<f32, 2> u
 	) const noexcept -> std::optional<lens::Interaction>>
-	::support_view
+	::add_skill<pro::skills::as_view>
 	::build {};
 }

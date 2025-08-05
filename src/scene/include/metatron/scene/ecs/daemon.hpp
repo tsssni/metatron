@@ -9,6 +9,6 @@ namespace mtt::ecs {
 	struct Daemon final: pro::facade_builder
 	::add_convention<daemon_init, auto () noexcept -> void>
 	::add_convention<daemon_update, auto () noexcept -> void>
-	::support_view
+	::add_skill<pro::skills::as_view>
 	::build {};
 }

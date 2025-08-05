@@ -1,7 +1,7 @@
 #include <metatron/resource/light/parallel.hpp>
 
 namespace mtt::light {
-	// Parallel_Light::Parallel_Light(view<spectra::Spectrum> L) noexcept: L(L) {}
+	Parallel_Light::Parallel_Light(view<spectra::Spectrum> L) noexcept: L(L) {}
 
 	auto Parallel_Light::operator()(
 		eval::Context const& ctx

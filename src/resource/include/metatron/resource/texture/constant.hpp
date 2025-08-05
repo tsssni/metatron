@@ -8,9 +8,7 @@ namespace mtt::texture {
 
 	template<>
 	struct Constant_Texture<spectra::Stochastic_Spectrum> final {
-		// FIXME: could not use single proxy_view to construct
-		view<spectra::Spectrum> x;
-		// Constant_Texture(view<spectra::Spectrum> x) noexcept;
+		Constant_Texture(view<spectra::Spectrum> x) noexcept;
 
 		auto sample(
 			eval::Context const& ctx,
@@ -18,7 +16,7 @@ namespace mtt::texture {
 		) const noexcept -> spectra::Stochastic_Spectrum;
 
 	private:
-		// view<spectra::Spectrum> x;
+		view<spectra::Spectrum> x;
 	};
 
 	template<>

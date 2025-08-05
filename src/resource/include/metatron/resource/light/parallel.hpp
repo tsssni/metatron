@@ -3,9 +3,7 @@
 
 namespace mtt::light {
 	struct Parallel_Light final {
-		view<spectra::Spectrum> L;
-		// FIXME: could not use single proxy_view to construct
-		// Parallel_Light(view<spectra::Spectrum> L) noexcept;
+		Parallel_Light(view<spectra::Spectrum> L) noexcept;
 
 		auto operator()(
 			eval::Context const& ctx
@@ -17,6 +15,6 @@ namespace mtt::light {
 		auto flags() const noexcept -> Flags;
 
 	private:
-		// view<spectra::Spectrum> L;
+		view<spectra::Spectrum> L;
 	};
 }
