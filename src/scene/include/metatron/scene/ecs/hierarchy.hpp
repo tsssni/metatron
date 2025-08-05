@@ -29,36 +29,45 @@ namespace mtt::ecs {
 		auto init() noexcept -> void;
 		auto update() noexcept -> void;
 
-		template<typename T, view<char> S>
-		auto static serde() noexcept -> void {
+		template<typename T>
+		auto static serde(std::string const& type) noexcept -> void {
+			auto sanitized_type = type;
+			std::ranges::replace(sanitized_type, '-', '_');
+			std::ranges::transform(
+				sanitized_type,
+				sanitized_type.begin(),
+				::tolower
+			);
+
 			auto fr = [](ecs::Entity e, std::string const& s) -> void {
 				auto d = T{};
-				if(auto e = glz::read_json<T>(d, s); !e) {
-					std::println(glz::format_error(e, s));
+				if (auto error = glz::read_json<T>(d, s); !error) {
+					std::println("{}", glz::format_error(error, s));
 					std::abort();
 				} else {
-					ecs::Hierarchy::instance->attach<T>(e, d);
+					ecs::Hierarchy::instance->attach(e, std::move(d));
 				}
 			};
-			auto fw = []() -> std::vector<serde::json> {
+			auto fw = [sanitized_type]() -> std::vector<serde::json> {
 				auto v = std::vector<serde::json>{};
-				for(auto&& [e, d]: ecs::Hierarchy::instance->registry.view<T>()) {
-					auto s = glz::write_json(d).value_or("error");
-					if (s == "error") {
+				auto& r = ecs::Hierarchy::instance->registry;
+				for (auto e: r.view<T>()) {
+					auto s = glz::write_json(r.get<T>(e));
+					if (!s) {
 						std::println(
-							"Failed to serialize component {} on {}",
-							S, ecs::Hierarchy::instance->path(e)
+							"failed to serialize component {} on {}",
+							sanitized_type, ecs::Hierarchy::instance->path(e)
 						);
 						std::abort();
 					}
-					v.push_back({e, S, glz::write_json(d).value()});
+					v.emplace_back(e, sanitized_type, s.value());
 				}
 				return v;
 			};
-			ecs::Hierarchy::instance->enable(S, std::move(fr), std::move(fw));
+			ecs::Hierarchy::instance->enable(sanitized_type, fr, fw);
 		}
 		auto enable(
-			std::string_view type,
+			std::string const& type,
 			std::function<void(ecs::Entity e, std::string const& s)> fr,
 			std::function<std::vector<serde::json>()> fw
 		) noexcept -> void;
@@ -82,4 +91,6 @@ namespace mtt::ecs {
 			registry.erase<T>(entity);
 		}
 	};
+
+	#define MTT_SERDE(T) ecs::Hierarchy::serde<compo::T>(#T)
 }

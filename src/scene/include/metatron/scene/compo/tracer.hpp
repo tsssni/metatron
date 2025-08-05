@@ -8,17 +8,29 @@ namespace mtt::compo {
 		ecs::Entity material;
 	};
 
-	enum struct Emitter: i32 {
-		uniform,
+	struct Uniform_Emitter final {
+		std::string_view uniform = "";
 	};
 
-	enum struct Acceleration: i32 {
-		lbvh,
+	using Emitter = std::variant<
+		Uniform_Emitter
+	>;
+
+	struct LBVH final {
+		std::string_view lbvh = "";
 	};
 
-	enum struct Integrator: i32 {
-		volume_path,
+	using Acceleration = std::variant<
+		LBVH
+	>;
+
+	struct Volume_Path_Integrator final {
+		std::string_view volume_path = "";
 	};
+
+	using Integrator = std::variant<
+		Volume_Path_Integrator
+	>;
 
 	struct Tracer final {
 		Emitter emitter;

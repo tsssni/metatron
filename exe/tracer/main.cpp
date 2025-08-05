@@ -118,7 +118,7 @@ auto main() -> int {
 	});
 
 	hierarchy.attach<compo::Medium>("/medium/cloud"_et, compo::Grid_Medium{
-		.grid = "../metatron-scenes/disney-cloud/volume/disney-cloud.nvdb",
+		.path = "../metatron-scenes/disney-cloud/volume/disney-cloud.nvdb",
 		.phase = compo::Henyey_Greenstein_Phase_Function{
 			.g = 0.877f
 		},
@@ -166,11 +166,13 @@ auto main() -> int {
 		.material = "/material/cloud"_et,
 	});
 	hierarchy.attach("/tracer"_et, compo::Tracer{
-		.emitter = compo::Emitter::uniform,
-		.accel = compo::Acceleration::lbvh,
+		.emitter = compo::Uniform_Emitter{},
+		.accel = compo::LBVH{},
+		.integrator = compo::Volume_Path_Integrator{},
 	});
 
 	hierarchy.update();
+	hierarchy.write("build/test.json");
 	tracer_daemon.render("build/test.exr");
 	return 0;
 }

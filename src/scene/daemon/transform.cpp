@@ -4,7 +4,9 @@
 #include <metatron/core/math/transform.hpp>
 
 namespace mtt::daemon {
-	auto Transform_Daemon::init() noexcept -> void {}
+	auto Transform_Daemon::init() noexcept -> void {
+		MTT_SERDE(Transform);
+	}
 
 	auto Transform_Daemon::update() noexcept -> void {
 		auto& hierarchy = *ecs::Hierarchy::instance;

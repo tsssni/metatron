@@ -9,14 +9,8 @@ namespace mtt::serde {
 	struct json final {
 		ecs::Entity entity;
 		std::string type;
-		std::string serialized;
+		glz::raw_json serialized;
 	};
-
-	#define MTT_SERDE_VARIANT(V)\
-	template<>\
-	struct glz::meta<V> {\
-		std::string_view constexpr static tag = "variant";\
-	}
 }
 
 namespace glz {

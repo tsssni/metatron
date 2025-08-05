@@ -1,5 +1,6 @@
 #include <metatron/scene/ecs/hierarchy.hpp>
 #include <metatron/scene/ecs/stage.hpp>
+#include <metatron/scene/serde/serde.hpp>
 #include <unordered_map>
 #include <print>
 
@@ -14,8 +15,8 @@ namespace mtt::ecs {
 		std::unordered_map<Entity, Entity> fathers;
 		std::unordered_map<Entity, std::vector<Entity>> sons;
 
-		std::unordered_map<std::string_view, std::function<void(Entity e, std::string const& s)>> frs;
-		std::unordered_map<std::string_view, std::function<std::vector<serde::json>()>> fws;
+		std::unordered_map<std::string, std::function<void(Entity e, std::string const& s)>> frs;
+		std::unordered_map<std::string, std::function<std::vector<serde::json>()>> fws;
 
 		auto plant() noexcept -> void {
 			entities["/"] = hierarchy->registry.create();
@@ -95,7 +96,7 @@ namespace mtt::ecs {
 	}
 
 	auto Hierarchy::enable(
-		std::string_view type,
+		std::string const& type,
 		std::function<void(Entity e, std::string const& s)> fr,
 		std::function<std::vector<serde::json>()> fw
 	) noexcept -> void {
@@ -107,6 +108,24 @@ namespace mtt::ecs {
 	}
 
 	auto Hierarchy::write(std::string path) noexcept -> void {
+		auto jsons = std::vector<serde::json>{};
+		for (auto [type, fw]: impl->fws) {
+			auto js = fw();
+			std::ranges::move(js, std::back_inserter(jsons));
+		}
+
+		auto serialized = glz::write_json(jsons);
+		if (!serialized) {
+			std::println("failed to serialize hierarchy");
+			std::abort();
+		}
+
+		auto f = std::ofstream{path};
+		if (!f.is_open()) {
+			std::println("failed to write serialized hierarchy to {}", path);
+			std::abort();
+		}
+		f << glz::prettify_json(serialized.value());
 	}
 
 	auto Hierarchy::init() noexcept -> void {

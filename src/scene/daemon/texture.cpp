@@ -7,6 +7,7 @@
 
 namespace mtt::daemon {
 	auto Texture_Daemon::init() noexcept -> void {
+		MTT_SERDE(Texture);
 		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto conductor_list = std::to_array<std::string>({"Au"});
 		for (auto& conductor: conductor_list) {

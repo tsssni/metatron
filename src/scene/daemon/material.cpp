@@ -8,7 +8,9 @@
 #include <print>
 
 namespace mtt::daemon {
-	auto Material_Daemon::init() noexcept -> void {}
+	auto Material_Daemon::init() noexcept -> void {
+		MTT_SERDE(Material);
+	}
 
 	auto Material_Daemon::update() noexcept -> void {
 		auto& hierarchy = *ecs::Hierarchy::instance;

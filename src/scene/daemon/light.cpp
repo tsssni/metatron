@@ -1,6 +1,7 @@
 #include <metatron/scene/daemon/light.hpp>
 #include <metatron/scene/compo/light.hpp>
 #include <metatron/scene/ecs/hierarchy.hpp>
+#include <metatron/scene/serde/serde.hpp>
 #include <metatron/resource/light/light.hpp>
 #include <metatron/resource/light/parallel.hpp>
 #include <metatron/resource/light/point.hpp>
@@ -9,7 +10,9 @@
 #include <metatron/resource/light/environment.hpp>
 
 namespace mtt::daemon {
-	auto Light_Daemon::init() noexcept -> void {}
+	auto Light_Daemon::init() noexcept -> void {
+		MTT_SERDE(Light);
+	}
 
 	auto Light_Daemon::update() noexcept -> void {
 		auto& hierarchy = *ecs::Hierarchy::instance;

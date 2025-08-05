@@ -11,6 +11,8 @@
 
 namespace mtt::daemon {
 	auto Medium_Daemon::init() noexcept -> void {
+		MTT_SERDE(Medium);
+		MTT_SERDE(Medium_Instance);
 		auto& hierarchy = *ecs::Hierarchy::instance;
 		hierarchy.attach<compo::Medium>("/medium/vaccum"_et, compo::Vaccum_Medium{});
 		hierarchy.attach("/hierarchy/medium/vaccum"_et, compo::Medium_Instance{
@@ -62,7 +64,7 @@ namespace mtt::daemon {
 							media::grid_size
 						>;
 						registry.emplace<poly<media::Medium_Grid>>(entity,
-							make_poly<media::Medium_Grid, Nanovdb_Grid>(compo.grid)
+							make_poly<media::Medium_Grid, Nanovdb_Grid>(compo.path)
 						);
 						return make_poly<media::Medium, media::Grid_Medium>(
 							registry.get<poly<media::Medium_Grid>>(entity),

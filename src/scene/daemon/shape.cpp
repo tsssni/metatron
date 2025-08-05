@@ -6,7 +6,13 @@
 #include <metatron/resource/shape/sphere.hpp>
 
 namespace mtt::daemon {
-	auto Shape_Daemon::init() noexcept -> void {}
+	template<char const* str>
+	auto f() -> void {}
+
+	auto Shape_Daemon::init() noexcept -> void {
+		MTT_SERDE(Shape);
+		MTT_SERDE(Shape_Instance);
+	}
 
 	auto Shape_Daemon::update() noexcept -> void {
 		auto& hierarchy = *ecs::Hierarchy::instance;

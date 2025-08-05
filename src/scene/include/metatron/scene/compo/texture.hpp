@@ -6,10 +6,12 @@
 
 namespace mtt::compo {
 	struct Constant_Spectrum_Texture final {
+		std::string_view constant_spectrum = "";
 		ecs::Entity spectrum;
 	};
 
 	struct Image_Spectrum_Texture final {
+		std::string_view image_spectrum = "";
 		std::string path;
 		color::Color_Space::Spectrum_Type type;
 	};
@@ -20,10 +22,12 @@ namespace mtt::compo {
 	>;
 
 	struct Constant_Vector_Texture final {
+		std::string_view constant_vector = "";
 		math::Vector<f32, 4> x;
 	};
 
 	struct Image_Vector_Texture final {
+		std::string_view image_vector = "";
 		std::string path;
 	};
 
