@@ -22,11 +22,6 @@
 
 using namespace mtt;
 
-struct Test final {
-	ecs::Entity e;
-	math::Matrix<f32, 4, 4> m;
-};
-
 auto main() -> int {
 	auto hierarchy = ecs::Hierarchy{};
 
@@ -80,16 +75,6 @@ auto main() -> int {
 
 	auto sRGB_entity = "/color-space/sRGB"_et;
 	auto* sRGB = &hierarchy.fetch<color::Color_Space>(sRGB_entity);
-
-	Test t = {
-		.e = sRGB_entity,
-		.m = {
-			{1.f, 0.f, 0.f, 0.f},
-			{0.f, 1.f, 0.f, 0.f},
-			{0.f, 0.f, 1.f, 0.f},
-			{0.f, 0.f, 0.f, 1.f},
-		},
-	};
 
 	hierarchy.attach<compo::Spectrum>("/spectrum/sigma-a"_et, compo::Rgb_Spectrum{
 		.c = {0.0f, 0.0f, 0.0f},
