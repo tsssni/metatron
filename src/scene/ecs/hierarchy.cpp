@@ -10,36 +10,39 @@ namespace mtt::ecs {
 		mut<Hierarchy> hierarchy;
 
 		std::unordered_map<std::string, Entity> entities;
-		std::unordered_map<Entity, std::string> names;
+		std::unordered_map<Entity, std::string> pathes;
 		std::unordered_map<Entity, Entity> fathers;
 		std::unordered_map<Entity, std::vector<Entity>> sons;
+
+		std::unordered_map<std::string_view, std::function<void(Entity e, std::string const& s)>> frs;
+		std::unordered_map<std::string_view, std::function<std::vector<serde::json>()>> fws;
 
 		auto plant() noexcept -> void {
 			entities["/"] = hierarchy->registry.create();
 			fathers[entities["/"]] = ecs::null;
 		}
 
-		auto create(std::string const& name) noexcept -> Entity {
-			if (entities.find(name) != entities.end()) {
-				return entities[name];
+		auto create(std::string const& path) noexcept -> Entity {
+			if (entities.find(path) != entities.end()) {
+				return entities[path];
 			}
 
-			auto slash = name.find_last_of('/');
+			auto slash = path.find_last_of('/');
 			if (slash == std::string::npos) {
-				std::println("ecs: invalid name {}", name);
+				std::println("ecs: invalid path {}", path);
 				std::abort();
 			}
 			
-			auto parent_name = slash == 0 ? "/" : name.substr(0, slash);
-			auto parent = create(parent_name);
+			auto parent_path = slash == 0 ? "/" : path.substr(0, slash);
+			auto parent = create(parent_path);
 
 			auto entity = hierarchy->registry.create();
-			fathers[entity] = entities[parent_name];
+			fathers[entity] = entities[parent_path];
 			sons[parent].push_back(entity);
 			sons[entity] = {};
 
-			names[entity] = name;
-			entities[name] = entity;
+			pathes[entity] = path;
+			entities[path] = entity;
 			return entity;
 		}
 
@@ -67,16 +70,16 @@ namespace mtt::ecs {
 		Hierarchy::instance = this;
 	}
 
-	auto Hierarchy::create(std::string const& name) noexcept -> Entity {
-		return impl->create(name);
+	auto Hierarchy::create(std::string const& path) noexcept -> Entity {
+		return impl->create(path);
 	}
 
-	auto Hierarchy::entity(std::string const& name) const noexcept -> Entity {
-		return impl->fetch(impl->entities, name);
+	auto Hierarchy::entity(std::string const& path) const noexcept -> Entity {
+		return impl->fetch(impl->entities, path);
 	}
 
-	auto Hierarchy::name(Entity entity) const noexcept -> std::string const& {
-		return impl->fetch(impl->names, entity);
+	auto Hierarchy::path(Entity entity) const noexcept -> std::string const& {
+		return impl->fetch(impl->pathes, entity);
 	}
 
 	auto Hierarchy::root() const noexcept -> Entity {
@@ -89,6 +92,21 @@ namespace mtt::ecs {
 
 	auto Hierarchy::children(Entity entity) const noexcept -> std::vector<Entity> const& {
 		return impl->fetch(impl->sons, entity);
+	}
+
+	auto Hierarchy::enable(
+		std::string_view type,
+		std::function<void(Entity e, std::string const& s)> fr,
+		std::function<std::vector<serde::json>()> fw
+	) noexcept -> void {
+		impl->frs.emplace(type, std::move(fr));
+		impl->fws.emplace(type, std::move(fw));
+	}
+
+	auto Hierarchy::read(std::string path) noexcept -> void {
+	}
+
+	auto Hierarchy::write(std::string path) noexcept -> void {
 	}
 
 	auto Hierarchy::init() noexcept -> void {

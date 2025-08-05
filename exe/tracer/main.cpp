@@ -1,4 +1,5 @@
 #include <metatron/scene/ecs/hierarchy.hpp>
+#include <metatron/scene/serde/serde.hpp>
 #include <metatron/scene/compo/spectrum.hpp>
 #include <metatron/scene/compo/transform.hpp>
 #include <metatron/scene/compo/shape.hpp>
@@ -20,6 +21,11 @@
 #include <metatron/scene/daemon/tracer.hpp>
 
 using namespace mtt;
+
+struct Test final {
+	ecs::Entity e;
+	math::Matrix<f32, 4, 4> m;
+};
 
 auto main() -> int {
 	auto hierarchy = ecs::Hierarchy{};
@@ -72,28 +78,38 @@ auto main() -> int {
 	hierarchy.activate();
 	hierarchy.init();
 
-	auto sRBB_entity = "/color-space/sRGB"_et;
-	auto* sRGB = &hierarchy.fetch<color::Color_Space>(sRBB_entity);
+	auto sRGB_entity = "/color-space/sRGB"_et;
+	auto* sRGB = &hierarchy.fetch<color::Color_Space>(sRGB_entity);
+
+	Test t = {
+		.e = sRGB_entity,
+		.m = {
+			{1.f, 0.f, 0.f, 0.f},
+			{0.f, 1.f, 0.f, 0.f},
+			{0.f, 0.f, 1.f, 0.f},
+			{0.f, 0.f, 0.f, 1.f},
+		},
+	};
 
 	hierarchy.attach<compo::Spectrum>("/spectrum/sigma-a"_et, compo::Rgb_Spectrum{
 		.c = {0.0f, 0.0f, 0.0f},
 		.type = color::Color_Space::Spectrum_Type::unbounded,
-		.color_space = sRBB_entity,
+		.color_space = sRGB_entity,
 	});
 	hierarchy.attach<compo::Spectrum>("/spectrum/sigma-s"_et, compo::Rgb_Spectrum{
 		.c = {1.0f, 1.0f, 1.0f},
 		.type = color::Color_Space::Spectrum_Type::unbounded,
-		.color_space = sRBB_entity,
+		.color_space = sRGB_entity,
 	});
 	hierarchy.attach<compo::Spectrum>("/spectrum/sigma-e"_et, compo::Rgb_Spectrum{
 		.c = {0.0f, 0.0f, 0.0f},
 		.type = color::Color_Space::Spectrum_Type::illuminant,
-		.color_space = sRBB_entity,
+		.color_space = sRGB_entity,
 	});
 	hierarchy.attach<compo::Spectrum>("/spectrum/env"_et, compo::Rgb_Spectrum{
 		.c = {0.03f, 0.07f, 0.23f},
 		.type = color::Color_Space::Spectrum_Type::illuminant,
-		.color_space = sRBB_entity
+		.color_space = sRGB_entity
 	});
 
 	hierarchy.attach("/hierarchy/camera"_et,compo::Transform{
@@ -156,7 +172,7 @@ auto main() -> int {
 		.sampler = compo::Halton_Sampler{},
 		.filter = compo::Lanczos_Filter{},
 		.initial_medium = "/hierarchy/medium/vaccum"_et,
-		.color_space = sRBB_entity,
+		.color_space = sRGB_entity,
 	});
 
 	hierarchy.attach("/divider/cloud"_et, compo::Divider{

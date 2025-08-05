@@ -1,17 +1,18 @@
 {
-  lib,
+  assimp,
   clangStdenv,
-  fetchFromGitHub,
   clang-tools,
   cmake,
-  ninja,
+  entt,
+  fetchFromGitHub,
+  glaze,
+  lib,
   mimalloc,
-  assimp,
+  ninja,
   openimageio,
   openvdb,
   proxy,
   zlib,
-  entt,
 }:
 clangStdenv.mkDerivation {
   pname = "metatron";
@@ -31,13 +32,14 @@ clangStdenv.mkDerivation {
   ];
 
   buildInputs = [
-    mimalloc
     assimp
+    entt
+	glaze
+    mimalloc
     openimageio
     openvdb
     proxy
     zlib
-    entt
   ];
 
   cmakeFlags = [

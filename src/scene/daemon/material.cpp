@@ -36,7 +36,7 @@ namespace mtt::daemon {
 			using Specrum_Texture = texture::Texture<spectra::Stochastic_Spectrum>;
 			for (auto& [name, entity]: compo.spectrum_textures) {
 				if (!registry.any_of<poly<Specrum_Texture>>(entity)) {
-					std::println("no spectrum texture {} in entity {}", name, hierarchy.name(entity));
+					std::println("no spectrum texture {} in entity {}", name, hierarchy.path(entity));
 					std::abort();
 				}
 				material.spectrum_textures.emplace(
@@ -48,7 +48,7 @@ namespace mtt::daemon {
 			using Vector_Texture = texture::Texture<math::Vector<f32, 4>>;
 			for (auto& [name, entity]: compo.vector_textures) {
 				if (!registry.any_of<poly<Vector_Texture>>(entity)) {
-					std::println("no vector texture {} in entity {}", name, hierarchy.name(entity));
+					std::println("no vector texture {} in entity {}", name, hierarchy.path(entity));
 					std::abort();
 				}
 				material.vector_textures.emplace(
