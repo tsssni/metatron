@@ -5,14 +5,14 @@
 
 namespace mtt::compo {
 	struct Pinhole_Lens final {
-		std::string_view pinhole = "";
 		f32 focal_length;
+		i32 pinhole{0};
 	};
 	struct Thin_Lens final {
-		std::string_view thin = "";
 		f32 aperture;
 		f32 focal_length;
 		f32 focus_distance;
+		i32 thin{0};
 	};
 	using Lens = std::variant<
 		Pinhole_Lens,
@@ -20,10 +20,10 @@ namespace mtt::compo {
 	>;
 
 	struct Independent_Sampler final {
-		std::string_view independent = "";
+		i32 independent{0};
 	};
 	struct Halton_Sampler final {
-		std::string_view halton = "";
+		i32 halton{0};
 	};
 	using Sampler = std::variant<
 		Independent_Sampler,
@@ -31,18 +31,18 @@ namespace mtt::compo {
 	>;
 
 	struct Box_Filter final {
-		std::string_view box = "";
 		math::Vector<f32, 2> radius{0.5f};
+		i32 box{0};
 	};
 	struct Gaussian_Filter final {
-		std::string_view gaussian = "";
 		math::Vector<f32, 2> radius{1.5f};
 		f32 sigma{0.5f};
+		i32 gaussian{0};
 	};
 	struct Lanczos_Filter final {
-		std::string_view lanczos = "";
 		math::Vector<f32, 2> radius{0.5f};
 		f32 tau{3.f};
+		i32 lanczos{0};
 	};
 	using Filter = std::variant<
 		Box_Filter,

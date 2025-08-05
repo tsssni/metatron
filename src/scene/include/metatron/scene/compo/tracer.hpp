@@ -9,7 +9,7 @@ namespace mtt::compo {
 	};
 
 	struct Uniform_Emitter final {
-		std::string_view uniform = "";
+		i32 uniform{0};
 	};
 
 	using Emitter = std::variant<
@@ -17,7 +17,7 @@ namespace mtt::compo {
 	>;
 
 	struct LBVH final {
-		std::string_view lbvh = "";
+		i32 lbvh{0};
 	};
 
 	using Acceleration = std::variant<
@@ -25,7 +25,7 @@ namespace mtt::compo {
 	>;
 
 	struct Volume_Path_Integrator final {
-		std::string_view volume_path = "";
+		i32 volume_path{0};
 	};
 
 	using Integrator = std::variant<

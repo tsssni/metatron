@@ -5,12 +5,12 @@
 
 namespace mtt::compo {
 	struct Mesh final {
-		std::string_view mesh = "";
 		std::string path;
+		i32 mesh{0};
 	};
 
 	struct Sphere final {
-		std::string_view sphere = "";
+		i32 sphere{0};
 	};
 
 	using Shape = std::variant<Mesh, Sphere>;
