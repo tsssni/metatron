@@ -2,6 +2,7 @@
 #include <metatron/scene/ecs/entity.hpp>
 #include <metatron/resource/color/color-space.hpp>
 #include <metatron/core/math/vector.hpp>
+#include <glaze/glaze.hpp>
 
 namespace mtt::compo {
 	struct Constant_Spectrum final {
@@ -18,3 +19,13 @@ namespace mtt::compo {
 
 	using Spectrum = std::variant<Constant_Spectrum, Rgb_Spectrum>;
 }
+
+template<>
+struct glz::meta<mtt::color::Color_Space::Spectrum_Type> {
+	using enum mtt::color::Color_Space::Spectrum_Type;
+	auto constexpr static value = glz::enumerate(
+		albedo,
+		unbounded,
+		illuminant
+	);
+};

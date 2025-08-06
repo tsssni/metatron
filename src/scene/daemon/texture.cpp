@@ -4,6 +4,7 @@
 #include <metatron/resource/texture/texture.hpp>
 #include <metatron/resource/texture/constant.hpp>
 #include <metatron/resource/texture/image.hpp>
+#include <metatron/core/stl/variant.hpp>
 
 namespace mtt::daemon {
 	auto Texture_Daemon::init() noexcept -> void {
@@ -42,7 +43,7 @@ namespace mtt::daemon {
 
 			std::visit([&](auto&& compo) {
 				using T = std::decay_t<decltype(compo)>;
-				if constexpr (std::is_same_v<T, compo::Spectrum_Texture>) {
+				if constexpr (stl::is_variant_alternative_v<T, compo::Spectrum_Texture>) {
 					registry.emplace<poly<Spectrum_Texture>>(entity,
 					std::visit([&](auto&& compo) {
 						using T = std::decay_t<decltype(compo)>;
@@ -57,8 +58,8 @@ namespace mtt::daemon {
 								image::Image::from_path(compo.path), compo.type
 							);
 						}
-					},compo));
-				} else if constexpr (std::is_same_v<T, compo::Vector_Texture>) {
+					}, compo::Spectrum_Texture{compo}));
+				} else if constexpr (stl::is_variant_alternative_v<T, compo::Vector_Texture>) {
 					registry.emplace<poly<Vector_Texture>>(entity,
 					std::visit([&](auto&& compo) {
 						using T = std::decay_t<decltype(compo)>;
@@ -71,7 +72,7 @@ namespace mtt::daemon {
 								image::Image::from_path(compo.path)
 							);
 						}
-					},compo));
+					}, compo::Vector_Texture{compo}));
 				}
 			}, texture);
 		}

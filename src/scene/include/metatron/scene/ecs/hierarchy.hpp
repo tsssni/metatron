@@ -32,17 +32,16 @@ namespace mtt::ecs {
 		template<typename T>
 		auto static serde(std::string const& type) noexcept -> void {
 			auto sanitized_type = type;
-			std::ranges::replace(sanitized_type, '-', '_');
 			std::ranges::transform(
 				sanitized_type,
 				sanitized_type.begin(),
 				::tolower
 			);
 
-			auto fr = [](ecs::Entity e, std::string const& s) -> void {
+			auto fr = [](ecs::Entity e, glz::raw_json const& s) -> void {
 				auto d = T{};
-				if (auto error = glz::read_json<T>(d, s); !error) {
-					std::println("{}", glz::format_error(error, s));
+				if (auto er = glz::read_json<T>(d, s.str); er) {
+					std::println("desrialize {} with glaze error: {}", s.str, glz::format_error(er));
 					std::abort();
 				} else {
 					ecs::Hierarchy::instance->attach(e, std::move(d));
@@ -68,7 +67,7 @@ namespace mtt::ecs {
 		}
 		auto enable(
 			std::string const& type,
-			std::function<void(ecs::Entity e, std::string const& s)> fr,
+			std::function<void(ecs::Entity e, glz::raw_json const& s)> fr,
 			std::function<std::vector<serde::json>()> fw
 		) noexcept -> void;
 		auto read(std::string path) noexcept -> void;

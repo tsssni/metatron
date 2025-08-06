@@ -15,7 +15,7 @@ namespace mtt::ecs {
 		std::unordered_map<Entity, Entity> fathers;
 		std::unordered_map<Entity, std::vector<Entity>> sons;
 
-		std::unordered_map<std::string, std::function<void(Entity e, std::string const& s)>> frs;
+		std::unordered_map<std::string, std::function<void(Entity e, glz::raw_json const& s)>> frs;
 		std::unordered_map<std::string, std::function<std::vector<serde::json>()>> fws;
 
 		auto plant() noexcept -> void {
@@ -97,7 +97,7 @@ namespace mtt::ecs {
 
 	auto Hierarchy::enable(
 		std::string const& type,
-		std::function<void(Entity e, std::string const& s)> fr,
+		std::function<void(Entity e, glz::raw_json const& s)> fr,
 		std::function<std::vector<serde::json>()> fw
 	) noexcept -> void {
 		impl->frs.emplace(type, std::move(fr));
@@ -105,6 +105,14 @@ namespace mtt::ecs {
 	}
 
 	auto Hierarchy::read(std::string path) noexcept -> void {
+		auto jsons = std::vector<serde::json>{};
+		if (auto e = glz::read_file_json(jsons, path, std::string{}); e) {
+			std::println("read scene {} with glaze error: {}", path, glz::format_error(e));
+		}
+
+		for (auto& json: jsons) {
+			impl->frs[json.type](json.entity, json.serialized);
+		}
 	}
 
 	auto Hierarchy::write(std::string path) noexcept -> void {

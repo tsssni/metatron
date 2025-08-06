@@ -18,6 +18,7 @@
 
 namespace mtt::daemon {
 	auto Tracer_Daemon::init() noexcept -> void {
+		MTT_SERDE(Divider);
 		MTT_SERDE(Tracer);
 	}
 

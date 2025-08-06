@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/scene/ecs/entity.hpp>
+#include <metatron/scene/compo/spectrum.hpp>
 #include <metatron/resource/color/color-space.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <variant>
@@ -37,7 +38,9 @@ namespace mtt::compo {
 	>;
 
 	using Texture = std::variant<
-		Spectrum_Texture,
-		Vector_Texture
+		Constant_Spectrum_Texture,
+		Image_Spectrum_Texture,
+		Constant_Vector_Texture,
+		Image_Vector_Texture
 	>;
 }

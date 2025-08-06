@@ -24,16 +24,16 @@ namespace mtt::daemon {
 			auto& compo = registry.get<compo::Material>(entity);
 
 			auto material = material::Material{};
-			material.bsdf = [](compo::Bsdf bsdf) {
-				switch (bsdf) {
-					case compo::Bsdf::interface:
-						return make_poly<bsdf::Bsdf, bsdf::Interface_Bsdf>();
-					case compo::Bsdf::lambertian:
-						return make_poly<bsdf::Bsdf, bsdf::Lambertian_Bsdf>();
-					case compo::Bsdf::microfacet:
-						return make_poly<bsdf::Bsdf, bsdf::Microfacet_Bsdf>();
+			material.bsdf = std::visit([](auto&& compo) {
+				using T = std::decay_t<decltype(compo)>;
+				if constexpr (std::is_same_v<T, compo::Interface_Bsdf>) {
+					return make_poly<bsdf::Bsdf, bsdf::Interface_Bsdf>();
+				} else if constexpr (std::is_same_v<T, compo::Lambertian_Bsdf>) {
+					return make_poly<bsdf::Bsdf, bsdf::Lambertian_Bsdf>();
+				} else if constexpr (std::is_same_v<T, compo::Microfacet_Bsdf>) {
+					return make_poly<bsdf::Bsdf, bsdf::Microfacet_Bsdf>();
 				}
-			}(compo.bsdf);
+			}, (compo.bsdf));
 
 			using Specrum_Texture = texture::Texture<spectra::Stochastic_Spectrum>;
 			for (auto& [name, entity]: compo.spectrum_textures) {
