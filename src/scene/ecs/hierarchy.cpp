@@ -105,18 +105,19 @@ namespace mtt::ecs {
 	}
 
 	auto Hierarchy::read(std::string path) noexcept -> void {
+		if (path.substr(path.size() - 1, 1) != "/") {
+			path += "/";
+		}
+		registry.emplace_or_replace<Working_Directory>(root(), path);
+
 		auto jsons = std::vector<serde::json>{};
-		if (auto e = glz::read_file_json(jsons, path, std::string{}); e) {
+		if (auto e = glz::read_file_json(jsons, path + "scene.json", std::string{}); e) {
 			std::println("read scene {} with glaze error: {}", path, glz::format_error(e));
 		}
 
 		for (auto& json: jsons) {
 			impl->frs[json.type](json.entity, json.serialized);
 		}
-
-		auto slash = path.find_last_of('/');
-		auto wd = slash == std::string::npos ? "./" : path.substr(0, slash + 1);
-		registry.emplace_or_replace<Working_Directory>(root(), wd);
 	}
 
 	auto Hierarchy::write(std::string path) noexcept -> void {

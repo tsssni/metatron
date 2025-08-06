@@ -1,4 +1,5 @@
 {
+  argparse,
   assimp,
   clangStdenv,
   clang-tools,
@@ -32,9 +33,10 @@ clangStdenv.mkDerivation {
   ];
 
   buildInputs = [
+    argparse
     assimp
     entt
-	glaze
+    glaze
     mimalloc
     openimageio
     openvdb

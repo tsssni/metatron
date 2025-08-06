@@ -9,10 +9,32 @@
 #include <metatron/scene/daemon/material.hpp>
 #include <metatron/scene/daemon/camera.hpp>
 #include <metatron/scene/daemon/tracer.hpp>
+#include <argparse/argparse.hpp>
 
 using namespace mtt;
 
-auto main() -> int {
+auto main(int argc, char* argv[]) -> int {
+	auto argparser = argparse::ArgumentParser{"metatron-tracer", "0.0.1"};
+
+	argparser.add_argument("-s", "--scene")
+	.required()
+	.help("directory contains scene.json")
+	.default_value(std::string{"./"});
+
+	argparser.add_argument("-o", "--output")
+	.required()
+	.help("result image path in exr format")
+	.default_value(std::string{"./result.exr"});
+
+	try {
+		argparser.parse_args(argc, argv);
+	}
+	catch (const std::exception& err) {
+		std::println("argparser error: {}", err.what());
+		std::cout << argparser;
+		return 1;
+	}
+
 	auto hierarchy = ecs::Hierarchy{};
 
 	auto spectrum_stage = make_poly<ecs::Stage>();
@@ -62,8 +84,8 @@ auto main() -> int {
 	};
 	hierarchy.activate();
 	hierarchy.init();
-	hierarchy.read("../metatron-scenes/disney-cloud/scene.json");
+	hierarchy.read(argparser.get<std::string>("-s"));
 	hierarchy.update();
-	tracer_daemon.render("build/test.exr");
+	tracer_daemon.render(argparser.get<std::string>("-o"));
 	return 0;
 }
