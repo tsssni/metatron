@@ -1,27 +1,29 @@
 {
-  lib,
+  argparse,
+  assimp,
   clangStdenv,
-  fetchFromGitHub,
   clang-tools,
   cmake,
-  ninja,
+  entt,
+  fetchFromGitHub,
+  glaze,
+  lib,
   mimalloc,
-  assimp,
+  ninja,
   openimageio,
   openvdb,
   proxy,
   zlib,
-  entt,
 }:
 clangStdenv.mkDerivation {
   pname = "metatron";
-  version = "dev";
+  version = "0.0.1";
 
   src = fetchFromGitHub {
     owner = "tsssni";
     repo = "metatron";
-    rev = "13af11b";
-    sha256 = "sha256-ZLfrMO7aMMY4a9k8INcsFYJQlM3gp8z7E7hhsjhcDXo=";
+    rev = "4610629";
+    sha256 = "sha256-schL/mz9cW2bsQDsw93ZLaFZlsjnG3x2u/P1H+uXsZI=";
   };
 
   nativeBuildInputs = [
@@ -31,13 +33,15 @@ clangStdenv.mkDerivation {
   ];
 
   buildInputs = [
-    mimalloc
+    argparse
     assimp
+    entt
+    glaze
+    mimalloc
     openimageio
     openvdb
     proxy
     zlib
-    entt
   ];
 
   cmakeFlags = [

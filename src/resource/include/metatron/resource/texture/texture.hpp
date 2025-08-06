@@ -19,7 +19,7 @@ namespace mtt::texture {
 		eval::Context const& ctx,
 		Coordinate const& coord
 	) const noexcept -> T>
-	::support_view
+	::template add_skill<pro::skills::as_view>
 	::build {};
 
 	auto grad(

@@ -1,1 +1,1 @@
-list(APPEND metatron-deps resource render entt)
+list(APPEND metatron-deps resource render entt glaze)

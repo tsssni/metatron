@@ -3,11 +3,23 @@
 #include <unordered_map>
 
 namespace mtt::compo {
-	enum struct Bsdf: i32 {
-		interface,
-		lambertian,
-		microfacet,
+	struct Interface_Bsdf final {
+		i32 interface = 0;
 	};
+
+	struct Lambertian_Bsdf final {
+		i32 lambertian = 0;
+	};
+
+	struct Microfacet_Bsdf final {
+		i32 microfacet = 0;
+	};
+
+	using Bsdf = std::variant<
+		Interface_Bsdf,
+		Lambertian_Bsdf,
+		Microfacet_Bsdf
+	>;
 
 	struct Material final {
 		Bsdf bsdf;

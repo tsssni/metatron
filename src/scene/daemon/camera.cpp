@@ -2,6 +2,7 @@
 #include <metatron/scene/compo/camera.hpp>
 #include <metatron/scene/compo/transform.hpp>
 #include <metatron/scene/ecs/hierarchy.hpp>
+#include <metatron/scene/serde/serde.hpp>
 #include <metatron/resource/photo/camera.hpp>
 #include <metatron/resource/lens/pinhole.hpp>
 #include <metatron/resource/lens/thin.hpp>
@@ -14,7 +15,9 @@
 #include <metatron/core/math/filter/lanczos.hpp>
 
 namespace mtt::daemon {
-	auto Camera_Daemon::init() noexcept -> void {}
+	auto Camera_Daemon::init() noexcept -> void {
+		MTT_SERDE(Camera);
+	}
 
 	auto Camera_Daemon::update() noexcept -> void {
 		auto& hierarchy = *ecs::Hierarchy::instance;

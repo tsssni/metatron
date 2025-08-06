@@ -9,6 +9,7 @@
 
 namespace mtt::daemon {
 	auto Spectrum_Daemon::init() noexcept -> void {
+		MTT_SERDE(Spectrum);
 		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
 

@@ -27,6 +27,6 @@ namespace mtt::math {
 		auto (math::Vector<i32, 3> const& ijk) noexcept -> T&,
 		auto (math::Vector<i32, 3> const& ijk) const noexcept -> T const&
 	>
-	::support_view
+	::template add_skill<pro::skills::as_view>
 	::build {};
 }

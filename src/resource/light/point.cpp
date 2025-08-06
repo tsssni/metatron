@@ -1,7 +1,7 @@
 #include <metatron/resource/light/point.hpp>
 
 namespace mtt::light {
-	// Point_Light::Point_Light(view<spectra::Spectrum> L) noexcept: L(L) {}
+	Point_Light::Point_Light(view<spectra::Spectrum> L) noexcept: L(L) {}
 
 	auto Point_Light::operator()(
 		eval::Context const& ctx

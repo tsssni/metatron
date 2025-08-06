@@ -19,6 +19,6 @@ namespace mtt::math {
 	::add_convention<filter_sample, auto (
 		Vector<f32, 2> const& u
 	) const -> std::optional<filter::Interaction>>
-	::support_view
+	::add_skill<pro::skills::as_view>
 	::build {};
 }

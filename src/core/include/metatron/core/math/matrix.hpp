@@ -6,7 +6,6 @@
 #include <span>
 #include <tuple>
 #include <cassert>
-#include <cmath>
 
 namespace mtt::math {
 	// forward declaration to support the declaration of 0d matrix

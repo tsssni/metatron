@@ -17,7 +17,10 @@
 #include <iostream>
 
 namespace mtt::daemon {
-	auto Tracer_Daemon::init() noexcept -> void {}
+	auto Tracer_Daemon::init() noexcept -> void {
+		MTT_SERDE(Divider);
+		MTT_SERDE(Tracer);
+	}
 
 	auto Tracer_Daemon::update() noexcept -> void {
 		auto& hierarchy = *ecs::Hierarchy::instance;
@@ -96,29 +99,30 @@ namespace mtt::daemon {
 			this->tracer = entity;
 			auto& tracer = registry.get<compo::Tracer>(entity);
 
-			switch (tracer.emitter) {
-				case compo::Emitter::uniform:
-					registry.emplace<poly<emitter::Emitter>>(entity,
-						make_poly<emitter::Emitter, emitter::Uniform_Emitter>(std::move(lights), std::move(inf_lights))
-					);
-					break;
-			}
+			registry.emplace<poly<emitter::Emitter>>(entity,
+			std::visit([&](auto&& compo) {
+				using T = std::decay_t<decltype(compo)>;
+				if constexpr (std::is_same_v<T, compo::Uniform_Emitter>) {
+					return make_poly<emitter::Emitter, emitter::Uniform_Emitter>(std::move(lights), std::move(inf_lights));
+				}
+			}, tracer.emitter));
+			
 			auto camera_space_view = registry.view<compo::Camera_Space>();
 			if (camera_space_view.empty()) {
 				std::println("tracer: camera not attached");
 				std::abort();
 			}
 			auto& space = registry.get<compo::Camera_Space>(camera_space_view.front());
-			switch (tracer.accel) {
-				case compo::Acceleration::lbvh:
-					registry.emplace<poly<accel::Acceleration>>(entity,
-						make_poly<accel::Acceleration, accel::LBVH>(
-							std::move(dividers),
-							&space.world_to_render
-						)
+			
+			registry.emplace<poly<accel::Acceleration>>(entity,
+			std::visit([&](auto&& compo) {
+				using T = std::decay_t<decltype(compo)>;
+				if constexpr (std::is_same_v<T, compo::LBVH>) {
+					return make_poly<accel::Acceleration, accel::LBVH>(
+						std::move(dividers), &space.world_to_render
 					);
-					break;
-			}
+				}
+			}, tracer.accel));
 		}
 	}
 
@@ -137,12 +141,12 @@ namespace mtt::daemon {
 		auto& camera = registry.get<photo::Camera>(entity);
 		auto& sampler = registry.get<poly<math::Sampler>>(entity);
 
-		auto integrator = [](compo::Integrator integrator) {
-			switch (integrator) {
-				case compo::Integrator::volume_path:
-					return make_poly<monte_carlo::Integrator, monte_carlo::Volume_Path_Integrator>();
+		auto integrator = std::visit([&](auto&& compo) {
+			using T = std::decay_t<decltype(compo)>;
+			if constexpr (std::is_same_v<T, compo::Volume_Path_Integrator>) {
+				return make_poly<monte_carlo::Integrator, monte_carlo::Volume_Path_Integrator>();
 			}
-		}(registry.get<compo::Tracer>(tracer).integrator);
+		}, registry.get<compo::Tracer>(tracer).integrator);
 		auto& accel = registry.get<poly<accel::Acceleration>>(tracer);
 		auto& emitter = registry.get<poly<emitter::Emitter>>(tracer);
 

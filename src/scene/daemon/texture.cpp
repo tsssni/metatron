@@ -4,9 +4,11 @@
 #include <metatron/resource/texture/texture.hpp>
 #include <metatron/resource/texture/constant.hpp>
 #include <metatron/resource/texture/image.hpp>
+#include <metatron/core/stl/variant.hpp>
 
 namespace mtt::daemon {
 	auto Texture_Daemon::init() noexcept -> void {
+		MTT_SERDE(Texture);
 		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto conductor_list = std::to_array<std::string>({"Au"});
 		for (auto& conductor: conductor_list) {
@@ -41,7 +43,7 @@ namespace mtt::daemon {
 
 			std::visit([&](auto&& compo) {
 				using T = std::decay_t<decltype(compo)>;
-				if constexpr (std::is_same_v<T, compo::Spectrum_Texture>) {
+				if constexpr (stl::is_variant_alternative_v<T, compo::Spectrum_Texture>) {
 					registry.emplace<poly<Spectrum_Texture>>(entity,
 					std::visit([&](auto&& compo) {
 						using T = std::decay_t<decltype(compo)>;
@@ -52,12 +54,13 @@ namespace mtt::daemon {
 								registry.get<poly<spectra::Spectrum>>(compo.spectrum)
 							);
 						} else if constexpr (std::is_same_v<T, compo::Image_Spectrum_Texture>) {
+							auto const& wd = registry.get<ecs::Working_Directory>(hierarchy.root());
 							return make_poly<Spectrum_Texture, Image_Texture>(
-								image::Image::from_path(compo.path), compo.type
+								image::Image::from_path(wd.path + compo.path), compo.type
 							);
 						}
-					},compo));
-				} else if constexpr (std::is_same_v<T, compo::Vector_Texture>) {
+					}, compo::Spectrum_Texture{compo}));
+				} else if constexpr (stl::is_variant_alternative_v<T, compo::Vector_Texture>) {
 					registry.emplace<poly<Vector_Texture>>(entity,
 					std::visit([&](auto&& compo) {
 						using T = std::decay_t<decltype(compo)>;
@@ -70,7 +73,7 @@ namespace mtt::daemon {
 								image::Image::from_path(compo.path)
 							);
 						}
-					},compo));
+					}, compo::Vector_Texture{compo}));
 				}
 			}, texture);
 		}

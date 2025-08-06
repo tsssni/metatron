@@ -28,6 +28,6 @@ namespace mtt::accel {
 		math::Ray const& r,
 		math::Vector<f32, 3> const& np
 	) const noexcept -> std::optional<Interaction>>
-	::support_view
+	::add_skill<pro::skills::as_view>
 	::build {};
 }

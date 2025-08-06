@@ -43,7 +43,7 @@ namespace mtt::bsdf {
 	) noexcept -> void>
 	::add_convention<bsdf_flags, auto () const noexcept -> Flags>
 	::add_convention<bsdf_degrade, auto () noexcept -> bool>
-	::support_view
+	::add_skill<pro::skills::as_view>
 	::support_copy<pro::constraint_level::nontrivial>
 	::build {};
 }
