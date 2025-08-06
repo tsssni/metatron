@@ -8,6 +8,10 @@ namespace mtt::ecs {
 	template<typename T>
 	struct Dirty_Mark final {};
 
+	struct Working_Directory final {
+		std::string path;
+	};
+
 	struct Hierarchy final: stl::capsule<Hierarchy> {
 		Registry registry;
 		std::vector<mut<Stage>> stages;

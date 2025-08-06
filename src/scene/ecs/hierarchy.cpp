@@ -113,6 +113,10 @@ namespace mtt::ecs {
 		for (auto& json: jsons) {
 			impl->frs[json.type](json.entity, json.serialized);
 		}
+
+		auto slash = path.find_last_of('/');
+		auto wd = slash == std::string::npos ? "./" : path.substr(0, slash + 1);
+		registry.emplace_or_replace<Working_Directory>(root(), wd);
 	}
 
 	auto Hierarchy::write(std::string path) noexcept -> void {

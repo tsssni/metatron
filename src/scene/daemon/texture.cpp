@@ -54,8 +54,9 @@ namespace mtt::daemon {
 								registry.get<poly<spectra::Spectrum>>(compo.spectrum)
 							);
 						} else if constexpr (std::is_same_v<T, compo::Image_Spectrum_Texture>) {
+							auto const& wd = registry.get<ecs::Working_Directory>(hierarchy.root());
 							return make_poly<Spectrum_Texture, Image_Texture>(
-								image::Image::from_path(compo.path), compo.type
+								image::Image::from_path(wd.path + compo.path), compo.type
 							);
 						}
 					}, compo::Spectrum_Texture{compo}));

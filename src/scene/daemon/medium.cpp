@@ -63,8 +63,9 @@ namespace mtt::daemon {
 							media::grid_size,
 							media::grid_size
 						>;
+						auto const& wd = registry.get<ecs::Working_Directory>(hierarchy.root());
 						registry.emplace<poly<media::Medium_Grid>>(entity,
-							make_poly<media::Medium_Grid, Nanovdb_Grid>(compo.path)
+							make_poly<media::Medium_Grid, Nanovdb_Grid>(wd.path + compo.path)
 						);
 						return make_poly<media::Medium, media::Grid_Medium>(
 							registry.get<poly<media::Medium_Grid>>(entity),

@@ -62,7 +62,7 @@ auto main() -> int {
 	};
 	hierarchy.activate();
 	hierarchy.init();
-	hierarchy.read("build/test.json");
+	hierarchy.read("../metatron-scenes/disney-cloud/scene.json");
 	hierarchy.update();
 	tracer_daemon.render("build/test.exr");
 	return 0;
