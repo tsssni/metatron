@@ -17,13 +17,13 @@
 }:
 clangStdenv.mkDerivation {
   pname = "metatron";
-  version = "dev";
+  version = "0.0.1";
 
   src = fetchFromGitHub {
     owner = "tsssni";
     repo = "metatron";
-    rev = "b8f4ec1";
-    sha256 = "sha256-ekcc30V8CMY4/got2xnU4VfoE3huDwoJQWNzQ6W4Zag=";
+    rev = "4610629";
+    sha256 = "sha256-schL/mz9cW2bsQDsw93ZLaFZlsjnG3x2u/P1H+uXsZI=";
   };
 
   nativeBuildInputs = [
