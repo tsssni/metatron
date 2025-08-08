@@ -52,12 +52,16 @@ namespace mtt::daemon {
 			auto& shape = registry.get<poly<shape::Shape>>(
 				registry.get<compo::Shape_Instance>(div.shape).path
 			);
-			auto& medium = registry.get<poly<media::Medium>>(
-				registry.get<compo::Medium_Instance>(div.medium).path
+			auto& int_medium = registry.get<poly<media::Medium>>(
+				registry.get<compo::Medium_Instance>(div.int_medium).path
+			);
+			auto& ext_medium = registry.get<poly<media::Medium>>(
+				registry.get<compo::Medium_Instance>(div.ext_medium).path
 			);
 			auto& material = registry.get<material::Material>(div.material);
 			auto& st = registry.get<math::Transform>(div.shape);
-			auto& mt = registry.get<math::Transform>(div.medium);
+			auto& int_mt = registry.get<math::Transform>(div.int_medium);
+			auto& ext_mt = registry.get<math::Transform>(div.ext_medium);
 
 			auto& areas = registry.emplace<std::vector<light::Area_Light>>(entity);
 			if (material.spectrum_textures.contains("emission")) {
@@ -72,8 +76,9 @@ namespace mtt::daemon {
 			divs.reserve(shape->size());
 			for (auto i = 0uz; i < shape->size(); i++) {
 				divs.emplace_back(
-					shape, medium, areas.empty() ? nullptr : &areas[i],
-					&material, &st, &mt, i
+					shape, int_medium, ext_medium,
+					areas.empty() ? nullptr : &areas[i],
+					&material, &st, &int_mt, &ext_mt, i
 				);
 			}
 			std::ranges::move(divs, std::back_inserter(dividers));

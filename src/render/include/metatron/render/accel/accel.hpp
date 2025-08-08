@@ -10,11 +10,13 @@
 namespace mtt::accel {
 	struct Divider final {
 		view<shape::Shape> shape{};
-		view<media::Medium> medium;
+		view<media::Medium> int_medium;
+		view<media::Medium> ext_medium;
 		view<light::Light> light{};
 		material::Material const* material{};
 		math::Transform const* local_to_world{};
-		math::Transform const* medium_to_world{};
+		math::Transform const* int_to_world{};
+		math::Transform const* ext_to_world{};
 		usize primitive{0uz};
 	};
 
