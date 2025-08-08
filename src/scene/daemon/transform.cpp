@@ -46,8 +46,8 @@ namespace mtt::daemon {
 
 		auto const& pt = registry.any_of<math::Transform>(parent)
 		? registry.get<math::Transform>(parent)
-		: math::Transform{compo::Transform{}};
-		auto mat = math::Matrix<f32, 4, 4>{pt | math::Transform{registry.get<compo::Transform>(entity)}};
+		: compo::to_transform(compo::Local_Transform{});
+		auto mat = math::Matrix<f32, 4, 4>{pt | compo::to_transform(registry.get<compo::Transform>(entity))};
 
 		registry.replace<math::Transform>(entity, math::Transform{mat});
 		registry.emplace<ecs::Dirty_Mark<math::Transform>>(entity);

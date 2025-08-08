@@ -59,7 +59,7 @@ namespace mtt::compo {
 		Sampler sampler;
 		Filter filter;
 		ecs::Entity initial_medium = "/hierarchy/medium/vaccum"_et;
-		ecs::Entity color_space = "/hierarchy/color-space/srgb"_et;
+		ecs::Entity color_space = "/color-space/sRGB"_et;
 	};
 
 	struct Camera_Space final {

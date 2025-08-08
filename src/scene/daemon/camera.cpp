@@ -107,13 +107,16 @@ namespace mtt::daemon {
 			registry.emplace<photo::Camera>(entity, lens, film);
 
 			auto& camera_space = registry.emplace_or_replace<compo::Camera_Space>(entity);
-			auto& camera_to_world = registry.get<compo::Transform>(entity);
-			camera_space.world_to_render = compo::Transform{
-				.translation = - camera_to_world.translation,
-			};
-			camera_space.render_to_camera = math::inverse(compo::Transform{
-				.rotation = camera_to_world.rotation,
+			auto camera_to_world = compo::to_transform(registry.get<compo::Transform>(entity));
+			auto t = camera_to_world.transform;
+			auto inv_t = camera_to_world.inv_transform;
+			camera_space.world_to_render = compo::to_transform(compo::Local_Transform{
+				.translation = -math::Vector<f32, 3>{t[0][3], t[1][3], t[2][3]},
 			});
+			t[0][3] = t[1][3] = t[2][3] = 0.0f;
+			inv_t[0][3] = inv_t[1][3] = inv_t[2][3] = 0.0f;
+			camera_space.render_to_camera.inv_transform = t;
+			camera_space.render_to_camera.transform = inv_t;
 
 			registry.clear<ecs::Dirty_Mark<compo::Camera>>();
 		}

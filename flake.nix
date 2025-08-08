@@ -23,7 +23,9 @@
         "x86_64-linux"
       ];
 
-      mapSystems = f: systems |> lib.map f |> lib.mergeAttrsList;
+      systemAttrs = f: system: { ${system} = f system; };
+
+      mapSystems = f: systems |> lib.map (systemAttrs f) |> lib.mergeAttrsList;
 
       packages = mapSystems (
         system:
@@ -34,7 +36,7 @@
           };
         in
         {
-          "${system}".default = pkgs.callPackage ./nix { };
+          default = pkgs.callPackage ./nix { };
         }
       );
 
