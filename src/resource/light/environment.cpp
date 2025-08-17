@@ -5,9 +5,9 @@
 #include <metatron/core/math/quaternion.hpp>
 
 namespace mtt::light {
-	// Environment_Light::Environment_Light(
-	// 	view<texture::Texture<spectra::Stochastic_Spectrum>> env_map
-	// ) noexcept: env_map(env_map) {}
+	Environment_Light::Environment_Light(
+		view<texture::Texture<spectra::Stochastic_Spectrum>> env_map
+	) noexcept: env_map(env_map) {}
 
 	auto Environment_Light::operator()(
 		eval::Context const& ctx

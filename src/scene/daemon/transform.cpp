@@ -6,6 +6,11 @@
 namespace mtt::daemon {
 	auto Transform_Daemon::init() noexcept -> void {
 		MTT_SERDE(Transform);
+		auto& hierarchy = *ecs::Hierarchy::instance;
+		hierarchy.attach("/hierarchy"_et, compo::Local_Transform{});
+		hierarchy.attach("/hierarchy/shape"_et, compo::Local_Transform{});
+		hierarchy.attach("/hierarchy/medium"_et, compo::Local_Transform{});
+		hierarchy.attach("/hierarchy/light"_et, compo::Local_Transform{});
 	}
 
 	auto Transform_Daemon::update() noexcept -> void {

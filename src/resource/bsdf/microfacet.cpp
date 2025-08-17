@@ -101,7 +101,7 @@ namespace mtt::bsdf {
 		k = attr.spectra.count("k") > 0 ? attr.spectra.at("k") : null_spec;
 
 		auto alpha = attr.vectors.count("alpha") > 0
-		? attr.vectors.at("alpha")[0] : 1.f;
+		? attr.vectors.at("alpha")[0] : 0.001f;
 		alpha_u = attr.vectors.count("alpha_u") > 0
 		? attr.vectors.at("alpha_u")[0] : alpha;
 		alpha_v = attr.vectors.count("alpha_v") > 0
