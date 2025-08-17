@@ -51,13 +51,17 @@ namespace mtt::compo {
 	>;
 
 	struct Camera final {
-		math::Vector<f32, 2> film_size;
-		math::Vector<usize, 2> image_size;
-		usize spp;
-		usize depth;
-		Lens lens;
-		Sampler sampler;
-		Filter filter;
+		math::Vector<f32, 2> film_size = {0.036f, 0.024f};
+		math::Vector<usize, 2> image_size = {1280uz, 720uz};
+		usize spp = 16uz;
+		usize depth = 64uz;
+		Lens lens = Thin_Lens{
+			.aperture = 5.6f,
+			.focal_length = 0.05f,
+			.focus_distance = 10.f,
+		};
+		Sampler sampler = Halton_Sampler{};
+		Filter filter = Lanczos_Filter{};
 		ecs::Entity initial_medium = "/hierarchy/medium/vaccum"_et;
 		ecs::Entity color_space = "/color-space/sRGB"_et;
 	};

@@ -34,8 +34,8 @@ namespace mtt::compo {
 	>;
 
 	struct Tracer final {
-		Emitter emitter;
-		Acceleration accel;
-		Integrator integrator;
+		Emitter emitter = Uniform_Emitter{};
+		Acceleration accel = LBVH{};
+		Integrator integrator = Volume_Path_Integrator{};
 	};
 }

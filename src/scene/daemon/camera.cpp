@@ -89,16 +89,18 @@ namespace mtt::daemon {
 			auto* color_space = &registry.get<color::Color_Space>(camera.color_space);
 			registry.emplace<photo::Sensor>(entity, color_space);
 			auto* sensor = &registry.get<photo::Sensor>(entity);
-			auto x = photo::Film{
-				camera.film_size,
-				camera.image_size,
-				filter,
-				sensor,
-				color_space,
-			};
+
+			auto film_size = camera.film_size;
+			auto image_size = camera.image_size;
+			auto aspect_ratio = f32(camera.image_size[0]) / f32(camera.image_size[1]);
+			if (aspect_ratio > 1.f) {
+				film_size[1] = film_size[0] / aspect_ratio;
+			} else {
+				film_size[0] = film_size[1] * aspect_ratio;
+			}
 			registry.emplace<photo::Film>(entity,
-				camera.film_size,
-				camera.image_size,
+				film_size,
+				image_size,
 				filter,
 				sensor,
 				color_space
