@@ -2,7 +2,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/arithmetic.hpp>
-#include <print>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::spectra {
 	Stochastic_Spectrum::Stochastic_Spectrum(f32 u, f32 v) noexcept {

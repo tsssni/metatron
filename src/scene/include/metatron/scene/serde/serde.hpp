@@ -2,8 +2,8 @@
 #include <metatron/scene/ecs/entity.hpp>
 #include <metatron/core/math/matrix.hpp>
 #include <metatron/core/math/quaternion.hpp>
+#include <metatron/core/stl/print.hpp>
 #include <glaze/glaze.hpp>
-#include <print>
 
 namespace mtt::serde {
 	struct json final {

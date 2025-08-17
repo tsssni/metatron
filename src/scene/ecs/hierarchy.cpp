@@ -1,8 +1,8 @@
 #include <metatron/scene/ecs/hierarchy.hpp>
 #include <metatron/scene/ecs/stage.hpp>
 #include <metatron/scene/serde/serde.hpp>
+#include <metatron/core/stl/print.hpp>
 #include <unordered_map>
-#include <print>
 
 namespace mtt::ecs {
 	mut<Hierarchy> Hierarchy::instance{nullptr};

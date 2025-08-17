@@ -1,6 +1,6 @@
 #include <metatron/resource/image/image.hpp>
+#include <metatron/core/stl/print.hpp>
 #include <OpenImageIO/imageio.h>
-#include <print>
 
 namespace mtt::image {
 	Image::Pixel::Pixel(Image const* image, byte* start) noexcept

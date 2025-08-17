@@ -31,8 +31,9 @@ namespace mtt::daemon {
 				if constexpr (std::is_same_v<T, compo::Sphere>) {
 					return make_poly<shape::Shape, shape::Sphere>();
 				} else if constexpr (std::is_same_v<T, compo::Mesh>) {
+					auto const& wd = registry.get<ecs::Working_Directory>(hierarchy.root());
 					return make_poly<shape::Shape, shape::Mesh>(
-						shape::Mesh::from_path(compo.path)
+						shape::Mesh::from_path(wd.path + compo.path)
 					);
 				}
 			},shape));

@@ -5,7 +5,7 @@
 #include <metatron/resource/bsdf/interface.hpp>
 #include <metatron/resource/bsdf/lambertian.hpp>
 #include <metatron/resource/bsdf/microfacet.hpp>
-#include <print>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::daemon {
 	auto Material_Daemon::init() noexcept -> void {

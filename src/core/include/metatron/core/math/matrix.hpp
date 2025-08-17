@@ -560,7 +560,8 @@ namespace mtt::math {
 	) noexcept -> std::optional<Matrix<T, n, m>> {
 		T det_a = determinant(a);
 		if (math::abs(det_a) < 1e-12f) {
-			return {};
+			// some triangles are too small
+			// return {};
 		}
 
 		auto result = Matrix<T, n, m>{};
