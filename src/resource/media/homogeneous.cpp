@@ -31,7 +31,7 @@ namespace mtt::media {
 		auto transmittance = ctx.spec;
 		transmittance.value = math::foreach([&](f32 value, usize i) {
 			return std::exp(-value * t);
-		}, transmittance.value);
+		}, sigma_maj.value);
 
 		auto phase = this->phase;
 		phase->configure({ctx.spec});
