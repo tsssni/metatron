@@ -4,6 +4,7 @@
 
 namespace mtt::spectra {
 	auto constexpr visible_lambda = math::Vector<f32, 2>{360.f, 830.f};
+	auto constexpr CIE_Y_integral = 106.856895f;
 
 	struct Spectrum final: pro::facade_builder
 	::add_convention<pro::operator_dispatch<"()">, auto (f32) const noexcept -> f32>
@@ -21,10 +22,10 @@ namespace mtt::spectra {
 	}
 
 	auto inline operator~(view<Spectrum> s) noexcept -> math::Vector<f32, 3> {
-		return {
+		return math::Vector<f32, 3>{
 			Spectrum::spectra["CIE-X"] | s,
 			Spectrum::spectra["CIE-Y"] | s,
-			Spectrum::spectra["CIE-Z"] | s
-		};
+			Spectrum::spectra["CIE-Z"] | s,
+		} / spectra::CIE_Y_integral;
 	}
 }

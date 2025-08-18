@@ -18,18 +18,14 @@ namespace mtt::color {
 	white_point(white_point),
 	scale(scale),
 	table(table),
-	encode(encode), 
+	encode(encode),
 	decode(decode) {
 		auto w = ~white_point;
-		auto r= math::Vector<f32, 3>{r_chroma, 1.f - r_chroma[0] - r_chroma[1]};
-		auto g= math::Vector<f32, 3>{g_chroma, 1.f - g_chroma[0] - g_chroma[1]};
-		auto b= math::Vector<f32, 3>{b_chroma, 1.f - b_chroma[0] - b_chroma[1]};
+		auto r= xyY_to_XYZ({r_chroma, 1.f});
+		auto g= xyY_to_XYZ({g_chroma, 1.f});
+		auto b= xyY_to_XYZ({b_chroma, 1.f});
 
-		auto rgb = math::Matrix<f32, 3, 3>{
-			{r[0], g[0], b[0]},
-			{r[1], g[1], b[1]},
-			{r[2], g[2], b[2]},
-		};
+		auto rgb = math::transpose(math::Matrix<f32, 3, 3>{r, g, b});
 		auto inv_rgb = math::inverse(rgb);
 		auto c = inv_rgb | w;
 		to_XYZ = rgb | math::Matrix<f32, 3, 3>{c[0], c[1], c[2]};
@@ -68,15 +64,15 @@ namespace mtt::color {
 			);
 		}
 
-		auto maxc = (rgb[0] > rgb[1]) ? ((rgb[0] > rgb[2]) ? 0 : 2) : ((rgb[1] > rgb[2]) ? 1 : 2);
+		auto maxc = math::maxi(rgb);
 		auto z = rgb[maxc];
 		auto x = rgb[(maxc + 1) % 3] * (table_res - 1) / z;
 		auto y = rgb[(maxc + 2) % 3] * (table_res - 1) / z;
 
 		// compute integer indices and offsets for coefficient interpolation
-		auto xi = std::max(0, std::min((i32)x, table_res - 2));
-		auto yi = std::max(0, std::min((i32)y, table_res - 2));
-		auto zi = std::max(0, std::min(table_res - 2, i32(std::lower_bound(std::begin(*scale), std::end(*scale), z) - std::begin(*scale) - 1)));
+		auto xi = std::min((i32)x, table_res - 2);
+		auto yi = std::min((i32)y, table_res - 2);
+		auto zi = std::clamp(i32(std::lower_bound(std::begin(*scale), std::end(*scale), z) - std::begin(*scale)) - 1, 0, table_res - 2);
 		auto dx = x - xi;
 		auto dy = y - yi;
 		auto dz = (z - (*scale)[zi]) / ((*scale)[zi + 1] - (*scale)[zi]);

@@ -24,9 +24,9 @@ namespace mtt::spectra {
 	}
 
 	auto Stochastic_Spectrum::operator()(view<Spectrum> spectrum) const noexcept -> f32 {
-		return math::sum(math::foreach([&](f32 lambda, f32 value, usize i) {
-			return value * (*spectrum)(lambda) / (1.f / (visible_lambda[1] - visible_lambda[0]));
-		}, lambda, value)) / stochastic_samples;
+		auto pdf = 1.f / (visible_lambda[1] - visible_lambda[0]);
+		auto spec = *this * (*this & spectrum) / pdf;
+		return math::sum(spec.value) / stochastic_samples;
 	}
 
 	auto Stochastic_Spectrum::operator&(view<Spectrum> spectrum) const noexcept -> Stochastic_Spectrum {

@@ -57,7 +57,7 @@ namespace mtt::compo {
 		usize depth = 64uz;
 		Lens lens = Thin_Lens{
 			.aperture = 5.6f,
-			.focal_length = 0.05f,
+			.focal_length = 0.035f,
 			.focus_distance = 10.f,
 		};
 		Sampler sampler = Halton_Sampler{};

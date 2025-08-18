@@ -21,7 +21,7 @@ namespace mtt::photo {
 
 	auto Fixel::operator=(spectra::Stochastic_Spectrum const& spectrum) noexcept -> void {
 		auto rgb = (*film->sensor)(spectrum);
-		film->image[pixel[0], pixel[1]] += {rgb * weight, 1.f};
+		film->image[pixel[0], pixel[1]] += {rgb * weight, weight};
 		// film->image[pixel[0], pixel[1]] += {math::Vector<f32, 3>{spectrum.value}, 1.f};
 	}
 

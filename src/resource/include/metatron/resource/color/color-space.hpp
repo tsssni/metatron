@@ -40,4 +40,18 @@ namespace mtt::color {
 		Scale const* scale;
 		Table const* table;
 	};
+
+	auto constexpr xyY_to_XYZ(math::Vector<f32, 3> const& xyY) -> math::Vector<f32, 3> {
+		auto [x, y, Y] = xyY;
+		if (y < math::epsilon<f32>) {
+			return {0.f};
+		} else {
+			return {x * Y / y, Y, (1.f - x - y) * Y / y};
+		}
+	};
+
+	auto constexpr XYZ_to_xyY(math::Vector<f32, 3> const& XYZ) -> math::Vector<f32, 3> {
+		auto s = math::sum(XYZ);
+		return {XYZ[0] / s, XYZ[1] / s, XYZ[1]};
+	}
 }

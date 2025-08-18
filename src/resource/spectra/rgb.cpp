@@ -13,7 +13,7 @@ namespace mtt::spectra {
 			if (std::isinf(x)) {
 				return x < 0.f ? 0.f : 1.f;
 			}
-			return 0.5f + x / (2.f * math::sqrt(1.f + x * x));
+			return 0.5f + x / (2.f * math::sqrt(1.f + math::sqr(x)));
 		};
 		return s * sigmoid(polynomial(lambda)) * (illuminant ? (*illuminant)(lambda) : 1.f);
 	}

@@ -1,4 +1,5 @@
 #include <metatron/resource/photo/sensor.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::photo {
 	Sensor::Sensor(view<color::Color_Space> color_space) noexcept: color_space(color_space) {}
@@ -8,7 +9,7 @@ namespace mtt::photo {
 			spectrum(spectra::Spectrum::spectra["CIE-X"]),
 			spectrum(spectra::Spectrum::spectra["CIE-Y"]),
 			spectrum(spectra::Spectrum::spectra["CIE-Z"]),
-		};
+		} / spectra::CIE_Y_integral;
 		auto rgb = color_space->from_XYZ | xyz;
 		return rgb;
 	}

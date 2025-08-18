@@ -423,7 +423,6 @@ namespace mtt::daemon {
 			"CIE-X",
 			"CIE-Y",
 			"CIE-Z",
-			"CIE-D65",
 			"eta/Au",
 			"k/Au",
 		});
@@ -431,6 +430,25 @@ namespace mtt::daemon {
 			auto entity = hierarchy.entity("/spectrum/" + name);
 			auto& spectrum = hierarchy.fetch<poly<spectra::Spectrum>>(entity);
 			spectra::Spectrum::spectra.emplace(name, spectrum);
+		}
+
+		auto illum_list = std::to_array<std::string>({
+			"D65",
+		});
+		for (auto& name: illum_list) {
+			auto CIE_entity = hierarchy.entity("/spectrum/CIE-" + name);
+			auto stdillum_entity = hierarchy.create("/spectrum/stdillum-" + name);
+			auto& CIE_spectrum = hierarchy.fetch<poly<spectra::Spectrum>>(CIE_entity);
+			registry.emplace<poly<spectra::Spectrum>>(
+				stdillum_entity,
+				make_poly<spectra::Spectrum, spectra::Visible_Spectrum>(
+					spectra::Visible_Spectrum::from_spectrum(CIE_spectrum, true)
+				)
+			);
+
+			auto& stdillum_spectrum = hierarchy.fetch<poly<spectra::Spectrum>>(stdillum_entity);
+			spectra::Spectrum::spectra.emplace("CIE-" + name, CIE_spectrum);
+			spectra::Spectrum::spectra.emplace("stdillum-" + name, stdillum_spectrum);
 		}
 	}
 
