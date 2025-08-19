@@ -24,6 +24,6 @@ namespace mtt::light {
 	}
 
 	auto Parallel_Light::flags() const noexcept -> Flags {
-		return Flags(delta | inf);
+		return delta;
 	}
 }

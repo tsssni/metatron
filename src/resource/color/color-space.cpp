@@ -1,7 +1,6 @@
 #include <metatron/resource/color/color-space.hpp>
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/arithmetic.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::color {
 	std::unordered_map<std::string, view<Color_Space>> Color_Space::color_spaces;

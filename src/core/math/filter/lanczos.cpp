@@ -20,7 +20,7 @@ namespace mtt::math {
 
 	auto Lanczos_Filter::operator()(Vector<f32, 2> const& p) const noexcept -> f32 {
 		auto v = foreach([&](f32 x, usize i) -> f32 {
-			return math::abs(x) >= radius[i] ? 0.f : windowed_sinc(x, tau);
+			return math::abs(x) > radius[i] ? 0.f : windowed_sinc(x, tau);
 		}, p);
 		return prod(v);
 	}
