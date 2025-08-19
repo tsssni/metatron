@@ -4,6 +4,7 @@
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/optional.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::monte_carlo {
 	auto Volume_Path_Integrator::sample(
@@ -71,6 +72,7 @@ namespace mtt::monte_carlo {
 				auto l_ctx = et ^ rt ^ direct_ctx;
 				MTT_OPT_OR_RETURN(l_intr, e_intr.divider->light->sample(l_ctx, sampler->generate_2d()));
 
+				auto print = initial_status.pixel == math::Vector<usize, 2>{571, 643} && l_intr.wi[2] == -1.f;
 				l_intr.p = rt | et | math::expand(l_intr.p, 1.f);
 				l_intr.wi = math::normalize(rt | et | math::expand(l_intr.wi, 0.f));
 				direct_ctx.r.d = l_intr.wi;
@@ -98,9 +100,9 @@ namespace mtt::monte_carlo {
 					p_s = p_intr.pdf;
 				}
 
-				auto amm_opt = std::optional<accel::Interaction>{};
+				auto acc_opt = std::optional<accel::Interaction>{};
 				auto termenated = false;
-				auto crommed = true;
+				auto crossed = true;
 
 				auto dedium = medium;
 				auto direct_to_world = medium_to_world;
@@ -124,60 +126,60 @@ namespace mtt::monte_carlo {
 						}
 					}
 
-					if (crommed) {
-						amm_opt = (*accel)(direct_ctx.r, direct_ctx.n);
-						if (!amm_opt) {
+					if (crossed) {
+						acc_opt = (*accel)(direct_ctx.r, direct_ctx.n);
+						if (!acc_opt) {
 							termenated = true;
 							continue;
 						}
-						auto& amm = amm_opt.value();
+						auto& acc = acc_opt.value();
 
-						if (!amm.intr_opt) {
+						if (!acc.intr_opt) {
 							termenated = true;
 							continue;
 						}
-						auto& imtr = amm_opt->intr_opt.value();
+						auto& intr = acc_opt->intr_opt.value();
 
-						auto& dim = *amm.divider;
-						auto& lt = *dim.local_to_world;
-						imtr.p = rt | lt | math::expand(imtr.p, 1.f);
-						imtr.n = math::normalize(rt | lt | imtr.n);
-						direct_ctx.inside = math::dot(-direct_ctx.r.d, imtr.n) < 0.f;
-						dedium = direct_ctx.inside ? dim.int_medium : dim.ext_medium;
-						direct_to_world = direct_ctx.inside ? dim.int_to_world : dim.ext_to_world;
-						imtr.n *= direct_ctx.inside ? -1.f : 1.f;
+						auto& div = *acc.divider;
+						auto& lt = *div.local_to_world;
+						intr.p = rt | lt | math::expand(intr.p, 1.f);
+						intr.n = math::normalize(rt | lt | intr.n);
+						direct_ctx.inside = math::dot(-direct_ctx.r.d, intr.n) < 0.f;
+						dedium = direct_ctx.inside ? div.int_medium : div.ext_medium;
+						direct_to_world = direct_ctx.inside ? div.int_to_world : div.ext_to_world;
+						intr.n *= direct_ctx.inside ? -1.f : 1.f;
 
-						auto close_to_light = math::length(imtr.p - l_intr.p) < 0.001f;
-						if (!close_to_light && !(dim.material->bsdf->flags() & bsdf::Flags::interface)) {
+						auto close_to_light = math::length(intr.p - l_intr.p) < 0.001f;
+						if (!close_to_light && !(div.material->bsdf->flags() & bsdf::Flags::interface)) {
 							termenated = true;
 							gamma = 0.f;
 							continue;
 						} else if (close_to_light) {
 							auto rd = ct ^ ddiff;
 							auto st = math::Transform{math::Matrix<f32, 4, 4>{
-								math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(imtr.p))
+								math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(intr.p))
 							}};
 							rd = st | rd;
 
 							auto ldiff = lt ^ rt ^ rd;
-							auto tangent = shape::Plane{imtr.p, imtr.n};
-							MTT_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, imtr), {
+							auto tangent = shape::Plane{intr.p, intr.n};
+							MTT_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, intr), {
 								termenated = true; gamma = 0.f; continue;
 							});
-							MTT_OPT_OR_CALLBACK(mat_intr, dim.material->sample(direct_ctx, tcoord), {
+							MTT_OPT_OR_CALLBACK(mat_intr, div.material->sample(direct_ctx, tcoord), {
 								termenated = true; gamma = 0.f; continue;
 							});
 							l_intr.L = mat_intr.emission;
 						}
 					}
 
-					auto& amm = amm_opt.value();
-					auto& dim = amm.divider;
-					auto& imtr = amm.intr_opt.value();
+					auto& acc = acc_opt.value();
+					auto& div = acc.divider;
+					auto& intr = acc.intr_opt.value();
 
 					auto& mt = *direct_to_world;
 					auto m_ctx = mt ^ rt ^ direct_ctx;
-					MTT_OPT_OR_CALLBACK(m_intr, dedium->sample(m_ctx, imtr.t, sampler->generate_1d()), {
+					MTT_OPT_OR_CALLBACK(m_intr, dedium->sample(m_ctx, intr.t, sampler->generate_1d()), {
 						gamma = 0.f;
 						termenated = true;
 						break;
@@ -185,21 +187,25 @@ namespace mtt::monte_carlo {
 					m_intr.p = rt | mt | math::expand(m_intr.p, 1.f);
 					l_intr.t -= m_intr.t;
 
-					auto hit = m_intr.t >= imtr.t;
+					auto hit = m_intr.t >= intr.t;
 
 					gamma *= m_intr.transmittance / m_intr.pdf;
 					mis_d *= m_intr.spectra_pdf / m_intr.pdf;
 					mis_l *= m_intr.spectra_pdf / m_intr.pdf;
+					if (print) {
+						std::println("{}", gamma.value);
+						std::println("{}", m_intr.transmittance.value);
+					}
 
 					if (!hit) {
 						gamma *= m_intr.sigma_n;
 						mis_d *= m_intr.sigma_n / m_intr.sigma_maj;
-						imtr.t -= m_intr.t;
+						intr.t -= m_intr.t;
 						direct_ctx.r.o = m_intr.p;
-						crommed = false;
+						crossed = false;
 					} else {
-						direct_ctx.r.o = imtr.p - 0.001f * imtr.n;
-						crommed = true;
+						direct_ctx.r.o = intr.p - 0.001f * intr.n;
+						crossed = true;
 					}
 					continue;
 				}

@@ -17,7 +17,7 @@ namespace mtt::light {
 		return Interaction{
 			ctx.spec & L,
 			wi,
-			ctx.r.o - 65535.f * wi,
+			ctx.r.o + 65535.f * wi,
 			65535.f,
 			1.f
 		};

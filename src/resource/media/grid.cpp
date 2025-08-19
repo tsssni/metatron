@@ -4,8 +4,8 @@
 #include <metatron/core/stl/optional.hpp>
 
 namespace mtt::media {
-    Grid_Medium::Grid_Medium(
-        view<Medium_Grid> grid,
+	Grid_Medium::Grid_Medium(
+		view<Medium_Grid> grid,
 		poly<phase::Phase_Function> phase,
 		view<spectra::Spectrum> sigma_a,
 		view<spectra::Spectrum> sigma_s,
@@ -19,11 +19,11 @@ namespace mtt::media {
 	sigma_e(sigma_e),
 	density_scale(density_scale) {}
 
-    auto Grid_Medium::sample(
-        eval::Context const& ctx, 
-        f32 t_max, 
-        f32 u
-    ) const noexcept -> std::optional<Interaction> {
+	auto Grid_Medium::sample(
+		eval::Context const& ctx, 
+		f32 t_max, 
+		f32 u
+	) const noexcept -> std::optional<Interaction> {
 		auto sigma_a = (ctx.spec & this->sigma_a) * density_scale;
 		auto sigma_s = (ctx.spec & this->sigma_s) * density_scale;
 		auto sigma_t = sigma_a + sigma_s;
@@ -100,5 +100,5 @@ namespace mtt::media {
 				};
 			}
 		}
-    }
+	}
 }
