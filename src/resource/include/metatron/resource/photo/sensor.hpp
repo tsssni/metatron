@@ -10,5 +10,9 @@ namespace mtt::photo {
 
 	private:
 		view<color::Color_Space> color_space;
+		view<spectra::Spectrum> r;
+		view<spectra::Spectrum> g;
+		view<spectra::Spectrum> b;
+		f32 s;
 	};
 }

@@ -5,28 +5,26 @@
 
 template<typename T, mtt::usize... dims>
 struct std::formatter<mtt::math::Matrix<T, dims...>> {
-    constexpr auto parse(std::format_parse_context& ctx) {
-        return ctx.begin();
-    }
-    
-    auto format(const mtt::math::Matrix<T, dims...>& matrix, std::format_context& ctx) const {
-        if constexpr (sizeof...(dims) == 1) {
-            auto out = std::format_to(ctx.out(), "[");
-            constexpr auto size = mtt::math::Matrix<T, dims...>::dimensions[0];
-            for (mtt::usize i = 0; i < size; ++i) {
-                if (i > 0) out = std::format_to(out, ", ");
-                out = std::format_to(out, "{}", matrix[i]);
-            }
-            return std::format_to(out, "]");
-        } else {
-            auto out = std::format_to(ctx.out(), "[");
-            constexpr auto first_dim = mtt::math::Matrix<T, dims...>::dimensions[0];
-            for (mtt::usize i = 0; i < first_dim; ++i) {
-                if (i > 0) out = std::format_to(out, ",\n ");
-                out = std::format_to(out, "{}", matrix[i]);
-            }
-            return std::format_to(out, "]");
-        }
-    }
+	using M = mtt::math::Matrix<T, dims...>;
+
+	constexpr auto parse(std::format_parse_context& ctx) {
+		return ctx.begin();
+	}
+
+	auto format(const mtt::math::Matrix<T, dims...>& matrix, std::format_context& ctx) const {
+		auto constexpr size = sizeof...(dims);
+		auto out = std::format_to(ctx.out(), size == 1 ? "[" : "[\n");
+		constexpr auto first_dim = M::dimensions[0];
+		for (auto i = 0uz; i < first_dim; i++) {
+			if (i == 0 && size == 1) {
+				out = std::format_to(out, "{}", matrix[i]);
+			} else if (size == 1) {
+				out = std::format_to(out, ", {}", matrix[i]);
+			} else {
+				out = std::format_to(out, "\t{}\n", matrix[i]);
+			}
+		}
+		return std::format_to(ctx.out(), size == 1 ? "]" : "]\n");
+	}
 };
 

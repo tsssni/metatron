@@ -16,7 +16,7 @@ namespace mtt::daemon {
 			math::Vector<f32, 2>{0.64f, 0.33f},
 			math::Vector<f32, 2>{0.30f, 0.60f},
 			math::Vector<f32, 2>{0.15f, 0.06f},
-			spectra::Spectrum::spectra["stdillum-D65"],
+			spectra::Spectrum::spectra["CIE-D65"],
 			[](f32 x) -> f32 {
 				if (x <= 0.0031308f) {
 					return 12.92f * x;

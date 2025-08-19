@@ -13,6 +13,9 @@ namespace mtt::photo {
 	};
 
 	struct Camera final {
+		view<Lens> lens;
+		mut<Film> film;
+
 		Camera(
 			view<Lens> lens,
 			mut<Film> film
@@ -25,8 +28,6 @@ namespace mtt::photo {
 		auto to_path(std::string_view path) -> void;
 
 	private:
-		view<Lens> lens;
-		mut<Film> film;
 		math::Ray_Differential default_differential;
 	};
 }

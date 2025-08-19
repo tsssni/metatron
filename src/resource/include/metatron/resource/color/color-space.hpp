@@ -17,7 +17,7 @@ namespace mtt::color {
 
 		math::Matrix<f32, 3, 3> from_XYZ;
 		math::Matrix<f32, 3, 3> to_XYZ;
-		view<spectra::Spectrum> white_point;
+		view<spectra::Spectrum> illuminant;
 		std::function<f32(f32)> encode;
 		std::function<f32(f32)> decode;
 
@@ -25,7 +25,7 @@ namespace mtt::color {
 			math::Vector<f32, 2> const& r,
 			math::Vector<f32, 2> const& g,
 			math::Vector<f32, 2> const& b,
-			view<spectra::Spectrum> white_point,
+			view<spectra::Spectrum> illuminant,
 			std::function<f32(f32)> encode,
 			std::function<f32(f32)> decode,
 			view<Scale> scale,

@@ -45,8 +45,4 @@ namespace mtt::photo {
 
 		return Interaction{ray, default_differential, fixel};
 	}
-
-	auto Camera::to_path(std::string_view path) -> void {
-		film->to_path(path);
-	}
 }

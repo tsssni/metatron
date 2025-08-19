@@ -1,6 +1,7 @@
 #include <metatron/resource/color/color-space.hpp>
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::color {
 	std::unordered_map<std::string, view<Color_Space>> Color_Space::color_spaces;
@@ -9,18 +10,21 @@ namespace mtt::color {
 		math::Vector<f32, 2> const& r_chroma,
 		math::Vector<f32, 2> const& g_chroma,
 		math::Vector<f32, 2> const& b_chroma,
-		view<spectra::Spectrum> white_point,
+		view<spectra::Spectrum> illuminant,
 		std::function<f32(f32)> encode,
 		std::function<f32(f32)> decode,
 		view<Scale> scale,
 		view<Table> table
 	): 
-	white_point(white_point),
+	illuminant(illuminant),
 	scale(scale),
 	table(table),
 	encode(encode),
 	decode(decode) {
-		auto w = ~white_point;
+		// project color primaries and white point to Y=1
+		auto w = ~illuminant;
+		w /= math::sum(w);
+		w = xyY_to_XYZ({w[0], w[1], 1.f});
 		auto r= xyY_to_XYZ({r_chroma, 1.f});
 		auto g= xyY_to_XYZ({g_chroma, 1.f});
 		auto b= xyY_to_XYZ({b_chroma, 1.f});
@@ -40,7 +44,7 @@ namespace mtt::color {
 		}
 
 		auto s = 0.f;
-		auto w = type == Color_Space::Spectrum_Type::illuminant ? white_point : nullptr;
+		auto w = type == Color_Space::Spectrum_Type::illuminant ? illuminant : nullptr;
 		switch (type) {
 			case Spectrum_Type::albedo:
 				s = 1.f;

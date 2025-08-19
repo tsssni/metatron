@@ -3,10 +3,10 @@
 
 namespace mtt::shape {
 	Plane::Plane(f32 a, f32 b, f32 c, f32 d) noexcept:
-		a(a), b(b), c(c), d(d) {}
+	a(a), b(b), c(c), d(d) {}
 
 	Plane::Plane(math::Vector<f32, 3> const& p, math::Vector<f32, 3> const& n):
-		a(n[0]), b(n[1]), c(n[2]), d(-math::dot(n, p)) {}
+	a(n[0]), b(n[1]), c(n[2]), d(-math::dot(n, p)) {}
 
 	auto Plane::size() const noexcept -> usize {
 		return 1uz;

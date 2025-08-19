@@ -193,6 +193,6 @@ namespace mtt::daemon {
 			}
 		});
 		std::println();
-		camera.to_path(path);
+		camera.film->to_path(path);
 	}
 }
