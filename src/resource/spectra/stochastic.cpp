@@ -2,13 +2,15 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <metatron/core/math/distribution/spectrum.hpp>
 #include <metatron/core/stl/print.hpp>
 
 namespace mtt::spectra {
 	Stochastic_Spectrum::Stochastic_Spectrum(f32 u, f32 v) noexcept {
 		lambda = math::foreach([&](f32 l, usize i) {
-			auto ui = std::fmod(u + i / f32(stochastic_samples), 1.f);
-			return math::lerp(visible_lambda[0], visible_lambda[1], ui);
+			auto ui = u + i / f32(stochastic_samples);
+			ui = ui > 1.f ? ui - 1.f : ui;
+			return math::Spectrum_Distribution{}.sample(ui);
 		}, lambda);
 		value = math::Vector<f32, stochastic_samples>{v};
 	}
@@ -24,9 +26,11 @@ namespace mtt::spectra {
 	}
 
 	auto Stochastic_Spectrum::operator()(view<Spectrum> spectrum) const noexcept -> f32 {
-		auto pdf = 1.f / (visible_lambda[1] - visible_lambda[0]);
-		auto spec = *this * (*this & spectrum) / pdf;
-		return math::sum(spec.value) / stochastic_samples;
+		auto pdf = math::foreach([&](f32 l, usize i) {
+			return math::Spectrum_Distribution{}.pdf(l);
+		}, lambda);
+		auto spec = (*this * (*this & spectrum)).value / pdf;
+		return math::sum(spec) / stochastic_samples;
 	}
 
 	auto Stochastic_Spectrum::operator&(view<Spectrum> spectrum) const noexcept -> Stochastic_Spectrum {

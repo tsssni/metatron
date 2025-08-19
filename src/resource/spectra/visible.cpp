@@ -1,14 +1,13 @@
 #include <metatron/resource/spectra/visible.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::spectra {
 	Visible_Spectrum::Visible_Spectrum(std::array<f32, visible_range>&& data) noexcept
 	: data(std::move(data)) {}
 
 	auto Visible_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
-		auto idx = usize(std::clamp(std::floor(lambda), visible_lambda[0], visible_lambda[1]));
-		auto frac = lambda - idx;
-		idx -= usize(visible_lambda[0]);
-		return math::lerp(data[idx], data[idx + 1], frac);
+		auto idx = std::clamp(usize(std::round(lambda) - visible_lambda[0]), 0uz, visible_range - 1uz);
+		return data[idx];
 	}
 
 	auto Visible_Spectrum::from_spectrum(view<Spectrum> spec, bool normalize) noexcept -> Visible_Spectrum {
