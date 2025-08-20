@@ -14,6 +14,7 @@ namespace mtt::photo {
 		f32 aperture;
 		f32 focal_length;
 		f32 focus_distance;
+		f32 focal_distance;
 	};
 }
 

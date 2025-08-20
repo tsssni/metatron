@@ -10,15 +10,16 @@ namespace mtt::photo {
 	) noexcept:
 	aperture(aperture),
 	focal_length(focal_length),
-	focus_distance(focus_distance) {}
+	focus_distance(focus_distance),
+	focal_distance(1.f / (1.f / focal_length - 1.f / focus_distance)) {}
 
 	auto Thin_Lens::sample(math::Vector<f32, 3> o, math::Vector<f32, 2> u) const noexcept -> std::optional<lens::Interaction> {
-		auto center = math::Vector<f32, 3>{0.f, 0.f, focal_length};
-		auto focused = center + (center - o) * focus_distance / focal_length;
+		auto center = math::Vector<f32, 3>{0.f, 0.f, focal_distance};
+		auto focused = center + (center - o) * focus_distance / focal_distance;
 		
-		auto radius = focal_length / aperture / 2.f;
+		auto radius = focal_distance / aperture / 2.f;
 		auto distr = math::Unifrom_Disk_Distribution{};
-		auto lens_p = math::Vector<f32, 3>{distr.sample(u) * radius, focal_length};
+		auto lens_p = math::Vector<f32, 3>{distr.sample(u) * radius, focal_distance};
 		auto direction = math::normalize(focused - lens_p);
 
 		return lens::Interaction{{lens_p, direction}, distr.pdf()};

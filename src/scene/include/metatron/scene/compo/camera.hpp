@@ -5,7 +5,7 @@
 
 namespace mtt::compo {
 	struct Pinhole_Lens final {
-		f32 focal_length;
+		f32 focal_distance;
 		i32 pinhole{0};
 	};
 	struct Thin_Lens final {

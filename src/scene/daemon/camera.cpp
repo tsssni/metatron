@@ -76,7 +76,7 @@ namespace mtt::daemon {
 				using T = std::decay_t<decltype(compo)>;
 				if constexpr (std::is_same_v<T, compo::Pinhole_Lens>) {
 					return make_poly<photo::Lens, photo::Pinhole_Lens>(
-						compo.focal_length
+						compo.focal_distance
 					);
 				} else if constexpr (std::is_same_v<T, compo::Thin_Lens>) {
 					return make_poly<photo::Lens, photo::Thin_Lens>(
