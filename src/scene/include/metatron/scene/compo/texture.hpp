@@ -17,9 +17,17 @@ namespace mtt::compo {
 		i32 image_spectrum{0};
 	};
 
+	struct Checkerboard_Texture final {
+		ecs::Entity x;
+		ecs::Entity y;
+		math::Vector<usize, 2> uv_scale{1uz};
+		i32 checkerboard{0};
+	};
+
 	using Spectrum_Texture = std::variant<
 		Constant_Spectrum_Texture,
-		Image_Spectrum_Texture
+		Image_Spectrum_Texture,
+		Checkerboard_Texture
 	>;
 
 	struct Constant_Vector_Texture final {
@@ -40,6 +48,7 @@ namespace mtt::compo {
 	using Texture = std::variant<
 		Constant_Spectrum_Texture,
 		Image_Spectrum_Texture,
+		Checkerboard_Texture,
 		Constant_Vector_Texture,
 		Image_Vector_Texture
 	>;

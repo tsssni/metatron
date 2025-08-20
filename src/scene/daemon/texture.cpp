@@ -4,6 +4,7 @@
 #include <metatron/resource/texture/texture.hpp>
 #include <metatron/resource/texture/constant.hpp>
 #include <metatron/resource/texture/image.hpp>
+#include <metatron/resource/texture/checkerboard.hpp>
 #include <metatron/core/stl/variant.hpp>
 
 namespace mtt::daemon {
@@ -57,6 +58,12 @@ namespace mtt::daemon {
 							auto const& wd = registry.get<ecs::Working_Directory>(hierarchy.root());
 							return make_poly<Spectrum_Texture, Image_Texture>(
 								image::Image::from_path(wd.path + compo.path), compo.type
+							);
+						} else if constexpr (std::is_same_v<T, compo::Checkerboard_Texture>) {
+							return make_poly<Spectrum_Texture, texture::Checkerboard_Texture>(
+								registry.get<poly<spectra::Spectrum>>(compo.x),
+								registry.get<poly<spectra::Spectrum>>(compo.y),
+								compo.uv_scale
 							);
 						}
 					}, compo::Spectrum_Texture{compo}));

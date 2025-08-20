@@ -1,5 +1,4 @@
 #pragma once
-#include <metatron/resource/image/image.hpp>
 #include <metatron/resource/texture/texture.hpp>
 
 namespace mtt::texture {
