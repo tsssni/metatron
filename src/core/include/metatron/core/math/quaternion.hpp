@@ -23,9 +23,15 @@ namespace mtt::math {
 		}
 
 		auto constexpr static from_rotation_between(Vector<T, 3> const& from, Vector<T, 3> const& to) noexcept -> Quaternion<T> {
-			auto axis = math::normalize(cross(from, to));
+			auto axis = cross(from, to);
+			if (math::length(axis) < math::epsilon<f32>) {
+				auto perp = math::abs(math::dot(from, math::Vector<T, 3>{0, 1, 0})) >= 1 - 1e-6f
+				? math::Vector<T, 3>{1, 0, 0}
+				: math::Vector<T, 3>{0, 1, 0};
+				axis = cross(from, perp);
+			}
 			auto rad = angle(from, to);
-			return from_axis_angle(axis, rad);
+			return from_axis_angle(math::normalize(axis), rad);
 		}
 
 		auto constexpr operator[](usize idx) noexcept -> T& {

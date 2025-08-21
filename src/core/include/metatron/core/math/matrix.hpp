@@ -556,12 +556,12 @@ namespace mtt::math {
 	requires std::floating_point<T>
 	auto constexpr cramer(
 		Matrix<T, n, n> const& a, 
-		Matrix<T, n, m> const& b
+		Matrix<T, n, m> const& b,
+		bool check_degeneration = false
 	) noexcept -> std::optional<Matrix<T, n, m>> {
 		T det_a = determinant(a);
-		if (math::abs(det_a) < 1e-12f) {
-			// some triangles are too small
-			// return {};
+		if (check_degeneration && math::abs(det_a) < 1e-12f) {
+			return {};
 		}
 
 		auto result = Matrix<T, n, m>{};

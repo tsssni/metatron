@@ -43,18 +43,12 @@ namespace mtt::shape {
 			};
 
 			auto A = math::transpose(math::Matrix<f32, 2, 2>{uv[0] - uv[2], uv[1] - uv[2]});
-			MTT_OPT_OR_CALLBACK(dpduv, math::cramer(A,
+			auto dpduv = math::cramer(A,
 				math::Matrix<f32, 2, 3>{v[0] - v[2], v[1] - v[2]}
-			), {
-				std::println("triangle with vertices\n\t{},\n\t{},\n\t{},\ndegenerates", v[0], v[1], v[2]);
-				std::abort();
-			});
-			MTT_OPT_OR_CALLBACK(dnduv, math::cramer(A,
+			).value();
+			auto dnduv = math::cramer(A,
 				math::Matrix<f32, 2, 3>{n[0] - n[2], n[1] - n[2]}
-			), {
-				std::println("triangle with normals\n\t{},\n\t{},\n\t{},\ndegenerates", n[0], n[1], n[2]);
-				std::abort();
-			});
+			).value();
 			dpdu[i] = dpduv[0];
 			dpdv[i] = dpduv[1];
 			dndu[i] = dnduv[0];
@@ -337,11 +331,6 @@ namespace mtt::shape {
 
 		for (auto i = 0uz; i < mesh->mNumFaces; i++) {
 			auto face = mesh->mFaces[i];
-			if (face.mNumIndices != 3) {
-				// std::println("assimp error: mesh {} has non-triangle face", mesh->mName.C_Str());
-				// std::abort();
-				continue;
-			}
 			indices.push_back({
 				face.mIndices[0],
 				face.mIndices[1],
