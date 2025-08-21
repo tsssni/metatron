@@ -113,7 +113,7 @@ namespace mtt::daemon {
 			
 			auto camera_space_view = registry.view<compo::Camera_Space>();
 			if (camera_space_view.empty()) {
-				std::println("tracer: camera not attached");
+				std::println("tracer: camera space not attached");
 				std::abort();
 			}
 			auto& space = registry.get<compo::Camera_Space>(camera_space_view.front());

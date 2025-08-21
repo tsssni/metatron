@@ -11,7 +11,10 @@ namespace mtt::daemon {
 	auto Texture_Daemon::init() noexcept -> void {
 		MTT_SERDE(Texture);
 		auto& hierarchy = *ecs::Hierarchy::instance;
-		auto conductor_list = std::to_array<std::string>({"Au"});
+		auto conductor_list = std::to_array<std::string>({
+			"Au",
+			"Al",
+		});
 		for (auto& conductor: conductor_list) {
 			hierarchy.attach<compo::Texture>(
 				hierarchy.create("/texture/eta/" + conductor),
