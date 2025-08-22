@@ -13,6 +13,7 @@
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <atomic>
+#include <chrono>
 #include <iostream>
 
 namespace mtt::daemon {
@@ -156,6 +157,8 @@ namespace mtt::daemon {
 
 		auto atomic_count = std::atomic<usize>{0uz};
 		auto total = compo.image_size[0] * compo.image_size[1] * compo.spp;
+		auto first_time = std::chrono::system_clock::now();
+		auto last_time = first_time;
 		auto last_percent = -1;
 
 		stl::scheduler::instance().sync_parallel(compo.image_size, [&](math::Vector<usize, 2> const& px) {
@@ -186,9 +189,16 @@ namespace mtt::daemon {
 				auto count = atomic_count.fetch_add(1) + 1;
 				auto percent = static_cast<int>(100.f * count / total);
 				if (percent > last_percent) {
-					last_percent = percent;
-					std::print("\rprogress: {}%", percent);
+					auto time = std::chrono::system_clock::now();
+					auto elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(time - first_time).count();
+					auto total_seconds = elapsed_seconds
+					+ (100 - percent) * std::chrono::duration_cast<std::chrono::seconds>(time - last_time).count();
+					std::print("\rprogress: {}% time: [{:02d}:{:02d}/{:02d}:{:02d}]",
+						percent, elapsed_seconds / 60, elapsed_seconds % 60, total_seconds / 60, total_seconds % 60
+					);
 					std::flush(std::cout);
+					last_percent = percent;
+					last_time = time;
 				}
 			}
 		});
