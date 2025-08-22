@@ -111,7 +111,9 @@ namespace mtt::accel {
 		);
 
 		auto area_split = [&](this auto self, std::vector<poly<LBVH_Node>>&& nodes) -> poly<LBVH_Node> {
-			if (nodes.size() == 1) {
+			if (nodes.size() == 0) {
+				return nullptr;
+			} else if (nodes.size() == 1) {
 				return std::move(nodes.front());
 			}
 
@@ -133,9 +135,10 @@ namespace mtt::accel {
 			for (auto& node: nodes) {
 				auto c = math::lerp(node->bbox.p_min, node->bbox.p_max, 0.5f);
 				auto b = std::min(num_buckets - 1, i32(num_buckets
-					* (c[root->split_axis] - cbox.p_min[root->split_axis])
-					/ (cbox.p_max[root->split_axis] - cbox.p_min[root->split_axis])
-				));
+				* math::guarded_div(
+					c[root->split_axis] - cbox.p_min[root->split_axis],
+					cbox.p_max[root->split_axis] - cbox.p_min[root->split_axis]
+				)));
 				auto& [bbox, count] = buckets[b];
 				bbox = math::merge(bbox, node->bbox);
 				count++;
@@ -162,12 +165,16 @@ namespace mtt::accel {
 			}
 
 			auto split_idx = std::ranges::distance(sah.begin(), std::ranges::min_element(sah)) + 1;
-			auto splitted_iter = std::ranges::partition(nodes, [&](auto& node) {
+			auto splitted_iter = nodes.size() == 2
+			// avoid stack overflow by two nodes always splitted to one side
+			? std::ranges::subrange(std::ranges::begin(nodes) + 1, std::end(nodes))
+			: std::ranges::partition(nodes, [&](auto& node) {
 				auto c = math::lerp(node->bbox.p_min, node->bbox.p_max, 0.5f);
 				auto b = std::min(num_buckets - 1, i32(num_buckets
-					* (c[root->split_axis] - cbox.p_min[root->split_axis])
-					/ (cbox.p_max[root->split_axis] - cbox.p_min[root->split_axis]))
-				);
+				* math::guarded_div(
+					c[root->split_axis] - cbox.p_min[root->split_axis],
+					cbox.p_max[root->split_axis] - cbox.p_min[root->split_axis]
+				)));
 				return b < split_idx;
 			});
 
