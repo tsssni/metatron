@@ -165,10 +165,7 @@ namespace mtt::accel {
 			}
 
 			auto split_idx = std::ranges::distance(sah.begin(), std::ranges::min_element(sah)) + 1;
-			auto splitted_iter = nodes.size() == 2
-			// avoid stack overflow by two nodes always splitted to one side
-			? std::ranges::subrange(std::ranges::begin(nodes) + 1, std::end(nodes))
-			: std::ranges::partition(nodes, [&](auto& node) {
+			auto splitted_iter = std::ranges::partition(nodes, [&](auto& node) {
 				auto c = math::lerp(node->bbox.p_min, node->bbox.p_max, 0.5f);
 				auto b = std::min(num_buckets - 1, i32(num_buckets
 				* math::guarded_div(
@@ -177,6 +174,13 @@ namespace mtt::accel {
 				)));
 				return b < split_idx;
 			});
+
+			if (false
+			|| std::ranges::begin(splitted_iter) == std::ranges::begin(nodes)
+			|| std::ranges::begin(splitted_iter) == std::ranges::end(nodes)) {
+				// avoid stack overflow by all splitted to one child
+				splitted_iter = std::ranges::subrange(std::ranges::begin(nodes) + 1, std::ranges::end(nodes));
+			}
 
 			auto range_split = [](auto&& begin, auto&& end){
 				return std::ranges::subrange(begin, end)
