@@ -1,3 +1,4 @@
+#include "metatron/resource/texture/texture.hpp"
 #include <metatron/resource/light/environment.hpp>
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/sphere.hpp>
@@ -6,7 +7,7 @@
 
 namespace mtt::light {
 	Environment_Light::Environment_Light(
-		view<texture::Texture<spectra::Stochastic_Spectrum>> env_map
+		view<texture::Spectrum_Texture> env_map
 	) noexcept: env_map(env_map) {}
 
 	auto Environment_Light::operator()(

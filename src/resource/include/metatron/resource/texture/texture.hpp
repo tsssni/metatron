@@ -13,12 +13,19 @@ namespace mtt::texture {
 
 	MTT_POLY_METHOD(texture_sample, sample);
 
-	template<typename T>
-	struct Texture final: pro::facade_builder
+	struct Spectrum_Texture final: pro::facade_builder
 	::add_convention<texture_sample, auto (
 		eval::Context const& ctx,
 		Coordinate const& coord
-	) const noexcept -> T>
+	) const noexcept -> spectra::Stochastic_Spectrum>
+	::template add_skill<pro::skills::as_view>
+	::build {};
+
+	struct Vector_Texture final: pro::facade_builder
+	::add_convention<texture_sample, auto (
+		eval::Context const& ctx,
+		Coordinate const& coord
+	) const noexcept -> math::Vector<f32, 4>>
 	::template add_skill<pro::skills::as_view>
 	::build {};
 

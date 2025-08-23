@@ -1,3 +1,4 @@
+#include "metatron/resource/texture/texture.hpp"
 #include <metatron/scene/daemon/material.hpp>
 #include <metatron/scene/compo/material.hpp>
 #include <metatron/scene/ecs/hierarchy.hpp>
@@ -35,27 +36,25 @@ namespace mtt::daemon {
 				}
 			}, (compo.bsdf));
 
-			using Specrum_Texture = texture::Texture<spectra::Stochastic_Spectrum>;
 			for (auto& [name, entity]: compo.spectrum_textures) {
-				if (!registry.any_of<poly<Specrum_Texture>>(entity)) {
+				if (!registry.any_of<poly<texture::Spectrum_Texture>>(entity)) {
 					std::println("no spectrum texture {} in entity {}", name, hierarchy.path(entity));
 					std::abort();
 				}
 				material.spectrum_textures.emplace(
 					name,
-					registry.get<poly<Specrum_Texture>>(entity)
+					registry.get<poly<texture::Spectrum_Texture>>(entity)
 				);
 			}
 
-			using Vector_Texture = texture::Texture<math::Vector<f32, 4>>;
 			for (auto& [name, entity]: compo.vector_textures) {
-				if (!registry.any_of<poly<Vector_Texture>>(entity)) {
+				if (!registry.any_of<poly<texture::Vector_Texture>>(entity)) {
 					std::println("no vector texture {} in entity {}", name, hierarchy.path(entity));
 					std::abort();
 				}
 				material.vector_textures.emplace(
 					name,
-					registry.get<poly<Vector_Texture>>(entity)
+					registry.get<poly<texture::Vector_Texture>>(entity)
 				);
 			}
 

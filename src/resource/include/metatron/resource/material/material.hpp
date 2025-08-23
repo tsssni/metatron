@@ -17,12 +17,12 @@ namespace mtt::material {
 		
 		std::unordered_map<
 			std::string,
-			view<texture::Texture<spectra::Stochastic_Spectrum>>
+			view<texture::Spectrum_Texture>
 		> spectrum_textures;
 
 		std::unordered_map<
 			std::string,
-			view<texture::Texture<math::Vector<f32, 4>>>
+			view<texture::Vector_Texture>
 		> vector_textures;
 
 		auto sample(

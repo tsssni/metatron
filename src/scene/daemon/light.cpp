@@ -1,3 +1,4 @@
+#include "metatron/resource/texture/texture.hpp"
 #include <metatron/scene/daemon/light.hpp>
 #include <metatron/scene/compo/light.hpp>
 #include <metatron/scene/ecs/hierarchy.hpp>
@@ -44,7 +45,7 @@ namespace mtt::daemon {
 					);
 				} else if constexpr (std::is_same_v<T, compo::Environment_Light>) {
 					return make_poly<light::Light, light::Environment_Light>(
-						registry.get<poly<texture::Texture<spectra::Stochastic_Spectrum>>>(compo.env_map)
+						registry.get<poly<texture::Spectrum_Texture>>(compo.env_map)
 					);
 				}
 			},light));

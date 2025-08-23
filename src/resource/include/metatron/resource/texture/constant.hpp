@@ -2,12 +2,8 @@
 #include <metatron/resource/texture/texture.hpp>
 
 namespace mtt::texture {
-	template<typename T>
-	struct Constant_Texture final {};
-
-	template<>
-	struct Constant_Texture<spectra::Stochastic_Spectrum> final {
-		Constant_Texture(view<spectra::Spectrum> x) noexcept;
+	struct Constant_Spectrum_Texture final {
+		Constant_Spectrum_Texture(view<spectra::Spectrum> x) noexcept;
 
 		auto sample(
 			eval::Context const& ctx,
@@ -18,9 +14,8 @@ namespace mtt::texture {
 		view<spectra::Spectrum> x;
 	};
 
-	template<>
-	struct Constant_Texture<math::Vector<f32, 4>> final {
-		Constant_Texture(math::Vector<f32, 4> const& x) noexcept;
+	struct Constant_Vector_Texture final {
+		Constant_Vector_Texture(math::Vector<f32, 4> const& x) noexcept;
 		auto sample(
 			eval::Context const& ctx,
 			Coordinate const& coord

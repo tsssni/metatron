@@ -5,7 +5,7 @@
 #include <bit>
 
 namespace mtt::texture {
-	Image_Texture<math::Vector<f32, 4>>::Image_Texture(poly<image::Image> image) noexcept {
+	Image_Vector_Texture::Image_Vector_Texture(poly<image::Image> image) noexcept {
 		auto size = math::Vector<usize, 2>{image->size};
 		auto channels = image->size[2];
 		auto stride = image->size[3];
@@ -38,7 +38,7 @@ namespace mtt::texture {
 		}
 	}
 
-	auto Image_Texture<math::Vector<f32, 4>>::sample(
+	auto Image_Vector_Texture::sample(
 		eval::Context const& ctx,
 		Coordinate const& coord
 	) const noexcept -> math::Vector<f32, 4> {
@@ -131,13 +131,13 @@ namespace mtt::texture {
 	}
 
 
-	Image_Texture<spectra::Stochastic_Spectrum>::Image_Texture(
+	Image_Spectrum_Texture::Image_Spectrum_Texture(
 		poly<image::Image> image,
 		color::Color_Space::Spectrum_Type type
 	) noexcept: image_tex(std::move(image)), type(type) {}
 
 
-	auto Image_Texture<spectra::Stochastic_Spectrum>::sample(
+	auto Image_Spectrum_Texture::sample(
 		eval::Context const& ctx,
 		Coordinate const& coord
 	) const noexcept -> spectra::Stochastic_Spectrum {

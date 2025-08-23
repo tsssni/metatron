@@ -4,23 +4,18 @@
 #include <metatron/resource/texture/texture.hpp>
 
 namespace mtt::texture {
-	template<typename T>
-	struct Image_Texture final {};
-
-	template<>
-	struct Image_Texture<math::Vector<f32, 4>> final {
+	struct Image_Vector_Texture final {
 		std::vector<poly<image::Image>> images;
-		Image_Texture(poly<image::Image> image) noexcept;
+		Image_Vector_Texture(poly<image::Image> image) noexcept;
 		auto sample(
 			eval::Context const& ctx,
 			Coordinate const& coord
 		) const noexcept -> math::Vector<f32, 4>;
 	};
 
-	template<>
-	struct Image_Texture<spectra::Stochastic_Spectrum> final {
+	struct Image_Spectrum_Texture final {
 		color::Color_Space::Spectrum_Type type;
-		Image_Texture(
+		Image_Spectrum_Texture(
 			poly<image::Image> image,
 			color::Color_Space::Spectrum_Type type
 		) noexcept;
@@ -30,6 +25,6 @@ namespace mtt::texture {
 		) const noexcept -> spectra::Stochastic_Spectrum;
 
 	private:
-		Image_Texture<math::Vector<f32, 4>> image_tex;
+		Image_Vector_Texture image_tex;
 	};
 }
