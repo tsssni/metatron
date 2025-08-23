@@ -42,7 +42,7 @@ namespace mtt::shape {
 				this->uvs[prim[2]],
 			};
 
-			auto A = math::transpose(math::Matrix<f32, 2, 2>{uv[0] - uv[2], uv[1] - uv[2]});
+			auto A = math::Matrix<f32, 2, 2>{uv[0] - uv[2], uv[1] - uv[2]};
 			auto dpduv = math::cramer(A,
 				math::Matrix<f32, 2, 3>{v[0] - v[2], v[1] - v[2]}
 			).value();
