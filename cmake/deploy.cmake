@@ -69,6 +69,11 @@ function(release)
 			${CMAKE_CURRENT_BINARY_DIR}/metatron-version.cmake
 		DESTINATION lib/cmake/metatron
 	)
+
+	install(
+		DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/share/
+		DESTINATION share/metatron
+	)
 endfunction()
 
 function(deploy)

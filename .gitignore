@@ -1,8 +1,9 @@
 /*
 !/asset/
+!/bin/
 !/cmake/
-!/exe/
 !/ext/
+!/share/
 !/src/
 !/nix
 !/.git*
