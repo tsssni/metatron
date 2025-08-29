@@ -4,6 +4,8 @@
 #include <metatron/resource/shape/shape.hpp>
 #include <metatron/resource/shape/mesh.hpp>
 #include <metatron/resource/shape/sphere.hpp>
+#include <metatron/core/stl/filesystem.hpp>
+#include <metatron/core/stl/optional.hpp>
 
 namespace mtt::daemon {
 	template<char const* str>
@@ -31,9 +33,12 @@ namespace mtt::daemon {
 				if constexpr (std::is_same_v<T, compo::Sphere>) {
 					return make_poly<shape::Shape, shape::Sphere>();
 				} else if constexpr (std::is_same_v<T, compo::Mesh>) {
-					auto const& wd = registry.get<ecs::Working_Directory>(hierarchy.root());
+					MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(compo.path), {
+						std::print("medium {} does not exist", compo.path);
+						std::abort();
+					});
 					return make_poly<shape::Shape, shape::Mesh>(
-						shape::Mesh::from_path(wd.path + compo.path)
+						shape::Mesh::from_path(path)
 					);
 				}
 			},shape));

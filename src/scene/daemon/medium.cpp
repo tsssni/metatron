@@ -8,6 +8,8 @@
 #include <metatron/resource/media/grid.hpp>
 #include <metatron/resource/media/nanovdb.hpp>
 #include <metatron/resource/phase/henyey-greenstein.hpp>
+#include <metatron/core/stl/filesystem.hpp>
+#include <metatron/core/stl/optional.hpp>
 
 namespace mtt::daemon {
 	auto Medium_Daemon::init() noexcept -> void {
@@ -63,9 +65,12 @@ namespace mtt::daemon {
 							media::grid_size,
 							media::grid_size
 						>;
-						auto const& wd = registry.get<ecs::Working_Directory>(hierarchy.root());
+						MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(compo.path), {
+							std::print("medium {} does not exist", compo.path);
+							std::abort();
+						});
 						registry.emplace<poly<media::Medium_Grid>>(entity,
-							make_poly<media::Medium_Grid, Nanovdb_Grid>(wd.path + compo.path)
+							make_poly<media::Medium_Grid, Nanovdb_Grid>(path)
 						);
 						return make_poly<media::Medium, media::Grid_Medium>(
 							registry.get<poly<media::Medium_Grid>>(entity),

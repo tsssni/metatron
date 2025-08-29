@@ -1,6 +1,7 @@
 #include <metatron/scene/ecs/hierarchy.hpp>
 #include <metatron/scene/ecs/stage.hpp>
 #include <metatron/scene/serde/serde.hpp>
+#include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <unordered_map>
 
@@ -105,10 +106,7 @@ namespace mtt::ecs {
 	}
 
 	auto Hierarchy::read(std::string path) noexcept -> void {
-		if (path.substr(path.size() - 1, 1) != "/") {
-			path += "/";
-		}
-		registry.emplace_or_replace<Working_Directory>(root(), path);
+		stl::filesystem::instance().push(path);
 
 		auto jsons = std::vector<serde::json>{};
 		if (auto e = glz::read_file_json(jsons, path + "scene.json", std::string{}); e) {

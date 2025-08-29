@@ -6,6 +6,8 @@
 #include <metatron/resource/texture/image.hpp>
 #include <metatron/resource/texture/checkerboard.hpp>
 #include <metatron/core/stl/variant.hpp>
+#include <metatron/core/stl/filesystem.hpp>
+#include <metatron/core/stl/optional.hpp>
 
 namespace mtt::daemon {
 	auto Texture_Daemon::init() noexcept -> void {
@@ -54,9 +56,12 @@ namespace mtt::daemon {
 								registry.get<poly<spectra::Spectrum>>(compo.spectrum)
 							);
 						} else if constexpr (std::is_same_v<T, compo::Image_Spectrum_Texture>) {
-							auto const& wd = registry.get<ecs::Working_Directory>(hierarchy.root());
+							MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(compo.path), {
+								std::print("medium {} does not exist", compo.path);
+								std::abort();
+							});
 							return make_poly<texture::Spectrum_Texture, texture::Image_Spectrum_Texture>(
-								image::Image::from_path(wd.path + compo.path), compo.type
+								image::Image::from_path(path), compo.type
 							);
 						} else if constexpr (std::is_same_v<T, compo::Checkerboard_Texture>) {
 							return make_poly<texture::Spectrum_Texture, texture::Checkerboard_Texture>(
