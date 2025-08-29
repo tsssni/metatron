@@ -42,7 +42,7 @@ namespace mtt::monte_carlo {
 		auto& ddiff = initial_status.default_differential;
 		auto& rt = *initial_status.world_to_render;
 		auto& ct = *initial_status.render_to_camera;
-		
+
 		while (true) {
 			depth += usize(scattered);
 			if (terminated || depth >= max_depth) {

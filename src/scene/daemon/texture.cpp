@@ -14,21 +14,11 @@ namespace mtt::daemon {
 	auto Texture_Daemon::init() noexcept -> void {
 		MTT_SERDE(Texture);
 		auto& hierarchy = *ecs::Hierarchy::instance;
-		auto conductor_list = std::to_array<std::string>({
-			"Au",
-			"Al",
-		});
-		for (auto& conductor: conductor_list) {
+		for (auto& [spec, _]: spectra::Spectrum::spectra) {
 			hierarchy.attach<compo::Texture>(
-				hierarchy.create("/texture/eta/" + conductor),
+				hierarchy.create("/texture/" + spec),
 				compo::Constant_Spectrum_Texture{
-					.spectrum = hierarchy.entity("/spectrum/eta/" + conductor),
-				}
-			);
-			hierarchy.attach<compo::Texture>(
-				hierarchy.create("/texture/k/" + conductor),
-				compo::Constant_Spectrum_Texture{
-					.spectrum = hierarchy.entity("/spectrum/k/" + conductor),
+					.spectrum = hierarchy.entity("/spectrum/" + spec),
 				}
 			);
 		}

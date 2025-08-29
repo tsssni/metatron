@@ -15,4 +15,12 @@ namespace mtt {
 	auto operator"" _et(view<char> path, usize size) -> ecs::Entity {
 		return ecs::to_entity(path);
 	}
+
+	auto operator/(std::string_view path, Entity_Divider et) -> ecs::Entity {
+		return ecs::to_entity(path.data());
+	}
+
+	auto operator/(ecs::Entity entity, Path_Divider pt) -> std::string {
+		return ecs::to_path(entity);
+	}
 }

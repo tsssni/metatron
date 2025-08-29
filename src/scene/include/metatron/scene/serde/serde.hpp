@@ -20,7 +20,7 @@ namespace glz {
 		auto static op(mtt::ecs::Entity& v, auto&&... args) noexcept -> void {
 			auto path = std::string{};
 			parse<JSON>::op<Opts>(path, args...);
-			v = mtt::ecs::to_entity(path);
+			v = path / mtt::et;
 		}
 	};
 
@@ -28,7 +28,7 @@ namespace glz {
 	struct to<JSON, mtt::ecs::Entity> {
 		template<auto Opts>
 		auto static op(mtt::ecs::Entity const& v, auto&&... args) noexcept -> void {
-			auto path = mtt::ecs::to_path(v);
+			auto path = v / mtt::pt;
 			serialize<JSON>::op<Opts>(path, args...);
 		}
 	};

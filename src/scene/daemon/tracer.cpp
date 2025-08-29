@@ -136,7 +136,7 @@ namespace mtt::daemon {
 		auto& registry = hierarchy.registry;
 
 		auto camera_view = registry.view<compo::Camera>();
-		if (camera_view->empty()) {
+		if (camera_view.empty()) {
 			std::println("tracer: camera not attached");
 			std::abort();
 		}

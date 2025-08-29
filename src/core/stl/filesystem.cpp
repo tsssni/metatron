@@ -14,6 +14,7 @@ namespace mtt::stl {
 			push_env("XDG_DATA_DIRS");
 			push_env("XDG_DATA_HOME");
 		#endif
+		push_env("MTT_DATA");
 	}
 
 	auto filesystem::push(std::string_view path) noexcept -> void {

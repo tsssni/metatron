@@ -1,5 +1,4 @@
 #include <metatron/resource/photo/sensor.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::photo {
 	Sensor::Sensor(view<color::Color_Space> color_space) noexcept:
