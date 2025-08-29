@@ -5,6 +5,7 @@
 #include <metatron/resource/shape/mesh.hpp>
 #include <metatron/resource/shape/sphere.hpp>
 #include <metatron/core/stl/filesystem.hpp>
+#include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 
@@ -21,11 +22,18 @@ namespace mtt::daemon {
 		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
 		auto shape_view = registry.view<ecs::Dirty_Mark<compo::Shape>>();
-		for (auto entity: shape_view) {
+
+		auto entities = registry.view<ecs::Dirty_Mark<compo::Shape>>()
+		| std::views::filter([&](auto entity) {
 			registry.remove<poly<shape::Shape>>(entity);
-			if (!registry.any_of<compo::Shape>(entity)) {
-				continue;
-			}
+			return registry.any_of<compo::Shape>(entity);
+		})
+		| std::ranges::to<std::vector<ecs::Entity>>();
+
+		auto mutex = std::mutex{};
+		stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{entities.size()}, [&](auto idx) {
+			auto entity = entities[idx[0]];
+			auto lock = std::lock_guard(mutex);
 			auto& shape = registry.get<compo::Shape>(entity);
 
 			registry.emplace<poly<shape::Shape>>(entity,
@@ -43,7 +51,7 @@ namespace mtt::daemon {
 					);
 				}
 			},shape));
-		}
+		});
 		registry.clear<ecs::Dirty_Mark<compo::Shape>>();
 	}
 }

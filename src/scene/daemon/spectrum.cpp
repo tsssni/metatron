@@ -48,7 +48,7 @@ namespace mtt::daemon {
 		| std::ranges::to<std::vector<std::filesystem::path>>();
 
 		auto mutex = std::mutex{};
-		stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{spectra.size()}, [&](math::Vector<usize, 1> idx) {
+		stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{spectra.size()}, [&](auto idx) {
 			auto path = spectra[idx[0]];
 			auto ext = path.extension();
 

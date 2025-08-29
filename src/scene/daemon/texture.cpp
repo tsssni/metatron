@@ -7,6 +7,7 @@
 #include <metatron/resource/texture/checkerboard.hpp>
 #include <metatron/core/stl/variant.hpp>
 #include <metatron/core/stl/filesystem.hpp>
+#include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 
@@ -28,12 +29,17 @@ namespace mtt::daemon {
 		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
 
-		auto texture_view = registry.view<ecs::Dirty_Mark<compo::Texture>>();
-		for (auto entity: texture_view) {
+		auto entities = registry.view<ecs::Dirty_Mark<compo::Texture>>()
+		| std::views::filter([&](auto entity) {
 			registry.remove<poly<texture::Spectrum_Texture>, poly<texture::Vector_Texture>>(entity);
-			if (!registry.any_of<compo::Texture>(entity)) {
-				continue;
-			}
+			return registry.any_of<compo::Texture>(entity);
+		})
+		| std::ranges::to<std::vector<ecs::Entity>>();
+
+		auto mutex = std::mutex{};
+		stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{entities.size()}, [&](auto idx) {
+			auto entity = entities[idx[0]];
+			auto lock = std::lock_guard(mutex);
 			auto& texture = registry.get<compo::Texture>(entity);
 
 			std::visit([&](auto&& compo) {
@@ -76,7 +82,7 @@ namespace mtt::daemon {
 					}, compo::Vector_Texture{compo}));
 				}
 			}, texture);
-		}
+		});
 
 		registry.clear<ecs::Dirty_Mark<compo::Texture>>();
 	}
