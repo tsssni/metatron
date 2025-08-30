@@ -13,7 +13,7 @@
 
 using namespace mtt;
 
-auto main(int argc, char* argv[]) -> int {
+auto main(i32 argc, mut<char> argv[]) -> int {
 	auto argparser = argparse::ArgumentParser{"metatron-tracer", "0.0.1"};
 
 	argparser.add_argument("-s", "--scene")

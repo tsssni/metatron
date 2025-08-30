@@ -54,6 +54,12 @@ namespace mtt::daemon {
 					return make_poly<light::Light, light::Environment_Light>(
 						registry.get<poly<texture::Spectrum_Texture>>(compo.env_map)
 					);
+				} else if constexpr (std::is_same_v<T, compo::Sunsky_Light>) {
+					return make_poly<light::Light, light::Sunsky_Light>(
+						compo.direction,
+						compo.turbility,
+						compo.albedo
+					);
 				}
 			},light);
 

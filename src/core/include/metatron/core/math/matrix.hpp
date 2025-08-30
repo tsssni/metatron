@@ -23,9 +23,9 @@ namespace mtt::math {
 		// directly use Element instead of template type to enable auto inference
 		constexpr Matrix(std::initializer_list<Element const> initializer_list) noexcept {
 			if (initializer_list.size() > 1) {
-				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), data.begin());
+				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), storage.begin());
 			} else {
-				for (auto& line: data) {
+				for (auto& line: storage) {
 					line = *initializer_list.begin();
 				}
 			}
@@ -36,9 +36,9 @@ namespace mtt::math {
 		requires (dimensions.size() == 1uz && std::is_convertible_v<E, Element>)
 		constexpr Matrix(std::initializer_list<E const> initializer_list) noexcept {
 			if (initializer_list.size() > 1) {
-				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), data.begin());
+				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), storage.begin());
 			} else {
-				for (auto& line: data) {
+				for (auto& line: storage) {
 					line = *initializer_list.begin();
 				}
 			}
@@ -49,9 +49,9 @@ namespace mtt::math {
 		constexpr Matrix(std::span<E const> initializer_list) noexcept
 		{
 			if (initializer_list.size() > 1) {
-				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), data.begin());
+				std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), storage.begin());
 			} else {
-				for (auto& line: data) {
+				for (auto& line: storage) {
 					line = *initializer_list.begin();
 				}
 			}
@@ -61,14 +61,14 @@ namespace mtt::math {
 		requires std::is_convertible_v<U, T>
 		explicit constexpr Matrix(U&& scalar) noexcept {
 			if constexpr (dimensions.size() == 1) {
-				data.fill(scalar);
+				storage.fill(scalar);
 			} else if constexpr (dimensions.size() == 2) {
 				auto constexpr diagonal_n = std::min(dimensions[0], dimensions[1]);
 				for (auto i = 0; i < diagonal_n; i++) {
-					data[i][i] = std::forward<U>(scalar);
+					storage[i][i] = std::forward<U>(scalar);
 				}
 			} else {
-				for (auto& line: data) {
+				for (auto& line: storage) {
 					line = Element{std::forward<U>(scalar)};
 				}
 			}  
@@ -82,12 +82,12 @@ namespace mtt::math {
 		)
 		explicit constexpr Matrix(Args&&... args) noexcept {
 			if constexpr (dimensions.size() > 2) {
-				for (auto& line: data) {
+				for (auto& line: storage) {
 					line = {args...};
 				}
 			} else {
 				[this, args...]<usize... idxs>(std::index_sequence<idxs...>) {
-					((data[idxs][idxs] = args), ...);
+					((storage[idxs][idxs] = args), ...);
 				}(std::make_index_sequence<sizeof...(Args)>{});
 			}
 		}
@@ -101,7 +101,7 @@ namespace mtt::math {
 			*this = rhs;
 			if constexpr (first_dim > rhs_first_dim) {
 				[this, &rest...]<usize... idxs>(std::index_sequence<idxs...>) {
-						((data[rhs_first_dim + idxs] = std::forward<Args>(rest)), ...);
+						((storage[rhs_first_dim + idxs] = std::forward<Args>(rest)), ...);
 				}(std::make_index_sequence<std::min(sizeof...(rest), first_dim - rhs_first_dim)>{});
 			}
 		}
@@ -115,7 +115,7 @@ namespace mtt::math {
 			*this = std::move(rhs);
 			if constexpr (first_dim > rhs_first_dim) {
 				[this, &rest...]<usize... idxs>(std::index_sequence<idxs...>) {
-						((data[rhs_first_dim + idxs] = std::forward<Args>(rest)), ...);
+						((storage[rhs_first_dim + idxs] = std::forward<Args>(rest)), ...);
 				}(std::make_index_sequence<std::min(sizeof...(rest), first_dim - rhs_first_dim)>{});
 			}
 		}
@@ -127,7 +127,7 @@ namespace mtt::math {
 		) noexcept {
 			*this = rhs0;
 			if constexpr (first_dim > rhs_first_dim0) {
-				std::copy_n(rhs1.data.begin(), std::min(first_dim, rhs_first_dim1) - rhs_first_dim0, data.begin() + rhs_first_dim0);
+				std::copy_n(rhs1.storage.begin(), std::min(first_dim, rhs_first_dim1) - rhs_first_dim0, storage.begin() + rhs_first_dim0);
 			}
 		}
 
@@ -138,7 +138,7 @@ namespace mtt::math {
 		) {
 			*this = std::move(rhs0);
 			if constexpr (first_dim > rhs_first_dim0) {
-				std::move(rhs1.data.begin(), rhs1.data.begin() + (std::min(first_dim, rhs_first_dim1) - rhs_first_dim0), data.begin() + rhs_first_dim0);
+				std::move(rhs1.storage.begin(), rhs1.storage.begin() + (std::min(first_dim, rhs_first_dim1) - rhs_first_dim0), storage.begin() + rhs_first_dim0);
 			}
 		}
 
@@ -147,7 +147,7 @@ namespace mtt::math {
 			&& std::is_convertible_v<U, T>
 			&& (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
 		auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...> const& rhs) noexcept -> Matrix& {
-			std::copy_n(rhs.data.begin(), std::min(first_dim, rhs_first_dim), data.begin());
+			std::copy_n(rhs.storage.begin(), std::min(first_dim, rhs_first_dim), storage.begin());
 			return *this;
 		}
 
@@ -156,16 +156,16 @@ namespace mtt::math {
 			&& std::is_convertible_v<U, T>
 			&& (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
 		auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...>&& rhs) noexcept -> Matrix& {
-			std::move(rhs.data.begin(), rhs.data.begin() + std::min(first_dim, rhs_first_dim), data.begin());
+			std::move(rhs.storage.begin(), rhs.storage.begin() + std::min(first_dim, rhs_first_dim), storage.begin());
 			return *this;
 		}
 
 		auto constexpr operator[](usize idx) noexcept -> Element& {
-			return data[idx];
+			return storage[idx];
 		}
 
 		auto constexpr operator[](usize idx) const noexcept -> Element const& {
-			return data[idx];
+			return storage[idx];
 		}
 
 		template<
@@ -209,7 +209,7 @@ namespace mtt::math {
 
 			if constexpr (higher_n > 0) {
 				for (auto i = 0; i < first_dim; i++) {
-					product[i] = data[i] * rhs[i];
+					product[i] = storage[i] * rhs[i];
 				}
 			} else {
 				if constexpr (l_n == 1 && r_n == 1) {
@@ -217,20 +217,20 @@ namespace mtt::math {
 				} else if constexpr (l_n == 1) {
 					for (auto i = 0; i < pds[0]; i++) {
 						for (auto j = 0; j < lds[0]; j++) {
-							product[i] += data[j] * rhs[j][i];
+							product[i] += storage[j] * rhs[j][i];
 						}
 					}
 				} else if constexpr (r_n == 1) {
 					for (auto i = 0; i < pds[0]; i++) {
 						for (auto j = 0; j < rds[0]; j++) {
-							product[i] += data[i][j] * rhs[j];
+							product[i] += storage[i][j] * rhs[j];
 						}
 					}
 				} else {
 					for (auto i = 0; i < pds[0]; i++) {
 						for (auto k = 0; k < pds[1]; k++) {
 							for (auto j = 0; j < lds[1]; j++) {
-								product[i][k] += data[i][j] * rhs[j][k];
+								product[i][k] += storage[i][j] * rhs[j][k];
 							}
 						}
 					}
@@ -243,7 +243,7 @@ namespace mtt::math {
 		auto constexpr operator+(Matrix const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = data[i] + rhs[i];
+				result[i] = storage[i] + rhs[i];
 			}
 			return result;
 		}
@@ -256,7 +256,7 @@ namespace mtt::math {
 		auto constexpr operator+(T const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = data[i] + rhs;
+				result[i] = storage[i] + rhs;
 			}
 			return result;
 		}
@@ -273,7 +273,7 @@ namespace mtt::math {
 		auto constexpr operator-(Matrix const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = data[i] - rhs[i];
+				result[i] = storage[i] - rhs[i];
 			}
 			return result;
 		}
@@ -286,7 +286,7 @@ namespace mtt::math {
 		auto constexpr operator-(T const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = data[i] - rhs;
+				result[i] = storage[i] - rhs;
 			}
 			return result;
 		}
@@ -299,7 +299,7 @@ namespace mtt::math {
 		auto constexpr operator-() const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = -data[i];
+				result[i] = -storage[i];
 			}
 			return result;
 		}
@@ -307,7 +307,7 @@ namespace mtt::math {
 		auto constexpr operator*(Matrix const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = data[i] * rhs[i];
+				result[i] = storage[i] * rhs[i];
 			}
 			return result;
 		}
@@ -320,7 +320,7 @@ namespace mtt::math {
 		auto constexpr operator*(T const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = data[i] * rhs;
+				result[i] = storage[i] * rhs;
 			}
 			return result;
 		}
@@ -333,7 +333,7 @@ namespace mtt::math {
 		auto constexpr operator/(Matrix const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = math::guarded_div(data[i], rhs[i]);
+				result[i] = math::guarded_div(storage[i], rhs[i]);
 			}
 			return result;
 		}
@@ -346,7 +346,7 @@ namespace mtt::math {
 		auto constexpr operator/(T const& rhs) const noexcept -> Matrix {
 			auto result = Matrix{};
 			for (auto i = 0; i < first_dim; i++) {
-				result[i] = math::guarded_div(data[i], rhs);
+				result[i] = math::guarded_div(storage[i], rhs);
 			}
 			return result;
 		}
@@ -358,24 +358,32 @@ namespace mtt::math {
 
 		auto constexpr operator<=>(Matrix const& rhs) const = default;
 
+		operator std::array<Element, first_dim>&() {
+			return storage;
+		};
+
 		operator std::array<Element, first_dim> const&() const {
-			return data;
+			return storage;
+		};
+
+		auto constexpr data() -> mut<T> {
+			return mut<T>(&storage);
 		};
 
 		template<usize idx>
 		auto constexpr get() const noexcept -> Element const& {
 			static_assert(idx < first_dim, "index out of bounds");
-			return data[idx];
+			return storage[idx];
 		}
 
 		template<usize idx>
 		auto constexpr get() noexcept -> Element& {
 			static_assert(idx < first_dim, "index out of bounds");
-			return data[idx];
+			return storage[idx];
 		}
 
 	private:
-		std::array<Element, first_dim> data{};
+		std::array<Element, first_dim> storage{};
 
 		template<typename U, usize... dims>
 		friend struct Matrix;

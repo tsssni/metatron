@@ -4,6 +4,7 @@
 
 namespace mtt::spectra {
 	auto constexpr visible_lambda = math::Vector<f32, 2>{360.f, 830.f};
+	auto constexpr CIE_Y_integral = 106.7502593994140625f;
 
 	struct Spectrum final: pro::facade_builder
 	::add_convention<pro::operator_dispatch<"()">, auto (f32) const noexcept -> f32>

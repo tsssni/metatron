@@ -50,7 +50,7 @@ namespace mtt::color {
 			std::abort();
 		}
 
-		if (!file.read((char*)(&table_res), sizeof(i32))) {
+		if (!file.read(mut<char>(&table_res), sizeof(i32))) {
 			std::println("{} coefficient could not read table resolution", name);
 			std::abort();
 		}
@@ -61,8 +61,8 @@ namespace mtt::color {
 		table.resize(data_size);
 
 		if (false
-		|| !file.read((char*)(scale.data()), scale_size * sizeof(f32))
-		|| !file.read((char*)(table.data()), data_size * sizeof(f32))) {
+		|| !file.read(mut<char>(scale.data()), scale_size * sizeof(f32))
+		|| !file.read(mut<char>(table.data()), data_size * sizeof(f32))) {
 			std::println("{} coefficient could not read table", name);
 			std::abort();
 		}

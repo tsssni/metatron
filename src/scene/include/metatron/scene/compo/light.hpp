@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/scene/ecs/entity.hpp>
+#include <metatron/core/math/vector.hpp>
 #include <variant>
 
 namespace mtt::compo {
@@ -25,10 +26,18 @@ namespace mtt::compo {
 		i32 environment{0};
 	};
 
+	struct Sunsky_Light final {
+		math::Vector<f32, 2> direction;
+		f32 turbility;
+		f32 albedo;
+		i32 sunsky{0};
+	};
+
 	using Light = std::variant<
 		Parallel_Light,
 		Point_Light,
 		Spot_Light,
-		Environment_Light
+		Environment_Light,
+		Sunsky_Light
 	>;
 }
