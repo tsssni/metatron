@@ -29,7 +29,7 @@ namespace mtt::daemon {
 		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
 
-		auto entities = registry.view<ecs::Dirty_Mark<compo::Texture>>()
+		auto view = registry.view<ecs::Dirty_Mark<compo::Texture>>()
 		| std::views::filter([&](auto entity) {
 			registry.remove<poly<texture::Spectrum_Texture>, poly<texture::Vector_Texture>>(entity);
 			return registry.any_of<compo::Texture>(entity);
@@ -37,16 +37,14 @@ namespace mtt::daemon {
 		| std::ranges::to<std::vector<ecs::Entity>>();
 
 		auto mutex = std::mutex{};
-		stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{entities.size()}, [&](auto idx) {
-			auto entity = entities[idx[0]];
-			auto lock = std::lock_guard(mutex);
+		stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{view.size()}, [&](auto idx) {
+			auto entity = view[idx[0]];
 			auto& texture = registry.get<compo::Texture>(entity);
 
 			std::visit([&](auto&& compo) {
 				using T = std::decay_t<decltype(compo)>;
 				if constexpr (stl::is_variant_alternative_v<T, compo::Spectrum_Texture>) {
-					registry.emplace<poly<texture::Spectrum_Texture>>(entity,
-					std::visit([&](auto&& compo) {
+					auto tex = std::visit([&](auto&& compo) {
 						using T = std::decay_t<decltype(compo)>;
 						if constexpr (std::is_same_v<T, compo::Constant_Spectrum_Texture>) {
 							return make_poly<texture::Spectrum_Texture, texture::Constant_Spectrum_Texture>(
@@ -67,10 +65,14 @@ namespace mtt::daemon {
 								compo.uv_scale
 							);
 						}
-					}, compo::Spectrum_Texture{compo}));
+					}, compo::Spectrum_Texture{compo});
+
+					{
+						auto lock = std::lock_guard(mutex);
+						registry.emplace<poly<texture::Spectrum_Texture>>(entity, std::move(tex));
+					}
 				} else if constexpr (stl::is_variant_alternative_v<T, compo::Vector_Texture>) {
-					registry.emplace<poly<texture::Vector_Texture>>(entity,
-					std::visit([&](auto&& compo) {
+					auto tex = std::visit([&](auto&& compo) {
 						using T = std::decay_t<decltype(compo)>;
 						if constexpr (std::is_same_v<T, compo::Constant_Vector_Texture>) {
 							return make_poly<texture::Vector_Texture, texture::Constant_Vector_Texture>(compo.x);
@@ -79,7 +81,12 @@ namespace mtt::daemon {
 								image::Image::from_path(compo.path)
 							);
 						}
-					}, compo::Vector_Texture{compo}));
+					}, compo::Vector_Texture{compo});
+
+					{
+						auto lock = std::lock_guard(mutex);
+						registry.emplace<poly<texture::Vector_Texture>>(entity, std::move(tex));
+					}
 				}
 			}, texture);
 		});

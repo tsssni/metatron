@@ -21,9 +21,8 @@ namespace mtt::daemon {
 	auto Shape_Daemon::update() noexcept -> void {
 		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
-		auto shape_view = registry.view<ecs::Dirty_Mark<compo::Shape>>();
 
-		auto entities = registry.view<ecs::Dirty_Mark<compo::Shape>>()
+		auto view = registry.view<ecs::Dirty_Mark<compo::Shape>>()
 		| std::views::filter([&](auto entity) {
 			registry.remove<poly<shape::Shape>>(entity);
 			return registry.any_of<compo::Shape>(entity);
@@ -31,13 +30,11 @@ namespace mtt::daemon {
 		| std::ranges::to<std::vector<ecs::Entity>>();
 
 		auto mutex = std::mutex{};
-		stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{entities.size()}, [&](auto idx) {
-			auto entity = entities[idx[0]];
-			auto lock = std::lock_guard(mutex);
+		stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{view.size()}, [&](auto idx) {
+			auto entity = view[idx[0]];
 			auto& shape = registry.get<compo::Shape>(entity);
 
-			registry.emplace<poly<shape::Shape>>(entity,
-			std::visit([&](auto&& compo) -> poly<shape::Shape> {
+			auto s = std::visit([&](auto&& compo) -> poly<shape::Shape> {
 				using T = std::decay_t<decltype(compo)>;
 				if constexpr (std::is_same_v<T, compo::Sphere>) {
 					return make_poly<shape::Shape, shape::Sphere>();
@@ -50,7 +47,12 @@ namespace mtt::daemon {
 						shape::Mesh::from_path(path)
 					);
 				}
-			},shape));
+			},shape);
+
+			{
+				auto lock = std::lock_guard(mutex);
+				registry.emplace<poly<shape::Shape>>(entity, std::move(s));
+			}
 		});
 		registry.clear<ecs::Dirty_Mark<compo::Shape>>();
 	}

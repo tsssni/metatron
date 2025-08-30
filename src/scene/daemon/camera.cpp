@@ -22,8 +22,9 @@ namespace mtt::daemon {
 	auto Camera_Daemon::update() noexcept -> void {
 		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
-		auto camera_view = registry.view<ecs::Dirty_Mark<compo::Camera>>();
-		for (auto entity: camera_view) {
+
+		auto entities = registry.view<ecs::Dirty_Mark<compo::Camera>>();
+		for (auto entity: entities) {
 			auto remove_camera = [&registry](ecs::Entity entity) {
 				registry.remove<
 					compo::Camera_Space,

@@ -6,6 +6,7 @@
 #include <metatron/resource/bsdf/interface.hpp>
 #include <metatron/resource/bsdf/lambertian.hpp>
 #include <metatron/resource/bsdf/microfacet.hpp>
+#include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/print.hpp>
 
 namespace mtt::daemon {
@@ -16,12 +17,17 @@ namespace mtt::daemon {
 	auto Material_Daemon::update() noexcept -> void {
 		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
-		auto material_view = registry.view<ecs::Dirty_Mark<compo::Material>>();
-		for (auto entity: material_view) {
-			registry.remove<material::Material>(entity);
-			if (!registry.any_of<compo::Material>(entity)) {
-				continue;
-			}
+
+		auto view = registry.view<ecs::Dirty_Mark<compo::Material>>()
+		| std::views::filter([&](auto entity) {
+			registry.remove<poly<material::Material>>(entity);
+			return registry.any_of<compo::Material>(entity);
+		})
+		| std::ranges::to<std::vector<ecs::Entity>>();
+
+		auto mutex = std::mutex{};
+		stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{view.size()}, [&](auto idx) {
+			auto entity = view[idx[0]];
 			auto& compo = registry.get<compo::Material>(entity);
 
 			auto material = material::Material{};
@@ -58,8 +64,11 @@ namespace mtt::daemon {
 				);
 			}
 
-			registry.emplace<material::Material>(entity, material);
-		}
+			{
+				auto lock = std::lock_guard(mutex);
+				registry.emplace<material::Material>(entity, std::move(material));
+			}
+		});
 		registry.clear<ecs::Dirty_Mark<compo::Material>>();
 	}
 }

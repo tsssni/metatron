@@ -134,16 +134,20 @@ namespace mtt::daemon {
 	auto Spectrum_Daemon::update() noexcept -> void {
 		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
-		auto spectrum_view = registry.view<ecs::Dirty_Mark<compo::Spectrum>>();
-		for (auto entity: spectrum_view) {
+
+		auto view = registry.view<ecs::Dirty_Mark<compo::Spectrum>>()
+		| std::views::filter([&](auto entity) {
 			registry.remove<poly<spectra::Spectrum>>(entity);
-			if (!registry.any_of<compo::Spectrum>(entity)) {
-				continue;
-			}
+			return registry.any_of<compo::Spectrum>(entity);
+		})
+		| std::ranges::to<std::vector<ecs::Entity>>();
+
+		auto mutex = std::mutex{};
+		stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{view.size()}, [&](auto idx) {
+			auto entity = view[idx[0]];
 			auto& spectrum = registry.get<compo::Spectrum>(entity);
 
-			registry.emplace<poly<spectra::Spectrum>>(entity,
-			std::visit([&](auto&& compo) -> poly<spectra::Spectrum> {
+			auto s = std::visit([&](auto&& compo) -> poly<spectra::Spectrum> {
 				using T = std::decay_t<decltype(compo)>;
 				if constexpr (std::is_same_v<T, compo::Constant_Spectrum>) {
 					return make_poly<spectra::Spectrum, spectra::Constant_Spectrum>(compo.x);
@@ -151,8 +155,13 @@ namespace mtt::daemon {
 					auto* color_space = &registry.get<color::Color_Space>(compo.color_space);
 					return color_space->to_spectrum(compo.c, compo.type);
 				}
-			},spectrum));
-		}
+			},spectrum);
+
+			{
+				auto lock = std::lock_guard(mutex);
+				registry.emplace<poly<spectra::Spectrum>>(entity, std::move(s));
+			}
+		});
 		registry.clear<ecs::Dirty_Mark<compo::Spectrum>>();
 	}
 }
