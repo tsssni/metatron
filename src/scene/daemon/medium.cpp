@@ -68,7 +68,7 @@ namespace mtt::daemon {
 							media::grid_size
 						>;
 						MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(compo.path), {
-							std::println("medium {} does not exist", compo.path);
+							std::println("medium {} not exists", compo.path);
 							std::abort();
 						});
 						registry.emplace<poly<media::Medium_Grid>>(entity,

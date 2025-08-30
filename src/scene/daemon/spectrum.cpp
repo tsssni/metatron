@@ -36,7 +36,7 @@ namespace mtt::daemon {
 		}
 
 		MTT_OPT_OR_CALLBACK(spectra_dir, stl::filesystem::instance().find("spectra"), {
-			std::println("spectra data do not exist");
+			std::println("spectra not exist");
 			std::abort();
 		});
 

@@ -52,7 +52,7 @@ namespace mtt::daemon {
 							);
 						} else if constexpr (std::is_same_v<T, compo::Image_Spectrum_Texture>) {
 							MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(compo.path), {
-								std::println("medium {} does not exist", compo.path);
+								std::println("medium {} not exists", compo.path);
 								std::abort();
 							});
 							return make_poly<texture::Spectrum_Texture, texture::Image_Spectrum_Texture>(

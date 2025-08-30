@@ -40,7 +40,7 @@ namespace mtt::daemon {
 					return make_poly<shape::Shape, shape::Sphere>();
 				} else if constexpr (std::is_same_v<T, compo::Mesh>) {
 					MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(compo.path), {
-						std::println("medium {} does not exist", compo.path);
+						std::println("medium {} not exists", compo.path);
 						std::abort();
 					});
 					return make_poly<shape::Shape, shape::Mesh>(

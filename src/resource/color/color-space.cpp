@@ -37,20 +37,20 @@ namespace mtt::color {
 		from_XYZ = math::inverse(to_XYZ);
 
 		MTT_OPT_OR_CALLBACK(coeff, stl::filesystem::instance().find("color-space/" + std::string{name} + ".coeff"), {
-			std::println("{} coefficient does not exist", name);
+			std::println("{} coefficient not exists", name);
 			std::abort();
 		});
-		auto file = std::ifstream(coeff, std::ios::binary);
+		auto file = std::ifstream{coeff, std::ios::binary};
 
-		auto header = std::array<char, 4>{};
+		auto header = std::string(4, '\0');
 		if (false
 		|| !file.read(header.data(), 4)
-		|| std::memcmp(header.data(), "SPEC", 4) != 0) {
+		|| header != "SPEC") {
 			std::println("{} coefficient has wrong header", name);
 			std::abort();
 		}
 
-		if (!file.read(reinterpret_cast<char*>(&table_res), sizeof(i32))) {
+		if (!file.read((char*)(&table_res), sizeof(i32))) {
 			std::println("{} coefficient could not read table resolution", name);
 			std::abort();
 		}
@@ -61,12 +61,12 @@ namespace mtt::color {
 		table.resize(data_size);
 
 		if (false
-		|| !file.read(reinterpret_cast<char*>(scale.data()), scale_size * sizeof(f32))
-		|| !file.read(reinterpret_cast<char*>(table.data()), data_size * sizeof(f32))) {
+		|| !file.read((char*)(scale.data()), scale_size * sizeof(f32))
+		|| !file.read((char*)(table.data()), data_size * sizeof(f32))) {
 			std::println("{} coefficient could not read table", name);
 			std::abort();
 		}
-
+		file.close();
 	}
 
 	auto Color_Space::to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> poly<spectra::Spectrum> {

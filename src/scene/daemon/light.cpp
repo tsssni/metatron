@@ -9,11 +9,13 @@
 #include <metatron/resource/light/spot.hpp>
 #include <metatron/resource/light/area.hpp>
 #include <metatron/resource/light/environment.hpp>
+#include <metatron/resource/light/sunsky.hpp>
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::daemon {
 	auto Light_Daemon::init() noexcept -> void {
 		MTT_SERDE(Light);
+		light::Sunsky_Light::init();
 	}
 
 	auto Light_Daemon::update() noexcept -> void {
