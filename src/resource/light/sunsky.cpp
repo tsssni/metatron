@@ -16,14 +16,16 @@ namespace mtt::light {
 	Sunsky_Light::Sunsky_Light(
 		math::Vector<f32, 2> direction,
 		f32 turbidity,
-		f32 albedo
+		f32 albedo,
+		f32 aperture
 	) noexcept:
 	d(math::unit_sphere_to_cartesion(direction)),
-	eta(1.f - direction[0] / (math::pi * 0.5f)),
-	x(std::pow(eta, 1.f / 3.f)),
 	turbidity(turbidity), 
 	albedo(albedo),
-	aperture(0.00931656755f) {
+	aperture(aperture),
+	area(1.f
+	* (1.f - std::cos(sun_aperture * 0.5f))
+	/ (1.f - std::cos(aperture * 0.5f))) {
 		auto bezier = [](std::vector<f32> const& data, usize block_size, usize offset, f32 x) -> std::vector<f32> {
 			auto interpolated = std::vector<f32>(block_size, 0.f);
 			auto c = std::array<f32, 6>{1, 5, 10, 10, 5, 1};
@@ -45,6 +47,9 @@ namespace mtt::light {
 			std::ranges::transform(x, y, z.begin(), [alpha](f32 x, f32 y){return std::lerp(x, y, alpha);});
 			return z;
 		};
+
+		auto eta = math::pi * 0.5f - direction[0];
+		auto x = std::pow(eta / (math::pi * 0.5f), 1.f / 3.f);
 
 		auto t_high = i32(turbidity);
 		auto t_low = t_high - 1;
@@ -73,7 +78,6 @@ namespace mtt::light {
 		auto load_sun = [&](mut<f32> storage, std::vector<f32> const& data) -> void {
 			auto size = data.size();
 			auto turbidity_size = size / sunsky_num_turbility;
-			auto segment_size = turbidity_size / sun_num_segments;
 
 			auto subdata = [&](usize front_size) -> std::vector<f32> {
 				return data
@@ -85,9 +89,7 @@ namespace mtt::light {
 			auto t1 = subdata(t_high * turbidity_size);
 			auto t = lerp(t0, t1, t_alpha);
 
-			auto segment = std::min(sun_num_segments - 1, i32(x * sun_num_segments));
-			auto start = segment * segment_size;
-			std::memcpy(storage, t.data() + start, segment_size * sizeof(f32));
+			std::memcpy(storage, t.data(), turbidity_size * sizeof(f32));
 		};
 
 		load_sky(sky_params.data(), sky_params_table);
@@ -157,32 +159,10 @@ namespace mtt::light {
 	) const noexcept -> std::optional<Interaction> {
 		auto cos_theta = math::unit_to_cos_theta(ctx.r.d);
 		auto cos_gamma = math::dot(d, ctx.r.d);
-		if (cos_theta <= 0.f) {
-			return {};
-		}
 
 		auto L = ctx.spec & spectra::Spectrum::spectra["zero"];
 		L.value = math::foreach([&](f32 lambda, usize i) {
-			if (lambda > sunsky_lambda.back()) {
-				return 0.f;
-			}
-
-			auto norm = (lambda - sunsky_lambda.front()) / sunsky_step;
-			auto low = std::min(sunsky_lambda.size() - 2, usize(norm));
-			auto high = low + 1;
-			auto alpha = norm - low;
-
-			auto sky = std::lerp(
-				hosek_sky(low, cos_theta, cos_gamma),
-				hosek_sky(high, cos_theta, cos_gamma),
-				alpha
-			);
-			auto sun = std::lerp(
-				hosek_sun(low, cos_theta, cos_gamma),
-				hosek_sun(high, cos_theta, cos_gamma),
-				alpha
-			);
-			return sky + sun;
+			return hosek(lambda, cos_theta, cos_gamma);
 		}, L.lambda);
 
 		return Interaction{L};
@@ -199,26 +179,79 @@ namespace mtt::light {
 		return Flags::inf;
 	}
 
-	auto Sunsky_Light::hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) const -> f32 {
-		auto coeff = sky_params[idx];
-		auto gamma = std::acos(cos_gamma);
+	auto Sunsky_Light::hosek(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
+		if (cos_theta <= 0.f || lambda > sunsky_lambda.back()) {
+			return 0.f;
+		}
 
-		auto [A, B, C, D, E, F, G, I, H] = coeff;
+		auto norm = (lambda - sunsky_lambda.front()) / sunsky_step;
+		auto low = std::min(sunsky_lambda.size() - 2, usize(norm));
+		auto high = low + 1;
+		auto alpha = norm - low;
+
+		auto L = std::lerp(
+			hosek_sky(low, cos_theta, cos_gamma),
+			hosek_sky(high, cos_theta, cos_gamma),
+			alpha
+		);
+		if (cos_gamma >= std::cos(aperture * 0.5f)) {
+			auto sun = std::lerp(
+				hosek_sun(low, cos_theta),
+				hosek_sun(high, cos_theta),
+				alpha
+			);
+			auto ld = std::lerp(
+				hosek_limb(low, cos_gamma),
+				hosek_limb(high, cos_gamma),
+				alpha
+			);
+			L += sun * ld * area;
+		}
+		return L / spectra::CIE_Y_integral;
+	}
+
+	auto Sunsky_Light::hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
+		auto gamma = std::acos(cos_gamma);
+		auto [A, B, C, D, E, F, G, I, H] = sky_params[idx];
 		auto chi = [](f32 g, f32 cos_alpha) -> f32 {
-			return 1.f
-			* (1.f + math::sqr(cos_alpha))
-			/ std::pow(1.f + math::sqr(g) - 2.f * g * cos_alpha, 1.5f);
+			return math::guarded_div(
+				1.f + math::sqr(cos_alpha),
+				std::pow(1.f + math::sqr(g) - 2.f * g * cos_alpha, 1.5f)
+			);
 		};
-		auto c0 = 1.f + A * std::exp(B / (cos_theta + 0.01f));
+		auto c0 = 1.f + A * std::exp(math::guarded_div(B, (cos_theta + 0.01f)));
 		auto c1 = 0.f
 		+ C + D * std::exp(E * gamma)
 		+ F * math::sqr(cos_gamma)
 		+ G * chi(H, cos_gamma)
 		+ I * math::sqrt(cos_theta);
-		return c0 * c1 * sky_radiance[idx] * spectra::CIE_Y_integral;
+		auto val = c0 * c1 * sky_radiance[idx];
+		return c0 * c1 * sky_radiance[idx];
 	}
 
-	auto Sunsky_Light::hosek_sun(i32 idx, f32 cos_theta, f32 cos_gamma) const -> f32 {
-		return 0.f;
+	auto Sunsky_Light::hosek_sun(i32 idx, f32 cos_theta) const noexcept -> f32 {
+		auto eta = math::pi * 0.5f - std::acos(cos_theta);
+		auto segment = std::min(
+			sun_num_segments - 1,
+			i32(std::pow(eta / (math::pi * 0.5f), 1.f / 3.f) * sun_num_segments)
+		);
+		auto x = eta - math::pi * 0.5f * math::pow(f32(segment) / f32(sun_num_segments), 3);
+		auto L = 0.f;
+		for (auto i = 0; i < sun_num_ctls; i++) {
+			L += sun_radiance[segment][idx][i] * math::pow(x, i);
+		}
+		return L;
+	}
+
+	auto Sunsky_Light::hosek_limb(i32 idx, f32 cos_gamma) const noexcept -> f32 {
+		auto& sun_limb = *(math::Matrix<f32, sunsky_num_lambda, sun_num_limb_params>*)(sun_limb_table.data());
+		auto sin_gamma_sqr = 1.f - math::sqr(cos_gamma);
+		auto cos_psi_sqr = 1.f - sin_gamma_sqr / math::sqr(std::sin(aperture * 0.5f));
+		auto cos_psi = math::sqrt(cos_psi_sqr);
+		auto l = 0.f;
+		for (auto i = 0; i < sun_num_limb_params; i++) {
+			l += sun_limb[idx][i] * math::pow(cos_psi, i);
+		}
+		return l;
 	}
 }

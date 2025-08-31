@@ -20,15 +20,16 @@ namespace mtt::color {
 		std::function<f32(f32)> decode
 	): 
 	illuminant(illuminant),
+	illuminant_Y_integral(spectra::Spectrum::spectra["CIE-Y"] | illuminant),
 	encode(encode),
 	decode(decode) {
 		// project color primaries and white point to Y=1
 		auto w = ~illuminant;
 		w /= math::sum(w);
 		w = xyY_to_XYZ({w[0], w[1], 1.f});
-		auto r= xyY_to_XYZ({r_chroma, 1.f});
-		auto g= xyY_to_XYZ({g_chroma, 1.f});
-		auto b= xyY_to_XYZ({b_chroma, 1.f});
+		auto r = xyY_to_XYZ({r_chroma, 1.f});
+		auto g = xyY_to_XYZ({g_chroma, 1.f});
+		auto b = xyY_to_XYZ({b_chroma, 1.f});
 
 		auto rgb = math::transpose(math::Matrix<f32, 3, 3>{r, g, b});
 		auto inv_rgb = math::inverse(rgb);
@@ -76,7 +77,7 @@ namespace mtt::color {
 			assert("RGB exceed [0.0, 1.0]");
 		}
 
-		auto s = 0.f;
+		auto s = 1.f;
 		auto w = type == Color_Space::Spectrum_Type::illuminant ? illuminant : nullptr;
 		switch (type) {
 			case Spectrum_Type::albedo:
@@ -90,6 +91,7 @@ namespace mtt::color {
 				break;
 		}
 		rgb = rgb / s;
+		s /= type == Spectrum_Type::illuminant ? illuminant_Y_integral : 1.f;
 
 		if (rgb[0] == rgb[1] && rgb[1] == rgb[2]) {
 			return make_poly<spectra::Spectrum, spectra::Rgb_Spectrum>(

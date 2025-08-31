@@ -58,7 +58,8 @@ namespace mtt::daemon {
 					return make_poly<light::Light, light::Sunsky_Light>(
 						compo.direction,
 						compo.turbility,
-						compo.albedo
+						compo.albedo,
+						compo.aperture
 					);
 				}
 			},light);

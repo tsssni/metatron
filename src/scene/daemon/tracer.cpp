@@ -159,7 +159,6 @@ namespace mtt::daemon {
 		auto atomic_percent = std::atomic<usize>{0uz};
 		auto total = compo.image_size[0] * compo.image_size[1] * compo.spp;
 		auto first_time = std::chrono::system_clock::now();
-		auto atomic_time = std::atomic<std::chrono::system_clock::time_point>{first_time};
 
 		stl::scheduler::instance().sync_parallel(compo.image_size, [&](math::Vector<usize, 2> const& px) {
 			for (auto n = 0uz; n < compo.spp; n++) {
@@ -192,9 +191,8 @@ namespace mtt::daemon {
 				auto last_percent = atomic_percent.load();
 				if (percent > last_percent && atomic_percent.compare_exchange_weak(last_percent, percent)) {
 					auto time = std::chrono::system_clock::now();
-					auto last_time = atomic_time.exchange(time);
 					auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(time - first_time).count();
-					auto total_ms = elapsed_ms + (100 - percent) * std::chrono::duration_cast<std::chrono::milliseconds>(time - last_time).count();
+					auto total_ms = elapsed_ms + (100 - percent) * elapsed_ms / percent;
 					auto elapsed_s = elapsed_ms / 1000;
 					auto total_s = total_ms / 1000;
 					std::print("\rprogress: {}% time: [{:02d}:{:02d}/{:02d}:{:02d}]",

@@ -15,12 +15,14 @@ namespace mtt::light {
 	auto constexpr sun_num_ctls = 4;
 	auto constexpr sun_num_segments = 45;
 	auto constexpr sun_num_limb_params = 6;
+	auto constexpr sun_aperture = 0.009351474132185619f;
 
 	struct Sunsky_Light final {
 		Sunsky_Light(
 			math::Vector<f32, 2> direction,
 			f32 turbidity,
-			f32 albedo
+			f32 albedo,
+			f32 aperture
 		) noexcept;
 
 		auto static init() noexcept -> void;
@@ -35,8 +37,10 @@ namespace mtt::light {
 		auto flags() const noexcept -> Flags;
 
 	private:
-		auto hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) const -> f32;
-		auto hosek_sun(i32 idx, f32 cos_theta, f32 cos_gamma) const -> f32;
+		auto hosek(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32;
+		auto hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) const noexcept -> f32;
+		auto hosek_sun(i32 idx, f32 cos_theta) const noexcept -> f32;
+		auto hosek_limb(i32 idx, f32 cos_gamma) const noexcept -> f32;
 
 		std::vector<f32> static sky_params_table;
 		std::vector<f32> static sky_radiance_table;
@@ -44,15 +48,15 @@ namespace mtt::light {
 		std::vector<f32> static sun_limb_table;
 
 		math::Vector<f32, 3> d;
-		f32 eta;
-		f32 x;
 
 		f32 turbidity;
 		f32 albedo;
 		f32 aperture;
+		f32 area;
+		f32 w_sky;
 
 		math::Matrix<f32, sunsky_num_lambda, sky_num_params> sky_params;
 		math::Matrix<f32, sunsky_num_lambda> sky_radiance;
-		math::Matrix<f32, sunsky_num_lambda, sun_num_ctls> sun_radiance;
+		math::Matrix<f32, sun_num_segments, sunsky_num_lambda, sun_num_ctls> sun_radiance;
 	};
 }

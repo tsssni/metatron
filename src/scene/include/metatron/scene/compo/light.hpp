@@ -30,6 +30,7 @@ namespace mtt::compo {
 		math::Vector<f32, 2> direction;
 		f32 turbility;
 		f32 albedo;
+		f32 aperture;
 		i32 sunsky{0};
 	};
 

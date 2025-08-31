@@ -33,6 +33,7 @@ namespace mtt::color {
 
 	private:
 		i32 table_res;
+		f32 illuminant_Y_integral;
 		std::vector<f32> scale;
 		std::vector<f32> table;
 	};
