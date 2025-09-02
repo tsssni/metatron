@@ -1,4 +1,5 @@
 #include <metatron/resource/light/sunsky.hpp>
+#include <metatron/resource/spectra/discrete.hpp>
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/integral/gauss-legendre.hpp>
 #include <metatron/core/stl/filesystem.hpp>
@@ -23,10 +24,10 @@ namespace mtt::light {
 	d(math::unit_sphere_to_cartesion(direction)),
 	turbidity(turbidity), 
 	albedo(albedo),
-	aperture(aperture),
+	cos_sun(std::cos(aperture * 0.5)),
 	area(1.f
 	* (1.f - std::cos(sun_aperture * 0.5f))
-	/ (1.f - std::cos(aperture * 0.5f))) {
+	/ (1.f - cos_sun)) {
 		auto bezier = [](std::vector<f32> const& data, usize block_size, usize offset, f32 x) -> std::vector<f32> {
 			auto interpolated = std::vector<f32>(block_size, 0.f);
 			auto c = std::array<f32, 6>{1, 5, 10, 10, 5, 1};
@@ -197,7 +198,7 @@ namespace mtt::light {
 			hosek_sky(high, cos_theta, cos_gamma),
 			alpha
 		);
-		if (cos_gamma >= std::cos(aperture * 0.5f)) {
+		if (cos_gamma >= cos_sun) {
 			auto sun = std::lerp(
 				hosek_sun(low, cos_theta),
 				hosek_sun(high, cos_theta),
@@ -249,7 +250,7 @@ namespace mtt::light {
 	auto Sunsky_Light::hosek_limb(i32 idx, f32 cos_gamma) const noexcept -> f32 {
 		auto& sun_limb = *(math::Matrix<f32, sunsky_num_lambda, sun_num_limb_params>*)(sun_limb_table.data());
 		auto sin_gamma_sqr = 1.f - math::sqr(cos_gamma);
-		auto cos_psi_sqr = 1.f - sin_gamma_sqr / math::sqr(std::sin(aperture * 0.5f));
+		auto cos_psi_sqr = 1.f - sin_gamma_sqr / (1.f - math::sqr(cos_sun));
 		auto cos_psi = math::sqrt(cos_psi_sqr);
 		auto l = 0.f;
 		for (auto i = 0; i < sun_num_limb_params; i++) {
@@ -260,6 +261,82 @@ namespace mtt::light {
 
 
 	auto Sunsky_Light::hosek_integral() const noexcept -> f32 {
-		return 0.f;
+		auto constexpr integral_num_samples = 200;
+		auto [x, w] = math::gauss_legendre<f32>(integral_num_samples);
+		auto cartesian_w = std::views::cartesian_product(w, w);
+
+		// sky
+		auto sky_luminance = [&]{
+			auto J = math::pi * 0.5f;
+			// [-1, 1] -> [0, 2pi]
+			auto phi = x | std::views::transform([](auto x){return math::pi * (x + 1.f);});
+			// [-1, 1] -> [0, 1]
+			auto cos_theta = x | std::views::transform([](auto x){return 0.5f * (x + 1.f);});
+			auto cos_theta_phi = std::views::cartesian_product(cos_theta, phi);
+			auto cos_gamma = cos_theta_phi | std::views::transform([d = this->d](auto&& cos_theta_phi) {
+				auto [cos_theta, phi] = cos_theta_phi;
+				auto sin_theta = math::sqrt(1.f - math::sqr(cos_theta));
+				auto cos_phi = std::cos(phi);
+				auto sin_phi = std::sin(phi);
+				auto wi = math::Vector<f32, 3>{sin_theta * cos_phi, cos_theta, sin_theta * sin_phi};
+				return math::dot(wi, d);
+			});
+
+			auto luminance = 0.f;
+			for (auto i = 0; i < sunsky_num_lambda; i++) {
+				auto radiance = std::views::zip_transform([&](
+					auto&& cos_theta_phi, auto cos_gamma, auto&& cartesian_w
+				){
+					auto [cos_theta, phi] = cos_theta_phi;
+					auto [w_theta, w_gamma] = cartesian_w;
+					return hosek_sky(i, cos_theta, cos_gamma) * w_theta * w_gamma;
+				}, cos_theta_phi, cos_gamma, cartesian_w);
+				auto integral = std::ranges::fold_left(radiance, 0.f, std::plus{}) * J;
+				luminance += integral * (*spectra::Spectrum::spectra["CIE-Y"])(sunsky_lambda[i]);
+			}
+			return luminance;
+		}();
+
+		// sun
+		auto sun_luminance = [&]{
+			auto J = math::pi * 0.5f * (1.f - cos_sun);
+			// [-1, 1] -> [0, 2pi]
+			auto phi = x | std::views::transform([](auto x){return math::pi * (x + 1.f);});
+			// [-1, 1] -> [cos_sun, 1]
+			auto cos_gamma = x | std::views::transform([cos_sun = this->cos_sun](auto x){
+				return 0.5f * ((1.f - cos_sun) * x + (1.f + cos_sun));
+			});
+			auto cos_gamma_phi = std::views::cartesian_product(cos_gamma, phi);
+			auto cos_theta = cos_gamma_phi | std::views::transform([
+				d = this->d,
+				t = math::Matrix<f32, 4, 4>{
+					math::Quaternion<f32>::from_rotation_between({0.f, 1.f, 0.f}, d)
+				}
+			](auto&& cos_gamma_phi) {
+				auto [cos_gamma, phi] = cos_gamma_phi;
+				auto sin_gamma = math::sqrt(1.f - math::sqr(cos_gamma));
+				auto cos_phi = std::cos(phi);
+				auto sin_phi = std::sin(phi);
+				auto wi_sun = math::Vector<f32, 3>{sin_gamma * cos_phi, cos_gamma, sin_gamma * sin_phi};
+				auto wi = math::normalize(math::Vector<f32, 3>{t | math::expand(wi_sun, 0.f)});
+				return math::unit_to_cos_theta(wi);
+			});
+
+			auto luminance = 0.f;
+			for (auto i = 0; i < sunsky_num_lambda; i++) {
+				auto radiance = std::views::zip_transform([&](
+					auto&& cos_gamma_phi, auto cos_theta, auto&& cartesian_w
+				){
+					auto [cos_gamma, phi] = cos_gamma_phi;
+					auto [w_theta, w_gamma] = cartesian_w;
+					return hosek_sun(i, cos_theta) * hosek_limb(i, cos_gamma) * w_theta * w_gamma;
+				}, cos_gamma_phi, cos_theta, cartesian_w);
+				auto integral = std::ranges::fold_left(radiance, 0.f, std::plus{}) * J;
+				luminance += integral * (*spectra::Spectrum::spectra["CIE-Y"])(sunsky_lambda[i]);
+			}
+			return luminance * area;
+		}();
+
+		return math::guarded_div(sky_luminance, sky_luminance + sun_luminance);
 	}
 }

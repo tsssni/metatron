@@ -52,12 +52,12 @@ namespace mtt::light {
 
 		f32 turbidity;
 		f32 albedo;
-		f32 aperture;
+		f32 cos_sun;
 		f32 area;
 		f32 w_sky;
 
 		math::Matrix<f32, sunsky_num_lambda, sky_num_params> sky_params;
-		math::Matrix<f32, sunsky_num_lambda> sky_radiance;
+		math::Vector<f32, sunsky_num_lambda> sky_radiance;
 		math::Matrix<f32, sun_num_segments, sunsky_num_lambda, sun_num_ctls> sun_radiance;
 	};
 }
