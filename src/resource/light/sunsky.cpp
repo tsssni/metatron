@@ -1,5 +1,6 @@
 #include <metatron/resource/light/sunsky.hpp>
 #include <metatron/core/math/sphere.hpp>
+#include <metatron/core/math/integral/gauss-legendre.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
@@ -95,6 +96,8 @@ namespace mtt::light {
 		load_sky(sky_params.data(), sky_params_table);
 		load_sky(sky_radiance.data(), sky_radiance_table);
 		load_sun(sun_radiance.data(), sun_radiance_table);
+
+		w_sky = hosek_integral();
 	}
 
 	auto Sunsky_Light::init() noexcept -> void {
@@ -253,5 +256,10 @@ namespace mtt::light {
 			l += sun_limb[idx][i] * math::pow(cos_psi, i);
 		}
 		return l;
+	}
+
+
+	auto Sunsky_Light::hosek_integral() const noexcept -> f32 {
+		return 0.f;
 	}
 }

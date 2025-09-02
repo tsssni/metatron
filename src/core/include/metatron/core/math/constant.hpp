@@ -3,7 +3,8 @@
 
 namespace mtt::math {
 	auto constexpr pi = 3.14159265358979f;
-	auto constexpr e = 2.7182881828458f;
+	template<typename T>
+	auto constexpr piv = T{3.14159265358979323846};
 
 	template<typename T>
 	auto constexpr epsilon = std::numeric_limits<T>::epsilon();

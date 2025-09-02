@@ -41,6 +41,7 @@ namespace mtt::light {
 		auto hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) const noexcept -> f32;
 		auto hosek_sun(i32 idx, f32 cos_theta) const noexcept -> f32;
 		auto hosek_limb(i32 idx, f32 cos_gamma) const noexcept -> f32;
+		auto hosek_integral() const noexcept -> f32;
 
 		std::vector<f32> static sky_params_table;
 		std::vector<f32> static sky_radiance_table;
