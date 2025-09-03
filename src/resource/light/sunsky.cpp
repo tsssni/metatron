@@ -1,19 +1,24 @@
 #include <metatron/resource/light/sunsky.hpp>
 #include <metatron/resource/spectra/discrete.hpp>
 #include <metatron/core/math/sphere.hpp>
+#include <metatron/core/math/trigonometric.hpp>
+#include <metatron/core/math/gaussian.hpp>
 #include <metatron/core/math/integral/gauss-legendre.hpp>
+#include <metatron/core/math/distribution/cone.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <ranges>
 #include <fstream>
 #include <cstring>
+#include <algorithm>
 
 namespace mtt::light {
 	std::vector<f32> Sunsky_Light::sky_params_table;
 	std::vector<f32> Sunsky_Light::sky_radiance_table;
 	std::vector<f32> Sunsky_Light::sun_radiance_table;
 	std::vector<f32> Sunsky_Light::sun_limb_table;
+	std::vector<f32> Sunsky_Light::tgmm_table;
 
 	Sunsky_Light::Sunsky_Light(
 		math::Vector<f32, 2> direction,
@@ -22,6 +27,7 @@ namespace mtt::light {
 		f32 aperture
 	) noexcept:
 	d(math::unit_sphere_to_cartesion(direction)),
+	t(math::Quaternion<f32>::from_rotation_between({0.f, 1.f, 0.f}, d)),
 	turbidity(turbidity), 
 	albedo(albedo),
 	cos_sun(std::cos(aperture * 0.5)),
@@ -77,26 +83,61 @@ namespace mtt::light {
 			std::memcpy(storage, b.data(), b.size() * sizeof(f32));
 		};
 
-		auto load_sun = [&](mut<f32> storage, std::vector<f32> const& data) -> void {
-			auto size = data.size();
-			auto turbidity_size = size / sunsky_num_turbility;
+		auto load_sun = [&]() {
+			auto& sun_table = *(math::Matrix<f32,
+				sunsky_num_turbility, sun_num_segments, sunsky_num_lambda, sun_num_ctls
+			>*)(sun_radiance_table.data());
+			auto t0 = sun_table[t_low];
+			auto t1 = sun_table[t_high];
+			sun_radiance = t0 * (1.f - t_alpha) + t1 * t_alpha;
+		};
 
-			auto subdata = [&](usize front_size) -> std::vector<f32> {
-				return data
-				| std::views::drop(front_size)
-				| std::views::take(turbidity_size)
-				| std::ranges::to<std::vector<f32>>();
-			};
-			auto t0 = subdata(t_low * turbidity_size);
-			auto t1 = subdata(t_high * turbidity_size);
-			auto t = lerp(t0, t1, t_alpha);
+		// https://github.com/mitsuba-renderer/mitsuba3/blob/master/include/mitsuba/render/sunsky.h
+		// load tgmm of 4 interpolation sources and sample them
+		auto load_tgmm = [&]() {
+			auto t_idx = std::clamp(turbidity - 2.f, 0.f, f32(sunsky_num_turbility - 2));
+			auto t_low = i32(t_idx);
+			auto t_high = std::min(t_low + 1, sunsky_num_turbility - 2);
+			auto t_alpha = t_idx - t_low;
 
-			std::memcpy(storage, t.data(), turbidity_size * sizeof(f32));
+			auto eta_deg = math::degree(eta);
+			auto eta_idx = std::clamp((eta_deg - 2.f) / 3.f, 0.f, f32(sun_num_segments - 1));
+			auto eta_low = i32(eta_idx);
+			auto eta_high = std::min(eta_low + 1, sun_num_segments - 1);
+			auto eta_alpha = eta_idx - eta_low;
+
+			auto t_eta = std::views::cartesian_product(
+				std::array<i32, 2>{t_low, t_high},
+				std::array<i32, 2>{eta_low, eta_high}
+			);
+			auto b_w = std::views::cartesian_product(
+				std::array<f32, 2>{1.f - t_alpha, t_alpha},
+				std::array<f32, 2>{1.f - eta_alpha, eta_alpha}
+			) | std::views::transform([](auto&& w) {
+				auto [x, y] = w;
+				return x * y;
+			});
+			auto& tgmm = *(math::Matrix<f32,
+				tgmm_num_turbility, tgmm_num_segments, tgmm_num_mixture, tgmm_num_gaussian_params + 1
+			>*)(tgmm_table.data());
+
+			auto w = std::vector<f32>(tgmm_num_gaussian);
+			for (auto i = 0; i < tgmm_num_bilinear; i++) {
+				auto [t, eta] = t_eta[i];
+				auto b = b_w[i];
+				for (auto j = 0; j < tgmm_num_mixture; j++) {
+					auto idx = i * tgmm_num_mixture + j;
+					tgmm_gaussian[idx] = tgmm[t][eta][j];
+					w[idx] = tgmm[t][eta][j][tgmm_num_gaussian_params - 1] * b;
+				}
+			}
+			tgmm_distr = math::Discrete_Distribution{w};
 		};
 
 		load_sky(sky_params.data(), sky_params_table);
 		load_sky(sky_radiance.data(), sky_radiance_table);
-		load_sun(sun_radiance.data(), sun_radiance_table);
+		load_sun();
+		load_tgmm();
 
 		w_sky = hosek_integral();
 	}
@@ -156,6 +197,7 @@ namespace mtt::light {
 		read(sky_radiance_table, std::vector<f64>{}, "sky-radiance");
 		read(sun_radiance_table, std::vector<f64>{}, "sun-radiance");
 		read(sun_limb_table, std::vector<f64>{}, "sun-limb");
+		read(tgmm_table, std::vector<f32>{}, "tgmm");
 	}
 
 	auto Sunsky_Light::operator()(
@@ -176,7 +218,20 @@ namespace mtt::light {
 		eval::Context const& ctx,
 		math::Vector<f32, 2> const& u
 	) const noexcept -> std::optional<Interaction> {
-		return {};
+		auto intr = std::optional<Interaction>{};
+		auto pdf = 0.f;
+		if (u[0] < w_sky) {
+			intr = sample_sky(ctx, {u[0] / w_sky, u[1]});
+			pdf = w_sky;
+		} else {
+			intr = sample_sun(ctx, {(u[0] - w_sky) / (1.f - w_sky), u[1]});
+			pdf = 1.f - w_sky;
+		}
+
+		if (intr) {
+			intr.value().pdf *= pdf;
+		}
+		return intr;
 	}
 
 	auto Sunsky_Light::flags() const noexcept -> Flags {
@@ -309,9 +364,7 @@ namespace mtt::light {
 			auto cos_gamma_phi = std::views::cartesian_product(cos_gamma, phi);
 			auto cos_theta = cos_gamma_phi | std::views::transform([
 				d = this->d,
-				t = math::Matrix<f32, 4, 4>{
-					math::Quaternion<f32>::from_rotation_between({0.f, 1.f, 0.f}, d)
-				}
+				t = this->t
 			](auto&& cos_gamma_phi) {
 				auto [cos_gamma, phi] = cos_gamma_phi;
 				auto sin_gamma = math::sqrt(1.f - math::sqr(cos_gamma));
@@ -338,5 +391,74 @@ namespace mtt::light {
 		}();
 
 		return math::guarded_div(sky_luminance, sky_luminance + sun_luminance);
+	}
+
+	auto Sunsky_Light::sample_sun(
+		eval::Context const& ctx,
+		math::Vector<f32, 2> const& u
+	) const noexcept -> std::optional<Interaction> {
+		auto intr = Interaction{};
+		auto distr = math::Cone_Distribution{cos_sun};
+		auto wi_gamma = distr.sample(u);
+		auto wi_theta = math::normalize(math::Vector<f32, 3>{t | math::expand(distr.sample(u), 0.f)});
+		auto cos_gamma = math::unit_to_cos_theta(wi_gamma);
+		auto cos_theta = math::unit_to_cos_theta(wi_theta);
+
+		auto L = ctx.spec;
+		L.value = math::foreach([&](f32 lambda, auto i){
+			auto norm = (lambda - sunsky_lambda.front()) / sunsky_step;
+			auto low = std::min(sunsky_lambda.size() - 2, usize(norm));
+			auto high = low + 1;
+			auto alpha = norm - low;
+			auto sun = std::lerp(
+				hosek_sun(low, cos_theta),
+				hosek_sun(high, cos_theta),
+				alpha
+			);
+			auto ld = std::lerp(
+				hosek_limb(low, cos_gamma),
+				hosek_limb(high, cos_gamma),
+				alpha
+			);
+			return sun * ld * area;
+		}, L.lambda);
+
+		return Interaction{
+			.L = L,
+			.wi = wi_theta,
+			.p = ctx.r.o + wi_theta * 65504.f,
+			.t = 65504.f,
+			.pdf = distr.pdf(),
+		};
+	}
+
+	auto Sunsky_Light::sample_sky(
+		eval::Context const& ctx,
+		math::Vector<f32, 2> const& u
+	) const noexcept -> std::optional<Interaction> {
+		auto wi = math::Vector<f32, 3>{};
+		auto cos_gamma = math::dot(wi, d);
+		auto cos_theta = math::dot(wi, {0.f, 1.f, 0.f});
+
+		auto L = ctx.spec;
+		L.value = math::foreach([&](f32 lambda, auto i){
+			auto norm = (lambda - sunsky_lambda.front()) / sunsky_step;
+			auto low = std::min(sunsky_lambda.size() - 2, usize(norm));
+			auto high = low + 1;
+			auto alpha = norm - low;
+			return std::lerp(
+				hosek_sky(low, cos_theta, cos_gamma),
+				hosek_sky(high, cos_theta, cos_gamma),
+				alpha
+			);
+		}, L.lambda);
+
+		return Interaction{
+			.L = L,
+			.wi = wi,
+			.p = ctx.r.o + wi * 65504.f,
+			.t = 65504.f,
+			.pdf = 1.f,
+		};
 	}
 }

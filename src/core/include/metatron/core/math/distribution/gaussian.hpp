@@ -1,17 +1,16 @@
 #pragma once
-#include <metatron/core/math/constant.hpp>
-#include <metatron/core/math/arithmetic.hpp>
-#include <cmath>
+#include <metatron/core/math/gaussian.hpp>
 
 namespace mtt::math {
 	struct Gaussian_Distribution final {
-		Gaussian_Distribution(f32 sigma) noexcept: sigma(sigma) {}
+		Gaussian_Distribution(f32 mu, f32 sigma) noexcept: mu(mu), sigma(sigma) {}
 
 		auto pdf(f32 x) const noexcept -> f32 {
-			return std::exp(-x * x / (2.f * sigma * sigma)) / (math::sqrt(2.f * pi) * sigma);
+			return gaussian(x, mu, sigma);
 		}
 
 	private:
+		f32 mu;
 		f32 sigma;
 	};
 }

@@ -10,6 +10,8 @@ namespace mtt::spectra {
 	::add_convention<pro::operator_dispatch<"()">, auto (f32) const noexcept -> f32>
 	::add_skill<pro::skills::as_view>
 	::build {
+		// IOR data: https://github.com/mitsuba-renderer/mitsuba-data/tree/master/ior
+		// CIE data: https://github.com/mmp/pbrt-v4/tree/master/src/pbrt/util/spectrum.cpp
 		std::unordered_map<std::string, view<Spectrum>> static spectra;
 	};
 

@@ -27,6 +27,8 @@ namespace mtt::color {
 			std::function<f32(f32)> decode
 		);
 
+		// method: https://jo.dreggn.org/home/2019_wide_gamut.pdf
+		// data optimized by: https://github.com/mitsuba-renderer/mitsuba3/tree/master/ext/rgb2spec
 		auto to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> poly<spectra::Spectrum>;
 
 		std::unordered_map<std::string, view<Color_Space>> static color_spaces;
