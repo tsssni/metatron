@@ -7,6 +7,7 @@
 #include <metatron/core/math/distribution/gaussian.hpp>
 #include <metatron/core/math/distribution/cone.hpp>
 #include <metatron/core/stl/filesystem.hpp>
+#include <metatron/core/stl/ranges.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <ranges>
@@ -108,17 +109,16 @@ namespace mtt::light {
 			auto eta_high = std::min(eta_low + 1, sun_num_segments - 1);
 			auto eta_alpha = eta_idx - eta_low;
 
-			auto t_eta = std::views::cartesian_product(
-				std::array<i32, 2>{t_low, t_high},
-				std::array<i32, 2>{eta_low, eta_high}
-			);
-			auto b_w = std::views::cartesian_product(
-				std::array<f32, 2>{1.f - t_alpha, t_alpha},
-				std::array<f32, 2>{1.f - eta_alpha, eta_alpha}
-			) | std::views::transform([](auto&& w) {
-				auto [x, y] = w;
-				return x * y;
-			});
+			auto t_eta = math::Matrix<i32, 4, 2>{
+				{t_low, eta_low}, {t_low, eta_high},
+				{t_high, eta_low}, {t_high, eta_high},
+			};
+			auto b_w = math::Vector<f32, 4>{
+				(1.f - t_alpha) * (1.f - eta_alpha),
+				(1.f - t_alpha) * eta_alpha,
+				t_alpha * (1.f - eta_alpha),
+				t_alpha * eta_alpha,
+			};
 			auto& tgmm = *(math::Matrix<f32,
 				tgmm_num_turbility, tgmm_num_segments, tgmm_num_mixture, tgmm_num_gaussian_params + 1
 			>*)(tgmm_table.data());
@@ -320,7 +320,7 @@ namespace mtt::light {
 	auto Sunsky_Light::hosek_integral() const noexcept -> f32 {
 		auto constexpr integral_num_samples = 200;
 		auto [x, w] = math::gauss_legendre<f32>(integral_num_samples);
-		auto cartesian_w = std::views::cartesian_product(w, w);
+		auto cartesian_w = stl::views::cartesian_product(w, w);
 
 		// sky
 		auto sky_luminance = [&]{
@@ -329,7 +329,7 @@ namespace mtt::light {
 			auto phi = x | std::views::transform([](auto x){return math::pi * (x + 1.f);});
 			// [-1, 1] -> [0, 1]
 			auto cos_theta = x | std::views::transform([](auto x){return 0.5f * (x + 1.f);});
-			auto cos_theta_phi = std::views::cartesian_product(cos_theta, phi);
+			auto cos_theta_phi = stl::views::cartesian_product(cos_theta, phi);
 			auto cos_gamma = cos_theta_phi | std::views::transform([d = this->d](auto&& cos_theta_phi) {
 				auto [cos_theta, phi] = cos_theta_phi;
 				auto sin_theta = math::sqrt(1.f - math::sqr(cos_theta));
@@ -341,13 +341,13 @@ namespace mtt::light {
 
 			auto luminance = 0.f;
 			for (auto i = 0; i < sunsky_num_lambda; i++) {
-				auto radiance = std::views::zip_transform([&](
-					auto&& cos_theta_phi, auto cos_gamma, auto&& cartesian_w
-				){
+				auto radiance = std::views::zip(cos_theta_phi, cos_gamma, cartesian_w)
+				| std::views::transform([&](auto&& zipped) {
+					auto [cos_theta_phi, cos_gamma, cartesian_w] = zipped;
 					auto [cos_theta, phi] = cos_theta_phi;
 					auto [w_theta, w_gamma] = cartesian_w;
 					return hosek_sky(i, cos_theta, cos_gamma) * w_theta * w_gamma;
-				}, cos_theta_phi, cos_gamma, cartesian_w);
+				});
 				auto integral = std::ranges::fold_left(radiance, 0.f, std::plus{}) * J;
 				luminance += integral * (*spectra::Spectrum::spectra["CIE-Y"])(sunsky_lambda[i]);
 			}
@@ -363,7 +363,7 @@ namespace mtt::light {
 			auto cos_gamma = x | std::views::transform([cos_sun = this->cos_sun](auto x){
 				return 0.5f * ((1.f - cos_sun) * x + (1.f + cos_sun));
 			});
-			auto cos_gamma_phi = std::views::cartesian_product(cos_gamma, phi);
+			auto cos_gamma_phi = stl::views::cartesian_product(cos_gamma, phi);
 			auto cos_theta = cos_gamma_phi | std::views::transform([
 				d = this->d,
 				t = this->t
@@ -379,13 +379,13 @@ namespace mtt::light {
 
 			auto luminance = 0.f;
 			for (auto i = 0; i < sunsky_num_lambda; i++) {
-				auto radiance = std::views::zip_transform([&](
-					auto&& cos_gamma_phi, auto cos_theta, auto&& cartesian_w
-				){
+				auto radiance = std::views::zip(cos_gamma_phi, cos_theta, cartesian_w)
+				| std::views::transform([&](auto&& zipped) {
+					auto [cos_gamma_phi, cos_theta, cartesian_w] = zipped;
 					auto [cos_gamma, phi] = cos_gamma_phi;
 					auto [w_theta, w_gamma] = cartesian_w;
 					return hosek_sun(i, cos_theta) * hosek_limb(i, cos_gamma) * w_theta * w_gamma;
-				}, cos_gamma_phi, cos_theta, cartesian_w);
+				});
 				auto integral = std::ranges::fold_left(radiance, 0.f, std::plus{}) * J;
 				luminance += integral * (*spectra::Spectrum::spectra["CIE-Y"])(sunsky_lambda[i]);
 			}

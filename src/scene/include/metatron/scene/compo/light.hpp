@@ -28,7 +28,7 @@ namespace mtt::compo {
 
 	struct Sunsky_Light final {
 		math::Vector<f32, 2> direction;
-		f32 turbility;
+		f32 turbidity;
 		f32 albedo;
 		f32 aperture;
 		i32 sunsky{0};

@@ -57,7 +57,7 @@ namespace mtt::daemon {
 				} else if constexpr (std::is_same_v<T, compo::Sunsky_Light>) {
 					return make_poly<light::Light, light::Sunsky_Light>(
 						compo.direction,
-						compo.turbility,
+						compo.turbidity,
 						compo.albedo,
 						compo.aperture
 					);
