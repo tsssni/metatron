@@ -6,7 +6,7 @@ namespace mtt::spectra {
 		math::Vector<f32, 3> const& c,
 		f32 s,
 		view<Spectrum> illuminant
-	) noexcept : polynomial({c[0], c[1], c[2]}), s(s), illuminant(illuminant) {}
+	) noexcept : c({c[0], c[1], c[2]}), s(s), illuminant(illuminant) {}
 
 	auto Rgb_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
 		auto sigmoid = [](f32 x) -> f32 {
@@ -15,6 +15,8 @@ namespace mtt::spectra {
 			}
 			return 0.5f + x / (2.f * math::sqrt(1.f + math::sqr(x)));
 		};
-		return s * sigmoid(polynomial(lambda)) * (illuminant ? (*illuminant)(lambda) : 1.f);
+		return s
+		* sigmoid(math::polynomial(lambda, c))
+		* (illuminant ? (*illuminant)(lambda) : 1.f);
 	}
 }

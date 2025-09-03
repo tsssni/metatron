@@ -12,11 +12,11 @@ namespace mtt::math {
 		n--;
 
 		if (n == 0) {
-			p[0] = T(0); w[0] = T(2);
+			p[0] = T{0}; w[0] = T{2};
 		} else {
-			p[0] = -math::sqrt(T(1.0 / 3.0));
+			p[0] = -math::sqrt(T{1.0 / 3.0});
 			p[1] = -p[0];
-			w[0] =  w[1] = T(1);
+			w[0] =  w[1] = T{1};
 		}
 
 		for (auto i = 0; i <= (n + 1) / 2; i++) {
@@ -47,7 +47,7 @@ namespace mtt::math {
 		if ((n % 2) == 0) {
 			auto [y, d] = legendre_derivative(n + 1, 0.0);
 			w[n / 2] = T(2.0 / (d * d));
-			p[n / 2] = T(0);
+			p[n / 2] = T{0};
 		}
 
 		return std::tuple<A, A>{p, w};

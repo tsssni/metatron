@@ -4,6 +4,7 @@
 #include <metatron/core/math/trigonometric.hpp>
 #include <metatron/core/math/gaussian.hpp>
 #include <metatron/core/math/integral/gauss-legendre.hpp>
+#include <metatron/core/math/distribution/gaussian.hpp>
 #include <metatron/core/math/distribution/cone.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/optional.hpp>
@@ -31,6 +32,7 @@ namespace mtt::light {
 	turbidity(turbidity), 
 	albedo(albedo),
 	cos_sun(std::cos(aperture * 0.5)),
+	phi_sun(direction[0]),
 	area(1.f
 	* (1.f - std::cos(sun_aperture * 0.5f))
 	/ (1.f - cos_sun)) {
@@ -436,9 +438,31 @@ namespace mtt::light {
 		eval::Context const& ctx,
 		math::Vector<f32, 2> const& u
 	) const noexcept -> std::optional<Interaction> {
-		auto wi = math::Vector<f32, 3>{};
+		auto idx = tgmm_distr.sample(u[0]);
+		auto [mu_phi, mu_theta, sigma_phi, sigma_theta] = tgmm_gaussian[idx];
+		auto u_phi = math::guarded_div(
+			u[0] - tgmm_distr.cdf[idx],
+			tgmm_distr.cdf[idx + 1] - tgmm_distr.cdf[idx]
+		);
+		auto u_theta = u[1];
+
+		auto phi_distr = math::Truncated_Gaussian_Distribution{
+			mu_phi, sigma_phi, 0.f, math::pi * 2.f
+		};
+		auto theta_distr = math::Truncated_Gaussian_Distribution{
+			mu_theta, sigma_theta, 0.f, math::pi * 0.5f
+		};
+
+		// data fix sun to phi = pi / 2
+		auto phi = phi_distr.sample(u_phi) + phi_sun - math::pi * 0.5f;
+		auto theta = std::min(
+			theta_distr.sample(u_theta),
+			math::pi * 0.5f - math::epsilon<f32>
+		);
+
+		auto wi = math::unit_sphere_to_cartesion(theta, phi);
 		auto cos_gamma = math::dot(wi, d);
-		auto cos_theta = math::dot(wi, {0.f, 1.f, 0.f});
+		auto cos_theta = math::unit_to_cos_theta(wi);
 
 		auto L = ctx.spec;
 		L.value = math::foreach([&](f32 lambda, auto i){
@@ -458,7 +482,7 @@ namespace mtt::light {
 			.wi = wi,
 			.p = ctx.r.o + wi * 65504.f,
 			.t = 65504.f,
-			.pdf = 1.f,
+			.pdf = phi_distr.pdf(phi) * theta_distr.pdf(theta) * tgmm_distr.pdf[idx],
 		};
 	}
 }

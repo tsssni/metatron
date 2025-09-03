@@ -3,17 +3,13 @@
 #include <cmath>
 
 namespace mtt::math {
-	template<usize n>
-	struct Polynomial final {
-		Polynomial(std::array<f32, n + 1>&& c): c(c) {}
-		auto operator()(f32 x) const noexcept -> f32 {
-			auto y = 0.f;
-			for (auto i = 0; i <= n; i++) {
-				y += c[i] * std::powf(x, i);
-			}
-			return y;
+	template<typename T, usize n>
+	requires std::floating_point<T>
+	auto constexpr polynomial(T x, std::array<T, n> c) noexcept -> T {
+		auto y = 0.f;
+		for (auto i = 0; i < n; i++) {
+			y += c[i] * std::pow(x, i);
 		}
-	private:
-		std::array<f32, n + 1> c;
-	};
+		return y;
+	}
 }

@@ -74,6 +74,7 @@ namespace mtt::light {
 		f32 turbidity;
 		f32 albedo;
 		f32 cos_sun;
+		f32 phi_sun;
 		f32 area;
 		f32 w_sky;
 

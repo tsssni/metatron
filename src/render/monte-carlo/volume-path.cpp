@@ -211,7 +211,7 @@ namespace mtt::monte_carlo {
 				}
 
 				auto mis_u = math::guarded_div(1.f, spectra::avg(mis_d + mis_l));
-				// emission += gamma * mis_u * l_intr.L;
+				emission += gamma * mis_u * l_intr.L;
 			}();
 
 			if (scattered || crossed) {
@@ -229,7 +229,7 @@ namespace mtt::monte_carlo {
 
 				auto p_e = e_intr.pdf * l_intr.pdf;
 				mis_e *= math::guarded_div(p_e, scatter_pdf);
-				auto mis_w = 1.f; // math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
+				auto mis_w = math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
 				emission += beta * mis_w * l_intr.L;
 				continue;
 			}
