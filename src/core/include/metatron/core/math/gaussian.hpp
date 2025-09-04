@@ -90,6 +90,6 @@ namespace mtt::math {
 	template<typename T>
 	requires std::floating_point<T>
 	auto gaussian_cdf(T x, T mu, T sigma) noexcept -> T {
-		return T{0.5} * (T{1} + erf(std::sqrt(T{2}) * (x - mu) / sigma));
+		return T{0.5} * (T{1} + erf((x - mu) / sigma / math::sqrt(T{2})));
 	}
 }

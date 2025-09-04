@@ -48,19 +48,23 @@ namespace mtt::light {
 
 	private:
 		auto hosek(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32;
+		auto hosek_sky(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32;
 		auto hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) const noexcept -> f32;
+		auto hosek_sun(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32;
 		auto hosek_sun(i32 idx, f32 cos_theta) const noexcept -> f32;
 		auto hosek_limb(i32 idx, f32 cos_gamma) const noexcept -> f32;
 		auto hosek_integral() const noexcept -> f32;
 
-		auto sample_sun(
-			eval::Context const& ctx,
-			math::Vector<f32, 2> const& u
-		) const noexcept -> std::optional<Interaction>;
 		auto sample_sky(
 			eval::Context const& ctx,
 			math::Vector<f32, 2> const& u
 		) const noexcept -> std::optional<Interaction>;
+		auto sample_sun(
+			eval::Context const& ctx,
+			math::Vector<f32, 2> const& u
+		) const noexcept -> std::optional<Interaction>;
+
+		auto split(f32 lambda) const noexcept -> std::tuple<i32, i32, f32>;
 
 		std::vector<f32> static sky_params_table;
 		std::vector<f32> static sky_radiance_table;
