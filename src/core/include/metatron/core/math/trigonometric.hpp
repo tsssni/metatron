@@ -12,11 +12,11 @@ namespace mtt::math {
 		return sinc(x) * sinc(x / tau);
 	}
 
-	auto inline radian(f32 degree) -> f32 {
+	auto inline radians(f32 degree) -> f32 {
 		return degree / 180.f * math::pi;
 	}
 
-	auto inline degree(f32 radian) -> f32 {
+	auto inline degrees(f32 radian) -> f32 {
 		return radian / math::pi * 180.f;
 	}
 }

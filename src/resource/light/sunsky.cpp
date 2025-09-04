@@ -3,7 +3,7 @@
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/trigonometric.hpp>
 #include <metatron/core/math/gaussian.hpp>
-#include <metatron/core/math/integral/gauss-legendre.hpp>
+#include <metatron/core/math/integral.hpp>
 #include <metatron/core/math/distribution/gaussian.hpp>
 #include <metatron/core/math/distribution/cone.hpp>
 #include <metatron/core/stl/filesystem.hpp>
@@ -103,7 +103,7 @@ namespace mtt::light {
 			auto t_high = std::min(t_low + 1, tgmm_num_turbility - 1);
 			auto t_alpha = t_idx - t_low;
 
-			auto eta_deg = math::degree(eta);
+			auto eta_deg = math::degrees(eta);
 			auto eta_idx = std::clamp((eta_deg - 2.f) / 3.f, 0.f, f32(sun_num_segments - 1));
 			auto eta_low = i32(eta_idx);
 			auto eta_high = std::min(eta_low + 1, sun_num_segments - 1);
