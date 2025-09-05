@@ -11,5 +11,10 @@ namespace mtt::ecs {
 }
 
 namespace mtt {
+	struct Entity_Divider final {} inline constexpr et;
+	struct Path_Divider final {} inline constexpr pt;
+
 	auto operator"" _et(mtt::view<char> path, usize size) -> mtt::ecs::Entity;
+	auto operator/(std::string_view path, Entity_Divider et) -> ecs::Entity;
+	auto operator/(ecs::Entity entity, Path_Divider pt) -> std::string;
 }

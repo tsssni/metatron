@@ -8,6 +8,9 @@
 #include <metatron/resource/media/grid.hpp>
 #include <metatron/resource/media/nanovdb.hpp>
 #include <metatron/resource/phase/henyey-greenstein.hpp>
+#include <metatron/core/stl/filesystem.hpp>
+#include <metatron/core/stl/optional.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::daemon {
 	auto Medium_Daemon::init() noexcept -> void {
@@ -24,19 +27,20 @@ namespace mtt::daemon {
 	auto Medium_Daemon::update() noexcept -> void {
 		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
-		auto medium_view = registry.view<ecs::Dirty_Mark<compo::Medium>>();
-		for (auto entity: medium_view) {
-			registry.remove<
-				poly<media::Medium>,
-				poly<media::Medium_Grid>
-			>(entity);
-			if (!registry.any_of<compo::Medium>(entity)) {
-				continue;
-			}
+
+		auto view = registry.view<ecs::Dirty_Mark<compo::Medium>>()
+		| std::views::filter([&](auto entity) {
+			registry.remove<poly<media::Medium>>(entity);
+			return registry.any_of<compo::Medium>(entity);
+		})
+		| std::ranges::to<std::vector<ecs::Entity>>();
+
+		auto mutex = std::mutex{};
+		stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{view.size()}, [&](auto idx) {
+			auto entity = view[idx[0]];
 			auto& medium = registry.get<compo::Medium>(entity);
 
-			registry.emplace<poly<media::Medium>>(entity,
-			std::visit([&](auto&& compo) -> poly<media::Medium> {
+			auto m = std::visit([&](auto&& compo) -> poly<media::Medium> {
 				using T = std::decay_t<decltype(compo)>;
 				if constexpr (std::is_same_v<T, compo::Vaccum_Medium>) {
 					return make_poly<media::Medium, media::Vaccum_Medium>();
@@ -63,9 +67,12 @@ namespace mtt::daemon {
 							media::grid_size,
 							media::grid_size
 						>;
-						auto const& wd = registry.get<ecs::Working_Directory>(hierarchy.root());
+						MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(compo.path), {
+							std::println("medium {} not exists", compo.path);
+							std::abort();
+						});
 						registry.emplace<poly<media::Medium_Grid>>(entity,
-							make_poly<media::Medium_Grid, Nanovdb_Grid>(wd.path + compo.path)
+							make_poly<media::Medium_Grid, Nanovdb_Grid>(path)
 						);
 						return make_poly<media::Medium, media::Grid_Medium>(
 							registry.get<poly<media::Medium_Grid>>(entity),
@@ -77,8 +84,13 @@ namespace mtt::daemon {
 						);
 					}
 				}
-			},medium));
-		}
+			}, medium);
+
+			{
+				auto lock = std::lock_guard(mutex);
+				registry.emplace<poly<media::Medium>>(entity, std::move(m));
+			}
+		});
 		registry.clear<ecs::Dirty_Mark<compo::Medium>>();
 	}
 }

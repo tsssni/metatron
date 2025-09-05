@@ -16,11 +16,11 @@ namespace mtt::light {
 		auto wi = math::normalize(-ctx.r.o);
 		auto r = math::length(ctx.r.o);
 		return Interaction{
-			(ctx.spec & L) / (r * r),
-			wi,
-			{0.f},
-			r,
-			1.f
+			.L = (ctx.spec & L) / (r * r),
+			.wi = wi,
+			.p = {0.f},
+			.t = r,
+			.pdf = 1.f
 		};
 	}
 

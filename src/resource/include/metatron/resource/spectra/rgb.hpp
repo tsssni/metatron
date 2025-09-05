@@ -13,7 +13,7 @@ namespace mtt::spectra {
 		auto operator()(f32 lambda) const noexcept -> f32;
 
 	private:
-		math::Polynomial<3> polynomial;
+		std::array<f32, 3> c;
 		f32 s;
 		view<Spectrum> illuminant;
 	};

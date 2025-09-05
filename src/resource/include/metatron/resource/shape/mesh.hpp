@@ -20,6 +20,7 @@ namespace mtt::shape {
 			math::Vector<f32, 3> const& np = {},
 			usize idx = 0uz
 		) const noexcept -> std::optional<Interaction>;
+		// sphere triangle sampling: https://pbr-book.org/4ed/Shapes/Triangle_Meshes
 		auto sample(
 			eval::Context const& ctx,
 			math::Vector<f32, 2> const& u,

@@ -3,6 +3,8 @@
 
 namespace mtt::monte_carlo {
 	struct Volume_Path_Integrator final {
+		// null scattering: https://cs.dartmouth.edu/~wjarosz/publications/miller19null.html
+		// mis method: https://pbr-book.org/4ed/Light_Transport_II_Volume_Rendering/Volume_Scattering_Integrators
 		auto sample(
 			Status initial_status,
 			view<accel::Acceleration> accel,

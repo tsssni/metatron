@@ -6,26 +6,20 @@
 #include <metatron/resource/texture/image.hpp>
 #include <metatron/resource/texture/checkerboard.hpp>
 #include <metatron/core/stl/variant.hpp>
+#include <metatron/core/stl/filesystem.hpp>
+#include <metatron/core/stl/thread.hpp>
+#include <metatron/core/stl/optional.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::daemon {
 	auto Texture_Daemon::init() noexcept -> void {
 		MTT_SERDE(Texture);
 		auto& hierarchy = *ecs::Hierarchy::instance;
-		auto conductor_list = std::to_array<std::string>({
-			"Au",
-			"Al",
-		});
-		for (auto& conductor: conductor_list) {
+		for (auto& [spec, _]: spectra::Spectrum::spectra) {
 			hierarchy.attach<compo::Texture>(
-				hierarchy.create("/texture/eta/" + conductor),
+				hierarchy.create("/texture/" + spec),
 				compo::Constant_Spectrum_Texture{
-					.spectrum = hierarchy.entity("/spectrum/eta/" + conductor),
-				}
-			);
-			hierarchy.attach<compo::Texture>(
-				hierarchy.create("/texture/k/" + conductor),
-				compo::Constant_Spectrum_Texture{
-					.spectrum = hierarchy.entity("/spectrum/k/" + conductor),
+					.spectrum = hierarchy.entity("/spectrum/" + spec),
 				}
 			);
 		}
@@ -35,28 +29,34 @@ namespace mtt::daemon {
 		auto& hierarchy = *ecs::Hierarchy::instance;
 		auto& registry = hierarchy.registry;
 
-		auto texture_view = registry.view<ecs::Dirty_Mark<compo::Texture>>();
-		for (auto entity: texture_view) {
+		auto view = registry.view<ecs::Dirty_Mark<compo::Texture>>()
+		| std::views::filter([&](auto entity) {
 			registry.remove<poly<texture::Spectrum_Texture>, poly<texture::Vector_Texture>>(entity);
-			if (!registry.any_of<compo::Texture>(entity)) {
-				continue;
-			}
+			return registry.any_of<compo::Texture>(entity);
+		})
+		| std::ranges::to<std::vector<ecs::Entity>>();
+
+		auto mutex = std::mutex{};
+		stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{view.size()}, [&](auto idx) {
+			auto entity = view[idx[0]];
 			auto& texture = registry.get<compo::Texture>(entity);
 
 			std::visit([&](auto&& compo) {
 				using T = std::decay_t<decltype(compo)>;
 				if constexpr (stl::is_variant_alternative_v<T, compo::Spectrum_Texture>) {
-					registry.emplace<poly<texture::Spectrum_Texture>>(entity,
-					std::visit([&](auto&& compo) {
+					auto tex = std::visit([&](auto&& compo) {
 						using T = std::decay_t<decltype(compo)>;
 						if constexpr (std::is_same_v<T, compo::Constant_Spectrum_Texture>) {
 							return make_poly<texture::Spectrum_Texture, texture::Constant_Spectrum_Texture>(
 								registry.get<poly<spectra::Spectrum>>(compo.spectrum)
 							);
 						} else if constexpr (std::is_same_v<T, compo::Image_Spectrum_Texture>) {
-							auto const& wd = registry.get<ecs::Working_Directory>(hierarchy.root());
+							MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(compo.path), {
+								std::println("medium {} not exists", compo.path);
+								std::abort();
+							});
 							return make_poly<texture::Spectrum_Texture, texture::Image_Spectrum_Texture>(
-								image::Image::from_path(wd.path + compo.path), compo.type
+								image::Image::from_path(path), compo.type
 							);
 						} else if constexpr (std::is_same_v<T, compo::Checkerboard_Texture>) {
 							return make_poly<texture::Spectrum_Texture, texture::Checkerboard_Texture>(
@@ -65,10 +65,14 @@ namespace mtt::daemon {
 								compo.uv_scale
 							);
 						}
-					}, compo::Spectrum_Texture{compo}));
+					}, compo::Spectrum_Texture{compo});
+
+					{
+						auto lock = std::lock_guard(mutex);
+						registry.emplace<poly<texture::Spectrum_Texture>>(entity, std::move(tex));
+					}
 				} else if constexpr (stl::is_variant_alternative_v<T, compo::Vector_Texture>) {
-					registry.emplace<poly<texture::Vector_Texture>>(entity,
-					std::visit([&](auto&& compo) {
+					auto tex = std::visit([&](auto&& compo) {
 						using T = std::decay_t<decltype(compo)>;
 						if constexpr (std::is_same_v<T, compo::Constant_Vector_Texture>) {
 							return make_poly<texture::Vector_Texture, texture::Constant_Vector_Texture>(compo.x);
@@ -77,10 +81,15 @@ namespace mtt::daemon {
 								image::Image::from_path(compo.path)
 							);
 						}
-					}, compo::Vector_Texture{compo}));
+					}, compo::Vector_Texture{compo});
+
+					{
+						auto lock = std::lock_guard(mutex);
+						registry.emplace<poly<texture::Vector_Texture>>(entity, std::move(tex));
+					}
 				}
 			}, texture);
-		}
+		});
 
 		registry.clear<ecs::Dirty_Mark<compo::Texture>>();
 	}

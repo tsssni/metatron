@@ -16,15 +16,13 @@ struct std::formatter<mtt::math::Matrix<T, dims...>> {
 		auto out = std::format_to(ctx.out(), size == 1 ? "[" : "[\n");
 		constexpr auto first_dim = M::dimensions[0];
 		for (auto i = 0uz; i < first_dim; i++) {
-			if (i == 0 && size == 1) {
-				out = std::format_to(out, "{}", matrix[i]);
-			} else if (size == 1) {
+			if (i != 0 && size == 1) {
 				out = std::format_to(out, ", {}", matrix[i]);
 			} else {
-				out = std::format_to(out, "\t{}\n", matrix[i]);
+				out = std::format_to(out, "{}", matrix[i]);
 			}
 		}
-		return std::format_to(ctx.out(), size == 1 ? "]" : "]\n");
+		return std::format_to(ctx.out(), "]\n");
 	}
 };
 

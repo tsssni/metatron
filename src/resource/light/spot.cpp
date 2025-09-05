@@ -42,11 +42,11 @@ namespace mtt::light {
 		);
 
 		return Interaction{
-			(ctx.spec & L) * intensity / (r * r),
-			wi,
-			{0.f},
-			r,
-			1.f
+			.L = (ctx.spec & L) * intensity / (r * r),
+			.wi = wi,
+			.p = {0.f},
+			.t = r,
+			.pdf = 1.f
 		};
 	}
 

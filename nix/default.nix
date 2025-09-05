@@ -22,8 +22,8 @@ clangStdenv.mkDerivation {
   src = fetchFromGitHub {
     owner = "tsssni";
     repo = "metatron";
-    rev = "575a754";
-    sha256 = "sha256-zp7IurWr7rmUcmGZggNDDJ5V4GBt+Olw68ocJGw24UU=";
+    rev = "724d8ce";
+    sha256 = "sha256-IgsO5HOlVlOF3DyAViequ8SqHKf+gUOd0WIhcA2DbcY=";
   };
 
   nativeBuildInputs = [

@@ -18,9 +18,9 @@ namespace mtt::light {
 		auto v = s[0] / math::pi;
 		auto spec = env_map->sample(ctx, {{u, v}});
 		return Interaction{
-			ctx.spec & (&spec),
-			{}, {}, {},
-			ctx.n != math::Vector<f32, 3>{0.f}
+			.L = ctx.spec & (&spec),
+			.wi = {}, .p = {}, .t = {},
+			.pdf = ctx.n != math::Vector<f32, 3>{0.f}
 			? math::Cosine_Hemisphere_Distribution{}.pdf(math::dot(ctx.n, ctx.r.d))
 			: math::Sphere_Distribution{}.pdf()
 		};
@@ -44,8 +44,8 @@ namespace mtt::light {
 		
 		auto intr = (*this)({{ctx.r.o, wi}, n, ctx.spec}).value();
 		intr.wi = wi;
-		intr.p = ctx.r.o + 65535.f * wi;
-		intr.t = 65535.f;
+		intr.p = ctx.r.o + 65504.f * wi;
+		intr.t = 65504.f;
 		return intr;
 	}
 

@@ -20,11 +20,11 @@ namespace mtt::light {
 		MTT_OPT_OR_RETURN(s_intr, shape->sample(ctx, u, primitive), {});
 		auto L = ctx.spec; L = 0.f; // delay fetching L in integrator material interaction
 		return Interaction{
-			L,
-			math::normalize(s_intr.p - ctx.r.o),
-			s_intr.p,
-			s_intr.t,
-			s_intr.pdf
+			.L = ctx.spec & spectra::Spectrum::spectra["zero"],
+			.wi = math::normalize(s_intr.p - ctx.r.o),
+			.p = s_intr.p,
+			.t = s_intr.t,
+			.pdf = s_intr.pdf
 		};
 	}
 

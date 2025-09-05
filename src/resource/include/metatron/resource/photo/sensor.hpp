@@ -13,6 +13,5 @@ namespace mtt::photo {
 		view<spectra::Spectrum> r;
 		view<spectra::Spectrum> g;
 		view<spectra::Spectrum> b;
-		f32 s;
 	};
 }

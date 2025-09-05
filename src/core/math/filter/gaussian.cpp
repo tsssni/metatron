@@ -1,12 +1,12 @@
 #include <metatron/core/math/filter/gaussian.hpp>
+#include <metatron/core/math/gaussian.hpp>
 
 namespace mtt::math {
 	Gaussian_Filter::Gaussian_Filter(
 		Vector<f32, 2> const& radius,
 		f32 sigma
 	) noexcept:
-	radius(radius),
-	gaussian(sigma) {
+	radius(radius) {
 		auto matrix = math::Matrix<f32, 64, 64>{};
 		for (auto i = 0uz; i < 64; i++) {
 			auto x = math::lerp(-radius[0], radius[0], (f32(i) + 0.5f) / 64.f);
@@ -23,8 +23,8 @@ namespace mtt::math {
 	}
 
 	auto Gaussian_Filter::operator()(Vector<f32, 2> const& p) const noexcept -> f32 {
-		auto vx = gaussian.pdf(p[0]) - gaussian.pdf(radius[0]);
-		auto vy = gaussian.pdf(p[1]) - gaussian.pdf(radius[1]);
+		auto vx = gaussian(p[0], 0.f, sigma) - gaussian(radius[0], 0.f, sigma);
+		auto vy = gaussian(p[1], 0.f, sigma) - gaussian(radius[1], 0.f, sigma);
 		return vx * vy;
 	}
 

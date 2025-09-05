@@ -4,11 +4,7 @@
 #include <functional>
 
 namespace mtt::color {
-	auto constexpr table_res = 64;
 	struct Color_Space final {
-		using Scale = f32[table_res];
-		using Table = f32[3][table_res][table_res][table_res][3];
-
 		enum struct Spectrum_Type: usize {
 			albedo,
 			unbounded,
@@ -22,23 +18,26 @@ namespace mtt::color {
 		std::function<f32(f32)> decode;
 
 		Color_Space(
+			std::string_view name,
 			math::Vector<f32, 2> const& r,
 			math::Vector<f32, 2> const& g,
 			math::Vector<f32, 2> const& b,
 			view<spectra::Spectrum> illuminant,
 			std::function<f32(f32)> encode,
-			std::function<f32(f32)> decode,
-			view<Scale> scale,
-			view<Table> table
+			std::function<f32(f32)> decode
 		);
 
+		// method: https://jo.dreggn.org/home/2019_wide_gamut.pdf
+		// polynomial fits data: https://github.com/mitsuba-renderer/mitsuba3/tree/master/ext/rgb2spec
 		auto to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> poly<spectra::Spectrum>;
 
 		std::unordered_map<std::string, view<Color_Space>> static color_spaces;
 
 	private:
-		Scale const* scale;
-		Table const* table;
+		i32 table_res;
+		f32 illuminant_Y_integral;
+		std::vector<f32> scale;
+		std::vector<f32> table;
 	};
 
 	auto constexpr xyY_to_XYZ(math::Vector<f32, 3> const& xyY) -> math::Vector<f32, 3> {

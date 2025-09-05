@@ -15,11 +15,11 @@ namespace mtt::light {
 	) const noexcept -> std::optional<Interaction> {
 		auto constexpr wi = math::Vector<f32, 3>{0.f, 0.f, -1.f};
 		return Interaction{
-			ctx.spec & L,
-			wi,
-			ctx.r.o + 65535.f * wi,
-			65535.f,
-			1.f
+			.L = ctx.spec & L,
+			.wi = wi,
+			.p = ctx.r.o + 65504.f * wi,
+			.t = 65504.f,
+			.pdf = 1.f
 		};
 	}
 

@@ -3,6 +3,7 @@
 #include <metatron/core/math/prime.hpp>
 
 namespace mtt::math {
+	// halton with owen scrambling: https://pbr-book.org/4ed/Sampling_and_Reconstruction/Halton_Sampler
 	struct Halton_Sampler final {
 		Halton_Sampler(
 			usize seed = 0uz,
