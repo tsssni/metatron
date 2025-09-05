@@ -2,6 +2,8 @@
 #include <metatron/resource/light/light.hpp>
 #include <metatron/resource/spectra/stochastic.hpp>
 #include <metatron/core/math/distribution/discrete.hpp>
+#include <metatron/core/math/distribution/gaussian.hpp>
+#include <metatron/core/math/distribution/cone.hpp>
 
 namespace mtt::light {
 	auto constexpr sunsky_num_lambda = 11;
@@ -85,7 +87,9 @@ namespace mtt::light {
 		math::Matrix<f32, sunsky_num_lambda, sky_num_params> sky_params;
 		math::Vector<f32, sunsky_num_lambda> sky_radiance;
 		math::Matrix<f32, sun_num_segments, sunsky_num_lambda, sun_num_ctls> sun_radiance;
-		math::Matrix<f32, tgmm_num_gaussian, tgmm_num_gaussian_params> tgmm_gaussian;
+		math::Vector<math::Truncated_Gaussian_Distribution, tgmm_num_gaussian> tgmm_phi_distr;
+		math::Vector<math::Truncated_Gaussian_Distribution, tgmm_num_gaussian> tgmm_theta_distr;
 		math::Discrete_Distribution tgmm_distr{{}};
+		math::Cone_Distribution sun_distr{1.f};
 	};
 }

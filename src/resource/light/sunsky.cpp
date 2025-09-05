@@ -4,8 +4,6 @@
 #include <metatron/core/math/trigonometric.hpp>
 #include <metatron/core/math/gaussian.hpp>
 #include <metatron/core/math/integral.hpp>
-#include <metatron/core/math/distribution/gaussian.hpp>
-#include <metatron/core/math/distribution/cone.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/ranges.hpp>
 #include <metatron/core/stl/optional.hpp>
@@ -36,7 +34,8 @@ namespace mtt::light {
 	phi_sun(direction[0]),
 	area(1.f
 	* (1.f - std::cos(sun_aperture * 0.5f))
-	/ (1.f - cos_sun)) {
+	/ (1.f - cos_sun)),
+	sun_distr(cos_sun) {
 		auto bezier = [](std::vector<f32> const& data, usize block_size, usize offset, f32 x) -> std::vector<f32> {
 			auto interpolated = std::vector<f32>(block_size, 0.f);
 			auto c = std::array<f32, 6>{1, 5, 10, 10, 5, 1};
@@ -129,8 +128,10 @@ namespace mtt::light {
 				auto b = b_w[i];
 				for (auto j = 0; j < tgmm_num_mixture; j++) {
 					auto idx = i * tgmm_num_mixture + j;
-					tgmm_gaussian[idx] = tgmm[t][eta][j];
-					w[idx] = tgmm[t][eta][j][tgmm_num_gaussian_params - 1] * b;
+					auto [mu_phi, mu_theta, sigma_phi, sigma_theta, w_g] = tgmm[t][eta][j];
+					tgmm_phi_distr[idx] = math::Truncated_Gaussian_Distribution{mu_phi, sigma_phi, 0.f, 2.f * math::pi};
+					tgmm_theta_distr[idx] = math::Truncated_Gaussian_Distribution{mu_theta, sigma_theta, 0.f, 0.5f * math::pi};
+					w[idx] = w_g * b;
 				}
 			}
 			tgmm_distr = math::Discrete_Distribution{w};
@@ -218,14 +219,7 @@ namespace mtt::light {
 		auto sun_pdf = cos_gamma >= cos_sun ? math::Cone_Distribution{cos_sun}.pdf() : 0.f;
 		auto sky_pdf = 0.f;
 		for (auto i = 0; i < tgmm_num_gaussian; i++) {
-			auto [mu_phi, mu_theta, sigma_phi, sigma_theta] = tgmm_gaussian[i];
-			auto phi_distr = math::Truncated_Gaussian_Distribution{
-				mu_phi, sigma_phi, 0.f, math::pi * 2.f
-			};
-			auto theta_distr = math::Truncated_Gaussian_Distribution{
-				mu_theta, sigma_theta, 0.f, math::pi * 0.5f
-			};
-			sky_pdf += phi_distr.pdf(tgmm_phi) * theta_distr.pdf(theta) * tgmm_distr.pdf[i];
+			sky_pdf += tgmm_phi_distr[i].pdf(tgmm_phi) * tgmm_theta_distr[i].pdf(theta) * tgmm_distr.pdf[i];
 		}
 		sky_pdf = math::guarded_div(sky_pdf, std::sin(theta));
 
@@ -423,29 +417,18 @@ namespace mtt::light {
 		math::Vector<f32, 2> const& u
 	) const noexcept -> std::optional<Interaction> {
 		auto idx = tgmm_distr.sample(u[0]);
-		auto [mu_phi, mu_theta, sigma_phi, sigma_theta] = tgmm_gaussian[idx];
 		auto u_phi = math::guarded_div(
 			u[0] - tgmm_distr.cdf[idx],
 			tgmm_distr.cdf[idx + 1] - tgmm_distr.cdf[idx]
 		);
 		auto u_theta = u[1];
 
-		auto phi_distr = math::Truncated_Gaussian_Distribution{
-			mu_phi, sigma_phi, 0.f, math::pi * 2.f
-		};
-		auto theta_distr = math::Truncated_Gaussian_Distribution{
-			mu_theta, sigma_theta, 0.f, math::pi * 0.5f
-		};
-
 		// data fix sun to phi = pi / 2
-		auto tgmm_phi = phi_distr.sample(u_phi);
+		auto tgmm_phi = tgmm_phi_distr[idx].sample(u_phi);
 		auto phi = tgmm_phi + phi_sun - math::pi * 0.5f;
-		auto theta = std::min(
-			theta_distr.sample(u_theta),
-			math::pi * 0.5f - math::epsilon<f32>
-		);
+		auto theta = std::min(tgmm_theta_distr[idx].sample(u_theta), math::pi * 0.5f - math::epsilon<f32>);
 
-		auto wi = math::unit_sphere_to_cartesion(theta, phi);
+		auto wi = math::unit_sphere_to_cartesion({theta, phi});
 		auto cos_gamma = math::dot(wi, d);
 		auto cos_theta = math::unit_to_cos_theta(wi);
 
@@ -460,7 +443,7 @@ namespace mtt::light {
 			.p = ctx.r.o + wi * 65504.f,
 			.t = 65504.f,
 			.pdf = math::guarded_div(
-				phi_distr.pdf(tgmm_phi) * theta_distr.pdf(theta) * tgmm_distr.pdf[idx], 
+				tgmm_phi_distr[idx].pdf(tgmm_phi) * tgmm_theta_distr[idx].pdf(theta) * tgmm_distr.pdf[idx], 
 				std::sin(theta)
 			),
 		};

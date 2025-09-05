@@ -15,6 +15,7 @@ namespace mtt::math {
 	};
 
 	struct Truncated_Gaussian_Distribution final {
+		Truncated_Gaussian_Distribution() noexcept {}
 		Truncated_Gaussian_Distribution(f32 mu, f32 sigma, f32 a, f32 b) noexcept:
 		mu(mu), sigma(sigma),
 		cdf_a(gaussian_cdf(a, mu, sigma)), cdf_b(gaussian_cdf(b, mu, sigma)) {}
