@@ -4,9 +4,13 @@
 namespace mtt::stl {
 	template<typename T>
 	struct capsule {
+		template<typename... Args>
+		capsule(Args&&... args)
+		noexcept: impl(std::forward<Args>(args)...) {}
+
 		struct Impl final {
 			template<typename... Args>
-			Impl(Args&&... args) noexcept :
+			Impl(Args&&... args) noexcept:
 			impl(new typename T::Impl(std::forward<Args>(args)...)),
 			deleter([](void* impl) {
 				delete (typename T::Impl*)impl;
