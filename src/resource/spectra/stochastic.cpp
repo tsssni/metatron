@@ -184,6 +184,10 @@ namespace mtt::spectra {
 		return math::sum(spectrum.value / stochastic_samples);
 	}
 
+	auto valid(Stochastic_Spectrum const& spectrum) noexcept -> bool {
+		return spectrum.lambda[0] != 0.f;
+	}
+
 	auto constant(Stochastic_Spectrum const& spectrum) noexcept -> bool {
 		return math::all([&](f32 x, usize i) { return x == spectrum.value[0]; }, spectrum.value);
 	}

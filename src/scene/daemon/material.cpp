@@ -4,8 +4,7 @@
 #include <metatron/scene/ecs/hierarchy.hpp>
 #include <metatron/resource/material/material.hpp>
 #include <metatron/resource/bsdf/interface.hpp>
-#include <metatron/resource/bsdf/lambertian.hpp>
-#include <metatron/resource/bsdf/microfacet.hpp>
+#include <metatron/resource/bsdf/physical.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/print.hpp>
 
@@ -44,10 +43,8 @@ namespace mtt::daemon {
 				using T = std::decay_t<decltype(compo)>;
 				if constexpr (std::is_same_v<T, compo::Interface_Bsdf>) {
 					return configure<bsdf::Interface_Bsdf>(material);
-				} else if constexpr (std::is_same_v<T, compo::Lambertian_Bsdf>) {
-					return configure<bsdf::Lambertian_Bsdf>(material);
-				} else if constexpr (std::is_same_v<T, compo::Microfacet_Bsdf>) {
-					return configure<bsdf::Microfacet_Bsdf>(material);
+				} else if constexpr (std::is_same_v<T, compo::Physical_Bsdf>) {
+					return configure<bsdf::Physical_Bsdf>(material);
 				}
 			}, (compo.bsdf));
 

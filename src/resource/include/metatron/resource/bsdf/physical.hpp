@@ -1,8 +1,12 @@
 #pragma once
 #include <metatron/resource/bsdf/bsdf.hpp>
+#include <metatron/core/stl/capsule.hpp>
 
 namespace mtt::bsdf {
-	struct Lambertian_Bsdf final {
+	struct Physical_Bsdf final: stl::capsule<Physical_Bsdf> {
+		struct Impl;
+		Physical_Bsdf() noexcept;
+
 		auto operator()(
 			math::Vector<f32, 3> const& wo,
 			math::Vector<f32, 3> const& wi
@@ -14,10 +18,5 @@ namespace mtt::bsdf {
 		auto configure(Attribute const& attr) noexcept -> void;
 		auto flags() const noexcept -> Flags;
 		auto degrade() noexcept -> bool;
-
-	private:
-		spectra::Stochastic_Spectrum spectrum;
-		spectra::Stochastic_Spectrum reflectance;
-		spectra::Stochastic_Spectrum transmittance;
 	};
 }

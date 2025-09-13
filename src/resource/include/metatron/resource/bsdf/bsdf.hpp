@@ -46,6 +46,9 @@ namespace mtt::bsdf {
 	::add_skill<pro::skills::as_view>
 	::build {};
 
+	auto lambertian(
+		spectra::Stochastic_Spectrum const& reflectance
+	) -> spectra::Stochastic_Spectrum;
 	auto fresnel(
 		f32 cos_theta_i,
 		spectra::Stochastic_Spectrum const& eta,

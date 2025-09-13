@@ -1,17 +1,47 @@
-#include <metatron/resource/bsdf/microfacet.hpp>
+#include <metatron/resource/bsdf/physical.hpp>
 #include <metatron/resource/spectra/constant.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/sphere.hpp>
+#include <metatron/core/math/distribution/sphere.hpp>
 #include <metatron/core/math/distribution/disk.hpp>
 
 namespace mtt::bsdf {
-	struct Microfacet_Bsdf::Impl final {
+	struct Physical_Bsdf::Impl final {
 		f32 alpha_u;
 		f32 alpha_v;
+		spectra::Stochastic_Spectrum spectrum;
 		spectra::Stochastic_Spectrum eta;
 		spectra::Stochastic_Spectrum k;
+		spectra::Stochastic_Spectrum reflectance;
+		
+		std::function<auto (
+			eval::Context const& ctx,
+			math::Vector<f32, 3> const& u
+		) -> std::optional<Interaction>> sample;
 
-		auto operator()(
+		std::function<auto (
+			math::Vector<f32, 3> const& wo,
+			math::Vector<f32, 3> const& wi
+		) -> std::optional<Interaction>> intersect;
+
+		auto intersect_uniform(
+			math::Vector<f32, 3> const& wo,
+			math::Vector<f32, 3> const& wi
+		) const noexcept -> std::optional<Interaction> {
+			auto reflective = -wo[1] * wi[1] >= 0.f;
+			auto forward = wi[1] > 0.f;
+			if (!reflective || !forward) {
+				return {};
+			}
+
+			auto f = lambertian(reflectance);
+			auto distr = math::Cosine_Hemisphere_Distribution{};
+			auto pdf = distr.pdf(math::abs(wi[1]));
+
+			return Interaction{f, wi, pdf};
+		}
+
+		auto intersect_microfacet(
 			math::Vector<f32, 3> const& wo,
 			math::Vector<f32, 3> const& wi
 		) const noexcept -> std::optional<Interaction> {
@@ -60,7 +90,19 @@ namespace mtt::bsdf {
 			);
 		}
 
-		auto sample(
+		auto sample_uniform(
+			eval::Context const& ctx,
+			math::Vector<f32, 3> const& u
+		) const noexcept -> std::optional<Interaction> {
+			auto distr = math::Cosine_Hemisphere_Distribution{};
+			auto f = lambertian(reflectance);
+			auto wi = distr.sample({u[1], u[2]});
+			auto pdf = distr.pdf(wi[1]);
+
+			return Interaction{f, wi, pdf};
+		}
+
+		auto sample_microfacet(
 			eval::Context const& ctx,
 			math::Vector<f32, 3> const& u
 		) const noexcept -> std::optional<Interaction> {
@@ -112,19 +154,31 @@ namespace mtt::bsdf {
 		}
 
 		auto configure(Attribute const& attr) noexcept -> void {
+			auto has_base = attr.spectra.count("reflectance") != 0;
+			auto has_surface = attr.spectra.count("eta") != 0;
 			auto null_spec = attr.spectra.at("spectrum") & spectra::Spectrum::spectra["zero"];
-			eta = attr.spectra.count("eta") > 0 ? attr.spectra.at("eta") : null_spec;
-			k = attr.spectra.count("k") > 0 ? attr.spectra.at("k") : null_spec;
 
-			auto alpha = attr.vectors.count("alpha") > 0
-			? attr.vectors.at("alpha")[0] : 0.001f;
-			alpha_u = attr.vectors.count("alpha_u") > 0
-			? attr.vectors.at("alpha_u")[0] : alpha;
-			alpha_v = attr.vectors.count("alpha_v") > 0
-			? attr.vectors.at("alpha_v")[0] : alpha;
+			if (has_base && !has_surface) {
+				reflectance = attr.spectra.count("reflectance") > 0 ? attr.spectra.at("reflectance") : null_spec;
+				intersect = [this](auto... args){ return intersect_uniform(args...); };
+				sample = [this](auto... args){ return sample_uniform(args...); };
+			} else {
+				eta = attr.spectra.count("eta") > 0 ? attr.spectra.at("eta") : null_spec;
+				k = attr.spectra.count("k") > 0 ? attr.spectra.at("k") : null_spec;
 
-			if (attr.inside) {
-				eta.value = 1.f / eta.value;
+				auto alpha = attr.vectors.count("alpha") > 0
+				? attr.vectors.at("alpha")[0] : 0.001f;
+				alpha_u = attr.vectors.count("alpha_u") > 0
+				? attr.vectors.at("alpha_u")[0] : alpha;
+				alpha_v = attr.vectors.count("alpha_v") > 0
+				? attr.vectors.at("alpha_v")[0] : alpha;
+
+				if (attr.inside) {
+					eta.value = 1.f / eta.value;
+				}
+
+				intersect = [this](auto... args){ return intersect_microfacet(args...); };
+				sample = [this](auto... args){ return sample_microfacet(args...); };
 			}
 		}
 
@@ -140,7 +194,7 @@ namespace mtt::bsdf {
 
 		auto flags() const noexcept -> Flags {
 			auto flags = 0;
-			if (spectra::max(k) > 0.f) {
+			if (spectra::valid(reflectance) || spectra::max(k) > 0.f) {
 				flags |= Flags::reflective;
 			} else if (spectra::constant(eta) && eta.value[0] == 1.f) {
 				flags |= Flags::transmissive;
@@ -151,31 +205,31 @@ namespace mtt::bsdf {
 		}
 	};
 
-	Microfacet_Bsdf::Microfacet_Bsdf() noexcept {}
+	Physical_Bsdf::Physical_Bsdf() noexcept {}
 
-	auto Microfacet_Bsdf::operator()(
+	auto Physical_Bsdf::operator()(
 		math::Vector<f32, 3> const& wo,
 		math::Vector<f32, 3> const& wi
 	) const noexcept -> std::optional<Interaction> {
-		return (*impl)(wo, wi);
+		return impl->intersect(wo, wi);
 	}
 
-	auto Microfacet_Bsdf::sample(
+	auto Physical_Bsdf::sample(
 		eval::Context const& ctx,
 		math::Vector<f32, 3> const& u
 	) const noexcept -> std::optional<Interaction> {
 		return impl->sample(ctx, u);
 	}
 
-	auto Microfacet_Bsdf::configure(Attribute const& attr) noexcept -> void {
+	auto Physical_Bsdf::configure(Attribute const& attr) noexcept -> void {
 		return impl->configure(attr);
 	}
 
-	auto Microfacet_Bsdf::flags() const noexcept -> Flags {
+	auto Physical_Bsdf::flags() const noexcept -> Flags {
 		return impl->flags();
 	}
 
-	auto Microfacet_Bsdf::degrade() noexcept -> bool {
+	auto Physical_Bsdf::degrade() noexcept -> bool {
 		return impl->degrade();
 	}
 

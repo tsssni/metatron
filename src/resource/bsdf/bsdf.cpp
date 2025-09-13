@@ -3,6 +3,12 @@
 #include <metatron/core/math/sphere.hpp>
 
 namespace mtt::bsdf {
+	auto lambertian(
+		spectra::Stochastic_Spectrum const& reflectance
+	) -> spectra::Stochastic_Spectrum {
+		return reflectance / math::pi;
+	}
+
 	auto fresnel(
 		f32 cos_theta_i,
 		spectra::Stochastic_Spectrum const& eta,
