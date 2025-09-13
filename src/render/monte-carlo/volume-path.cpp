@@ -150,7 +150,8 @@ namespace mtt::monte_carlo {
 						intr.n *= direct_ctx.inside ? -1.f : 1.f;
 
 						auto close_to_light = math::length(intr.p - l_intr.p) < 0.001f;
-						if (!close_to_light && !(div.material->bsdf->flags() & bsdf::Flags::interface)) {
+						auto is_interface = div.material->spectrum_textures.empty() && div.material->vector_textures.empty();
+						if (!close_to_light && !is_interface) {
 							termenated = true;
 							gamma = 0.f;
 							continue;

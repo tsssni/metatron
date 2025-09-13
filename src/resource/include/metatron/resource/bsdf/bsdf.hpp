@@ -44,6 +44,48 @@ namespace mtt::bsdf {
 	::add_convention<bsdf_flags, auto () const noexcept -> Flags>
 	::add_convention<bsdf_degrade, auto () noexcept -> bool>
 	::add_skill<pro::skills::as_view>
-	::support_copy<pro::constraint_level::nontrivial>
 	::build {};
+
+	auto fresnel(
+		f32 cos_theta_i,
+		spectra::Stochastic_Spectrum const& eta,
+		spectra::Stochastic_Spectrum const& k
+	) noexcept -> spectra::Stochastic_Spectrum;
+	auto lambda(
+		math::Vector<f32, 3> const& wo,
+		f32 alpha_u,
+		f32 alpha_v
+	) noexcept -> f32;
+	auto smith_mask(
+		math::Vector<f32, 3> const& wo,
+		f32 alpha_u,
+		f32 alpha_v
+	) noexcept -> f32;
+	auto smith_shadow(
+		math::Vector<f32, 3> const& wo,
+		math::Vector<f32, 3> const& wi,
+		f32 alpha_u,
+		f32 alpha_v
+	) noexcept -> f32;
+	auto trowbridge_reitz(
+		math::Vector<f32, 3> const& wm,
+		f32 alpha_u,
+		f32 alpha_v
+	) noexcept -> f32;
+	auto visible_trowbridge_reitz(
+		math::Vector<f32, 3> const& wo,
+		math::Vector<f32, 3> const& wm,
+		f32 alpha_u,
+		f32 alpha_v
+	) noexcept -> f32;
+	auto torrance_sparrow(
+		bool reflective, f32 pr, f32 pt,
+		spectra::Stochastic_Spectrum const& F, f32 D, f32 G,
+		math::Vector<f32, 3> const& wo,
+		math::Vector<f32, 3> const& wi,
+		math::Vector<f32, 3> const& wm,
+		spectra::Stochastic_Spectrum const& eta,
+		f32 alpha_u,
+		f32 alpha_v
+	) noexcept -> std::optional<Interaction>;
 }
