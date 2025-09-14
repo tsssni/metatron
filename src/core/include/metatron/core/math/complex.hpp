@@ -159,4 +159,22 @@ namespace mtt::math {
 	auto constexpr sqr(Complex<T> const& z) noexcept -> Complex<T> {
 		return z * z;
 	}
+
+	template<typename T>
+	requires std::floating_point<T>
+	auto inline constexpr guarded_div(Complex<T> const& x, Complex<T> const& y) noexcept -> Complex<T> {
+		return x / y;
+	}
+
+	template<typename T>
+	requires std::floating_point<T>
+	auto inline constexpr guarded_div(T x, Complex<T> const& y) noexcept -> Complex<T> {
+		return x / y;
+	}
+
+	template<typename T>
+	requires std::floating_point<T>
+	auto inline constexpr guarded_div(Complex<T> const& x, T y) noexcept -> Complex<T> {
+		return x / y;
+	}
 }

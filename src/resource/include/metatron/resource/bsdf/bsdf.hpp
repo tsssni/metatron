@@ -46,14 +46,16 @@ namespace mtt::bsdf {
 	::add_skill<pro::skills::as_view>
 	::build {};
 
-	auto lambertian(
-		spectra::Stochastic_Spectrum const& reflectance
-	) -> spectra::Stochastic_Spectrum;
+	auto lambert(f32 reflectance) -> f32;
+	auto lambert(spectra::Stochastic_Spectrum const& reflectance) -> spectra::Stochastic_Spectrum;
+
+	auto fresnel(f32 cos_theta_i, f32 eta, f32 k) -> f32;
 	auto fresnel(
 		f32 cos_theta_i,
 		spectra::Stochastic_Spectrum const& eta,
 		spectra::Stochastic_Spectrum const& k
 	) noexcept -> spectra::Stochastic_Spectrum;
+
 	auto lambda(
 		math::Vector<f32, 3> const& wo,
 		f32 alpha_u,
@@ -70,6 +72,7 @@ namespace mtt::bsdf {
 		f32 alpha_u,
 		f32 alpha_v
 	) noexcept -> f32;
+
 	auto trowbridge_reitz(
 		math::Vector<f32, 3> const& wm,
 		f32 alpha_u,

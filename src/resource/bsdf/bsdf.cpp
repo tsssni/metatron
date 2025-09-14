@@ -1,12 +1,57 @@
 #include <metatron/resource/bsdf/bsdf.hpp>
+#include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/complex.hpp>
 #include <metatron/core/math/sphere.hpp>
 
 namespace mtt::bsdf {
-	auto lambertian(
+	auto lambert(f32 reflectance) -> f32 {
+		return reflectance / math::pi;
+	}
+
+	auto lambert(
 		spectra::Stochastic_Spectrum const& reflectance
 	) -> spectra::Stochastic_Spectrum {
 		return reflectance / math::pi;
+	}
+
+	auto fresnel(f32 cos_theta_i, f32 eta, f32 k) -> f32 {
+		cos_theta_i = std::clamp(cos_theta_i, -1.f, 1.f);
+		auto F = [cos_theta_i](auto eta) {
+			using T = decltype(eta);
+			auto constexpr is_complex = std::is_same_v<T, math::Complex<f32>>;
+
+			auto sin2_theta_i = std::max(0.f, 1.f - cos_theta_i * cos_theta_i);
+			auto sin2_theta_t = math::guarded_div(sin2_theta_i, eta * eta);
+			auto cos_theta_t = math::sqrt(1.f - sin2_theta_t);
+
+			if constexpr (is_complex) {
+				auto conductive = eta.i > math::epsilon<f32>;
+				if (!conductive && sin2_theta_t.r >= 1.f) {
+					return 1.f;
+				}
+			}
+
+			auto r_parl = math::guarded_div(
+				eta * cos_theta_i - cos_theta_t,
+				eta * cos_theta_i + cos_theta_t
+			);
+			auto r_perp = math::guarded_div(
+				cos_theta_i - eta * cos_theta_t,
+				cos_theta_i + eta * cos_theta_t
+			);
+			if constexpr (is_complex) {
+				return (math::norm(r_parl) + math::norm(r_perp)) / 2.f;
+			} else {
+				return (math::sqr(r_parl) + math::sqr(r_perp)) / 2.f;
+			}
+		};
+		
+		if (k > math::epsilon<f32>) {
+			auto eta_k = math::Complex<f32>{eta, k};
+			return F(eta_k);
+		} else {
+			return F(eta);
+		}
 	}
 
 	auto fresnel(
@@ -16,24 +61,7 @@ namespace mtt::bsdf {
 	) noexcept -> spectra::Stochastic_Spectrum {
 		auto F = eta;
 		F.value = math::foreach([&](f32 lambda, usize i) {
-			auto eta_k = math::Complex<f32>{eta.value[i], k.value[i]};
-			cos_theta_i = std::clamp(cos_theta_i, -1.f, 1.f);
-			auto sin2_theta_i = std::max(0.f, 1.f - cos_theta_i * cos_theta_i);
-			auto sin2_theta_t = sin2_theta_i / (eta_k * eta_k);
-			auto cos_theta_t = math::sqrt(1.f - sin2_theta_t);
-
-			auto conductive = eta_k.i > math::epsilon<f32>;
-			if (!conductive && sin2_theta_t.r >= 1.f) {
-				return 1.f;
-			}
-
-			auto r_parl = 1.f
-			* (eta_k * cos_theta_i - cos_theta_t)
-			/ (eta_k * cos_theta_i + cos_theta_t);
-			auto r_perp = 1.f
-			* (cos_theta_i - eta_k * cos_theta_t)
-			/ (cos_theta_i + eta_k * cos_theta_t);
-			return (math::norm(r_parl) + math::norm(r_perp)) / 2.f;
+			return fresnel(cos_theta_i, eta.value[i], k.value[i]);
 		}, F.lambda);
 		return F;
 	}

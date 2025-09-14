@@ -20,6 +20,7 @@ namespace mtt::daemon {
 
 	auto Material_Daemon::init() noexcept -> void {
 		MTT_SERDE(Material);
+		bsdf::Physical_Bsdf::init();
 	}
 
 	auto Material_Daemon::update() noexcept -> void {
