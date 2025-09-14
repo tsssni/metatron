@@ -4,6 +4,7 @@
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>
 #include <metatron/core/math/distribution/disk.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::bsdf {
 	struct Physical_Bsdf::Impl final {
@@ -52,12 +53,7 @@ namespace mtt::bsdf {
 				return {};
 			}
 
-			auto conductive = spectra::max(k) > math::epsilon<f32>;
 			auto reflective = -wo[1] * wi[1] > 0.f;
-			if (conductive && !reflective) {
-				return {};
-			}
-
 			auto wm = math::normalize(reflective ? -wo + wi : -wo + wi * eta.value[0]);
 			if (wm[1] < 0.f) {
 				wm *= -1.f;
@@ -156,15 +152,19 @@ namespace mtt::bsdf {
 		auto configure(Attribute const& attr) noexcept -> void {
 			auto has_base = attr.spectra.count("reflectance") != 0;
 			auto has_surface = attr.spectra.count("eta") != 0;
+			auto has_conductor = attr.spectra.count("k") != 0;
 			auto null_spec = attr.spectra.at("spectrum") & spectra::Spectrum::spectra["zero"];
+			auto invalid_spec = spectra::Stochastic_Spectrum{};
 
 			if (has_base && !has_surface) {
-				reflectance = attr.spectra.count("reflectance") > 0 ? attr.spectra.at("reflectance") : null_spec;
+				reflectance = attr.spectra.at("reflectance");
 				intersect = [this](auto... args){ return intersect_uniform(args...); };
 				sample = [this](auto... args){ return sample_uniform(args...); };
-			} else {
-				eta = attr.spectra.count("eta") > 0 ? attr.spectra.at("eta") : null_spec;
-				k = attr.spectra.count("k") > 0 ? attr.spectra.at("k") : null_spec;
+			} else if (has_surface && (has_conductor ^ has_base) == true) {
+				eta = attr.spectra.at("eta");
+				eta = attr.inside ? 1.f / eta : eta;
+				k = has_surface ? attr.spectra.at("k") : null_spec;
+				reflectance = has_base ? attr.spectra.at("reflectance") : invalid_spec;
 
 				auto alpha = attr.vectors.count("alpha") > 0
 				? attr.vectors.at("alpha")[0] : 0.001f;
@@ -173,12 +173,19 @@ namespace mtt::bsdf {
 				alpha_v = attr.vectors.count("alpha_v") > 0
 				? attr.vectors.at("alpha_v")[0] : alpha;
 
-				if (attr.inside) {
-					eta.value = 1.f / eta.value;
+				if (!has_surface) {
+					intersect = [this](auto... args){ return intersect_microfacet(args...); };
+					sample = [this](auto... args){ return sample_microfacet(args...); };
 				}
-
-				intersect = [this](auto... args){ return intersect_microfacet(args...); };
-				sample = [this](auto... args){ return sample_microfacet(args...); };
+			} else {
+				std::println("bsdf not physically possible with these attributes:");
+				for (auto& [name, _]: attr.spectra) {
+					std::print("{} ", name);
+				};
+				for (auto& [name, _]: attr.vectors) {
+					std::print("{} ", name);
+				};
+				std::abort();
 			}
 		}
 
