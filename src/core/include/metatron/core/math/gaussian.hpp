@@ -9,7 +9,7 @@ namespace mtt::math {
 	auto erf(T x) noexcept -> T {
 		auto c0 = T{};
 		auto c1 = T{};
-		auto xa = std::abs(x);
+		auto xa = math::abs(x);
 		auto x2 = math::sqr(x);
 		if constexpr (std::is_same_v<T, f32>) {
 			c0 = polynomial(x2, std::to_array<T>({

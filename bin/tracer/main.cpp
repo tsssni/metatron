@@ -67,7 +67,6 @@ auto main(i32 argc, mut<char> argv[]) -> int {
 	material_stage->daemons = {
 		&light_daemon,
 		&material_daemon,
-		&camera_daemon,
 	};
 	camera_stage->daemons = {
 		&camera_daemon,
