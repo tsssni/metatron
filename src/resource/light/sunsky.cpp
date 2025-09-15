@@ -247,7 +247,7 @@ namespace mtt::light {
 			eval::Context const& ctx
 		) const noexcept -> std::optional<Interaction> {
 			auto [theta, phi] = math::cartesion_to_unit_sphere(ctx.r.d);
-			theta = std::min(theta, math::pi * 0.5f - 1e-2f);
+			theta = std::clamp(theta, 1e-2f, math::pi * 0.5f - 1e-2f);
 			auto cos_theta = math::unit_to_cos_theta(ctx.r.d);
 			auto cos_gamma = math::dot(d, ctx.r.d);
 
@@ -264,10 +264,9 @@ namespace mtt::light {
 				for (auto i = 0; i < tgmm_num_gaussian; i++) {
 					sky_pdf += tgmm_phi_distr[i].pdf(tgmm_phi) * tgmm_theta_distr[i].pdf(theta) * tgmm_distr.pdf[i];
 				}
-				sky_pdf = math::guarded_div(sky_pdf * 0.5f, std::sin(theta));
+				sky_pdf = math::guarded_div(sky_pdf, std::sin(theta));
 				sun_pdf = cos_gamma >= cos_sun ? math::Cone_Distribution{cos_sun}.pdf() : 0.f;
 			}
-
 			return Interaction{
 				.L = L,
 				.wi = {}, .p = {}, .t = {},
@@ -300,10 +299,6 @@ namespace mtt::light {
 		}
 
 		auto hosek(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
-			if (cos_theta < math::epsilon<f32> || lambda > sunsky_lambda.back()) {
-				return 0.f;
-			}
-
 			auto L = hosek_sky(lambda, cos_theta, cos_gamma);
 			if (cos_gamma >= cos_sun) {
 				L += hosek_sun(lambda, cos_theta, cos_gamma);
@@ -312,6 +307,10 @@ namespace mtt::light {
 		}
 
 		auto hosek_sky(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
+			if (lambda > sunsky_lambda.back()) {
+				return 0.f;
+			}
+
 			auto [low, high, alpha] = split(lambda);
 			auto sky = std::lerp(
 				hosek_sky(low, cos_theta, cos_gamma),
@@ -341,6 +340,10 @@ namespace mtt::light {
 		}
 
 		auto hosek_sun(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
+			if (lambda > sunsky_lambda.back()) {
+				return 0.f;
+			}
+
 			auto [low, high, alpha] = split(lambda);
 			auto sun = std::lerp(
 				hosek_sun(low, cos_theta),
@@ -470,8 +473,13 @@ namespace mtt::light {
 
 			// data fix sun to phi = pi / 2
 			auto tgmm_phi = tgmm_phi_distr[idx].sample(u_phi);
+			auto tgmm_theta = tgmm_theta_distr[idx].sample(u_theta);
+			auto pdf = 1.f
+			* tgmm_phi_distr[idx].pdf(tgmm_phi)
+			* tgmm_theta_distr[idx].pdf(tgmm_theta)
+			* tgmm_distr.pdf[idx];
 			auto phi = tgmm_phi + phi_sun - math::pi * 0.5f;
-			auto theta = std::min(tgmm_theta_distr[idx].sample(u_theta), math::pi * 0.5f - 1e-2f);
+			auto theta = std::clamp(tgmm_theta, 1e-2f, math::pi * 0.5f - 1e-2f);
 
 			auto wi = math::unit_sphere_to_cartesion({theta, phi});
 			auto cos_gamma = math::dot(wi, d);
@@ -487,10 +495,7 @@ namespace mtt::light {
 				.wi = wi,
 				.p = ctx.r.o + wi * 65504.f,
 				.t = 65504.f,
-				.pdf = math::guarded_div(
-					tgmm_phi_distr[idx].pdf(tgmm_phi) * tgmm_theta_distr[idx].pdf(theta) * tgmm_distr.pdf[idx],
-					std::sin(theta)
-				),
+				.pdf = math::guarded_div(pdf, std::sin(theta)),
 			};
 		}
 

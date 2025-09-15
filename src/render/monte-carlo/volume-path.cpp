@@ -72,7 +72,6 @@ namespace mtt::monte_carlo {
 				auto l_ctx = et ^ rt ^ direct_ctx;
 				MTT_OPT_OR_RETURN(l_intr, e_intr.divider->light->sample(l_ctx, sampler->generate_2d()));
 
-				auto print = initial_status.pixel == math::Vector<usize, 2>{571, 643} && l_intr.wi[2] == -1.f;
 				l_intr.p = rt | et | math::expand(l_intr.p, 1.f);
 				l_intr.wi = math::normalize(rt | et | math::expand(l_intr.wi, 0.f));
 				direct_ctx.r.d = l_intr.wi;
@@ -193,10 +192,6 @@ namespace mtt::monte_carlo {
 					gamma *= m_intr.transmittance / m_intr.pdf;
 					mis_d *= m_intr.spectra_pdf / m_intr.pdf;
 					mis_l *= m_intr.spectra_pdf / m_intr.pdf;
-					if (print) {
-						std::println("{}", gamma.value);
-						std::println("{}", m_intr.transmittance.value);
-					}
 
 					if (!hit) {
 						gamma *= m_intr.sigma_n;

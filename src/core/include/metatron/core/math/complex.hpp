@@ -2,7 +2,7 @@
 #include <metatron/core/math/arithmetic.hpp>
 
 namespace mtt::math {
-	template <typename T>
+	template<typename T>
 	struct Complex {
 		T r;
 		T i;
@@ -91,22 +91,25 @@ namespace mtt::math {
 		}
 	};
 
-	template <typename T>
+	template<typename C, typename T>
+	concept complex = std::is_same_v<C, Complex<T>>;
+
+	template<typename T>
 	auto constexpr operator+(T const& lhs, Complex<T> const& rhs) noexcept -> Complex<T> {
 		return rhs + lhs;
 	}
 
-	template <typename T>
+	template<typename T>
 	auto constexpr operator-(T const& lhs, Complex<T> const& rhs) noexcept -> Complex<T> {
 		return -rhs + lhs;
 	}
 
-	template <typename T>
+	template<typename T>
 	auto constexpr operator*(T const& lhs, Complex<T> const& rhs) noexcept -> Complex<T> {
 		return rhs * lhs;
 	}
 
-	template <typename T>
+	template<typename T>
 	auto constexpr operator/(T const& lhs, Complex<T> const& rhs) noexcept -> Complex<T> {
 		return Complex<T>{lhs} / rhs;
 	}
@@ -121,19 +124,19 @@ namespace mtt::math {
 		return z.template get<idx>();
 	}
 
-	template <typename T>
+	template<typename T>
 	requires std::floating_point<T>
 	auto constexpr norm(Complex<T> const& z) noexcept -> T {
 		return z.r * z.r + z.i * z.i;
 	}
 
-	template <typename T>
+	template<typename T>
 	requires std::floating_point<T>
 	auto constexpr abs(Complex<T> const& z) noexcept -> T {
 		return math::sqrt(norm(z));
 	}
 
-	template <typename T>
+	template<typename T>
 	requires std::floating_point<T>
 	auto constexpr sqrt(Complex<T> const& z) noexcept -> Complex<T> {
 		// z = a + bi, w = u + vi = sqrt(z)
@@ -161,19 +164,16 @@ namespace mtt::math {
 	}
 
 	template<typename T>
-	requires std::floating_point<T>
 	auto inline constexpr guarded_div(Complex<T> const& x, Complex<T> const& y) noexcept -> Complex<T> {
 		return x / y;
 	}
 
 	template<typename T>
-	requires std::floating_point<T>
 	auto inline constexpr guarded_div(T x, Complex<T> const& y) noexcept -> Complex<T> {
 		return x / y;
 	}
 
 	template<typename T>
-	requires std::floating_point<T>
 	auto inline constexpr guarded_div(Complex<T> const& x, T y) noexcept -> Complex<T> {
 		return x / y;
 	}
