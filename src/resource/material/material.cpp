@@ -29,7 +29,7 @@ namespace mtt::material {
 		intr.normal = attr.vectors["normal"];
 
 		attr.inside = ctx.inside;
-		intr.bsdf = bsdf; intr.bsdf->configure(attr);
+		intr.bsdf = configurator(attr);
 		intr.degraded = intr.bsdf->degrade();
 
 		return intr;

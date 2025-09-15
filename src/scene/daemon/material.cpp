@@ -4,14 +4,23 @@
 #include <metatron/scene/ecs/hierarchy.hpp>
 #include <metatron/resource/material/material.hpp>
 #include <metatron/resource/bsdf/interface.hpp>
-#include <metatron/resource/bsdf/lambertian.hpp>
-#include <metatron/resource/bsdf/microfacet.hpp>
+#include <metatron/resource/bsdf/physical.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/print.hpp>
 
 namespace mtt::daemon {
+	template<typename T>
+	auto configure(material::Material& material) noexcept -> void {
+		material.configurator = [](bsdf::Attribute const& attr) -> poly<bsdf::Bsdf> {
+			auto bsdf = make_poly<bsdf::Bsdf, T>();
+			bsdf->configure(attr);
+			return bsdf;
+		};
+	}
+
 	auto Material_Daemon::init() noexcept -> void {
 		MTT_SERDE(Material);
+		bsdf::Physical_Bsdf::init();
 	}
 
 	auto Material_Daemon::update() noexcept -> void {
@@ -31,14 +40,12 @@ namespace mtt::daemon {
 			auto& compo = registry.get<compo::Material>(entity);
 
 			auto material = material::Material{};
-			material.bsdf = std::visit([](auto&& compo) {
+			std::visit([&material](auto&& compo) {
 				using T = std::decay_t<decltype(compo)>;
 				if constexpr (std::is_same_v<T, compo::Interface_Bsdf>) {
-					return make_poly<bsdf::Bsdf, bsdf::Interface_Bsdf>();
-				} else if constexpr (std::is_same_v<T, compo::Lambertian_Bsdf>) {
-					return make_poly<bsdf::Bsdf, bsdf::Lambertian_Bsdf>();
-				} else if constexpr (std::is_same_v<T, compo::Microfacet_Bsdf>) {
-					return make_poly<bsdf::Bsdf, bsdf::Microfacet_Bsdf>();
+					return configure<bsdf::Interface_Bsdf>(material);
+				} else if constexpr (std::is_same_v<T, compo::Physical_Bsdf>) {
+					return configure<bsdf::Physical_Bsdf>(material);
 				}
 			}, (compo.bsdf));
 

@@ -33,7 +33,7 @@ namespace mtt::math {
 				auto step = y / d;
 				x -= step;
 
-				if (std::abs(step) <= 4.0 * std::abs(x) * math::epsilon<f64>) {
+				if (math::abs(step) <= 4.0 * std::abs(x) * math::epsilon<f64>) {
 					break;
 				}
 				it++;

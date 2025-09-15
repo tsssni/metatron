@@ -39,7 +39,7 @@ namespace mtt::math {
 	template<typename T>
 	requires std::floating_point<T>
 	auto constexpr sqrt(T x) noexcept -> T {
-		return std::sqrt(std::max(0.f, x));
+		return std::sqrt(std::max(T{0}, x));
 	}
 
 	template<typename T>

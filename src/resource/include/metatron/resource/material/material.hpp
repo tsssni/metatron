@@ -3,6 +3,7 @@
 #include <metatron/resource/bsdf/bsdf.hpp>
 #include <metatron/resource/media/medium.hpp>
 #include <unordered_map>
+#include <functional>
 
 namespace mtt::material {
 	struct Interaction final {
@@ -13,8 +14,8 @@ namespace mtt::material {
 	};
 
 	struct Material final {
-		poly<bsdf::Bsdf> bsdf;
-		
+		std::function<auto (bsdf::Attribute const&) -> poly<bsdf::Bsdf>> configurator;
+
 		std::unordered_map<
 			std::string,
 			view<texture::Spectrum_Texture>

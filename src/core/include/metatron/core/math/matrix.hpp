@@ -18,7 +18,13 @@ namespace mtt::math {
 		using Element = std::conditional_t<sizeof...(rest_dims) == 0, T, Matrix<T, rest_dims...>>;
 		auto static constexpr dimensions = std::array<usize, 1 + sizeof...(rest_dims)>{first_dim, rest_dims...};
 
-		Matrix() noexcept = default;
+		Matrix() noexcept {
+			if constexpr (std::is_floating_point_v<Element> || std::is_integral_v<Element>) {
+				storage.fill(Element{0});
+			} else {
+				storage.fill(Element{});
+			}
+		}
 
 		// directly use Element instead of template type to enable auto inference
 		constexpr Matrix(std::initializer_list<Element const> initializer_list) noexcept {
