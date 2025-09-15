@@ -247,26 +247,26 @@ namespace mtt::light {
 			eval::Context const& ctx
 		) const noexcept -> std::optional<Interaction> {
 			auto [theta, phi] = math::cartesion_to_unit_sphere(ctx.r.d);
-			if (theta > math::pi * 0.5f) {
-				theta = math::pi - theta;
-			}
-			theta = std::min(theta, math::pi * 0.5f - math::epsilon<f32>);
-			auto wo = math::unit_sphere_to_cartesion({theta, phi});
-			auto cos_theta = math::unit_to_cos_theta(wo);
-			auto cos_gamma = math::dot(d, wo);
+			theta = std::min(theta, math::pi * 0.5f - 1e-2f);
+			auto cos_theta = math::unit_to_cos_theta(ctx.r.d);
+			auto cos_gamma = math::dot(d, ctx.r.d);
 
+			auto wo = math::unit_sphere_to_cartesion({theta, phi});
 			auto L = ctx.spec & spectra::Spectrum::spectra["zero"];
 			L.value = math::foreach([&](f32 lambda, usize i) {
-				return hosek(lambda, cos_theta, cos_gamma);
+				return hosek(lambda, math::unit_to_cos_theta(wo), math::dot(d, wo));
 			}, L.lambda);
 
 			auto tgmm_phi = phi + math::pi * 0.5f - phi_sun;
-			auto sun_pdf = cos_gamma >= cos_sun ? math::Cone_Distribution{cos_sun}.pdf() : 0.f;
+			auto sun_pdf = 0.f;
 			auto sky_pdf = 0.f;
-			for (auto i = 0; i < tgmm_num_gaussian; i++) {
-				sky_pdf += tgmm_phi_distr[i].pdf(tgmm_phi) * tgmm_theta_distr[i].pdf(theta) * tgmm_distr.pdf[i];
+			if (cos_theta > 1e-2f) {
+				for (auto i = 0; i < tgmm_num_gaussian; i++) {
+					sky_pdf += tgmm_phi_distr[i].pdf(tgmm_phi) * tgmm_theta_distr[i].pdf(theta) * tgmm_distr.pdf[i];
+				}
+				sky_pdf = math::guarded_div(sky_pdf * 0.5f, std::sin(theta));
+				sun_pdf = cos_gamma >= cos_sun ? math::Cone_Distribution{cos_sun}.pdf() : 0.f;
 			}
-			sky_pdf = math::guarded_div(sky_pdf * 0.5f, std::sin(theta));
 
 			return Interaction{
 				.L = L,
@@ -414,7 +414,7 @@ namespace mtt::light {
 					auto integral = std::ranges::fold_left(radiance, 0.f, std::plus{}) * J;
 					luminance += integral * (*spectra::Spectrum::spectra["CIE-Y"])(sunsky_lambda[i]);
 				}
-				return luminance * 2.f;
+				return luminance;
 			}();
 
 			auto sun_luminance = [&]{
@@ -466,19 +466,16 @@ namespace mtt::light {
 				u[0] - tgmm_distr.cdf[idx],
 				tgmm_distr.cdf[idx + 1] - tgmm_distr.cdf[idx]
 			);
-			auto u_theta = u[1] > 0.5 ? (1.0 - u[1]) / 0.5 : u[1] / 0.5;
+			auto u_theta = u[1];
 
 			// data fix sun to phi = pi / 2
 			auto tgmm_phi = tgmm_phi_distr[idx].sample(u_phi);
 			auto phi = tgmm_phi + phi_sun - math::pi * 0.5f;
-			auto theta = std::min(tgmm_theta_distr[idx].sample(u_theta), math::pi * 0.5f - math::epsilon<f32>);
+			auto theta = std::min(tgmm_theta_distr[idx].sample(u_theta), math::pi * 0.5f - 1e-2f);
 
 			auto wi = math::unit_sphere_to_cartesion({theta, phi});
 			auto cos_gamma = math::dot(wi, d);
 			auto cos_theta = math::unit_to_cos_theta(wi);
-			if (u[1] > 0.5f) {
-				wi = math::unit_sphere_to_cartesion({math::pi - theta, phi});
-			}
 
 			auto L = ctx.spec;
 			L.value = math::foreach([&](f32 lambda, auto i){
@@ -491,7 +488,7 @@ namespace mtt::light {
 				.p = ctx.r.o + wi * 65504.f,
 				.t = 65504.f,
 				.pdf = math::guarded_div(
-					tgmm_phi_distr[idx].pdf(tgmm_phi) * tgmm_theta_distr[idx].pdf(theta) * tgmm_distr.pdf[idx] * 0.5f,
+					tgmm_phi_distr[idx].pdf(tgmm_phi) * tgmm_theta_distr[idx].pdf(theta) * tgmm_distr.pdf[idx],
 					std::sin(theta)
 				),
 			};
