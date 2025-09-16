@@ -48,7 +48,7 @@ namespace mtt::bsdf {
 			auto& m = *(math::Vector<f32, fresnel_length + 1>*)(fresnel_reflectance_table.data());
 		}
 
-		auto intersect(
+		auto operator()(
 			math::Vector<f32, 3> const& wo,
 			math::Vector<f32, 3> const& wi
 		) const noexcept -> std::optional<Interaction> {
@@ -66,7 +66,7 @@ namespace mtt::bsdf {
 				wm *= -1.f;
 			}
 			if (false
-			|| ((lambertian || plastic) && (!reflective || !forward))
+			|| (!dieletric && (!reflective || !forward))
 			|| math::abs(wm[1]) < math::epsilon<f32>
 			|| math::dot(-wo, wm) < 0.f
 			|| math::dot((reflective ? 1.f : -1.f) * wi, wm) < 0.f) {
@@ -278,7 +278,7 @@ namespace mtt::bsdf {
 		math::Vector<f32, 3> const& wo,
 		math::Vector<f32, 3> const& wi
 	) const noexcept -> std::optional<Interaction> {
-		return impl->intersect(wo, wi);
+		return (*impl)(wo, wi);
 	}
 
 	auto Physical_Bsdf::sample(

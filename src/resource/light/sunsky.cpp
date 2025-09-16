@@ -246,11 +246,14 @@ namespace mtt::light {
 		auto operator()(
 			eval::Context const& ctx
 		) const noexcept -> std::optional<Interaction> {
-			auto [theta, phi] = math::cartesion_to_unit_sphere(ctx.r.d);
-			theta = std::clamp(theta, 1e-2f, math::pi * 0.5f - 1e-2f);
 			auto cos_theta = math::unit_to_cos_theta(ctx.r.d);
+			auto sin_theta = math::unit_to_sin_theta(ctx.r.d);
 			auto cos_gamma = math::dot(d, ctx.r.d);
+			auto valid = cos_theta >= 0.f && sin_theta != 0.f;
 
+			// clamp theta to give invalid direction reasonable result
+			auto [theta, phi] = math::cartesion_to_unit_sphere(ctx.r.d);
+			theta = std::clamp(theta, math::epsilon<f32>, math::pi * 0.5f - math::epsilon<f32>);
 			auto wo = math::unit_sphere_to_cartesion({theta, phi});
 			auto L = ctx.spec & spectra::Spectrum::spectra["zero"];
 			L.value = math::foreach([&](f32 lambda, usize i) {
@@ -260,13 +263,13 @@ namespace mtt::light {
 			auto tgmm_phi = phi + math::pi * 0.5f - phi_sun;
 			auto sun_pdf = 0.f;
 			auto sky_pdf = 0.f;
-			if (cos_theta > 1e-2f) {
+			if (cos_theta >= 0.f) {
 				for (auto i = 0; i < tgmm_num_gaussian; i++) {
 					sky_pdf += tgmm_phi_distr[i].pdf(tgmm_phi) * tgmm_theta_distr[i].pdf(theta) * tgmm_distr.pdf[i];
 				}
-				sky_pdf = math::guarded_div(sky_pdf, std::sin(theta));
-				sun_pdf = cos_gamma >= cos_sun ? math::Cone_Distribution{cos_sun}.pdf() : 0.f;
 			}
+			sky_pdf = math::guarded_div(sky_pdf, std::sin(theta));
+			sun_pdf = cos_gamma >= cos_sun ? math::Cone_Distribution{cos_sun}.pdf() : 0.f;
 			return Interaction{
 				.L = L,
 				.wi = {}, .p = {}, .t = {},
@@ -479,7 +482,7 @@ namespace mtt::light {
 			* tgmm_theta_distr[idx].pdf(tgmm_theta)
 			* tgmm_distr.pdf[idx];
 			auto phi = tgmm_phi + phi_sun - math::pi * 0.5f;
-			auto theta = std::clamp(tgmm_theta, 1e-2f, math::pi * 0.5f - 1e-2f);
+			auto theta = std::clamp(tgmm_theta, math::epsilon<f32>, math::pi * 0.5f - math::epsilon<f32>);
 
 			auto wi = math::unit_sphere_to_cartesion({theta, phi});
 			auto cos_gamma = math::dot(wi, d);
@@ -506,7 +509,7 @@ namespace mtt::light {
 			auto intr = Interaction{};
 			auto distr = math::Cone_Distribution{cos_sun};
 			auto wi_gamma = distr.sample(u);
-			auto wi_theta = math::normalize(math::Vector<f32, 3>{t | math::expand(distr.sample(u), 0.f)});
+			auto wi_theta = math::normalize(math::Vector<f32, 3>{t | math::expand(wi_gamma, 0.f)});
 			auto cos_gamma = math::unit_to_cos_theta(wi_gamma);
 			auto cos_theta = math::unit_to_cos_theta(wi_theta);
 
