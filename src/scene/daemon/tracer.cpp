@@ -11,6 +11,7 @@
 #include <metatron/render/accel/lbvh.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/core/stl/thread.hpp>
+#include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <atomic>
 #include <chrono>
@@ -160,11 +161,14 @@ namespace mtt::daemon {
 		auto total = compo.image_size[0] * compo.image_size[1] * compo.spp;
 		auto first_time = std::chrono::system_clock::now();
 
-		stl::scheduler::instance().sync_parallel(compo.image_size, [&, sampler](math::Vector<usize, 2> const& px) mutable {
+		stl::scheduler::instance().sync_parallel(compo.image_size, [&](math::Vector<usize, 2> const& px) {
 			for (auto n = 0uz; n < compo.spp; n++) {
-				auto sample = camera.sample(px, n, sampler);
-				sample->ray_differential = space.render_to_camera ^ sample->ray_differential;
-				auto& s = sample.value();
+				auto sp = sampler;
+				MTT_OPT_OR_CALLBACK(s, camera.sample(px, n, sp), {
+					std::println("ray generation failed");
+					std::abort();
+				});
+				s.ray_differential = space.render_to_camera ^ s.ray_differential;
 
 				auto Li_opt = integrator->sample(
 					{
@@ -180,7 +184,7 @@ namespace mtt::daemon {
 					},
 					accel,
 					emitter,
-					sampler
+					sp
 				);
 
 				auto& Li = Li_opt.value();
