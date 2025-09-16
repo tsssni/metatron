@@ -5,6 +5,7 @@
 namespace mtt::math {
 	struct Independent_Sampler final {
 		Independent_Sampler(usize seed = 0) noexcept;
+		Independent_Sampler(Independent_Sampler const&) noexcept = default;
 
 		auto start(Vector<usize, 2> const& pixel, usize idx, usize dim = 0uz) noexcept -> void;
 		auto generate_1d() const noexcept -> f32;

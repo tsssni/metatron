@@ -9,6 +9,7 @@ namespace mtt::math {
 			usize seed = 0uz,
 			Vector<usize, 2> const& scale_exponential = {7uz, 4uz}
 		) noexcept;
+		Halton_Sampler(Halton_Sampler const&) noexcept = default;
 
 		auto start(math::Vector<usize, 2> const& pixel, usize idx, usize dim = 2uz) noexcept -> void;
 		auto generate_1d() const noexcept -> f32;

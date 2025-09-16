@@ -160,7 +160,7 @@ namespace mtt::daemon {
 		auto total = compo.image_size[0] * compo.image_size[1] * compo.spp;
 		auto first_time = std::chrono::system_clock::now();
 
-		stl::scheduler::instance().sync_parallel(compo.image_size, [&](math::Vector<usize, 2> const& px) {
+		stl::scheduler::instance().sync_parallel(compo.image_size, [&, sampler](math::Vector<usize, 2> const& px) mutable {
 			for (auto n = 0uz; n < compo.spp; n++) {
 				auto sample = camera.sample(px, n, sampler);
 				sample->ray_differential = space.render_to_camera ^ sample->ray_differential;
