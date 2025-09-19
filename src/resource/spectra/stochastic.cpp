@@ -176,8 +176,20 @@ namespace mtt::spectra {
 		return math::min(spectrum.value);
 	}
 
+	auto min(Stochastic_Spectrum const& spectrum, math::Vector<f32, 4> x) noexcept -> Stochastic_Spectrum {
+		auto spec = spectrum;
+		spec.value = math::min(spec.value, x);
+		return spec;
+	}
+
 	auto max(Stochastic_Spectrum const& spectrum) noexcept -> f32 {
 		return math::max(spectrum.value);
+	}
+
+	auto max(Stochastic_Spectrum const& spectrum, math::Vector<f32, 4> x) noexcept -> Stochastic_Spectrum {
+		auto spec = spectrum;
+		spec.value = math::max(spec.value, x);
+		return spec;
 	}
 
 	auto avg(Stochastic_Spectrum const& spectrum) noexcept -> f32 {

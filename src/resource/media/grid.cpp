@@ -94,7 +94,7 @@ namespace mtt::media {
 					transmittance,
 					density * sigma_a,
 					density * sigma_s,
-					sigma_maj - density * sigma_t,
+					spectra::max(sigma_maj - density * sigma_t, {0.f}),
 					sigma_maj,
 					density * (ctx.spec & sigma_e)
 				};

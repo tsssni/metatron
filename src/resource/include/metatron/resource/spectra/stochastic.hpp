@@ -45,7 +45,9 @@ namespace mtt::spectra {
 	auto operator/(f32 s, Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum;
 
 	auto min(Stochastic_Spectrum const& spectrum) noexcept -> f32;
+	auto min(Stochastic_Spectrum const& spectrum, math::Vector<f32, 4> x) noexcept -> Stochastic_Spectrum;
 	auto max(Stochastic_Spectrum const& spectrum) noexcept -> f32;
+	auto max(Stochastic_Spectrum const& spectrum, math::Vector<f32, 4> x) noexcept -> Stochastic_Spectrum;
 	auto avg(Stochastic_Spectrum const& spectrum) noexcept -> f32;
 
 	auto valid(Stochastic_Spectrum const& spectrum) noexcept -> bool;
