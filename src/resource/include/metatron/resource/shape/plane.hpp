@@ -12,7 +12,6 @@ namespace mtt::shape {
 		) const noexcept -> math::Bounding_Box;
 		auto operator()(
 			math::Ray const& r,
-			math::Vector<f32, 3> const& np = {},
 			usize idx = 0uz
 		) const noexcept -> std::optional<Interaction>;
 		auto sample(
@@ -20,6 +19,11 @@ namespace mtt::shape {
 			math::Vector<f32, 2> const& u,
 			usize idxuz
 		) const noexcept -> std::optional<Interaction>;
+		auto pdf(
+			math::Ray const& r,
+			math::Vector<f32, 3> const& np = {},
+			usize idx = 0uz
+		) const noexcept -> f32;
 	
 	private:
 		f32 a;
