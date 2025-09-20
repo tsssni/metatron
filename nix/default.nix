@@ -6,7 +6,7 @@
   cmake,
   entt,
   eve,
-  fetchFromGitHub,
+  # fetchFromGitHub,
   glaze,
   lib,
   mimalloc,
@@ -20,12 +20,13 @@ clangStdenv.mkDerivation {
   pname = "metatron";
   version = "0.0.1";
 
-  src = fetchFromGitHub {
-    owner = "tsssni";
-    repo = "metatron";
-    rev = "fb9c575";
-    sha256 = "sha256-aAx0ZElkfZlkD5TEeKi1vLLTWJvmeYiccg/x6lBN/7s=";
-  };
+  src = ../.;
+  # src = fetchFromGitHub {
+  #   owner = "tsssni";
+  #   repo = "metatron";
+  #   rev = "";
+  #   sha256 = "";
+  # };
 
   nativeBuildInputs = [
     clang-tools

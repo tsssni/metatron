@@ -66,7 +66,7 @@ namespace mtt::light {
 			f32 albedo,
 			f32 aperture
 		) noexcept:
-		d(math::unit_sphere_to_cartesion(direction)),
+		d(math::unit_spherical_to_cartesian(direction)),
 		t(math::Quaternion<f32>::from_rotation_between({0.f, 1.f, 0.f}, d)),
 		turbidity(turbidity), 
 		albedo(albedo),
@@ -252,9 +252,9 @@ namespace mtt::light {
 			auto valid = cos_theta >= 0.f && sin_theta != 0.f;
 
 			// clamp theta to give invalid direction reasonable result
-			auto [theta, phi] = math::cartesion_to_unit_sphere(ctx.r.d);
+			auto [theta, phi] = math::cartesian_to_unit_spherical(ctx.r.d);
 			theta = std::clamp(theta, math::epsilon<f32>, math::pi * 0.5f - math::epsilon<f32>);
-			auto wo = math::unit_sphere_to_cartesion({theta, phi});
+			auto wo = math::unit_spherical_to_cartesian({theta, phi});
 			auto L = ctx.spec & spectra::Spectrum::spectra["zero"];
 			L.value = math::foreach([&](f32 lambda, usize i) {
 				return hosek(lambda, math::unit_to_cos_theta(wo), math::dot(d, wo));
@@ -484,7 +484,7 @@ namespace mtt::light {
 			auto phi = tgmm_phi + phi_sun - math::pi * 0.5f;
 			auto theta = std::clamp(tgmm_theta, math::epsilon<f32>, math::pi * 0.5f - math::epsilon<f32>);
 
-			auto wi = math::unit_sphere_to_cartesion({theta, phi});
+			auto wi = math::unit_spherical_to_cartesian({theta, phi});
 			auto cos_gamma = math::dot(wi, d);
 			auto cos_theta = math::unit_to_cos_theta(wi);
 
