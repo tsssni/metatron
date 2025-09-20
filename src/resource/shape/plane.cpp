@@ -21,7 +21,6 @@ namespace mtt::shape {
 
 	auto Plane::operator()(
 		math::Ray const& r,
-		math::Vector<f32, 3> const& np,
 		usize idx
 	) const noexcept -> std::optional<Interaction> {
 		auto n = math::Vector<f32, 3>{a, b, c};
@@ -44,4 +43,11 @@ namespace mtt::shape {
 		return {};
 	}
 
+	auto Plane::pdf(
+		math::Ray const& r,
+		math::Vector<f32, 3> const& np,
+		usize idx
+	) const noexcept -> f32 {
+		return 0.f;
+	}
 }

@@ -77,33 +77,28 @@ namespace mtt::shape {
 
 	auto Mesh::operator()(
 		math::Ray const& r,
-		math::Vector<f32, 3> const& np,
 		usize idx
 	) const noexcept -> std::optional<Interaction> {
-		auto T = math::Matrix<f32, 4, 4>{
+		auto rs = r.d;
+		auto ri = math::maxi(math::abs(rs));
+		std::swap(rs[2], rs[ri]);
+		auto rt = math::Vector<f32, 3>{
+			-rs[0], -rs[1], 1.f
+		} / rs[2];
 
-			{1.f, 0.f, 0.f, -r.o[0],},
-			{0.f, 1.f, 0.f, -r.o[1],},
-			{0.f, 0.f, 1.f, -r.o[2],},
-			{0.f, 0.f, 0.f, 1.f,},
-		};
-		auto P = math::Matrix<f32, 4, 4>{1.f};
-		
-		std::swap(P[2], P[math::maxi(math::abs(r.d))]);
-		auto d = P | math::expand(r.d, 0.f);
-		auto S = math::Matrix<f32, 4, 4>{
-			{1.f, 0.f, -d[0] / d[2], 0.f,},
-			{0.f, 1.f, -d[1] / d[2], 0.f,},
-			{0.f, 0.f, 1.f / d[2], 0.f,},
-			{0.f, 0.f, 0.f, 1.f,},
+		auto local_to_shear = [&](auto const& x) {
+			auto y = x - r.o;
+			std::swap(y[2], y[ri]);
+			auto z = y[2] * rt;
+			y[2] = 0.f;
+			return y + z;
 		};
 
 		auto prim = indices[idx];
-		auto local_to_shear = S | P | T;
 		auto v = math::Vector<math::Vector<f32, 4>, 3>{
-			local_to_shear | math::expand(vertices[prim[0]], 1.f),
-			local_to_shear | math::expand(vertices[prim[1]], 1.f),
-			local_to_shear | math::expand(vertices[prim[2]], 1.f),
+			local_to_shear(vertices[prim[0]]),
+			local_to_shear(vertices[prim[1]]),
+			local_to_shear(vertices[prim[2]]),
 		};
 
 		auto ef = [](
@@ -129,69 +124,21 @@ namespace mtt::shape {
 			return {};
 		}
 
-		auto p = blerp(vertices, bary, idx);
-		auto n = math::normalize(blerp(normals, bary, idx));
-		auto tn = math::gram_schmidt(math::normalize(dpdu[idx]), n);
-		auto bn = math::cross(tn, n);
-		auto uv = blerp(uvs, bary, idx);
 		auto t = math::blerp(v, bary)[2];
 		if (t < math::epsilon<f32>) {
 			return {};
 		}
 
-		auto a = math::normalize(vertices[prim[0]] - r.o);
-		auto b = math::normalize(vertices[prim[1]] - r.o);
-		auto c = math::normalize(vertices[prim[2]] - r.o);
-
-		auto n_ab = math::normalize(math::cross(b, a));
-		auto n_bc = math::normalize(math::cross(c, b));
-		auto n_ca = math::normalize(math::cross(a, c));
-
-		auto alpha = math::angle(n_ab, -n_ca);
-		auto beta = math::angle(n_bc, -n_ab);
-		auto gamma = math::angle(n_ca, -n_bc);
-
-		auto c_2 = r.d;
-		auto c_1 = math::normalize(math::cross(math::cross(b, c_2), math::cross(c, a)));
-		if (math::dot(c_1, a + c) < 0.f) {
-			c_1 *= -1.f;
-		}
-
-		auto u = math::Vector<f32, 2>{};
-		auto pdf = 1.f;
-		u[1] = math::guarded_div(1.f - math::dot(b, c_2), (1.f - math::dot(b, c_1)));
-		pdf = math::guarded_div(pdf, 1.f - math::dot(b, c_1));
-		if (math::dot(a, c_1) > 0.99999847691f) {/* 0.1 degrees */
-			u[0] = 0.f;
-		} else {
-			auto n_bc1 = math::normalize(math::cross(c_1, b));
-			auto n_c1a = math::normalize(math::cross(a, c_1));
-			auto A = alpha + beta + gamma - math::pi;
-			pdf = math::guarded_div(pdf, A);
-
-			if (math::length(n_bc1) < math::epsilon<f32> || math::length(n_c1a) < math::epsilon<f32>) {
-				u = {0.5f};
-			} else {
-				auto A_1 = alpha + math::angle(n_bc1, -n_ab) + math::angle(n_c1a, -n_bc1) - math::pi;
-				u[1] = math::guarded_div(A_1, A);
-			}
-		}
-
-		if (np != math::Vector<f32, 3>{0.f}) {
-			auto distr = math::Bilinear_Distribution{
-				math::dot(np, b),
-				math::dot(np, a),
-				math::dot(np, b),
-				math::dot(np, c),
-			};
-			pdf *= distr.pdf(u);
-		}
+		auto p = blerp(vertices, bary, idx);
+		auto n = math::normalize(blerp(normals, bary, idx));
+		auto tn = math::gram_schmidt(math::normalize(dpdu[idx]), n);
+		auto bn = math::cross(tn, n);
+		auto uv = blerp(uvs, bary, idx);
 
 		return shape::Interaction{
 			p, n, tn, bn, uv, t,
 			dpdu[idx], dpdv[idx],
 			dndu[idx], dndv[idx],
-			pdf,
 		};
 	}
 
@@ -264,6 +211,10 @@ namespace mtt::shape {
 		auto cos_bc2 = 1.f - u[1] * (1.f - cos_bc1);
 		auto sin_bc2 = math::sqrt(1.f - cos_bc2 * cos_bc2);
 		auto d = cos_bc2 * b + sin_bc2 * math::normalize(math::gram_schmidt(c_1, b));
+		pdf = math::guarded_div(
+			math::guarded_div(pdf, (A_pi - math::pi)),
+			(1.f - cos_bc1)
+		);
 
 		auto v = math::Vector<math::Vector<f32, 3>, 3>{
 			vertices[prim[0]],
@@ -293,11 +244,64 @@ namespace mtt::shape {
 			p, n, tn, bn, uv, t,
 			dpdu[idx], dpdv[idx],
 			dndu[idx], dndv[idx],
-			math::guarded_div(
-				math::guarded_div(pdf, (A_pi - math::pi)),
-				(1.f - cos_bc1)
-			),
+			pdf
 		};
+	}
+
+	auto Mesh::pdf(
+		math::Ray const& r,
+		math::Vector<f32, 3> const& np,
+		usize idx
+	) const noexcept -> f32 {
+		auto prim = vertices[idx];
+		auto a = math::normalize(vertices[prim[0]] - r.o);
+		auto b = math::normalize(vertices[prim[1]] - r.o);
+		auto c = math::normalize(vertices[prim[2]] - r.o);
+
+		auto n_ab = math::normalize(math::cross(b, a));
+		auto n_bc = math::normalize(math::cross(c, b));
+		auto n_ca = math::normalize(math::cross(a, c));
+
+		auto alpha = math::angle(n_ab, -n_ca);
+		auto beta = math::angle(n_bc, -n_ab);
+		auto gamma = math::angle(n_ca, -n_bc);
+
+		auto c_2 = r.d;
+		auto c_1 = math::normalize(math::cross(math::cross(b, c_2), math::cross(c, a)));
+		if (math::dot(c_1, a + c) < 0.f) {
+			c_1 *= -1.f;
+		}
+
+		auto u = math::Vector<f32, 2>{};
+		auto pdf = 1.f;
+		u[1] = math::guarded_div(1.f - math::dot(b, c_2), (1.f - math::dot(b, c_1)));
+		pdf = math::guarded_div(pdf, 1.f - math::dot(b, c_1));
+		if (math::dot(a, c_1) > 0.99999847691f) {/* 0.1 degrees */
+			u[0] = 0.f;
+		} else {
+			auto n_bc1 = math::normalize(math::cross(c_1, b));
+			auto n_c1a = math::normalize(math::cross(a, c_1));
+			auto A = alpha + beta + gamma - math::pi;
+			pdf = math::guarded_div(pdf, A);
+
+			if (math::length(n_bc1) < math::epsilon<f32> || math::length(n_c1a) < math::epsilon<f32>) {
+				u = {0.5f};
+			} else {
+				auto A_1 = alpha + math::angle(n_bc1, -n_ab) + math::angle(n_c1a, -n_bc1) - math::pi;
+				u[1] = math::guarded_div(A_1, A);
+			}
+		}
+
+		if (np != math::Vector<f32, 3>{0.f}) {
+			auto distr = math::Bilinear_Distribution{
+				math::dot(np, b),
+				math::dot(np, a),
+				math::dot(np, b),
+				math::dot(np, c),
+			};
+			pdf *= distr.pdf(u);
+		}
+		return pdf;
 	}
 
 	auto Mesh::from_path(std::string_view path) noexcept -> Mesh {

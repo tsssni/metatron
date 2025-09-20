@@ -27,8 +27,7 @@ namespace mtt::accel {
 
 	struct Acceleration final: pro::facade_builder
 	::add_convention<pro::operator_dispatch<"()">, auto (
-		math::Ray const& r,
-		math::Vector<f32, 3> const& np
+		math::Ray const& r
 	) const noexcept -> std::optional<Interaction>>
 	::add_skill<pro::skills::as_view>
 	::build {};
