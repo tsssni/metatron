@@ -355,7 +355,7 @@ namespace mtt::shape {
 					mesh->mTextureCoords[0][i].y
 				}
 				: 1.f
-				* math::cartesion_to_unit_sphere(math::normalize(vertices.back()))
+				* math::cartesian_to_unit_spherical(math::normalize(vertices.back()))
 				/ math::Vector<f32, 2>{math::pi, 2.f * math::pi}
 			);
 		}

@@ -215,11 +215,13 @@ namespace mtt::math {
 
 			if constexpr (higher_n > 0) {
 				for (auto i = 0; i < first_dim; i++) {
-					product[i] = storage[i] * rhs[i];
+					product[i] = storage[i] | rhs[i];
 				}
 			} else {
 				if constexpr (l_n == 1 && r_n == 1) {
-					
+					for (auto i = 0; i < pds[0]; i++) {
+						product[i] = storage[i] * rhs[i];
+					}
 				} else if constexpr (l_n == 1) {
 					for (auto i = 0; i < pds[0]; i++) {
 						for (auto j = 0; j < lds[0]; j++) {

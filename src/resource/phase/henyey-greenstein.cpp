@@ -29,7 +29,7 @@ namespace mtt::phase {
 			: -1.f / (2.f * g) * (1.f + g * g - std::pow(math::guarded_div(1.f - g * g, 1.f + g - 2.f * g * u[0]), 2.f));
 		auto phi = 2.f * math::pi * u[1];
 
-		auto wi = math::unit_sphere_to_cartesion(cos_theta, phi);
+		auto wi = math::unit_spherical_to_cartesian(cos_theta, phi);
 		auto x = (*this)({0.f, -1.f, 0.f}, wi);
 		return x;
 	}

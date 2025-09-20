@@ -3,7 +3,7 @@
 #include <metatron/core/math/arithmetic.hpp>
 
 namespace mtt::math {
-	auto inline constexpr cartesion_to_unit_sphere(math::Vector<f32, 3> const& d) noexcept -> math::Vector<f32, 2> {
+	auto inline constexpr cartesian_to_unit_spherical(math::Vector<f32, 3> const& d) noexcept -> math::Vector<f32, 2> {
 		auto theta = std::acos(d[1]);
 		auto phi = std::atan2(d[2], d[0]);
 		if (phi < 0.f) {
@@ -12,7 +12,7 @@ namespace mtt::math {
 		return {theta, phi};
 	}
 
-	auto inline constexpr unit_sphere_to_cartesion(f32 cos_theta, f32 phi) noexcept -> math::Vector<f32, 3> {
+	auto inline constexpr unit_spherical_to_cartesian(f32 cos_theta, f32 phi) noexcept -> math::Vector<f32, 3> {
 		auto sin_theta_2 = 1.f - cos_theta * cos_theta;
 		auto sin_theta = math::sqrt(sin_theta_2);
 		auto x = sin_theta * std::cos(phi);
@@ -21,28 +21,28 @@ namespace mtt::math {
 		return {x, y, z};
 	}
 
-	auto inline constexpr unit_sphere_to_cartesion(math::Vector<f32, 2> const& s) noexcept -> math::Vector<f32, 3> {
+	auto inline constexpr unit_spherical_to_cartesian(math::Vector<f32, 2> const& s) noexcept -> math::Vector<f32, 3> {
 		auto [theta, phi] = s;
-		return unit_sphere_to_cartesion(std::cos(theta), phi);
+		return unit_spherical_to_cartesian(std::cos(theta), phi);
 	}
 
-	auto inline constexpr cartesion_to_sphere(math::Vector<f32, 3> const& d) noexcept -> math::Vector<f32, 2> {
+	auto inline constexpr cartesian_to_spherical(math::Vector<f32, 3> const& d) noexcept -> math::Vector<f32, 2> {
 		auto r = math::length(d);
 		auto nd = math::normalize(d);
-		auto [theta, phi] = cartesion_to_unit_sphere(nd);
+		auto [theta, phi] = cartesian_to_unit_spherical(nd);
 		return {r, theta, phi};
 	}
 
-	auto inline constexpr sphere_to_cartesion(f32 r, f32 cos_theta, f32 phi) noexcept -> math::Vector<f32, 3> {
-		auto c = unit_sphere_to_cartesion(cos_theta, phi);
+	auto inline constexpr spherical_to_cartesian(f32 r, f32 cos_theta, f32 phi) noexcept -> math::Vector<f32, 3> {
+		auto c = unit_spherical_to_cartesian(cos_theta, phi);
 		return r * c;
 	}
 
-	auto inline constexpr sphere_to_cartesion(math::Vector<f32, 3> const& s) noexcept -> math::Vector<f32, 3> {
+	auto inline constexpr spherical_to_cartesian(math::Vector<f32, 3> const& s) noexcept -> math::Vector<f32, 3> {
 		auto r = s[0];
 		auto theta = s[1];
 		auto phi = s[2];
-		return sphere_to_cartesion(r, std::cos(theta), phi);
+		return spherical_to_cartesian(r, std::cos(theta), phi);
 	}
 
 	auto inline constexpr unit_to_cos_theta(math::Vector<f32, 3> const& d) noexcept -> f32 {

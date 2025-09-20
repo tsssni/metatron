@@ -9,7 +9,7 @@ namespace mtt::math {
 		auto sample(Vector<f32, 2> const& u) const noexcept -> Vector<f32, 3> {
 			auto cos_theta = 1.f - u[0] * (1.f - cos_theta_max);
 			auto phi = u[1] * 2.f * pi;
-			return unit_sphere_to_cartesion(cos_theta, phi);
+			return unit_spherical_to_cartesian(cos_theta, phi);
 		}
 
 		auto pdf() const noexcept -> f32 {
