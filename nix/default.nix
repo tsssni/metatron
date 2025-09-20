@@ -5,6 +5,7 @@
   clang-tools,
   cmake,
   entt,
+  eve,
   fetchFromGitHub,
   glaze,
   lib,
@@ -36,6 +37,7 @@ clangStdenv.mkDerivation {
     argparse
     assimp
     entt
+    eve
     glaze
     mimalloc
     openimageio
