@@ -218,28 +218,29 @@ namespace mtt::math {
 					product[i] = storage[i] | rhs[i];
 				}
 			} else {
-				if constexpr (l_n == 1 && r_n == 1) {
+				using U = Matrix<T, pds.front()>;
+				auto constexpr reduce = [](U const& x, U const& y) -> T {
+					auto z = x * y;
+					T sum = T{0};
+					for (auto i = 0uz; i < U::dimensions.front(); i++) {
+						sum += z[i];
+					}
+					return sum;
+				};
+
+				if constexpr (r_n == 1) {
 					for (auto i = 0; i < pds[0]; i++) {
-						product[i] = storage[i] * rhs[i];
+						product[i] = reduce((*this)[i], rhs);
 					}
 				} else if constexpr (l_n == 1) {
+					auto rt = transpose(rhs);
 					for (auto i = 0; i < pds[0]; i++) {
-						for (auto j = 0; j < lds[0]; j++) {
-							product[i] += storage[j] * rhs[j][i];
-						}
-					}
-				} else if constexpr (r_n == 1) {
-					for (auto i = 0; i < pds[0]; i++) {
-						for (auto j = 0; j < rds[0]; j++) {
-							product[i] += storage[i][j] * rhs[j];
-						}
+						product[i] = reduce(*this, transpose(rhs)[i]);
 					}
 				} else {
 					for (auto i = 0; i < pds[0]; i++) {
-						for (auto k = 0; k < pds[1]; k++) {
-							for (auto j = 0; j < lds[1]; j++) {
-								product[i][k] += storage[i][j] * rhs[j][k];
-							}
+						for (auto j = 0; j < pds[1]; j++) {
+							product[i][j] = reduce((*this)[i], transpose(rhs)[j]);
 						}
 					}
 				}
