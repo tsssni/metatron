@@ -14,7 +14,7 @@ namespace mtt::photo {
 
 	struct Lens final: pro::facade_builder
 	::add_convention<lens_sample, auto (
-		math::Vector<f32, 3> o, math::Vector<f32, 2> u
+		math::Vector<f32, 2> o, math::Vector<f32, 2> u
 	) const noexcept -> std::optional<lens::Interaction>>
 	::add_skill<pro::skills::as_view>
 	::build {};

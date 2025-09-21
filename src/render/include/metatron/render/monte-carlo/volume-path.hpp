@@ -9,7 +9,7 @@ namespace mtt::monte_carlo {
 			Status initial_status,
 			view<accel::Acceleration> accel,
 			view<emitter::Emitter> emitter,
-			view<math::Sampler> sampler
+			mut<math::Sampler> sampler
 		) const noexcept -> std::optional<spectra::Stochastic_Spectrum>;
 	};
 }

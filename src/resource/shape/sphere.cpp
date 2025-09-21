@@ -24,7 +24,6 @@ namespace mtt::shape {
 
 	auto Sphere::operator()(
 		math::Ray const& r,
-		math::Vector<f32, 3> const& np,
 		usize idx
 	) const noexcept -> std::optional<Interaction> {
 		auto a = math::dot(r.d, r.d);
@@ -67,16 +66,7 @@ namespace mtt::shape {
 		tn = math::gram_schmidt(tn, n);
 		auto bn = math::cross(tn, n);
 
-		auto pdf = 1.f;
-		auto d = math::length(r.o);
-		if (d < 1.f) {
-			pdf = math::Sphere_Distribution{}.pdf();
-		} else {
-			auto cos_theta_max = math::sqrt(1.f - 1.f / (d * d));
-			pdf = math::Cone_Distribution{cos_theta_max}.pdf();
-		}
-
-		return Interaction{p, n, tn, bn, uv, t, dpdu, dpdv, dndu, dndv, pdf};
+		return Interaction{p, n, tn, bn, uv, t, dpdu, dpdv, dndu, dndv};
 	}
 
 	auto Sphere::sample(
@@ -102,8 +92,25 @@ namespace mtt::shape {
 			sdir = math::rotate(math::expand(sdir, 0.f), rot);
 
 			MTT_OPT_OR_RETURN(intr, (*this)({ctx.r.o, sdir}), {});
+			intr.pdf = pdf(ctx.r, {}, idx);
 			return intr;
 		}
+	}
+
+	auto Sphere::pdf(
+		math::Ray const& r,
+		math::Vector<f32, 3> const& np,
+		usize idx
+	) const noexcept -> f32 {
+		auto pdf = 1.f;
+		auto d = math::length(r.o);
+		if (d < 1.f) {
+			pdf = math::Sphere_Distribution{}.pdf();
+		} else {
+			auto cos_theta_max = math::sqrt(1.f - 1.f / (d * d));
+			pdf = math::Cone_Distribution{cos_theta_max}.pdf();
+		}
+		return pdf;
 	}
 
 }

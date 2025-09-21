@@ -13,7 +13,9 @@ namespace mtt::light {
 			math::Vector<f32, 2> direction,
 			f32 turbidity,
 			f32 albedo,
-			f32 aperture
+			f32 aperture,
+			f32 temperature,
+			f32 intensity
 		) noexcept;
 
 		auto static init() noexcept -> void;

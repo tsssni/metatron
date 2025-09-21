@@ -227,10 +227,11 @@ namespace mtt::accel {
 	}
 
 	auto LBVH::operator()(
-		math::Ray const& r,
-		math::Vector<f32, 3> const& n
+		math::Ray const& r
 	) const noexcept -> std::optional<Interaction> {
 		auto& rt = *transform;
+		auto wr = rt ^ r;
+
 		auto intr_div = (Divider const*)nullptr;
 		auto intr_opt = std::optional<shape::Interaction>{};
 		auto candidates = std::stack<u32>{};
@@ -240,18 +241,19 @@ namespace mtt::accel {
 			auto idx = candidates.top();
 			candidates.pop();
 			auto node = &bvh[idx];
-			MTT_OPT_OR_CONTINUE(t_bbox, math::hit(r, node->bbox));
+			auto t_opt = math::hit(r, node->bbox, true);
+			if (!t_opt || (intr_opt && intr_opt->t < t_opt.value())) {
+				continue;
+			}
 
 			if (node->num_prims > 0) {
 				for (auto i = 0u; i < node->num_prims; i++) {
 					auto idx = node->div_idx + i;
 					auto div = &dividers[idx];
 					auto& lt = *div->local_to_world;
+					auto lr = lt ^ wr;
 
-					auto lr = lt ^ rt ^ r;
-					auto ln = lt ^ rt ^ n;
-					MTT_OPT_OR_CONTINUE(div_intr, (*div->shape)(lr, ln, div->primitive));
-
+					MTT_OPT_OR_CONTINUE(div_intr, (*div->shape)(lr, div->primitive));
 					if (!intr_opt || div_intr.t < intr_opt.value().t) {
 						intr_opt = div_intr_opt;
 						intr_div = div;

@@ -1,5 +1,5 @@
 #include <metatron/resource/light/sunsky.hpp>
-#include <metatron/resource/spectra/discrete.hpp>
+#include <metatron/resource/spectra/blackbody.hpp>
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/trigonometric.hpp>
 #include <metatron/core/math/gaussian.hpp>
@@ -27,13 +27,17 @@ namespace mtt::light {
 	auto constexpr sun_num_segments = 45;
 	auto constexpr sun_num_limb_params = 6;
 	auto constexpr sun_aperture = 0.009351474132185619f;
+	auto constexpr sun_blackbody_scale = math::pi * 3.19992e-10f;
+	auto constexpr sun_perp_radiance = std::array<f32, sunsky_num_lambda>{
+		7500.0f, 12500.0f, 21127.5f, 26760.5f, 30663.7f, 27825.0f,
+		25503.8f, 25134.2f, 23212.1f, 21526.7f, 19870.8f,
+	};
 	auto constexpr tgmm_num_turbility = sunsky_num_turbility - 1;
 	auto constexpr tgmm_num_segments = 30;
 	auto constexpr tgmm_num_mixture = 5;
 	auto constexpr tgmm_num_gaussian_params = 4;
 	auto constexpr tgmm_num_bilinear = 4;
 	auto constexpr tgmm_num_gaussian = tgmm_num_bilinear * tgmm_num_mixture;
-
 
 	struct Sunsky_Light::Impl final {
 		std::vector<f32> static sky_params_table;
@@ -64,18 +68,14 @@ namespace mtt::light {
 			math::Vector<f32, 2> direction,
 			f32 turbidity,
 			f32 albedo,
-			f32 aperture
+			f32 aperture,
+			f32 temperature,
+			f32 intensity
 		) noexcept:
-		d(math::unit_sphere_to_cartesion(direction)),
+		d(math::unit_spherical_to_cartesian(direction)),
 		t(math::Quaternion<f32>::from_rotation_between({0.f, 1.f, 0.f}, d)),
 		turbidity(turbidity), 
-		albedo(albedo),
-		cos_sun(std::cos(aperture * 0.5)),
-		phi_sun(direction[0]),
-		area(1.f
-		* (1.f - std::cos(sun_aperture * 0.5f))
-		/ (1.f - cos_sun)),
-		sun_distr(cos_sun) {
+		albedo(albedo) {
 			auto bezier = [](std::vector<f32> const& data, usize block_size, usize offset, f32 x) -> std::vector<f32> {
 				auto interpolated = std::vector<f32>(block_size, 0.f);
 				auto c = std::array<f32, 6>{1, 5, 10, 10, 5, 1};
@@ -132,6 +132,28 @@ namespace mtt::light {
 				auto t0 = sun_table[t_low];
 				auto t1 = sun_table[t_high];
 				sun_radiance = t0 * (1.f - t_alpha) + t1 * t_alpha;
+
+				auto bspec = spectra::Blackbody_Spectrum{temperature};
+				auto sun_scale = math::Vector<f32, sunsky_num_lambda>{};
+				for (auto i = 0; i < sunsky_num_lambda; i++) {
+					auto lambda = sunsky_lambda[i];
+					auto Lp = sun_perp_radiance[i];
+					auto Lb = bspec(lambda) * sun_blackbody_scale;
+					sun_scale[i] = Lb / Lp;
+				}
+
+				// only use visible spectra
+				auto ratio = (math::sum(sun_scale) - sun_scale[0] - sun_scale[1]) / 9.f;
+				cos_sun = std::cos(aperture * 0.5f);
+				phi_sun = direction[0];
+				area = (1.f - std::cos(sun_aperture * 0.5f)) / (1.f - cos_sun);
+				sun_distr = math::Cone_Distribution{cos_sun};
+				sky_radiance *= intensity / ratio * sun_scale;
+				for (auto i = 0; i < sun_num_segments; i++) {
+					for (auto j = 0; j < sunsky_num_lambda; j++) {
+						sun_radiance[i][j] *= intensity / ratio * sun_scale[j];
+					}
+				}
 			};
 
 			// https://github.com/mitsuba-renderer/mitsuba3/blob/master/include/mitsuba/render/sunsky.h
@@ -252,9 +274,9 @@ namespace mtt::light {
 			auto valid = cos_theta >= 0.f && sin_theta != 0.f;
 
 			// clamp theta to give invalid direction reasonable result
-			auto [theta, phi] = math::cartesion_to_unit_sphere(ctx.r.d);
+			auto [theta, phi] = math::cartesian_to_unit_spherical(ctx.r.d);
 			theta = std::clamp(theta, math::epsilon<f32>, math::pi * 0.5f - math::epsilon<f32>);
-			auto wo = math::unit_sphere_to_cartesion({theta, phi});
+			auto wo = math::unit_spherical_to_cartesian({theta, phi});
 			auto L = ctx.spec & spectra::Spectrum::spectra["zero"];
 			L.value = math::foreach([&](f32 lambda, usize i) {
 				return hosek(lambda, math::unit_to_cos_theta(wo), math::dot(d, wo));
@@ -457,7 +479,7 @@ namespace mtt::light {
 					auto integral = std::ranges::fold_left(radiance, 0.f, std::plus{}) * J;
 					luminance += integral * (*spectra::Spectrum::spectra["CIE-Y"])(sunsky_lambda[i]);
 				}
-				return luminance * area;
+				return luminance;
 			}();
 
 			return math::guarded_div(sky_luminance, sky_luminance + sun_luminance);
@@ -484,7 +506,7 @@ namespace mtt::light {
 			auto phi = tgmm_phi + phi_sun - math::pi * 0.5f;
 			auto theta = std::clamp(tgmm_theta, math::epsilon<f32>, math::pi * 0.5f - math::epsilon<f32>);
 
-			auto wi = math::unit_sphere_to_cartesion({theta, phi});
+			auto wi = math::unit_spherical_to_cartesian({theta, phi});
 			auto cos_gamma = math::dot(wi, d);
 			auto cos_theta = math::unit_to_cos_theta(wi);
 
@@ -546,8 +568,12 @@ namespace mtt::light {
 		math::Vector<f32, 2> direction,
 		f32 turbidity,
 		f32 albedo,
-		f32 aperture
-	) noexcept: stl::capsule<Sunsky_Light>(direction, turbidity, albedo, aperture) {}
+		f32 aperture,
+		f32 temperature,
+		f32 intensity
+	) noexcept: stl::capsule<Sunsky_Light>(
+		direction, turbidity, albedo, aperture, temperature, intensity
+	) {}
 
 	auto Sunsky_Light::init() noexcept -> void {
 		Sunsky_Light::Impl::init();

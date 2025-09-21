@@ -1,8 +1,8 @@
 #pragma once
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/math/bounding-box.hpp>
+#include <metatron/core/stl/optional.hpp>
 #include <metatron/resource/eval/context.hpp>
-#include <optional>
 
 namespace mtt::shape {
 	struct Interaction final {
@@ -24,6 +24,7 @@ namespace mtt::shape {
 	MTT_POLY_METHOD(shape_size, size);
 	MTT_POLY_METHOD(shape_bounding_box, bounding_box);
 	MTT_POLY_METHOD(shape_sample, sample);
+	MTT_POLY_METHOD(shape_pdf, pdf); // defer complex pdf computation
 
 	struct Shape final: pro::facade_builder
 	::add_convention<shape_size, auto () const noexcept -> usize>
@@ -33,7 +34,6 @@ namespace mtt::shape {
 	) const noexcept -> math::Bounding_Box>
 	::add_convention<pro::operator_dispatch<"()">, auto (
 		math::Ray const& r,
-		math::Vector<f32, 3> const& np,
 		usize idx
 	) const noexcept -> std::optional<Interaction>>
 	::add_convention<shape_sample, auto (
@@ -41,6 +41,11 @@ namespace mtt::shape {
 		math::Vector<f32, 2> const& u,
 		usize idx
 	) const noexcept -> std::optional<Interaction>>
+	::add_convention<shape_pdf, auto (
+		math::Ray const& r,
+		math::Vector<f32, 3> const& np,
+		usize idx
+	) const noexcept -> f32>
 	::add_skill<pro::skills::as_view>
 	::build {};
 }

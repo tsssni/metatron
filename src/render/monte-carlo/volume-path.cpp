@@ -1,8 +1,8 @@
 #include <metatron/render/monte-carlo/volume-path.hpp>
-#include <metatron/resource/shape/plane.hpp>
 #include <metatron/core/math/distribution/discrete.hpp>
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <metatron/core/math/plane.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 
@@ -11,7 +11,7 @@ namespace mtt::monte_carlo {
 		Status initial_status,
 		view<accel::Acceleration> accel,
 		view<emitter::Emitter> emitter,
-		view<math::Sampler> sampler
+		mut<math::Sampler> sampler
 	) const noexcept -> std::optional<spectra::Stochastic_Spectrum> {
 		auto lambda_u = sampler->generate_1d();
 		auto emission = spectra::Stochastic_Spectrum{lambda_u};
@@ -21,15 +21,16 @@ namespace mtt::monte_carlo {
 
 		auto depth = 0uz;
 		auto max_depth = initial_status.max_depth;
+
+		auto scattered = false;
 		auto crossed = true;
 		auto terminated = false;
 
-		auto scattered = false;
-		auto scatter_pdf = 0.f;
-		auto scatter_f = emission;
-
+		auto p = 0.f;
+		auto f = emission;
 		auto bsdf = poly<bsdf::Bsdf>{};
 		auto phase = poly<phase::Phase_Function>{};
+
 		auto trace_ctx = eval::Context{};
 		auto history_ctx = eval::Context{};
 		trace_ctx.r = initial_status.ray_differential.r;
@@ -80,8 +81,8 @@ namespace mtt::monte_carlo {
 					return;
 				}
 
-				auto p_s = 0.f;
-				auto f = spectra::Stochastic_Spectrum{};
+				auto q = 0.f;
+				auto g = spectra::Stochastic_Spectrum{};
 
 				if (direct_ctx.n != math::Vector<f32, 3>{0.f}) {
 					auto flip_n = math::dot(-history_ctx.r.d, direct_ctx.n) < 0.f ? -1.f : 1.f;
@@ -91,26 +92,26 @@ namespace mtt::monte_carlo {
 					auto wo = t | math::expand(history_ctx.r.d, 0.f);
 					auto wi = t | math::expand(l_intr.wi, 0.f);
 					MTT_OPT_OR_RETURN(b_intr, (*bsdf)(wo, wi));
-					f = b_intr.f * math::abs(math::dot(l_intr.wi, direct_ctx.n));
-					p_s = b_intr.pdf;
+					g = b_intr.f * math::abs(math::dot(l_intr.wi, direct_ctx.n));
+					q = b_intr.pdf;
 				} else {
 					MTT_OPT_OR_RETURN(p_intr, (*phase)(history_ctx.r.d, l_intr.wi));
-					f = p_intr.f;
-					p_s = p_intr.pdf;
+					g = p_intr.f;
+					q = p_intr.pdf;
 				}
 
 				auto acc_opt = std::optional<accel::Interaction>{};
-				auto termenated = false;
+				auto terminated = false;
 				auto crossed = true;
 
-				auto dedium = medium;
+				auto volume = medium;
 				auto direct_to_world = medium_to_world;
-				auto gamma = beta * (f / p_e) / (scatter_f / scatter_pdf);
-				auto mis_d = mis_s * p_s / p_e * f32(!(e_intr.divider->light->flags() & light::Flags::delta));
+				auto gamma = beta * (g / p_e) / (f / p);
+				auto mis_d = mis_s * q / p_e * f32(!(e_intr.divider->light->flags() & light::Flags::delta));
 				auto mis_l = mis_s;
 
 				while (true) {
-					if (termenated || l_intr.t < 0.001f) {
+					if (terminated || l_intr.t < 0.001f) {
 						break;
 					}
 
@@ -118,7 +119,7 @@ namespace mtt::monte_carlo {
 						auto q = 0.25f;
 						if (sampler->generate_1d() > q) {
 							gamma = 0.f;
-							termenated = true;
+							terminated = true;
 							continue;
 						} else {
 							gamma /= q;
@@ -126,15 +127,15 @@ namespace mtt::monte_carlo {
 					}
 
 					if (crossed) {
-						acc_opt = (*accel)(direct_ctx.r, direct_ctx.n);
+						acc_opt = (*accel)(direct_ctx.r);
 						if (!acc_opt) {
-							termenated = true;
+							terminated = true;
 							continue;
 						}
 						auto& acc = acc_opt.value();
 
 						if (!acc.intr_opt) {
-							termenated = true;
+							terminated = true;
 							continue;
 						}
 						auto& intr = acc_opt->intr_opt.value();
@@ -144,14 +145,14 @@ namespace mtt::monte_carlo {
 						intr.p = rt | lt | math::expand(intr.p, 1.f);
 						intr.n = math::normalize(rt | lt | intr.n);
 						direct_ctx.inside = math::dot(-direct_ctx.r.d, intr.n) < 0.f;
-						dedium = direct_ctx.inside ? div.int_medium : div.ext_medium;
+						volume = direct_ctx.inside ? div.int_medium : div.ext_medium;
 						direct_to_world = direct_ctx.inside ? div.int_to_world : div.ext_to_world;
 						intr.n *= direct_ctx.inside ? -1.f : 1.f;
 
 						auto close_to_light = math::length(intr.p - l_intr.p) < 0.001f;
 						auto is_interface = div.material->spectrum_textures.empty() && div.material->vector_textures.empty();
 						if (!close_to_light && !is_interface) {
-							termenated = true;
+							terminated = true;
 							gamma = 0.f;
 							continue;
 						} else if (close_to_light) {
@@ -162,12 +163,11 @@ namespace mtt::monte_carlo {
 							rd = st | rd;
 
 							auto ldiff = lt ^ rt ^ rd;
-							auto tangent = shape::Plane{intr.p, intr.n};
 							MTT_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, intr), {
-								termenated = true; gamma = 0.f; continue;
+								terminated = true; gamma = 0.f; continue;
 							});
 							MTT_OPT_OR_CALLBACK(mat_intr, div.material->sample(direct_ctx, tcoord), {
-								termenated = true; gamma = 0.f; continue;
+								terminated = true; gamma = 0.f; continue;
 							});
 							l_intr.L = mat_intr.emission;
 						}
@@ -179,9 +179,9 @@ namespace mtt::monte_carlo {
 
 					auto& mt = *direct_to_world;
 					auto m_ctx = mt ^ rt ^ direct_ctx;
-					MTT_OPT_OR_CALLBACK(m_intr, dedium->sample(m_ctx, intr.t, sampler->generate_1d()), {
+					MTT_OPT_OR_CALLBACK(m_intr, volume->sample(m_ctx, intr.t, sampler->generate_1d()), {
 						gamma = 0.f;
-						termenated = true;
+						terminated = true;
 						break;
 					});
 					m_intr.p = rt | mt | math::expand(m_intr.p, 1.f);
@@ -211,7 +211,7 @@ namespace mtt::monte_carlo {
 			}();
 
 			if (scattered || crossed) {
-				acc_opt = (*accel)(trace_ctx.r, trace_ctx.n);
+				acc_opt = (*accel)(trace_ctx.r);
 			}
 
 			if (!acc_opt || !acc_opt.value().intr_opt) {
@@ -224,7 +224,7 @@ namespace mtt::monte_carlo {
 				MTT_OPT_OR_CONTINUE(l_intr, (*e_intr.divider->light)(l_ctx));
 
 				auto p_e = e_intr.pdf * l_intr.pdf;
-				mis_e *= math::guarded_div(p_e, scatter_pdf);
+				mis_e *= math::guarded_div(p_e, p);
 				auto mis_w = math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
 				emission += beta * mis_w * l_intr.L;
 				continue;
@@ -293,8 +293,8 @@ namespace mtt::monte_carlo {
 
 					scattered = true;
 					crossed = false;
-					scatter_f = p_intr.f;
-					scatter_pdf = p_intr.pdf;
+					f = p_intr.f;
+					p = p_intr.pdf;
 					history_ctx = trace_ctx;
 					trace_ctx = {{m_intr.p, p_intr.wi}, {}, emission};
 				} else {
@@ -327,13 +327,14 @@ namespace mtt::monte_carlo {
 				if (spectra::max(mat_intr.emission) < math::epsilon<f32>) {
 					return;
 				}
+				intr.pdf = div->shape->pdf(trace_ctx.r, trace_ctx.n, div->primitive);
 
 				MTT_OPT_OR_RETURN(e_intr, (*emitter)(trace_ctx, {div->light, div->local_to_world}));
 				auto& div = *e_intr.divider;
 				auto& lt = *div.local_to_world;
 
 				auto p_e = e_intr.pdf * intr.pdf;
-				mis_e *= math::guarded_div(p_e, scatter_pdf);
+				mis_e *= math::guarded_div(p_e, p);
 				auto mis_w = math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
 				emission += mis_w * beta * mat_intr.emission;
 			}();
@@ -380,8 +381,8 @@ namespace mtt::monte_carlo {
 			trace_ctx = {{trace_p, b_intr.wi}, trace_n, emission};
 			beta *= b_intr.f / b_intr.pdf;
 			mis_e = mis_s;
-			scatter_f = b_intr.f;
-			scatter_pdf = b_intr.pdf;
+			f = b_intr.f;
+			p = b_intr.pdf;
 		}
 
 		return emission;

@@ -25,9 +25,13 @@ namespace mtt::compo {
 	struct Halton_Sampler final {
 		i32 halton{0};
 	};
+	struct Sobol_Sampler final {
+		i32 sobol{0};
+	};
 	using Sampler = std::variant<
 		Independent_Sampler,
-		Halton_Sampler
+		Halton_Sampler,
+		Sobol_Sampler
 	>;
 
 	struct Box_Filter final {
@@ -60,7 +64,7 @@ namespace mtt::compo {
 			.focal_length = 0.035f,
 			.focus_distance = 10.f,
 		};
-		Sampler sampler = Halton_Sampler{};
+		Sampler sampler = Sobol_Sampler{};
 		Filter filter = Lanczos_Filter{};
 		ecs::Entity initial_medium = "/hierarchy/medium/vaccum"_et;
 		ecs::Entity color_space = "/color-space/sRGB"_et;

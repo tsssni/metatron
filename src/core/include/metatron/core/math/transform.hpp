@@ -96,7 +96,7 @@ namespace mtt::math {
 			if constexpr (std::is_same_v<Type, Vector<f32, 4>>) {
 				return transform | rhs;
 			} else if constexpr (std::is_same_v<Type, Vector<f32, 3>>) {
-				return math::normalize(expand(rhs, 0.f) | inv_transform);
+				return math::normalize(shrink(expand(rhs, 0.f) | inv_transform));
 			} else if constexpr (std::is_same_v<Type, Ray>) {
 				auto r = rhs;
 				r.o = *this | expand(r.o, 1.f);
@@ -120,7 +120,7 @@ namespace mtt::math {
 			if constexpr (std::is_same_v<Type, Vector<f32, 4>>) {
 				return inv_transform | rhs;
 			} else if constexpr (std::is_same_v<Type, Vector<f32, 3>>) {
-				return math::normalize(expand(rhs, 0.f) | transform);
+				return math::normalize(shrink(expand(rhs, 0.f) | transform));
 			} else if constexpr (std::is_same_v<Type, Ray>) {
 				auto r = rhs;
 				r.o = *this ^ expand(r.o, 1.f);

@@ -19,8 +19,7 @@ namespace mtt::accel {
 			usize num_guide_leaf_prims = 4
 		) noexcept;
 		auto operator()(
-			math::Ray const& r,
-			math::Vector<f32, 3> const& n = {}
+			math::Ray const& r
 		) const noexcept -> std::optional<Interaction>;
 
 	private:

@@ -11,9 +11,9 @@ namespace mtt::math {
 	::add_convention<sampler_start, auto (
 		math::Vector<usize, 2> const& pixel, usize idx, usize dim
 	) noexcept -> void>
-	::add_convention<sampler_generate_1d, auto () const noexcept -> f32>
-	::add_convention<sampler_generate_2d, auto () const noexcept -> math::Vector<f32, 2>>
-	::add_convention<sampler_generate_pixel_2d, auto () const noexcept -> math::Vector<f32, 2>>
+	::add_convention<sampler_generate_1d, auto () noexcept -> f32>
+	::add_convention<sampler_generate_2d, auto () noexcept -> math::Vector<f32, 2>>
+	::add_convention<sampler_generate_pixel_2d, auto () noexcept -> math::Vector<f32, 2>>
 	::support_copy<pro::constraint_level::nontrivial>
 	::add_skill<pro::skills::as_view>
 	::build {};

@@ -31,6 +31,8 @@ namespace mtt::compo {
 		f32 turbidity;
 		f32 albedo;
 		f32 aperture;
+		f32 temperature;
+		f32 intensity;
 		i32 sunsky{0};
 	};
 
