@@ -21,6 +21,7 @@
       systems = [
         "aarch64-darwin"
         "x86_64-linux"
+        "aarch64-linux"
       ];
 
       systemAttrs = f: system: { ${system} = f system; };
