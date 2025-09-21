@@ -1,8 +1,8 @@
 #include <metatron/render/monte-carlo/volume-path.hpp>
-#include <metatron/resource/shape/plane.hpp>
 #include <metatron/core/math/distribution/discrete.hpp>
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <metatron/core/math/plane.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 
@@ -163,7 +163,6 @@ namespace mtt::monte_carlo {
 							rd = st | rd;
 
 							auto ldiff = lt ^ rt ^ rd;
-							auto tangent = shape::Plane{intr.p, intr.n};
 							MTT_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, intr), {
 								terminated = true; gamma = 0.f; continue;
 							});

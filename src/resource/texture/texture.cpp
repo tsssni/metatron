@@ -1,5 +1,5 @@
 #include <metatron/resource/texture/texture.hpp>
-#include <metatron/resource/shape/plane.hpp>
+#include <metatron/core/math/plane.hpp>
 #include <metatron/core/stl/optional.hpp>
 
 namespace mtt::texture {
@@ -7,13 +7,14 @@ namespace mtt::texture {
 		math::Ray_Differential const& diff,
 		shape::Interaction const& intr
 	) noexcept -> std::optional<texture::Coordinate> {
-		auto tangent = shape::Plane{intr.p, intr.n};
-		MTT_OPT_OR_RETURN(d_intr, tangent(diff.r), {});
-		MTT_OPT_OR_RETURN(dx_intr, tangent(diff.rx), {});
-		MTT_OPT_OR_RETURN(dy_intr, tangent(diff.ry), {});
+		auto tangent = math::Plane{intr.p, intr.n};
+		MTT_OPT_OR_RETURN(dt, math::hit(diff.r, tangent), {});
+		MTT_OPT_OR_RETURN(dxt, math::hit(diff.rx, tangent), {});
+		MTT_OPT_OR_RETURN(dyt, math::hit(diff.ry, tangent), {});
 		
-		auto dpdx = dx_intr.p - d_intr.p;
-		auto dpdy = dy_intr.p - d_intr.p;
+		auto p = diff.r.o + dt * diff.r.d;
+		auto dpdx = diff.rx.o + dxt * diff.rx.d - p;
+		auto dpdy = diff.ry.o + dyt * diff.ry.d - p;
 		auto dpduv =  math::transpose(math::Matrix<f32, 2, 3>{intr.dpdu, intr.dpdv});
 		auto duvdx = math::least_squares(dpduv, dpdx);
 		auto duvdy = math::least_squares(dpduv, dpdy);
