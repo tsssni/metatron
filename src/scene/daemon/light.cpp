@@ -59,7 +59,9 @@ namespace mtt::daemon {
 						compo.direction,
 						compo.turbidity,
 						compo.albedo,
-						compo.aperture
+						compo.aperture,
+						compo.temperature,
+						compo.intensity
 					);
 				}
 			},light);
