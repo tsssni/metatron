@@ -9,6 +9,7 @@
 #include <metatron/core/math/sampler/sampler.hpp>
 #include <metatron/core/math/sampler/independent.hpp>
 #include <metatron/core/math/sampler/halton.hpp>
+#include <metatron/core/math/sampler/sobol.hpp>
 #include <metatron/core/math/filter/filter.hpp>
 #include <metatron/core/math/filter/box.hpp>
 #include <metatron/core/math/filter/gaussian.hpp>
@@ -17,6 +18,7 @@
 namespace mtt::daemon {
 	auto Camera_Daemon::init() noexcept -> void {
 		MTT_SERDE(Camera);
+		math::Sobol_Sampler::init();
 	}
 
 	auto Camera_Daemon::update() noexcept -> void {
@@ -68,9 +70,10 @@ namespace mtt::daemon {
 					return make_poly<math::Sampler, math::Independent_Sampler>(seed);
 				} else if constexpr (std::is_same_v<T, compo::Halton_Sampler>) {
 					return make_poly<math::Sampler, math::Halton_Sampler>(seed);
+				} else if constexpr (std::is_same_v<T, compo::Sobol_Sampler>) {
+					return make_poly<math::Sampler, math::Sobol_Sampler>(seed, camera.spp, camera.image_size);
 				}
 			}, camera.sampler));
-			auto sampler = view<math::Sampler>{registry.get<poly<math::Sampler>>(entity)};
 
 			registry.emplace<poly<photo::Lens>>(entity,
 			std::visit([&](auto&& compo) -> poly<photo::Lens> {

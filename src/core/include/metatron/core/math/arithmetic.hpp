@@ -14,8 +14,10 @@ namespace mtt::math {
 		return abs(y) < epsilon<T> ? 0.0 : x / y;
 	}
 
-	auto inline constexpr pow(usize x, usize n) noexcept -> usize {
-		auto y = 1uz;
+	template<typename T>
+	requires std::integral<T>
+	auto inline constexpr pow(T x, T n) noexcept -> T {
+		auto y = T{1};
 		while (n) {
 			if (n & 1) {
 				y = y * x;
@@ -52,5 +54,11 @@ namespace mtt::math {
 	requires std::floating_point<T>
 	auto constexpr lerp(T x, T y, T alpha) noexcept -> T {
 		return (T{1.0} - alpha) * x + alpha * y;
+	}
+
+	template<typename T>
+	auto constexpr log2i(T x) noexcept -> usize {
+		auto y = usize(x);
+		return std::bit_width(y) - 1uz;
 	}
 }

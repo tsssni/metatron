@@ -36,7 +36,7 @@ namespace mtt::math {
 		if (t_exit < -epsilon<f32> || t_enter > t_exit + epsilon<f32>) {
 			return {};
 		} else {
-			return back || t_enter > epsilon<f32> ? t_enter : t_exit;
+			return (back || (t_enter > epsilon<f32>)) ? t_enter : t_exit;
 		}
 	}
 
