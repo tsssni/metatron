@@ -19,16 +19,14 @@ namespace mtt::math {
 		return in;
 	}
 
-	auto inline constexpr hit(Ray const& r, Bounding_Box const& bbox) noexcept -> std::optional<f32> {
+	auto inline constexpr hit(Ray const& r, Bounding_Box const& bbox, bool back = false) noexcept -> std::optional<f32> {
 		auto hit_min = (bbox.p_min - r.o) / r.d;
 		auto hit_max = (bbox.p_max - r.o) / r.d;
 		for (auto i = 0uz; i < 3uz; i++) {
 			if (math::abs(r.d[i]) < epsilon<f32>) {
 				hit_min[i] = -inf<f32>;
 				hit_max[i] = +inf<f32>;
-			}
-
-			if (hit_min[i] > hit_max[i]) {
+			} else if (hit_min[i] > hit_max[i]) {
 				std::swap(hit_min[i], hit_max[i]);
 			}
 		}
@@ -38,7 +36,7 @@ namespace mtt::math {
 		if (t_exit < -epsilon<f32> || t_enter > t_exit + epsilon<f32>) {
 			return {};
 		} else {
-			return t_enter > epsilon<f32> ? t_enter : t_exit;
+			return back || t_enter > epsilon<f32> ? t_enter : t_exit;
 		}
 	}
 
