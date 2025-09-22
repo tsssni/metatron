@@ -240,7 +240,7 @@ namespace mtt::monte_carlo {
 
 			if (scattered || crossed) {
 				intr.p = lt | math::expand(intr.p, 1.f);
-				intr.n = lt | math::normalize(intr.n);
+				intr.n = math::normalize(lt | intr.n);
 				trace_ctx.inside = math::dot(-trace_ctx.r.d, intr.n) < 0.f;
 				medium = trace_ctx.inside ? div->int_medium : div->ext_medium;
 				medium_to_world = trace_ctx.inside ? div->int_to_world : div->ext_to_world;

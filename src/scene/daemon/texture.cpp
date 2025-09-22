@@ -82,7 +82,7 @@ namespace mtt::daemon {
 								std::abort();
 							});
 							return make_poly<texture::Vector_Texture, texture::Image_Vector_Texture>(
-								image::Image::from_path(path), compo.anisotropy
+								image::Image::from_path(path, true), compo.anisotropy
 							);
 						}
 					}, compo::Vector_Texture{compo});
