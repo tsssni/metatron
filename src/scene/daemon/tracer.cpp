@@ -169,6 +169,7 @@ namespace mtt::daemon {
 					std::abort();
 				});
 				s.ray_differential = space.render_to_camera ^ s.ray_differential;
+				s.default_differential = space.render_to_camera ^ s.default_differential;
 
 				auto Li_opt = integrator->sample(
 					{

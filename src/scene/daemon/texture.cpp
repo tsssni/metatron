@@ -56,7 +56,7 @@ namespace mtt::daemon {
 								std::abort();
 							});
 							return make_poly<texture::Spectrum_Texture, texture::Image_Spectrum_Texture>(
-								image::Image::from_path(path), compo.type
+								image::Image::from_path(path), compo.type, compo.anisotropy
 							);
 						} else if constexpr (std::is_same_v<T, compo::Checkerboard_Texture>) {
 							return make_poly<texture::Spectrum_Texture, texture::Checkerboard_Texture>(
@@ -77,8 +77,12 @@ namespace mtt::daemon {
 						if constexpr (std::is_same_v<T, compo::Constant_Vector_Texture>) {
 							return make_poly<texture::Vector_Texture, texture::Constant_Vector_Texture>(compo.x);
 						} else if constexpr (std::is_same_v<T, compo::Image_Vector_Texture>) {
+							MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(compo.path), {
+								std::println("medium {} not exists", compo.path);
+								std::abort();
+							});
 							return make_poly<texture::Vector_Texture, texture::Image_Vector_Texture>(
-								image::Image::from_path(compo.path)
+								image::Image::from_path(path), compo.anisotropy
 							);
 						}
 					}, compo::Vector_Texture{compo});

@@ -141,9 +141,10 @@ namespace mtt::monte_carlo {
 						auto& intr = acc_opt->intr_opt.value();
 
 						auto& div = *acc.divider;
-						auto& lt = *div.local_to_world;
-						intr.p = rt | lt | math::expand(intr.p, 1.f);
-						intr.n = math::normalize(rt | lt | intr.n);
+						auto lt = math::Transform{rt, *div.local_to_world};
+
+						intr.p = lt | math::expand(intr.p, 1.f);
+						intr.n = math::normalize(lt | intr.n);
 						direct_ctx.inside = math::dot(-direct_ctx.r.d, intr.n) < 0.f;
 						volume = direct_ctx.inside ? div.int_medium : div.ext_medium;
 						direct_to_world = direct_ctx.inside ? div.int_to_world : div.ext_to_world;
@@ -156,14 +157,16 @@ namespace mtt::monte_carlo {
 							gamma = 0.f;
 							continue;
 						} else if (close_to_light) {
-							auto rd = ct ^ ddiff;
 							auto st = math::Transform{math::Matrix<f32, 4, 4>{
-								math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(intr.p))
+								math::Quaternion<f32>::from_rotation_between(ddiff.r.d, math::normalize(intr.p))
 							}};
-							rd = st | rd;
+							auto rd = st | ddiff;
 
-							auto ldiff = lt ^ rt ^ rd;
-							MTT_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, intr), {
+							auto ldiff = lt ^ rd;
+							auto d_intr = intr;
+							d_intr.p = lt ^ d_intr.p;
+							d_intr.n = lt ^ d_intr.n;
+							MTT_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, d_intr), {
 								terminated = true; gamma = 0.f; continue;
 							});
 							MTT_OPT_OR_CALLBACK(mat_intr, div.material->sample(direct_ctx, tcoord), {
@@ -233,18 +236,19 @@ namespace mtt::monte_carlo {
 			auto& acc = acc_opt.value();
 			auto& div = acc.divider;
 			auto& intr = acc.intr_opt.value();
-			auto& lt = *div->local_to_world;
+			auto lt = math::Transform{rt, *div->local_to_world};
+
 			if (scattered || crossed) {
-				intr.p = rt | lt | math::expand(intr.p, 1.f);
-				intr.n = math::normalize(rt | lt | intr.n);
+				intr.p = lt | math::expand(intr.p, 1.f);
+				intr.n = lt | math::normalize(intr.n);
 				trace_ctx.inside = math::dot(-trace_ctx.r.d, intr.n) < 0.f;
 				medium = trace_ctx.inside ? div->int_medium : div->ext_medium;
 				medium_to_world = trace_ctx.inside ? div->int_to_world : div->ext_to_world;
 
 				auto flip_n = trace_ctx.inside ? -1.f : 1.f;
 				intr.n *= flip_n;
-				intr.tn = rt | lt | math::expand(intr.tn * flip_n, 0.f);
-				intr.bn = rt | lt | math::expand(intr.bn * flip_n, 0.f);
+				intr.tn = math::normalize(lt | math::expand(intr.tn * flip_n, 0.f));
+				intr.bn = math::normalize(lt | math::expand(intr.bn * flip_n, 0.f));
 			}
 
 			auto& mt = *medium_to_world;
@@ -311,16 +315,17 @@ namespace mtt::monte_carlo {
 			}
 
 			if (!rdiff.differentiable) {
-				auto rd = ct ^ ddiff;
 				auto st = math::Transform{math::Matrix<f32, 4, 4>{
-					math::Quaternion<f32>::from_rotation_between(rd.r.d, math::normalize(intr.p))
+					math::Quaternion<f32>::from_rotation_between(ddiff.r.d, math::normalize(intr.p))
 				}};
-				rdiff = st | rd;
+				rdiff = st | ddiff;
 			}
 			rdiff.differentiable = false;
-			auto ldiff = lt ^ rt ^ rdiff;
-
-			MTT_OPT_OR_BREAK(tcoord, texture::grad(ldiff, intr));
+			auto ldiff = lt ^ rdiff;
+			auto l_intr = acc.intr_opt.value();
+			l_intr.p = lt ^ l_intr.p;
+			l_intr.n = lt ^ l_intr.n;
+			MTT_OPT_OR_BREAK(tcoord, texture::grad(ldiff, l_intr));
 			MTT_OPT_OR_BREAK(mat_intr, div->material->sample(trace_ctx, tcoord));
 
 			[&]() {
@@ -328,10 +333,7 @@ namespace mtt::monte_carlo {
 					return;
 				}
 				intr.pdf = div->shape->pdf(trace_ctx.r, trace_ctx.n, div->primitive);
-
 				MTT_OPT_OR_RETURN(e_intr, (*emitter)(trace_ctx, {div->light, div->local_to_world}));
-				auto& div = *e_intr.divider;
-				auto& lt = *div.local_to_world;
 
 				auto p_e = e_intr.pdf * intr.pdf;
 				mis_e *= math::guarded_div(p_e, p);

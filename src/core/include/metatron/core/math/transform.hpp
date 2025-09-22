@@ -3,6 +3,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/ray.hpp>
+#include <metatron/core/stl/ranges.hpp>
 #include <vector>
 
 namespace mtt::math {
@@ -80,10 +81,20 @@ namespace mtt::math {
 			friend Transform;
 		};
 
-		Matrix<f32, 4, 4> transform;
-		Matrix<f32, 4, 4> inv_transform;
+		Matrix<f32, 4, 4> transform{1.f};
+		Matrix<f32, 4, 4> inv_transform{1.f};
 
 		Transform() = default;
+
+		Transform(std::initializer_list<math::Transform> list) {
+			for (auto const& t: list) {
+				transform = transform | t.transform;
+			}
+			for (auto const& t: std::views::reverse(list)) {
+				inv_transform = inv_transform | t.inv_transform;
+			}
+		}
+
 		explicit Transform(Matrix<f32, 4, 4> const& m)
 		: transform(m), inv_transform(math::inverse(m)) {}
 

@@ -2,15 +2,18 @@
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <bit>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::texture {
-	Image_Vector_Texture::Image_Vector_Texture(poly<image::Image> image) noexcept {
+	Image_Vector_Texture::Image_Vector_Texture(
+		poly<image::Image> image,
+		f32 anisotropy
+	) noexcept: anisotropy(anisotropy) {
 		auto size = math::Vector<usize, 2>{image->size};
 		auto channels = image->size[2];
 		auto stride = image->size[3];
 
-		auto max_mips = usize(std::bit_width(math::max(size)));
+		auto max_mips = std::bit_width(math::max(size));
 		images.reserve(max_mips);
 		images.push_back(std::move(image));
 
@@ -26,15 +29,16 @@ namespace mtt::texture {
 			auto& image = *images[mip];
 			auto& upper = *images[mip - 1];
 
-			stl::scheduler::instance().sync_parallel(size, [&](math::Vector<usize, 2> const& px) {
+			stl::scheduler::instance().sync_parallel(size, [&image, &upper](auto px) {
 				auto [i, j] = px;
-				image[i, j] = 0.25f * (math::Vector<f32, 4>{0.f}
-					+ math::Vector<f32, 4>{upper[i * 2uz + 0, j * 2uz + 0]}
-					+ math::Vector<f32, 4>{upper[i * 2uz + 0, j * 2uz + 1]}
-					+ math::Vector<f32, 4>{upper[i * 2uz + 1, j * 2uz + 0]}
-					+ math::Vector<f32, 4>{upper[i * 2uz + 1, j * 2uz + 1]}
+				image[i, j] = 0.25f * (0.f
+			 	+ math::Vector<f32, 4>{upper[i * 2uz + 0, j * 2uz + 0]}
+			 	+ math::Vector<f32, 4>{upper[i * 2uz + 0, j * 2uz + 1]}
+			 	+ math::Vector<f32, 4>{upper[i * 2uz + 1, j * 2uz + 0]}
+			 	+ math::Vector<f32, 4>{upper[i * 2uz + 1, j * 2uz + 1]}
 				);
 			});
+			std::atomic_thread_fence(std::memory_order_release);
 		}
 	}
 
@@ -42,19 +46,50 @@ namespace mtt::texture {
 		eval::Context const& ctx,
 		Coordinate const& coord
 	) const noexcept -> math::Vector<f32, 4> {
-		auto mip = std::min(0uz, images.size() - 1uz);
-		auto& image = *images[mip];
+		auto du = math::Vector<f32, 2>{coord.dudx, coord.dudy};
+		auto dv = math::Vector<f32, 2>{coord.dvdx, coord.dvdy};
+		auto ul = math::length(du);
+		auto vl = math::length(dv);
+		auto sl = std::min(ul, vl);
+		auto ll = std::max(ul, vl);
 
+		if (sl * anisotropy < ll && sl > 0.f) {
+			auto s = ll / (sl * anisotropy);
+			sl *= s;
+			if (ul == sl) {
+				du *= s;
+			} else {
+				dv *= s;
+			}
+		} else if (sl == 0.f) {
+			return mip(coord, 0);
+		}
+
+		auto lod = std::max(0.f, images.size() - 1.f + std::log2(sl));
+		auto lodi = std::min(images.size() - 2, usize(lod));
+		return math::lerp(ewa(coord, lodi), ewa(coord, lodi + 1), lod - lodi);
+	}
+
+	auto Image_Vector_Texture::mip(Coordinate const& coord, i32 lod) const noexcept -> math::Vector<f32, 4> {
+		auto& image = *images[lod];
+		auto uv = coord.uv * math::Vector<usize, 2>{image.size} - 0.5f;
+		auto i = math::pmod(usize(std::round(uv[0])), image.size[0]);
+		auto j = math::pmod(usize(std::round(uv[1])), image.size[1]);
+		return math::Vector<f32, 4>{image[i, j]};
+	}
+
+	auto Image_Vector_Texture::ewa(Coordinate const& coord, i32 lod) const noexcept -> math::Vector<f32, 4> {
+		auto& image = *images[lod];
 		auto uv = coord.uv * math::Vector<usize, 2>{image.size} - 0.5f;
 		auto ux = coord.dudx * image.width;
 		auto uy = coord.dudy * image.height;
 		auto vx = coord.dvdx * image.width;
 		auto vy = coord.dvdy * image.height;
 
-		auto A = uy * uy + vy * vy;
+		auto A = uy * uy + vy * vy + 1.f;
 		auto B = -2.f * (ux * uy + vx * vy);
-		auto C = ux * ux + vx * vx;
-		auto F = math::sqrt(A * C -  B * B / 4.f);
+		auto C = ux * ux + vx * vx + 1.f;
+		auto F = A * C -  B * B / 4.f;
 		A = math::guarded_div(A, F);
 		B = math::guarded_div(B, F);
 		C = math::guarded_div(C, F);
@@ -116,8 +151,8 @@ namespace mtt::texture {
 					});
 
 					auto size = math::Vector<i32, 2>{image.size};
-					auto pi = (i + size[0]) % size[0];
-					auto pj = (j + size[1]) % size[1];
+					auto pi = math::pmod(i, size[0]);
+					auto pj = math::pmod(j, size[1]);
 
 					auto idx = std::min<usize>(r2 * ewa_lut.size(), ewa_lut.size() - 1);
 					auto w = ewa_lut[idx];
@@ -130,11 +165,11 @@ namespace mtt::texture {
 		return sum_t / sum_w;
 	}
 
-
 	Image_Spectrum_Texture::Image_Spectrum_Texture(
 		poly<image::Image> image,
-		color::Color_Space::Spectrum_Type type
-	) noexcept: image_tex(std::move(image)), type(type) {}
+		color::Color_Space::Spectrum_Type type,
+		f32 anisotropy
+	) noexcept: image_tex(std::move(image), anisotropy), type(type) {}
 
 
 	auto Image_Spectrum_Texture::sample(

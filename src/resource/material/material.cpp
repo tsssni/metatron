@@ -1,6 +1,7 @@
 #include <metatron/resource/material/material.hpp>
 #include <metatron/resource/bsdf/interface.hpp>
 #include <metatron/resource/spectra/constant.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::material {
 	auto Material::sample(
@@ -12,7 +13,7 @@ namespace mtt::material {
 		auto spec = ctx.spec;
 
 		auto null_spec = spec & spectra::Spectrum::spectra["zero"];
-		auto geometry_normal = math::Vector<f32, 3>{0.f, 0.f, 1.f};
+		auto geometry_normal = math::Vector<f32, 3>{0.5f, 0.5f, 1.f};
 		attr.spectra["spectrum"] = null_spec;
 		attr.spectra["emission"] = null_spec;
 		attr.vectors["normal"] = geometry_normal;
@@ -26,7 +27,7 @@ namespace mtt::material {
 		}
 
 		intr.emission = attr.spectra["emission"];
-		intr.normal = attr.vectors["normal"];
+		intr.normal = math::normalize(math::shrink(attr.vectors["normal"]) * 2.f - 1.f);
 
 		attr.inside = ctx.inside;
 		intr.bsdf = configurator(attr);
