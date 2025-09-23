@@ -14,6 +14,7 @@ namespace mtt::compo {
 	struct Image_Spectrum_Texture final {
 		std::string path;
 		color::Color_Space::Spectrum_Type type;
+		f32 anisotropy;
 		i32 image_spectrum{0};
 	};
 
@@ -37,6 +38,7 @@ namespace mtt::compo {
 
 	struct Image_Vector_Texture final {
 		std::string path;
+		f32 anisotropy;
 		i32 image_vector{0};
 	};
 

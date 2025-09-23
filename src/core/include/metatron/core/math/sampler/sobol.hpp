@@ -22,7 +22,7 @@ namespace mtt::math {
 		}
 		Sobol_Sampler(Sobol_Sampler const&) noexcept = default;
 
-		auto static init() -> void {
+		auto static init() noexcept -> void {
 			auto& fs = stl::filesystem::instance();
 			auto path = "sampler/sobol.bin";
 			MTT_OPT_OR_CALLBACK(data, fs.find(path), {
@@ -69,7 +69,7 @@ namespace mtt::math {
 		}
 	
 	private:
-		auto permute_idx() -> usize {
+		auto permute_idx() noexcept -> usize {
 			auto static const permutations = Matrix<byte, 24, 4>{
 				{0, 1, 2, 3},
 				{0, 1, 3, 2},
@@ -120,7 +120,7 @@ namespace mtt::math {
 			return idx;
 		}
 
-		auto sobol(usize idx, i32 dim, u32 hash) -> f32 {
+		auto sobol(usize idx, i32 dim, u32 hash) noexcept -> f32 {
 			auto x = 0u;
 			for (auto i = dim * sobol_matrix_size; idx != 0; idx >>= 1, i++) {
 				if (idx & 1) {

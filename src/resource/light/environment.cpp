@@ -1,4 +1,3 @@
-#include "metatron/resource/texture/texture.hpp"
 #include <metatron/resource/light/environment.hpp>
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/sphere.hpp>

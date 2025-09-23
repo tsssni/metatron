@@ -26,29 +26,54 @@ namespace mtt::shape {
 
 		for (auto i = 0uz; i < this->indices.size(); i++) {
 			auto prim = this->indices[i];
-			auto v = math::Vector<math::Vector<f32, 3>, 3>{
+			auto v = math::Matrix<f32, 3, 3>{
 				this->vertices[prim[0]],
 				this->vertices[prim[1]],
 				this->vertices[prim[2]],
 			};
-			auto n = math::Vector<math::Vector<f32, 3>, 3>{
+			auto n = math::Matrix<f32, 3, 3>{
 				this->normals[prim[0]],
 				this->normals[prim[1]],
 				this->normals[prim[2]],
 			};
-			auto uv = math::Vector<math::Vector<f32, 2>, 3>{
+			auto uv = math::Matrix<f32, 3, 2>{
 				this->uvs[prim[0]],
 				this->uvs[prim[1]],
 				this->uvs[prim[2]],
 			};
 
 			auto A = math::Matrix<f32, 2, 2>{uv[0] - uv[2], uv[1] - uv[2]};
-			auto dpduv = math::cramer(A,
+			auto dpduv_opt = math::cramer(A,
 				math::Matrix<f32, 2, 3>{v[0] - v[2], v[1] - v[2]}
-			).value();
-			auto dnduv = math::cramer(A,
+			);
+			// remove parallel dpduv
+			if (dpduv_opt) {
+				auto dpduv = dpduv_opt.value();
+				auto perp = math::cross(dpduv[0], dpduv[1]);
+				if (math::length(perp) == 0.f) {
+					dpduv_opt.reset();
+				}
+			}
+			// fallback to make sure normal is correct
+			if (!dpduv_opt) {
+				auto n = math::normalize(math::cross(v[2] - v[0], v[1] - v[0]));
+				dpduv_opt = math::orthogonalize(n);
+			}
+
+			auto dnduv_opt = math::cramer(A,
 				math::Matrix<f32, 2, 3>{n[0] - n[2], n[1] - n[2]}
-			).value();
+			);
+			if (!dnduv_opt) {
+				auto dn = math::normalize(math::cross(n[2] - n[0], n[1] - n[0]));
+				if (math::length(dn) == 0) {
+					dnduv_opt = math::Matrix<f32, 2, 3>{0.f};
+				} else {
+					dnduv_opt = math::orthogonalize(dn);
+				}
+			}
+
+			auto dpduv = dpduv_opt.value();
+			auto dnduv = dnduv_opt.value();
 			dpdu[i] = dpduv[0];
 			dpdv[i] = dpduv[1];
 			dndu[i] = dnduv[0];
@@ -130,8 +155,8 @@ namespace mtt::shape {
 		}
 
 		auto p = blerp(vertices, bary, idx);
-		auto n = math::normalize(blerp(normals, bary, idx));
-		auto tn = math::gram_schmidt(math::normalize(dpdu[idx]), n);
+		auto n = blerp(normals, bary, idx);
+		auto tn = math::gram_schmidt(dpdu[idx], n);
 		auto bn = math::cross(tn, n);
 		auto uv = blerp(uvs, bary, idx);
 
@@ -235,8 +260,8 @@ namespace mtt::shape {
 		auto bary = math::Vector<f32, 3>{1.f - b_1 - b_2, b_1, b_2};
 
 		auto p = ctx.r.o + t * d;
-		auto n = math::normalize(blerp(normals, bary, idx));
-		auto tn = math::gram_schmidt(math::normalize(dpdu[idx]), n);
+		auto n = blerp(normals, bary, idx);
+		auto tn = math::gram_schmidt(dpdu[idx], n);
 		auto bn = math::cross(tn, n);
 		auto uv = blerp(uvs, bary, idx);
 
@@ -307,19 +332,9 @@ namespace mtt::shape {
 	auto Mesh::from_path(std::string_view path) noexcept -> Mesh {
 		auto importer = Assimp::Importer{};
 		auto* scene = importer.ReadFile(path.data(), 0
-			| aiProcess_FindDegenerates
 			| aiProcess_FlipUVs
 			| aiProcess_FlipWindingOrder
-			| aiProcess_GenSmoothNormals
-			| aiProcess_GenUVCoords
-			| aiProcess_ImproveCacheLocality
-			| aiProcess_JoinIdenticalVertices
 			| aiProcess_MakeLeftHanded
-			| aiProcess_OptimizeGraph
-			| aiProcess_OptimizeMeshes
-			| aiProcess_RemoveRedundantMaterials
-			| aiProcess_TransformUVCoords
-			| aiProcess_Triangulate
 		);
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->HasMeshes()) {

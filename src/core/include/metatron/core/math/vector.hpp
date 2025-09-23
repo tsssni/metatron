@@ -290,4 +290,15 @@ namespace mtt::math {
 	auto constexpr gram_schmidt(Vector<T, size> const& y, Vector<T, size> const& x) noexcept -> Vector<T, size> {
 		return y - x * dot(x, y);
 	}
+
+	template<typename T, usize size>
+	requires std::floating_point<T>
+	auto constexpr orthogonalize(Vector<T, size> const& n) noexcept -> math::Matrix<T, 2, size> {
+		auto t = math::abs(n[0]) > 1.f - math::epsilon<f32>
+		? math::Vector<f32, 3>{1.f, 0.f, 0.f}
+		: math::Vector<f32, 3>{0.f, 1.f, 0.f};
+		auto tn = math::normalize(math::gram_schmidt(t, n));
+		auto bn = math::normalize(math::cross(tn, n));
+		return {tn, bn};
+	}
 }

@@ -573,22 +573,21 @@ namespace mtt::math {
 	requires std::floating_point<T>
 	auto constexpr cramer(
 		Matrix<T, n, n> const& a, 
-		Matrix<T, n, m> const& b,
-		bool check_degeneration = false
+		Matrix<T, n, m> const& b
 	) noexcept -> std::optional<Matrix<T, n, m>> {
 		T det_a = determinant(a);
-		if (check_degeneration && math::abs(det_a) < 1e-12f) {
+		if (math::abs(det_a) < 1e-9) {
 			return {};
 		}
 
 		auto result = Matrix<T, n, m>{};
 		if constexpr (n == 2) {
 			result[0] = (a[1][1] * b[0] - a[0][1] * b[1]) / det_a;
-			result[1] = (a[1][0] * b[0] - a[0][0] * b[1]) / det_a;
+			result[1] = (a[0][0] * b[1] - a[1][0] * b[0]) / det_a;
 		} else {
 			for (auto i = 0uz; i < n; i++) {
-				auto a_i = a;
 				for (auto j = 0uz; j < m; j++) {
+					auto a_i = a;
 					for (auto k = 0uz; k < n; k++) {
 						a_i[k][i] = b[k][j];
 					}

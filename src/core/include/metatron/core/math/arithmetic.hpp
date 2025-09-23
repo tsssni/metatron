@@ -9,6 +9,11 @@ namespace mtt::math {
 	}
 
 	template<typename T>
+	auto inline constexpr pmod(T x, T y) noexcept -> T {
+		return (x % y + y) % y;
+	}
+
+	template<typename T>
 	requires std::floating_point<T>
 	auto inline constexpr guarded_div(T x, T y) noexcept -> T {
 		return abs(y) < epsilon<T> ? 0.0 : x / y;
