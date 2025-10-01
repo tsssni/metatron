@@ -7,27 +7,27 @@
 #include <metatron/core/math/sampler/sampler.hpp>
 
 namespace mtt::monte_carlo {
-	struct Status final {
-		math::Ray_Differential ray_differential;
-		math::Ray_Differential default_differential;
-		math::Transform const* local_to_world;
-		math::Transform const* world_to_render;
-		math::Transform const* render_to_camera;
-		view<media::Medium> medium;
-		math::Vector<usize, 2> pixel;
-		usize sample_index;
-		usize max_depth;
-	};
+    struct Status final {
+        math::Ray_Differential ray_differential;
+        math::Ray_Differential default_differential;
+        math::Transform const* local_to_world;
+        math::Transform const* world_to_render;
+        math::Transform const* render_to_camera;
+        view<media::Medium> medium;
+        math::Vector<usize, 2> pixel;
+        usize sample_index;
+        usize max_depth;
+    };
 
-	MTT_POLY_METHOD(integrator_sample, sample);
+    MTT_POLY_METHOD(integrator_sample, sample);
 
-	struct Integrator final: pro::facade_builder
-	::add_convention<integrator_sample, auto (
-		Status initial_status,
-		view<accel::Acceleration> accel,
-		view<emitter::Emitter> emitter,
-		mut<math::Sampler> sampler
-	) const noexcept -> std::optional<spectra::Stochastic_Spectrum>>
-	::add_skill<pro::skills::as_view>
-	::build {};
+    struct Integrator final: pro::facade_builder
+    ::add_convention<integrator_sample, auto (
+        Status initial_status,
+        view<accel::Acceleration> accel,
+        view<emitter::Emitter> emitter,
+        mut<math::Sampler> sampler
+    ) const noexcept -> std::optional<spectra::Stochastic_Spectrum>>
+    ::add_skill<pro::skills::as_view>
+    ::build {};
 }
