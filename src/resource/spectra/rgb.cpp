@@ -2,21 +2,21 @@
 #include <metatron/core/math/arithmetic.hpp>
 
 namespace mtt::spectra {
-	Rgb_Spectrum::Rgb_Spectrum(
-		math::Vector<f32, 3> const& c,
-		f32 s,
-		view<Spectrum> illuminant
-	) noexcept : c({c[0], c[1], c[2]}), s(s), illuminant(illuminant) {}
+    Rgb_Spectrum::Rgb_Spectrum(
+        math::Vector<f32, 3> const& c,
+        f32 s,
+        view<Spectrum> illuminant
+    ) noexcept : c({c[0], c[1], c[2]}), s(s), illuminant(illuminant) {}
 
-	auto Rgb_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
-		auto sigmoid = [](f32 x) -> f32 {
-			if (std::isinf(x)) {
-				return x < 0.f ? 0.f : 1.f;
-			}
-			return 0.5f + x / (2.f * math::sqrt(1.f + math::sqr(x)));
-		};
-		return s
-		* sigmoid(math::polynomial(lambda, c))
-		* (illuminant ? (*illuminant)(lambda) : 1.f);
-	}
+    auto Rgb_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
+        auto sigmoid = [](f32 x) -> f32 {
+            if (std::isinf(x)) {
+                return x < 0.f ? 0.f : 1.f;
+            }
+            return 0.5f + x / (2.f * math::sqrt(1.f + math::sqr(x)));
+        };
+        return s
+        * sigmoid(math::polynomial(lambda, c))
+        * (illuminant ? (*illuminant)(lambda) : 1.f);
+    }
 }

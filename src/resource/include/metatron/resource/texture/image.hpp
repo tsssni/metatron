@@ -4,27 +4,43 @@
 #include <metatron/resource/texture/texture.hpp>
 
 namespace mtt::texture {
-	struct Image_Vector_Texture final {
-		std::vector<poly<image::Image>> images;
-		Image_Vector_Texture(poly<image::Image> image) noexcept;
-		auto sample(
-			eval::Context const& ctx,
-			Coordinate const& coord
-		) const noexcept -> math::Vector<f32, 4>;
-	};
+    struct Image_Vector_Texture final {
+        std::vector<poly<image::Image>> images;
 
-	struct Image_Spectrum_Texture final {
-		color::Color_Space::Spectrum_Type type;
-		Image_Spectrum_Texture(
-			poly<image::Image> image,
-			color::Color_Space::Spectrum_Type type
-		) noexcept;
-		auto sample(
-			eval::Context const& ctx,
-			Coordinate const& coord
-		) const noexcept -> spectra::Stochastic_Spectrum;
+        Image_Vector_Texture(
+            poly<image::Image> image
+        ) noexcept;
+        auto sample(
+            eval::Context const& ctx,
+            Sampler const& sampler,
+            Coordinate const& coord
+        ) const noexcept -> math::Vector<f32, 4>;
 
-	private:
-		Image_Vector_Texture image_tex;
-	};
+    private:
+        auto fetch(
+            math::Vector<i32, 3> texel, Sampler const& sampler
+        ) const noexcept -> math::Vector<f32, 4>;
+        auto nearest(
+            Coordinate const& coord, i32 lod, Sampler const& sampler
+        ) const noexcept -> math::Vector<f32, 4>;
+        auto linear(
+            Coordinate const& coord, i32 lod, Sampler const& sampler
+        ) const noexcept -> math::Vector<f32, 4>;
+    };
+
+    struct Image_Spectrum_Texture final {
+        color::Color_Space::Spectrum_Type type;
+        Image_Spectrum_Texture(
+            poly<image::Image> image,
+            color::Color_Space::Spectrum_Type type
+        ) noexcept;
+        auto sample(
+            eval::Context const& ctx,
+            Sampler const& sampler,
+            Coordinate const& coord
+        ) const noexcept -> spectra::Stochastic_Spectrum;
+
+    private:
+        Image_Vector_Texture image_tex;
+    };
 }

@@ -8,27 +8,27 @@
 #include <metatron/core/math/transform.hpp>
 
 namespace mtt::accel {
-	struct Divider final {
-		view<shape::Shape> shape{};
-		view<media::Medium> int_medium;
-		view<media::Medium> ext_medium;
-		view<light::Light> light{};
-		material::Material const* material{};
-		math::Transform const* local_to_world{};
-		math::Transform const* int_to_world{};
-		math::Transform const* ext_to_world{};
-		usize primitive{0uz};
-	};
+    struct Divider final {
+        view<shape::Shape> shape{};
+        view<media::Medium> int_medium;
+        view<media::Medium> ext_medium;
+        view<light::Light> light{};
+        material::Material const* material{};
+        math::Transform const* local_to_world{};
+        math::Transform const* int_to_world{};
+        math::Transform const* ext_to_world{};
+        usize primitive{0uz};
+    };
 
-	struct Interaction final {
-		Divider const* divider{nullptr};
-		std::optional<shape::Interaction> intr_opt;
-	};
+    struct Interaction final {
+        Divider const* divider{nullptr};
+        std::optional<shape::Interaction> intr_opt;
+    };
 
-	struct Acceleration final: pro::facade_builder
-	::add_convention<pro::operator_dispatch<"()">, auto (
-		math::Ray const& r
-	) const noexcept -> std::optional<Interaction>>
-	::add_skill<pro::skills::as_view>
-	::build {};
+    struct Acceleration final: pro::facade_builder
+    ::add_convention<pro::operator_dispatch<"()">, auto (
+        math::Ray const& r
+    ) const noexcept -> std::optional<Interaction>>
+    ::add_skill<pro::skills::as_view>
+    ::build {};
 }

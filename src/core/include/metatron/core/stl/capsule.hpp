@@ -2,61 +2,61 @@
 #include <functional>
 
 namespace mtt::stl {
-	template<typename T>
-	struct capsule {
-		template<typename... Args>
-		capsule(Args&&... args)
-		noexcept: impl(std::forward<Args>(args)...) {}
+    template<typename T>
+    struct capsule {
+        template<typename... Args>
+        capsule(Args&&... args)
+        noexcept: impl(std::forward<Args>(args)...) {}
 
-		struct Impl final {
-			template<typename... Args>
-			Impl(Args&&... args) noexcept:
-			impl(new typename T::Impl(std::forward<Args>(args)...)),
-			deleter([](void* impl) {
-				delete (typename T::Impl*)impl;
-			}) {}
+        struct Impl final {
+            template<typename... Args>
+            Impl(Args&&... args) noexcept:
+            impl(new typename T::Impl(std::forward<Args>(args)...)),
+            deleter([](void* impl) {
+                delete (typename T::Impl*)impl;
+            }) {}
 
-			~Impl() noexcept {
-				if (impl) {
-					deleter(impl);
-				}
-			}
+            ~Impl() noexcept {
+                if (impl) {
+                    deleter(impl);
+                }
+            }
 
-			Impl(Impl&& impl) noexcept {
-				*this = std::move(impl);
-			}
+            Impl(Impl&& impl) noexcept {
+                *this = std::move(impl);
+            }
 
-			auto operator=(Impl&& impl) noexcept {
-				if (impl) {
-					deleter(impl);
-				}
-				impl = impl.impl;
-				impl.impl = nullptr;
-				return *this;
-			}
+            auto operator=(Impl&& impl) noexcept {
+                if (impl) {
+                    deleter(impl);
+                }
+                impl = impl.impl;
+                impl.impl = nullptr;
+                return *this;
+            }
 
-			auto operator->() noexcept {
-				return (typename T::Impl*)impl;
-			}
+            auto operator->() noexcept {
+                return (typename T::Impl*)impl;
+            }
 
-			auto operator->() const noexcept {
-				return (typename T::Impl const*)impl;
-			}
+            auto operator->() const noexcept {
+                return (typename T::Impl const*)impl;
+            }
 
-			auto operator*() noexcept {
-				return *this->operator->();
-			}
+            auto operator*() noexcept {
+                return *this->operator->();
+            }
 
-			auto operator*() const noexcept {
-				return *this->operator->();
-			}
+            auto operator*() const noexcept {
+                return *this->operator->();
+            }
 
-		private:
-			void* impl;
-			std::function<void(void*)> deleter;
-		};
+        private:
+            void* impl;
+            std::function<void(void*)> deleter;
+        };
 
-	protected:
-		Impl impl;
-	};
+    protected:
+        Impl impl;
+    };
 }
