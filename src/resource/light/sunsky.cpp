@@ -275,7 +275,10 @@ namespace mtt::light {
 
             // clamp theta to give invalid direction reasonable result
             auto [theta, phi] = math::cartesian_to_unit_spherical(ctx.r.d);
-            theta = std::clamp(theta, math::epsilon<f32>, math::pi * 0.5f - math::epsilon<f32>);
+            theta = std::clamp(
+                theta < math::pi * 0.5f ? theta : math::pi - theta,
+                0.f, math::pi * 0.5f - 1e-2f
+            );
             auto wo = math::unit_spherical_to_cartesian({theta, phi});
             auto L = ctx.spec & spectra::Spectrum::spectra["zero"];
             L.value = math::foreach([&](f32 lambda, usize i) {
@@ -504,7 +507,7 @@ namespace mtt::light {
             * tgmm_theta_distr[idx].pdf(tgmm_theta)
             * tgmm_distr.pdf[idx];
             auto phi = tgmm_phi + phi_sun - math::pi * 0.5f;
-            auto theta = std::clamp(tgmm_theta, math::epsilon<f32>, math::pi * 0.5f - math::epsilon<f32>);
+            auto theta = std::clamp(tgmm_theta, 1e-2f, math::pi * 0.5f - 1e-2f);
 
             auto wi = math::unit_spherical_to_cartesian({theta, phi});
             auto cos_gamma = math::dot(wi, d);
