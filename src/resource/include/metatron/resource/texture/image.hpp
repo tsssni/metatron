@@ -6,31 +6,37 @@
 namespace mtt::texture {
     struct Image_Vector_Texture final {
         std::vector<poly<image::Image>> images;
-        f32 anisotropy;
 
         Image_Vector_Texture(
-            poly<image::Image> image,
-            f32 anisotropy
+            poly<image::Image> image
         ) noexcept;
         auto sample(
             eval::Context const& ctx,
+            Sampler const& sampler,
             Coordinate const& coord
         ) const noexcept -> math::Vector<f32, 4>;
 
     private:
-        auto mip(Coordinate const& coord, i32 lod) const noexcept -> math::Vector<f32, 4>;
-        auto ewa(Coordinate const& coord, i32 lod) const noexcept -> math::Vector<f32, 4>;
+        auto fetch(
+            math::Vector<i32, 3> texel, Sampler const& sampler
+        ) const noexcept -> math::Vector<f32, 4>;
+        auto nearest(
+            Coordinate const& coord, i32 lod, Sampler const& sampler
+        ) const noexcept -> math::Vector<f32, 4>;
+        auto linear(
+            Coordinate const& coord, i32 lod, Sampler const& sampler
+        ) const noexcept -> math::Vector<f32, 4>;
     };
 
     struct Image_Spectrum_Texture final {
         color::Color_Space::Spectrum_Type type;
         Image_Spectrum_Texture(
             poly<image::Image> image,
-            color::Color_Space::Spectrum_Type type,
-            f32 anisotropy
+            color::Color_Space::Spectrum_Type type
         ) noexcept;
         auto sample(
             eval::Context const& ctx,
+            Sampler const& sampler,
             Coordinate const& coord
         ) const noexcept -> spectra::Stochastic_Spectrum;
 

@@ -1,4 +1,3 @@
-#include "metatron/resource/texture/texture.hpp"
 #include <metatron/scene/daemon/material.hpp>
 #include <metatron/scene/compo/material.hpp>
 #include <metatron/scene/ecs/hierarchy.hpp>
@@ -47,12 +46,15 @@ namespace mtt::daemon {
                 } else if constexpr (std::is_same_v<T, compo::Physical_Bsdf>) {
                     return configure<bsdf::Physical_Bsdf>(material);
                 }
-            }, (compo.bsdf));
+            }, compo.bsdf);
 
             for (auto& [name, entity]: compo.spectrum_textures) {
                 if (!registry.any_of<poly<texture::Spectrum_Texture>>(entity)) {
-                    std::println("no spectrum texture {} in entity {}", name, hierarchy.path(entity));
+                    std::println("no spectrum texture {} in entity {}", name, ecs::to_path(entity));
                     std::abort();
+                }
+                if (!compo.samplers.contains(name)) {
+                    compo.samplers.emplace(name, "/sampler/default"_et);
                 }
                 material.spectrum_textures.emplace(
                     name,
@@ -62,12 +64,26 @@ namespace mtt::daemon {
 
             for (auto& [name, entity]: compo.vector_textures) {
                 if (!registry.any_of<poly<texture::Vector_Texture>>(entity)) {
-                    std::println("no vector texture {} in entity {}", name, hierarchy.path(entity));
+                    std::println("no vector texture {} in entity {}", name, ecs::to_path(entity));
                     std::abort();
+                }
+                if (!compo.samplers.contains(name)) {
+                    compo.samplers.emplace(name, "/sampler/default"_et);
                 }
                 material.vector_textures.emplace(
                     name,
                     registry.get<poly<texture::Vector_Texture>>(entity)
+                );
+            }
+
+            for (auto& [name, entity]: compo.samplers) {
+                if (!registry.any_of<poly<texture::Sampler>>(entity)) {
+                    std::println("no sampler {} in entity {}", name, ecs::to_path(entity));
+                    std::abort();
+                }
+                material.samplers.emplace(
+                    name,
+                    registry.get<poly<texture::Sampler>>(entity).get()
                 );
             }
 

@@ -14,15 +14,20 @@
 namespace mtt::daemon {
     auto Texture_Daemon::init() noexcept -> void {
         MTT_SERDE(Texture);
+        MTT_SERDE(Sampler);
         auto& hierarchy = *ecs::Hierarchy::instance;
         for (auto& [spec, _]: spectra::Spectrum::spectra) {
             hierarchy.attach<compo::Texture>(
-                hierarchy.create("/texture/" + spec),
+                ecs::to_entity("/texture/" + spec),
                 compo::Constant_Spectrum_Texture{
                     .spectrum = hierarchy.entity("/spectrum/" + spec),
                 }
             );
         }
+        hierarchy.attach<compo::Sampler>(
+            ecs::to_entity("/sampler/default"),
+            compo::Sampler{}
+        );
     }
 
     auto Texture_Daemon::update() noexcept -> void {
@@ -35,6 +40,14 @@ namespace mtt::daemon {
             return registry.any_of<compo::Texture>(entity);
         })
         | std::ranges::to<std::vector<ecs::Entity>>();
+
+        for (auto entity: registry.view<ecs::Dirty_Mark<compo::Sampler>>()) {
+            auto s = registry.get<compo::Sampler>(entity);
+            s.anisotropy = std::max(1.f, s.anisotropy);
+            s.min_lod = std::max(0.f, s.min_lod);
+            s.max_lod = std::max(s.min_lod, s.max_lod);
+            registry.emplace_or_replace<poly<texture::Sampler>>(entity, make_poly<texture::Sampler>(s));
+        }
 
         auto mutex = std::mutex{};
         stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{view.size()}, [&](auto idx) {
@@ -56,7 +69,7 @@ namespace mtt::daemon {
                                 std::abort();
                             });
                             return make_poly<texture::Spectrum_Texture, texture::Image_Spectrum_Texture>(
-                                image::Image::from_path(path), compo.type, compo.anisotropy
+                                image::Image::from_path(path), compo.type
                             );
                         } else if constexpr (std::is_same_v<T, compo::Checkerboard_Texture>) {
                             return make_poly<texture::Spectrum_Texture, texture::Checkerboard_Texture>(
@@ -82,7 +95,7 @@ namespace mtt::daemon {
                                 std::abort();
                             });
                             return make_poly<texture::Vector_Texture, texture::Image_Vector_Texture>(
-                                image::Image::from_path(path, true), compo.anisotropy
+                                image::Image::from_path(path, true)
                             );
                         }
                     }, compo::Vector_Texture{compo});

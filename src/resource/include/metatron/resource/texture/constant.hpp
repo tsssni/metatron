@@ -7,6 +7,7 @@ namespace mtt::texture {
 
         auto sample(
             eval::Context const& ctx,
+            Sampler const& sampler,
             Coordinate const& coord
         ) const noexcept -> spectra::Stochastic_Spectrum;
 
@@ -18,6 +19,7 @@ namespace mtt::texture {
         Constant_Vector_Texture(math::Vector<f32, 4> const& x) noexcept;
         auto sample(
             eval::Context const& ctx,
+            Sampler const& sampler,
             Coordinate const& coord
         ) const noexcept -> math::Vector<f32, 4>;
 

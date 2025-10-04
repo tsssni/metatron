@@ -1,4 +1,3 @@
-#include "metatron/resource/texture/texture.hpp"
 #include <metatron/scene/daemon/light.hpp>
 #include <metatron/scene/compo/light.hpp>
 #include <metatron/scene/ecs/hierarchy.hpp>
@@ -51,8 +50,16 @@ namespace mtt::daemon {
                         compo.falloff_end_theta
                     );
                 } else if constexpr (std::is_same_v<T, compo::Environment_Light>) {
+                    if (!registry.any_of<poly<texture::Sampler>>(compo.sampler)) {
+                        std::println(
+                            "no sampler for env map {} in entity {}",
+                            ecs::to_path(compo.env_map), ecs::to_path(compo.sampler)
+                        );
+                        std::abort();
+                    }
                     return make_poly<light::Light, light::Environment_Light>(
-                        registry.get<poly<texture::Spectrum_Texture>>(compo.env_map)
+                        registry.get<poly<texture::Spectrum_Texture>>(compo.env_map),
+                        registry.get<poly<texture::Sampler>>(compo.sampler).get()
                     );
                 } else if constexpr (std::is_same_v<T, compo::Sunsky_Light>) {
                     return make_poly<light::Light, light::Sunsky_Light>(

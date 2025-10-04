@@ -23,6 +23,7 @@ namespace mtt::compo {
 
     struct Environment_Light final {
         ecs::Entity env_map;
+        ecs::Entity sampler{"/sampler/default"_et};
         i32 environment{0};
     };
 

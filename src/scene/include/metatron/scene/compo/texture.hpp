@@ -1,6 +1,7 @@
 #pragma once
 #include <metatron/scene/ecs/entity.hpp>
 #include <metatron/scene/compo/spectrum.hpp>
+#include <metatron/resource/texture/texture.hpp>
 #include <metatron/resource/color/color-space.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <variant>
@@ -14,7 +15,6 @@ namespace mtt::compo {
     struct Image_Spectrum_Texture final {
         std::string path;
         color::Color_Space::Spectrum_Type type;
-        f32 anisotropy;
         i32 image_spectrum{0};
     };
 
@@ -38,7 +38,6 @@ namespace mtt::compo {
 
     struct Image_Vector_Texture final {
         std::string path;
-        f32 anisotropy;
         i32 image_vector{0};
     };
 
@@ -54,4 +53,27 @@ namespace mtt::compo {
         Constant_Vector_Texture,
         Image_Vector_Texture
     >;
+
+    using Sampler = texture::Sampler;
 }
+
+template<>
+struct glz::meta<mtt::texture::Sampler::Filter> {
+    using enum mtt::texture::Sampler::Filter;
+    auto constexpr static value = glz::enumerate(
+        none,
+        nearest,
+        linear
+    );
+};
+
+template<>
+struct glz::meta<mtt::texture::Sampler::Wrap> {
+    using enum mtt::texture::Sampler::Wrap;
+    auto constexpr static value = glz::enumerate(
+        repeat,
+        mirror,
+        edge,
+        border
+    );
+};

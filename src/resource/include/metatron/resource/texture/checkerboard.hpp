@@ -11,6 +11,7 @@ namespace mtt::texture {
 
         auto sample(
             eval::Context const& ctx,
+            Sampler const& sampler,
             Coordinate const& coord
         ) const noexcept -> spectra::Stochastic_Spectrum;
 

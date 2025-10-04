@@ -20,5 +20,6 @@ namespace mtt::compo {
         Bsdf bsdf;
         std::unordered_map<std::string, ecs::Entity> spectrum_textures;
         std::unordered_map<std::string, ecs::Entity> vector_textures;
+        std::unordered_map<std::string, ecs::Entity> samplers;
     };
 }

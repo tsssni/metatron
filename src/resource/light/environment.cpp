@@ -6,8 +6,9 @@
 
 namespace mtt::light {
     Environment_Light::Environment_Light(
-        view<texture::Spectrum_Texture> env_map
-    ) noexcept: env_map(env_map) {}
+        view<texture::Spectrum_Texture> env_map,
+        view<texture::Sampler> sampler
+    ) noexcept: env_map(env_map), sampler(sampler) {}
 
     auto Environment_Light::operator()(
         eval::Context const& ctx
@@ -15,7 +16,7 @@ namespace mtt::light {
         auto s = math::cartesian_to_unit_spherical(ctx.r.d);
         auto u = 1.f - s[1] / (2.f * math::pi);
         auto v = s[0] / math::pi;
-        auto spec = env_map->sample(ctx, {{u, v}});
+        auto spec = env_map->sample(ctx, *sampler, {{u, v}});
         return Interaction{
             .L = ctx.spec & (&spec),
             .wi = {}, .p = {}, .t = {},

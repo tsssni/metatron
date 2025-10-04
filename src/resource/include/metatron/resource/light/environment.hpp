@@ -7,7 +7,10 @@
 
 namespace mtt::light {
     struct Environment_Light final {
-        Environment_Light(view<texture::Spectrum_Texture> env_map) noexcept;
+        Environment_Light(
+            view<texture::Spectrum_Texture> env_map,
+            view<texture::Sampler> sampler
+        ) noexcept;
 
         auto operator()(
             eval::Context const& ctx
@@ -20,5 +23,6 @@ namespace mtt::light {
 
     private:
         view<texture::Spectrum_Texture> env_map;
+        view<texture::Sampler> sampler;
     };
 }

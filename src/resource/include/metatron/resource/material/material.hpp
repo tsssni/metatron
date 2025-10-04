@@ -26,6 +26,11 @@ namespace mtt::material {
             view<texture::Vector_Texture>
         > vector_textures;
 
+        std::unordered_map<
+            std::string,
+            view<texture::Sampler>
+        > samplers;
+
         auto sample(
             eval::Context const& ctx,
             texture::Coordinate const& coord

@@ -195,6 +195,14 @@ namespace mtt::math {
     }
 
     template<typename T, usize size>
+    requires std::floating_point<T>
+    auto constexpr round(Vector<T, size> const& x) noexcept -> Vector<T, size> {
+        return foreach([](T const& v, usize) noexcept -> T {
+            return std::round(v);
+        }, x);
+    }
+
+    template<typename T, usize size>
     requires requires(T a, T b) { a + b; }
     auto constexpr sum(Vector<T, size> const& x) noexcept -> T {
         auto y = T{};

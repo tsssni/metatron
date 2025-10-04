@@ -9,6 +9,7 @@ namespace mtt::texture {
 
     auto Checkerboard_Texture::sample(
         eval::Context const& ctx,
+        Sampler const& sampler,
         Coordinate const& coord
     ) const noexcept -> spectra::Stochastic_Spectrum {
         auto [u, v] = math::Vector<usize, 2>{coord.uv * uv_scale};

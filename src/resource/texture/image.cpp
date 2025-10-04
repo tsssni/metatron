@@ -6,9 +6,8 @@
 
 namespace mtt::texture {
     Image_Vector_Texture::Image_Vector_Texture(
-        poly<image::Image> image,
-        f32 anisotropy
-    ) noexcept: anisotropy(anisotropy) {
+        poly<image::Image> image
+    ) noexcept {
         auto size = math::Vector<usize, 2>{image->size};
         auto channels = image->size[2];
         auto stride = image->size[3];
@@ -44,6 +43,7 @@ namespace mtt::texture {
 
     auto Image_Vector_Texture::sample(
         eval::Context const& ctx,
+        Sampler const& sampler,
         Coordinate const& coord
     ) const noexcept -> math::Vector<f32, 4> {
         auto du = math::Vector<f32, 2>{coord.dudx, coord.dudy};
@@ -53,32 +53,89 @@ namespace mtt::texture {
         auto sl = std::min(ul, vl);
         auto ll = std::max(ul, vl);
 
-        if (sl * anisotropy < ll && sl > 0.f) {
-            auto s = ll / (sl * anisotropy);
+        auto c = coord;
+
+        if (sl * sampler.anisotropy < ll && sl > 0.f) {
+            auto s = ll / (sl * sampler.anisotropy);
             sl *= s;
             if (ul == sl) {
-                du *= s;
+                c.dudx *= s;
+                c.dudy *= s;
             } else {
-                dv *= s;
+                c.dvdx *= s;
+                c.dvdy *= s;
             }
         } else if (sl == 0.f) {
-            return mip(coord, 0);
+            return nearest(coord, sampler.min_lod + sampler.lod_bias, sampler);
         }
 
-        auto lod = std::max(0.f, images.size() - 1.f + std::log2(sl));
-        auto lodi = std::min(images.size() - 2, usize(lod));
-        return math::lerp(ewa(coord, lodi), ewa(coord, lodi + 1), lod - lodi);
+        auto l = std::max(ul * images[0]->size[0], vl * images[0]->size[1]);
+        auto f = l > 1.f ? sampler.min_filter : sampler.mag_filter;
+        auto filter = f == Sampler::Filter::nearest
+        ? &Image_Vector_Texture::nearest
+        : &Image_Vector_Texture::linear;
+
+        auto lod = std::min(sampler.max_lod, std::max(sampler.min_lod,
+            images.size() - 1.f + std::log2(sl) + sampler.lod_bias
+        ));
+        if (sampler.mip_filter == Sampler::Filter::none) {
+            return (this->*filter)(c, 0, sampler);
+        } else if (sampler.mip_filter == Sampler::Filter::nearest) {
+            auto lodi = std::min(images.size() - 1, usize(std::round(lod)));
+            return (this->*filter)(c, lodi, sampler);
+        } else {
+            auto lodi = std::min(images.size() - 2, usize(lod));
+            return math::lerp(
+                (this->*filter)(c, lodi, sampler),
+                (this->*filter)(c, lodi + 1, sampler),
+                lod - lodi
+            );
+        }
     }
 
-    auto Image_Vector_Texture::mip(Coordinate const& coord, i32 lod) const noexcept -> math::Vector<f32, 4> {
+
+    auto Image_Vector_Texture::fetch(
+        math::Vector<i32, 3> texel, Sampler const& sampler
+    ) const noexcept -> math::Vector<f32, 4> {
+        auto px = math::Vector<i32, 2>{texel};
+        auto lod = texel[2];
+        auto size = math::Vector<i32, 2>{images[lod]->size};
+
+        auto wrap = [](i32 x, i32 s, Sampler::Wrap w) -> i32 {
+            auto c = std::clamp(x, 0, s - 1);
+            if (c == x || w == Sampler::Wrap::edge) {
+                return c;
+            } else if (w == Sampler::Wrap::repeat) {
+                return math::pmod(x, s);
+            } else if (w == Sampler::Wrap::mirror) {
+                auto b = math::pmod(x / s, 2);
+                auto p = math::pmod(x, s);
+                return b == 0 ? p : s - 1 - p;
+            } else {
+                return s;
+            }
+        };
+
+        auto i = wrap(px[0], size[0], sampler.wrap_u);
+        auto j = wrap(px[1], size[1], sampler.wrap_v);
+        if (i == size[0] || j == size[1]) {
+            return sampler.border;
+        } else {
+            return math::Vector<f32, 4>{(*images[lod])[i, j]};
+        }
+    }
+
+    auto Image_Vector_Texture::nearest(
+        Coordinate const& coord, i32 lod, Sampler const& sampler
+    ) const noexcept -> math::Vector<f32, 4> {
         auto& image = *images[lod];
-        auto uv = coord.uv * math::Vector<usize, 2>{image.size} - 0.5f;
-        auto i = math::pmod(usize(std::round(uv[0])), image.size[0]);
-        auto j = math::pmod(usize(std::round(uv[1])), image.size[1]);
-        return math::Vector<f32, 4>{image[i, j]};
+        auto uv = math::round(coord.uv * math::Vector<usize, 2>{image.size} - 0.5f);
+        return fetch({uv, lod}, sampler);
     }
 
-    auto Image_Vector_Texture::ewa(Coordinate const& coord, i32 lod) const noexcept -> math::Vector<f32, 4> {
+    auto Image_Vector_Texture::linear(
+        Coordinate const& coord, i32 lod, Sampler const& sampler
+    ) const noexcept -> math::Vector<f32, 4> {
         auto& image = *images[lod];
         auto uv = coord.uv * math::Vector<usize, 2>{image.size} - 0.5f;
         auto ux = coord.dudx * image.width;
@@ -150,13 +207,9 @@ namespace mtt::texture {
                         0.0065472275f, 0.00433036685f, 0.0021481365f, 0.f,
                     });
 
-                    auto size = math::Vector<i32, 2>{image.size};
-                    auto pi = math::pmod(i, size[0]);
-                    auto pj = math::pmod(j, size[1]);
-
                     auto idx = std::min<usize>(r2 * ewa_lut.size(), ewa_lut.size() - 1);
                     auto w = ewa_lut[idx];
-                    sum_t += w * math::Vector<f32, 4>{image[pi, pj]};
+                    sum_t += w * fetch({i, j, lod}, sampler);
                     sum_w += w;
                 }
             }
@@ -167,16 +220,16 @@ namespace mtt::texture {
 
     Image_Spectrum_Texture::Image_Spectrum_Texture(
         poly<image::Image> image,
-        color::Color_Space::Spectrum_Type type,
-        f32 anisotropy
-    ) noexcept: image_tex(std::move(image), anisotropy), type(type) {}
+        color::Color_Space::Spectrum_Type type
+    ) noexcept: image_tex(std::move(image)), type(type) {}
 
 
     auto Image_Spectrum_Texture::sample(
         eval::Context const& ctx,
+        Sampler const& sampler,
         Coordinate const& coord
     ) const noexcept -> spectra::Stochastic_Spectrum {
-        auto rgba = image_tex.sample(ctx, coord);
+        auto rgba = image_tex.sample(ctx, sampler, coord);
         auto rgb_spec = image_tex.images.front()->color_space->to_spectrum(rgba, type);
         return ctx.spec & rgb_spec;
     }

@@ -19,11 +19,13 @@ namespace mtt::material {
         attr.vectors["normal"] = geometry_normal;
 
         for (auto const& [name, tex]: spectrum_textures) {
-            attr.spectra[name] = tex->sample(ctx, coord);
+            auto& s = *samplers.at(name);
+            attr.spectra[name] = tex->sample(ctx, s, coord);
         }
 
         for (auto const& [name, tex]: vector_textures) {
-            attr.vectors[name] = tex->sample(ctx, coord);
+            auto& s = *samplers.at(name);
+            attr.vectors[name] = tex->sample(ctx, s, coord);
         }
 
         intr.emission = attr.spectra["emission"];
