@@ -5,16 +5,17 @@
 namespace mtt::emitter {
     struct Divider final {
         view<light::Light> light;
-        math::Transform const* local_to_world;
+        view<math::Transform> local_to_world;
     };
 
     struct Interaction final {
-        Divider const* divider;
-        f32 pdf{0.f};
+        view<Divider> divider;
     };
 
     MTT_POLY_METHOD(emitter_sample, sample);
     MTT_POLY_METHOD(emitter_sample_infinite, sample_infinite);
+    MTT_POLY_METHOD(emitter_pdf, pdf);
+    MTT_POLY_METHOD(emitter_pdf_infinite, pdf_infinite);
 
     struct Emitter final: pro::facade_builder
     ::add_convention<pro::operator_dispatch<"()">, auto (
@@ -29,6 +30,12 @@ namespace mtt::emitter {
         eval::Context const& ctx,
         f32 u
     ) const noexcept -> std::optional<Interaction>>
+    ::add_convention<emitter_pdf, auto (
+        Divider const& divider
+    ) const noexcept -> f32>
+    ::add_convention<emitter_pdf_infinite, auto (
+        Divider const& divider
+    ) const noexcept -> f32>
     ::add_skill<pro::skills::as_view>
     ::build {};
 }

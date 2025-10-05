@@ -8,7 +8,8 @@ namespace mtt::light {
     ) noexcept: shape(shape), primitive(primitive) {}
 
     auto Area_Light::operator()(
-        eval::Context const& ctx
+        math::Ray const& r,
+        spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> std::optional<Interaction> {
         return {};
     }
@@ -24,8 +25,14 @@ namespace mtt::light {
             .wi = math::normalize(s_intr.p - ctx.r.o),
             .p = s_intr.p,
             .t = s_intr.t,
-            .pdf = s_intr.pdf
         };
+    }
+
+    auto Area_Light::pdf(
+        math::Ray const& r,
+        math::Vector<f32, 3> const& np
+    ) const noexcept -> f32 {
+        return shape->pdf(r, np, primitive);
     }
 
     auto Area_Light::flags() const noexcept -> Flags {

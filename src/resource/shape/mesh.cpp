@@ -169,7 +169,7 @@ namespace mtt::shape {
 
     auto Mesh::sample(
         eval::Context const& ctx,
-        math::Vector<f32, 2> const& u_0,
+        math::Vector<f32, 2> const& u,
         usize idx
     ) const noexcept -> std::optional<Interaction> {
         auto prim = indices[idx];
@@ -201,19 +201,6 @@ namespace mtt::shape {
         auto beta = math::angle(n_bc, -n_ab);
         auto gamma = math::angle(n_ca, -n_bc);
 
-        auto pdf = 1.f;
-        auto u = u_0;
-        if (ctx.n != math::Vector<f32, 3>{0.f}) {
-            auto distr = math::Bilinear_Distribution{
-                math::dot(ctx.n, b),
-                math::dot(ctx.n, a),
-                math::dot(ctx.n, b),
-                math::dot(ctx.n, c),
-            };
-            u = distr.sample(u_0);
-            pdf *= distr.pdf(u);
-        }
-
         auto A_pi = alpha + beta + gamma;
         auto A_1_pi = math::lerp(math::pi, A_pi, u[0]);
 
@@ -236,10 +223,6 @@ namespace mtt::shape {
         auto cos_bc2 = 1.f - u[1] * (1.f - cos_bc1);
         auto sin_bc2 = math::sqrt(1.f - cos_bc2 * cos_bc2);
         auto d = cos_bc2 * b + sin_bc2 * math::normalize(math::gram_schmidt(c_1, b));
-        pdf = math::guarded_div(
-            math::guarded_div(pdf, (A_pi - math::pi)),
-            (1.f - cos_bc1)
-        );
 
         auto v = math::Vector<math::Vector<f32, 3>, 3>{
             vertices[prim[0]],
@@ -269,7 +252,6 @@ namespace mtt::shape {
             p, n, tn, bn, uv, t,
             dpdu[idx], dpdv[idx],
             dndu[idx], dndv[idx],
-            pdf
         };
     }
 

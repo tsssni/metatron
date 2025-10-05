@@ -13,12 +13,16 @@ namespace mtt::texture {
         auto stride = image->size[3];
 
         auto max_mips = std::bit_width(math::max(size));
+        auto pdf_mip = -1;
         images.reserve(max_mips);
         images.push_back(std::move(image));
 
         for (auto mip = 1uz; mip < max_mips; mip++) {
             size[0] = std::max(1uz, size[0] >> 1uz);
             size[1] = std::max(1uz, size[1] >> 1uz);
+            if (pdf_mip == -1 && size[0] <= pdf_dim) {
+                pdf_mip = mip;
+            }
 
             images.push_back(make_poly<image::Image>(
                 math::Vector<usize, 4>{size, channels, stride},
@@ -39,10 +43,24 @@ namespace mtt::texture {
             });
             std::atomic_thread_fence(std::memory_order_release);
         }
+
+        auto pdf = math::Matrix<f32, pdf_dim / 2, pdf_dim>{};
+        auto pdf_size = math::Vector<usize, 2>{pdf_dim / 2, pdf_dim};
+        auto& pdf_image = *images[pdf_mip];
+
+        stl::scheduler::instance().sync_parallel(pdf_size, [this, &pdf, pdf_mip, pdf_size](auto px) {
+            auto uv = (math::Vector<f32, 2>{px} + 0.5f) / pdf_size;
+            auto spec = images[pdf_mip]->color_space->to_spectrum(
+                linear({uv}, pdf_mip, {}),
+                color::Color_Space::Spectrum_Type::illuminant
+            );
+            pdf[px[0]][px[1]] = spectra::Spectrum::spectra["CIE-Y"] | spec;
+        });
+        std::atomic_thread_fence(std::memory_order_release);
+        distr = decltype(distr){std::move(pdf), {0.f}, {1.f}};
     }
 
-    auto Image_Vector_Texture::sample(
-        eval::Context const& ctx,
+    auto Image_Vector_Texture::operator()(
         Sampler const& sampler,
         Coordinate const& coord
     ) const noexcept -> math::Vector<f32, 4> {
@@ -93,6 +111,18 @@ namespace mtt::texture {
         }
     }
 
+    auto Image_Vector_Texture::sample(
+        eval::Context const& ctx,
+        math::Vector<f32, 2> const& u
+    ) const noexcept -> math::Vector<f32, 2> {
+        return math::reverse(distr.sample(u));
+    }
+
+    auto Image_Vector_Texture::pdf(
+        math::Vector<f32, 2> const& uv
+    ) const noexcept -> f32 {
+        return distr.pdf(math::reverse(uv));
+    }
 
     auto Image_Vector_Texture::fetch(
         math::Vector<i32, 3> texel, Sampler const& sampler
@@ -224,13 +254,26 @@ namespace mtt::texture {
     ) noexcept: image_tex(std::move(image)), type(type) {}
 
 
+    auto Image_Spectrum_Texture::operator()(
+        Sampler const& sampler,
+        Coordinate const& coord,
+        spectra::Stochastic_Spectrum const& spec
+    ) const noexcept -> spectra::Stochastic_Spectrum {
+        auto rgba = image_tex(sampler, coord);
+        auto rgb_spec = image_tex.images.front()->color_space->to_spectrum(rgba, type);
+        return spec & rgb_spec;
+    }
+
     auto Image_Spectrum_Texture::sample(
         eval::Context const& ctx,
-        Sampler const& sampler,
-        Coordinate const& coord
-    ) const noexcept -> spectra::Stochastic_Spectrum {
-        auto rgba = image_tex.sample(ctx, sampler, coord);
-        auto rgb_spec = image_tex.images.front()->color_space->to_spectrum(rgba, type);
-        return ctx.spec & rgb_spec;
+        math::Vector<f32, 2> const& u
+    ) const noexcept -> math::Vector<f32, 2> {
+        return image_tex.sample(ctx, u);
+    }
+
+    auto Image_Spectrum_Texture::pdf(
+        math::Vector<f32, 2> const& uv
+    ) const noexcept -> f32 {
+        return image_tex.pdf(uv);
     }
 }

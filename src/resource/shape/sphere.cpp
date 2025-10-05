@@ -92,7 +92,6 @@ namespace mtt::shape {
             sdir = math::rotate(math::expand(sdir, 0.f), rot);
 
             MTT_OPT_OR_RETURN(intr, (*this)({ctx.r.o, sdir}), {});
-            intr.pdf = pdf(ctx.r, {}, idx);
             return intr;
         }
     }

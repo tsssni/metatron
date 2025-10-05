@@ -24,18 +24,18 @@ namespace mtt::math {
         ) noexcept {
             cdf[0] = 0.f;
             integral = 0.f;
-            this->low = low[n - 1];
-            this->high = high[n - 1];
+            this->low = low[0];
+            this->high = high[0];
 
             for (auto i = 0uz; i < first_dim; i++) {
                 if constexpr (n == 1uz) {
                     rows[i] = math::abs(matrix[i]);
                     cdf[i + 1] = rows[i];
                 } else {
-                    rows[i] = Element{std::move(matrix[i]), shrink(low), shrink(high)};
+                    rows[i] = Element{std::move(matrix[i]), cut(low), cut(high)};
                     cdf[i + 1] = rows[i].integral;
                 }
-                cdf[i + 1] = cdf[i + 1] * (this->high - this->low) / f32(first_dim) + cdf[i];
+                cdf[i + 1] += cdf[i];
             }
 
             integral = cdf.back();
@@ -50,26 +50,26 @@ namespace mtt::math {
 
         auto sample(Vector<f32, dimensions.size()> const& u) const noexcept -> Vector<f32, dimensions.size()> {
             auto idx = 1uz;
-            for (; idx < first_dim && cdf[idx] <= u[n - 1]; idx++) {}
+            for (; idx < first_dim && cdf[idx] <= u[0]; idx++) {}
             idx--;
 
-            auto t = guarded_div(u[n - 1] - cdf[idx], cdf[idx + 1uz] - cdf[idx]);
+            auto t = guarded_div(u[0] - cdf[idx], cdf[idx + 1uz] - cdf[idx]);
             auto p = math::lerp(low, high, (f32(idx) + t) / f32(first_dim));
 
             if constexpr (n == 1uz) {
                 return {p};
             } else {
-                return {rows[idx].sample(shrink(u)), p};
+                return math::consume(rows[idx].sample(cut(u)), p);
             }
         }
 
         auto pdf(Vector<f32, dimensions.size()> const& p) const noexcept -> f32 {
-            auto idx = usize((p[n - 1] - low) / (high - low) * f32(first_dim));
-            auto prob = (cdf[idx + 1] - cdf[idx]) * f32(first_dim) / (high - low);
+            auto idx = usize((p[0] - low) / (high - low) * f32(first_dim));
+            auto prob = cdf[idx + 1] - cdf[idx];
             if constexpr (n == 1uz) {
                 return prob;
             } else {
-                return rows[idx].pdf(shrink(p)) * prob;
+                return rows[idx].pdf(cut(p)) * prob;
             }
         }
 

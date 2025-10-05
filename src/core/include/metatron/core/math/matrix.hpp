@@ -379,6 +379,10 @@ namespace mtt::math {
             return mut<T>(&storage);
         };
 
+        auto constexpr data() const -> view<T> {
+            return view<T>(&storage);
+        };
+
         template<usize idx>
         auto constexpr get() const noexcept -> Element const& {
             static_assert(idx < first_dim, "index out of bounds");

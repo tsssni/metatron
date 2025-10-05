@@ -20,6 +20,8 @@ namespace mtt::emitter {
             eval::Context const& ctx,
             f32 u
         ) const noexcept -> std::optional<emitter::Interaction>;
+        auto pdf(Divider const& divider) const noexcept -> f32;
+        auto pdf_infinite(Divider const& divider) const noexcept -> f32;
 
     private:
         std::vector<Divider> dividers;

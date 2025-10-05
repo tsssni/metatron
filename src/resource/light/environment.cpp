@@ -3,6 +3,7 @@
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/quaternion.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::light {
     Environment_Light::Environment_Light(
@@ -11,18 +12,18 @@ namespace mtt::light {
     ) noexcept: env_map(env_map), sampler(sampler) {}
 
     auto Environment_Light::operator()(
-        eval::Context const& ctx
+        math::Ray const& r,
+        spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> std::optional<Interaction> {
-        auto s = math::cartesian_to_unit_spherical(ctx.r.d);
-        auto u = 1.f - s[1] / (2.f * math::pi);
-        auto v = s[0] / math::pi;
-        auto spec = env_map->sample(ctx, *sampler, {{u, v}});
+        auto [theta, phi] = math::cartesian_to_unit_spherical(r.d);
+        auto u = 1.f - phi / (2.f * math::pi);
+        auto v = theta / math::pi;
+        auto t = (*env_map)(*sampler, {{u, v}}, spec);
         return Interaction{
-            .L = ctx.spec & (&spec),
-            .wi = {}, .p = {}, .t = {},
-            .pdf = ctx.n != math::Vector<f32, 3>{0.f}
-            ? math::Cosine_Hemisphere_Distribution{}.pdf(math::dot(ctx.n, ctx.r.d))
-            : math::Sphere_Distribution{}.pdf()
+            .L = t,
+            .wi = r.d,
+            .p = r.o + r.d * 65504.f,
+            .t = 65504.f,
         };
     }
 
@@ -30,23 +31,22 @@ namespace mtt::light {
         eval::Context const& ctx,
         math::Vector<f32, 2> const& u
     ) const noexcept -> std::optional<Interaction> {
-        auto wi = math::Vector<f32, 3>{};
-        auto n = math::Vector<f32, 3>{0.f};
-        if (ctx.n != n) {
-            auto local_to_render = math::Quaternion<f32>::from_rotation_between({0.f, 1.f, 0.f}, ctx.n);
-            wi = math::Vector<f32, 3>{math::rotate(math::expand(
-                math::Cosine_Hemisphere_Distribution{}.sample(u), 0.f
-            ), local_to_render)};
-            n = ctx.n;
-        } else {
-            wi = math::Sphere_Distribution{}.sample(u);
-        }
-        
-        auto intr = (*this)({{ctx.r.o, wi}, n, ctx.spec}).value();
-        intr.wi = wi;
-        intr.p = ctx.r.o + 65504.f * wi;
-        intr.t = 65504.f;
-        return intr;
+        auto uv = env_map->sample(ctx, u);
+        auto phi = (1.f - uv[0]) * 2.f * math::pi;
+        auto theta = uv[1] * math::pi;
+        auto wi = math::unit_spherical_to_cartesian({theta, phi});
+        return (*this)({ctx.r.o, wi}, ctx.spec);
+    }
+
+    auto Environment_Light::pdf(
+        math::Ray const& r,
+        math::Vector<f32, 3> const& np
+    ) const noexcept -> f32 {
+        auto [theta, phi] = math::cartesian_to_unit_spherical(r.d);
+        auto u = 1.f - phi / (2.f * math::pi);
+        auto v = theta / math::pi;
+        auto sin_theta = std::sin(theta);
+        return math::guarded_div(env_map->pdf({u, v}), sin_theta);
     }
 
     auto Environment_Light::flags() const noexcept -> Flags {

@@ -23,13 +23,18 @@ namespace mtt::light {
         // Hosek atomosphere model: https://cgg.mff.cuni.cz/projects/SkylightModelling/
         // binary data: https://github.com/mitsuba-renderer/mitsuba-data/tree/master/sunsky/output
         auto operator()(
-            eval::Context const& ctx
+            math::Ray const& r,
+            spectra::Stochastic_Spectrum const& spec
         ) const noexcept -> std::optional<Interaction>;
         // TGMM sky sampling: https://diglib.eg.org/items/b3f1efca-1d13-44d0-ad60-741c4abe3d21
         auto sample(
             eval::Context const& ctx,
             math::Vector<f32, 2> const& u
         ) const noexcept -> std::optional<Interaction>;
+        auto pdf(
+            math::Ray const& r,
+            math::Vector<f32, 3> const& np
+        ) const noexcept -> f32;
         auto flags() const noexcept -> Flags;
     };
 }
