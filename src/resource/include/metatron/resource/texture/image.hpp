@@ -5,8 +5,6 @@
 #include <metatron/core/math/distribution/piecewise.hpp>
 
 namespace mtt::texture {
-    auto constexpr pdf_dim = 256uz;
-
     struct Image_Vector_Texture final {
         std::vector<poly<image::Image>> images;
 
@@ -37,7 +35,7 @@ namespace mtt::texture {
             Coordinate const& coord, i32 lod, Sampler const& sampler
         ) const noexcept -> math::Vector<f32, 4>;
 
-        math::Piecewise_Distribution<pdf_dim / 2, pdf_dim> distr;
+        math::Piecewise_Distribution<f32, 2> distr;
     };
 
     struct Image_Spectrum_Texture final {

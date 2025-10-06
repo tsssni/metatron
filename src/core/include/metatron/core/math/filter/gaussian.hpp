@@ -15,8 +15,9 @@ namespace mtt::math {
                     matrix[j][i] = math::abs((*this)({x, y}));
                 }
             }
-            piecewise = Piecewise_Distribution<64, 64>{
-                std::move(matrix),
+            piecewise = Piecewise_Distribution<f32, 2>{
+                std::span{matrix.data(), matrix.size()},
+                {64, 64},
                 {-radius[1], -radius[0]},
                 {radius[1], radius[0]}
             };
@@ -36,7 +37,7 @@ namespace mtt::math {
         }
 
     private:
-        Piecewise_Distribution<64, 64> piecewise;
+        Piecewise_Distribution<f32, 2> piecewise;
         Vector<f32, 2> radius;
         f32 sigma;
     };

@@ -76,6 +76,8 @@ namespace mtt::media {
 
         auto to_local(math::Vector<i32, 3> const& ijk) const noexcept -> math::Vector<f32, 3> { return majorant_grid.to_local(ijk); }
         auto to_index(math::Vector<f32, 3> const& pos) const noexcept -> math::Vector<i32, 3> { return majorant_grid.to_index(pos); }
+        auto inside(math::Vector<i32, 3> const& pos) const noexcept -> bool { return majorant_grid.inside(pos); }
+        auto inside(math::Vector<f32, 3> const& pos) const noexcept -> bool { return majorant_grid.inside(pos); }
         auto bounding_box() const noexcept -> math::Bounding_Box { return majorant_grid.bounding_box(); }
         auto bounding_box(math::Vector<f32, 3> const& pos) const noexcept -> math::Bounding_Box { return majorant_grid.bounding_box(pos); }
         auto bounding_box(math::Vector<i32, 3> const& ijk) const noexcept -> math::Bounding_Box { return majorant_grid.bounding_box(ijk); }

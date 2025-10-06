@@ -63,6 +63,7 @@ namespace mtt::daemon {
 
             auto rd = std::random_device{};
             auto seed = rd();
+            std::println("seed: {}", seed);
             registry.emplace<poly<math::Sampler>>(entity,
             std::visit([&](auto&& compo) -> poly<math::Sampler> {
                 using T = std::decay_t<decltype(compo)>;

@@ -179,6 +179,19 @@ namespace mtt::math {
     }
 
     template<typename T, usize size>
+    auto constexpr minvi(Vector<T, size> const& x) noexcept -> std::tuple<T, usize> {
+        auto y = x[0];
+        auto z = 0uz;
+        for (auto i = 1uz; i < size; i++) {
+            if (x[i] < y) {
+                y = x[i];
+                z = i;
+            }
+        }
+        return std::make_tuple(y, z);
+    }
+
+    template<typename T, usize size>
     requires std::totally_ordered<T>
     auto constexpr max(Vector<T, size> const& x) noexcept -> T {
         auto y = x[0];
@@ -199,6 +212,19 @@ namespace mtt::math {
     auto constexpr maxi(Vector<T, size> const& x) noexcept -> usize {
         auto const& x_arr = std::array<T, size>(x);
         return std::ranges::distance(x_arr.begin(), std::ranges::max_element(x_arr));
+    }
+
+    template<typename T, usize size>
+    auto constexpr maxvi(Vector<T, size> const& x) noexcept -> std::tuple<T, usize> {
+        auto y = x[0];
+        auto z = 0uz;
+        for (auto i = 1uz; i < size; i++) {
+            if (x[i] > y) {
+                y = x[i];
+                z = i;
+            }
+        }
+        return std::make_tuple(y, z);
     }
 
     template<typename T, usize size>

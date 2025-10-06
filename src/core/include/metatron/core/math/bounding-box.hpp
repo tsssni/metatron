@@ -10,16 +10,15 @@ namespace mtt::math {
     };
 
     auto inline constexpr inside(math::Vector<f32, 3> const& p, Bounding_Box const& bbox) noexcept -> bool {
-        auto in = true;
-        for (auto i = 0uz; i < 3; i++) {
-            in = in
-            && p[i] - bbox.p_min[i] > epsilon<f32>
-            && -p[i] + bbox.p_max[i] > epsilon<f32>;
-        }
-        return in;
+        return math::all([](f32 x, f32 y, f32 z, auto) {
+            return x >= y && x < z;
+        }, p, bbox.p_min, bbox.p_max);
     }
 
-    auto inline constexpr hit(Ray const& r, Bounding_Box const& bbox, bool back = false) noexcept -> std::optional<f32> {
+    auto inline constexpr hit(
+        Ray const& r,
+        Bounding_Box const& bbox
+    ) noexcept -> std::optional<math::Vector<f32, 2>> {
         auto hit_min = (bbox.p_min - r.o) / r.d;
         auto hit_max = (bbox.p_max - r.o) / r.d;
         for (auto i = 0uz; i < 3uz; i++) {
@@ -36,7 +35,31 @@ namespace mtt::math {
         if (t_exit < -epsilon<f32> || t_enter > t_exit + epsilon<f32>) {
             return {};
         } else {
-            return (back || (t_enter > epsilon<f32>)) ? t_enter : t_exit;
+            return math::Vector<f32, 2>{t_enter, t_exit};
+        }
+    }
+
+    auto inline constexpr hitvi(
+        Ray const& r,
+        Bounding_Box const& bbox
+    ) noexcept -> std::optional<std::tuple<f32, f32, usize, usize>> {
+        auto hit_min = (bbox.p_min - r.o) / r.d;
+        auto hit_max = (bbox.p_max - r.o) / r.d;
+        for (auto i = 0uz; i < 3uz; i++) {
+            if (math::abs(r.d[i]) < epsilon<f32>) {
+                hit_min[i] = -inf<f32>;
+                hit_max[i] = +inf<f32>;
+            } else if (hit_min[i] > hit_max[i]) {
+                std::swap(hit_min[i], hit_max[i]);
+            }
+        }
+
+        auto [t_enter, i_enter] = maxvi(hit_min);
+        auto [t_exit, i_exit] = minvi(hit_max);
+        if (t_exit < -epsilon<f32> || t_enter > t_exit + epsilon<f32>) {
+            return {};
+        } else {
+            return std::make_tuple(t_enter, t_exit, i_enter, i_exit);
         }
     }
 

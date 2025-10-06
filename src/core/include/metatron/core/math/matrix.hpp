@@ -13,7 +13,6 @@ namespace mtt::math {
     struct Matrix;
 
     template<typename T, usize first_dim, usize... rest_dims>
-    requires (first_dim > 0 && (... && (rest_dims > 0)))
     struct Matrix<T, first_dim, rest_dims...> final {
         using Element = std::conditional_t<sizeof...(rest_dims) == 0, T, Matrix<T, rest_dims...>>;
         auto static constexpr dimensions = std::array<usize, 1 + sizeof...(rest_dims)>{first_dim, rest_dims...};
@@ -382,6 +381,14 @@ namespace mtt::math {
         auto constexpr data() const -> view<T> {
             return view<T>(&storage);
         };
+
+        auto constexpr size() const -> usize {
+            auto s = 1uz;
+            for (auto d: dimensions) {
+                s *= d;
+            }
+            return s;
+        }
 
         template<usize idx>
         auto constexpr get() const noexcept -> Element const& {

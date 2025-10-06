@@ -3,7 +3,7 @@
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/quaternion.hpp>
-#include <metatron/core/stl/print.hpp>
+#include <metatron/core/math/distribution/sphere.hpp>
 
 namespace mtt::light {
     Environment_Light::Environment_Light(
@@ -45,8 +45,8 @@ namespace mtt::light {
         auto [theta, phi] = math::cartesian_to_unit_spherical(r.d);
         auto u = 1.f - phi / (2.f * math::pi);
         auto v = theta / math::pi;
-        auto sin_theta = std::sin(theta);
-        return math::guarded_div(env_map->pdf({u, v}), sin_theta);
+        auto J = 2.f * math::sqr(math::pi) * std::sin(theta);
+        return math::guarded_div(env_map->pdf({u, v}), J);
     }
 
     auto Environment_Light::flags() const noexcept -> Flags {

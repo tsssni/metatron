@@ -8,21 +8,25 @@ namespace mtt::texture {
     Image_Vector_Texture::Image_Vector_Texture(
         poly<image::Image> image
     ) noexcept {
-        auto size = math::Vector<usize, 2>{image->size};
+        auto size = math::Vector<usize, 2>(image->size);
         auto channels = image->size[2];
         auto stride = image->size[3];
 
+        auto pdf = std::vector<f32>(math::prod(size));
+        stl::scheduler::instance().sync_parallel(size, [&image, &pdf, size](auto px) mutable {
+            auto c = math::Vector<f32, 4>{(*image)[px[0], px[1]]};
+            pdf[px[0] + px[1] * size[0]] = math::avg(math::shrink(c));
+        });
+        std::atomic_thread_fence(std::memory_order_release);
+        distr = {std::span{pdf}, math::reverse(size), {0.f}, {1.f}};
+
         auto max_mips = std::bit_width(math::max(size));
-        auto pdf_mip = -1;
         images.reserve(max_mips);
         images.push_back(std::move(image));
 
         for (auto mip = 1uz; mip < max_mips; mip++) {
             size[0] = std::max(1uz, size[0] >> 1uz);
             size[1] = std::max(1uz, size[1] >> 1uz);
-            if (pdf_mip == -1 && size[0] <= pdf_dim) {
-                pdf_mip = mip;
-            }
 
             images.push_back(make_poly<image::Image>(
                 math::Vector<usize, 4>{size, channels, stride},
@@ -43,21 +47,6 @@ namespace mtt::texture {
             });
             std::atomic_thread_fence(std::memory_order_release);
         }
-
-        auto pdf = math::Matrix<f32, pdf_dim / 2, pdf_dim>{};
-        auto pdf_size = math::Vector<usize, 2>{pdf_dim / 2, pdf_dim};
-        auto& pdf_image = *images[pdf_mip];
-
-        stl::scheduler::instance().sync_parallel(pdf_size, [this, &pdf, pdf_mip, pdf_size](auto px) {
-            auto uv = (math::Vector<f32, 2>{px} + 0.5f) / pdf_size;
-            auto spec = images[pdf_mip]->color_space->to_spectrum(
-                linear({uv}, pdf_mip, {}),
-                color::Color_Space::Spectrum_Type::illuminant
-            );
-            pdf[px[0]][px[1]] = spectra::Spectrum::spectra["CIE-Y"] | spec;
-        });
-        std::atomic_thread_fence(std::memory_order_release);
-        distr = decltype(distr){std::move(pdf), {0.f}, {1.f}};
     }
 
     auto Image_Vector_Texture::operator()(

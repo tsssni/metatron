@@ -66,4 +66,10 @@ namespace mtt::math {
         auto y = usize(x);
         return std::bit_width(y) - 1uz;
     }
+
+    template<typename T>
+    requires std::floating_point<T> || std::integral<T>
+    auto constexpr sign(T x) noexcept -> i32 {
+        return (x > 0) - (x < 0);
+    }
 }

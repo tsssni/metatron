@@ -163,6 +163,7 @@ namespace mtt::daemon {
 
         stl::scheduler::instance().sync_parallel(compo.image_size, [&](math::Vector<usize, 2> const& px) {
             for (auto n = 0uz; n < compo.spp; n++) {
+                // if (px != math::Vector<usize, 2>{444, 500}) return;
                 auto sp = sampler;
                 MTT_OPT_OR_CALLBACK(s, camera.sample(px, n, sp), {
                     std::println("ray generation failed");
