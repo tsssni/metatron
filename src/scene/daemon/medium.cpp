@@ -61,21 +61,15 @@ namespace mtt::daemon {
                             registry.get<poly<spectra::Spectrum>>(compo.sigma_e)
                         );
                     } else if constexpr (std::is_same_v<T, compo::Grid_Medium>) {
-                        using Nanovdb_Grid = media::Nanovdb_Grid<
-                            f32,
-                            media::grid_size,
-                            media::grid_size,
-                            media::grid_size
-                        >;
                         MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(compo.path), {
                             std::println("medium {} not exists", compo.path);
                             std::abort();
                         });
-                        registry.emplace<poly<media::Medium_Grid>>(entity,
-                            make_poly<media::Medium_Grid, Nanovdb_Grid>(path)
+                        registry.emplace<poly<math::Grid<f32>>>(entity,
+                            make_poly<math::Grid<f32>, media::Nanovdb_Grid<f32>>(path, compo.dimensions)
                         );
                         return make_poly<media::Medium, media::Grid_Medium>(
-                            registry.get<poly<media::Medium_Grid>>(entity),
+                            registry.get<poly<math::Grid<f32>>>(entity),
                             std::move(phase),
                             registry.get<poly<spectra::Spectrum>>(compo.sigma_a),
                             registry.get<poly<spectra::Spectrum>>(compo.sigma_s),

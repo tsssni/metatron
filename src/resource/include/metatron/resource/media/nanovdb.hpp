@@ -33,17 +33,16 @@ namespace mtt::media {
     template<typename T>
     using Nanovdb_Sampler = nanovdb::math::SampleFromVoxels<nanovdb::NanoTree<T>, 1, false>;
 
-    template<typename T, usize x, usize y, usize z>
+    template<typename T>
     struct Nanovdb_Grid final {
-        auto static constexpr dimensions = math::Vector<usize, 3>{x, y, z};
-
         Nanovdb_Grid(
-            std::string_view path
+            std::string_view path,
+            math::Vector<usize, 3> const& dimensions
         ) noexcept:
         handle(nanovdb::io::readGrid(std::string{path})),
         nanovdb_grid(handle.grid<T>()),
         sampler(nanovdb_grid->tree()),
-        majorant_grid(from_nanovdb(nanovdb_grid->worldBBox())),
+        majorant_grid(from_nanovdb(nanovdb_grid->worldBBox()), dimensions),
         background(
             sampler(nanovdb_grid->worldToIndex(
                 to_nanovdb(majorant_grid.bounding_box().p_min - 1.f)
@@ -51,7 +50,7 @@ namespace mtt::media {
         ) {
             auto& root = nanovdb_grid->tree().root();
             stl::scheduler::instance().sync_parallel(
-                majorant_grid.dimensions,
+                majorant_grid.dimensions(),
                 [&](math::Vector<usize, 3> const& xyz) {
                     auto ijk = math::Vector<i32, 3>{xyz};
                     auto voxel_bbox = majorant_grid.bounding_box(ijk);
@@ -76,6 +75,7 @@ namespace mtt::media {
 
         auto to_local(math::Vector<i32, 3> const& ijk) const noexcept -> math::Vector<f32, 3> { return majorant_grid.to_local(ijk); }
         auto to_index(math::Vector<f32, 3> const& pos) const noexcept -> math::Vector<i32, 3> { return majorant_grid.to_index(pos); }
+        auto dimensions() const noexcept -> math::Vector<usize, 3> { return majorant_grid.dimensions(); }
         auto inside(math::Vector<i32, 3> const& pos) const noexcept -> bool { return majorant_grid.inside(pos); }
         auto inside(math::Vector<f32, 3> const& pos) const noexcept -> bool { return majorant_grid.inside(pos); }
         auto bounding_box() const noexcept -> math::Bounding_Box { return majorant_grid.bounding_box(); }
@@ -86,7 +86,7 @@ namespace mtt::media {
             return sampler(nanovdb_grid->worldToIndex(to_nanovdb(pos)));
         }
         auto operator[](math::Vector<i32, 3> const& ijk) noexcept -> T& {
-            if (ijk == clamp(ijk, math::Vector<i32, 3>{0}, math::Vector<i32, 3>{x - 1, y - 1, z - 1})) {
+            if (majorant_grid.inside(ijk)) {
                 return majorant_grid[ijk];
             } else {
                 return background;
@@ -100,7 +100,7 @@ namespace mtt::media {
         nanovdb::GridHandle<> handle;
         nanovdb::Grid<nanovdb::NanoTree<T>> const* nanovdb_grid;
         Nanovdb_Sampler<T> sampler;
-        math::Uniform_Grid<T, x, y, z> majorant_grid;
+        math::Uniform_Grid<T> majorant_grid;
         T background;
     };
 }

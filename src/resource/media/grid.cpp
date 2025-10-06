@@ -5,7 +5,7 @@
 
 namespace mtt::media {
     Grid_Medium::Grid_Medium(
-        view<Medium_Grid> grid,
+        view<math::Grid<f32>> grid,
         poly<phase::Phase_Function> phase,
         view<spectra::Spectrum> sigma_a,
         view<spectra::Spectrum> sigma_s,
@@ -70,7 +70,7 @@ namespace mtt::media {
             );
             r.o = r.o + t_enter * r.d;
             cell = math::clamp<i32, 3>(
-                grid->to_index(r.o), math::Vector<i32, 3>{0}, Medium_Grid::dimensions - 1
+                grid->to_index(r.o), math::Vector<i32, 3>{0}, grid->dimensions() - 1
             );
         }
         update_majorant(t_max);
