@@ -96,10 +96,8 @@ namespace mtt::media {
                     r.o,
                     phase,
                     t_max,
-                    transmittance.value[0],
                     transmittance,
-                    transmittance,
-                    {}, {}, {}, {}, {}
+                    {}, {}, {}, {}, {},
                 };
             } else if (true
             && t_boundary > t_cell
@@ -117,8 +115,6 @@ namespace mtt::media {
                     r.o,
                     phase,
                     t_transmitted,
-                    spectra_pdf.value[0],
-                    spectra_pdf,
                     transmittance,
                     density * sigma_a,
                     density * sigma_s,

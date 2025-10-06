@@ -49,9 +49,9 @@ namespace mtt::texture {
     ) const noexcept -> f32 {
         auto [u, v] = math::Vector<usize, 2>{uv * uv_scale};
         if ((u + v) % 2 == 0) {
-            return w_x;
+            return w_x / math::prod(uv_scale);
         } else {
-            return w_y;
+            return w_y / math::prod(uv_scale);
         }
     }
 }

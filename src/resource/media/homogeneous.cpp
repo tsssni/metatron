@@ -39,8 +39,6 @@ namespace mtt::media {
             ctx.r.o + ctx.r.d * t,
             phase,
             t,
-            pdf,
-            t < t_max ? sigma_maj * transmittance : transmittance,
             transmittance,
             sigma_a,
             sigma_s,

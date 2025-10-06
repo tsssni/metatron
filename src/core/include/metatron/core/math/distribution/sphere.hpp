@@ -11,7 +11,7 @@ namespace mtt::math {
             auto cos_theta = 1.f - 2.f * u[0];
             auto sin_theta = math::sqrt(1 - cos_theta * cos_theta);
             auto phi = 2.f * pi * u[1];
-            return {sin_theta * std::cosf(phi), cos_theta, sin_theta * std::sin(phi)};
+            return {sin_theta * std::cos(phi), cos_theta, sin_theta * std::sin(phi)};
         }
 
         auto pdf() const noexcept -> f32 {

@@ -25,19 +25,20 @@ namespace mtt::math {
             this->high = high[0];
 
             dim = dimensions[0];
+            delta = (this->high - this->low) / dim;
             rows.resize(dim);
             cdf.resize(dim + 1);
-            auto size = math::prod(dimensions) / dim;
+            auto size = prod(dimensions) / dim;
 
             for (auto i = 0uz; i < dim; i++) {
                 if constexpr (n == 1uz) {
-                    rows[i] = math::abs(data[i]);
+                    rows[i] = abs(data[i]);
                     cdf[i + 1] = rows[i];
                 } else {
                     rows[i] = Element{std::span{&data[i * size], size}, cut(dimensions), cut(low), cut(high)};
                     cdf[i + 1] = rows[i].integral;
                 }
-                cdf[i + 1] += cdf[i];
+                cdf[i + 1] = cdf[i + 1] * delta + cdf[i];
             }
 
             integral = cdf.back();
@@ -55,22 +56,22 @@ namespace mtt::math {
             for (; idx < dim && cdf[idx] <= u[0]; idx++) {}
             idx--;
 
-            auto t = guarded_div(u[0] - cdf[idx], cdf[idx + 1uz] - cdf[idx]);
-            auto p = math::lerp(low, high, (T(idx) + t) / T(dim));
+            auto du = guarded_div(u[0] - cdf[idx], cdf[idx + 1uz] - cdf[idx]);
+            auto p = lerp(low, high, (T(idx) + du) / T(dim));
 
             if constexpr (n == 1uz) {
                 return {p};
             } else {
-                return math::consume(rows[idx].sample(cut(u)), p);
+                return consume(rows[idx].sample(cut(u)), p);
             }
         }
 
         auto pdf(Vector<T, n> const& p) const noexcept -> T {
             auto idx = std::clamp(
-                usize((p[0] - low) / (high - low) * T(dim)),
+                usize((p[0] - low) / delta),
                 0uz, dim - 1uz
             );
-            auto prob = (cdf[idx + 1] - cdf[idx]) / ((high - low) / T(dim));
+            auto prob = (cdf[idx + 1] - cdf[idx]) / delta;
             if constexpr (n == 1uz) {
                 return prob;
             } else {
@@ -85,6 +86,7 @@ namespace mtt::math {
         usize dim;
         T low{};
         T high{};
+        T delta{};
         T integral{};
 
         template<typename U, usize m>

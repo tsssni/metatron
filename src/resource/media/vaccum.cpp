@@ -11,10 +11,8 @@ namespace mtt::media {
             ctx.r.o + t_max * ctx.r.d,
             {},
             t_max,
-            1.f,
             transmittance,
-            transmittance,
-            {}, {}, {}, {}, {}
+            {}, {}, {}, {}, {},
         };
     }
 }

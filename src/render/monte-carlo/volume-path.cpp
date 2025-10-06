@@ -4,7 +4,6 @@
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/plane.hpp>
 #include <metatron/core/stl/optional.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::monte_carlo {
     auto Volume_Path_Integrator::sample(
@@ -194,10 +193,14 @@ namespace mtt::monte_carlo {
                     l_intr.t -= m_intr.t;
 
                     auto hit = m_intr.t >= intr.t;
+                    auto spectra_pdf = hit
+                    ? m_intr.transmittance
+                    : m_intr.sigma_maj * m_intr.transmittance;
+                    auto flight_pdf = spectra_pdf.value[0];
 
-                    gamma *= m_intr.transmittance / m_intr.pdf;
-                    mis_d *= m_intr.spectra_pdf / m_intr.pdf;
-                    mis_l *= m_intr.spectra_pdf / m_intr.pdf;
+                    gamma *= m_intr.transmittance / flight_pdf;
+                    mis_d *= spectra_pdf / flight_pdf;
+                    mis_l *= spectra_pdf / flight_pdf;
 
                     if (!hit) {
                         gamma *= m_intr.sigma_n;
@@ -267,10 +270,14 @@ namespace mtt::monte_carlo {
             m_intr.p = rt | mt | math::expand(m_intr.p, 1.f);
 
             auto hit = m_intr.t >= intr.t;
+            auto spectra_pdf = hit
+            ? m_intr.transmittance
+            : m_intr.sigma_maj * m_intr.transmittance;
+            auto flight_pdf = spectra_pdf.value[0];
 
-            beta *= m_intr.transmittance / m_intr.pdf;
-            mis_s *= m_intr.spectra_pdf / m_intr.pdf;
-            mis_e *= m_intr.spectra_pdf / m_intr.pdf;
+            beta *= m_intr.transmittance / flight_pdf;
+            mis_s *= spectra_pdf / flight_pdf;
+            mis_e *= spectra_pdf / flight_pdf;
 
             if (!hit) {
                 auto mis_a = math::guarded_div(1.f, spectra::avg(mis_s));

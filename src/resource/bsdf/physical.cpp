@@ -8,7 +8,6 @@
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/ranges.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::bsdf {
     auto constexpr fresnel_num_samples = 65536;
@@ -136,7 +135,7 @@ namespace mtt::bsdf {
 
                 auto sample_y = math::sqrt(1.f - math::dot(sample_p, sample_p));
                 auto wm = sample_p[0] * wx + sample_y * wy + sample_p[1] * wz;
-                if (wm[1] < math::epsilon<f32>) {
+                if (math::abs(wm[1]) < math::epsilon<f32>) {
                     return {};
                 }
                 // normal transformation with inverse transposed matrix
@@ -157,7 +156,7 @@ namespace mtt::bsdf {
                 auto reflective = (plastic || conductive) ? true : u[0] < pr / (pr + pt);
                 auto wi = reflective ? math::reflect(wo, wm) : math::refract(wo, wm, eta.value[0]);
                 auto G = smith_shadow(wo, wi, alpha_u, alpha_v);
-                if (wi == math::Vector<f32, 3>{0.f}) {
+                if (math::abs(wi[1]) < math::epsilon<f32>) {
                     return {};
                 }
 
