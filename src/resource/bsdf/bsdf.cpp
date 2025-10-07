@@ -71,7 +71,6 @@ namespace mtt::bsdf {
         f32 alpha_u,
         f32 alpha_v
     ) noexcept -> f32 {
-
         auto tan2_theta = math::unit_to_tan2_theta(wo);
         if (std::isinf(tan2_theta)) {
             return 0.f;

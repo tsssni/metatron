@@ -18,7 +18,7 @@ namespace mtt::texture {
                 auto c = math::Vector<f32, 4>{(*image)[px[0], px[1]]};
                 auto w = 1.f;
                 if (distr == Image_Distribution::spherical) {
-                    auto v = f32(px[1]) / f32(size[1]);
+                    auto v = (px[1] + 0.5f) / size[1];
                     auto theta = v * math::pi;
                     w = std::sin(theta);
                 }

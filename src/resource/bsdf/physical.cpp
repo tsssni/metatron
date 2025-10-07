@@ -121,10 +121,14 @@ namespace mtt::bsdf {
             auto Fo = plastic ? fresnel(math::unit_to_cos_theta(-ctx.r.d), eta, k) : 0.f;
             if (dieletric || conductive || (plastic && u[0] < Fo.value[0])) {
                 auto wo = ctx.r.d;
+                if (math::abs(wo[1]) < math::epsilon<f32>) {
+                    return {};
+                }
+
                 auto wy = math::normalize(-wo * math::Vector<f32, 3>{alpha_u, 1.f, alpha_v});
                 auto wx = wy[1] < 1.f - math::epsilon<f32>
-                    ? math::cross(wy, math::Vector<f32, 3>{0.f, 1.f, 0.f})
-                    : math::Vector<f32, 3>{1.f, 0.f, 0.f};
+                ? math::cross(wy, math::Vector<f32, 3>{0.f, 1.f, 0.f})
+                : math::Vector<f32, 3>{1.f, 0.f, 0.f};
                 auto wz = math::cross(wx, wy);
 
                 // use polar disk distribution to fetch more samples near center
@@ -135,7 +139,9 @@ namespace mtt::bsdf {
 
                 auto sample_y = math::sqrt(1.f - math::dot(sample_p, sample_p));
                 auto wm = sample_p[0] * wx + sample_y * wy + sample_p[1] * wz;
-                if (math::abs(wm[1]) < math::epsilon<f32>) {
+                if (false
+                || math::abs(wm[1]) < math::epsilon<f32>
+                || math::dot(-wo, wm) < 0.f) {
                     return {};
                 }
                 // normal transformation with inverse transposed matrix
@@ -172,6 +178,9 @@ namespace mtt::bsdf {
                 auto distr = math::Cosine_Hemisphere_Distribution{};
                 auto wi = distr.sample({u[1], u[2]});
                 auto pdf = distr.pdf(wi[1]);
+                if (math::abs(wi[1]) < math::epsilon<f32>) {
+                    return {};
+                }
 
                 if (lambertian) {
                     auto f = lambert(reflectance);

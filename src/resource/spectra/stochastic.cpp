@@ -8,8 +8,7 @@
 namespace mtt::spectra {
     Stochastic_Spectrum::Stochastic_Spectrum(f32 u, f32 v) noexcept {
         lambda = math::foreach([&](f32 l, usize i) {
-            auto ui = u + i / f32(stochastic_samples);
-            ui = ui > 1.f ? ui - 1.f : ui;
+            auto ui = math::mod(u + i / f32(stochastic_samples), 1.f);
             return math::Spectrum_Distribution{}.sample(ui);
         }, lambda);
         value = math::Vector<f32, stochastic_samples>{v};
@@ -209,7 +208,7 @@ namespace mtt::spectra {
     }
 
     auto degrade(Stochastic_Spectrum& spectrum) noexcept -> void {
-        spectrum.value = math::Vector<f32, stochastic_samples>{spectrum.value[0]};
-        spectrum.lambda = math::Vector<f32, stochastic_samples>{spectrum.lambda[0]};
+        spectrum.value = {spectrum.value[0]};
+        spectrum.lambda = {spectrum.lambda[0]};
     }
 }
