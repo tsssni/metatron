@@ -69,7 +69,7 @@ namespace mtt::daemon {
                                 std::abort();
                             });
                             return make_poly<texture::Spectrum_Texture, texture::Image_Spectrum_Texture>(
-                                image::Image::from_path(path), compo.type
+                                image::Image::from_path(path), compo.type, compo.distr
                             );
                         } else if constexpr (std::is_same_v<T, compo::Checkerboard_Texture>) {
                             return make_poly<texture::Spectrum_Texture, texture::Checkerboard_Texture>(
@@ -95,7 +95,7 @@ namespace mtt::daemon {
                                 std::abort();
                             });
                             return make_poly<texture::Vector_Texture, texture::Image_Vector_Texture>(
-                                image::Image::from_path(path, true)
+                                image::Image::from_path(path, true), texture::Image_Distribution::none
                             );
                         }
                     }, compo::Vector_Texture{compo});

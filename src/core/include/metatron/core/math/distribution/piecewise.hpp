@@ -3,7 +3,6 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/ranges.hpp>
-#include <metatron/core/stl/print.hpp>
 #include <vector>
 
 namespace mtt::math {

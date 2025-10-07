@@ -5,11 +5,18 @@
 #include <metatron/core/math/distribution/piecewise.hpp>
 
 namespace mtt::texture {
+    enum struct Image_Distribution {
+        none,
+        uniform,
+        spherical,
+    };
+
     struct Image_Vector_Texture final {
         std::vector<poly<image::Image>> images;
 
         Image_Vector_Texture(
-            poly<image::Image> image
+            poly<image::Image> image,
+            Image_Distribution distr
         ) noexcept;
 
         auto operator()(
@@ -42,7 +49,8 @@ namespace mtt::texture {
         color::Color_Space::Spectrum_Type type;
         Image_Spectrum_Texture(
             poly<image::Image> image,
-            color::Color_Space::Spectrum_Type type
+            color::Color_Space::Spectrum_Type type,
+            Image_Distribution distr
         ) noexcept;
 
         auto operator()(

@@ -1,5 +1,4 @@
 #include <metatron/resource/spectra/visible.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::spectra {
     Visible_Spectrum::Visible_Spectrum(std::array<f32, visible_range>&& data) noexcept

@@ -1,7 +1,6 @@
 #include <metatron/resource/material/material.hpp>
 #include <metatron/resource/bsdf/interface.hpp>
 #include <metatron/resource/spectra/constant.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::material {
     auto Material::sample(

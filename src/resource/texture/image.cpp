@@ -2,23 +2,31 @@
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::texture {
     Image_Vector_Texture::Image_Vector_Texture(
-        poly<image::Image> image
+        poly<image::Image> image,
+        Image_Distribution distr
     ) noexcept {
         auto size = math::Vector<usize, 2>(image->size);
         auto channels = image->size[2];
         auto stride = image->size[3];
 
-        auto pdf = std::vector<f32>(math::prod(size));
-        stl::scheduler::instance().sync_parallel(size, [&image, &pdf, size](auto px) mutable {
-            auto c = math::Vector<f32, 4>{(*image)[px[0], px[1]]};
-            pdf[px[0] + px[1] * size[0]] = math::avg(math::shrink(c));
-        });
-        std::atomic_thread_fence(std::memory_order_release);
-        distr = {std::span{pdf}, math::reverse(size), {0.f}, {1.f}};
+        if (distr != Image_Distribution::none) {
+            auto pdf = std::vector<f32>(math::prod(size));
+            stl::scheduler::instance().sync_parallel(size, [&image, &pdf, distr, size](auto px) mutable {
+                auto c = math::Vector<f32, 4>{(*image)[px[0], px[1]]};
+                auto w = 1.f;
+                if (distr == Image_Distribution::spherical) {
+                    auto v = f32(px[1]) / f32(size[1]);
+                    auto theta = v * math::pi;
+                    w = std::sin(theta);
+                }
+                pdf[px[0] + px[1] * size[0]] = math::avg(math::shrink(c)) * w;
+            });
+            std::atomic_thread_fence(std::memory_order_release);
+            this->distr = {std::span{pdf}, math::reverse(size), {0.f}, {1.f}};
+        }
 
         auto max_mips = std::bit_width(math::max(size));
         images.reserve(max_mips);
@@ -239,8 +247,9 @@ namespace mtt::texture {
 
     Image_Spectrum_Texture::Image_Spectrum_Texture(
         poly<image::Image> image,
-        color::Color_Space::Spectrum_Type type
-    ) noexcept: image_tex(std::move(image)), type(type) {}
+        color::Color_Space::Spectrum_Type type,
+        Image_Distribution distr
+    ) noexcept: image_tex(std::move(image), distr), type(type) {}
 
 
     auto Image_Spectrum_Texture::operator()(

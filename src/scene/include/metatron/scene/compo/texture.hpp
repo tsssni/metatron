@@ -2,6 +2,7 @@
 #include <metatron/scene/ecs/entity.hpp>
 #include <metatron/scene/compo/spectrum.hpp>
 #include <metatron/resource/texture/texture.hpp>
+#include <metatron/resource/texture/image.hpp>
 #include <metatron/resource/color/color-space.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <variant>
@@ -15,6 +16,7 @@ namespace mtt::compo {
     struct Image_Spectrum_Texture final {
         std::string path;
         color::Color_Space::Spectrum_Type type;
+        texture::Image_Distribution distr{texture::Image_Distribution::none};
         i32 image_spectrum{0};
     };
 
@@ -75,5 +77,15 @@ struct glz::meta<mtt::texture::Sampler::Wrap> {
         mirror,
         edge,
         border
+    );
+};
+
+template<>
+struct glz::meta<mtt::texture::Image_Distribution> {
+    using enum mtt::texture::Image_Distribution;
+    auto constexpr static value = glz::enumerate(
+        none,
+        uniform,
+        spherical
     );
 };
