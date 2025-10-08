@@ -91,8 +91,8 @@ namespace mtt::monte_carlo {
                     auto t = math::Transform{math::Matrix<f32, 4, 4>{
                         math::Quaternion<f32>::from_rotation_between(flip_n * direct_ctx.n, {0.f, 1.f, 0.f})
                     }};
-                    auto wo = t | math::expand(history_ctx.r.d, 0.f);
-                    auto wi = t | math::expand(l_intr.wi, 0.f);
+                    auto wo = math::normalize(t | math::expand(history_ctx.r.d, 0.f));
+                    auto wi = math::normalize(t | math::expand(l_intr.wi, 0.f));
                     MTT_OPT_OR_RETURN(b_intr, (*bsdf)(wo, wi));
                     g = b_intr.f * math::abs(math::dot(l_intr.wi, direct_ctx.n));
                     q = b_intr.pdf;
@@ -303,7 +303,7 @@ namespace mtt::monte_carlo {
                         terminated = true;
                         continue;
                     });
-                    p_intr.wi = pt ^ math::expand(p_intr.wi, 0.f);
+                    p_intr.wi = math::normalize(pt ^ math::expand(p_intr.wi, 0.f));
 
                     beta *= m_intr.sigma_s / p_s * p_intr.f / p_intr.pdf;
                     mis_s *= m_intr.sigma_s / m_intr.sigma_maj / p_s;
