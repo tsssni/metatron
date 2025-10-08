@@ -127,10 +127,25 @@ namespace mtt::math {
         return Vector<T, n + sizeof...(v)>{x, v...};
     }
 
+    template<typename T, typename... Ts, usize n, usize head = sizeof...(Ts)>
+    requires (std::is_convertible_v<T, Ts> && ...)
+    auto constexpr consume(Vector<T, n> const& x, Ts... v) noexcept -> Vector<T, n + head> {
+        auto y = Vector<T, n + head>{};
+        *(Vector<T, n>*)(y.data() + head) = x;
+        *(Vector<T, head>*)(y.data()) = reverse(Vector<T, head>{v...});
+        return y;
+    }
+
     template<typename T, usize n, usize tail = 1uz>
     requires (n > tail)
     auto constexpr shrink(Vector<T, n> const& x) noexcept -> Vector<T, n - tail> {
         return Vector<T, n - tail>{x};
+    }
+
+    template<typename T, usize n, usize head = 1uz>
+    requires (n > head)
+    auto constexpr cut(Vector<T, n> const& x) noexcept -> Vector<T, n - head> {
+        return *(view<Vector<T, n - head>>)(x.data() + head);
     }
 
     template<typename T, usize n>
@@ -164,6 +179,19 @@ namespace mtt::math {
     }
 
     template<typename T, usize size>
+    auto constexpr minvi(Vector<T, size> const& x) noexcept -> std::tuple<T, usize> {
+        auto y = x[0];
+        auto z = 0uz;
+        for (auto i = 1uz; i < size; i++) {
+            if (x[i] < y) {
+                y = x[i];
+                z = i;
+            }
+        }
+        return std::make_tuple(y, z);
+    }
+
+    template<typename T, usize size>
     requires std::totally_ordered<T>
     auto constexpr max(Vector<T, size> const& x) noexcept -> T {
         auto y = x[0];
@@ -187,10 +215,39 @@ namespace mtt::math {
     }
 
     template<typename T, usize size>
+    auto constexpr maxvi(Vector<T, size> const& x) noexcept -> std::tuple<T, usize> {
+        auto y = x[0];
+        auto z = 0uz;
+        for (auto i = 1uz; i < size; i++) {
+            if (x[i] > y) {
+                y = x[i];
+                z = i;
+            }
+        }
+        return std::make_tuple(y, z);
+    }
+
+    template<typename T, usize size>
     requires std::floating_point<T> || std::integral<T>
     auto constexpr abs(Vector<T, size> const& x) noexcept -> Vector<T, size> {
         return foreach([](T const& v, usize) noexcept -> T {
             return math::abs(v);
+        }, x);
+    }
+
+    template<typename T, usize size>
+    requires std::floating_point<T>
+    auto constexpr floor(Vector<T, size> const& x) noexcept -> Vector<T, size> {
+        return foreach([](T const& v, usize) noexcept -> T {
+            return std::floor(v);
+        }, x);
+    }
+
+    template<typename T, usize size>
+    requires std::floating_point<T>
+    auto constexpr ceil(Vector<T, size> const& x) noexcept -> Vector<T, size> {
+        return foreach([](T const& v, usize) noexcept -> T {
+            return std::ceil(v);
         }, x);
     }
 
@@ -233,9 +290,9 @@ namespace mtt::math {
         return sum(x) / size;
     }
 
-    template<typename T, usize size>
+    template<typename T>
     requires std::floating_point<T> || std::integral<T>
-    auto constexpr mod(T const& x, T const& m) noexcept -> Vector<T, size> {
+    auto constexpr mod(T const& x, T const& m) noexcept -> T {
         if constexpr (std::floating_point<T>) {
             return std::fmod(x, m);
         } else {

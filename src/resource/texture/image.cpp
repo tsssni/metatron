@@ -6,11 +6,28 @@
 
 namespace mtt::texture {
     Image_Vector_Texture::Image_Vector_Texture(
-        poly<image::Image> image
+        poly<image::Image> image,
+        Image_Distribution distr
     ) noexcept {
-        auto size = math::Vector<usize, 2>{image->size};
+        auto size = math::Vector<usize, 2>(image->size);
         auto channels = image->size[2];
         auto stride = image->size[3];
+
+        if (distr != Image_Distribution::none) {
+            auto pdf = std::vector<f32>(math::prod(size));
+            stl::scheduler::instance().sync_parallel(size, [&image, &pdf, distr, size](auto px) mutable {
+                auto c = math::Vector<f32, 4>{(*image)[px[0], px[1]]};
+                auto w = 1.f;
+                if (distr == Image_Distribution::spherical) {
+                    auto v = (px[1] + 0.5f) / size[1];
+                    auto theta = v * math::pi;
+                    w = std::sin(theta);
+                }
+                pdf[px[0] + px[1] * size[0]] = math::avg(math::shrink(c)) * w;
+            });
+            std::atomic_thread_fence(std::memory_order_release);
+            this->distr = {std::span{pdf}, math::reverse(size), {0.f}, {1.f}};
+        }
 
         auto max_mips = std::bit_width(math::max(size));
         images.reserve(max_mips);
@@ -41,8 +58,7 @@ namespace mtt::texture {
         }
     }
 
-    auto Image_Vector_Texture::sample(
-        eval::Context const& ctx,
+    auto Image_Vector_Texture::operator()(
         Sampler const& sampler,
         Coordinate const& coord
     ) const noexcept -> math::Vector<f32, 4> {
@@ -54,7 +70,6 @@ namespace mtt::texture {
         auto ll = std::max(ul, vl);
 
         auto c = coord;
-
         if (sl * sampler.anisotropy < ll && sl > 0.f) {
             auto s = ll / (sl * sampler.anisotropy);
             sl *= s;
@@ -75,9 +90,16 @@ namespace mtt::texture {
         ? &Image_Vector_Texture::nearest
         : &Image_Vector_Texture::linear;
 
-        auto lod = std::min(sampler.max_lod, std::max(sampler.min_lod,
-            images.size() - 1.f + std::log2(sl) + sampler.lod_bias
-        ));
+        auto lod = std::min(
+            std::min(
+                images.size() - 1.f,
+                sampler.max_lod
+            ),
+            std::max(
+                sampler.min_lod,
+                images.size() - 1.f + std::log2(sl) + sampler.lod_bias
+            )
+        );
         if (sampler.mip_filter == Sampler::Filter::none) {
             return (this->*filter)(c, 0, sampler);
         } else if (sampler.mip_filter == Sampler::Filter::nearest) {
@@ -85,14 +107,27 @@ namespace mtt::texture {
             return (this->*filter)(c, lodi, sampler);
         } else {
             auto lodi = std::min(images.size() - 2, usize(lod));
-            return math::lerp(
+            auto x = math::lerp(
                 (this->*filter)(c, lodi, sampler),
                 (this->*filter)(c, lodi + 1, sampler),
                 lod - lodi
             );
+            return x;
         }
     }
 
+    auto Image_Vector_Texture::sample(
+        eval::Context const& ctx,
+        math::Vector<f32, 2> const& u
+    ) const noexcept -> math::Vector<f32, 2> {
+        return math::reverse(distr.sample(u));
+    }
+
+    auto Image_Vector_Texture::pdf(
+        math::Vector<f32, 2> const& uv
+    ) const noexcept -> f32 {
+        return distr.pdf(math::reverse(uv));
+    }
 
     auto Image_Vector_Texture::fetch(
         math::Vector<i32, 3> texel, Sampler const& sampler
@@ -214,23 +249,36 @@ namespace mtt::texture {
                 }
             }
         }
-
         return sum_t / sum_w;
     }
 
     Image_Spectrum_Texture::Image_Spectrum_Texture(
         poly<image::Image> image,
-        color::Color_Space::Spectrum_Type type
-    ) noexcept: image_tex(std::move(image)), type(type) {}
+        color::Color_Space::Spectrum_Type type,
+        Image_Distribution distr
+    ) noexcept: image_tex(std::move(image), distr), type(type) {}
 
+
+    auto Image_Spectrum_Texture::operator()(
+        Sampler const& sampler,
+        Coordinate const& coord,
+        spectra::Stochastic_Spectrum const& spec
+    ) const noexcept -> spectra::Stochastic_Spectrum {
+        auto rgba = image_tex(sampler, coord);
+        auto rgb_spec = image_tex.images.front()->color_space->to_spectrum(rgba, type);
+        return spec & rgb_spec;
+    }
 
     auto Image_Spectrum_Texture::sample(
         eval::Context const& ctx,
-        Sampler const& sampler,
-        Coordinate const& coord
-    ) const noexcept -> spectra::Stochastic_Spectrum {
-        auto rgba = image_tex.sample(ctx, sampler, coord);
-        auto rgb_spec = image_tex.images.front()->color_space->to_spectrum(rgba, type);
-        return ctx.spec & rgb_spec;
+        math::Vector<f32, 2> const& u
+    ) const noexcept -> math::Vector<f32, 2> {
+        return image_tex.sample(ctx, u);
+    }
+
+    auto Image_Spectrum_Texture::pdf(
+        math::Vector<f32, 2> const& uv
+    ) const noexcept -> f32 {
+        return image_tex.pdf(uv);
     }
 }

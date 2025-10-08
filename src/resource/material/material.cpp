@@ -1,7 +1,6 @@
 #include <metatron/resource/material/material.hpp>
 #include <metatron/resource/bsdf/interface.hpp>
 #include <metatron/resource/spectra/constant.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::material {
     auto Material::sample(
@@ -19,13 +18,13 @@ namespace mtt::material {
         attr.vectors["normal"] = geometry_normal;
 
         for (auto const& [name, tex]: spectrum_textures) {
-            auto& s = *samplers.at(name);
-            attr.spectra[name] = tex->sample(ctx, s, coord);
+            auto& sampler = *samplers.at(name);
+            attr.spectra[name] = (*tex)(sampler, coord, spec);
         }
 
         for (auto const& [name, tex]: vector_textures) {
-            auto& s = *samplers.at(name);
-            attr.vectors[name] = tex->sample(ctx, s, coord);
+            auto& sampler = *samplers.at(name);
+            attr.vectors[name] = (*tex)(sampler, coord);
         }
 
         intr.emission = attr.spectra["emission"];

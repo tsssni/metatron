@@ -145,7 +145,7 @@ namespace mtt::light {
                 // only use visible spectra
                 auto ratio = (math::sum(sun_scale) - sun_scale[0] - sun_scale[1]) / 9.f;
                 cos_sun = std::cos(aperture * 0.5f);
-                phi_sun = direction[0];
+                phi_sun = direction[1];
                 area = (1.f - std::cos(sun_aperture * 0.5f)) / (1.f - cos_sun);
                 sun_distr = math::Cone_Distribution{cos_sun};
                 sky_radiance *= intensity / ratio * sun_scale;
@@ -266,23 +266,70 @@ namespace mtt::light {
         }
 
         auto operator()(
-            eval::Context const& ctx
+            math::Ray const& r,
+            spectra::Stochastic_Spectrum const& spec
         ) const noexcept -> std::optional<Interaction> {
-            auto cos_theta = math::unit_to_cos_theta(ctx.r.d);
-            auto sin_theta = math::unit_to_sin_theta(ctx.r.d);
-            auto cos_gamma = math::dot(d, ctx.r.d);
-            auto valid = cos_theta >= 0.f && sin_theta != 0.f;
+            auto cos_theta = math::unit_to_cos_theta(r.d);
+            auto sin_theta = math::unit_to_sin_theta(r.d);
+            auto cos_gamma = math::dot(d, r.d);
 
             // clamp theta to give invalid direction reasonable result
-            auto [theta, phi] = math::cartesian_to_unit_spherical(ctx.r.d);
-            theta = std::clamp(theta, math::epsilon<f32>, math::pi * 0.5f - math::epsilon<f32>);
-            auto wo = math::unit_spherical_to_cartesian({theta, phi});
-            auto L = ctx.spec & spectra::Spectrum::spectra["zero"];
+            auto [theta, phi] = math::cartesian_to_unit_spherical(r.d);
+            theta = std::clamp(
+                theta < math::pi * 0.5f ? theta : math::pi - theta,
+                0.f, math::pi * 0.5f - 1e-2f
+            );
+            auto wi = math::unit_spherical_to_cartesian({theta, phi});
+            auto L = spec & spectra::Spectrum::spectra["zero"];
             L.value = math::foreach([&](f32 lambda, usize i) {
-                return hosek(lambda, math::unit_to_cos_theta(wo), math::dot(d, wo));
+                return hosek(lambda, math::unit_to_cos_theta(wi), math::dot(d, wi));
             }, L.lambda);
 
+            return Interaction{
+                .L = L,
+                .wi = r.d,
+                .p = r.o + r.d * 65504.f,
+                .t = 65504.f,
+            };
+        }
+
+        auto sample(
+            eval::Context const& ctx,
+            math::Vector<f32, 2> const& u
+        ) const noexcept -> std::optional<Interaction> {
+            auto wi = math::Vector<f32, 3>{};
+            if (u[0] < w_sky) {
+                auto idx = tgmm_distr.sample(u[0]);
+                auto u_phi = math::guarded_div(
+                    u[0] - tgmm_distr.cdf[idx],
+                    tgmm_distr.cdf[idx + 1] - tgmm_distr.cdf[idx]
+                );
+                auto u_theta = u[1];
+
+                // data fix sun to phi = pi / 2
+                auto tgmm_phi = tgmm_phi_distr[idx].sample(u_phi);
+                auto tgmm_theta = tgmm_theta_distr[idx].sample(u_theta);
+                auto phi = tgmm_phi + phi_sun - math::pi * 0.5f;
+                auto theta = std::clamp(tgmm_theta, 1e-2f, math::pi * 0.5f - 1e-2f);
+                wi = math::unit_spherical_to_cartesian({theta, phi});
+            } else {
+                auto intr = Interaction{};
+                auto distr = math::Cone_Distribution{cos_sun};
+                wi = math::normalize(math::Vector<f32, 3>{t | math::expand(distr.sample(u), 0.f)});
+            }
+            return (*this)({ctx.r.o, wi}, ctx.spec);
+        }
+
+        auto pdf(
+            math::Ray const& r,
+            math::Vector<f32, 3> const& np
+        ) const noexcept -> f32 {
+            auto [theta, phi] = math::cartesian_to_unit_spherical(r.d);
+            auto cos_theta = math::unit_to_cos_theta(r.d);
+            auto sin_theta = math::unit_to_sin_theta(r.d);
+            auto cos_gamma = math::dot(d, r.d);
             auto tgmm_phi = phi + math::pi * 0.5f - phi_sun;
+
             auto sun_pdf = 0.f;
             auto sky_pdf = 0.f;
             if (cos_theta >= 0.f) {
@@ -292,31 +339,7 @@ namespace mtt::light {
             }
             sky_pdf = math::guarded_div(sky_pdf, std::sin(theta));
             sun_pdf = cos_gamma >= cos_sun ? math::Cone_Distribution{cos_sun}.pdf() : 0.f;
-            return Interaction{
-                .L = L,
-                .wi = {}, .p = {}, .t = {},
-                .pdf = std::lerp(sun_pdf, sky_pdf, w_sky),
-            };
-        }
-
-        auto sample(
-            eval::Context const& ctx,
-            math::Vector<f32, 2> const& u
-        ) const noexcept -> std::optional<Interaction> {
-            auto intr = std::optional<Interaction>{};
-            auto pdf = 0.f;
-            if (u[0] < w_sky) {
-                intr = sample_sky(ctx, {u[0] / w_sky, u[1]});
-                pdf = w_sky;
-            } else {
-                intr = sample_sun(ctx, {(u[0] - w_sky) / (1.f - w_sky), u[1]});
-                pdf = 1.f - w_sky;
-            }
-
-            if (intr) {
-                intr.value().pdf *= pdf;
-            }
-            return intr;
+            return std::lerp(sun_pdf, sky_pdf, w_sky);
         }
 
         auto flags() const noexcept -> Flags {
@@ -324,25 +347,30 @@ namespace mtt::light {
         }
 
         auto hosek(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
-            auto L = hosek_sky(lambda, cos_theta, cos_gamma);
-            if (cos_gamma >= cos_sun) {
-                L += hosek_sun(lambda, cos_theta, cos_gamma);
-            }
-            return L;
-        }
-
-        auto hosek_sky(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
             if (lambda > sunsky_lambda.back()) {
                 return 0.f;
             }
 
             auto [low, high, alpha] = split(lambda);
-            auto sky = std::lerp(
+            auto L = std::lerp(
                 hosek_sky(low, cos_theta, cos_gamma),
                 hosek_sky(high, cos_theta, cos_gamma),
                 alpha
             );
-            return sky;
+            if (cos_gamma >= cos_sun) {
+                L += area
+                * std::lerp(
+                    hosek_sun(low, cos_theta),
+                    hosek_sun(high, cos_theta),
+                    alpha
+                )
+                * std::lerp(
+                    hosek_limb(low, cos_gamma),
+                    hosek_limb(high, cos_gamma),
+                    alpha
+                );
+            }
+            return L;
         }
 
         auto hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
@@ -362,25 +390,6 @@ namespace mtt::light {
             + I * math::sqrt(cos_theta);
 
             return c0 * c1 * sky_radiance[idx] / spectra::CIE_Y_integral;
-        }
-
-        auto hosek_sun(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
-            if (lambda > sunsky_lambda.back()) {
-                return 0.f;
-            }
-
-            auto [low, high, alpha] = split(lambda);
-            auto sun = std::lerp(
-                hosek_sun(low, cos_theta),
-                hosek_sun(high, cos_theta),
-                alpha
-            );
-            auto ld = std::lerp(
-                hosek_limb(low, cos_gamma),
-                hosek_limb(high, cos_gamma),
-                alpha
-            );
-            return sun * ld * area;
         }
 
         auto hosek_sun(i32 idx, f32 cos_theta) const noexcept -> f32 {
@@ -485,70 +494,6 @@ namespace mtt::light {
             return math::guarded_div(sky_luminance, sky_luminance + sun_luminance);
         }
 
-        auto sample_sky(
-            eval::Context const& ctx,
-            math::Vector<f32, 2> const& u
-        ) const noexcept -> std::optional<Interaction> {
-            auto idx = tgmm_distr.sample(u[0]);
-            auto u_phi = math::guarded_div(
-                u[0] - tgmm_distr.cdf[idx],
-                tgmm_distr.cdf[idx + 1] - tgmm_distr.cdf[idx]
-            );
-            auto u_theta = u[1];
-
-            // data fix sun to phi = pi / 2
-            auto tgmm_phi = tgmm_phi_distr[idx].sample(u_phi);
-            auto tgmm_theta = tgmm_theta_distr[idx].sample(u_theta);
-            auto pdf = 1.f
-            * tgmm_phi_distr[idx].pdf(tgmm_phi)
-            * tgmm_theta_distr[idx].pdf(tgmm_theta)
-            * tgmm_distr.pdf[idx];
-            auto phi = tgmm_phi + phi_sun - math::pi * 0.5f;
-            auto theta = std::clamp(tgmm_theta, math::epsilon<f32>, math::pi * 0.5f - math::epsilon<f32>);
-
-            auto wi = math::unit_spherical_to_cartesian({theta, phi});
-            auto cos_gamma = math::dot(wi, d);
-            auto cos_theta = math::unit_to_cos_theta(wi);
-
-            auto L = ctx.spec;
-            L.value = math::foreach([&](f32 lambda, auto i){
-                return hosek_sky(lambda, cos_theta, cos_gamma);
-            }, L.lambda);
-
-            return Interaction{
-                .L = L,
-                .wi = wi,
-                .p = ctx.r.o + wi * 65504.f,
-                .t = 65504.f,
-                .pdf = math::guarded_div(pdf, std::sin(theta)),
-            };
-        }
-
-        auto sample_sun(
-            eval::Context const& ctx,
-            math::Vector<f32, 2> const& u
-        ) const noexcept -> std::optional<Interaction> {
-            auto intr = Interaction{};
-            auto distr = math::Cone_Distribution{cos_sun};
-            auto wi_gamma = distr.sample(u);
-            auto wi_theta = math::normalize(math::Vector<f32, 3>{t | math::expand(wi_gamma, 0.f)});
-            auto cos_gamma = math::unit_to_cos_theta(wi_gamma);
-            auto cos_theta = math::unit_to_cos_theta(wi_theta);
-
-            auto L = ctx.spec;
-            L.value = math::foreach([&](f32 lambda, auto i){
-                return hosek_sun(lambda, cos_theta, cos_gamma);
-            }, L.lambda);
-
-            return Interaction{
-                .L = L,
-                .wi = wi_theta,
-                .p = ctx.r.o + wi_theta * 65504.f,
-                .t = 65504.f,
-                .pdf = distr.pdf(),
-            };
-        }
-
         auto split(f32 lambda) const noexcept -> std::tuple<i32, i32, f32> {
             auto norm = (lambda - sunsky_lambda.front()) / sunsky_step;
             auto low = std::min(sunsky_lambda.size() - 2, usize(norm));
@@ -580,9 +525,10 @@ namespace mtt::light {
     }
 
     auto Sunsky_Light::operator()(
-        eval::Context const& ctx
+        math::Ray const& r,
+        spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> std::optional<Interaction> {
-        return (*impl)(ctx);
+        return (*impl)(r, spec);
     }
 
     auto Sunsky_Light::sample(
@@ -592,8 +538,14 @@ namespace mtt::light {
         return impl->sample(ctx, u);
     }
 
+    auto Sunsky_Light::pdf(
+        math::Ray const& r,
+        math::Vector<f32, 3> const& np
+    ) const noexcept -> f32 {
+        return impl->pdf(r, np);
+    }
+
     auto Sunsky_Light::flags() const noexcept -> Flags {
         return impl->flags();
     }
-
 }

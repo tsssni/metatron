@@ -17,8 +17,6 @@ namespace mtt::shape {
         math::Vector<f32, 3> dpdv;
         math::Vector<f32, 3> dndu;
         math::Vector<f32, 3> dndv;
-
-        f32 pdf;
     };
 
     MTT_POLY_METHOD(shape_size, size);

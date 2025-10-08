@@ -1,5 +1,4 @@
 #include <metatron/resource/spectra/discrete.hpp>
-#include <metatron/core/stl/print.hpp>
 #include <algorithm>
 
 namespace mtt::spectra {

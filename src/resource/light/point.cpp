@@ -4,7 +4,8 @@ namespace mtt::light {
     Point_Light::Point_Light(view<spectra::Spectrum> L) noexcept: L(L) {}
 
     auto Point_Light::operator()(
-        eval::Context const& ctx
+        math::Ray const& r,
+        spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> std::optional<Interaction> {
         return {};
     }
@@ -20,8 +21,14 @@ namespace mtt::light {
             .wi = wi,
             .p = {0.f},
             .t = r,
-            .pdf = 1.f
         };
+    }
+
+    auto Point_Light::pdf(
+        math::Ray const& r,
+        math::Vector<f32, 3> const& np
+    ) const noexcept -> f32 {
+        return 1.f;
     }
 
     auto Point_Light::flags() const noexcept -> Flags {

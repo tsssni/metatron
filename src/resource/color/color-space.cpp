@@ -71,12 +71,6 @@ namespace mtt::color {
     }
 
     auto Color_Space::to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> poly<spectra::Spectrum> {
-        if (false
-        || math::any([](f32 x, usize i){ return x < 0.f; }, rgb)
-        || math::any([](f32 x, usize i){ return x > 1.f; }, rgb)) {
-            assert("RGB exceed [0.0, 1.0]");
-        }
-
         auto s = 1.f;
         auto w = type == Color_Space::Spectrum_Type::illuminant ? illuminant : nullptr;
         switch (type) {

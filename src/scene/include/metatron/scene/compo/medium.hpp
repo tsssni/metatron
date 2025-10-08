@@ -27,6 +27,7 @@ namespace mtt::compo {
 
     struct Grid_Medium final {
         std::string path;
+        math::Vector<usize, 3> dimensions;
         Phase_Function phase;
         ecs::Entity sigma_a;
         ecs::Entity sigma_s;

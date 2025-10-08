@@ -4,7 +4,6 @@
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/plane.hpp>
 #include <metatron/core/stl/optional.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::monte_carlo {
     auto Volume_Path_Integrator::sample(
@@ -69,17 +68,20 @@ namespace mtt::monte_carlo {
                 auto direct_ctx = trace_ctx;
                 MTT_OPT_OR_RETURN(e_intr, emitter->sample(direct_ctx, sampler->generate_1d()));
                 auto& et = *e_intr.divider->local_to_world;
-
+                auto light = e_intr.divider->light;
                 auto l_ctx = et ^ rt ^ direct_ctx;
-                MTT_OPT_OR_RETURN(l_intr, e_intr.divider->light->sample(l_ctx, sampler->generate_2d()));
+                MTT_OPT_OR_RETURN(l_intr, light->sample(l_ctx, sampler->generate_2d()));
+
+                auto e_pdf = emitter->pdf(*e_intr.divider);
+                auto l_pdf = e_intr.divider->light->pdf({l_ctx.r.o, l_intr.wi}, l_ctx.n);
+                auto p_e = e_pdf * l_pdf;
+                if (math::abs(p_e) < math::epsilon<f32>) {
+                    return;
+                }
 
                 l_intr.p = rt | et | math::expand(l_intr.p, 1.f);
                 l_intr.wi = math::normalize(rt | et | math::expand(l_intr.wi, 0.f));
                 direct_ctx.r.d = l_intr.wi;
-                auto p_e = e_intr.pdf * l_intr.pdf;
-                if (math::abs(p_e) < math::epsilon<f32>) {
-                    return;
-                }
 
                 auto q = 0.f;
                 auto g = spectra::Stochastic_Spectrum{};
@@ -89,8 +91,8 @@ namespace mtt::monte_carlo {
                     auto t = math::Transform{math::Matrix<f32, 4, 4>{
                         math::Quaternion<f32>::from_rotation_between(flip_n * direct_ctx.n, {0.f, 1.f, 0.f})
                     }};
-                    auto wo = t | math::expand(history_ctx.r.d, 0.f);
-                    auto wi = t | math::expand(l_intr.wi, 0.f);
+                    auto wo = math::normalize(t | math::expand(history_ctx.r.d, 0.f));
+                    auto wi = math::normalize(t | math::expand(l_intr.wi, 0.f));
                     MTT_OPT_OR_RETURN(b_intr, (*bsdf)(wo, wi));
                     g = b_intr.f * math::abs(math::dot(l_intr.wi, direct_ctx.n));
                     q = b_intr.pdf;
@@ -191,10 +193,14 @@ namespace mtt::monte_carlo {
                     l_intr.t -= m_intr.t;
 
                     auto hit = m_intr.t >= intr.t;
+                    auto spectra_pdf = hit
+                    ? m_intr.transmittance
+                    : m_intr.sigma_maj * m_intr.transmittance;
+                    auto flight_pdf = spectra_pdf.value[0];
 
-                    gamma *= m_intr.transmittance / m_intr.pdf;
-                    mis_d *= m_intr.spectra_pdf / m_intr.pdf;
-                    mis_l *= m_intr.spectra_pdf / m_intr.pdf;
+                    gamma *= m_intr.transmittance / flight_pdf;
+                    mis_d *= spectra_pdf / flight_pdf;
+                    mis_l *= spectra_pdf / flight_pdf;
 
                     if (!hit) {
                         gamma *= m_intr.sigma_n;
@@ -221,12 +227,16 @@ namespace mtt::monte_carlo {
                 terminated = true;
 
                 MTT_OPT_OR_CONTINUE(e_intr, emitter->sample_infinite(trace_ctx, sampler->generate_1d()));
+                auto light = e_intr.divider->light;
                 auto& lt = *e_intr.divider->local_to_world;
 
                 auto l_ctx = lt ^ rt ^ trace_ctx;
-                MTT_OPT_OR_CONTINUE(l_intr, (*e_intr.divider->light)(l_ctx));
+                MTT_OPT_OR_CONTINUE(l_intr, (*light)(l_ctx.r, l_ctx.spec));
 
-                auto p_e = e_intr.pdf * l_intr.pdf;
+                auto e_pdf = emitter->pdf_infinite(*e_intr.divider);
+                auto l_pdf = light->pdf(l_ctx.r, l_ctx.n);
+                auto p_e = e_pdf * l_pdf;
+
                 mis_e *= math::guarded_div(p_e, p);
                 auto mis_w = math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
                 emission += beta * mis_w * l_intr.L;
@@ -260,10 +270,14 @@ namespace mtt::monte_carlo {
             m_intr.p = rt | mt | math::expand(m_intr.p, 1.f);
 
             auto hit = m_intr.t >= intr.t;
+            auto spectra_pdf = hit
+            ? m_intr.transmittance
+            : m_intr.sigma_maj * m_intr.transmittance;
+            auto flight_pdf = spectra_pdf.value[0];
 
-            beta *= m_intr.transmittance / m_intr.pdf;
-            mis_s *= m_intr.spectra_pdf / m_intr.pdf;
-            mis_e *= m_intr.spectra_pdf / m_intr.pdf;
+            beta *= m_intr.transmittance / flight_pdf;
+            mis_s *= spectra_pdf / flight_pdf;
+            mis_e *= spectra_pdf / flight_pdf;
 
             if (!hit) {
                 auto mis_a = math::guarded_div(1.f, spectra::avg(mis_s));
@@ -289,7 +303,7 @@ namespace mtt::monte_carlo {
                         terminated = true;
                         continue;
                     });
-                    p_intr.wi = pt ^ math::expand(p_intr.wi, 0.f);
+                    p_intr.wi = math::normalize(pt ^ math::expand(p_intr.wi, 0.f));
 
                     beta *= m_intr.sigma_s / p_s * p_intr.f / p_intr.pdf;
                     mis_s *= m_intr.sigma_s / m_intr.sigma_maj / p_s;
@@ -332,10 +346,12 @@ namespace mtt::monte_carlo {
                 if (spectra::max(mat_intr.emission) < math::epsilon<f32>) {
                     return;
                 }
-                intr.pdf = div->shape->pdf(trace_ctx.r, trace_ctx.n, div->primitive);
                 MTT_OPT_OR_RETURN(e_intr, (*emitter)(trace_ctx, {div->light, div->local_to_world}));
 
-                auto p_e = e_intr.pdf * intr.pdf;
+                auto s_pdf = div->shape->pdf(trace_ctx.r, trace_ctx.n, div->primitive);
+                auto e_pdf = emitter->pdf(*e_intr.divider);
+                auto p_e = e_pdf * s_pdf;
+
                 mis_e *= math::guarded_div(p_e, p);
                 auto mis_w = math::guarded_div(1.f, spectra::avg(mis_s + mis_e));
                 emission += mis_w * beta * mat_intr.emission;

@@ -241,8 +241,8 @@ namespace mtt::accel {
             auto idx = candidates.top();
             candidates.pop();
             auto node = &bvh[idx];
-            auto t_opt = math::hit(r, node->bbox, true);
-            if (!t_opt || (intr_opt && intr_opt->t < t_opt.value())) {
+            auto t_opt = math::hit(r, node->bbox);
+            if (!t_opt || (intr_opt && intr_opt->t < t_opt.value()[0])) {
                 continue;
             }
 

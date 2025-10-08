@@ -4,7 +4,8 @@ namespace mtt::light {
     Parallel_Light::Parallel_Light(view<spectra::Spectrum> L) noexcept: L(L) {}
 
     auto Parallel_Light::operator()(
-        eval::Context const& ctx
+        math::Ray const& r,
+        spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> std::optional<Interaction> {
         return {};
     }
@@ -19,8 +20,14 @@ namespace mtt::light {
             .wi = wi,
             .p = ctx.r.o + 65504.f * wi,
             .t = 65504.f,
-            .pdf = 1.f
         };
+    }
+
+    auto Parallel_Light::pdf(
+        math::Ray const& r,
+        math::Vector<f32, 3> const& np
+    ) const noexcept -> f32 {
+        return 1.f;
     }
 
     auto Parallel_Light::flags() const noexcept -> Flags {

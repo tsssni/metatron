@@ -9,8 +9,6 @@ namespace mtt::media {
         math::Vector<f32, 3> p;
         poly<phase::Phase_Function> phase;
         f32 t;
-        f32 pdf;
-        spectra::Stochastic_Spectrum spectra_pdf;
         spectra::Stochastic_Spectrum transmittance;
         spectra::Stochastic_Spectrum sigma_a;
         spectra::Stochastic_Spectrum sigma_s;

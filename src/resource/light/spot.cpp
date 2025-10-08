@@ -11,7 +11,8 @@ namespace mtt::light {
     falloff_end_cos_theta(std::cos(falloff_end_theta)) {}
 
     auto Spot_Light::operator()(
-        eval::Context const& ctx
+        math::Ray const& r,
+        spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> std::optional<Interaction> {
         return {};
     }
@@ -46,8 +47,14 @@ namespace mtt::light {
             .wi = wi,
             .p = {0.f},
             .t = r,
-            .pdf = 1.f
         };
+    }
+
+    auto Spot_Light::pdf(
+        math::Ray const& r,
+        math::Vector<f32, 3> const& np
+    ) const noexcept -> f32 {
+        return 1.f;
     }
 
     auto Spot_Light::flags() const noexcept -> Flags {

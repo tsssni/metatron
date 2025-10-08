@@ -5,12 +5,9 @@
 #include <metatron/core/math/grid/grid.hpp>
 
 namespace mtt::media {
-    auto constexpr grid_size = 64uz;
-    using Medium_Grid = math::Grid<f32, grid_size, grid_size, grid_size>;
-
     struct Grid_Medium final {
         Grid_Medium(
-            view<Medium_Grid> grid,
+            view<math::Grid<f32>> grid,
             poly<phase::Phase_Function> phase,
             view<spectra::Spectrum> sigma_a,
             view<spectra::Spectrum> sigma_s,
@@ -28,7 +25,7 @@ namespace mtt::media {
         view<spectra::Spectrum> sigma_s;
         view<spectra::Spectrum> sigma_e;
 
-        view<Medium_Grid> grid;
+        view<math::Grid<f32>> grid;
         f32 density_scale;
     };
 }

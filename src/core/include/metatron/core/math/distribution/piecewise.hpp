@@ -2,85 +2,94 @@
 #include <metatron/core/math/matrix.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <metatron/core/stl/ranges.hpp>
+#include <vector>
 
 namespace mtt::math {
-    // forward declaration to support the declaration of 0d piecewise distribution
-    template<usize... dims>
-    struct Piecewise_Distribution;
-
-    template<usize first_dim, usize... rest_dims>
-    requires (first_dim > 0 && (... && (rest_dims > 0)))
-    struct Piecewise_Distribution<first_dim, rest_dims...> final {
-        using Element = std::conditional_t<sizeof...(rest_dims) == 0, f32, Piecewise_Distribution<rest_dims...>>;
-        auto static constexpr dimensions = std::array<usize, 1 + sizeof...(rest_dims)>{first_dim, rest_dims...};
-        auto static constexpr n = dimensions.size();
+    template<typename T, usize n>
+    requires std::floating_point<T>
+    struct Piecewise_Distribution final {
+        using Element = std::conditional_t<n == 1, T, Piecewise_Distribution<T, n - 1>>;
 
         Piecewise_Distribution() noexcept = default;
 
         Piecewise_Distribution(
-            Matrix<f32, first_dim, rest_dims...>&& matrix, 
-            Vector<f32, n>&& low,
-            Vector<f32, n>&& high
+            std::span<T> data,
+            Vector<usize, n> const& dimensions,
+            Vector<T, n> const& low,
+            Vector<T, n> const& high
         ) noexcept {
-            cdf[0] = 0.f;
-            integral = 0.f;
-            this->low = low[n - 1];
-            this->high = high[n - 1];
+            integral = T{0};
+            this->low = low[0];
+            this->high = high[0];
 
-            for (auto i = 0uz; i < first_dim; i++) {
+            dim = dimensions[0];
+            delta = (this->high - this->low) / dim;
+            rows.resize(dim);
+            cdf.resize(dim + 1);
+            auto size = prod(dimensions) / dim;
+
+            for (auto i = 0uz; i < dim; i++) {
                 if constexpr (n == 1uz) {
-                    rows[i] = math::abs(matrix[i]);
+                    rows[i] = abs(data[i]);
                     cdf[i + 1] = rows[i];
                 } else {
-                    rows[i] = Element{std::move(matrix[i]), shrink(low), shrink(high)};
+                    rows[i] = Element{std::span{&data[i * size], size}, cut(dimensions), cut(low), cut(high)};
                     cdf[i + 1] = rows[i].integral;
                 }
-                cdf[i + 1] = cdf[i + 1] * (this->high - this->low) / f32(first_dim) + cdf[i];
+                cdf[i + 1] = cdf[i + 1] * delta + cdf[i];
             }
 
             integral = cdf.back();
-            for (auto i = 1uz; i <= first_dim; i++) {
+            for (auto i = 1uz; i <= dim; i++) {
                 if (integral == 0.f) {
-                    cdf[i] = f32(i) / f32(first_dim);
+                    cdf[i] = T(i) / T(dim);
                 } else {
                     cdf[i] /= integral;
                 }
             }
         }
 
-        auto sample(Vector<f32, dimensions.size()> const& u) const noexcept -> Vector<f32, dimensions.size()> {
+        auto sample(Vector<T, n> const& u) const noexcept -> Vector<T, n> {
             auto idx = 1uz;
-            for (; idx < first_dim && cdf[idx] <= u[n - 1]; idx++) {}
+            for (; idx < dim && cdf[idx] <= u[0]; idx++) {}
             idx--;
 
-            auto t = guarded_div(u[n - 1] - cdf[idx], cdf[idx + 1uz] - cdf[idx]);
-            auto p = math::lerp(low, high, (f32(idx) + t) / f32(first_dim));
+            auto du = guarded_div(u[0] - cdf[idx], cdf[idx + 1uz] - cdf[idx]);
+            auto p = lerp(low, high, (T(idx) + du) / T(dim));
 
             if constexpr (n == 1uz) {
                 return {p};
             } else {
-                return {rows[idx].sample(shrink(u)), p};
+                return consume(rows[idx].sample(cut(u)), p);
             }
         }
 
-        auto pdf(Vector<f32, dimensions.size()> const& p) const noexcept -> f32 {
-            auto idx = usize((p[n - 1] - low) / (high - low) * f32(first_dim));
-            auto prob = (cdf[idx + 1] - cdf[idx]) * f32(first_dim) / (high - low);
+        auto pdf(Vector<T, n> const& p) const noexcept -> T {
+            auto idx = std::clamp(
+                usize((p[0] - low) / delta),
+                0uz, dim - 1uz
+            );
+            auto prob = (cdf[idx + 1] - cdf[idx]) / delta;
             if constexpr (n == 1uz) {
                 return prob;
             } else {
-                return rows[idx].pdf(shrink(p)) * prob;
+                return rows[idx].pdf(cut(p)) * prob;
             }
         }
 
     private:
-        std::array<Element, first_dim> rows{};
-        std::array<f32, first_dim + 1uz> cdf{};
-        f32 low{};
-        f32 high{};
-        f32 integral{};
+        std::vector<Element> rows{};
+        std::vector<T> cdf{};
 
-        template<usize... dims>
+        usize dim;
+        T low{};
+        T high{};
+        T delta{};
+        T integral{};
+
+        template<typename U, usize m>
+        requires std::floating_point<U>
         friend struct Piecewise_Distribution;
     };
 }
