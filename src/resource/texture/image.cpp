@@ -2,6 +2,7 @@
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/thread.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::texture {
     Image_Vector_Texture::Image_Vector_Texture(
@@ -69,7 +70,6 @@ namespace mtt::texture {
         auto ll = std::max(ul, vl);
 
         auto c = coord;
-
         if (sl * sampler.anisotropy < ll && sl > 0.f) {
             auto s = ll / (sl * sampler.anisotropy);
             sl *= s;
@@ -90,9 +90,16 @@ namespace mtt::texture {
         ? &Image_Vector_Texture::nearest
         : &Image_Vector_Texture::linear;
 
-        auto lod = std::min(sampler.max_lod, std::max(sampler.min_lod,
-            images.size() - 1.f + std::log2(sl) + sampler.lod_bias
-        ));
+        auto lod = std::min(
+            std::min(
+                images.size() - 1.f,
+                sampler.max_lod
+            ),
+            std::max(
+                sampler.min_lod,
+                images.size() - 1.f + std::log2(sl) + sampler.lod_bias
+            )
+        );
         if (sampler.mip_filter == Sampler::Filter::none) {
             return (this->*filter)(c, 0, sampler);
         } else if (sampler.mip_filter == Sampler::Filter::nearest) {
@@ -100,11 +107,12 @@ namespace mtt::texture {
             return (this->*filter)(c, lodi, sampler);
         } else {
             auto lodi = std::min(images.size() - 2, usize(lod));
-            return math::lerp(
+            auto x = math::lerp(
                 (this->*filter)(c, lodi, sampler),
                 (this->*filter)(c, lodi + 1, sampler),
                 lod - lodi
             );
+            return x;
         }
     }
 
@@ -241,7 +249,6 @@ namespace mtt::texture {
                 }
             }
         }
-
         return sum_t / sum_w;
     }
 

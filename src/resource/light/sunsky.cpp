@@ -145,7 +145,7 @@ namespace mtt::light {
                 // only use visible spectra
                 auto ratio = (math::sum(sun_scale) - sun_scale[0] - sun_scale[1]) / 9.f;
                 cos_sun = std::cos(aperture * 0.5f);
-                phi_sun = direction[0];
+                phi_sun = direction[1];
                 area = (1.f - std::cos(sun_aperture * 0.5f)) / (1.f - cos_sun);
                 sun_distr = math::Cone_Distribution{cos_sun};
                 sky_radiance *= intensity / ratio * sun_scale;
@@ -279,10 +279,10 @@ namespace mtt::light {
                 theta < math::pi * 0.5f ? theta : math::pi - theta,
                 0.f, math::pi * 0.5f - 1e-2f
             );
-            auto wo = math::unit_spherical_to_cartesian({theta, phi});
+            auto wi = math::unit_spherical_to_cartesian({theta, phi});
             auto L = spec & spectra::Spectrum::spectra["zero"];
             L.value = math::foreach([&](f32 lambda, usize i) {
-                return hosek(lambda, math::unit_to_cos_theta(wo), math::dot(d, wo));
+                return hosek(lambda, math::unit_to_cos_theta(wi), math::dot(d, wi));
             }, L.lambda);
 
             return Interaction{
@@ -311,7 +311,7 @@ namespace mtt::light {
                 auto tgmm_theta = tgmm_theta_distr[idx].sample(u_theta);
                 auto phi = tgmm_phi + phi_sun - math::pi * 0.5f;
                 auto theta = std::clamp(tgmm_theta, 1e-2f, math::pi * 0.5f - 1e-2f);
-                wi = math::spherical_to_cartesian({theta, phi});
+                wi = math::unit_spherical_to_cartesian({theta, phi});
             } else {
                 auto intr = Interaction{};
                 auto distr = math::Cone_Distribution{cos_sun};
@@ -347,25 +347,30 @@ namespace mtt::light {
         }
 
         auto hosek(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
-            auto L = hosek_sky(lambda, cos_theta, cos_gamma);
-            if (cos_gamma >= cos_sun) {
-                L += hosek_sun(lambda, cos_theta, cos_gamma);
-            }
-            return L;
-        }
-
-        auto hosek_sky(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
             if (lambda > sunsky_lambda.back()) {
                 return 0.f;
             }
 
             auto [low, high, alpha] = split(lambda);
-            auto sky = std::lerp(
+            auto L = std::lerp(
                 hosek_sky(low, cos_theta, cos_gamma),
                 hosek_sky(high, cos_theta, cos_gamma),
                 alpha
             );
-            return sky;
+            if (cos_gamma >= cos_sun) {
+                L += area
+                * std::lerp(
+                    hosek_sun(low, cos_theta),
+                    hosek_sun(high, cos_theta),
+                    alpha
+                )
+                * std::lerp(
+                    hosek_limb(low, cos_gamma),
+                    hosek_limb(high, cos_gamma),
+                    alpha
+                );
+            }
+            return L;
         }
 
         auto hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
@@ -385,25 +390,6 @@ namespace mtt::light {
             + I * math::sqrt(cos_theta);
 
             return c0 * c1 * sky_radiance[idx] / spectra::CIE_Y_integral;
-        }
-
-        auto hosek_sun(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
-            if (lambda > sunsky_lambda.back()) {
-                return 0.f;
-            }
-
-            auto [low, high, alpha] = split(lambda);
-            auto sun = std::lerp(
-                hosek_sun(low, cos_theta),
-                hosek_sun(high, cos_theta),
-                alpha
-            );
-            auto ld = std::lerp(
-                hosek_limb(low, cos_gamma),
-                hosek_limb(high, cos_gamma),
-                alpha
-            );
-            return sun * ld * area;
         }
 
         auto hosek_sun(i32 idx, f32 cos_theta) const noexcept -> f32 {
