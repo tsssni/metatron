@@ -137,7 +137,7 @@ namespace mtt::texture {
         auto size = math::Vector<i32, 2>{images[lod]->size};
 
         auto wrap = [](i32 x, i32 s, Sampler::Wrap w) -> i32 {
-            auto c = std::clamp(x, 0, s - 1);
+            auto c = math::clamp(x, 0, s - 1);
             if (c == x || w == Sampler::Wrap::edge) {
                 return c;
             } else if (w == Sampler::Wrap::repeat) {

@@ -243,9 +243,9 @@ namespace mtt::bsdf {
                 fresnel_reflectance.value = math::foreach([](auto eta, auto) {
                     auto idx = eta / 3.f * fresnel_length;
                     auto low = i32(idx);
-                    auto high = std::clamp(low + 1, 0, fresnel_num_samples);
+                    auto high = math::clamp(low + 1, 0, fresnel_num_samples);
                     auto alpha = idx - low;
-                    return std::lerp(fresnel_reflectance_table[low], fresnel_reflectance_table[high], alpha);
+                    return math::lerp(fresnel_reflectance_table[low], fresnel_reflectance_table[high], alpha);
                 }, eta.value);
             }
         }

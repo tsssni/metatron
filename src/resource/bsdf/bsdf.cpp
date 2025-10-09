@@ -15,7 +15,7 @@ namespace mtt::bsdf {
     }
 
     auto fresnel(f32 cos_theta_i, f32 eta, f32 k) -> f32 {
-        cos_theta_i = std::clamp(cos_theta_i, -1.f, 1.f);
+        cos_theta_i = math::clamp(cos_theta_i, -1.f, 1.f);
         auto F = [cos_theta_i](auto eta) {
             using T = decltype(eta);
             auto constexpr is_complex = std::is_same_v<T, math::Complex<f32>>;

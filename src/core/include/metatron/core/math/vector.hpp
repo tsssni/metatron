@@ -59,6 +59,22 @@ namespace mtt::math {
     }
 
     template<typename T, usize size>
+    requires std::floating_point<T>
+    auto constexpr isnan(Vector<T, size> const& x) noexcept -> bool {
+        return math::any([](T x, auto){
+            return math::isnan(x);
+        }, x);
+    }
+
+    template<typename T, usize size>
+    requires std::floating_point<T>
+    auto constexpr isinf(Vector<T, size> const& x) noexcept -> bool {
+        return math::any([](T x, auto){
+            return math::isinf(x);
+        }, x);
+    }
+
+    template<typename T, usize size>
     auto constexpr dot(Vector<T, size> const& x, Vector<T, size> const& y) noexcept -> T {
         auto result = T{};
         for (auto i = 0; i < size; i++) {
@@ -316,11 +332,7 @@ namespace mtt::math {
     requires std::floating_point<T> || std::integral<T>
     auto constexpr mod(Vector<T, size> const& x, Vector<T, size> const& m) noexcept -> Vector<T, size> {
         return foreach([&](T const& v, usize i) noexcept -> T {
-            if constexpr (std::floating_point<T>) {
-                return std::fmod(v, m[i]);
-            } else {
-                return v % m[i];
-            }
+            return math::mod(v, m[i]);
         }, x);
     }
 
@@ -328,7 +340,7 @@ namespace mtt::math {
     requires std::totally_ordered<T>
     auto constexpr clamp(Vector<T, size> const& x, Vector<T, size> const& l, Vector<T, size> const& r) noexcept -> Vector<T, size> {
         return foreach([&](T const& v, usize i) noexcept -> T {
-            return std::clamp(v, l[i], r[i]);
+            return math::clamp(v, l[i], r[i]);
         }, x);
     }
 

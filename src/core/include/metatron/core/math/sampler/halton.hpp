@@ -25,7 +25,7 @@ namespace mtt::math {
         auto start(Vector<usize, 2> const& pixel, usize idx, usize dim = 2) noexcept -> void {
             this->pixel = pixel;
             this->idx = idx;
-            this->dim = std::clamp(dim, 2uz, primes.size() - 1uz);
+            this->dim = math::clamp(dim, 2uz, primes.size() - 1uz);
 
             // high num_exponetial bits of radical_inverse(halton_index) equals pixel % (base ^ num_exoinential),
             // so low num_exponetial bits of halton_index equals radical_inverse(pixel % (base ^ num_exoinetial))

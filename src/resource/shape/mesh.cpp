@@ -234,8 +234,8 @@ namespace mtt::shape {
             ctx.r.o - v[0]
         ), {});
         auto [t, b_1, b_2] = cramer;
-        b_1 = std::clamp(b_1, 0.f, 1.f);
-        b_2 = std::clamp(b_2, 0.f, 1.f);
+        b_1 = math::clamp(b_1, 0.f, 1.f);
+        b_2 = math::clamp(b_2, 0.f, 1.f);
         if (b_1 + b_2 > 1.f) {
             b_1 /= (b_1 + b_2);
             b_2 /= (b_1 + b_2);

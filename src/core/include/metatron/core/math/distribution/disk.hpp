@@ -7,7 +7,7 @@ namespace mtt::math {
         Polar_Disk_Distribution() noexcept = default;
 
         auto sample(Vector<f32, 2> const& u) const noexcept -> Vector<f32, 2> {
-            auto r = std::sqrt(u[0]);
+            auto r = math::sqrt(u[0]);
             auto theta = 2.f * pi * u[1];
             return r * Vector<f32, 2>{std::cos(theta), std::sin(theta)};
         }

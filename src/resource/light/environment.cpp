@@ -15,7 +15,7 @@ namespace mtt::light {
         math::Ray const& r,
         spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> std::optional<Interaction> {
-        auto [theta, phi] = math::cartesian_to_unit_spherical(r.d);
+        auto [radius, theta, phi] = math::cartesian_to_spherical(r.d);
         auto u = 1.f - phi / (2.f * math::pi);
         auto v = theta / math::pi;
         auto t = (*env_map)(*sampler, {{u, v}}, spec);

@@ -66,7 +66,7 @@ namespace mtt::math {
         }
 
         auto pdf(Vector<T, n> const& p) const noexcept -> T {
-            auto idx = std::clamp(
+            auto idx = math::clamp(
                 usize((p[0] - low) / delta),
                 0uz, dim - 1uz
             );

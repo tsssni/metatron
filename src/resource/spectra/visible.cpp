@@ -5,7 +5,7 @@ namespace mtt::spectra {
     : data(std::move(data)) {}
 
     auto Visible_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
-        auto idx = std::clamp(usize(std::round(lambda) - visible_lambda[0]), 0uz, visible_range - 1uz);
+        auto idx = math::clamp(usize(std::round(lambda) - visible_lambda[0]), 0uz, visible_range - 1uz);
         return data[idx];
     }
 }

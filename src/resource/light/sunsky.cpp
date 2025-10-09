@@ -94,7 +94,7 @@ namespace mtt::light {
 
             auto lerp = [](std::vector<f32> const& x, std::vector<f32> const& y, f32 alpha) -> std::vector<f32> {
                 auto z = std::vector<f32>(x.size());
-                std::ranges::transform(x, y, z.begin(), [alpha](f32 x, f32 y){return std::lerp(x, y, alpha);});
+                std::ranges::transform(x, y, z.begin(), [alpha](f32 x, f32 y){return math::lerp(x, y, alpha);});
                 return z;
             };
 
@@ -159,13 +159,13 @@ namespace mtt::light {
             // https://github.com/mitsuba-renderer/mitsuba3/blob/master/include/mitsuba/render/sunsky.h
             // load tgmm of 4 interpolation sources and sample them
             auto load_tgmm = [&]() {
-                auto t_idx = std::clamp(turbidity - 2.f, 0.f, f32(tgmm_num_turbility - 1));
+                auto t_idx = math::clamp(turbidity - 2.f, 0.f, f32(tgmm_num_turbility - 1));
                 auto t_low = i32(t_idx);
                 auto t_high = std::min(t_low + 1, tgmm_num_turbility - 1);
                 auto t_alpha = t_idx - t_low;
 
                 auto eta_deg = math::degrees(eta);
-                auto eta_idx = std::clamp((eta_deg - 2.f) / 3.f, 0.f, f32(sun_num_segments - 1));
+                auto eta_idx = math::clamp((eta_deg - 2.f) / 3.f, 0.f, f32(sun_num_segments - 1));
                 auto eta_low = i32(eta_idx);
                 auto eta_high = std::min(eta_low + 1, sun_num_segments - 1);
                 auto eta_alpha = eta_idx - eta_low;
@@ -269,17 +269,19 @@ namespace mtt::light {
             math::Ray const& r,
             spectra::Stochastic_Spectrum const& spec
         ) const noexcept -> std::optional<Interaction> {
-            auto cos_theta = math::unit_to_cos_theta(r.d);
-            auto sin_theta = math::unit_to_sin_theta(r.d);
-            auto cos_gamma = math::dot(d, r.d);
+            auto wi = math::normalize(r.d);
+            auto cos_theta = math::unit_to_cos_theta(wi);
+            auto sin_theta = math::unit_to_sin_theta(wi);
+            auto cos_gamma = math::dot(d, wi);
 
             // clamp theta to give invalid direction reasonable result
             auto [theta, phi] = math::cartesian_to_unit_spherical(r.d);
-            theta = std::clamp(
+            theta = math::clamp(
                 theta < math::pi * 0.5f ? theta : math::pi - theta,
                 0.f, math::pi * 0.5f - 1e-2f
             );
-            auto wi = math::unit_spherical_to_cartesian({theta, phi});
+            wi = math::unit_spherical_to_cartesian({theta, phi});
+
             auto L = spec & spectra::Spectrum::spectra["zero"];
             L.value = math::foreach([&](f32 lambda, usize i) {
                 return hosek(lambda, math::unit_to_cos_theta(wi), math::dot(d, wi));
@@ -310,7 +312,7 @@ namespace mtt::light {
                 auto tgmm_phi = tgmm_phi_distr[idx].sample(u_phi);
                 auto tgmm_theta = tgmm_theta_distr[idx].sample(u_theta);
                 auto phi = tgmm_phi + phi_sun - math::pi * 0.5f;
-                auto theta = std::clamp(tgmm_theta, 1e-2f, math::pi * 0.5f - 1e-2f);
+                auto theta = math::clamp(tgmm_theta, 1e-2f, math::pi * 0.5f - 1e-2f);
                 wi = math::unit_spherical_to_cartesian({theta, phi});
             } else {
                 auto intr = Interaction{};
@@ -339,7 +341,7 @@ namespace mtt::light {
             }
             sky_pdf = math::guarded_div(sky_pdf, std::sin(theta));
             sun_pdf = cos_gamma >= cos_sun ? math::Cone_Distribution{cos_sun}.pdf() : 0.f;
-            return std::lerp(sun_pdf, sky_pdf, w_sky);
+            return math::lerp(sun_pdf, sky_pdf, w_sky);
         }
 
         auto flags() const noexcept -> Flags {
@@ -352,19 +354,19 @@ namespace mtt::light {
             }
 
             auto [low, high, alpha] = split(lambda);
-            auto L = std::lerp(
+            auto L = math::lerp(
                 hosek_sky(low, cos_theta, cos_gamma),
                 hosek_sky(high, cos_theta, cos_gamma),
                 alpha
             );
             if (cos_gamma >= cos_sun) {
                 L += area
-                * std::lerp(
+                * math::lerp(
                     hosek_sun(low, cos_theta),
                     hosek_sun(high, cos_theta),
                     alpha
                 )
-                * std::lerp(
+                * math::lerp(
                     hosek_limb(low, cos_gamma),
                     hosek_limb(high, cos_gamma),
                     alpha
@@ -374,7 +376,7 @@ namespace mtt::light {
         }
 
         auto hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
-            auto gamma = std::acos(cos_gamma);
+            auto gamma = math::acos(cos_gamma);
             auto [A, B, C, D, E, F, G, I, H] = sky_params[idx];
             auto chi = [](f32 g, f32 cos_alpha) -> f32 {
                 return math::guarded_div(
@@ -393,7 +395,7 @@ namespace mtt::light {
         }
 
         auto hosek_sun(i32 idx, f32 cos_theta) const noexcept -> f32 {
-            auto eta = math::pi * 0.5f - std::acos(cos_theta);
+            auto eta = math::pi * 0.5f - math::acos(cos_theta);
             auto segment = std::min(
                 sun_num_segments - 1,
                 i32(std::pow(eta / (math::pi * 0.5f), 1.f / 3.f) * sun_num_segments)

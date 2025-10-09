@@ -21,9 +21,9 @@ namespace mtt::math {
         cdf_a(gaussian_cdf(a, mu, sigma)), cdf_b(gaussian_cdf(b, mu, sigma)) {}
 
         auto sample(f32 u) const noexcept -> f32 {
-            auto s = std::lerp(cdf_a, cdf_b, u);
-            s = std::clamp(s, math::epsilon<f32>, 1.f - math::epsilon<f32>);
-            return std::sqrt(2.f) * erfinv(2.f * s - 1.f) * sigma + mu;
+            auto s = math::lerp(cdf_a, cdf_b, u);
+            s = math::clamp(s, math::epsilon<f32>, 1.f - math::epsilon<f32>);
+            return math::sqrt(2.f) * erfinv(2.f * s - 1.f) * sigma + mu;
         }
 
         auto pdf(f32 x) const noexcept -> f32 {

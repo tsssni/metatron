@@ -13,7 +13,7 @@ struct std::formatter<mtt::math::Matrix<T, dims...>> {
 
     auto format(const mtt::math::Matrix<T, dims...>& matrix, std::format_context& ctx) const {
         auto constexpr size = sizeof...(dims);
-        auto out = std::format_to(ctx.out(), "\n[");
+        auto out = std::format_to(ctx.out(), "[");
         auto constexpr first_dim = M::dimensions[0];
         for (auto i = 0uz; i < first_dim; i++) {
             if (i != 0 && size == 1) {

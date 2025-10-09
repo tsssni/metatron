@@ -4,11 +4,8 @@
 
 namespace mtt::math {
     auto inline constexpr cartesian_to_unit_spherical(math::Vector<f32, 3> const& d) noexcept -> math::Vector<f32, 2> {
-        auto theta = std::acos(d[1]);
-        auto phi = std::atan2(d[2], d[0]);
-        if (phi < 0.f) {
-            phi += 2.f * math::pi;
-        }
+        auto theta = math::acos(d[1]);
+        auto phi = math::atan2(d[2], d[0]);
         return {theta, phi};
     }
 
@@ -26,7 +23,7 @@ namespace mtt::math {
         return unit_spherical_to_cartesian(std::cos(theta), phi);
     }
 
-    auto inline constexpr cartesian_to_spherical(math::Vector<f32, 3> const& d) noexcept -> math::Vector<f32, 2> {
+    auto inline constexpr cartesian_to_spherical(math::Vector<f32, 3> const& d) noexcept -> math::Vector<f32, 3> {
         auto r = math::length(d);
         auto nd = math::normalize(d);
         auto [theta, phi] = cartesian_to_unit_spherical(nd);
@@ -71,11 +68,11 @@ namespace mtt::math {
 
     auto inline constexpr unit_to_cos_phi(math::Vector<f32, 3> const& d) noexcept -> f32 {
         auto sin_theta = unit_to_sin_theta(d);
-        return std::clamp(math::guarded_div(d[0], sin_theta), -1.f, 1.f);
+        return math::clamp(math::guarded_div(d[0], sin_theta), -1.f, 1.f);
     }
 
     auto inline constexpr unit_to_sin_phi(math::Vector<f32, 3> const& d) noexcept -> f32 {
         auto sin_theta = unit_to_sin_theta(d);
-        return std::clamp(math::guarded_div(d[2], sin_theta), -1.f, 1.f);
+        return math::clamp(math::guarded_div(d[2], sin_theta), -1.f, 1.f);
     }
 }

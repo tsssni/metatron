@@ -403,6 +403,9 @@ namespace mtt::monte_carlo {
             p = b_intr.pdf;
         }
 
+        if (math::isnan(emission.value) || math::isinf(emission.value)) {
+            return {};
+        }
         return emission;
     }
 }

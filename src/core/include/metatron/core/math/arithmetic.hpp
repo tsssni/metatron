@@ -4,24 +4,52 @@
 
 namespace mtt::math {
     template<typename T>
-    auto inline constexpr abs(T x) noexcept -> T {
+    auto constexpr abs(T x) noexcept -> T {
         return std::abs(x);
     }
 
     template<typename T>
-    auto inline constexpr pmod(T x, T y) noexcept -> T {
+    auto constexpr clamp(T x, T l, T r) noexcept -> T {
+        return std::clamp(x, l, r);
+    }
+
+    template<typename T>
+    requires std::floating_point<T>
+    auto constexpr isnan(T x) noexcept -> bool {
+        return std::isnan(x);
+    }
+
+    template<typename T>
+    requires std::floating_point<T>
+    auto constexpr isinf(T x) noexcept -> bool {
+        return std::isinf(x);
+    }
+
+
+    template<typename T, usize size>
+    requires std::floating_point<T> || std::integral<T>
+    auto constexpr mod(T x, T y) noexcept -> T {
+        if constexpr (std::floating_point<T>) {
+            return std::fmod(x, y);
+        } else {
+            return x % y;
+        }
+    }
+
+    template<typename T>
+    auto constexpr pmod(T x, T y) noexcept -> T {
         return (x % y + y) % y;
     }
 
     template<typename T>
     requires std::floating_point<T>
-    auto inline constexpr guarded_div(T x, T y) noexcept -> T {
+    auto constexpr guarded_div(T x, T y) noexcept -> T {
         return abs(y) < epsilon<T> ? 0.0 : x / y;
     }
 
     template<typename T>
     requires std::integral<T>
-    auto inline constexpr pow(T x, T n) noexcept -> T {
+    auto constexpr pow(T x, T n) noexcept -> T {
         auto y = T{1};
         while (n) {
             if (n & 1) {
@@ -58,7 +86,7 @@ namespace mtt::math {
     template<typename T>
     requires std::floating_point<T>
     auto constexpr lerp(T x, T y, T alpha) noexcept -> T {
-        return (T{1.0} - alpha) * x + alpha * y;
+        return (T{1} - alpha) * x + alpha * y;
     }
 
     template<typename T>
@@ -70,6 +98,28 @@ namespace mtt::math {
     template<typename T>
     requires std::floating_point<T> || std::integral<T>
     auto constexpr sign(T x) noexcept -> i32 {
-        return (x > 0) - (x < 0);
+        return (x > T{0}) - (x < T{0});
+    }
+
+    template<typename T>
+    requires std::floating_point<T>
+    auto constexpr acos(T x) noexcept -> T {
+        return std::acos(math::clamp(x, T{-1}, T{1}));
+    }
+
+    template<typename T>
+    requires std::floating_point<T>
+    auto constexpr asin(T x) noexcept -> T {
+        return std::asin(math::clamp(x, T{-1}, T{1}));
+    }
+
+    template<typename T>
+    requires std::floating_point<T>
+    auto constexpr atan2(T y, T x) noexcept -> T {
+        auto z = std::atan2(y, x);
+        if (z < T{0}) {
+            z += T{2} * T{math::pi};
+        }
+        return z;
     }
 }

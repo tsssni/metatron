@@ -171,7 +171,7 @@ namespace mtt::daemon {
                 s.ray_differential = space.render_to_camera ^ s.ray_differential;
                 s.default_differential = space.render_to_camera ^ s.default_differential;
 
-                auto Li_opt = integrator->sample(
+                MTT_OPT_OR_CALLBACK(Li, integrator->sample(
                     {
                         s.ray_differential,
                         s.default_differential,
@@ -186,9 +186,11 @@ namespace mtt::daemon {
                     accel,
                     emitter,
                     sp
-                );
+                ), {
+                    std::println("invalid value appears in pixel {} sample {}", px, n);
+                    std::abort();
+                });
 
-                auto& Li = Li_opt.value();
                 s.fixel = Li;
                 auto count = atomic_count.fetch_add(1) + 1;
                 auto percent = static_cast<usize>(100.f * count / total);

@@ -105,7 +105,7 @@ namespace mtt::color {
         // compute integer indices and offsets for coefficient interpolation
         auto xi = std::min((i32)x, table_res - 2);
         auto yi = std::min((i32)y, table_res - 2);
-        auto zi = std::clamp(i32(std::ranges::lower_bound(scale, z) - std::begin(scale)) - 1, 0, table_res - 2);
+        auto zi = math::clamp(i32(std::ranges::lower_bound(scale, z) - std::begin(scale)) - 1, 0, table_res - 2);
         auto dx = x - xi;
         auto dy = y - yi;
         auto dz = (z - scale[zi]) / (scale[zi + 1] - scale[zi]);
