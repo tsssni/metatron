@@ -50,7 +50,7 @@ namespace mtt::math {
 
         auto generate_1d() noexcept -> f32 {
             auto idx = permute_idx();
-            this->dim++;
+            ++dim;
             return sobol(idx, 0, hash(dim, seed));
         }
 
@@ -122,7 +122,7 @@ namespace mtt::math {
 
         auto sobol(usize idx, i32 dim, u32 hash) noexcept -> f32 {
             auto x = 0u;
-            for (auto i = dim * sobol_matrix_size; idx != 0; idx >>= 1, i++) {
+            for (auto i = dim * sobol_matrix_size; idx != 0; idx >>= 1, ++i) {
                 if (idx & 1) {
                     x ^= sobol_matrices[i];
                 }

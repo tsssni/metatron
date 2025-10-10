@@ -85,7 +85,8 @@ namespace mtt::daemon {
                         using T = std::decay_t<decltype(data)>;
                         if constexpr (std::is_same_v<T, std::array<f32, spectra::visible_range>>) {
                             if (iss >> value) {
-                                data[idx++] = value;
+                                data[idx] = value;
+                                ++idx;
                             }
                         } else {
                             if (iss >> wavelength >> value) {

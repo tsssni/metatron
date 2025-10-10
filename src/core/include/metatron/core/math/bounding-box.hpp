@@ -21,7 +21,7 @@ namespace mtt::math {
     ) noexcept -> std::optional<math::Vector<f32, 2>> {
         auto hit_min = (bbox.p_min - r.o) / r.d;
         auto hit_max = (bbox.p_max - r.o) / r.d;
-        for (auto i = 0uz; i < 3uz; i++) {
+        for (auto i = 0uz; i < 3uz; ++i) {
             if (math::abs(r.d[i]) < epsilon<f32>) {
                 hit_min[i] = -inf<f32>;
                 hit_max[i] = +inf<f32>;
@@ -45,7 +45,7 @@ namespace mtt::math {
     ) noexcept -> std::optional<std::tuple<f32, f32, usize, usize>> {
         auto hit_min = (bbox.p_min - r.o) / r.d;
         auto hit_max = (bbox.p_max - r.o) / r.d;
-        for (auto i = 0uz; i < 3uz; i++) {
+        for (auto i = 0uz; i < 3uz; ++i) {
             if (math::abs(r.d[i]) < epsilon<f32>) {
                 hit_min[i] = -inf<f32>;
                 hit_max[i] = +inf<f32>;

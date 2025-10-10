@@ -1,7 +1,7 @@
 #pragma once
 #include <concepts>
 
-namespace mtt::stl {
+namespace mtt::math {
     template<typename T>
     requires std::unsigned_integral<T>
     auto bit_reverse(T x) -> T {

@@ -67,7 +67,7 @@ namespace mtt::daemon {
             auto& areas = registry.emplace<std::vector<light::Area_Light>>(entity);
             if (material.spectrum_textures.contains("emission")) {
                 areas.reserve(shape->size());
-                for (auto i = 0uz; i < shape->size(); i++) {
+                for (auto i = 0uz; i < shape->size(); ++i) {
                     areas.emplace_back(shape, i);
                     lights.emplace_back(&areas[i], &st);
                 }
@@ -75,7 +75,7 @@ namespace mtt::daemon {
 
             auto divs = std::vector<accel::Divider>{};
             divs.reserve(shape->size());
-            for (auto i = 0uz; i < shape->size(); i++) {
+            for (auto i = 0uz; i < shape->size(); ++i) {
                 divs.emplace_back(
                     shape, int_medium, ext_medium,
                     areas.empty() ? nullptr : &areas[i],
@@ -165,7 +165,7 @@ namespace mtt::daemon {
         auto first_time = std::chrono::system_clock::now();
 
         stl::scheduler::instance().sync_parallel(compo.image_size, [&](math::Vector<usize, 2> const& px) {
-            for (auto n = 0uz; n < compo.spp; n++) {
+            for (auto n = 0uz; n < compo.spp; ++n) {
                 auto sp = sampler;
                 MTT_OPT_OR_CALLBACK(s, camera.sample(px, n, sp), {
                     std::println("ray generation failed");

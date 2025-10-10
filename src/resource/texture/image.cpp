@@ -33,7 +33,7 @@ namespace mtt::texture {
         images.reserve(max_mips);
         images.push_back(std::move(image));
 
-        for (auto mip = 1uz; mip < max_mips; mip++) {
+        for (auto mip = 1uz; mip < max_mips; ++mip) {
             size[0] = std::max(1uz, size[0] >> 1uz);
             size[1] = std::max(1uz, size[1] >> 1uz);
 
@@ -200,9 +200,9 @@ namespace mtt::texture {
 
         auto sum_t = math::Vector<f32, 4>{0.f};
         auto sum_w = 0.f;
-        for (auto j = v_range[0]; j <= v_range[1]; j++) {
+        for (auto j = v_range[0]; j <= v_range[1]; ++j) {
             auto ud = j - uv[1];
-            for (auto i = u_range[0]; i <= u_range[1]; i++) {
+            for (auto i = u_range[0]; i <= u_range[1]; ++i) {
                 auto vd = i - uv[0];
                 auto r2 = A * ud * ud + B * ud * vd + C * vd * vd;
                 if (r2 < 1) {

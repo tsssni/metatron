@@ -79,7 +79,7 @@ namespace mtt::light {
             auto bezier = [](std::vector<f32> const& data, usize block_size, usize offset, f32 x) -> std::vector<f32> {
                 auto interpolated = std::vector<f32>(block_size, 0.f);
                 auto c = std::array<f32, 6>{1, 5, 10, 10, 5, 1};
-                for (auto i = 0; i < 6; i++) {
+                for (auto i = 0; i < 6; ++i) {
                     auto start = offset + i * block_size;
                     auto coeff = c[i] * std::pow(x, i) * std::pow(1.f - x, 5 - i);
 
@@ -135,7 +135,7 @@ namespace mtt::light {
 
                 auto bspec = spectra::Blackbody_Spectrum{temperature};
                 auto sun_scale = math::Vector<f32, sunsky_num_lambda>{};
-                for (auto i = 0; i < sunsky_num_lambda; i++) {
+                for (auto i = 0; i < sunsky_num_lambda; ++i) {
                     auto lambda = sunsky_lambda[i];
                     auto Lp = sun_perp_radiance[i];
                     auto Lb = bspec(lambda) * sun_blackbody_scale;
@@ -149,8 +149,8 @@ namespace mtt::light {
                 area = (1.f - std::cos(sun_aperture * 0.5f)) / (1.f - cos_sun);
                 sun_distr = math::Cone_Distribution{cos_sun};
                 sky_radiance *= intensity / ratio * sun_scale;
-                for (auto i = 0; i < sun_num_segments; i++) {
-                    for (auto j = 0; j < sunsky_num_lambda; j++) {
+                for (auto i = 0; i < sun_num_segments; ++i) {
+                    for (auto j = 0; j < sunsky_num_lambda; ++j) {
                         sun_radiance[i][j] *= intensity / ratio * sun_scale[j];
                     }
                 }
@@ -185,10 +185,10 @@ namespace mtt::light {
                 >*)(tgmm_table.data());
 
                 auto w = std::vector<f32>(tgmm_num_gaussian);
-                for (auto i = 0; i < tgmm_num_bilinear; i++) {
+                for (auto i = 0; i < tgmm_num_bilinear; ++i) {
                     auto [t, eta] = t_eta[i];
                     auto b = b_w[i];
-                    for (auto j = 0; j < tgmm_num_mixture; j++) {
+                    for (auto j = 0; j < tgmm_num_mixture; ++j) {
                         auto idx = i * tgmm_num_mixture + j;
                         auto [mu_phi, mu_theta, sigma_phi, sigma_theta, w_g] = tgmm[t][eta][j];
                         tgmm_phi_distr[idx] = math::Truncated_Gaussian_Distribution{mu_phi, sigma_phi, 0.f, 2.f * math::pi};
@@ -335,7 +335,7 @@ namespace mtt::light {
             auto sun_pdf = 0.f;
             auto sky_pdf = 0.f;
             if (cos_theta >= 0.f) {
-                for (auto i = 0; i < tgmm_num_gaussian; i++) {
+                for (auto i = 0; i < tgmm_num_gaussian; ++i) {
                     sky_pdf += tgmm_phi_distr[i].pdf(tgmm_phi) * tgmm_theta_distr[i].pdf(theta) * tgmm_distr.pdf[i];
                 }
             }
@@ -402,7 +402,7 @@ namespace mtt::light {
             );
             auto x = eta - math::pi * 0.5f * math::pow(f32(segment) / f32(sun_num_segments), 3);
             auto L = 0.f;
-            for (auto i = 0; i < sun_num_ctls; i++) {
+            for (auto i = 0; i < sun_num_ctls; ++i) {
                 L += sun_radiance[segment][idx][i] * math::pow(x, i);
             }
             return L / spectra::CIE_Y_integral;
@@ -414,7 +414,7 @@ namespace mtt::light {
             auto cos_psi_sqr = 1.f - sin_gamma_sqr / (1.f - math::sqr(cos_sun));
             auto cos_psi = math::sqrt(cos_psi_sqr);
             auto l = 0.f;
-            for (auto i = 0; i < sun_num_limb_params; i++) {
+            for (auto i = 0; i < sun_num_limb_params; ++i) {
                 l += sun_limb[idx][i] * math::pow(cos_psi, i);
             }
             return l;
@@ -442,7 +442,7 @@ namespace mtt::light {
                 });
 
                 auto luminance = 0.f;
-                for (auto i = 0; i < sunsky_num_lambda; i++) {
+                for (auto i = 0; i < sunsky_num_lambda; ++i) {
                     auto radiance = std::views::zip(cos_theta_phi, cos_gamma, cartesian_w)
                     | std::views::transform([&](auto&& zipped) {
                         auto [cos_theta_phi, cos_gamma, cartesian_w] = zipped;
@@ -479,7 +479,7 @@ namespace mtt::light {
                 });
 
                 auto luminance = 0.f;
-                for (auto i = 0; i < sunsky_num_lambda; i++) {
+                for (auto i = 0; i < sunsky_num_lambda; ++i) {
                     auto radiance = std::views::zip(cos_gamma_phi, cos_theta, cartesian_w)
                     | std::views::transform([&](auto&& zipped) {
                         auto [cos_gamma_phi, cos_theta, cartesian_w] = zipped;

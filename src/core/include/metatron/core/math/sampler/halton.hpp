@@ -49,7 +49,7 @@ namespace mtt::math {
             auto scrambled = owen_scrambled_radical_inverse(
                 halton_idx, primes[dim], mix_bits(seed ^ dim)
             );
-            dim++;
+            ++dim;
             return scrambled;
         }
 

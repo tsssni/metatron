@@ -65,7 +65,7 @@ namespace mtt::math {
     requires std::floating_point<T>
     auto constexpr pow(T x, usize n) noexcept -> T {
         auto y = T{1};
-        for (auto i = 0; i < n; i++) {
+        for (auto i = 0; i < n; ++i) {
             y *= x;
         }
         return y;

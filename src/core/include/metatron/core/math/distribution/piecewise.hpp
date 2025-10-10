@@ -29,7 +29,7 @@ namespace mtt::math {
             cdf.resize(dim + 1);
             auto size = prod(dimensions) / dim;
 
-            for (auto i = 0uz; i < dim; i++) {
+            for (auto i = 0uz; i < dim; ++i) {
                 if constexpr (n == 1uz) {
                     rows[i] = abs(data[i]);
                     cdf[i + 1] = rows[i];
@@ -41,7 +41,7 @@ namespace mtt::math {
             }
 
             integral = cdf.back();
-            for (auto i = 1uz; i <= dim; i++) {
+            for (auto i = 1uz; i <= dim; ++i) {
                 if (integral == 0.f) {
                     cdf[i] = T(i) / T(dim);
                 } else {
@@ -52,7 +52,7 @@ namespace mtt::math {
 
         auto sample(Vector<T, n> const& u) const noexcept -> Vector<T, n> {
             auto idx = 1uz;
-            for (; idx < dim && cdf[idx] <= u[0]; idx++) {}
+            for (; idx < dim && cdf[idx] <= u[0]; ++idx) {}
             idx--;
 
             auto du = guarded_div(u[0] - cdf[idx], cdf[idx + 1uz] - cdf[idx]);

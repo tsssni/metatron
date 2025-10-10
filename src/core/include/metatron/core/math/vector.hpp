@@ -16,7 +16,7 @@ namespace mtt::math {
     noexcept -> Vector<decltype(f(vectors[0]..., 0uz)), size> {
         using Return_Type = decltype(f(vectors[0]..., 0uz));
         auto r = Vector<Return_Type, size>{};
-        for (auto i = 0uz; i < size; i++) {
+        for (auto i = 0uz; i < size; ++i) {
             r[i] = f(vectors[i]..., i);
         }
         return r;
@@ -32,7 +32,7 @@ namespace mtt::math {
         static_assert(std::is_same_v<Return_Type, bool>, "f must return bool");
 
         auto r = foreach(f, vectors...);
-        for (auto i = 0uz; i < size; i++) {
+        for (auto i = 0uz; i < size; ++i) {
             if (r[i]) {
                 return true;
             }
@@ -50,7 +50,7 @@ namespace mtt::math {
         static_assert(std::is_same_v<Return_Type, bool>, "f must return bool");
 
         auto r = foreach(f, vectors...);
-        for (auto i = 0uz; i < size; i++) {
+        for (auto i = 0uz; i < size; ++i) {
             if (!r[i]) {
                 return false;
             }
@@ -77,7 +77,7 @@ namespace mtt::math {
     template<typename T, usize size>
     auto constexpr dot(Vector<T, size> const& x, Vector<T, size> const& y) noexcept -> T {
         auto result = T{};
-        for (auto i = 0; i < size; i++) {
+        for (auto i = 0; i < size; ++i) {
             result += x[i] * y[i];
         }
         return result;
@@ -175,7 +175,7 @@ namespace mtt::math {
     requires std::totally_ordered<T>
     auto constexpr min(Vector<T, size> const& x) noexcept -> T {
         auto y = x[0];
-        for (auto i = 1uz; i < size; i++) {
+        for (auto i = 1uz; i < size; ++i) {
             y = std::min(y, x[i]);
         }
         return y;
@@ -198,7 +198,7 @@ namespace mtt::math {
     auto constexpr minvi(Vector<T, size> const& x) noexcept -> std::tuple<T, usize> {
         auto y = x[0];
         auto z = 0uz;
-        for (auto i = 1uz; i < size; i++) {
+        for (auto i = 1uz; i < size; ++i) {
             if (x[i] < y) {
                 y = x[i];
                 z = i;
@@ -211,7 +211,7 @@ namespace mtt::math {
     requires std::totally_ordered<T>
     auto constexpr max(Vector<T, size> const& x) noexcept -> T {
         auto y = x[0];
-        for (auto i = 1uz; i < size; i++) {
+        for (auto i = 1uz; i < size; ++i) {
             y = std::max(y, x[i]);
         }
         return y;
@@ -234,7 +234,7 @@ namespace mtt::math {
     auto constexpr maxvi(Vector<T, size> const& x) noexcept -> std::tuple<T, usize> {
         auto y = x[0];
         auto z = 0uz;
-        for (auto i = 1uz; i < size; i++) {
+        for (auto i = 1uz; i < size; ++i) {
             if (x[i] > y) {
                 y = x[i];
                 z = i;

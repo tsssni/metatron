@@ -136,7 +136,7 @@ namespace mtt::stl {
                             i % grid[2],
                         });
                     }
-                    dispatched++;
+                    ++dispatched;
                 }
 
                 if (dispatched > 0u && dispatch_counter->fetch_add(dispatched) + dispatched == n) {
@@ -146,7 +146,7 @@ namespace mtt::stl {
 
             {
                 auto lock = std::lock_guard{mutex};
-                for (auto i = 0uz; i < std::min(threads.size(), n - usize(sync)); i++) {
+                for (auto i = 0uz; i < std::min(threads.size(), n - usize(sync)); ++i) {
                     tasks.emplace(task);
                 }
             }

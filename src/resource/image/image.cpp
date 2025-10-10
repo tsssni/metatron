@@ -8,7 +8,7 @@ namespace mtt::image {
 
     Image::Pixel::operator math::Vector<f32, 4>() const noexcept {
         auto pixel = math::Vector<f32, 4>{};
-        for (auto i = 0; i < image->size[2]; i++) {
+        for (auto i = 0; i < image->size[2]; ++i) {
             switch (image->size[3]) {
                 case 1:
                     pixel[i] = image->linear
@@ -26,7 +26,7 @@ namespace mtt::image {
     }
 
     auto Image::Pixel::operator=(math::Vector<f32, 4> const& v) noexcept -> void {
-        for (auto i = 0; i < image->size[2]; i++) {
+        for (auto i = 0; i < image->size[2]; ++i) {
             auto* pixel = start + image->size[3] * i; 
             switch (image->size[3]) {
                 case 1:

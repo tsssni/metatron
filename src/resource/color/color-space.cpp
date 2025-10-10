@@ -112,7 +112,7 @@ namespace mtt::color {
 
         // trilinearly interpolate sigmoid polynomial coefficients
         auto c = math::Vector<f32, 3>{};
-        for (auto i = 0; i < 3; i++) {
+        for (auto i = 0; i < 3; ++i) {
             // define co lambda for looking up sigmoid polynomial coefficients
             auto co = [&](int dx, int dy, int dz) {
                 return table[0uz

@@ -7,7 +7,7 @@ namespace mtt::spectra {
 
     Discrete_Spectrum::Discrete_Spectrum(std::vector<math::Vector<f32, 2>>&& interleaved) noexcept
     : lambda(interleaved.size()), data(interleaved.size()) {
-        for (auto i = 0uz; i < interleaved.size(); i++) {
+        for (auto i = 0uz; i < interleaved.size(); ++i) {
             lambda[i] = interleaved[i][0];
             data[i] = interleaved[i][1];
         }
