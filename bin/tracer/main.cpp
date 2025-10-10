@@ -26,6 +26,11 @@ auto main(i32 argc, mut<char> argv[]) -> int {
     .help("result image path in exr format")
     .default_value(std::string{"./result.exr"});
 
+    argparser.add_argument("-a", "--address")
+    .required()
+    .help("address to tev server")
+    .default_value(std::string{""});
+
     try {
         argparser.parse_args(argc, argv);
     }
@@ -85,6 +90,9 @@ auto main(i32 argc, mut<char> argv[]) -> int {
     hierarchy.init();
     hierarchy.read(argparser.get<std::string>("-s"));
     hierarchy.update();
-    tracer_daemon.render(argparser.get<std::string>("-o"));
+    tracer_daemon.render(
+        argparser.get<std::string>("-o"),
+        argparser.get<std::string>("-a")
+    );
     return 0;
 }

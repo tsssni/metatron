@@ -132,7 +132,10 @@ namespace mtt::daemon {
         }
     }
 
-    auto Tracer_Daemon::render(std::string_view path) noexcept -> void {
+    auto Tracer_Daemon::render(
+        std::string_view path,
+        std::string_view address
+    ) noexcept -> void {
         auto& hierarchy = *ecs::Hierarchy::instance;
         auto& registry = hierarchy.registry;
 
@@ -210,6 +213,17 @@ namespace mtt::daemon {
             }
         });
         std::println();
-        camera.film->to_path(path);
+        
+        auto& image = camera.film->image;
+        stl::scheduler::instance().sync_parallel(
+            math::Vector<usize, 2>{image.size},
+            [&image](math::Vector<usize, 2> const& px) {
+                auto [i, j] = px;
+                auto pixel = math::Vector<f32, 4>{image[i, j]};
+                pixel /= pixel[3];
+                image[i, j] = pixel;
+            }
+        );
+        image.to_path(path);
     }
 }
