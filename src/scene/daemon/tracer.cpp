@@ -157,9 +157,11 @@ namespace mtt::daemon {
         auto& accel = registry.get<poly<accel::Acceleration>>(tracer);
         auto& emitter = registry.get<poly<emitter::Emitter>>(tracer);
 
+        auto range = math::Vector<usize, 2>{};
+        auto next = 1uz;
         auto progress = stl::progress{compo.image_size[0] * compo.image_size[1] * compo.spp};
-        stl::scheduler::instance().sync_parallel(compo.image_size, [&](math::Vector<usize, 2> const& px) {
-            for (auto n = 0uz; n < compo.spp; ++n) {
+        auto trace = [&](math::Vector<usize, 2> const& px) {
+            for (auto n = range[0]; n < range[1]; ++n) {
                 auto sp = sampler;
                 MTT_OPT_OR_CALLBACK(s, camera.sample(px, n, sp), {
                     std::println("ray generation failed");
@@ -191,19 +193,28 @@ namespace mtt::daemon {
                 s.fixel = Li;
                 ++progress;
             }
-        });
-        ~progress;
-        
-        auto& image = camera.film->image;
-        stl::scheduler::instance().sync_parallel(
-            math::Vector<usize, 2>{image.size},
-            [&image](math::Vector<usize, 2> const& px) {
-                auto [i, j] = px;
-                auto pixel = math::Vector<f32, 4>{image[i, j]};
-                pixel /= pixel[3];
-                image[i, j] = pixel;
+        };
+
+        while (range[0] < compo.spp) {
+            stl::scheduler::instance().sync_parallel(compo.image_size, trace);
+            range[0] = range[1];
+            range[1] = std::min(compo.spp, range[1] + next);
+            next = std::min(next * 2uz, 64uz);
+
+            auto image = camera.film->image;
+            stl::scheduler::instance().sync_parallel(
+                math::Vector<usize, 2>{image.size},
+                [&image](math::Vector<usize, 2> const& px) {
+                    auto [i, j] = px;
+                    auto pixel = math::Vector<f32, 4>{image[i, j]};
+                    pixel /= pixel[3];
+                    image[i, j] = pixel;
+                }
+            );
+            if (range[0] == compo.spp) {
+                image.to_path(path);
             }
-        );
-        image.to_path(path);
+        }
+        ~progress;
     }
 }
