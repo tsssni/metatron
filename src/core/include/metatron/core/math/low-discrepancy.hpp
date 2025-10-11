@@ -2,7 +2,7 @@
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/prime.hpp>
 #include <metatron/core/math/hash.hpp>
-#include <metatron/core/stl/bit.hpp>
+#include <metatron/core/math/bit.hpp>
 
 namespace mtt::math {
     auto inline constexpr radical_inverse(usize x, i32 b) noexcept -> f32 {
@@ -24,7 +24,7 @@ namespace mtt::math {
 
     auto inline constexpr inverse_radical(usize reversed, i32 b, i32 n) noexcept -> usize {
         auto idx = 0uz;
-        for (auto i = 0uz; i < n; i++) {
+        for (auto i = 0uz; i < n; ++i) {
             auto digit = reversed % b;
             reversed /= b;
             idx = idx * b + digit;
@@ -51,12 +51,12 @@ namespace mtt::math {
     }
 
     auto inline constexpr fast_binary_owen_scramble(u32 x, u32 hash) noexcept -> u32 {
-        x = stl::bit_reverse(x);
+        x = math::bit_reverse(x);
         x ^= x * 0x3d20adea;
         x += hash;
         x *= (hash >> 16) | 1;
         x ^= x * 0x05526c56;
         x ^= x * 0x53a22864;
-        return stl::bit_reverse(x);
+        return math::bit_reverse(x);
     }
 }

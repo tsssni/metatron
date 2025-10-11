@@ -32,15 +32,14 @@ namespace mtt::photo {
         view<color::Color_Space> color_space
     ) noexcept:
     film_size(film_size),
-    image_size(image_size),
     dxdy(film_size / image_size),
     image({image_size, 4uz, 4uz}, color_space),
     filter(filter),
     sensor(sensor) {}
 
     auto Film::operator()(
-        math::Vector<usize, 2> pixel,
-        math::Vector<f32, 2> u
+        math::Vector<usize, 2> const& pixel,
+        math::Vector<f32, 2> const& u
     ) noexcept -> Fixel {
         auto f_intr = filter->sample(u).value();
         auto pixel_position = math::Vector<f32, 2>{pixel} + 0.5f + f_intr.p;
@@ -53,19 +52,5 @@ namespace mtt::photo {
             film_position,
             math::guarded_div(f_intr.weight, f_intr.pdf)
         };
-    }
-
-    auto Film::to_path(std::string_view path) noexcept -> void {
-        stl::scheduler::instance().sync_parallel(
-            math::Vector<usize, 2>{image.width, image.height},
-            [&](math::Vector<usize, 2> const& px) {
-                auto [i, j] = px;
-                auto pixel = math::Vector<f32, 4>{image[i, j]};
-                pixel /= pixel[3];
-                pixel[3] = 1.f;
-                image[i, j] = pixel;
-            }
-        );
-        image.to_path(path);
     }
 }

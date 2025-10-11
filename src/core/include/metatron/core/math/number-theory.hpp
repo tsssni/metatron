@@ -44,7 +44,7 @@ namespace mtt::math {
         
         auto M = sum(b);
         auto x = 0uz;
-        for (auto i = 0uz; i < n; i++) {
+        for (auto i = 0uz; i < n; ++i) {
             auto m = M / b[i];
             auto c = m * multiplicative_inverse(m, b[i]);
             x += a[i] * c;

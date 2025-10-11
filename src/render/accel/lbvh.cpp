@@ -30,7 +30,7 @@ namespace mtt::accel {
     dividers(std::move(dividers)),
     transform(transform) {
         std::vector<LBVH_Divider> lbvh_divs;
-        for (auto i = 0u; i < this->dividers.size(); i++) {
+        for (auto i = 0u; i < this->dividers.size(); ++i) {
             auto& div = this->dividers[i];
             auto& lt = *div.local_to_world;
             auto t = this->transform->transform | lt.transform;
@@ -55,7 +55,7 @@ namespace mtt::accel {
         });
 
         auto intervals = std::vector<math::Vector<u32, 2>>{};
-        for (auto start = 0u, end = 0u; end <= lbvh_divs.size(); end++) {
+        for (auto start = 0u, end = 0u; end <= lbvh_divs.size(); ++end) {
             auto constexpr mask = 0x3ffc0000;
             if (false
             || end == lbvh_divs.size()
@@ -73,7 +73,7 @@ namespace mtt::accel {
                 node->div_idx = start;
                 node->num_prims = n;
                 node->bbox = math::Bounding_Box{};
-                for (auto i = start; i < end; i++) {
+                for (auto i = start; i < end; ++i) {
                     node->bbox = math::merge(node->bbox, lbvh_divs[i].bbox);
                 }
                 return node;
@@ -81,7 +81,7 @@ namespace mtt::accel {
                 auto mask = 1u << bit;
                 auto start_split_bit = lbvh_divs[start].morton_code & mask;
                 auto split = start + 1;
-                for (; split < end; split++) {
+                for (; split < end; ++split) {
                     auto split_bit = lbvh_divs[split].morton_code & mask;
                     if (split_bit != start_split_bit) {
                         break;
@@ -141,19 +141,19 @@ namespace mtt::accel {
                 )));
                 auto& [bbox, count] = buckets[b];
                 bbox = math::merge(bbox, node->bbox);
-                count++;
+                ++count;
             }
 
             auto sah = std::vector<f32>(num_buckets - 1);
-            for (auto i = 0; i < num_buckets - 1; i++) {
+            for (auto i = 0; i < num_buckets - 1; ++i) {
                 auto b = math::Vector<math::Bounding_Box, 2>{};
                 auto c = math::Vector<i32, 2>{};
-                for (auto j = 0; j <= i; j++) {
+                for (auto j = 0; j <= i; ++j) {
                     auto& [bbox, count] = buckets[j];
                     b[0] = math::merge(b[0], bbox);
                     c[0] += count;
                 }
-                for (auto j = i + 1; j < num_buckets; j++) {
+                for (auto j = i + 1; j < num_buckets; ++j) {
                     auto& [bbox, count] = buckets[j];
                     b[1] = math::merge(b[1], bbox);
                     c[1] += count;
@@ -220,7 +220,7 @@ namespace mtt::accel {
 
         auto divs = std::vector<Divider>();
         divs.reserve(lbvh_divs.size());
-        for (auto i = 0u; i < lbvh_divs.size(); i++) {
+        for (auto i = 0u; i < lbvh_divs.size(); ++i) {
             divs.emplace_back(this->dividers[lbvh_divs[i].index]);
         }
         std::swap(divs, this->dividers);
@@ -247,7 +247,7 @@ namespace mtt::accel {
             }
 
             if (node->num_prims > 0) {
-                for (auto i = 0u; i < node->num_prims; i++) {
+                for (auto i = 0u; i < node->num_prims; ++i) {
                     auto idx = node->div_idx + i;
                     auto div = &dividers[idx];
                     auto& lt = *div->local_to_world;

@@ -8,6 +8,9 @@ namespace mtt::daemon {
         ecs::Entity tracer;
         auto init() noexcept -> void;
         auto update() noexcept -> void;
-        auto render(std::string_view path) noexcept -> void;
+        auto render(
+            std::string_view path,
+            std::string_view address
+        ) noexcept -> void;
     };
 }

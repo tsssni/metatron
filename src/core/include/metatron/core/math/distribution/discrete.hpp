@@ -19,7 +19,7 @@ namespace mtt::math {
 
         auto sample(f32 u) const noexcept -> usize {
             auto i = 0uz;
-            for (; i < pdf.size() && u > cdf[i + 1]; i++);
+            for (; i < pdf.size() && u > cdf[i + 1]; ++i);
             return i;
         }
     };

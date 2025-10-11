@@ -69,7 +69,7 @@ namespace mtt::math {
                 storage.fill(scalar);
             } else if constexpr (dimensions.size() == 2) {
                 auto constexpr diagonal_n = std::min(dimensions[0], dimensions[1]);
-                for (auto i = 0; i < diagonal_n; i++) {
+                for (auto i = 0; i < diagonal_n; ++i) {
                     storage[i][i] = std::forward<U>(scalar);
                 }
             } else {
@@ -213,7 +213,7 @@ namespace mtt::math {
             auto product = Product_Matrix{};
 
             if constexpr (higher_n > 0) {
-                for (auto i = 0; i < first_dim; i++) {
+                for (auto i = 0; i < first_dim; ++i) {
                     product[i] = storage[i] | rhs[i];
                 }
             } else {
@@ -221,24 +221,24 @@ namespace mtt::math {
                 auto constexpr reduce = [](U const& x, U const& y) -> T {
                     auto z = x * y;
                     T sum = T{0};
-                    for (auto i = 0uz; i < U::dimensions.front(); i++) {
+                    for (auto i = 0uz; i < U::dimensions.front(); ++i) {
                         sum += z[i];
                     }
                     return sum;
                 };
 
                 if constexpr (r_n == 1) {
-                    for (auto i = 0; i < pds[0]; i++) {
+                    for (auto i = 0; i < pds[0]; ++i) {
                         product[i] = reduce((*this)[i], rhs);
                     }
                 } else if constexpr (l_n == 1) {
                     auto rt = transpose(rhs);
-                    for (auto i = 0; i < pds[0]; i++) {
+                    for (auto i = 0; i < pds[0]; ++i) {
                         product[i] = reduce(*this, transpose(rhs)[i]);
                     }
                 } else {
-                    for (auto i = 0; i < pds[0]; i++) {
-                        for (auto j = 0; j < pds[1]; j++) {
+                    for (auto i = 0; i < pds[0]; ++i) {
+                        for (auto j = 0; j < pds[1]; ++j) {
                             product[i][j] = reduce((*this)[i], transpose(rhs)[j]);
                         }
                     }
@@ -250,7 +250,7 @@ namespace mtt::math {
 
         auto constexpr operator+(Matrix const& rhs) const noexcept -> Matrix {
             auto result = Matrix{};
-            for (auto i = 0; i < first_dim; i++) {
+            for (auto i = 0; i < first_dim; ++i) {
                 result[i] = storage[i] + rhs[i];
             }
             return result;
@@ -263,7 +263,7 @@ namespace mtt::math {
 
         auto constexpr operator+(T const& rhs) const noexcept -> Matrix {
             auto result = Matrix{};
-            for (auto i = 0; i < first_dim; i++) {
+            for (auto i = 0; i < first_dim; ++i) {
                 result[i] = storage[i] + rhs;
             }
             return result;
@@ -280,7 +280,7 @@ namespace mtt::math {
 
         auto constexpr operator-(Matrix const& rhs) const noexcept -> Matrix {
             auto result = Matrix{};
-            for (auto i = 0; i < first_dim; i++) {
+            for (auto i = 0; i < first_dim; ++i) {
                 result[i] = storage[i] - rhs[i];
             }
             return result;
@@ -293,7 +293,7 @@ namespace mtt::math {
 
         auto constexpr operator-(T const& rhs) const noexcept -> Matrix {
             auto result = Matrix{};
-            for (auto i = 0; i < first_dim; i++) {
+            for (auto i = 0; i < first_dim; ++i) {
                 result[i] = storage[i] - rhs;
             }
             return result;
@@ -306,7 +306,7 @@ namespace mtt::math {
 
         auto constexpr operator-() const noexcept -> Matrix {
             auto result = Matrix{};
-            for (auto i = 0; i < first_dim; i++) {
+            for (auto i = 0; i < first_dim; ++i) {
                 result[i] = -storage[i];
             }
             return result;
@@ -314,7 +314,7 @@ namespace mtt::math {
 
         auto constexpr operator*(Matrix const& rhs) const noexcept -> Matrix {
             auto result = Matrix{};
-            for (auto i = 0; i < first_dim; i++) {
+            for (auto i = 0; i < first_dim; ++i) {
                 result[i] = storage[i] * rhs[i];
             }
             return result;
@@ -327,7 +327,7 @@ namespace mtt::math {
 
         auto constexpr operator*(T const& rhs) const noexcept -> Matrix {
             auto result = Matrix{};
-            for (auto i = 0; i < first_dim; i++) {
+            for (auto i = 0; i < first_dim; ++i) {
                 result[i] = storage[i] * rhs;
             }
             return result;
@@ -340,7 +340,7 @@ namespace mtt::math {
 
         auto constexpr operator/(Matrix const& rhs) const noexcept -> Matrix {
             auto result = Matrix{};
-            for (auto i = 0; i < first_dim; i++) {
+            for (auto i = 0; i < first_dim; ++i) {
                 result[i] = math::guarded_div(storage[i], rhs[i]);
             }
             return result;
@@ -353,7 +353,7 @@ namespace mtt::math {
 
         auto constexpr operator/(T const& rhs) const noexcept -> Matrix {
             auto result = Matrix{};
-            for (auto i = 0; i < first_dim; i++) {
+            for (auto i = 0; i < first_dim; ++i) {
                 result[i] = math::guarded_div(storage[i], rhs);
             }
             return result;
@@ -444,8 +444,8 @@ namespace mtt::math {
     template<typename T, usize h, usize w>
     auto constexpr transpose(Matrix<T, h, w> const& m) noexcept -> Matrix<T, w, h> {
         auto result = Matrix<T, w, h>{};
-        for (auto i = 0; i < w; i++) {
-            for (auto j = 0; j < h; j++) {
+        for (auto i = 0; i < w; ++i) {
+            for (auto j = 0; j < h; ++j) {
                 result[i][j] = m[j][i];
             }
         }
@@ -467,13 +467,13 @@ namespace mtt::math {
         } else {
             // upper triangular matrix
             auto u = m;
-            T det = T{1};
+            auto det = T{1};
             
-            for (usize i = 0; i < n; i++) {
-                usize pivot_row = i;
-                T max_val = math::abs(u[i][i]);
+            for (auto i = 0uz; i < n; ++i) {
+                auto pivot_row = i;
+                auto max_val = math::abs(u[i][i]);
                 
-                for (usize j = i + 1; j < n; j++) {
+                for (auto j = i + 1; j < n; ++j) {
                     if (auto curr_val = math::abs(u[j][i]); curr_val > max_val) {
                         max_val = curr_val;
                         pivot_row = j;
@@ -489,9 +489,9 @@ namespace mtt::math {
                 }
                 det *= u[i][i];
 
-                for (usize j = i + 1; j < n; j++) {
-                    T factor = u[j][i] / u[i][i];
-                    for (usize k = i + 1; k < n; k++) {
+                for (auto j = i + 1; j < n; ++j) {
+                    auto factor = u[j][i] / u[i][i];
+                    for (auto k = i + 1; k < n; ++k) {
                         u[j][k] -= factor * u[i][k];
                     }
                 }
@@ -505,21 +505,21 @@ namespace mtt::math {
     requires std::floating_point<T>
     auto constexpr inverse(Matrix<T, h, h> const& m) noexcept -> Matrix<T, h, h> {
         auto augmented = Matrix<T, h, h * 2>{};
-        for (usize i = 0; i < h; i++) {
-            for (usize j = 0; j < h; j++) {
+        for (auto i = 0uz; i < h; ++i) {
+            for (auto j = 0uz; j < h; ++j) {
                 augmented[i][j] = m[i][j];
             }
         }
-        for (usize i = 0; i < h; i++) {
+        for (auto i = 0uz; i < h; ++i) {
             augmented[i][h + i] = T(1);
         }
 
         // Gaussian-Jordan
-        for (usize i = 0; i < h; i++) {
+        for (auto i = 0uz; i < h; ++i) {
             auto pivot_row = i;
             auto max_val = math::abs(augmented[i][i]);
             
-            for (usize j = i + 1; j < h; j++) {
+            for (auto j = i + 1; j < h; ++j) {
                 if (auto curr_val = math::abs(augmented[j][i]); curr_val > max_val) {
                     max_val = curr_val;
                     pivot_row = j;
@@ -533,7 +533,7 @@ namespace mtt::math {
             auto pivot = augmented[i][i];
             augmented[i] /= pivot;
 
-            for (usize j = 0; j < h; j++) {
+            for (auto j = 0uz; j < h; ++j) {
                 if (j != i) {
                     auto factor = augmented[j][i];
                     augmented[j] -= factor * augmented[i];
@@ -542,8 +542,8 @@ namespace mtt::math {
         }
 
         auto result = Matrix<T, h, h>{};
-        for (usize i = 0; i < h; i++) {
-            for (usize j = 0; j < h; j++) {
+        for (auto i = 0uz; i < h; ++i) {
+            for (auto j = 0uz; j < h; ++j) {
                 result[i][j] = augmented[i][h + j];
             }
         }
@@ -569,9 +569,9 @@ namespace mtt::math {
         }
 
         auto result = Matrix<T, n>{};
-        for (auto i = 0uz; i < n; i++) {
+        for (auto i = 0uz; i < n; ++i) {
             auto a_i = a;
-            for (auto j = 0uz; j < n; j++) {
+            for (auto j = 0uz; j < n; ++j) {
                 a_i[j][i] = b[j];
             }
             result[i] = determinant(a_i) / det_a;
@@ -596,10 +596,10 @@ namespace mtt::math {
             result[0] = (a[1][1] * b[0] - a[0][1] * b[1]) / det_a;
             result[1] = (a[0][0] * b[1] - a[1][0] * b[0]) / det_a;
         } else {
-            for (auto i = 0uz; i < n; i++) {
-                for (auto j = 0uz; j < m; j++) {
+            for (auto i = 0uz; i < n; ++i) {
+                for (auto j = 0uz; j < m; ++j) {
                     auto a_i = a;
-                    for (auto k = 0uz; k < n; k++) {
+                    for (auto k = 0uz; k < n; ++k) {
                         a_i[k][i] = b[k][j];
                     }
                     result[i][j] = determinant(a_i) / det_a;

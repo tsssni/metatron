@@ -36,7 +36,7 @@ namespace mtt::bsdf {
                 auto integral = 0.0;
                 auto eta = i * 3.f / fresnel_length;
                 auto f0 = fresnel(0.f, eta, 0.f);
-                for (auto i = 1; i <= fresnel_num_samples; i++) {
+                for (auto i = 1; i <= fresnel_num_samples; ++i) {
                     auto cos_theta_2 = f32(i) / f32(fresnel_num_samples);
                     auto cos_theta = math::sqrt(cos_theta_2);
                     auto f1 = fresnel(cos_theta, eta, 0.f);

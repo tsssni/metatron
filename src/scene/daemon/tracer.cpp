@@ -10,12 +10,11 @@
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/render/accel/lbvh.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
+#include <metatron/network/remote/preview.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
-#include <atomic>
-#include <chrono>
-#include <iostream>
+#include <metatron/core/stl/progress.hpp>
 
 namespace mtt::daemon {
     auto Tracer_Daemon::init() noexcept -> void {
@@ -67,7 +66,7 @@ namespace mtt::daemon {
             auto& areas = registry.emplace<std::vector<light::Area_Light>>(entity);
             if (material.spectrum_textures.contains("emission")) {
                 areas.reserve(shape->size());
-                for (auto i = 0uz; i < shape->size(); i++) {
+                for (auto i = 0uz; i < shape->size(); ++i) {
                     areas.emplace_back(shape, i);
                     lights.emplace_back(&areas[i], &st);
                 }
@@ -75,7 +74,7 @@ namespace mtt::daemon {
 
             auto divs = std::vector<accel::Divider>{};
             divs.reserve(shape->size());
-            for (auto i = 0uz; i < shape->size(); i++) {
+            for (auto i = 0uz; i < shape->size(); ++i) {
                 divs.emplace_back(
                     shape, int_medium, ext_medium,
                     areas.empty() ? nullptr : &areas[i],
@@ -132,7 +131,10 @@ namespace mtt::daemon {
         }
     }
 
-    auto Tracer_Daemon::render(std::string_view path) noexcept -> void {
+    auto Tracer_Daemon::render(
+        std::string_view path,
+        std::string_view address
+    ) noexcept -> void {
         auto& hierarchy = *ecs::Hierarchy::instance;
         auto& registry = hierarchy.registry;
 
@@ -156,13 +158,10 @@ namespace mtt::daemon {
         auto& accel = registry.get<poly<accel::Acceleration>>(tracer);
         auto& emitter = registry.get<poly<emitter::Emitter>>(tracer);
 
-        auto atomic_count = std::atomic<usize>{0uz};
-        auto atomic_percent = std::atomic<usize>{0uz};
-        auto total = compo.image_size[0] * compo.image_size[1] * compo.spp;
-        auto first_time = std::chrono::system_clock::now();
-
-        stl::scheduler::instance().sync_parallel(compo.image_size, [&](math::Vector<usize, 2> const& px) {
-            for (auto n = 0uz; n < compo.spp; n++) {
+        auto range = math::Vector<usize, 2>{0uz, std::min(1uz, compo.spp)};
+        auto progress = stl::progress{compo.image_size[0] * compo.image_size[1] * compo.spp};
+        auto trace = [&](math::Vector<usize, 2> const& px) {
+            for (auto n = range[0]; n < range[1]; ++n) {
                 auto sp = sampler;
                 MTT_OPT_OR_CALLBACK(s, camera.sample(px, n, sp), {
                     std::println("ray generation failed");
@@ -192,24 +191,53 @@ namespace mtt::daemon {
                 });
 
                 s.fixel = Li;
-                auto count = atomic_count.fetch_add(1) + 1;
-                auto percent = static_cast<usize>(100.f * count / total);
-                
-                auto last_percent = atomic_percent.load();
-                if (percent > last_percent && atomic_percent.compare_exchange_weak(last_percent, percent)) {
-                    auto time = std::chrono::system_clock::now();
-                    auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(time - first_time).count();
-                    auto total_ms = elapsed_ms + (100 - percent) * elapsed_ms / percent;
-                    auto elapsed_s = elapsed_ms / 1000;
-                    auto total_s = total_ms / 1000;
-                    std::print("\rprogress: {}% time: [{:02d}:{:02d}/{:02d}:{:02d}]",
-                        percent, elapsed_s / 60, elapsed_s % 60, total_s / 60, total_s % 60
-                    );
-                    std::flush(std::cout);
-                }
+                ++progress;
             }
-        });
-        std::println();
-        camera.film->to_path(path);
+        };
+
+        auto next = 1uz;
+        auto previewer = remote::Previewer{address, "metatron"};
+        auto futures = std::vector<std::shared_future<void>>{};
+        futures.reserve(compo.spp / 64 + 8);
+
+        while (range[0] < compo.spp) {
+            stl::scheduler::instance().sync_parallel(compo.image_size, trace);
+            range[0] = range[1];
+            range[1] = std::min(compo.spp, range[1] + next);
+            next = std::min(next * 2uz, 64uz);
+
+            auto finished = range[0] == compo.spp;
+            auto& film = camera.film->image;
+            auto&& image = image::Image{finished ? std::move(film) : film};
+            stl::scheduler::instance().sync_parallel(
+                math::Vector<usize, 2>{image.size},
+                [&image](auto const& px) {
+                    auto [i, j] = px;
+                    auto pixel = math::Vector<f32, 4>{image[i, j]};
+                    pixel /= pixel[3];
+                    image[i, j] = pixel;
+                }
+            );
+            if (finished) {
+                image.to_path(path);
+            }
+
+            futures.push_back(stl::scheduler::instance().async_dispatch(
+                [
+                    idx = futures.size(),
+                    image = std::move(image),
+                    &futures,
+                    &previewer
+                ] mutable {
+                    if (idx > 0) {
+                        futures[idx - 1].wait();
+                    }
+                    previewer.update(std::move(image));
+                }
+            ));
+        }
+
+        futures.back().wait();
+        ~progress;
     }
 }

@@ -15,7 +15,7 @@ namespace mtt::spectra {
     }
 
     auto Stochastic_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
-        for (auto i = 0uz; i < stochastic_samples; i++) {
+        for (auto i = 0uz; i < stochastic_samples; ++i) {
             if (lambda == this->lambda[i]) {
                 return value[i];
             }

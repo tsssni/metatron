@@ -19,7 +19,7 @@ namespace mtt::math {
             w[0] =  w[1] = T{1};
         }
 
-        for (auto i = 0; i <= (n + 1) / 2; i++) {
+        for (auto i = 0; i <= (n + 1) / 2; ++i) {
             auto x = -std::cos(f64(2 * i + 1) / f64(2 * n + 2) * math::piv<f64>);
             auto it = 0;
 
@@ -36,7 +36,7 @@ namespace mtt::math {
                 if (math::abs(step) <= 4.0 * std::abs(x) * math::epsilon<f64>) {
                     break;
                 }
-                it++;
+                ++it;
             }
 
             auto [y, d] = legendre_derivative(n + 1, x);

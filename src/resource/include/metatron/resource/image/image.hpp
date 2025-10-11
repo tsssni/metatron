@@ -15,6 +15,8 @@ namespace mtt::image {
             Image const* image;
             byte* start;
         };
+        friend Pixel;
+        std::vector<byte> pixels;
 
         // 0: width, 1: height, 2: channels, 3: stride
         union {
@@ -43,9 +45,5 @@ namespace mtt::image {
             bool linear = false
         ) noexcept -> poly<Image>;
         auto to_path(std::string_view path) const noexcept -> void;
-
-    private:
-        friend Pixel;
-        std::vector<byte> pixels;
     };
 }

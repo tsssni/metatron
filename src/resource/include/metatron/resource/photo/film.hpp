@@ -14,20 +14,25 @@ namespace mtt::photo {
         math::Vector<f32, 2> const position;
         math::Vector<f32, 2> const dxdy;
         f32 const weight;
+
         Fixel(
             mut<Film> film,
             math::Vector<usize, 2> const& pixel,
             math::Vector<f32, 2> const& position,
             f32 weight
         ) noexcept;
-        auto operator=(spectra::Stochastic_Spectrum const& spectrum) noexcept -> void;
+
+        auto operator=(
+            spectra::Stochastic_Spectrum const& spectrum
+        ) noexcept -> void;
+
     private:
         mut<Film> film;
     };
 
     struct Film final {
+        image::Image image;
         math::Vector<f32, 2> film_size;
-        math::Vector<usize, 2> image_size;
         math::Vector<f32, 2> dxdy;
 
         Film(
@@ -39,15 +44,13 @@ namespace mtt::photo {
         ) noexcept;
 
         auto operator()(
-            math::Vector<usize, 2> pixel,
-            math::Vector<f32, 2> u
+            math::Vector<usize, 2> const& pixel,
+            math::Vector<f32, 2> const& u
         ) noexcept -> Fixel;
-        auto to_path(std::string_view path) noexcept -> void;
 
     private:
-        friend Fixel;
-        image::Image image;
         view<math::Filter> filter;
         view<Sensor> sensor;
+        friend Fixel;
     };
 }

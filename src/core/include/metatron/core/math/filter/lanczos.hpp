@@ -8,9 +8,9 @@ namespace mtt::math {
         Lanczos_Filter(Vector<f32, 2> const& radius = {0.5f}, f32 tau = 3.f) noexcept:
         radius(radius), tau(tau) {
             auto matrix = math::Matrix<f32, 64, 64>{};
-            for (auto j = 0uz; j < 64; j++) {
+            for (auto j = 0uz; j < 64; ++j) {
                 auto y = math::lerp(-radius[1], radius[1], (f32(j) + 0.5f) / 64.f);
-                for (auto i = 0uz; i < 64; i++) {
+                for (auto i = 0uz; i < 64; ++i) {
                     auto x = math::lerp(-radius[0], radius[0], (f32(i) + 0.5f) / 64.f);
                     matrix[j][i] = (*this)({x, y});
                 }

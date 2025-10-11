@@ -62,9 +62,9 @@ namespace mtt::media {
                     p_min[2] *= -1;
                     p_max[2] *= -1;
 
-                    for (auto i = p_min[0]; i <= p_max[0]; i++) {
-                        for (auto j = p_min[1]; j <= p_max[1]; j++) {
-                            for (auto k = p_min[2]; k <= p_max[2]; k++) {
+                    for (auto i = p_min[0]; i <= p_max[0]; ++i) {
+                        for (auto j = p_min[1]; j <= p_max[1]; ++j) {
+                            for (auto k = p_min[2]; k <= p_max[2]; ++k) {
                                 majorant_grid[ijk] = std::max(majorant_grid[ijk], nanovdb_grid->tree().getValue({i, j, k}));
                             }
                         }

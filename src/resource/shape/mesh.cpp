@@ -24,7 +24,7 @@ namespace mtt::shape {
         dndu.resize(this->indices.size());
         dndv.resize(this->indices.size());
 
-        for (auto i = 0uz; i < this->indices.size(); i++) {
+        for (auto i = 0uz; i < this->indices.size(); ++i) {
             auto prim = this->indices[i];
             auto v = math::Matrix<f32, 3, 3>{
                 this->vertices[prim[0]],
@@ -330,7 +330,7 @@ namespace mtt::shape {
         auto normals = std::vector<math::Vector<f32, 3>>{};
         auto uvs = std::vector<math::Vector<f32, 2>>{};
 
-        for (auto i = 0uz; i < mesh->mNumFaces; i++) {
+        for (auto i = 0uz; i < mesh->mNumFaces; ++i) {
             auto face = mesh->mFaces[i];
             indices.push_back({
                 face.mIndices[0],
@@ -339,7 +339,7 @@ namespace mtt::shape {
             });
         }
 
-        for (auto i = 0uz; i < mesh->mNumVertices; i++) {
+        for (auto i = 0uz; i < mesh->mNumVertices; ++i) {
             vertices.push_back({
                 mesh->mVertices[i].x,
                 mesh->mVertices[i].y,
