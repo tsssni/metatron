@@ -7,13 +7,14 @@ namespace mtt::remote {
         wired::Tcp_Socket socket;
         std::string name;
         std::array<std::string, 4> channels{"R", "G", "B", "A"};
+        bool local{false};
         bool created{false};
 
         Impl(wired::Address const& address, std::string_view name) noexcept
-        : socket(address), name(name) {}
+        : socket(address), name(name), local(address.host.empty()) {}
 
         auto create(image::Image const& image) noexcept -> void {
-            if (created) {
+            if (created || local) {
                 return;
             }
 
@@ -28,7 +29,7 @@ namespace mtt::remote {
 
         auto update(image::Image&& image) noexcept -> void {
             create(image);
-            if (!created || image.stride != 4) {
+            if (!created || local || image.stride != 4) {
                 return;
             }
 

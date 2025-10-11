@@ -3,8 +3,9 @@
 
 namespace mtt::wired {
     struct Address final {
-        std::string host;
-        std::string port;
+        std::string host{};
+        std::string port{};
+        Address() noexcept = default;
         Address(std::string_view address) noexcept;
         Address(Address const&) noexcept = default;
     };

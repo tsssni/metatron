@@ -158,7 +158,7 @@ namespace mtt::daemon {
         auto& accel = registry.get<poly<accel::Acceleration>>(tracer);
         auto& emitter = registry.get<poly<emitter::Emitter>>(tracer);
 
-        auto range = math::Vector<usize, 2>{0uz, std::min(1uz, compo.spp)};
+        auto range = math::Vector<usize, 2>{0uz, address.empty() ? compo.spp : 1uz};
         auto progress = stl::progress{compo.image_size[0] * compo.image_size[1] * compo.spp};
         auto trace = [&](math::Vector<usize, 2> const& px) {
             for (auto n = range[0]; n < range[1]; ++n) {
@@ -197,8 +197,10 @@ namespace mtt::daemon {
 
         auto next = 1uz;
         auto previewer = remote::Previewer{address, "metatron"};
+        auto& scheduler = stl::scheduler::instance();
         auto futures = std::vector<std::shared_future<void>>{};
         futures.reserve(compo.spp / 64 + 8);
+        futures.emplace_back(scheduler.async_dispatch([]{}));
 
         while (range[0] < compo.spp) {
             stl::scheduler::instance().sync_parallel(compo.image_size, trace);
@@ -209,7 +211,7 @@ namespace mtt::daemon {
             auto finished = range[0] == compo.spp;
             auto& film = camera.film->image;
             auto&& image = image::Image{finished ? std::move(film) : film};
-            stl::scheduler::instance().sync_parallel(
+            scheduler.sync_parallel(
                 math::Vector<usize, 2>{image.size},
                 [&image](auto const& px) {
                     auto [i, j] = px;
@@ -222,16 +224,13 @@ namespace mtt::daemon {
                 image.to_path(path);
             }
 
-            futures.push_back(stl::scheduler::instance().async_dispatch(
+            futures.push_back(scheduler.async_dispatch(
                 [
-                    idx = futures.size(),
                     image = std::move(image),
-                    &futures,
+                    &f = futures.back(),
                     &previewer
                 ] mutable {
-                    if (idx > 0) {
-                        futures[idx - 1].wait();
-                    }
+                    f.wait();
                     previewer.update(std::move(image));
                 }
             ));
