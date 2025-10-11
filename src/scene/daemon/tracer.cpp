@@ -158,7 +158,6 @@ namespace mtt::daemon {
         auto& emitter = registry.get<poly<emitter::Emitter>>(tracer);
 
         auto range = math::Vector<usize, 2>{};
-        auto next = 1uz;
         auto progress = stl::progress{compo.image_size[0] * compo.image_size[1] * compo.spp};
         auto trace = [&](math::Vector<usize, 2> const& px) {
             for (auto n = range[0]; n < range[1]; ++n) {
@@ -195,6 +194,7 @@ namespace mtt::daemon {
             }
         };
 
+        auto next = 1uz;
         while (range[0] < compo.spp) {
             stl::scheduler::instance().sync_parallel(compo.image_size, trace);
             range[0] = range[1];

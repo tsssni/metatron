@@ -7,11 +7,11 @@ template<typename T, mtt::usize... dims>
 struct std::formatter<mtt::math::Matrix<T, dims...>> {
     using M = mtt::math::Matrix<T, dims...>;
 
-    constexpr auto parse(std::format_parse_context& ctx) {
+    auto constexpr parse(std::format_parse_context& ctx) {
         return ctx.begin();
     }
 
-    auto format(const mtt::math::Matrix<T, dims...>& matrix, std::format_context& ctx) const {
+    auto format(mtt::math::Matrix<T, dims...> const& matrix, std::format_context& ctx) const {
         auto constexpr size = sizeof...(dims);
         auto out = std::format_to(ctx.out(), "[");
         auto constexpr first_dim = M::dimensions[0];
@@ -25,4 +25,3 @@ struct std::formatter<mtt::math::Matrix<T, dims...>> {
         return std::format_to(ctx.out(), "]");
     }
 };
-
