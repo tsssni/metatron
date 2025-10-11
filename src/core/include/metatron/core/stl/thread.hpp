@@ -60,16 +60,12 @@ namespace mtt::stl {
             return parallel(grid, std::forward<F>(f), false);
         }
 
-        template<
-            typename F,
-            usize size
-        >
-        requires (std::is_invocable_v<F, math::Vector<usize, size>> && size >= 1 && size <= 3)
+        template<typename F>
+        requires (std::is_invocable_v<F>)
         auto async_dispatch(
-            math::Vector<usize, size> const& grid,
             F&& f
         ) noexcept {
-            using R = std::invoke_result_t<F, math::Vector<usize, size>>;
+            using R = std::invoke_result_t<F>;
             auto promise = std::make_shared<std::promise<R>>();
             auto future = promise->get_future().share();
             

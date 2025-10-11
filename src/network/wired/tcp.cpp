@@ -29,19 +29,17 @@ namespace mtt::wired {
             if (auto err = ::getaddrinfo(
                 address.host.c_str(), address.port.c_str(), &hints, &info
             )) {
-                std::println("getaddrinfo() failed: {}", ::gai_strerror(err));
+                std::println("getaddrinfo failed: {}", ::gai_strerror(err));
                 std::abort();
             }
 
             for (auto* ptr = info; ptr; ptr = ptr->ai_next) {
                 socket = ::socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
                 if (socket == invalid_socket) {
-                    std::println("socket() failed: {}", ::strerror(errno));
                     continue;
                 }
 
                 if (::connect(socket, ptr->ai_addr, ptr->ai_addrlen) == socket_error) {
-                    std::println("connect() failed: {}", ::strerror(errno));
                     ::close(socket);
                     socket = invalid_socket;
                     continue;
@@ -74,13 +72,16 @@ namespace mtt::wired {
             if (sent_size == data.size()) {
                 return true;
             }
+
+            std::println("send failed: {}", ::strerror(errno));
             disconnect();
+            socket = invalid_socket;
             return false;
         }
     };
 
-    Tcp_Socket::Tcp_Socket(Address const& address)
-    noexcept: stl::capsule<Tcp_Socket>(address) {}
+    Tcp_Socket::Tcp_Socket(Address const& address) noexcept
+    : stl::capsule<Tcp_Socket>(address) {}
 
     auto Tcp_Socket::send(std::span<byte const> data) noexcept -> bool {
         return impl->send(data);

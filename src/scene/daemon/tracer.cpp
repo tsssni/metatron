@@ -10,6 +10,7 @@
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/render/accel/lbvh.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
+#include <metatron/network/remote/preview.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
@@ -157,7 +158,7 @@ namespace mtt::daemon {
         auto& accel = registry.get<poly<accel::Acceleration>>(tracer);
         auto& emitter = registry.get<poly<emitter::Emitter>>(tracer);
 
-        auto range = math::Vector<usize, 2>{};
+        auto range = math::Vector<usize, 2>{0uz, std::min(1uz, compo.spp)};
         auto progress = stl::progress{compo.image_size[0] * compo.image_size[1] * compo.spp};
         auto trace = [&](math::Vector<usize, 2> const& px) {
             for (auto n = range[0]; n < range[1]; ++n) {
@@ -195,26 +196,48 @@ namespace mtt::daemon {
         };
 
         auto next = 1uz;
+        auto previewer = remote::Previewer{address, "metatron"};
+        auto futures = std::vector<std::shared_future<void>>{};
+        futures.reserve(compo.spp / 64 + 8);
+
         while (range[0] < compo.spp) {
             stl::scheduler::instance().sync_parallel(compo.image_size, trace);
             range[0] = range[1];
             range[1] = std::min(compo.spp, range[1] + next);
             next = std::min(next * 2uz, 64uz);
 
-            auto image = camera.film->image;
+            auto finished = range[0] == compo.spp;
+            auto& film = camera.film->image;
+            auto&& image = image::Image{finished ? std::move(film) : film};
             stl::scheduler::instance().sync_parallel(
                 math::Vector<usize, 2>{image.size},
-                [&image](math::Vector<usize, 2> const& px) {
+                [&image](auto const& px) {
                     auto [i, j] = px;
                     auto pixel = math::Vector<f32, 4>{image[i, j]};
                     pixel /= pixel[3];
                     image[i, j] = pixel;
                 }
             );
-            if (range[0] == compo.spp) {
+            if (finished) {
                 image.to_path(path);
             }
+
+            futures.push_back(stl::scheduler::instance().async_dispatch(
+                [
+                    idx = futures.size(),
+                    image = std::move(image),
+                    &futures,
+                    &previewer
+                ] mutable {
+                    if (idx > 0) {
+                        futures[idx - 1].wait();
+                    }
+                    previewer.update(std::move(image));
+                }
+            ));
         }
+
+        futures.back().wait();
         ~progress;
     }
 }
