@@ -4,8 +4,8 @@
 namespace mtt::compo {
     struct Divider final {
         ecs::Entity shape;
-        ecs::Entity int_medium = "/hierarchy/medium/vaccum"_et;
-        ecs::Entity ext_medium = "/hierarchy/medium/vaccum"_et;
+        ecs::Entity int_medium{"/hierarchy/medium/vaccum"_et};
+        ecs::Entity ext_medium{"/hierarchy/medium/vaccum"_et};
         ecs::Entity material;
     };
 

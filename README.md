@@ -20,7 +20,7 @@ Metatron is a physically based renderer unbiasedly simulating radiative transfer
   * RGB compatibility via [J19](https://jo.dreggn.org/home/2019_sigmoid.pdf).
   * [Real world spectra](https://github.com/tsssni/metatron/tree/master/share/spectra) are used for conductor, dispersion and color space definition.
 * Medium
-  * Null-scattering integration for heterogenous medium via [MG19](https://cs.dartmouth.edu/~wjarosz/publications/miller19null.html).
+  * Null-scattering integral for heterogenous medium via [MG19](https://cs.dartmouth.edu/~wjarosz/publications/miller19null.html).
   * Phase function evaluation and sampling via [HG41](https://adsabs.harvard.edu/full/1941ApJ....93...70H).
   * [NanoVDB](https://www.openvdb.org/documentation/doxygen/NanoVDB_MainPage.html) is supported for volume data.
 * BSDF
