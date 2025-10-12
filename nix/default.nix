@@ -16,7 +16,7 @@
 }:
 clangStdenv.mkDerivation {
   pname = "metatron";
-  version = "0.0.1";
+  version = "0.1.0";
 
   src = ../.;
   # src = fetchFromGitHub {
@@ -62,6 +62,10 @@ clangStdenv.mkDerivation {
     description = "physically-based path-tracing renderer";
     homepage = "github.com/tsssni/metatron";
     license = licenses.gpl3;
-    platforms = platforms.linux ++ platforms.darwin;
+    platforms = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "aarch64-darwin"
+    ];
   };
 }
