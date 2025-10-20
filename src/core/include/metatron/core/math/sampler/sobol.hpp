@@ -122,11 +122,8 @@ namespace mtt::math {
 
         auto sobol(usize idx, i32 dim, u32 hash) noexcept -> f32 {
             auto x = 0u;
-            for (auto i = dim * sobol_matrix_size; idx != 0; idx >>= 1, ++i) {
-                if (idx & 1) {
-                    x ^= sobol_matrices[i];
-                }
-            }
+            for (auto i = dim * sobol_matrix_size; idx != 0; idx >>= 1, ++i)
+                if (idx & 1) x ^= sobol_matrices[i];
 
             x = fast_binary_owen_scramble(x, hash);
             return std::min(x * 0x1p-32f, 1.f - epsilon<f32>);

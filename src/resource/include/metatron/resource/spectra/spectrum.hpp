@@ -17,9 +17,8 @@ namespace mtt::spectra {
 
     auto inline operator|(view<Spectrum> x, view<Spectrum> y) noexcept -> f32 {
         auto integral = 0.f;
-        for (auto lambda = visible_lambda[0]; lambda <= visible_lambda[1]; ++lambda) {
+        for (auto lambda = visible_lambda[0]; lambda <= visible_lambda[1]; ++lambda)
             integral += (*x)(lambda) * (*y)(lambda);
-        }
         return integral;
     }
 

@@ -33,8 +33,7 @@ auto main(i32 argc, mut<char> argv[]) -> int {
 
     try {
         argparser.parse_args(argc, argv);
-    }
-    catch (const std::exception& err) {
+    } catch (const std::exception& err) {
         std::println("argparser error: {}", err.what());
         std::cout << argparser;
         return 1;

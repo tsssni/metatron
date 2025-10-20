@@ -4,16 +4,12 @@
 
 namespace mtt::math {
     auto inline constexpr gcd(usize a, usize b) noexcept -> usize {
-        if (b == 0) {
-            return a;
-        }
+        if (b == 0) return a;
         return gcd(b, a % b);
     }
 
     auto inline constexpr extended_gcd(usize a, usize b) noexcept -> std::tuple<usize, usize, usize> {
-        if (b == 0) {
-            return {a, 1uz, 0uz};
-        }
+        if (b == 0) return {a, 1uz, 0uz};
         auto [gcd, x, y] = extended_gcd(b, a % b);
         // b * x + (a % b) * y = gcd
         // b * x + (a - a / b * b) * y = gcd

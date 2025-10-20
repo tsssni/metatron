@@ -50,9 +50,7 @@ namespace mtt::shape {
             if (dpduv_opt) {
                 auto dpduv = dpduv_opt.value();
                 auto perp = math::cross(dpduv[0], dpduv[1]);
-                if (math::length(perp) == 0.f) {
-                    dpduv_opt.reset();
-                }
+                if (math::length(perp) == 0.f) dpduv_opt.reset();
             }
             // fallback to make sure normal is correct
             if (!dpduv_opt) {
@@ -65,11 +63,9 @@ namespace mtt::shape {
             );
             if (!dnduv_opt) {
                 auto dn = math::normalize(math::cross(n[2] - n[0], n[1] - n[0]));
-                if (math::length(dn) == 0) {
-                    dnduv_opt = math::Matrix<f32, 2, 3>{0.f};
-                } else {
-                    dnduv_opt = math::orthogonalize(dn);
-                }
+                dnduv_opt = math::length(dn) == 0
+                ? math::Matrix<f32, 2, 3>{0.f}
+                : math::orthogonalize(dn);
             }
 
             auto dpduv = dpduv_opt.value();
@@ -145,14 +141,10 @@ namespace mtt::shape {
         || math::abs(det) < math::epsilon<f32>
         || std::signbit(e[0]) != std::signbit(e[1])
         || std::signbit(e[1]) != std::signbit(e[2])
-        ) {
-            return {};
-        }
+        ) return {};
 
         auto t = math::blerp(v, bary)[2];
-        if (t < math::epsilon<f32>) {
-            return {};
-        }
+        if (t < math::epsilon<f32>) return {};
 
         auto p = blerp(vertices, bary, idx);
         auto n = blerp(normals, bary, idx);
@@ -183,9 +175,7 @@ namespace mtt::shape {
         if (false
         || validate_vector(a)
         || validate_vector(b)
-        || validate_vector(c)) {
-            return {};
-        }
+        || validate_vector(c)) return {};
 
         auto n_ab = math::normalize(math::cross(b, a));
         auto n_bc = math::normalize(math::cross(c, b));
@@ -193,9 +183,7 @@ namespace mtt::shape {
         if (false
         || validate_vector(n_ab)
         || validate_vector(n_bc)
-        || validate_vector(n_ca)) {
-            return {};
-        }
+        || validate_vector(n_ca)) return {};
 
         auto alpha = math::angle(n_ab, -n_ca);
         auto beta = math::angle(n_bc, -n_ab);
@@ -275,15 +263,13 @@ namespace mtt::shape {
 
         auto c_2 = r.d;
         auto c_1 = math::normalize(math::cross(math::cross(b, c_2), math::cross(c, a)));
-        if (math::dot(c_1, a + c) < 0.f) {
-            c_1 *= -1.f;
-        }
+        if (math::dot(c_1, a + c) < 0.f) c_1 *= -1.f;
 
         auto u = math::Vector<f32, 2>{};
         auto pdf = 1.f;
         u[1] = math::guarded_div(1.f - math::dot(b, c_2), (1.f - math::dot(b, c_1)));
         pdf = math::guarded_div(pdf, 1.f - math::dot(b, c_1));
-        if (math::dot(a, c_1) > 0.99999847691f) {/* 0.1 degrees */
+        if (math::dot(a, c_1) > 0.99999847691f) { // 0.1 degrees
             u[0] = 0.f;
         } else {
             auto n_bc1 = math::normalize(math::cross(c_1, b));

@@ -31,9 +31,7 @@ namespace mtt::emitter {
         eval::Context const& ctx,
         f32 u
     ) const noexcept -> std::optional<emitter::Interaction> {
-        if (dividers.empty() && inf_dividers.empty()) {
-            return {};
-        }
+        if (dividers.empty() && inf_dividers.empty()) return {};
 
         auto idx = distr.sample(u);
         return emitter::Interaction{
@@ -47,9 +45,7 @@ namespace mtt::emitter {
         eval::Context const& ctx,
         f32 u
     ) const noexcept -> std::optional<emitter::Interaction> {
-        if (inf_dividers.empty()) {
-            return {};
-        }
+        if (inf_dividers.empty()) return {};
 
         auto idx = inf_distr.sample(u);
         return emitter::Interaction{

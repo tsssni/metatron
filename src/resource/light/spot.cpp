@@ -22,11 +22,8 @@ namespace mtt::light {
         math::Vector<f32, 2> const& u
     ) const noexcept -> std::optional<Interaction> {
         auto smoothstep = [](f32 start, f32 end, f32 x) -> f32 {
-            if (x < start) {
-                return 0.f;
-            } else if (x > end) {
-                return 1.f;
-            }
+            if (x < start) return 0.f;
+            else if (x > end) return 1.f;
             auto t = (x - start) / (end - start);
             return t * t * (3.f - 2.f * t);
         };

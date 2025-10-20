@@ -17,9 +17,7 @@ namespace mtt::stl {
                     while (true) {
                         auto lock = std::unique_lock{mutex};
                         cv.wait(lock, [this] { return !tasks.empty() || stop; });
-                        if (stop && tasks.empty()) {
-                            break;
-                        }
+                        if (stop && tasks.empty()) break;
 
                         auto task = std::move(tasks.top());
                         tasks.pop();
@@ -36,9 +34,7 @@ namespace mtt::stl {
                 stop = true;
             }
             cv.notify_all();
-            for (auto& thread : threads) {
-                thread.join();
-            }
+            for (auto& t : threads) t.join();
         }
 
         template<typename F, usize size>
@@ -135,22 +131,18 @@ namespace mtt::stl {
                     ++dispatched;
                 }
 
-                if (dispatched > 0u && dispatch_counter->fetch_add(dispatched) + dispatched == n) {
+                if (dispatched > 0u && dispatch_counter->fetch_add(dispatched) + dispatched == n)
                     promise->set_value();
-                }
             });
 
             {
                 auto lock = std::lock_guard{mutex};
-                for (auto i = 0uz; i < std::min(threads.size(), n - usize(sync)); ++i) {
+                for (auto i = 0uz; i < std::min(threads.size(), n - usize(sync)); ++i)
                     tasks.emplace(task);
-                }
             }
 
             cv.notify_all();
-            if (sync) {
-                (*task)();
-            }
+            if (sync) (*task)();
             return future;
         }
 

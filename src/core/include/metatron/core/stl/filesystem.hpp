@@ -31,9 +31,7 @@ namespace mtt::stl {
         auto find(std::string_view path) noexcept -> std::optional<std::string> {
             for (const auto& base : pathes | std::views::reverse) {
                 auto full = std::filesystem::path(base) / path;
-                if (std::filesystem::exists(full)) {
-                    return full.string();
-                }
+                if (std::filesystem::exists(full)) return full.string();
             }
             return {};
         }
@@ -53,15 +51,10 @@ namespace mtt::stl {
             auto path = std::string{};
             auto pathes = std::vector<std::string>{};
             
-            while(std::getline(ss, path, sep)) {
-                if (!path.empty()) {
-                    pathes.push_back(path);
-                }
-            }
-
-            for (auto path: pathes | std::views::reverse) {
+            while(std::getline(ss, path, sep))
+                if (!path.empty()) pathes.push_back(path);
+            for (auto path: pathes | std::views::reverse)
                 this->pathes.push_back(path);
-            }
         }
 
         std::vector<std::string> pathes;

@@ -16,9 +16,7 @@ namespace mtt::wired {
         }
 
         ~Impl() {
-            if (socket != invalid_socket) {
-                disconnect();
-            }
+            if (socket != invalid_socket) disconnect();
         }
 
         auto connect() noexcept -> void {
@@ -35,9 +33,7 @@ namespace mtt::wired {
 
             for (auto* ptr = info; ptr; ptr = ptr->ai_next) {
                 socket = ::socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
-                if (socket == invalid_socket) {
-                    continue;
-                }
+                if (socket == invalid_socket) continue;
 
                 if (::connect(socket, ptr->ai_addr, ptr->ai_addrlen) == socket_error) {
                     ::close(socket);
@@ -49,9 +45,8 @@ namespace mtt::wired {
             }
 
             ::freeaddrinfo(info);
-            if (socket == invalid_socket) {
+            if (socket == invalid_socket)
                 std::println("tcp could not connect to {}", address);
-            }
         }
 
         auto disconnect() noexcept -> void {
@@ -63,15 +58,11 @@ namespace mtt::wired {
         auto send(std::span<byte const> data) noexcept -> bool {
             if (socket == invalid_socket) {
                 connect();
-                if (socket == invalid_socket) {
-                    return false;
-                }
+                if (socket == invalid_socket) return false;
             }
 
             auto sent_size = ::send(socket, view<char>(data.data()), data.size(), 0);
-            if (sent_size == data.size()) {
-                return true;
-            }
+            if (sent_size == data.size()) return true;
 
             std::println("send failed: {}", ::strerror(errno));
             disconnect();

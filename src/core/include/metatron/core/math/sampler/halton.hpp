@@ -43,9 +43,7 @@ namespace mtt::math {
         }
 
         auto generate_1d() noexcept -> f32 {
-            if (dim >= primes.size()) {
-                dim = 2uz;
-            }
+            if (dim >= primes.size()) dim = 2uz;
             auto scrambled = owen_scrambled_radical_inverse(
                 halton_idx, primes[dim], mix_bits(seed ^ dim)
             );

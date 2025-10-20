@@ -13,9 +13,7 @@
 namespace mtt::media {
     template<typename T, usize n>
     auto to_nanovdb(math::Vector<T, n> x) {
-        if constexpr (n == 3) {
-            return nanovdb::math::Vec3<T>{x[0], x[1], -x[2]};
-        }
+        if constexpr (n == 3) return nanovdb::math::Vec3<T>{x[0], x[1], -x[2]};
     }
 
     template<typename T>
@@ -62,13 +60,10 @@ namespace mtt::media {
                     p_min[2] *= -1;
                     p_max[2] *= -1;
 
-                    for (auto i = p_min[0]; i <= p_max[0]; ++i) {
-                        for (auto j = p_min[1]; j <= p_max[1]; ++j) {
-                            for (auto k = p_min[2]; k <= p_max[2]; ++k) {
+                    for (auto i = p_min[0]; i <= p_max[0]; ++i)
+                        for (auto j = p_min[1]; j <= p_max[1]; ++j)
+                            for (auto k = p_min[2]; k <= p_max[2]; ++k)
                                 majorant_grid[ijk] = std::max(majorant_grid[ijk], nanovdb_grid->tree().getValue({i, j, k}));
-                            }
-                        }
-                    }
                 }
             );
         }
@@ -86,11 +81,7 @@ namespace mtt::media {
             return sampler(nanovdb_grid->worldToIndex(to_nanovdb(pos)));
         }
         auto operator[](math::Vector<i32, 3> const& ijk) noexcept -> T& {
-            if (majorant_grid.inside(ijk)) {
-                return majorant_grid[ijk];
-            } else {
-                return background;
-            }
+            return majorant_grid.inside(ijk) ? majorant_grid[ijk] : background;
         }
         auto operator[](math::Vector<i32, 3> const& ijk) const noexcept -> T const& {
             return const_cast<Nanovdb_Grid&>(*this)[ijk];

@@ -149,11 +149,9 @@ namespace mtt::light {
                 area = (1.f - std::cos(sun_aperture * 0.5f)) / (1.f - cos_sun);
                 sun_distr = math::Cone_Distribution{cos_sun};
                 sky_radiance *= intensity / ratio * sun_scale;
-                for (auto i = 0; i < sun_num_segments; ++i) {
-                    for (auto j = 0; j < sunsky_num_lambda; ++j) {
+                for (auto i = 0; i < sun_num_segments; ++i)
+                    for (auto j = 0; j < sunsky_num_lambda; ++j)
                         sun_radiance[i][j] *= intensity / ratio * sun_scale[j];
-                    }
-                }
             };
 
             // https://github.com/mitsuba-renderer/mitsuba3/blob/master/include/mitsuba/render/sunsky.h
@@ -334,11 +332,9 @@ namespace mtt::light {
 
             auto sun_pdf = 0.f;
             auto sky_pdf = 0.f;
-            if (cos_theta >= 0.f) {
-                for (auto i = 0; i < tgmm_num_gaussian; ++i) {
+            if (cos_theta >= 0.f)
+                for (auto i = 0; i < tgmm_num_gaussian; ++i)
                     sky_pdf += tgmm_phi_distr[i].pdf(tgmm_phi) * tgmm_theta_distr[i].pdf(theta) * tgmm_distr.pdf[i];
-                }
-            }
             sky_pdf = math::guarded_div(sky_pdf, std::sin(theta));
             sun_pdf = cos_gamma >= cos_sun ? math::Cone_Distribution{cos_sun}.pdf() : 0.f;
             return math::lerp(sun_pdf, sky_pdf, w_sky);
@@ -349,9 +345,7 @@ namespace mtt::light {
         }
 
         auto hosek(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
-            if (lambda > sunsky_lambda.back()) {
-                return 0.f;
-            }
+            if (lambda > sunsky_lambda.back()) return 0.f;
 
             auto [low, high, alpha] = split(lambda);
             auto L = math::lerp(
@@ -402,9 +396,8 @@ namespace mtt::light {
             );
             auto x = eta - math::pi * 0.5f * math::pow(f32(segment) / f32(sun_num_segments), 3);
             auto L = 0.f;
-            for (auto i = 0; i < sun_num_ctls; ++i) {
+            for (auto i = 0; i < sun_num_ctls; ++i)
                 L += sun_radiance[segment][idx][i] * math::pow(x, i);
-            }
             return L / spectra::CIE_Y_integral;
         }
 
@@ -414,9 +407,8 @@ namespace mtt::light {
             auto cos_psi_sqr = 1.f - sin_gamma_sqr / (1.f - math::sqr(cos_sun));
             auto cos_psi = math::sqrt(cos_psi_sqr);
             auto l = 0.f;
-            for (auto i = 0; i < sun_num_limb_params; ++i) {
+            for (auto i = 0; i < sun_num_limb_params; ++i)
                 l += sun_limb[idx][i] * math::pow(cos_psi, i);
-            }
             return l;
         }
 

@@ -153,11 +153,8 @@ namespace mtt::texture {
 
         auto i = wrap(px[0], size[0], sampler.wrap_u);
         auto j = wrap(px[1], size[1], sampler.wrap_v);
-        if (i == size[0] || j == size[1]) {
-            return sampler.border;
-        } else {
-            return math::Vector<f32, 4>{(*images[lod])[i, j]};
-        }
+        if (i == size[0] || j == size[1]) return sampler.border;
+        else return math::Vector<f32, 4>{(*images[lod])[i, j]};
     }
 
     auto Image_Vector_Texture::nearest(

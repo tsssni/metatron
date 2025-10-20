@@ -16,9 +16,8 @@ namespace mtt::math {
     noexcept -> Vector<decltype(f(vectors[0]..., 0uz)), size> {
         using Return_Type = decltype(f(vectors[0]..., 0uz));
         auto r = Vector<Return_Type, size>{};
-        for (auto i = 0uz; i < size; ++i) {
+        for (auto i = 0uz; i < size; ++i)
             r[i] = f(vectors[i]..., i);
-        }
         return r;
     }
 
@@ -32,11 +31,8 @@ namespace mtt::math {
         static_assert(std::is_same_v<Return_Type, bool>, "f must return bool");
 
         auto r = foreach(f, vectors...);
-        for (auto i = 0uz; i < size; ++i) {
-            if (r[i]) {
-                return true;
-            }
-        }
+        for (auto i = 0uz; i < size; ++i)
+            if (r[i]) return true;
         return false;
     }
 
@@ -50,36 +46,32 @@ namespace mtt::math {
         static_assert(std::is_same_v<Return_Type, bool>, "f must return bool");
 
         auto r = foreach(f, vectors...);
-        for (auto i = 0uz; i < size; ++i) {
-            if (!r[i]) {
-                return false;
-            }
-        }
+        for (auto i = 0uz; i < size; ++i)
+            if (!r[i]) return false;
         return true;
     }
 
     template<typename T, usize size>
     requires std::floating_point<T>
     auto constexpr isnan(Vector<T, size> const& x) noexcept -> bool {
-        return math::any([](T x, auto){
-            return math::isnan(x);
+        return any([](T x, auto){
+            return isnan(x);
         }, x);
     }
 
     template<typename T, usize size>
     requires std::floating_point<T>
     auto constexpr isinf(Vector<T, size> const& x) noexcept -> bool {
-        return math::any([](T x, auto){
-            return math::isinf(x);
+        return any([](T x, auto){
+            return isinf(x);
         }, x);
     }
 
     template<typename T, usize size>
     auto constexpr dot(Vector<T, size> const& x, Vector<T, size> const& y) noexcept -> T {
         auto result = T{};
-        for (auto i = 0; i < size; ++i) {
+        for (auto i = 0; i < size; ++i)
             result += x[i] * y[i];
-        }
         return result;
     }
 
@@ -109,11 +101,8 @@ namespace mtt::math {
     requires std::floating_point<T>
     auto constexpr angle(Vector<T, size> const& x, Vector<T, size> const& y) noexcept -> T {
         // compute theta / 2 to avoid round-off error
-        if (dot(x, y) < 0.f) {
-            return pi - 2.f * std::asin(length(-y - x)/2);
-        } else {
-            return 2.f * std::asin(length(y - x) / 2);
-        }
+        if (dot(x, y) < 0.f) return pi - 2.f * std::asin(length(-y - x)/2);
+        else return 2.f * std::asin(length(y - x) / 2);
     }
 
     template<typename T, usize size>
@@ -175,9 +164,8 @@ namespace mtt::math {
     requires std::totally_ordered<T>
     auto constexpr min(Vector<T, size> const& x) noexcept -> T {
         auto y = x[0];
-        for (auto i = 1uz; i < size; ++i) {
+        for (auto i = 1uz; i < size; ++i)
             y = std::min(y, x[i]);
-        }
         return y;
     }
 
@@ -198,12 +186,11 @@ namespace mtt::math {
     auto constexpr minvi(Vector<T, size> const& x) noexcept -> std::tuple<T, usize> {
         auto y = x[0];
         auto z = 0uz;
-        for (auto i = 1uz; i < size; ++i) {
+        for (auto i = 1uz; i < size; ++i)
             if (x[i] < y) {
                 y = x[i];
                 z = i;
             }
-        }
         return std::make_tuple(y, z);
     }
 
@@ -211,9 +198,8 @@ namespace mtt::math {
     requires std::totally_ordered<T>
     auto constexpr max(Vector<T, size> const& x) noexcept -> T {
         auto y = x[0];
-        for (auto i = 1uz; i < size; ++i) {
+        for (auto i = 1uz; i < size; ++i)
             y = std::max(y, x[i]);
-        }
         return y;
     }
 
@@ -234,12 +220,11 @@ namespace mtt::math {
     auto constexpr maxvi(Vector<T, size> const& x) noexcept -> std::tuple<T, usize> {
         auto y = x[0];
         auto z = 0uz;
-        for (auto i = 1uz; i < size; ++i) {
+        for (auto i = 1uz; i < size; ++i)
             if (x[i] > y) {
                 y = x[i];
                 z = i;
             }
-        }
         return std::make_tuple(y, z);
     }
 
@@ -247,7 +232,7 @@ namespace mtt::math {
     requires std::floating_point<T> || std::integral<T>
     auto constexpr abs(Vector<T, size> const& x) noexcept -> Vector<T, size> {
         return foreach([](T const& v, usize) noexcept -> T {
-            return math::abs(v);
+            return abs(v);
         }, x);
     }
 
@@ -306,25 +291,11 @@ namespace mtt::math {
         return sum(x) / size;
     }
 
-    template<typename T>
-    requires std::floating_point<T> || std::integral<T>
-    auto constexpr mod(T const& x, T const& m) noexcept -> T {
-        if constexpr (std::floating_point<T>) {
-            return std::fmod(x, m);
-        } else {
-            return x % m;
-        };
-    }
-
     template<typename T, usize size>
     requires std::floating_point<T> || std::integral<T>
     auto constexpr mod(Vector<T, size> const& x, T const& m) noexcept -> Vector<T, size> {
         return foreach([&](T const& v, usize i) noexcept -> T {
-            if constexpr (std::floating_point<T>) {
-                return std::fmod(v, m);
-            } else {
-                return v % m;
-            }
+            return mod(v, m);
         }, x);
     }
 
@@ -332,7 +303,7 @@ namespace mtt::math {
     requires std::floating_point<T> || std::integral<T>
     auto constexpr mod(Vector<T, size> const& x, Vector<T, size> const& m) noexcept -> Vector<T, size> {
         return foreach([&](T const& v, usize i) noexcept -> T {
-            return math::mod(v, m[i]);
+            return mod(v, m[i]);
         }, x);
     }
 
@@ -340,7 +311,7 @@ namespace mtt::math {
     requires std::totally_ordered<T>
     auto constexpr clamp(Vector<T, size> const& x, Vector<T, size> const& l, Vector<T, size> const& r) noexcept -> Vector<T, size> {
         return foreach([&](T const& v, usize i) noexcept -> T {
-            return math::clamp(v, l[i], r[i]);
+            return clamp(v, l[i], r[i]);
         }, x);
     }
 
@@ -370,12 +341,12 @@ namespace mtt::math {
 
     template<typename T, usize size>
     requires std::floating_point<T>
-    auto constexpr orthogonalize(Vector<T, size> const& n) noexcept -> math::Matrix<T, 2, size> {
-        auto t = math::abs(n[0]) > 1.f - math::epsilon<f32>
-        ? math::Vector<f32, 3>{1.f, 0.f, 0.f}
-        : math::Vector<f32, 3>{0.f, 1.f, 0.f};
-        auto tn = math::normalize(math::gram_schmidt(t, n));
-        auto bn = math::normalize(math::cross(tn, n));
+    auto constexpr orthogonalize(Vector<T, size> const& n) noexcept -> Matrix<T, 2, size> {
+        auto t = abs(n[0]) > 1.f - epsilon<f32>
+        ? Vector<f32, 3>{1.f, 0.f, 0.f}
+        : Vector<f32, 3>{0.f, 1.f, 0.f};
+        auto tn = normalize(gram_schmidt(t, n));
+        auto bn = normalize(cross(tn, n));
         return {tn, bn};
     }
 }

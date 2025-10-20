@@ -40,9 +40,7 @@ namespace mtt::shape {
             math::Vector<f32, 3> const& b,
             usize idx
         ) const noexcept -> T {
-            if (traits.empty()) {
-                return {};
-            }
+            if (traits.empty()) return {};
             auto prim = indices[idx];
             return math::blerp(
                 math::Vector<T, 3>{

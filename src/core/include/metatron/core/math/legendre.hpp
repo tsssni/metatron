@@ -32,14 +32,9 @@ namespace mtt::math {
             }
         }
 
-        if (l == m) {
-            return mm;
-        }
-
+        if (l == m) return mm;
         auto mmp1 = x * (T{2} * m + T{1}) * mm;
-        if (l == m + 1) {
-            return mmp1;
-        }
+        if (l == m + 1) return mmp1;
 
         auto lm2m = mm;
         auto lm1m = mmp1;
@@ -72,11 +67,8 @@ namespace mtt::math {
             }
             return {l0, d0};
         } else {
-            if (l == 0) {
-                return {T{1}, T{0}};
-            } else {
-                return {T{x}, T{1}};
-            }
+            if (l == 0) return {T{1}, T{0}};
+            else return {T{x}, T{1}};
         }
     }
 }

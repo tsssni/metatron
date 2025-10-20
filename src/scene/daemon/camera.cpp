@@ -42,22 +42,19 @@ namespace mtt::daemon {
                 remove_camera(this->camera);
                 registry.remove<compo::Camera>(this->camera);
             }
-            if (!registry.any_of<compo::Camera>(entity)) {
-                continue;
-            }
+            if (!registry.any_of<compo::Camera>(entity)) continue;
             this->camera = entity;
             auto& camera = registry.get<compo::Camera>(entity);
 
             registry.emplace<poly<math::Filter>>(entity,
             std::visit([&](auto&& compo) -> poly<math::Filter> {
                 using T = std::decay_t<decltype(compo)>;
-                if constexpr (std::is_same_v<T, compo::Box_Filter>) {
+                if constexpr (std::is_same_v<T, compo::Box_Filter>)
                     return make_poly<math::Filter, math::Box_Filter>(compo.radius);
-                } else if constexpr (std::is_same_v<T, compo::Gaussian_Filter>) {
+                else if constexpr (std::is_same_v<T, compo::Gaussian_Filter>)
                     return make_poly<math::Filter, math::Gaussian_Filter>(compo.radius, compo.sigma);
-                } else if constexpr (std::is_same_v<T, compo::Lanczos_Filter>) {
+                else if constexpr (std::is_same_v<T, compo::Lanczos_Filter>)
                     return make_poly<math::Filter, math::Lanczos_Filter>(compo.radius, compo.tau);
-                }
             }, camera.filter));
             auto filter = view<math::Filter>{registry.get<poly<math::Filter>>(entity)};
 
@@ -67,27 +64,25 @@ namespace mtt::daemon {
             registry.emplace<poly<math::Sampler>>(entity,
             std::visit([&](auto&& compo) -> poly<math::Sampler> {
                 using T = std::decay_t<decltype(compo)>;
-                if constexpr (std::is_same_v<T, compo::Independent_Sampler>) {
+                if constexpr (std::is_same_v<T, compo::Independent_Sampler>)
                     return make_poly<math::Sampler, math::Independent_Sampler>(seed);
-                } else if constexpr (std::is_same_v<T, compo::Halton_Sampler>) {
+                else if constexpr (std::is_same_v<T, compo::Halton_Sampler>)
                     return make_poly<math::Sampler, math::Halton_Sampler>(seed);
-                } else if constexpr (std::is_same_v<T, compo::Sobol_Sampler>) {
+                else if constexpr (std::is_same_v<T, compo::Sobol_Sampler>)
                     return make_poly<math::Sampler, math::Sobol_Sampler>(seed, camera.spp, camera.image_size);
-                }
             }, camera.sampler));
 
             registry.emplace<poly<photo::Lens>>(entity,
             std::visit([&](auto&& compo) -> poly<photo::Lens> {
                 using T = std::decay_t<decltype(compo)>;
-                if constexpr (std::is_same_v<T, compo::Pinhole_Lens>) {
+                if constexpr (std::is_same_v<T, compo::Pinhole_Lens>)
                     return make_poly<photo::Lens, photo::Pinhole_Lens>(
                         compo.focal_distance
                     );
-                } else if constexpr (std::is_same_v<T, compo::Thin_Lens>) {
+                else if constexpr (std::is_same_v<T, compo::Thin_Lens>)
                     return make_poly<photo::Lens, photo::Thin_Lens>(
                         compo.aperture, compo.focal_length, compo.focus_distance
                     );
-                }
             }, camera.lens));
             auto lens = view<photo::Lens>{registry.get<poly<photo::Lens>>(entity)};
             
@@ -98,11 +93,9 @@ namespace mtt::daemon {
             auto film_size = camera.film_size;
             auto image_size = camera.image_size;
             auto aspect_ratio = f32(camera.image_size[0]) / f32(camera.image_size[1]);
-            if (aspect_ratio > 1.f) {
-                film_size[1] = film_size[0] / aspect_ratio;
-            } else {
-                film_size[0] = film_size[1] * aspect_ratio;
-            }
+            if (aspect_ratio > 1.f) film_size[1] = film_size[0] / aspect_ratio;
+            else film_size[0] = film_size[1] * aspect_ratio;
+
             registry.emplace<photo::Film>(entity,
                 film_size,
                 image_size,

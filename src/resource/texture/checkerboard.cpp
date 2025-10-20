@@ -37,9 +37,9 @@ namespace mtt::texture {
         }
 
         uv *= uv_scale;
-        if (usize(math::sum(math::floor(uv))) % 2 != i) {
+        auto x = math::mod(1.f, 1.f);
+        if (usize(math::sum(math::floor(uv))) % 2 != i)
             uv[0] = math::mod(uv[0] + 1.f, f32(uv_scale[0]));
-        }
         return uv;
 
     }
@@ -48,10 +48,8 @@ namespace mtt::texture {
         math::Vector<f32, 2> const& uv
     ) const noexcept -> f32 {
         auto [u, v] = math::Vector<usize, 2>{uv * uv_scale};
-        if ((u + v) % 2 == 0) {
-            return w_x / math::prod(uv_scale);
-        } else {
-            return w_y / math::prod(uv_scale);
-        }
+        return (u + v) % 2 == 0
+        ? w_x / math::prod(uv_scale)
+        : w_y / math::prod(uv_scale);
     }
 }

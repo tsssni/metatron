@@ -17,9 +17,7 @@ namespace mtt::math {
         auto n = math::Vector<f32, 3>{p.a, p.b, p.c};
         auto no = math::dot(n, r.o) + p.d;
         auto nd = math::dot(n, r.d);
-        if (nd == 0.f && no != 0.f) {
-            return {};
-        }
+        if (nd == 0.f && no != 0.f) return {};
         return -no / nd;
     }
 }

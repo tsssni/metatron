@@ -9,12 +9,10 @@ namespace mtt::math {
         Discrete_Distribution(std::vector<f32> const& ws) noexcept
         : pdf(ws) {
             cdf.push_back(0.f);
-            for (auto w: this->pdf) {
+            for (auto w: this->pdf)
                 cdf.push_back(cdf.back() + w);
-            }
-            for (auto& w: this->pdf) {
+            for (auto& w: this->pdf)
                 w /= cdf.back();
-            }
         }
 
         auto sample(f32 u) const noexcept -> usize {

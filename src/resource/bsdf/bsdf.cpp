@@ -26,9 +26,7 @@ namespace mtt::bsdf {
 
             if constexpr (is_complex) {
                 auto conductive = eta.i > math::epsilon<f32>;
-                if (!conductive && sin2_theta_t.r >= 1.f) {
-                    return 1.f;
-                }
+                if (!conductive && sin2_theta_t.r >= 1.f) return 1.f;
             }
 
             auto r_parl = math::guarded_div(
@@ -39,11 +37,8 @@ namespace mtt::bsdf {
                 cos_theta_i - eta * cos_theta_t,
                 cos_theta_i + eta * cos_theta_t
             );
-            if constexpr (is_complex) {
-                return (math::norm(r_parl) + math::norm(r_perp)) / 2.f;
-            } else {
-                return (math::sqr(r_parl) + math::sqr(r_perp)) / 2.f;
-            }
+            if constexpr (is_complex) return (math::norm(r_parl) + math::norm(r_perp)) / 2.f;
+            else return (math::sqr(r_parl) + math::sqr(r_perp)) / 2.f;
         };
         
         if (k > math::epsilon<f32>) {
@@ -72,9 +67,7 @@ namespace mtt::bsdf {
         f32 alpha_v
     ) noexcept -> f32 {
         auto tan2_theta = math::unit_to_tan2_theta(wo);
-        if (std::isinf(tan2_theta)) {
-            return 0.f;
-        }
+        if (std::isinf(tan2_theta)) return 0.f;
         auto alpha2 = 0.f
         + math::sqr(math::unit_to_cos_theta(wo) * alpha_u)
         + math::sqr(math::unit_to_sin_theta(wo) * alpha_v);
@@ -104,15 +97,11 @@ namespace mtt::bsdf {
         f32 alpha_v
     ) noexcept -> f32 {
         auto tan2_theta = math::unit_to_tan2_theta(wm);
-        if (std::isinf(tan2_theta)) {
-            return 0.f;
-        }
+        if (std::isinf(tan2_theta)) return 0.f;
 
         auto cos2_theta = math::unit_to_cos2_theta(wm);
         auto cos4_theta = math::sqr(cos2_theta);
-        if (cos4_theta < math::epsilon<f32>) {
-            return 0.f;
-        }
+        if (cos4_theta < math::epsilon<f32>) return 0.f;
 
         auto cos_phi = math::unit_to_cos_phi(wm);
         auto sin_phi = math::unit_to_sin_phi(wm);

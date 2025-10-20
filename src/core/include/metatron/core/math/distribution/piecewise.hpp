@@ -41,28 +41,21 @@ namespace mtt::math {
             }
 
             integral = cdf.back();
-            for (auto i = 1uz; i <= dim; ++i) {
-                if (integral == 0.f) {
-                    cdf[i] = T(i) / T(dim);
-                } else {
-                    cdf[i] /= integral;
-                }
-            }
+            for (auto i = 1uz; i <= dim; ++i)
+                if (integral == 0.f) cdf[i] = T(i) / T(dim);
+                else cdf[i] /= integral;
         }
 
         auto sample(Vector<T, n> const& u) const noexcept -> Vector<T, n> {
             auto idx = 1uz;
-            for (; idx < dim && cdf[idx] <= u[0]; ++idx) {}
+            for (; idx < dim && cdf[idx] <= u[0]; ++idx);
             idx--;
 
             auto du = guarded_div(u[0] - cdf[idx], cdf[idx + 1uz] - cdf[idx]);
             auto p = lerp(low, high, (T(idx) + du) / T(dim));
 
-            if constexpr (n == 1uz) {
-                return {p};
-            } else {
-                return consume(rows[idx].sample(cut(u)), p);
-            }
+            if constexpr (n == 1uz) return {p};
+            else return consume(rows[idx].sample(cut(u)), p);
         }
 
         auto pdf(Vector<T, n> const& p) const noexcept -> T {
@@ -71,11 +64,8 @@ namespace mtt::math {
                 0uz, dim - 1uz
             );
             auto prob = (cdf[idx + 1] - cdf[idx]) / delta;
-            if constexpr (n == 1uz) {
-                return prob;
-            } else {
-                return rows[idx].pdf(cut(p)) * prob;
-            }
+            if constexpr (n == 1uz) return prob;
+            else return rows[idx].pdf(cut(p)) * prob;
         }
 
     private:

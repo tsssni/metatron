@@ -41,9 +41,8 @@ namespace mtt::accel {
         }
 
         auto render_bbox = math::Bounding_Box{};
-        for (auto& div: lbvh_divs) {
+        for (auto& div: lbvh_divs)
             render_bbox = math::merge(render_bbox, div.bbox);
-        }
         for (auto& div: lbvh_divs) {
             auto extent = render_bbox.p_max - render_bbox.p_min;
             auto pos = math::lerp(div.bbox.p_min, div.bbox.p_max, 0.5f) - render_bbox.p_min;
@@ -83,14 +82,9 @@ namespace mtt::accel {
                 auto split = start + 1;
                 for (; split < end; ++split) {
                     auto split_bit = lbvh_divs[split].morton_code & mask;
-                    if (split_bit != start_split_bit) {
-                        break;
-                    }
+                    if (split_bit != start_split_bit) break;
                 }
-
-                if (split == end) {
-                    return self(interval, bit - 1);
-                }
+                if (split == end) return self(interval, bit - 1);
 
                 auto node = make_poly<LBVH_Node>();
                 node->left = self({start, split}, bit - 1);
@@ -111,17 +105,13 @@ namespace mtt::accel {
         );
 
         auto area_split = [&](this auto self, std::vector<poly<LBVH_Node>>&& nodes) -> poly<LBVH_Node> {
-            if (nodes.size() == 0) {
-                return nullptr;
-            } else if (nodes.size() == 1) {
-                return std::move(nodes.front());
-            }
+            if (nodes.size() == 0) return nullptr;
+            else if (nodes.size() == 1) return std::move(nodes.front());
 
             auto root = make_poly<LBVH_Node>();
             root->bbox = math::Bounding_Box{};
-            for (auto& node: nodes) {
+            for (auto& node: nodes)
                 root->bbox = math::merge(root->bbox, node->bbox);
-            }
             
             auto cbox = math::Bounding_Box{};
             for (auto& node: nodes) {
@@ -220,9 +210,8 @@ namespace mtt::accel {
 
         auto divs = std::vector<Divider>();
         divs.reserve(lbvh_divs.size());
-        for (auto i = 0u; i < lbvh_divs.size(); ++i) {
+        for (auto i = 0u; i < lbvh_divs.size(); ++i)
             divs.emplace_back(this->dividers[lbvh_divs[i].index]);
-        }
         std::swap(divs, this->dividers);
     }
 
@@ -242,9 +231,7 @@ namespace mtt::accel {
             candidates.pop();
             auto node = &bvh[idx];
             auto t_opt = math::hit(r, node->bbox);
-            if (!t_opt || (intr_opt && intr_opt->t < t_opt.value()[0])) {
-                continue;
-            }
+            if (!t_opt || (intr_opt && intr_opt->t < t_opt.value()[0])) continue;
 
             if (node->num_prims > 0) {
                 for (auto i = 0u; i < node->num_prims; ++i) {

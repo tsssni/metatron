@@ -5,9 +5,7 @@ namespace mtt::spectra {
     Blackbody_Spectrum::Blackbody_Spectrum(f32 T) noexcept: T(T) {}
 
     auto Blackbody_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
-        if (T <= 0.f) {
-            return 0.f;
-        }
+        if (T <= 0.f) return 0.f;
 
         auto constexpr c = 299792458.f;
         auto constexpr h = 6.62606957e-34f;

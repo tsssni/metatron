@@ -4,14 +4,12 @@
 
 namespace mtt::ecs {
     auto Stage::init() noexcept -> void {
-        for (auto& daemon : daemons) {
+        for (auto& daemon : daemons)
             daemon->init();
-        }
     }
 
     auto Stage::update() noexcept -> void {
-        for (auto& daemon : daemons) {
+        for (auto& daemon : daemons)
             daemon->update();
-        }
     }
 }

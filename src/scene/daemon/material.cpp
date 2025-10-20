@@ -41,11 +41,10 @@ namespace mtt::daemon {
             auto material = material::Material{};
             std::visit([&material](auto&& compo) {
                 using T = std::decay_t<decltype(compo)>;
-                if constexpr (std::is_same_v<T, compo::Interface_Bsdf>) {
+                if constexpr (std::is_same_v<T, compo::Interface_Bsdf>)
                     return configure<bsdf::Interface_Bsdf>(material);
-                } else if constexpr (std::is_same_v<T, compo::Physical_Bsdf>) {
+                else if constexpr (std::is_same_v<T, compo::Physical_Bsdf>)
                     return configure<bsdf::Physical_Bsdf>(material);
-                }
             }, compo.bsdf);
 
             for (auto& [name, entity]: compo.spectrum_textures) {
@@ -53,9 +52,8 @@ namespace mtt::daemon {
                     std::println("no spectrum texture {} in entity {}", name, ecs::to_path(entity));
                     std::abort();
                 }
-                if (!compo.samplers.contains(name)) {
+                if (!compo.samplers.contains(name))
                     compo.samplers.emplace(name, "/sampler/default"_et);
-                }
                 material.spectrum_textures.emplace(
                     name,
                     registry.get<poly<texture::Spectrum_Texture>>(entity)
@@ -67,9 +65,8 @@ namespace mtt::daemon {
                     std::println("no vector texture {} in entity {}", name, ecs::to_path(entity));
                     std::abort();
                 }
-                if (!compo.samplers.contains(name)) {
+                if (!compo.samplers.contains(name))
                     compo.samplers.emplace(name, "/sampler/default"_et);
-                }
                 material.vector_textures.emplace(
                     name,
                     registry.get<poly<texture::Vector_Texture>>(entity)

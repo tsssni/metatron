@@ -61,24 +61,19 @@ namespace mtt::bsdf {
             auto reflective = -wo[1] * wi[1] > 0.f;
             auto forward = wi[1] > 0.f;
             auto wm = math::normalize(reflective ? -wo + wi : -wo + wi * eta.value[0]);
-            if (wm[1] < 0.f) {
-                wm *= -1.f;
-            }
+            if (wm[1] < 0.f) wm *= -1.f;
             if (false
             || (!dieletric && (!reflective || !forward))
             || math::abs(wm[1]) < math::epsilon<f32>
             || math::dot(-wo, wm) < 0.f
-            || math::dot((reflective ? 1.f : -1.f) * wi, wm) < 0.f) {
-                return {};
-            }
+            || math::dot((reflective ? 1.f : -1.f) * wi, wm) < 0.f) return {};
 
-            if (lambertian) {
+            if (lambertian)
                 return Interaction{
                     .f = lambert(reflectance),
                     .wi = wi,
                     .pdf = math::Cosine_Hemisphere_Distribution{}.pdf(math::unit_to_cos_theta(wi)),
                 };
-            }
 
             auto F = fresnel(math::dot(-wo, wm), eta, k);
             auto D = trowbridge_reitz(wm, alpha_u, alpha_v);
@@ -89,9 +84,7 @@ namespace mtt::bsdf {
             auto flags = this->flags();
             pr *= bool(flags & Flags::reflective);
             pt *= bool(flags & Flags::transmissive);
-            if (pr == 0.f && pt == 0.f) {
-                return {};
-            }
+            if (pr == 0.f && pt == 0.f) return {};
 
             MTT_OPT_OR_RETURN(R, torrance_sparrow(
                 reflective, pr, pt,
@@ -121,9 +114,7 @@ namespace mtt::bsdf {
             auto Fo = plastic ? fresnel(math::unit_to_cos_theta(-ctx.r.d), eta, k) : 0.f;
             if (dieletric || conductive || (plastic && u[0] < Fo.value[0])) {
                 auto wo = ctx.r.d;
-                if (math::abs(wo[1]) < math::epsilon<f32>) {
-                    return {};
-                }
+                if (math::abs(wo[1]) < math::epsilon<f32>) return {};
 
                 auto wy = math::normalize(-wo * math::Vector<f32, 3>{alpha_u, 1.f, alpha_v});
                 auto wx = wy[1] < 1.f - math::epsilon<f32>
@@ -141,9 +132,7 @@ namespace mtt::bsdf {
                 auto wm = sample_p[0] * wx + sample_y * wy + sample_p[1] * wz;
                 if (false
                 || math::abs(wm[1]) < math::epsilon<f32>
-                || math::dot(-wo, wm) < 0.f) {
-                    return {};
-                }
+                || math::dot(-wo, wm) < 0.f) return {};
                 // normal transformation with inverse transposed matrix
                 wm = math::normalize(wm * math::Vector<f32, 3>{alpha_u, 1.f, alpha_v});
 
@@ -155,16 +144,12 @@ namespace mtt::bsdf {
                 auto flags = this->flags();
                 pr *= bool(flags & Flags::reflective);
                 pt *= bool(flags & Flags::transmissive);
-                if (pr == 0.f && pt == 0.f) {
-                    return {};
-                }
+                if (pr == 0.f && pt == 0.f) return {};
 
                 auto reflective = (plastic || conductive) ? true : u[0] < pr / (pr + pt);
                 auto wi = reflective ? math::reflect(wo, wm) : math::refract(wo, wm, eta.value[0]);
                 auto G = smith_shadow(wo, wi, alpha_u, alpha_v);
-                if (math::abs(wi[1]) < math::epsilon<f32>) {
-                    return {};
-                }
+                if (math::abs(wi[1]) < math::epsilon<f32>) return {};
 
                 MTT_OPT_OR_RETURN(R, torrance_sparrow(
                     reflective, pr, pt,
@@ -178,9 +163,7 @@ namespace mtt::bsdf {
                 auto distr = math::Cosine_Hemisphere_Distribution{};
                 auto wi = distr.sample({u[1], u[2]});
                 auto pdf = distr.pdf(wi[1]);
-                if (math::abs(wi[1]) < math::epsilon<f32>) {
-                    return {};
-                }
+                if (math::abs(wi[1]) < math::epsilon<f32>) return {};
 
                 if (lambertian) {
                     auto f = lambert(reflectance);
@@ -210,23 +193,16 @@ namespace mtt::bsdf {
             plastic = bitmask == 0b011;
             if (!lambertian && !dieletric && !conductive && ! plastic) {
                 std::println("bsdf not physically possible with these attributes:");
-                for (auto& [name, _]: attr.spectra) {
+                for (auto& [name, _]: attr.spectra)
                     std::print("{} ", name);
-                };
-                for (auto& [name, _]: attr.vectors) {
+                for (auto& [name, _]: attr.vectors)
                     std::print("{} ", name);
-                };
                 std::abort();
             }
 
-            if (has_base) {
-                reflectance = attr.spectra.at("reflectance");
-            }
             if (has_surface) {
                 eta = attr.spectra.at("eta");
                 eta = attr.inside ? 1.f / eta : eta;
-                k = null_spec;
-                reflectance = has_base ? attr.spectra.at("reflectance") : invalid_spec;
 
                 auto alpha = attr.vectors.count("alpha") > 0
                 ? attr.vectors.at("alpha")[0] : 0.001f;
@@ -234,9 +210,6 @@ namespace mtt::bsdf {
                 ? attr.vectors.at("alpha_u")[0] : alpha;
                 alpha_v = attr.vectors.count("alpha_v") > 0
                 ? attr.vectors.at("alpha_v")[0] : alpha;
-            }
-            if (has_conductor) {
-                k = attr.spectra.at("k");
             }
             if (plastic) {
                 fresnel_reflectance = eta;
@@ -248,6 +221,8 @@ namespace mtt::bsdf {
                     return math::lerp(fresnel_reflectance_table[low], fresnel_reflectance_table[high], alpha);
                 }, eta.value);
             }
+            reflectance = has_base ? attr.spectra.at("reflectance") : invalid_spec;
+            k = has_conductor ? attr.spectra.at("k") : null_spec;
         }
 
         auto degrade() noexcept -> bool {
@@ -262,13 +237,12 @@ namespace mtt::bsdf {
 
         auto flags() const noexcept -> Flags {
             auto flags = 0;
-            if (spectra::valid(reflectance) || spectra::max(k) > 0.f) {
+            if (spectra::valid(reflectance) || spectra::max(k) > 0.f)
                 flags |= Flags::reflective;
-            } else if (spectra::constant(eta) && eta.value[0] == 1.f) {
+            else if (spectra::constant(eta) && eta.value[0] == 1.f)
                 flags |= Flags::transmissive;
-            } else {
+            else
                 flags |= (Flags::transmissive | Flags::reflective);
-            }
             return Flags(flags);
         }
     };

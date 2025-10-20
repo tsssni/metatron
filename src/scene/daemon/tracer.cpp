@@ -32,11 +32,8 @@ namespace mtt::daemon {
         for (auto entity: light_view) {
             auto& light = registry.get<poly<light::Light>>(entity);
             auto& t = registry.get<math::Transform>(entity);
-            if (light->flags() & light::Flags::inf) {
-                inf_lights.emplace_back(light, &t);
-            } else {
-                lights.emplace_back(light, &t);
-            }
+            if (light->flags() & light::Flags::inf) inf_lights.emplace_back(light, &t);
+            else lights.emplace_back(light, &t);
         }
         registry.clear<ecs::Dirty_Mark<compo::Light>>();
 
@@ -44,9 +41,7 @@ namespace mtt::daemon {
         auto div_view = registry.view<ecs::Dirty_Mark<compo::Divider>>();
         for (auto entity: div_view) {
             registry.remove<std::vector<light::Area_Light>>(entity);
-            if (!registry.any_of<compo::Divider>(entity)) {
-                continue;
-            }
+            if (!registry.any_of<compo::Divider>(entity)) continue;
             auto& div = registry.get<compo::Divider>(entity);
 
             auto& shape = registry.get<poly<shape::Shape>>(
@@ -74,13 +69,12 @@ namespace mtt::daemon {
 
             auto divs = std::vector<accel::Divider>{};
             divs.reserve(shape->size());
-            for (auto i = 0uz; i < shape->size(); ++i) {
+            for (auto i = 0uz; i < shape->size(); ++i)
                 divs.emplace_back(
                     shape, int_medium, ext_medium,
                     areas.empty() ? nullptr : &areas[i],
                     &material, &st, &int_mt, &ext_mt, i
                 );
-            }
             std::ranges::move(divs, std::back_inserter(dividers));
         }
         registry.clear<ecs::Dirty_Mark<compo::Divider>>();
@@ -98,9 +92,7 @@ namespace mtt::daemon {
                 remove_tracer(this->tracer);
                 registry.remove<compo::Tracer>(this->tracer);
             }
-            if (!registry.any_of<compo::Tracer>(entity)) {
-                continue;
-            }
+            if (!registry.any_of<compo::Tracer>(entity)) continue;
             this->tracer = entity;
             auto& tracer = registry.get<compo::Tracer>(entity);
 
@@ -122,11 +114,10 @@ namespace mtt::daemon {
             registry.emplace<poly<accel::Acceleration>>(entity,
             std::visit([&](auto&& compo) {
                 using T = std::decay_t<decltype(compo)>;
-                if constexpr (std::is_same_v<T, compo::LBVH>) {
+                if constexpr (std::is_same_v<T, compo::LBVH>)
                     return make_poly<accel::Acceleration, accel::LBVH>(
                         std::move(dividers), &space.world_to_render
                     );
-                }
             }, tracer.accel));
         }
     }
@@ -151,9 +142,8 @@ namespace mtt::daemon {
 
         auto integrator = std::visit([&](auto&& compo) {
             using T = std::decay_t<decltype(compo)>;
-            if constexpr (std::is_same_v<T, compo::Volume_Path_Integrator>) {
+            if constexpr (std::is_same_v<T, compo::Volume_Path_Integrator>)
                 return make_poly<monte_carlo::Integrator, monte_carlo::Volume_Path_Integrator>();
-            }
         }, registry.get<compo::Tracer>(tracer).integrator);
         auto& accel = registry.get<poly<accel::Acceleration>>(tracer);
         auto& emitter = registry.get<poly<emitter::Emitter>>(tracer);
@@ -220,9 +210,7 @@ namespace mtt::daemon {
                     image[i, j] = pixel;
                 }
             );
-            if (finished) {
-                image.to_path(path);
-            }
+            if (finished) image.to_path(path);
 
             futures.push_back(scheduler.async_dispatch(
                 [

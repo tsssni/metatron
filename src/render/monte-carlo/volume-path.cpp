@@ -45,9 +45,7 @@ namespace mtt::monte_carlo {
 
         while (true) {
             depth += usize(scattered);
-            if (terminated || depth >= max_depth) {
-                break;
-            }
+            if (terminated || depth >= max_depth) break;
 
             auto q = spectra::max(beta * math::guarded_div(1.f, spectra::avg(mis_s)));
             if (q < 1.f && depth > 1uz) {
@@ -61,9 +59,7 @@ namespace mtt::monte_carlo {
             }
 
             [&]() {
-                if (!scattered) {
-                    return;
-                }
+                if (!scattered) return;
 
                 auto direct_ctx = trace_ctx;
                 MTT_OPT_OR_RETURN(e_intr, emitter->sample(direct_ctx, sampler->generate_1d()));
@@ -75,9 +71,7 @@ namespace mtt::monte_carlo {
                 auto e_pdf = emitter->pdf(*e_intr.divider);
                 auto l_pdf = e_intr.divider->light->pdf({l_ctx.r.o, l_intr.wi}, l_ctx.n);
                 auto p_e = e_pdf * l_pdf;
-                if (math::abs(p_e) < math::epsilon<f32>) {
-                    return;
-                }
+                if (math::abs(p_e) < math::epsilon<f32>) return;
 
                 l_intr.p = rt | et | math::expand(l_intr.p, 1.f);
                 l_intr.wi = math::normalize(rt | et | math::expand(l_intr.wi, 0.f));
@@ -113,9 +107,7 @@ namespace mtt::monte_carlo {
                 auto mis_l = mis_s;
 
                 while (true) {
-                    if (terminated || l_intr.t < 0.001f) {
-                        break;
-                    }
+                    if (terminated || l_intr.t < 0.001f) break;
 
                     if (spectra::max(gamma * math::guarded_div(1.f, spectra::avg(mis_d + mis_l))) < 0.05f) {
                         auto q = 0.25f;
@@ -219,10 +211,7 @@ namespace mtt::monte_carlo {
                 emission += gamma * mis_u * l_intr.L;
             }();
 
-            if (scattered || crossed) {
-                acc_opt = (*accel)(trace_ctx.r);
-            }
-
+            if (scattered || crossed) acc_opt = (*accel)(trace_ctx.r);
             if (!acc_opt || !acc_opt.value().intr_opt) {
                 terminated = true;
 
@@ -343,9 +332,7 @@ namespace mtt::monte_carlo {
             MTT_OPT_OR_BREAK(mat_intr, div->material->sample(trace_ctx, tcoord));
 
             [&]() {
-                if (spectra::max(mat_intr.emission) < math::epsilon<f32>) {
-                    return;
-                }
+                if (spectra::max(mat_intr.emission) < math::epsilon<f32>) return;
                 MTT_OPT_OR_RETURN(e_intr, (*emitter)(trace_ctx, {div->light, div->local_to_world}));
 
                 auto s_pdf = div->shape->pdf(trace_ctx.r, trace_ctx.n, div->primitive);
@@ -403,9 +390,7 @@ namespace mtt::monte_carlo {
             p = b_intr.pdf;
         }
 
-        if (math::isnan(emission.value) || math::isinf(emission.value)) {
-            return {};
-        }
+        if (math::isnan(emission.value) || math::isinf(emission.value)) return {};
         return emission;
     }
 }

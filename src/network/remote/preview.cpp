@@ -14,9 +14,7 @@ namespace mtt::remote {
         : socket(address), name(name), local(address.host.empty()) {}
 
         auto create(image::Image const& image) noexcept -> void {
-            if (created || local) {
-                return;
-            }
+            if (created || local) return;
 
             auto packet = tevipc::IpcPacket{};
             packet.setCreateImage(
@@ -29,9 +27,7 @@ namespace mtt::remote {
 
         auto update(image::Image&& image) noexcept -> void {
             create(image);
-            if (!created || local || image.stride != 4) {
-                return;
-            }
+            if (!created || local || image.stride != 4) return;
 
             auto desc = std::array<tevipc::IpcPacket::ChannelDesc, 4>{};
             for (auto i = 0uz; i < 4uz; ++i) {
@@ -47,9 +43,8 @@ namespace mtt::remote {
                 {(f32*)image.pixels.data(), image.pixels.size() / sizeof(f32)}
             );
 
-            if (!socket.send({(byte*)packet.data(), packet.size()})) {
+            if (!socket.send({(byte*)packet.data(), packet.size()}))
                 std::println("failed to send image to remote previewer");
-            }
         }
     };
 

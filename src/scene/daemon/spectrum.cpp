@@ -55,12 +55,11 @@ namespace mtt::daemon {
             auto name = std::string{};
             auto extra_ext = std::to_array<std::string>({"eta", "k"});
             auto stem = std::filesystem::path(path).stem();
-            for (auto const& ext: extra_ext) {
+            for (auto const& ext: extra_ext)
                 if (stem.extension() == "." + ext) {
                     name = ext + "/";
                     stem = stem.stem();
                 }
-            }
             name += stem;
 
             auto read = [&](std::variant<std::array<f32, spectra::visible_range>, std::vector<math::Vector<f32, 2>>>&& data) -> void {
@@ -73,9 +72,7 @@ namespace mtt::daemon {
                 auto line = std::string{};
 
                 while (std::getline(file, line)) {
-                    if (line.empty() || line.front() == '#') {
-                        continue;
-                    }
+                    if (line.empty() || line.front() == '#') continue;
                     
                     auto iss = std::istringstream{line};
                     auto wavelength = 0.f;
@@ -89,9 +86,8 @@ namespace mtt::daemon {
                                 ++idx;
                             }
                         } else {
-                            if (iss >> wavelength >> value) {
+                            if (iss >> wavelength >> value)
                                 data.push_back(math::Vector<f32, 2>{wavelength, value});
-                            }
                         }
                     }, data);
                 }
@@ -124,11 +120,8 @@ namespace mtt::daemon {
 
             };
 
-            if (ext == ".vspd") {
-                read(std::array<f32, spectra::visible_range>{});
-            } else {
-                read(std::vector<math::Vector<f32, 2>>{});
-            }
+            if (ext == ".vspd") read(std::array<f32, spectra::visible_range>{});
+            else read(std::vector<math::Vector<f32, 2>>{});
         });
     }
 

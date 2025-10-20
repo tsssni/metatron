@@ -96,9 +96,8 @@ namespace mtt::math {
         auto cos_theta = dot(q0v, q1v);
         
         // use lerp with small angle
-        if (cos_theta > T{0.9995}) {
+        if (cos_theta > T{0.9995})
             return Quaternion{normalize(lerp(q0v, q1v, t))};
-        }
 
         // ensure shortest path
         auto q1v_adj = q1v;

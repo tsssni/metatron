@@ -3,9 +3,7 @@
 
 namespace mtt::wired {
     Address::Address(std::string_view address) noexcept {
-        if (address.empty()) {
-            return;
-        }
+        if (address.empty()) return;
 
         auto split = address.find_last_of(':');
         if (split == std::string::npos) {

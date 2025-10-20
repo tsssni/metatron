@@ -114,11 +114,8 @@ namespace mtt::image {
         };
 
         auto cs_name = std::string{"sRGB"};
-        for (auto const& [name, cs]: color::Color_Space::color_spaces) {
-            if (color_space == cs) {
-                cs_name = name;
-            }
-        }
+        for (auto const& [name, cs]: color::Color_Space::color_spaces)
+            if (color_space == cs) cs_name = name;
         spec.attribute("oiio::ColorSpace", cs_name);
         spec.attribute("planarconfig", "contig");
 

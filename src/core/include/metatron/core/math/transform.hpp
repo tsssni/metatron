@@ -42,13 +42,10 @@ namespace mtt::math {
 
             explicit operator Matrix<f32, 4, 4>() const {
                 auto ret = transforms.back()->transform;
-                for (auto i = i32(transforms.size()) - 2; i >= 0; i--) {
-                    if (ops[i] == 0) {
-                        ret = transforms[i]->transform | ret;
-                    } else {
-                        ret = transforms[i]->inv_transform | ret;
-                    }
-                }
+                for (auto i = i32(transforms.size()) - 2; i >= 0; i--)
+                    ret = (ops[i] == 0)
+                    ? transforms[i]->transform | ret
+                    : transforms[i]->inv_transform | ret;
                 return ret;
             }
 
@@ -64,13 +61,10 @@ namespace mtt::math {
             template<Transformable T, typename Type = std::remove_cvref_t<T>>
             auto dechain(T const& rhs) noexcept -> Type {
                 auto ret = rhs;
-                for (auto i = i32(transforms.size()) - 1; i >= 0; i--) {
-                    if (ops[i] == 0) {
-                        ret = *transforms[i] | ret;
-                    } else {
-                        ret = *transforms[i] ^ ret;
-                    }
-                }
+                for (auto i = i32(transforms.size()) - 1; i >= 0; i--)
+                    ret = (ops[i] == 0)
+                    ? *transforms[i] | ret
+                    : *transforms[i] ^ ret;
                 return ret;
             }
 
@@ -87,12 +81,10 @@ namespace mtt::math {
         Transform() = default;
 
         Transform(std::initializer_list<math::Transform> list) {
-            for (auto const& t: list) {
+            for (auto const& t: list)
                 transform = transform | t.transform;
-            }
-            for (auto const& t: std::views::reverse(list)) {
+            for (auto const& t: std::views::reverse(list))
                 inv_transform = inv_transform | t.inv_transform;
-            }
         }
 
         explicit Transform(Matrix<f32, 4, 4> const& m)

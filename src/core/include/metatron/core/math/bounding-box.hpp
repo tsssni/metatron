@@ -21,22 +21,18 @@ namespace mtt::math {
     ) noexcept -> std::optional<math::Vector<f32, 2>> {
         auto hit_min = (bbox.p_min - r.o) / r.d;
         auto hit_max = (bbox.p_max - r.o) / r.d;
-        for (auto i = 0uz; i < 3uz; ++i) {
+        for (auto i = 0uz; i < 3uz; ++i)
             if (math::abs(r.d[i]) < epsilon<f32>) {
                 hit_min[i] = -inf<f32>;
                 hit_max[i] = +inf<f32>;
             } else if (hit_min[i] > hit_max[i]) {
                 std::swap(hit_min[i], hit_max[i]);
             }
-        }
 
         auto t_enter = max(hit_min);
         auto t_exit = min(hit_max);
-        if (t_exit < -epsilon<f32> || t_enter > t_exit + epsilon<f32>) {
-            return {};
-        } else {
-            return math::Vector<f32, 2>{t_enter, t_exit};
-        }
+        if (t_exit < -epsilon<f32> || t_enter > t_exit + epsilon<f32>) return {};
+        return math::Vector<f32, 2>{t_enter, t_exit};
     }
 
     auto inline constexpr hitvi(
@@ -45,22 +41,18 @@ namespace mtt::math {
     ) noexcept -> std::optional<std::tuple<f32, f32, usize, usize>> {
         auto hit_min = (bbox.p_min - r.o) / r.d;
         auto hit_max = (bbox.p_max - r.o) / r.d;
-        for (auto i = 0uz; i < 3uz; ++i) {
+        for (auto i = 0uz; i < 3uz; ++i)
             if (math::abs(r.d[i]) < epsilon<f32>) {
                 hit_min[i] = -inf<f32>;
                 hit_max[i] = +inf<f32>;
             } else if (hit_min[i] > hit_max[i]) {
                 std::swap(hit_min[i], hit_max[i]);
             }
-        }
 
         auto [t_enter, i_enter] = maxvi(hit_min);
         auto [t_exit, i_exit] = minvi(hit_max);
-        if (t_exit < -epsilon<f32> || t_enter > t_exit + epsilon<f32>) {
-            return {};
-        } else {
-            return std::make_tuple(t_enter, t_exit, i_enter, i_exit);
-        }
+        if (t_exit < -epsilon<f32> || t_enter > t_exit + epsilon<f32>) return {};
+        return std::make_tuple(t_enter, t_exit, i_enter, i_exit);
     }
 
     auto inline constexpr merge(
@@ -75,11 +67,8 @@ namespace mtt::math {
 
     auto inline constexpr area(Bounding_Box const& bbox) noexcept -> f32 {
         if(math::any([](f32 x, f32 y, usize) {
-                return x >= y;
-            }, bbox.p_min, bbox.p_max)
-        ) {
-            return 0.f;
-        }
+            return x >= y;
+        }, bbox.p_min, bbox.p_max)) return 0.f;
         auto extent = bbox.p_max - bbox.p_min;
         return 2.f * (extent[0] * extent[1] + extent[1] * extent[2] + extent[2] * extent[0]);
     }

@@ -73,21 +73,15 @@ namespace mtt::math {
         template<usize idx>
         auto constexpr get() const noexcept -> T const& {
             static_assert(idx < 2, "index out of bounds");
-            if constexpr (idx == 0) {
-                return r;
-            } else {
-                return i;
-            }
+            if constexpr (idx == 0) return r;
+            else return i;
         }
 
         template<usize idx>
         auto constexpr get() noexcept -> T& {
             static_assert(idx < 2, "index out of bounds");
-            if constexpr (idx == 0) {
-                return r;
-            } else {
-                return i;
-            }
+            if constexpr (idx == 0) return r;
+            else return i;
         }
     };
 

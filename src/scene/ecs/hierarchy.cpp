@@ -25,9 +25,7 @@ namespace mtt::ecs {
         }
 
         auto create(std::string const& path) noexcept -> Entity {
-            if (entities.find(path) != entities.end()) {
-                return entities[path];
-            }
+            if (entities.find(path) != entities.end()) return entities[path];
 
             auto slash = path.find_last_of('/');
             if (slash == std::string::npos) {
@@ -109,13 +107,10 @@ namespace mtt::ecs {
         stl::filesystem::instance().push(path);
 
         auto jsons = std::vector<serde::json>{};
-        if (auto e = glz::read_file_json(jsons, path + "scene.json", std::string{}); e) {
+        if (auto e = glz::read_file_json(jsons, path + "scene.json", std::string{}); e)
             std::println("read scene {} with glaze error: {}", path, glz::format_error(e));
-        }
 
-        for (auto& json: jsons) {
-            impl->frs[json.type](json.entity, json.serialized);
-        }
+        for (auto& j: jsons) impl->frs[j.type](j.entity, j.serialized);
     }
 
     auto Hierarchy::write(std::string path) noexcept -> void {
@@ -140,14 +135,12 @@ namespace mtt::ecs {
     }
 
     auto Hierarchy::init() noexcept -> void {
-        for (auto& stage: stages) {
+        for (auto& stage: stages)
             stage->init();
-        }
     }
 
     auto Hierarchy::update() noexcept -> void {
-        for (auto& stage: stages) {
+        for (auto& stage: stages)
             stage->update();
-        }
     }
 }

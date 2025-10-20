@@ -17,9 +17,7 @@ namespace mtt::stl {
             }) {}
 
             ~Impl() noexcept {
-                if (impl) {
-                    deleter(impl);
-                }
+                if (impl) deleter(impl);
             }
 
             Impl(Impl&& impl) noexcept {
@@ -27,9 +25,7 @@ namespace mtt::stl {
             }
 
             auto operator=(Impl&& impl) noexcept {
-                if (impl) {
-                    deleter(impl);
-                }
+                if (impl) deleter(impl);
                 impl = impl.impl;
                 impl.impl = nullptr;
                 return *this;

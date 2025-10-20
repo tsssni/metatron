@@ -26,14 +26,11 @@ namespace mtt::math {
     }
 
 
-    template<typename T, usize size>
+    template<typename T>
     requires std::floating_point<T> || std::integral<T>
     auto constexpr mod(T x, T y) noexcept -> T {
-        if constexpr (std::floating_point<T>) {
-            return std::fmod(x, y);
-        } else {
-            return x % y;
-        }
+        if constexpr (std::integral<T>) return x % y;
+        else return std::fmod(x, y);
     }
 
     template<typename T>
@@ -52,9 +49,8 @@ namespace mtt::math {
     auto constexpr pow(T x, T n) noexcept -> T {
         auto y = T{1};
         while (n) {
-            if (n & 1) {
+            if (n & 1)
                 y = y * x;
-            }
             x = x * x;
             n >>= 1;
         }
@@ -65,9 +61,8 @@ namespace mtt::math {
     requires std::floating_point<T>
     auto constexpr pow(T x, usize n) noexcept -> T {
         auto y = T{1};
-        for (auto i = 0; i < n; ++i) {
+        for (auto i = 0; i < n; ++i)
             y *= x;
-        }
         return y;
     }
 
@@ -117,9 +112,8 @@ namespace mtt::math {
     requires std::floating_point<T>
     auto constexpr atan2(T y, T x) noexcept -> T {
         auto z = std::atan2(y, x);
-        if (z < T{0}) {
+        if (z < T{0})
             z += T{2} * T{math::pi};
-        }
         return z;
     }
 }
