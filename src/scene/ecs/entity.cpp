@@ -12,7 +12,7 @@ namespace mtt::ecs {
 }
 
 namespace mtt {
-    auto operator"" _et(view<char> path, usize size) -> ecs::Entity {
+    auto operator""_et(view<char> path, usize size) -> ecs::Entity {
         return ecs::to_entity(path);
     }
 
