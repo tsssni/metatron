@@ -32,7 +32,7 @@ namespace mtt::daemon {
         stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{view.size()}, [&](auto idx) {
             auto entity = view[idx[0]];
             auto& light = registry.get<compo::Light>(entity);
-            
+
             auto l = std::visit([&](auto&& compo) -> poly<light::Light> {
                 using T = std::decay_t<decltype(compo)>;
                 if constexpr (std::is_same_v<T, compo::Parallel_Light>) {
