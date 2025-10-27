@@ -12,6 +12,7 @@
   openimageio,
   openvdb,
   proxy,
+  vulkan-tools,
   zlib,
 }:
 clangStdenv.mkDerivation {
@@ -42,7 +43,9 @@ clangStdenv.mkDerivation {
     openvdb
     proxy
     zlib
-  ];
+  ] ++ (lib.optionals clangStdenv.isLinux [
+    vulkan-tools
+  ]);
 
   cmakeFlags = [
     "--preset rel"

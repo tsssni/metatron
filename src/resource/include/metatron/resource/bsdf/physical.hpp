@@ -1,12 +1,8 @@
 #pragma once
 #include <metatron/resource/bsdf/bsdf.hpp>
-#include <metatron/core/stl/capsule.hpp>
 
 namespace mtt::bsdf {
-    struct Physical_Bsdf final: stl::capsule<Physical_Bsdf> {
-        struct Impl;
-        Physical_Bsdf() noexcept;
-
+    struct Physical_Bsdf final {
         auto static init() noexcept -> void;
 
         // microfacet:
@@ -30,5 +26,21 @@ namespace mtt::bsdf {
         auto configure(Attribute const& attr) noexcept -> void;
         auto flags() const noexcept -> Flags;
         auto degrade() noexcept -> bool;
+
+    private:
+        std::vector<f32> static fresnel_reflectance_table;
+
+        f32 alpha_u;
+        f32 alpha_v;
+        spectra::Stochastic_Spectrum spectrum;
+        spectra::Stochastic_Spectrum eta;
+        spectra::Stochastic_Spectrum k;
+        spectra::Stochastic_Spectrum reflectance;
+        spectra::Stochastic_Spectrum fresnel_reflectance;
+
+        bool lambertian;
+        bool dieletric;
+        bool conductive;
+        bool plastic;
     };
 }
