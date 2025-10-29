@@ -61,6 +61,9 @@ namespace mtt::stl {
     };
 
 
+    template<typename T>
+    struct poly_vector<T>: poly_vector<T, T> {};
+
     template<typename F, typename... Ts>
     poly_vector<F, Ts...>::lambdas poly_vector<F, Ts...>::reinterpret_ts = {
         [] (auto ptr) { return (Ts*)ptr; }...

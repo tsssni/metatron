@@ -102,12 +102,12 @@ namespace mtt::daemon {
                         if constexpr (std::is_same_v<T, std::array<f32, spectra::visible_range>>) {
                             registry.emplace<poly<spectra::Spectrum>>(
                                 entity,
-                                make_poly<spectra::Spectrum, spectra::Visible_Spectrum>(std::move(data))
+                                make_poly<spectra::Spectrum, spectra::Visible_Spectrum>(data)
                             );
                         } else {
                             registry.emplace<poly<spectra::Spectrum>>(
                                 entity,
-                                make_poly<spectra::Spectrum, spectra::Discrete_Spectrum>(std::move(data))
+                                make_poly<spectra::Spectrum, spectra::Discrete_Spectrum>(data)
                             );
                         }
                     }, data);
