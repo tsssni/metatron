@@ -8,6 +8,8 @@
 #include <metatron/core/stl/optional.hpp>
 
 namespace mtt::shape {
+    Sphere::Sphere(Descriptor const& desc) noexcept {}
+
     auto Sphere::size() const noexcept -> usize {
         return 1uz;
     }

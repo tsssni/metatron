@@ -1,6 +1,6 @@
 #pragma once
 #include <entt/entt.hpp>
-#include <metatron/core/stl/poly_vector.hpp>
+#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::scene {
     using Registry = entt::registry;

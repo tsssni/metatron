@@ -13,7 +13,7 @@ namespace mtt::image {
                 case 1:
                     pixel[i] = image->linear
                         ? *(start + i) / 255.f
-                        : image->color_space->decode(*(start + i) / 255.f);
+                        : image->color_space->linearize(*(start + i) / 255.f);
                     break;
                 case 4:
                     pixel[i] = *((f32*)(start) + i);
@@ -32,7 +32,7 @@ namespace mtt::image {
                 case 1:
                     *pixel = image->linear
                         ? byte(v[i] * 255.f)
-                        : byte(image->color_space->encode(v[i]) * 255.f);
+                        : byte(image->color_space->transfer(v[i]) * 255.f);
                     break;
                 case 4:
                     *((f32*)pixel) = v[i];

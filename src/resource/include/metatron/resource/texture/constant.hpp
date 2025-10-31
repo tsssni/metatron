@@ -1,8 +1,13 @@
 #pragma once
 #include <metatron/resource/texture/texture.hpp>
+#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::texture {
     struct Constant_Spectrum_Texture final {
+        struct Descriptor final {
+            stl::proxy<spectra::Spectrum> x;
+        };
+        Constant_Spectrum_Texture(Descriptor const& desc) noexcept;
         Constant_Spectrum_Texture(view<spectra::Spectrum> x) noexcept;
 
         auto operator()(

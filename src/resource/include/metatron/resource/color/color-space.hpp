@@ -1,6 +1,7 @@
 #pragma once
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/math/vector.hpp>
+#include <metatron/core/stl/vector.hpp>
 #include <functional>
 
 namespace mtt::color {
@@ -11,33 +12,28 @@ namespace mtt::color {
             illuminant,
         };
 
+        std::unordered_map<std::string, view<Color_Space>> static color_spaces;
+
         math::Matrix<f32, 3, 3> from_XYZ;
         math::Matrix<f32, 3, 3> to_XYZ;
-        view<spectra::Spectrum> illuminant;
-        std::function<f32(f32)> encode;
-        std::function<f32(f32)> decode;
+        stl::proxy<spectra::Spectrum> illuminant;
+        std::function<f32(f32)> transfer;
+        std::function<f32(f32)> linearize;
+
+        i32 table_res;
+        f32 illuminant_Y_integral;
+        std::vector<f32> scale;
+        std::vector<f32> table;
 
         Color_Space(
             std::string_view name,
             math::Vector<f32, 2> const& r,
             math::Vector<f32, 2> const& g,
             math::Vector<f32, 2> const& b,
-            view<spectra::Spectrum> illuminant,
-            std::function<f32(f32)> encode,
-            std::function<f32(f32)> decode
+            stl::proxy<spectra::Spectrum> illuminant,
+            std::function<f32(f32)> transfer,
+            std::function<f32(f32)> linearize
         );
-
-        // method: https://jo.dreggn.org/home/2019_wide_gamut.pdf
-        // polynomial fits data: https://github.com/mitsuba-renderer/mitsuba3/tree/master/ext/rgb2spec
-        auto to_spectrum(math::Vector<f32, 3> rgb, Spectrum_Type type) const -> poly<spectra::Spectrum>;
-
-        std::unordered_map<std::string, view<Color_Space>> static color_spaces;
-
-    private:
-        i32 table_res;
-        f32 illuminant_Y_integral;
-        std::vector<f32> scale;
-        std::vector<f32> table;
     };
 
     auto constexpr xyY_to_XYZ(math::Vector<f32, 3> const& xyY) -> math::Vector<f32, 3> {

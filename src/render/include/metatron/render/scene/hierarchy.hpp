@@ -24,9 +24,11 @@ namespace mtt::scene {
         auto populate(std::string_view path) noexcept -> void;
 
         template<typename F, typename T>
-        auto attach(Entity entity, T&& component = {}) noexcept -> void {
+        auto attach(Entity entity, T&& component = {}) noexcept -> stl::proxy<F> {
             auto idx = stl::poly_vector<F>::instance().push_back(std::forward<T>(component));
-            registry.emplace(entity, stl::proxy<F>{idx});
+            auto handle = stl::proxy<F>{idx};
+            registry.emplace<stl::proxy<F>>(entity, handle);
+            return handle;
         }
 
         template<typename F>

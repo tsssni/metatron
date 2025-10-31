@@ -1,22 +1,34 @@
 #include <metatron/resource/spectra/discrete.hpp>
+#include <metatron/core/stl/print.hpp>
 #include <algorithm>
-#include <cstring>
+#include <fstream>
+#include <sstream>
 
 namespace mtt::spectra {
-    Discrete_Spectrum::Discrete_Spectrum(
-        std::span<f32> lambda,
-        std::span<f32> data
-    ) noexcept: size(lambda.size()) {
-        std::memcpy(this->lambda.data(), lambda.data(), size * sizeof(f32));
-    }
-
-    Discrete_Spectrum::Discrete_Spectrum(
-        std::span<math::Vector<f32, 2>> interleaved
-    ) noexcept: size(interleaved.size()) {
-        for (auto i = 0uz; i < size; ++i) {
-            lambda[i] = interleaved[i][0];
-            data[i] = interleaved[i][1];
+    Discrete_Spectrum::Discrete_Spectrum(Descriptor const& desc) noexcept {
+        auto idx = 0;
+        auto file = std::ifstream{desc.path};
+        if (!file.is_open()) {
+            std::println("failed to open discrete spectrum {}", desc.path);
+            std::abort();
         }
+        auto line = std::string{};
+
+        while (std::getline(file, line)) {
+            if (line.empty() || line.front() == '#') continue;
+            
+            auto iss = std::istringstream{line};
+            auto wavelength = 0.f;
+            auto value = 0.f;
+
+            if (iss >> wavelength >> value) {
+                lambda[idx] = wavelength;
+                storage[idx] = value;
+                ++idx;
+            }
+        }
+        size = idx;
+        file.close();
     }
 
     auto Discrete_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
@@ -33,6 +45,6 @@ namespace mtt::spectra {
         auto alpha = 1.f
         * (lambda - this->lambda[idx])
         / (this->lambda[idx + 1] - this->lambda[idx]);
-        return math::lerp(data[idx], data[idx + 1], alpha);
+        return math::lerp(storage[idx], storage[idx + 1], alpha);
     }
 }

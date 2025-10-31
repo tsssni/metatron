@@ -2,8 +2,6 @@
 #include <metatron/core/math/arithmetic.hpp>
 
 namespace mtt::spectra {
-    Blackbody_Spectrum::Blackbody_Spectrum(f32 T) noexcept: T(T) {}
-
     auto Blackbody_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
         if (T <= 0.f) return 0.f;
 

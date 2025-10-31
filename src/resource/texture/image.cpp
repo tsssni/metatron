@@ -262,8 +262,12 @@ namespace mtt::texture {
         spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> spectra::Stochastic_Spectrum {
         auto rgba = image_tex(sampler, coord);
-        auto rgb_spec = image_tex.images.front()->color_space->to_spectrum(rgba, type);
-        return spec & rgb_spec;
+        auto rgb_spec = spectra::Rgb_Spectrum{{
+            rgba,
+            type,
+            stl::proxy<color::Color_Space>{0},
+        }};
+        return spec & (&rgb_spec);
     }
 
     auto Image_Spectrum_Texture::sample(
