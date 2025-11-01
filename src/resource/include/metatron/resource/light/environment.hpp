@@ -1,13 +1,11 @@
 #pragma once
 #include <metatron/resource/light/light.hpp>
 #include <metatron/resource/texture/texture.hpp>
-#include <metatron/resource/image/image.hpp>
 
 namespace mtt::light {
     struct Environment_Light final {
         Environment_Light(
-            view<texture::Spectrum_Texture> env_map,
-            view<texture::Sampler> sampler
+            view<texture::Spectrum_Texture> env_map
         ) noexcept;
 
         auto operator()(
@@ -26,6 +24,5 @@ namespace mtt::light {
 
     private:
         view<texture::Spectrum_Texture> env_map;
-        view<texture::Sampler> sampler;
     };
 }

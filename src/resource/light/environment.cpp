@@ -7,9 +7,8 @@
 
 namespace mtt::light {
     Environment_Light::Environment_Light(
-        view<texture::Spectrum_Texture> env_map,
-        view<texture::Sampler> sampler
-    ) noexcept: env_map(env_map), sampler(sampler) {}
+        view<texture::Spectrum_Texture> env_map
+    ) noexcept: env_map(env_map) {}
 
     auto Environment_Light::operator()(
         math::Ray const& r,
@@ -18,7 +17,7 @@ namespace mtt::light {
         auto [radius, theta, phi] = math::cartesian_to_spherical(r.d);
         auto u = 1.f - phi / (2.f * math::pi);
         auto v = theta / math::pi;
-        auto t = (*env_map)(*sampler, {{u, v}}, spec);
+        auto t = (*env_map)({{u, v}}, spec);
         return Interaction{
             .L = t,
             .wi = r.d,

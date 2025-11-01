@@ -4,11 +4,10 @@
 
 namespace mtt::texture {
     struct Constant_Spectrum_Texture final {
-        stl::proxy<spectra::Spectrum> x;
+        stl::proxy<spectra::Spectrum> const x;
 
         auto operator()(
-            device::Sampler const& sampler,
-            Coordinate const& coord,
+            device::Coordinate const& coord,
             spectra::Stochastic_Spectrum const& spec
         ) const noexcept -> spectra::Stochastic_Spectrum;
         auto sample(
@@ -24,8 +23,7 @@ namespace mtt::texture {
         math::Vector<f32, 4> x;
 
         auto operator()(
-            device::Sampler const& sampler,
-            Coordinate const& coord
+            device::Coordinate const& coord
         ) const noexcept -> math::Vector<f32, 4>;
         auto sample(
             eval::Context const& ctx,

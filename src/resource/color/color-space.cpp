@@ -8,7 +8,7 @@
 #include <cstring>
 
 namespace mtt::color {
-    std::unordered_map<std::string, view<Color_Space>> Color_Space::color_spaces;
+    std::unordered_map<std::string, stl::proxy<Color_Space>> Color_Space::color_spaces;
 
     Color_Space::Color_Space(
         std::string_view name,
@@ -20,7 +20,7 @@ namespace mtt::color {
         std::function<f32(f32)> decode
     ): 
     illuminant(illuminant),
-    illuminant_Y_integral(spectra::Spectrum::spectra["CIE-Y"] | illuminant.data()),
+    illuminant_Y_integral(spectra::Spectrum::spectra["CIE-Y"].data() | illuminant.data()),
     transfer(encode),
     linearize(decode) {
         // project color primaries and white point to Y=1

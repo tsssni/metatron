@@ -28,7 +28,7 @@ namespace mtt::media {
         auto sigma_s = (ctx.spec & this->sigma_s) * density_scale;
         auto sigma_t = sigma_a + sigma_s;
         auto sigma_maj = sigma_t;
-        auto transmittance = ctx.spec & spectra::Spectrum::spectra["one"];
+        auto transmittance = ctx.spec & spectra::Spectrum::spectra["one"].data();
         auto density_maj = 0.f;
         auto distr = math::Exponential_Distribution{0.f};
 

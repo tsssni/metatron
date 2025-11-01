@@ -28,19 +28,19 @@ namespace mtt::scene {
             vec.emplace_type<spectra::Discrete_Spectrum>();
             vec.emplace_type<spectra::Blackbody_Spectrum>();
 
-            auto e = "/spectrum/zero"_et;
-            hierarchy.attach<spectra::Spectrum>(
-                "/spectrum/zero"_et,
-                spectra::Constant_Spectrum{0.f}
-            );
-            hierarchy.attach<spectra::Spectrum>(
-                "/spectrum/one"_et,
-                spectra::Constant_Spectrum{1.f}
-            );
-            for (auto const& name: std::to_array<std::string>({"zero", "one"})) {
+            auto name = std::to_array<std::string>({
+                "zero", "one",
+            });
+            auto data = std::to_array<f32>({
+                0.f, 1.f,
+            });
+            for (auto i = 0uz; i < name.size(); i++) {
                 spectra::Spectrum::spectra.emplace(
-                    name,
-                    hierarchy.fetch<spectra::Spectrum>(("/spectrum/" + name) / et).data()
+                    name[i],
+                    hierarchy.attach<spectra::Spectrum>(
+                        ("/spectrum/" + name[i]) / et,
+                        spectra::Constant_Spectrum{data[i]}
+                    )
                 );
             }
 
@@ -77,7 +77,7 @@ namespace mtt::scene {
                     auto lock = std::lock_guard(mutex);
                     auto entity = ("/spectrum/" + name) / et;
                     auto handle = hierarchy.attach<spectra::Spectrum>(entity, std::forward<S>(spec));
-                    spectra::Spectrum::spectra.emplace(name, handle.data());
+                    spectra::Spectrum::spectra.emplace(name, handle);
                 };
                 if (ext == ".vspd") attach(spectra::Visible_Spectrum{{path}});
                 else if (ext == ".dspd") attach(spectra::Discrete_Spectrum{{path}});
@@ -137,12 +137,15 @@ namespace mtt::scene {
                     auto lock = std::lock_guard(mutex);
                     hierarchy.attach<color::Color_Space>(entity, std::move(cs));
                     auto cs = hierarchy.fetch<color::Color_Space>(entity);
-                    color::Color_Space::color_spaces[name[i]] = cs.data();
+                    color::Color_Space::color_spaces[name[i]] = cs;
                 }
             });
         }();
 
         [&] {
+            auto& dvec = stl::poly_vector<device::Texture>::instance();
+            dvec.emplace_type<device::Texture>();
+
             auto& vvec = stl::poly_vector<texture::Vector_Texture>::instance();
             vvec.emplace_type<texture::Constant_Vector_Texture>();
             vvec.emplace_type<texture::Image_Vector_Texture>();
@@ -152,9 +155,6 @@ namespace mtt::scene {
             svec.emplace_type<texture::Image_Spectrum_Texture>();
             svec.emplace_type<texture::Checkerboard_Texture>();
 
-            auto& spvec = stl::poly_vector<device::Sampler>::instance();
-            spvec.emplace_type<device::Sampler>();
-
             for (auto& [spec, _]: spectra::Spectrum::spectra)
                 hierarchy.attach<texture::Spectrum_Texture>(
                     ("/texture/" + spec) / et,
@@ -162,19 +162,19 @@ namespace mtt::scene {
                         hierarchy.fetch<spectra::Spectrum>(("/spectrum/" + spec) / et),
                     }
                 );
-            hierarchy.attach<device::Sampler>(
-                "/sampler/default" / et,
-                device::Sampler{}
-            );
         }();
     }
 
+    // TODO: generate textures on cpu
     auto test() noexcept -> void {
         auto& hierarchy = Hierarchy::instance();
-        auto handle = hierarchy.fetch<texture::Spectrum_Texture>("/texture/eta/Al" / et);
-        auto spec = spectra::Stochastic_Spectrum{0};
-        auto ret = (*handle.data())({}, {}, spec);
-        std::println("{}", ret.lambda);
-        std::println("{}", ret.value);
+        auto handle = hierarchy.attach<texture::Spectrum_Texture>(
+            "/texture/test" / et,
+            texture::Image_Spectrum_Texture{{
+                "/home/tsssni/metatron-scenes/dispersion/texture/env.exr",
+                color::Color_Space::Spectrum_Type::illuminant,
+                texture::Image_Distribution::spherical,
+            }}
+        );
     }
 }

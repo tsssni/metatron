@@ -1,17 +1,18 @@
 #pragma once
 #include <metatron/resource/texture/texture.hpp>
+#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::texture {
     struct Checkerboard_Texture final {
-        Checkerboard_Texture(
-            view<spectra::Spectrum> x,
-            view<spectra::Spectrum> y,
-            math::Vector<usize, 2> uv_scale
-        ) noexcept;
+        struct Descriptor final {
+            stl::proxy<spectra::Spectrum> x;
+            stl::proxy<spectra::Spectrum> y;
+            math::Vector<usize, 2> uv_scale;
+        };
+        Checkerboard_Texture(Descriptor const& desc) noexcept;
 
         auto operator()(
-            device::Sampler const& sampler,
-            Coordinate const& coord,
+            device::Coordinate const& coord,
             spectra::Stochastic_Spectrum const& spec
         ) const noexcept -> spectra::Stochastic_Spectrum;
         auto sample(
@@ -23,8 +24,8 @@ namespace mtt::texture {
         ) const noexcept -> f32;
 
     private:
-        view<spectra::Spectrum> x;
-        view<spectra::Spectrum> y;
+        stl::proxy<spectra::Spectrum> const x;
+        stl::proxy<spectra::Spectrum> const y;
         math::Vector<usize, 2> uv_scale;
 
         f32 w_x;

@@ -5,27 +5,22 @@
 namespace mtt::material {
     auto Material::sample(
         eval::Context const& ctx,
-        texture::Coordinate const& coord
+        device::Coordinate const& coord
     ) const noexcept -> std::optional<Interaction> {
         auto attr = bsdf::Attribute{};
         auto intr = Interaction{};
         auto spec = ctx.spec;
 
-        auto null_spec = spec & spectra::Spectrum::spectra["zero"];
+        auto null_spec = spec & spectra::Spectrum::spectra["zero"].data();
         auto geometry_normal = math::Vector<f32, 3>{0.5f, 0.5f, 1.f};
         attr.spectra["spectrum"] = null_spec;
         attr.spectra["emission"] = null_spec;
         attr.vectors["normal"] = geometry_normal;
 
-        for (auto const& [name, tex]: spectrum_textures) {
-            auto& sampler = *samplers.at(name);
-            attr.spectra[name] = (*tex)(sampler, coord, spec);
-        }
-
-        for (auto const& [name, tex]: vector_textures) {
-            auto& sampler = *samplers.at(name);
-            attr.vectors[name] = (*tex)(sampler, coord);
-        }
+        for (auto const& [name, tex]: spectrum_textures)
+            attr.spectra[name] = (*tex)(coord, spec);
+        for (auto const& [name, tex]: vector_textures)
+            attr.vectors[name] = (*tex)(coord);
 
         intr.emission = attr.spectra["emission"];
         intr.normal = math::normalize(math::shrink(attr.vectors["normal"]) * 2.f - 1.f);

@@ -12,7 +12,7 @@ namespace mtt::color {
             illuminant,
         };
 
-        std::unordered_map<std::string, view<Color_Space>> static color_spaces;
+        std::unordered_map<std::string, stl::proxy<Color_Space>> static color_spaces;
 
         math::Matrix<f32, 3, 3> from_XYZ;
         math::Matrix<f32, 3, 3> to_XYZ;

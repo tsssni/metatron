@@ -236,7 +236,7 @@ namespace mtt::light {
         );
         wi = math::unit_spherical_to_cartesian({theta, phi});
 
-        auto L = spec & spectra::Spectrum::spectra["zero"];
+        auto L = spec & spectra::Spectrum::spectra["zero"].data();
         L.value = math::foreach([&](f32 lambda, usize i) {
             return hosek(lambda, math::unit_to_cos_theta(wi), math::dot(d, wi));
         }, L.lambda);
@@ -399,7 +399,8 @@ namespace mtt::light {
                     return hosek_sky(i, cos_theta, cos_gamma) * w_theta * w_gamma;
                 });
                 auto integral = std::ranges::fold_left(radiance, 0.f, std::plus{}) * J;
-                luminance += integral * (*spectra::Spectrum::spectra["CIE-Y"])(sunsky_lambda[i]);
+                auto&& CIE_Y = *spectra::Spectrum::spectra["CIE-Y"].data();
+                luminance += integral * CIE_Y(sunsky_lambda[i]);
             }
             return luminance;
         }();
@@ -436,7 +437,8 @@ namespace mtt::light {
                     return hosek_sun(i, cos_theta) * hosek_limb(i, cos_gamma) * w_theta * w_gamma;
                 });
                 auto integral = std::ranges::fold_left(radiance, 0.f, std::plus{}) * J;
-                luminance += integral * (*spectra::Spectrum::spectra["CIE-Y"])(sunsky_lambda[i]);
+                auto&& CIE_Y = *spectra::Spectrum::spectra["CIE-Y"].data();
+                luminance += integral * CIE_Y(sunsky_lambda[i]);
             }
             return luminance;
         }();
