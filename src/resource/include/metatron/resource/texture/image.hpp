@@ -20,7 +20,7 @@ namespace mtt::texture {
         ) noexcept;
 
         auto operator()(
-            Sampler const& sampler,
+            device::Sampler const& sampler,
             Coordinate const& coord
         ) const noexcept -> math::Vector<f32, 4>;
         auto sample(
@@ -33,13 +33,13 @@ namespace mtt::texture {
 
     private:
         auto fetch(
-            math::Vector<i32, 3> texel, Sampler const& sampler
+            math::Vector<i32, 3> texel, device::Sampler const& sampler
         ) const noexcept -> math::Vector<f32, 4>;
         auto nearest(
-            Coordinate const& coord, i32 lod, Sampler const& sampler
+            Coordinate const& coord, i32 lod, device::Sampler const& sampler
         ) const noexcept -> math::Vector<f32, 4>;
         auto linear(
-            Coordinate const& coord, i32 lod, Sampler const& sampler
+            Coordinate const& coord, i32 lod, device::Sampler const& sampler
         ) const noexcept -> math::Vector<f32, 4>;
 
         math::Piecewise_Distribution<f32, 2> distr;
@@ -54,7 +54,7 @@ namespace mtt::texture {
         ) noexcept;
 
         auto operator()(
-            Sampler const& sampler,
+            device::Sampler const& sampler,
             Coordinate const& coord,
             spectra::Stochastic_Spectrum const& spec
         ) const noexcept -> spectra::Stochastic_Spectrum;

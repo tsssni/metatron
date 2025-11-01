@@ -7,6 +7,9 @@
 #include <metatron/resource/spectra/visible.hpp>
 #include <metatron/resource/spectra/discrete.hpp>
 #include <metatron/resource/spectra/blackbody.hpp>
+#include <metatron/resource/texture/constant.hpp>
+#include <metatron/resource/texture/image.hpp>
+#include <metatron/resource/texture/checkerboard.hpp>
 #include <metatron/core/stl/vector.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/filesystem.hpp>
@@ -138,11 +141,40 @@ namespace mtt::scene {
                 }
             });
         }();
+
+        [&] {
+            auto& vvec = stl::poly_vector<texture::Vector_Texture>::instance();
+            vvec.emplace_type<texture::Constant_Vector_Texture>();
+            vvec.emplace_type<texture::Image_Vector_Texture>();
+
+            auto& svec = stl::poly_vector<texture::Spectrum_Texture>::instance();
+            svec.emplace_type<texture::Constant_Spectrum_Texture>();
+            svec.emplace_type<texture::Image_Spectrum_Texture>();
+            svec.emplace_type<texture::Checkerboard_Texture>();
+
+            auto& spvec = stl::poly_vector<device::Sampler>::instance();
+            spvec.emplace_type<device::Sampler>();
+
+            for (auto& [spec, _]: spectra::Spectrum::spectra)
+                hierarchy.attach<texture::Spectrum_Texture>(
+                    ("/texture/" + spec) / et,
+                    texture::Constant_Spectrum_Texture{
+                        hierarchy.fetch<spectra::Spectrum>(("/spectrum/" + spec) / et),
+                    }
+                );
+            hierarchy.attach<device::Sampler>(
+                "/sampler/default" / et,
+                device::Sampler{}
+            );
+        }();
     }
 
     auto test() noexcept -> void {
         auto& hierarchy = Hierarchy::instance();
-        auto handle = hierarchy.fetch<spectra::Spectrum>("/spectrum/k/K" / et);
-        std::println("{} {}", u32(handle), (*handle.data())(305));
+        auto handle = hierarchy.fetch<texture::Spectrum_Texture>("/texture/eta/Al" / et);
+        auto spec = spectra::Stochastic_Spectrum{0};
+        auto ret = (*handle.data())({}, {}, spec);
+        std::println("{}", ret.lambda);
+        std::println("{}", ret.value);
     }
 }

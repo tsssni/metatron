@@ -10,7 +10,7 @@ namespace mtt::texture {
         ) noexcept;
 
         auto operator()(
-            Sampler const& sampler,
+            device::Sampler const& sampler,
             Coordinate const& coord,
             spectra::Stochastic_Spectrum const& spec
         ) const noexcept -> spectra::Stochastic_Spectrum;

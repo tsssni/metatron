@@ -1,1 +1,1 @@
-list(APPEND metatron-deps openimageio assimp openvdb)
+list(APPEND metatron-deps device openimageio assimp openvdb)

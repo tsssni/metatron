@@ -59,7 +59,7 @@ namespace mtt::texture {
     }
 
     auto Image_Vector_Texture::operator()(
-        Sampler const& sampler,
+        device::Sampler const& sampler,
         Coordinate const& coord
     ) const noexcept -> math::Vector<f32, 4> {
         auto du = math::Vector<f32, 2>{coord.dudx, coord.dudy};
@@ -86,7 +86,7 @@ namespace mtt::texture {
 
         auto l = std::max(ul * images[0]->size[0], vl * images[0]->size[1]);
         auto f = l > 1.f ? sampler.min_filter : sampler.mag_filter;
-        auto filter = f == Sampler::Filter::nearest
+        auto filter = f == device::Sampler::Filter::nearest
         ? &Image_Vector_Texture::nearest
         : &Image_Vector_Texture::linear;
 
@@ -100,9 +100,9 @@ namespace mtt::texture {
                 images.size() - 1.f + std::log2(sl) + sampler.lod_bias
             )
         );
-        if (sampler.mip_filter == Sampler::Filter::none) {
+        if (sampler.mip_filter == device::Sampler::Filter::none) {
             return (this->*filter)(c, 0, sampler);
-        } else if (sampler.mip_filter == Sampler::Filter::nearest) {
+        } else if (sampler.mip_filter == device::Sampler::Filter::nearest) {
             auto lodi = std::min(images.size() - 1, usize(std::round(lod)));
             return (this->*filter)(c, lodi, sampler);
         } else {
@@ -130,19 +130,19 @@ namespace mtt::texture {
     }
 
     auto Image_Vector_Texture::fetch(
-        math::Vector<i32, 3> texel, Sampler const& sampler
+        math::Vector<i32, 3> texel, device::Sampler const& sampler
     ) const noexcept -> math::Vector<f32, 4> {
         auto px = math::Vector<i32, 2>{texel};
         auto lod = texel[2];
         auto size = math::Vector<i32, 2>{images[lod]->size};
 
-        auto wrap = [](i32 x, i32 s, Sampler::Wrap w) -> i32 {
+        auto wrap = [](i32 x, i32 s, device::Sampler::Wrap w) -> i32 {
             auto c = math::clamp(x, 0, s - 1);
-            if (c == x || w == Sampler::Wrap::edge) {
+            if (c == x || w == device::Sampler::Wrap::edge) {
                 return c;
-            } else if (w == Sampler::Wrap::repeat) {
+            } else if (w == device::Sampler::Wrap::repeat) {
                 return math::pmod(x, s);
-            } else if (w == Sampler::Wrap::mirror) {
+            } else if (w == device::Sampler::Wrap::mirror) {
                 auto b = math::pmod(x / s, 2);
                 auto p = math::pmod(x, s);
                 return b == 0 ? p : s - 1 - p;
@@ -158,7 +158,7 @@ namespace mtt::texture {
     }
 
     auto Image_Vector_Texture::nearest(
-        Coordinate const& coord, i32 lod, Sampler const& sampler
+        Coordinate const& coord, i32 lod, device::Sampler const& sampler
     ) const noexcept -> math::Vector<f32, 4> {
         auto& image = *images[lod];
         auto uv = math::round(coord.uv * math::Vector<usize, 2>{image.size} - 0.5f);
@@ -166,7 +166,7 @@ namespace mtt::texture {
     }
 
     auto Image_Vector_Texture::linear(
-        Coordinate const& coord, i32 lod, Sampler const& sampler
+        Coordinate const& coord, i32 lod, device::Sampler const& sampler
     ) const noexcept -> math::Vector<f32, 4> {
         auto& image = *images[lod];
         auto uv = coord.uv * math::Vector<usize, 2>{image.size} - 0.5f;
@@ -257,7 +257,7 @@ namespace mtt::texture {
 
 
     auto Image_Spectrum_Texture::operator()(
-        Sampler const& sampler,
+        device::Sampler const& sampler,
         Coordinate const& coord,
         spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> spectra::Stochastic_Spectrum {

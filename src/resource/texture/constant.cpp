@@ -2,16 +2,12 @@
 #include <metatron/resource/spectra/rgb.hpp>
 
 namespace mtt::texture {
-    Constant_Spectrum_Texture::Constant_Spectrum_Texture(
-        view<spectra::Spectrum> x
-    ) noexcept: x(x) {}
-
     auto Constant_Spectrum_Texture::operator()(
-        Sampler const& sampler,
+        device::Sampler const& sampler,
         Coordinate const& coord,
         spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> spectra::Stochastic_Spectrum {
-        return spec & x;
+        return spec & x.data();
     }
 
     auto Constant_Spectrum_Texture::sample(
@@ -27,12 +23,8 @@ namespace mtt::texture {
         return 1.f;
     }
 
-    Constant_Vector_Texture::Constant_Vector_Texture(
-        math::Vector<f32, 4> const& x
-    ) noexcept: x(x) {}
-
     auto Constant_Vector_Texture::operator()(
-        Sampler const& sampler,
+        device::Sampler const& sampler,
         Coordinate const& coord
     ) const noexcept -> math::Vector<f32, 4> {
         return x;

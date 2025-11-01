@@ -28,7 +28,7 @@ namespace mtt::material {
 
         std::unordered_map<
             std::string,
-            view<texture::Sampler>
+            view<device::Sampler>
         > samplers;
 
         auto sample(
