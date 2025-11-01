@@ -85,8 +85,27 @@ namespace mtt::scene {
         }();
 
         [&] {
-            auto& vec = stl::poly_vector<color::Color_Space>::instance();
-            vec.emplace_type<color::Color_Space>();
+            auto& tvec = stl::poly_vector<color::Transfer_Function>::instance();
+            tvec.emplace_type<color::Transfer_Function>();
+
+            auto& cvec = stl::poly_vector<color::Color_Space>::instance();
+            cvec.emplace_type<color::Color_Space>();
+
+            auto transfer = std::to_array({
+                [](f32 x) -> f32 {
+                    if (x <= 0.0031308f) return 12.92f * x;
+                    else return 1.055f * std::pow(x, 1.f / 2.4f) - 0.055f;
+                }
+            });
+            auto linearize = std::to_array({
+                [](f32 x) -> f32 {
+                    if (x <= 0.04045f) return x / 12.92f;
+                    else return std::pow((x + 0.055f) / 1.055f, 2.4f);
+                }
+            });
+
+            for (auto i = 0uz; i < transfer.size(); i++)
+                tvec.emplace_back<color::Transfer_Function>(transfer[i], linearize[i]);
 
             auto name = std::to_array<std::string>({
                 "sRGB",
@@ -103,17 +122,8 @@ namespace mtt::scene {
             auto white_point = std::to_array<std::string>({
                 "CIE-D65",
             });
-            auto transfer = std::to_array({
-                [](f32 x) -> f32 {
-                    if (x <= 0.0031308f) return 12.92f * x;
-                    else return 1.055f * std::pow(x, 1.f / 2.4f) - 0.055f;
-                }
-            });
-            auto linearize = std::to_array({
-                [](f32 x) -> f32 {
-                    if (x <= 0.04045f) return x / 12.92f;
-                    else return std::pow((x + 0.055f) / 1.055f, 2.4f);
-                }
+            auto transfer_function = std::to_array<u32>({
+                0,
             });
 
             auto mutex = std::mutex{};
@@ -129,8 +139,7 @@ namespace mtt::scene {
                     green_primitive[i],
                     blue_primitive[i],
                     hierarchy.fetch<spectra::Spectrum>(white),
-                    transfer[i],
-                    linearize[i]
+                    stl::proxy<color::Transfer_Function>{transfer_function[i]},
                 };
 
                 {
@@ -176,5 +185,7 @@ namespace mtt::scene {
                 texture::Image_Distribution::spherical,
             }}
         );
+        auto srgb = color::Color_Space::color_spaces["sRGB"];
+        std::println("{}", srgb->transfer_function->transfer(0.18f));
     }
 }

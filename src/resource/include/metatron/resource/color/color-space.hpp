@@ -5,6 +5,11 @@
 #include <functional>
 
 namespace mtt::color {
+    struct Transfer_Function final {
+        std::function<f32(f32)> transfer;
+        std::function<f32(f32)> linearize;
+    };
+
     struct Color_Space final {
         enum struct Spectrum_Type: usize {
             albedo,
@@ -17,8 +22,7 @@ namespace mtt::color {
         math::Matrix<f32, 3, 3> from_XYZ;
         math::Matrix<f32, 3, 3> to_XYZ;
         stl::proxy<spectra::Spectrum> illuminant;
-        std::function<f32(f32)> transfer;
-        std::function<f32(f32)> linearize;
+        stl::proxy<Transfer_Function> transfer_function;
 
         i32 table_res;
         f32 illuminant_Y_integral;
@@ -31,8 +35,7 @@ namespace mtt::color {
             math::Vector<f32, 2> const& g,
             math::Vector<f32, 2> const& b,
             stl::proxy<spectra::Spectrum> illuminant,
-            std::function<f32(f32)> transfer,
-            std::function<f32(f32)> linearize
+            stl::proxy<Transfer_Function> transfer_function
         );
     };
 

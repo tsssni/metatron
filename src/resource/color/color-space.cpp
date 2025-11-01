@@ -16,13 +16,11 @@ namespace mtt::color {
         math::Vector<f32, 2> const& g_chroma,
         math::Vector<f32, 2> const& b_chroma,
         stl::proxy<spectra::Spectrum> illuminant,
-        std::function<f32(f32)> encode,
-        std::function<f32(f32)> decode
+        stl::proxy<Transfer_Function> transfer_function
     ): 
     illuminant(illuminant),
     illuminant_Y_integral(spectra::Spectrum::spectra["CIE-Y"].data() | illuminant.data()),
-    transfer(encode),
-    linearize(decode) {
+    transfer_function(transfer_function) {
         // project color primaries and white point to Y=1
         auto w = ~illuminant.data();
         w /= math::sum(w);
