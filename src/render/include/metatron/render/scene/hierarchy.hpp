@@ -3,6 +3,7 @@
 #include <metatron/render/scene/json.hpp>
 #include <metatron/core/stl/capsule.hpp>
 #include <metatron/core/stl/singleton.hpp>
+#include <mutex>
 
 namespace mtt::scene {
     struct Hierarchy final: stl::singleton<Hierarchy>, stl::capsule<Hierarchy> {

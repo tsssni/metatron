@@ -20,18 +20,11 @@ namespace mtt::light {
     std::vector<f32> Sunsky_Light::sun_limb_table;
     std::vector<f32> Sunsky_Light::tgmm_table;
 
-    Sunsky_Light::Sunsky_Light(
-        math::Vector<f32, 2> direction,
-        f32 turbidity,
-        f32 albedo,
-        f32 aperture,
-        f32 temperature,
-        f32 intensity
-    ) noexcept:
-    d(math::unit_spherical_to_cartesian(direction)),
+    Sunsky_Light::Sunsky_Light(Descriptor const& desc) noexcept:
+    d(math::unit_spherical_to_cartesian(desc.direction)),
     t(math::Quaternion<f32>::from_rotation_between({0.f, 1.f, 0.f}, d)),
-    turbidity(turbidity), 
-    albedo(albedo) {
+    turbidity(desc.turbidity), 
+    albedo(desc.albedo) {
         auto bezier = [](std::vector<f32> const& data, usize block_size, usize offset, f32 x) -> std::vector<f32> {
             auto interpolated = std::vector<f32>(block_size, 0.f);
             auto c = std::array<f32, 6>{1, 5, 10, 10, 5, 1};
@@ -54,7 +47,7 @@ namespace mtt::light {
             return z;
         };
 
-        auto eta = math::pi * 0.5f - direction[0];
+        auto eta = math::pi * 0.5f - desc.direction[0];
         auto x = std::pow(eta / (math::pi * 0.5f), 1.f / 3.f);
 
         auto t_high = i32(turbidity);
@@ -89,7 +82,7 @@ namespace mtt::light {
             auto t1 = sun_table[t_high];
             sun_radiance = t0 * (1.f - t_alpha) + t1 * t_alpha;
 
-            auto bspec = spectra::Blackbody_Spectrum{temperature};
+            auto bspec = spectra::Blackbody_Spectrum{desc.temperature};
             auto sun_scale = math::Vector<f32, sunsky_num_lambda>{};
             for (auto i = 0; i < sunsky_num_lambda; ++i) {
                 auto lambda = sunsky_lambda[i];
@@ -100,14 +93,14 @@ namespace mtt::light {
 
             // only use visible spectra
             auto ratio = (math::sum(sun_scale) - sun_scale[0] - sun_scale[1]) / 9.f;
-            cos_sun = std::cos(aperture * 0.5f);
-            phi_sun = direction[1];
+            cos_sun = std::cos(desc.aperture * 0.5f);
+            phi_sun = desc.direction[1];
             area = (1.f - std::cos(sun_aperture * 0.5f)) / (1.f - cos_sun);
             sun_distr = math::Cone_Distribution{cos_sun};
-            sky_radiance *= intensity / ratio * sun_scale;
+            sky_radiance *= desc.intensity / ratio * sun_scale;
             for (auto i = 0; i < sun_num_segments; ++i)
                 for (auto j = 0; j < sunsky_num_lambda; ++j)
-                    sun_radiance[i][j] *= intensity / ratio * sun_scale[j];
+                    sun_radiance[i][j] *= desc.intensity / ratio * sun_scale[j];
         };
 
         // https://github.com/mitsuba-renderer/mitsuba3/blob/master/include/mitsuba/render/sunsky.h

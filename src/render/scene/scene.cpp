@@ -10,6 +10,12 @@
 #include <metatron/resource/texture/constant.hpp>
 #include <metatron/resource/texture/image.hpp>
 #include <metatron/resource/texture/checkerboard.hpp>
+#include <metatron/resource/light/parallel.hpp>
+#include <metatron/resource/light/point.hpp>
+#include <metatron/resource/light/spot.hpp>
+#include <metatron/resource/light/area.hpp>
+#include <metatron/resource/light/environment.hpp>
+#include <metatron/resource/light/sunsky.hpp>
 #include <metatron/core/stl/vector.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/filesystem.hpp>
@@ -172,12 +178,22 @@ namespace mtt::scene {
                     }
                 );
         }();
+
+        [&] {
+            auto& vec = stl::poly_vector<light::Light>::instance();
+            vec.emplace_type<light::Parallel_Light>();
+            vec.emplace_type<light::Point_Light>();
+            vec.emplace_type<light::Spot_Light>();
+            vec.emplace_type<light::Area_Light>();
+            vec.emplace_type<light::Environment_Light>();
+            vec.emplace_type<light::Sunsky_Light>();
+        }();
     }
 
     // TODO: generate textures on cpu
     auto test() noexcept -> void {
         auto& hierarchy = Hierarchy::instance();
-        auto handle = hierarchy.attach<texture::Spectrum_Texture>(
+        hierarchy.attach<texture::Spectrum_Texture>(
             "/texture/test" / et,
             texture::Image_Spectrum_Texture{{
                 "/home/tsssni/metatron-scenes/dispersion/texture/env.exr",
@@ -185,7 +201,17 @@ namespace mtt::scene {
                 texture::Image_Distribution::spherical,
             }}
         );
-        auto srgb = color::Color_Space::color_spaces["sRGB"];
-        std::println("{}", srgb->transfer_function->transfer(0.18f));
+        auto handle = hierarchy.attach<light::Light>(
+            "/light/test" / et,
+            light::Environment_Light{
+                hierarchy.fetch<texture::Spectrum_Texture>(
+                    "/texture/test" / et
+                )
+            }
+        );
+
+        auto spec = spectra::Stochastic_Spectrum{0.5f};
+        auto intr = (*handle.data())({.o = {}, .d = math::normalize(math::Vector<f32, 3>{0, 0.25, -1})}, spec);
+        std::println("{}", intr.value().L.value);
     }
 }

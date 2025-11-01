@@ -1,1 +1,1 @@
-list(APPEND metatron-deps resource entt glaze)
+list(APPEND metatron-deps resource network entt glaze)

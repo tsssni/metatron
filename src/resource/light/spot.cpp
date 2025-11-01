@@ -1,14 +1,10 @@
 #include <metatron/resource/light/spot.hpp>
 
 namespace mtt::light {
-    Spot_Light::Spot_Light(
-        view<spectra::Spectrum> L,
-        f32 falloff_start_theta,
-        f32 falloff_end_theta
-    ) noexcept:
-    L(L),
-    falloff_start_cos_theta(std::cos(falloff_start_theta)),
-    falloff_end_cos_theta(std::cos(falloff_end_theta)) {}
+    Spot_Light::Spot_Light(Descriptor const& desc) noexcept:
+    L(desc.L),
+    falloff_start_cos_theta(std::cos(desc.falloff_start_theta)),
+    falloff_end_cos_theta(std::cos(desc.falloff_end_theta)) {}
 
     auto Spot_Light::operator()(
         math::Ray const& r,
@@ -40,7 +36,7 @@ namespace mtt::light {
         );
 
         return Interaction{
-            .L = (ctx.spec & L) * intensity / (r * r),
+            .L = (ctx.spec & L.data()) * intensity / (r * r),
             .wi = wi,
             .p = {0.f},
             .t = r,

@@ -6,10 +6,6 @@
 #include <metatron/core/math/distribution/sphere.hpp>
 
 namespace mtt::light {
-    Environment_Light::Environment_Light(
-        view<texture::Spectrum_Texture> env_map
-    ) noexcept: env_map(env_map) {}
-
     auto Environment_Light::operator()(
         math::Ray const& r,
         spectra::Stochastic_Spectrum const& spec
@@ -17,7 +13,7 @@ namespace mtt::light {
         auto [radius, theta, phi] = math::cartesian_to_spherical(r.d);
         auto u = 1.f - phi / (2.f * math::pi);
         auto v = theta / math::pi;
-        auto t = (*env_map)({{u, v}}, spec);
+        auto t = (*env_map.data())({{u, v}}, spec);
         return Interaction{
             .L = t,
             .wi = r.d,

@@ -2,11 +2,6 @@
 #include <metatron/core/stl/optional.hpp>
 
 namespace mtt::light {
-    Area_Light::Area_Light(
-        view<shape::Shape> shape,
-        usize primitive
-    ) noexcept: shape(shape), primitive(primitive) {}
-
     auto Area_Light::operator()(
         math::Ray const& r,
         spectra::Stochastic_Spectrum const& spec

@@ -32,14 +32,15 @@ namespace mtt::light {
     auto constexpr tgmm_num_gaussian = tgmm_num_bilinear * tgmm_num_mixture;
 
     struct Sunsky_Light final {
-        Sunsky_Light(
-            math::Vector<f32, 2> direction,
-            f32 turbidity,
-            f32 albedo,
-            f32 aperture,
-            f32 temperature,
-            f32 intensity
-        ) noexcept;
+        struct Descriptor final {
+            math::Vector<f32, 2> direction;
+            f32 turbidity;
+            f32 albedo;
+            f32 aperture;
+            f32 temperature;
+            f32 intensity;
+        };
+        Sunsky_Light(Descriptor const& desc) noexcept;
 
         auto static init() noexcept -> void;
 
