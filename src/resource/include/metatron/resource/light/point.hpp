@@ -3,7 +3,7 @@
 
 namespace mtt::light {
     struct Point_Light final {
-        Point_Light(view<spectra::Spectrum> L) noexcept;
+        stl::proxy<spectra::Spectrum> L;
 
         auto operator()(
             math::Ray const& r,
@@ -18,8 +18,5 @@ namespace mtt::light {
             math::Vector<f32, 3> const& np
         ) const noexcept -> f32;
         auto flags() const noexcept -> Flags;
-
-    private:
-        view<spectra::Spectrum> L;
     };
 }

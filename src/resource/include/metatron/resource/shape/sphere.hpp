@@ -3,6 +3,9 @@
 
 namespace mtt::shape {
     struct Sphere final {
+        struct Descriptor final {};
+        Sphere(Descriptor const& desc) noexcept;
+        
         auto size() const noexcept -> usize;
         auto bounding_box(
             math::Matrix<f32, 4, 4> const& t,

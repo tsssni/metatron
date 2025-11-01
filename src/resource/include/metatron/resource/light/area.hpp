@@ -1,13 +1,12 @@
 #pragma once
 #include <metatron/resource/light/light.hpp>
 #include <metatron/resource/shape/shape.hpp>
+#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::light {
     struct Area_Light final {
-        Area_Light(
-            view<shape::Shape> shape,
-            usize primitive
-        ) noexcept;
+        stl::proxy<shape::Shape> shape;
+        usize primitive;
 
         auto operator()(
             math::Ray const& r,
@@ -22,9 +21,5 @@ namespace mtt::light {
             math::Vector<f32, 3> const& np
         ) const noexcept -> f32;
         auto flags() const noexcept -> Flags;
-
-    private:
-        view<shape::Shape> shape;
-        usize primitive;
     };
 }

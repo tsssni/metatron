@@ -1,8 +1,6 @@
 #include <metatron/resource/light/point.hpp>
 
 namespace mtt::light {
-    Point_Light::Point_Light(view<spectra::Spectrum> L) noexcept: L(L) {}
-
     auto Point_Light::operator()(
         math::Ray const& r,
         spectra::Stochastic_Spectrum const& spec
@@ -17,7 +15,7 @@ namespace mtt::light {
         auto wi = math::normalize(-ctx.r.o);
         auto r = math::length(ctx.r.o);
         return Interaction{
-            .L = (ctx.spec & L) / (r * r),
+            .L = (ctx.spec & L.data()) / (r * r),
             .wi = wi,
             .p = {0.f},
             .t = r,

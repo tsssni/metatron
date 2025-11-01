@@ -20,22 +20,27 @@ namespace mtt::photo {
     weight(weight) {}
 
     auto Fixel::operator=(spectra::Stochastic_Spectrum const& spectrum) noexcept -> void {
-        auto rgb = (*film->sensor)(spectrum);
-        film->image[pixel[0], pixel[1]] += {rgb * weight, weight};
+        auto xyz = math::Vector<f32, 3>{
+            spectrum(film->r.data()),
+            spectrum(film->g.data()),
+            spectrum(film->b.data()),
+        };
+        auto rgb = film->color_space->from_XYZ | xyz;
+        (*film->image.data())[pixel[0], pixel[1]] += {rgb * weight, weight};
     }
 
-    Film::Film(
-        math::Vector<f32, 2> const& film_size,
-        math::Vector<usize, 2> const& image_size,
-        view<math::Filter> filter,
-        view<Sensor> sensor,
-        view<color::Color_Space> color_space
-    ) noexcept:
-    film_size(film_size),
-    dxdy(film_size / image_size),
-    image({image_size, 4uz, 4uz}, color_space),
-    filter(filter),
-    sensor(sensor) {}
+    Film::Film(Descriptor const& desc) noexcept:
+    film_size(desc.film_size),
+    dxdy(desc.film_size / desc.image_size),
+    filter(desc.filter),
+    r(desc.r),
+    g(desc.g),
+    b(desc.b) {
+        auto& vec = stl::poly_vector<device::Texture>::instance();
+        image = vec.push_back<device::Texture>({});
+        image->size = {desc.image_size, 4, 4};
+        image->linear = true;
+    }
 
     auto Film::operator()(
         math::Vector<usize, 2> const& pixel,
@@ -43,7 +48,7 @@ namespace mtt::photo {
     ) noexcept -> Fixel {
         auto f_intr = filter->sample(u).value();
         auto pixel_position = math::Vector<f32, 2>{pixel} + 0.5f + f_intr.p;
-        auto uv = pixel_position / image.size;
+        auto uv = pixel_position / image->size;
         auto film_position = (uv - 0.5f) * math::Vector<f32, 2>{-1.f, 1.f} * film_size;
 
         return {

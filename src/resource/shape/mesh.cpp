@@ -9,16 +9,51 @@
 #include <assimp/postprocess.h>
 
 namespace mtt::shape {
-    Mesh::Mesh(
-        std::vector<math::Vector<usize, 3>>&& indices,
-        std::vector<math::Vector<f32, 3>>&& vertices,
-        std::vector<math::Vector<f32, 3>>&& normals,
-        std::vector<math::Vector<f32, 2>>&& uvs
-    ) noexcept :
-    indices{std::move(indices)},
-    vertices{std::move(vertices)},
-    normals{std::move(normals)},
-    uvs{std::move(uvs)} {
+    Mesh::Mesh(Descriptor const& desc) noexcept {
+        auto importer = Assimp::Importer{};
+        auto* scene = importer.ReadFile(desc.path.data(), 0
+            | aiProcess_FlipUVs
+            | aiProcess_FlipWindingOrder
+            | aiProcess_MakeLeftHanded
+        );
+
+        if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->HasMeshes()) {
+            std::println("assimp error: while loading {}: {}", desc.path, importer.GetErrorString());
+            std::abort();
+        }
+        auto* mesh = scene->mMeshes[0];
+
+        for (auto i = 0uz; i < mesh->mNumFaces; ++i) {
+            auto face = mesh->mFaces[i];
+            indices.push_back({
+                face.mIndices[0],
+                face.mIndices[1],
+                face.mIndices[2]
+            });
+        }
+
+        for (auto i = 0uz; i < mesh->mNumVertices; ++i) {
+            vertices.push_back({
+                mesh->mVertices[i].x,
+                mesh->mVertices[i].y,
+                mesh->mVertices[i].z
+            });
+            normals.push_back({
+                mesh->mNormals[i].x,
+                mesh->mNormals[i].y,
+                mesh->mNormals[i].z
+            });
+            uvs.push_back(mesh->mTextureCoords[0]
+                ? math::Vector<f32, 2>{
+                    mesh->mTextureCoords[0][i].x,
+                    mesh->mTextureCoords[0][i].y
+                }
+                : 1.f
+                * math::cartesian_to_unit_spherical(math::normalize(vertices.back()))
+                / math::Vector<f32, 2>{math::pi, 2.f * math::pi}
+            );
+        }
+
         dpdu.resize(this->indices.size());
         dpdv.resize(this->indices.size());
         dndu.resize(this->indices.size());
@@ -296,62 +331,4 @@ namespace mtt::shape {
         }
         return pdf;
     }
-
-    auto Mesh::from_path(std::string_view path) noexcept -> Mesh {
-        auto importer = Assimp::Importer{};
-        auto* scene = importer.ReadFile(path.data(), 0
-            | aiProcess_FlipUVs
-            | aiProcess_FlipWindingOrder
-            | aiProcess_MakeLeftHanded
-        );
-
-        if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->HasMeshes()) {
-            std::println("assimp error: while loading {}: {}", path, importer.GetErrorString());
-            std::abort();
-        }
-        auto* mesh = scene->mMeshes[0];
-
-        auto indices = std::vector<math::Vector<usize, 3>>{};
-        auto vertices = std::vector<math::Vector<f32, 3>>{};
-        auto normals = std::vector<math::Vector<f32, 3>>{};
-        auto uvs = std::vector<math::Vector<f32, 2>>{};
-
-        for (auto i = 0uz; i < mesh->mNumFaces; ++i) {
-            auto face = mesh->mFaces[i];
-            indices.push_back({
-                face.mIndices[0],
-                face.mIndices[1],
-                face.mIndices[2]
-            });
-        }
-
-        for (auto i = 0uz; i < mesh->mNumVertices; ++i) {
-            vertices.push_back({
-                mesh->mVertices[i].x,
-                mesh->mVertices[i].y,
-                mesh->mVertices[i].z
-            });
-            normals.push_back({
-                mesh->mNormals[i].x,
-                mesh->mNormals[i].y,
-                mesh->mNormals[i].z
-            });
-            uvs.push_back(mesh->mTextureCoords[0]
-                ? math::Vector<f32, 2>{
-                    mesh->mTextureCoords[0][i].x,
-                    mesh->mTextureCoords[0][i].y
-                }
-                : 1.f
-                * math::cartesian_to_unit_spherical(math::normalize(vertices.back()))
-                / math::Vector<f32, 2>{math::pi, 2.f * math::pi}
-            );
-        }
-
-        return shape::Mesh{
-            std::move(indices),
-            std::move(vertices),
-            std::move(normals),
-            std::move(uvs)
-        };
-    };
 }

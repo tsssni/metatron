@@ -13,7 +13,7 @@ namespace mtt::remote {
         Impl(wired::Address const& address, std::string_view name) noexcept
         : socket(address), name(name), local(address.host.empty()) {}
 
-        auto create(image::Image const& image) noexcept -> void {
+        auto create(device::Texture const& image) noexcept -> void {
             if (created || local) return;
 
             auto packet = tevipc::IpcPacket{};
@@ -25,7 +25,7 @@ namespace mtt::remote {
             created = socket.send({(byte*)packet.data(), packet.size()});
         }
 
-        auto update(image::Image&& image) noexcept -> void {
+        auto update(device::Texture&& image) noexcept -> void {
             create(image);
             if (!created || local || image.stride != 4) return;
 
@@ -51,7 +51,7 @@ namespace mtt::remote {
     Previewer::Previewer(wired::Address const& address, std::string_view name) noexcept
     : stl::capsule<Previewer>(address, name) {}
 
-    auto Previewer::update(image::Image&& image) noexcept -> void {
+    auto Previewer::update(device::Texture&& image) noexcept -> void {
         impl->update(std::move(image));
     }
 }

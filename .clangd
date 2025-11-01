@@ -3,4 +3,4 @@ InlayHints:
 
 Completion:
   HeaderInsertion: Never
-  ArgumentLists: None
+  ArgumentLists: Delimiters

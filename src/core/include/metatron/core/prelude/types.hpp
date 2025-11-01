@@ -1,6 +1,6 @@
 #pragma once
-#include <cstddef>
 #include <cstdint>
+#include <cstddef>
 
 namespace mtt::inline prelude {
     using i8 = std::int8_t;

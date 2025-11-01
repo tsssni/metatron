@@ -13,21 +13,13 @@ namespace mtt::photo {
     };
 
     struct Camera final {
-        view<Lens> lens;
-        mut<Film> film;
+        stl::proxy<Lens> const lens;
+        stl::proxy<Film> film;
 
-        Camera(
-            view<Lens> lens,
-            mut<Film> film
-        ) noexcept;
         auto sample(
             math::Vector<usize, 2> pixel,
             usize idx,
             mut<math::Sampler> sampler
-        ) const noexcept -> std::optional<Interaction>;
-        auto to_path(std::string_view path) -> void;
-
-    private:
-        math::Ray_Differential default_differential;
+        ) noexcept -> std::optional<Interaction>;
     };
 }

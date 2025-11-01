@@ -1,30 +1,50 @@
 #include <metatron/resource/spectra/discrete.hpp>
+#include <metatron/core/stl/print.hpp>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
 
 namespace mtt::spectra {
-    Discrete_Spectrum::Discrete_Spectrum(std::vector<f32>&& lambda, std::vector<f32>&& data) noexcept
-    : lambda(std::move(lambda)), data(std::move(data)) {}
-
-    Discrete_Spectrum::Discrete_Spectrum(std::vector<math::Vector<f32, 2>>&& interleaved) noexcept
-    : lambda(interleaved.size()), data(interleaved.size()) {
-        for (auto i = 0uz; i < interleaved.size(); ++i) {
-            lambda[i] = interleaved[i][0];
-            data[i] = interleaved[i][1];
+    Discrete_Spectrum::Discrete_Spectrum(Descriptor const& desc) noexcept {
+        auto idx = 0;
+        auto file = std::ifstream{desc.path};
+        if (!file.is_open()) {
+            std::println("failed to open discrete spectrum {}", desc.path);
+            std::abort();
         }
+        auto line = std::string{};
+
+        while (std::getline(file, line)) {
+            if (line.empty() || line.front() == '#') continue;
+            
+            auto iss = std::istringstream{line};
+            auto wavelength = 0.f;
+            auto value = 0.f;
+
+            if (iss >> wavelength >> value) {
+                lambda[idx] = wavelength;
+                storage[idx] = value;
+                ++idx;
+            }
+        }
+        size = idx;
+        file.close();
     }
 
     auto Discrete_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
-        if (lambda < this->lambda.front() || lambda > this->lambda.back()) return 0.f;
+        if (lambda < this->lambda[0] || lambda > this->lambda[size - 1]) return 0.f;
 
         auto idx = std::max(0uz, std::min(
-            this->lambda.size() - 2,
+            size - 2,
             std::lower_bound(
                 this->lambda.begin(),
-                this->lambda.end(),
+                this->lambda.begin() + size,
                 lambda
             ) - this->lambda.begin() - 1uz
         ));
-        auto alpha = (lambda - this->lambda[idx]) / (this->lambda[idx + 1] - this->lambda[idx]);
-        return math::lerp(data[idx], data[idx + 1], alpha);
+        auto alpha = 1.f
+        * (lambda - this->lambda[idx])
+        / (this->lambda[idx + 1] - this->lambda[idx]);
+        return math::lerp(storage[idx], storage[idx + 1], alpha);
     }
 }

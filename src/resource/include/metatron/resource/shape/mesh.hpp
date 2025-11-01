@@ -3,12 +3,10 @@
 
 namespace mtt::shape {
     struct Mesh final {
-        Mesh(
-            std::vector<math::Vector<usize, 3>>&& indices,
-            std::vector<math::Vector<f32, 3>>&& vertices,
-            std::vector<math::Vector<f32, 3>>&& normals,
-            std::vector<math::Vector<f32, 2>>&& uvs
-        ) noexcept;
+        struct Descriptor final {
+            std::string path;
+        };
+        Mesh(Descriptor const& desc) noexcept;
 
         auto size() const noexcept -> usize;
         auto bounding_box(
@@ -30,8 +28,6 @@ namespace mtt::shape {
             math::Vector<f32, 3> const& np = {},
             usize idx = 0uz
         ) const noexcept -> f32;
-
-        auto static from_path(std::string_view path) noexcept -> Mesh;
 
     private:
         template<typename T>

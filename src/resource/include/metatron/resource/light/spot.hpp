@@ -1,13 +1,15 @@
 #pragma once
 #include <metatron/resource/light/light.hpp>
+#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::light {
     struct Spot_Light final {
-        Spot_Light(
-            view<spectra::Spectrum> L,
-            f32 falloff_start_theta,
-            f32 falloff_end_theta
-        ) noexcept;
+        struct Descriptor final {
+            stl::proxy<spectra::Spectrum> L;
+            f32 falloff_start_theta;
+            f32 falloff_end_theta;
+        };
+        Spot_Light(Descriptor const& desc) noexcept;
 
         auto operator()(
             math::Ray const& r,
@@ -24,7 +26,7 @@ namespace mtt::light {
         auto flags() const noexcept -> Flags;
 
     private:
-        view<spectra::Spectrum> L;
+        stl::proxy<spectra::Spectrum> L;
         f32 falloff_start_cos_theta;
         f32 falloff_end_cos_theta;
     };
