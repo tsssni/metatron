@@ -25,4 +25,15 @@ namespace mtt::media {
     ) const noexcept -> std::optional<Interaction>>
     ::add_skill<pro::skills::as_view>
     ::build {};
+
+    struct Phase final {
+        enum Function {
+            henyey_greenstein,
+        } function;
+        f32 g;
+
+        auto to_phase(
+            spectra::Stochastic_Spectrum const& spec
+        ) const noexcept -> poly<phase::Phase_Function>;
+    };
 }

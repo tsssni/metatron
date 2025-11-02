@@ -15,7 +15,6 @@ namespace mtt::phase {
     };
 
     MTT_POLY_METHOD(phase_function_sample, sample);
-    MTT_POLY_METHOD(phase_function_configure, configure);
 
     struct Phase_Function final: pro::facade_builder
     ::add_convention<pro::operator_dispatch<"()">, auto (
@@ -25,9 +24,6 @@ namespace mtt::phase {
     ::add_convention<phase_function_sample, auto (
         eval::Context const& ctx, math::Vector<f32, 2> const& u
     ) const noexcept -> std::optional<Interaction>>
-    ::add_convention<phase_function_configure, auto (
-        Attribute const& attr
-    ) noexcept -> void>
     ::support_copy<pro::constraint_level::nontrivial>
     ::build {};
 }

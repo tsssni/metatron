@@ -6,26 +6,15 @@
 
 namespace mtt::media {
     struct Grid_Medium final {
-        Grid_Medium(
-            view<math::Grid<f32>> grid,
-            poly<phase::Phase_Function> phase,
-            view<spectra::Spectrum> sigma_a,
-            view<spectra::Spectrum> sigma_s,
-            view<spectra::Spectrum> sigma_e,
-            f32 density_scale = 1.0f
-        ) noexcept;
+        Phase phase;
+        stl::proxy<spectra::Spectrum> sigma_a;
+        stl::proxy<spectra::Spectrum> sigma_s;
+        stl::proxy<spectra::Spectrum> sigma_e;
+        stl::proxy<math::Grid<f32>> grid;
+        f32 density_scale;
 
         auto sample(
             eval::Context const& ctx, f32 t_max, f32 u
         ) const noexcept -> std::optional<Interaction>;
-        
-    private:
-        poly<phase::Phase_Function> phase;
-        view<spectra::Spectrum> sigma_a;
-        view<spectra::Spectrum> sigma_s;
-        view<spectra::Spectrum> sigma_e;
-
-        view<math::Grid<f32>> grid;
-        f32 density_scale;
     };
 }

@@ -4,28 +4,13 @@
 #include <metatron/core/stl/optional.hpp>
 
 namespace mtt::media {
-    Grid_Medium::Grid_Medium(
-        view<math::Grid<f32>> grid,
-        poly<phase::Phase_Function> phase,
-        view<spectra::Spectrum> sigma_a,
-        view<spectra::Spectrum> sigma_s,
-        view<spectra::Spectrum> sigma_e,
-        f32 density_scale
-    ) noexcept:
-    grid(grid),
-    phase(phase),
-    sigma_a(sigma_a),
-    sigma_s(sigma_s),
-    sigma_e(sigma_e),
-    density_scale(density_scale) {}
-
     auto Grid_Medium::sample(
         eval::Context const& ctx, 
         f32 t_max, 
         f32 u
     ) const noexcept -> std::optional<Interaction> {
-        auto sigma_a = (ctx.spec & this->sigma_a) * density_scale;
-        auto sigma_s = (ctx.spec & this->sigma_s) * density_scale;
+        auto sigma_a = (ctx.spec & this->sigma_a.data()) * density_scale;
+        auto sigma_s = (ctx.spec & this->sigma_s.data()) * density_scale;
         auto sigma_t = sigma_a + sigma_s;
         auto sigma_maj = sigma_t;
         auto transmittance = ctx.spec & spectra::Spectrum::spectra["one"].data();
@@ -59,7 +44,7 @@ namespace mtt::media {
                 i_next == 0, i_next == 1, i_next == 2
             };
 
-            density_maj = (*grid)[cell];
+            density_maj = (*grid.data())[cell];
             sigma_maj = density_maj * sigma_t;
             distr = math::Exponential_Distribution(sigma_maj.value[0]);
         };
@@ -90,11 +75,9 @@ namespace mtt::media {
             && t_boundary <= t_cell
             && (density_maj < math::epsilon<f32> || t_u >= t_boundary)) {
                 update_transmittance(t_boundary);
-                auto phase = this->phase;
-                phase->configure({ctx.spec});
                 return Interaction{
                     r.o,
-                    phase,
+                    phase.to_phase(ctx.spec),
                     t_max,
                     transmittance,
                     {}, {}, {}, {}, {},
@@ -107,20 +90,18 @@ namespace mtt::media {
             } else {
                 update_transmittance(t_u);
                 auto spectra_pdf = sigma_maj * transmittance;
-                auto density = (*grid)(r.o);
+                auto density = (*grid.data())(r.o);
 
-                auto phase = this->phase;
-                phase->configure({ctx.spec});
                 return Interaction{
                     r.o,
-                    phase,
+                    phase.to_phase(ctx.spec),
                     t_transmitted,
                     transmittance,
                     density * sigma_a,
                     density * sigma_s,
                     spectra::max(sigma_maj - density * sigma_t, {0.f}),
                     sigma_maj,
-                    density * (ctx.spec & sigma_e)
+                    density * (ctx.spec & sigma_e.data())
                 };
             }
         }

@@ -7,8 +7,6 @@
 #include <metatron/core/math/quaternion.hpp>
 
 namespace mtt::phase {
-    Henyey_Greenstein_Phase_Function::Henyey_Greenstein_Phase_Function(f32 g) noexcept: g(g) {}
-
     auto Henyey_Greenstein_Phase_Function::operator()(
         math::Vector<f32, 3> const& wo,
         math::Vector<f32, 3> const& wi
@@ -32,9 +30,5 @@ namespace mtt::phase {
         auto wi = math::unit_spherical_to_cartesian(cos_theta, phi);
         auto x = (*this)({0.f, -1.f, 0.f}, wi);
         return x;
-    }
-
-    auto Henyey_Greenstein_Phase_Function::configure(Attribute const& attr) noexcept -> void {
-        spectrum = attr.spectrum;
     }
 }
