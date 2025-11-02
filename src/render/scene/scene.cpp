@@ -18,11 +18,17 @@
 #include <metatron/resource/light/sunsky.hpp>
 #include <metatron/resource/material/interface.hpp>
 #include <metatron/resource/material/physical.hpp>
+#include <metatron/resource/volume/uniform.hpp>
+#include <metatron/resource/volume/nanovdb.hpp>
+#include <metatron/resource/media/vaccum.hpp>
+#include <metatron/resource/media/homogeneous.hpp>
+#include <metatron/resource/media/heterogeneous.hpp>
 #include <metatron/core/stl/vector.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
+#include <nanovdb/GridHandle.h>
 
 namespace mtt::scene {
     auto init() noexcept -> void {
@@ -196,30 +202,46 @@ namespace mtt::scene {
             vec.emplace_type<material::Interface_Material>();
             vec.emplace_type<material::Physical_Material>();
         }();
+
+        [&] {
+            auto& vec = stl::poly_vector<volume::Volume>::instance();
+            vec.emplace_type<volume::Uniform_Volume>();
+            vec.emplace_type<volume::Nanovdb_Volume>();
+
+            auto& nvec = stl::poly_vector<nanovdb::GridHandle<>>::instance();
+            nvec.emplace_type<nanovdb::GridHandle<>>();
+        }();
+
+        [&] {
+            auto& vec = stl::poly_vector<media::Medium>::instance();
+            vec.emplace_type<media::Vaccum_Medium>();
+            vec.emplace_type<media::Homogeneous_Medium>();
+            vec.emplace_type<media::Heterogeneous_Medium>();
+        }();
     }
 
     // TODO: generate textures on cpu
     auto test() noexcept -> void {
+        auto path = "/home/tsssni/metatron-scenes/cloud/volume/disney-cloud.nvdb";
+        auto& vec = stl::poly_vector<nanovdb::GridHandle<>>::instance();
         auto& hierarchy = Hierarchy::instance();
-        hierarchy.attach<texture::Spectrum_Texture>(
-            "/texture/test" / et,
-            texture::Image_Spectrum_Texture{{
-                "/home/tsssni/metatron-scenes/dispersion/texture/env.exr",
-                color::Color_Space::Spectrum_Type::illuminant,
-                texture::Image_Distribution::spherical,
+        hierarchy.attach<volume::Volume>(
+            "/volume/test" / et,
+            volume::Nanovdb_Volume{path}
+        );
+        auto handle = hierarchy.attach<media::Medium>(
+            "/medium/test" / et,
+            media::Heterogeneous_Medium{{
+                .phase = {
+                    .function = media::Phase::Function::henyey_greenstein,
+                    .g = 0.877,
+                },
+                .sigma_a = hierarchy.fetch<spectra::Spectrum>("/spectrum/zero" / et),
+                .sigma_s = hierarchy.fetch<spectra::Spectrum>("/spectrum/one" / et),
+                .dimensions = {64, 64, 64},
+                .density = hierarchy.fetch<volume::Volume>("/volume/test" / et),
+                .density_scale = 4.f,
             }}
         );
-        auto handle = hierarchy.attach<light::Light>(
-            "/light/test" / et,
-            light::Environment_Light{
-                hierarchy.fetch<texture::Spectrum_Texture>(
-                    "/texture/test" / et
-                )
-            }
-        );
-
-        auto spec = spectra::Stochastic_Spectrum{0.5f};
-        auto intr = (*handle.data())({.o = {}, .d = math::normalize(math::Vector<f32, 3>{0, 0.25, -1})}, spec);
-        std::println("{}", intr.value().L.value);
     }
 }

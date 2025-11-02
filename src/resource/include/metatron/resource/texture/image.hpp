@@ -31,7 +31,7 @@ namespace mtt::texture {
 
     private:
         stl::proxy<device::Texture> texture;
-        math::Piecewise_Distribution<f32, 2> distr;
+        math::Piecewise_Distribution<2> distr;
     };
 
     struct Image_Spectrum_Texture final {
