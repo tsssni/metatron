@@ -13,15 +13,15 @@ namespace mtt::accel {
         view<media::Medium> int_medium;
         view<media::Medium> ext_medium;
         view<light::Light> light{};
-        material::Material const* material{};
-        math::Transform const* local_to_world{};
-        math::Transform const* int_to_world{};
-        math::Transform const* ext_to_world{};
+        view<material::Material> material{};
+        view<math::Transform> local_to_world{};
+        view<math::Transform> int_to_world{};
+        view<math::Transform> ext_to_world{};
         usize primitive{0uz};
     };
 
     struct Interaction final {
-        Divider const* divider{nullptr};
+        view<Divider> divider{nullptr};
         std::optional<shape::Interaction> intr_opt;
     };
 

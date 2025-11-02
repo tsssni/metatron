@@ -16,6 +16,8 @@
 #include <metatron/resource/light/area.hpp>
 #include <metatron/resource/light/environment.hpp>
 #include <metatron/resource/light/sunsky.hpp>
+#include <metatron/resource/material/interface.hpp>
+#include <metatron/resource/material/physical.hpp>
 #include <metatron/core/stl/vector.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/filesystem.hpp>
@@ -187,6 +189,12 @@ namespace mtt::scene {
             vec.emplace_type<light::Area_Light>();
             vec.emplace_type<light::Environment_Light>();
             vec.emplace_type<light::Sunsky_Light>();
+        }();
+
+        [&] {
+            auto& vec = stl::poly_vector<material::Material>::instance();
+            vec.emplace_type<material::Interface_Material>();
+            vec.emplace_type<material::Physical_Material>();
         }();
     }
 

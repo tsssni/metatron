@@ -2,6 +2,10 @@
 #include <metatron/core/math/constant.hpp>
 
 namespace mtt::bsdf {
+    Interface_Bsdf::Interface_Bsdf(
+        spectra::Stochastic_Spectrum const& spectrum
+    ) noexcept: spectrum(spectrum) {}
+
     auto Interface_Bsdf::operator()(
         math::Vector<f32, 3> const& wo,
         math::Vector<f32, 3> const& wi
@@ -18,10 +22,6 @@ namespace mtt::bsdf {
         auto f = spectrum;
         f = 1.f;
         return Interaction{f, ctx.r.d, 1.f};
-    }
-
-    auto Interface_Bsdf::configure(Attribute const& attr) noexcept -> void {
-        spectrum = attr.spectra.at("spectrum");
     }
 
     auto Interface_Bsdf::flags() const noexcept -> Flags {

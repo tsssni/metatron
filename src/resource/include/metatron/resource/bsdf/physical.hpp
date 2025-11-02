@@ -3,6 +3,15 @@
 
 namespace mtt::bsdf {
     struct Physical_Bsdf final {
+        Physical_Bsdf(
+            spectra::Stochastic_Spectrum const& spectrum,
+            spectra::Stochastic_Spectrum const& reflectance,
+            spectra::Stochastic_Spectrum const& eta,
+            spectra::Stochastic_Spectrum const& k,
+            f32 alpha_u,
+            f32 alpha_v,
+            bool inside
+        ) noexcept;
         auto static init() noexcept -> void;
 
         // microfacet:
@@ -23,20 +32,19 @@ namespace mtt::bsdf {
             eval::Context const& ctx,
             math::Vector<f32, 3> const& u
         ) const noexcept -> std::optional<Interaction>;
-        auto configure(Attribute const& attr) noexcept -> void;
         auto flags() const noexcept -> Flags;
         auto degrade() noexcept -> bool;
 
     private:
         std::vector<f32> static fresnel_reflectance_table;
 
-        f32 alpha_u;
-        f32 alpha_v;
         spectra::Stochastic_Spectrum spectrum;
-        spectra::Stochastic_Spectrum eta;
-        spectra::Stochastic_Spectrum k;
         spectra::Stochastic_Spectrum reflectance;
         spectra::Stochastic_Spectrum fresnel_reflectance;
+        spectra::Stochastic_Spectrum eta;
+        spectra::Stochastic_Spectrum k;
+        f32 alpha_u;
+        f32 alpha_v;
 
         bool lambertian;
         bool dieletric;

@@ -15,6 +15,51 @@ namespace mtt::bsdf {
 
     std::vector<f32> Physical_Bsdf::fresnel_reflectance_table;
 
+    Physical_Bsdf::Physical_Bsdf(
+        spectra::Stochastic_Spectrum const& spectrum,
+        spectra::Stochastic_Spectrum const& reflectance,
+        spectra::Stochastic_Spectrum const& eta,
+        spectra::Stochastic_Spectrum const& k,
+        f32 alpha_u,
+        f32 alpha_v,
+        bool inside
+    ) noexcept {
+        auto has_base = spectra::valid(reflectance);
+        auto has_surface = spectra::valid(eta);
+        auto has_conductor = spectra::valid(k);
+        auto null_spec = spectrum & spectra::Spectrum::spectra["zero"].data();
+        auto invalid_spec = spectra::Stochastic_Spectrum{};
+
+        auto bitmask = has_base | (has_surface << 1) | (has_conductor << 2);
+        lambertian = bitmask == 0b001;
+        dieletric = bitmask == 0b010;
+        conductive = bitmask == 0b110;
+        plastic = bitmask == 0b011;
+        if (!lambertian && !dieletric && !conductive && ! plastic) {
+            std::println("bsdf not physically possible with these attributes:");
+            std::abort();
+        }
+
+        if (has_surface) {
+            this->eta = eta;
+            this->eta = inside ? 1.f / eta : eta;
+            this->alpha_u = alpha_u;
+            this->alpha_v = alpha_v;
+        }
+        if (plastic) {
+            fresnel_reflectance = eta;
+            fresnel_reflectance.value = math::foreach([](auto eta, auto) {
+                auto idx = eta / 3.f * fresnel_length;
+                auto low = i32(idx);
+                auto high = math::clamp(low + 1, 0, fresnel_num_samples);
+                auto alpha = idx - low;
+                return math::lerp(fresnel_reflectance_table[low], fresnel_reflectance_table[high], alpha);
+            }, eta.value);
+        }
+        this->reflectance = has_base ? reflectance : invalid_spec;
+        this->k = has_conductor ? k : null_spec;
+    }
+
     auto Physical_Bsdf::init() noexcept -> void {
         fresnel_reflectance_table.resize(fresnel_length + 1);
         stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{fresnel_length + 1}, [&](auto idx) {
@@ -163,52 +208,6 @@ namespace mtt::bsdf {
                 return Interaction{f, wi, pdf};
             }
         }
-    }
-
-    auto Physical_Bsdf::configure(Attribute const& attr) noexcept -> void {
-        auto has_base = attr.spectra.count("reflectance") != 0;
-        auto has_surface = attr.spectra.count("eta") != 0;
-        auto has_conductor = attr.spectra.count("k") != 0;
-        auto null_spec = attr.spectra.at("spectrum") & spectra::Spectrum::spectra["zero"].data();
-        auto invalid_spec = spectra::Stochastic_Spectrum{};
-
-        auto bitmask = has_base | (has_surface << 1) | (has_conductor << 2);
-        lambertian = bitmask == 0b001;
-        dieletric = bitmask == 0b010;
-        conductive = bitmask == 0b110;
-        plastic = bitmask == 0b011;
-        if (!lambertian && !dieletric && !conductive && ! plastic) {
-            std::println("bsdf not physically possible with these attributes:");
-            for (auto& [name, _]: attr.spectra)
-                std::print("{} ", name);
-            for (auto& [name, _]: attr.vectors)
-                std::print("{} ", name);
-            std::abort();
-        }
-
-        if (has_surface) {
-            eta = attr.spectra.at("eta");
-            eta = attr.inside ? 1.f / eta : eta;
-
-            auto alpha = attr.vectors.count("alpha") > 0
-            ? attr.vectors.at("alpha")[0] : 0.001f;
-            alpha_u = attr.vectors.count("alpha_u") > 0
-            ? attr.vectors.at("alpha_u")[0] : alpha;
-            alpha_v = attr.vectors.count("alpha_v") > 0
-            ? attr.vectors.at("alpha_v")[0] : alpha;
-        }
-        if (plastic) {
-            fresnel_reflectance = eta;
-            fresnel_reflectance.value = math::foreach([](auto eta, auto) {
-                auto idx = eta / 3.f * fresnel_length;
-                auto low = i32(idx);
-                auto high = math::clamp(low + 1, 0, fresnel_num_samples);
-                auto alpha = idx - low;
-                return math::lerp(fresnel_reflectance_table[low], fresnel_reflectance_table[high], alpha);
-            }, eta.value);
-        }
-        reflectance = has_base ? attr.spectra.at("reflectance") : invalid_spec;
-        k = has_conductor ? attr.spectra.at("k") : null_spec;
     }
 
     auto Physical_Bsdf::degrade() noexcept -> bool {

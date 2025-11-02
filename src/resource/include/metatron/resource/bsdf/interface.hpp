@@ -3,6 +3,10 @@
 
 namespace mtt::bsdf {
     struct Interface_Bsdf final {
+        Interface_Bsdf(
+            spectra::Stochastic_Spectrum const& spectrum
+        ) noexcept;
+
         auto operator()(
             math::Vector<f32, 3> const& wo,
             math::Vector<f32, 3> const& wi
@@ -11,7 +15,6 @@ namespace mtt::bsdf {
             eval::Context const& ctx,
             math::Vector<f32, 3> const& u
         ) const noexcept -> std::optional<Interaction>;
-        auto configure(Attribute const& attr) noexcept -> void;
         auto flags() const noexcept -> Flags;
         auto degrade() noexcept -> bool;
 
