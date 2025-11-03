@@ -12,7 +12,7 @@ namespace mtt::texture {
         Checkerboard_Texture(Descriptor const& desc) noexcept;
 
         auto operator()(
-            device::Coordinate const& coord,
+            image::Coordinate const& coord,
             spectra::Stochastic_Spectrum const& spec
         ) const noexcept -> spectra::Stochastic_Spectrum;
         auto sample(

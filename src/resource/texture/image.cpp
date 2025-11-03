@@ -15,8 +15,8 @@ namespace mtt::texture {
         }
 
         auto& spec = in->spec();
-        auto& vec = stl::poly_vector<device::Texture>::instance();
-        texture = vec.push_back<device::Texture>({});
+        auto& vec = stl::poly_vector<image::Image>::instance();
+        texture = vec.push_back<image::Image>({});
         texture->linear = desc.linear;
         texture->size = {
             usize(spec.width),
@@ -51,10 +51,32 @@ namespace mtt::texture {
             pdf[px[0] + px[1] * size[0]] = math::avg(math::shrink(c)) * w;
         });
         distr = {std::span{pdf}, math::reverse(size), {0.f}, {1.f}};
+
+        for (auto mip = 1uz; mip < texture->pixels.size(); ++mip) {
+            size[0] = std::max(1uz, size[0] >> 1uz);
+            size[1] = std::max(1uz, size[1] >> 1uz);
+            texture->pixels[mip].resize(math::prod(size) * channels * stride);
+
+            auto down = [this, mip](math::Vector<usize, 2> const& px) mutable {
+                auto [i, j] = px;
+                auto& tex = *texture.data();
+                tex[i, j, mip] = 0.25f * (0.f
+                + math::Vector<f32, 4>{tex[i * 2uz + 0, j * 2uz + 0, mip - 1]}
+                + math::Vector<f32, 4>{tex[i * 2uz + 0, j * 2uz + 1, mip - 1]}
+                + math::Vector<f32, 4>{tex[i * 2uz + 1, j * 2uz + 0, mip - 1]}
+                + math::Vector<f32, 4>{tex[i * 2uz + 1, j * 2uz + 1, mip - 1]}
+                );
+            };
+            if (math::prod(size) > 1024)
+                stl::scheduler::instance().sync_parallel(size, down);
+            else for (auto j = 0; j < size[1]; ++j)
+                    for (auto i = 0; i < size[0]; ++i)
+                        down({i, j});
+        }
     }
 
     auto Image_Vector_Texture::operator()(
-        device::Coordinate const& coord
+        image::Coordinate const& coord
     ) const noexcept -> math::Vector<f32, 4> {
         return (*texture.data())(coord);
     }
@@ -81,7 +103,7 @@ namespace mtt::texture {
 
 
     auto Image_Spectrum_Texture::operator()(
-        device::Coordinate const& coord,
+        image::Coordinate const& coord,
         spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> spectra::Stochastic_Spectrum {
         auto rgba = image_tex(coord);

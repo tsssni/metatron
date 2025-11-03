@@ -11,7 +11,7 @@ namespace mtt::texture {
     }
 
     auto Checkerboard_Texture::operator()(
-        device::Coordinate const& coord,
+        image::Coordinate const& coord,
         spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> spectra::Stochastic_Spectrum {
         auto [u, v] = math::Vector<usize, 2>{coord.uv * uv_scale};

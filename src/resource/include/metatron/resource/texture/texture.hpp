@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/resource/shape/sphere.hpp>
 #include <metatron/resource/eval/context.hpp>
-#include <metatron/device/texture.hpp>
+#include <metatron/resource/image/image.hpp>
 
 namespace mtt::texture {
     MTT_POLY_METHOD(texture_sample, sample);
@@ -9,7 +9,7 @@ namespace mtt::texture {
 
     struct Spectrum_Texture final: pro::facade_builder
     ::add_convention<pro::operator_dispatch<"()">, auto (
-        device::Coordinate const& coord,
+        image::Coordinate const& coord,
         spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> spectra::Stochastic_Spectrum>
     ::add_convention<texture_sample, auto (
@@ -24,7 +24,7 @@ namespace mtt::texture {
 
     struct Vector_Texture final: pro::facade_builder
     ::add_convention<pro::operator_dispatch<"()">, auto (
-        device::Coordinate const& coord
+        image::Coordinate const& coord
     ) const noexcept -> math::Vector<f32, 4>>
     ::add_convention<texture_sample, auto (
         eval::Context const& ctx,
@@ -39,5 +39,5 @@ namespace mtt::texture {
     auto grad(
         math::Ray_Differential const& diff,
         shape::Interaction const& intr
-    ) noexcept -> std::optional<device::Coordinate>;
+    ) noexcept -> std::optional<image::Coordinate>;
 }

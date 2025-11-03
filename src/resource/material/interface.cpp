@@ -4,7 +4,7 @@
 namespace mtt::material {
     auto Interface_Material::sample (
         eval::Context const& ctx,
-        device::Coordinate const& coord
+        image::Coordinate const& coord
     ) const noexcept -> std::optional<Interaction> {
         return Interaction{
             .bsdf = make_poly<bsdf::Bsdf, bsdf::Interface_Bsdf>(ctx.spec),

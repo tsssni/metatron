@@ -17,7 +17,7 @@ namespace mtt::stl {
             storage.push_back({});
             length.push_back(sizeof(T));
             reinterpreter.push_back([] (byte const* ptr) {
-                return mut<F>{(T*)ptr};
+                return make_view<F>(*(T*)ptr);
             });
         }
 

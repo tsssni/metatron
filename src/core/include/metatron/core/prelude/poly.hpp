@@ -52,6 +52,26 @@ namespace mtt::inline prelude {
     template<typename T>
     using view = view_impl<std::add_const_t<std::remove_const_t<T>>>::type;
 
+    template<typename T>
+    auto make_view(T& x) -> mut<T> {
+        return &x;
+    }
+
+    template<typename T>
+    auto make_view(T const& x) -> view<T> {
+        return &x;
+    }
+
+    template<pro::facade F, typename T>
+    auto make_view(T& x) -> mut<F> {
+        return pro::make_proxy_view<F>(x);
+    }
+
+    template<pro::facade F, typename T>
+    auto make_view(T const& x) -> view<F> {
+        return pro::make_proxy_view<F>(x);
+    }
+
     #define MTT_POLY_METHOD(x, ...) PRO_DEF_MEM_DISPATCH(x, __VA_ARGS__)
     #define MTT_POLY_FUNCTION(x, ...) PRO_DEF_FREE_DISPATCH(x, __VA_ARGS__)
     #define MTT_POLY_FUNCTION_METHOD(x, ...) PRO_DEF_FREE_AS_MEM_DISPATCH(x, __VA_ARGS__)

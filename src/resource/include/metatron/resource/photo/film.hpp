@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/resource/spectra/stochastic.hpp>
 #include <metatron/resource/color/color-space.hpp>
-#include <metatron/device/texture.hpp>
+#include <metatron/resource/image/image.hpp>
 #include <metatron/core/math/filter/filter.hpp>
 #include <metatron/core/math/vector.hpp>
 
@@ -31,7 +31,7 @@ namespace mtt::photo {
     };
 
     struct Film final {
-        stl::proxy<device::Texture> image;
+        stl::proxy<image::Image> image;
         math::Vector<f32, 2> film_size;
         math::Vector<f32, 2> dxdy;
 

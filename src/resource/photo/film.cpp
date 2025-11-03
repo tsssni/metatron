@@ -36,8 +36,8 @@ namespace mtt::photo {
     r(desc.r),
     g(desc.g),
     b(desc.b) {
-        auto& vec = stl::poly_vector<device::Texture>::instance();
-        image = vec.push_back<device::Texture>({});
+        auto& vec = stl::poly_vector<image::Image>::instance();
+        image = vec.push_back<image::Image>({});
         image->size = {desc.image_size, 4, 4};
         image->linear = true;
     }

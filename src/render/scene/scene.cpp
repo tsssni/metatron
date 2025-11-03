@@ -166,8 +166,8 @@ namespace mtt::scene {
         }();
 
         [&] {
-            auto& dvec = stl::poly_vector<device::Texture>::instance();
-            dvec.emplace_type<device::Texture>();
+            auto& ivec = stl::poly_vector<image::Image>::instance();
+            ivec.emplace_type<image::Image>();
 
             auto& vvec = stl::poly_vector<texture::Vector_Texture>::instance();
             vvec.emplace_type<texture::Constant_Vector_Texture>();
@@ -241,6 +241,14 @@ namespace mtt::scene {
                 .dimensions = {64, 64, 64},
                 .density = hierarchy.fetch<volume::Volume>("/volume/test" / et),
                 .density_scale = 4.f,
+            }}
+        );
+        auto h = hierarchy.attach<texture::Spectrum_Texture>(
+            "/texture/test" / et,
+            texture::Image_Spectrum_Texture{{
+                "/home/tsssni/metatron-scenes/dispersion/texture/env.exr",
+                color::Color_Space::Spectrum_Type::illuminant,
+                texture::Image_Distribution::spherical,
             }}
         );
     }

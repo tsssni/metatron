@@ -1,6 +1,7 @@
 #pragma once
 #include <metatron/resource/volume/volume.hpp>
-#include <vector>
+#include <metatron/resource/image/image.hpp>
+#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::volume {
     struct Uniform_Volume final {
@@ -29,6 +30,6 @@ namespace mtt::volume {
         math::Bounding_Box bbox;
         math::Vector<i32, 3> dims;
         math::Vector<f32, 3> voxel_size;
-        std::vector<f32> data;
+        stl::proxy<image::Image> storage;
     };
 }

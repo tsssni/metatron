@@ -34,7 +34,7 @@ namespace mtt::media {
                 for (auto i = p_min[0]; i <= p_max[0]; ++i)
                     for (auto j = p_min[1]; j <= p_max[1]; ++j)
                         for (auto k = p_min[2]; k <= p_max[2]; ++k)
-                            maj = std::max(maj, density->at({i, j, k}));
+                            maj = std::max(maj, (*density.data())[{i, j, k}]);
                 (*sigma_majorant.data())[ijk] = maj;
             }
         );

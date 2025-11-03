@@ -6,7 +6,7 @@ namespace mtt::texture {
     auto grad(
         math::Ray_Differential const& diff,
         shape::Interaction const& intr
-    ) noexcept -> std::optional<device::Coordinate> {
+    ) noexcept -> std::optional<image::Coordinate> {
         auto tangent = math::Plane{intr.p, intr.n};
         MTT_OPT_OR_RETURN(dt, math::hit(diff.r, tangent), {});
         MTT_OPT_OR_RETURN(dxt, math::hit(diff.rx, tangent), {});
@@ -19,6 +19,6 @@ namespace mtt::texture {
         auto duvdx = math::least_squares(dpduv, dpdx);
         auto duvdy = math::least_squares(dpduv, dpdy);
 
-        return device::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
+        return image::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
     }
 }

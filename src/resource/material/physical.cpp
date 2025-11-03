@@ -4,7 +4,7 @@
 namespace mtt::material {
     auto Physical_Material::sample (
         eval::Context const& ctx,
-        device::Coordinate const& coord
+        image::Coordinate const& coord
     ) const noexcept -> std::optional<Interaction> {
         auto guarded_sample = [&]<typename T>(T tex, auto const& fallback) {
             if constexpr (std::is_same_v<T, stl::proxy<texture::Spectrum_Texture>>) {

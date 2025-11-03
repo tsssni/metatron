@@ -19,7 +19,7 @@ namespace mtt::texture {
         Image_Vector_Texture(Descriptor const& desc) noexcept;
 
         auto operator()(
-            device::Coordinate const& coord
+            image::Coordinate const& coord
         ) const noexcept -> math::Vector<f32, 4>;
         auto sample(
             eval::Context const& ctx,
@@ -30,7 +30,7 @@ namespace mtt::texture {
         ) const noexcept -> f32;
 
     private:
-        stl::proxy<device::Texture> texture;
+        stl::proxy<image::Image> texture;
         math::Piecewise_Distribution<2> distr;
     };
 
@@ -44,7 +44,7 @@ namespace mtt::texture {
         Image_Spectrum_Texture(Descriptor const& desc) noexcept;
 
         auto operator()(
-            device::Coordinate const& coord,
+            image::Coordinate const& coord,
             spectra::Stochastic_Spectrum const& spec
         ) const noexcept -> spectra::Stochastic_Spectrum;
         auto sample(

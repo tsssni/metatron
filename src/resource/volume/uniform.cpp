@@ -7,8 +7,14 @@ namespace mtt::volume {
     ) noexcept:
     bbox(bbox),
     dims(dimensions),
-    voxel_size((bbox.p_max - bbox.p_min) / dimensions),
-    data(math::prod(dimensions)) {}
+    voxel_size((bbox.p_max - bbox.p_min) / dimensions) {
+        auto& vec = stl::poly_vector<image::Image>::instance();
+        storage = vec.push_back(image::Image{});
+        storage->size = math::Vector<f32, 4>{math::shrink(dimensions), 1uz, sizeof(f32)};
+        storage->pixels.resize(dimensions[2]);
+        for (auto i = 0; i < dimensions[2]; i++)
+            storage->pixels[i].resize(math::prod(storage->size));
+    }
 
     auto Uniform_Volume::to_local(math::Vector<i32, 3> const& ijk) const noexcept -> math::Vector<f32, 3> {
         return bbox.p_min + ijk * voxel_size;
@@ -62,8 +68,8 @@ namespace mtt::volume {
 
     auto Uniform_Volume::operator[](math::Vector<i32, 3> const& ijk) noexcept -> f32& {
         auto [i, j, k] = ijk;
-        auto offset = i * dims[1] * dims[2] + j * dims[2] + k;
-        return data[offset];
+        auto ptr = (*storage.data())[i, j, k].data();
+        return *(f32*)ptr;
     }
 
     auto Uniform_Volume::operator[](math::Vector<i32, 3> const& ijk) const noexcept -> f32 {

@@ -1,19 +1,20 @@
-#include <metatron/device/texture.hpp>
+#include <metatron/resource/image/image.hpp>
 #include <metatron/core/stl/print.hpp>
+#include <functional>
 
-namespace mtt::device {
+namespace mtt::image {
     auto sRGB_linearize(f32 x) noexcept -> f32 {
         if (x <= 0.04045f) return x / 12.92f;
         else return std::pow((x + 0.055f) / 1.055f, 2.4f);
     };
 
-    Texture::Pixel::Pixel(view<Texture> image, mut<byte> start) noexcept
+    Image::Pixel::Pixel(view<Image> image, mut<byte> start) noexcept
     : image(image), start(start) {}
 
-    Texture::Pixel::operator math::Vector<f32, 4>() const noexcept {
+    Image::Pixel::operator math::Vector<f32, 4>() const noexcept {
         auto pixel = math::Vector<f32, 4>{};
-        for (auto i = 0; i < image->size[2]; ++i) {
-            switch (image->size[3]) {
+        for (auto i = 0; i < image->channels; ++i) {
+            switch (image->stride) {
                 case 1:
                     pixel[i] = image->linear
                     ? *(start + i) / 255.f
@@ -29,29 +30,34 @@ namespace mtt::device {
         return pixel;
     }
 
-    auto Texture::Pixel::operator=(math::Vector<f32, 4> const& v) noexcept -> void {
-        if (image->size[3] != 4) {
+    auto Image::Pixel::operator=(math::Vector<f32, 4> const& v) noexcept -> void {
+        if (image->stride != 4) {
             std::println("texture is readonly");
             std::abort();
         }
         *((math::Vector<f32, 4>*)start) = v;
     }
 
-    auto Texture::Pixel::operator+=(math::Vector<f32, 4> const& v) noexcept -> void {
+    auto Image::Pixel::operator+=(math::Vector<f32, 4> const& v) noexcept -> void {
         *this = math::Vector<f32, 4>(*this) + v;
     }
 
-    auto Texture::operator[](usize x, usize y, usize lod) noexcept -> Pixel {
-        auto offset = (y * width + x) * channels * stride;
+    auto Image::Pixel::data() noexcept -> mut<byte> {
+        return start;
+    }
+
+    auto Image::operator[](usize x, usize y, usize lod) noexcept -> Pixel {
+        auto width = (pixels.size() == 1 || pixels[0].size() == pixels[1].size())
+        ? this->width : (this->width >> lod);
+        auto offset = (y * (width >> lod) + x) * channels * stride;
         return Pixel{this, &pixels[lod][offset]};
     }
 
-    auto Texture::operator[](usize x, usize y, usize lod) const noexcept -> Pixel const {
-        auto offset = (y * width + x) * channels * stride;
-        return (Pixel const){this, (byte*)(&pixels.at(lod).at(offset))};
+    auto Image::operator[](usize x, usize y, usize lod) const noexcept -> Pixel const {
+        return (*const_cast<Image*>(this))[x, y, lod];
     }
 
-    auto Texture::operator()(Coordinate const& coord) const -> math::Vector<f32, 4> {
+    auto Image::operator()(Coordinate const& coord) const -> math::Vector<f32, 4> {
         auto du = math::Vector<f32, 2>{coord.dudx, coord.dudy};
         auto dv = math::Vector<f32, 2>{coord.dvdx, coord.dvdy};
         auto ul = math::length(du);
@@ -72,7 +78,7 @@ namespace mtt::device {
                 c.dvdy *= s;
             }
         } else if (sl == 0.f) {
-            auto [x, y] = math::round(coord.uv * math::Vector<usize, 2>{size} - 0.5f);
+            auto [x, y] = math::round(coord.uv * math::Vector<f32, 2>{width, height} - 0.5f);
             return math::Vector<f32, 4>{(*this)[x, y]};
         }
 
@@ -172,5 +178,43 @@ namespace mtt::device {
             lod - lodi
         );
         return x;
+    }
+
+    auto Image::operator()(math::Vector<f32, 3> const& uvw) const -> math::Vector<f32, 4> {
+        auto pixel = uvw * math::Vector<f32, 3>{width, height, pixels.size()};
+        auto base = math::clamp(
+            math::floor(pixel - 0.5f),
+            math::Vector<f32, 3>{0.f},
+            math::Vector<f32, 3>{width - 2, height - 2, pixels.size() - 2}
+        );
+        auto frac = math::clamp(
+            pixel - 0.5f - base,
+            math::Vector<f32, 3>{0.f},
+            math::Vector<f32, 3>{1.f}
+        );
+
+        auto weights = math::Vector<std::function<auto(f32) -> f32>, 2>{
+            [] (f32 x) { return 1.f - x; },
+            [] (f32 x) { return x; },
+        };
+        auto offsets = math::Vector<i32, 2>{0, 1};
+
+        auto r = math::Vector<f32, 4>{0.f};
+        for (auto i = 0; i < 4; i++) {
+            auto b0 = i & 1;
+            auto b1 = (i & 2) >> 1;
+            auto w = weights[b0](frac[0]) * weights[b1](frac[1]);
+            auto o = base + math::Vector<usize, 2>{offsets[b0], offsets[b1]};
+
+            if (base[2] + 1 >= pixels.size())
+                r += w * math::Vector<f32, 4>{(*this)[o[0], o[1], base[2]]};
+            else
+                r += w * math::lerp(
+                    math::Vector<f32, 4>{(*this)[o[0], o[1], base[2]]},
+                    math::Vector<f32, 4>{(*this)[o[0], o[1], base[2] + 1]},
+                    frac[2]
+                );
+        }
+        return r;
     }
 }

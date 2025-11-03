@@ -3,7 +3,7 @@
 
 namespace mtt::texture {
     auto Constant_Spectrum_Texture::operator()(
-        device::Coordinate const& coord,
+        image::Coordinate const& coord,
         spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> spectra::Stochastic_Spectrum {
         return spec & x.data();
@@ -23,7 +23,7 @@ namespace mtt::texture {
     }
 
     auto Constant_Vector_Texture::operator()(
-        device::Coordinate const& coord
+        image::Coordinate const& coord
     ) const noexcept -> math::Vector<f32, 4> {
         return x;
     }
