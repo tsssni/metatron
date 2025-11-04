@@ -18,9 +18,10 @@ namespace mtt::scene {
         auto parent(Entity entity) const noexcept -> Entity;
         auto children(Entity entity) const noexcept -> std::span<Entity const>;
 
-        using filter_function = std::function<auto (json const&) -> void>;
-        auto bundle(std::span<std::string_view> types) noexcept -> void;
-        auto filter(std::string_view type, filter_function f) noexcept -> void;
+        using filter_function = std::function<
+            auto (std::unordered_map<std::string, std::vector<json>>
+        ) -> void>;
+        auto filter(filter_function f) noexcept -> void;
         auto populate(std::string_view path) noexcept -> void;
 
         template<typename F, typename T>

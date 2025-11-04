@@ -8,17 +8,12 @@
 namespace mtt::scene {
     struct Hierarchy::Impl final {
         mut<Hierarchy> hierarchy;
+        std::vector<Hierarchy::filter_function> filters;
 
         std::unordered_map<std::string, Entity> entities;
         std::unordered_map<Entity, std::string> pathes;
         std::unordered_map<Entity, Entity> fathers;
         std::unordered_map<Entity, std::vector<Entity>> sons;
-
-        std::vector<std::string> stages;
-        std::unordered_map<
-            std::string,
-            Hierarchy::filter_function
-        > filters;
 
         auto plant() noexcept -> void {
             entities["/"] = hierarchy->registry.create();
@@ -85,15 +80,8 @@ namespace mtt::scene {
         return impl->fetch(impl->sons, entity);
     }
 
-    auto Hierarchy::bundle(std::span<std::string_view> types) noexcept -> void {
-        impl->stages = {types.begin(), types.end()};
-    }
-
-    auto Hierarchy::filter(
-        std::string_view type,
-        filter_function f
-    ) noexcept -> void {
-        impl->filters[std::string{type}] = f;
+    auto Hierarchy::filter(filter_function f) noexcept -> void {
+        impl->filters.push_back(f);
     }
 
     auto Hierarchy::populate(std::string_view path) noexcept -> void {
@@ -104,17 +92,7 @@ namespace mtt::scene {
             std::println("read scene {} with glaze error: {}", path, glz::format_error(e));
 
         auto bins = std::unordered_map<std::string, std::vector<json>>{};
-        for (auto& s: impl->stages) bins.emplace(s, std::vector<json>{});
         for (auto& j: jsons) bins[j.type].push_back(std::move(j));
-
-        for (auto& s: impl->stages) {
-            auto& b = bins[s];
-            auto& f = impl->filters[s];
-            auto g = math::Vector<usize, 1>{b.size()};
-            stl::scheduler::instance().sync_parallel(g, [&b, &f](auto idx) {
-                auto [i] = idx;
-                f(b[i]);
-            });
-        }
+        for (auto& f: impl->filters) f(bins);
     }
 }
