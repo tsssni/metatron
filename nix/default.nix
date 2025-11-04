@@ -15,7 +15,10 @@
   vulkan-tools,
   zlib,
 }:
-clangStdenv.mkDerivation {
+let
+  stdenv = clangStdenv;
+in
+stdenv.mkDerivation {
   pname = "metatron";
   version = "0.1.0";
 
@@ -43,7 +46,8 @@ clangStdenv.mkDerivation {
     openvdb
     proxy
     zlib
-  ] ++ (lib.optionals clangStdenv.isLinux [
+  ]
+  ++ (lib.optionals stdenv.isLinux [
     vulkan-tools
   ]);
 
@@ -66,9 +70,9 @@ clangStdenv.mkDerivation {
     homepage = "github.com/tsssni/metatron";
     license = licenses.gpl3;
     platforms = [
-        "x86_64-linux"
-        "aarch64-linux"
-        "aarch64-darwin"
+      "x86_64-linux"
+      "aarch64-linux"
+      "aarch64-darwin"
     ];
   };
 }
