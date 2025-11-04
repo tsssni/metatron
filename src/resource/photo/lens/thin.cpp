@@ -1,16 +1,12 @@
-#include <metatron/resource/lens/thin.hpp>
+#include <metatron/resource/photo/lens/thin.hpp>
 #include <metatron/core/math/distribution/disk.hpp>
 #include <metatron/core/math/constant.hpp>
 
 namespace mtt::photo {
-    Thin_Lens::Thin_Lens(
-        f32 aperture,
-        f32 focal_length,
-        f32 focus_distance
-    ) noexcept:
-    aperture(aperture),
-    focal_length(focal_length),
-    focus_distance(focus_distance),
+    Thin_Lens::Thin_Lens(Descriptor const& desc) noexcept:
+    aperture(desc.aperture),
+    focal_length(desc.focal_length),
+    focus_distance(desc.focus_distance),
     focal_distance(1.f / (1.f / focal_length - 1.f / focus_distance)) {}
 
     auto Thin_Lens::sample(math::Vector<f32, 2> o, math::Vector<f32, 2> u) const noexcept -> std::optional<lens::Interaction> {

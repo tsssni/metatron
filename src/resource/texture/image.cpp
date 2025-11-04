@@ -15,33 +15,32 @@ namespace mtt::texture {
         }
 
         auto& spec = in->spec();
-        auto& vec = stl::poly_vector<image::Image>::instance();
-        texture = vec.push_back<image::Image>({});
-        texture->linear = desc.linear;
-        texture->size = {
+        auto tex = image::Image{};
+        tex.linear = desc.linear;
+        tex.size = {
             usize(spec.width),
             usize(spec.height),
             usize(spec.nchannels),
             spec.format.size(),
         };
-        texture->pixels.resize(std::bit_width(std::max(texture->width, texture->height)));
-        texture->pixels.front().resize(math::prod(texture->size));
+        tex.pixels.resize(std::bit_width(std::max(tex.width, tex.height)));
+        tex.pixels.front().resize(math::prod(tex.size));
 
-        auto success = in->read_image(0, 0, 0, spec.nchannels, spec.format, texture->pixels.front().data());
+        auto success = in->read_image(0, 0, 0, spec.nchannels, spec.format, tex.pixels.front().data());
         if (!success) {
             std::println("can not read image {}", desc.path);
             std::abort();
         }
         in->close();
 
-        auto size = math::Vector<usize, 2>(texture->size);
-        auto channels = texture->size[2];
-        auto stride = texture->size[3];
+        auto size = math::Vector<usize, 2>(tex.size);
+        auto channels = tex.size[2];
+        auto stride = tex.size[3];
         if (desc.distr == Image_Distribution::none) return;
 
         auto pdf = std::vector<f32>(math::prod(size));
         stl::scheduler::instance().sync_parallel(size, [&](auto px) mutable {
-            auto c = math::Vector<f32, 4>{(*texture.data())[px[0], px[1]]};
+            auto c = math::Vector<f32, 4>{tex[px[0], px[1]]};
             auto w = 1.f;
             if (desc.distr == Image_Distribution::spherical) {
                 auto v = (px[1] + 0.5f) / size[1];
@@ -52,14 +51,13 @@ namespace mtt::texture {
         });
         distr = {std::span{pdf}, math::reverse(size), {0.f}, {1.f}};
 
-        for (auto mip = 1uz; mip < texture->pixels.size(); ++mip) {
+        for (auto mip = 1uz; mip < tex.pixels.size(); ++mip) {
             size[0] = std::max(1uz, size[0] >> 1uz);
             size[1] = std::max(1uz, size[1] >> 1uz);
-            texture->pixels[mip].resize(math::prod(size) * channels * stride);
+            tex.pixels[mip].resize(math::prod(size) * channels * stride);
 
-            auto down = [this, mip](math::Vector<usize, 2> const& px) mutable {
+            auto down = [this, mip, &tex](math::Vector<usize, 2> const& px) mutable {
                 auto [i, j] = px;
-                auto& tex = *texture.data();
                 tex[i, j, mip] = 0.25f * (0.f
                 + math::Vector<f32, 4>{tex[i * 2uz + 0, j * 2uz + 0, mip - 1]}
                 + math::Vector<f32, 4>{tex[i * 2uz + 0, j * 2uz + 1, mip - 1]}
@@ -73,6 +71,10 @@ namespace mtt::texture {
                     for (auto i = 0; i < size[0]; ++i)
                         down({i, j});
         }
+
+        auto& vec = stl::vector<image::Image>::instance();
+        auto lock = vec.lock();
+        texture = vec.push_back(std::move(tex));
     }
 
     auto Image_Vector_Texture::operator()(

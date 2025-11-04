@@ -8,12 +8,15 @@ namespace mtt::volume {
     bbox(bbox),
     dims(dimensions),
     voxel_size((bbox.p_max - bbox.p_min) / dimensions) {
-        auto& vec = stl::poly_vector<image::Image>::instance();
-        storage = vec.push_back(image::Image{});
-        storage->size = math::Vector<f32, 4>{math::shrink(dimensions), 1uz, sizeof(f32)};
-        storage->pixels.resize(dimensions[2]);
-        for (auto i = 0; i < dimensions[2]; i++)
-            storage->pixels[i].resize(math::prod(storage->size));
+        auto img = image::Image{};
+        img.size = math::Vector<f32, 4>{math::shrink(dimensions), 1uz, sizeof(f32)};
+        img.pixels.resize(dimensions[2]);
+        for (auto i = 0; i < dimensions[2]; ++i)
+            img.pixels[i].resize(math::prod(img.size));
+
+        auto& vec = stl::vector<image::Image>::instance();
+        auto lock = vec.lock();
+        storage = vec.push_back(std::move(img));
     }
 
     auto Uniform_Volume::to_local(math::Vector<i32, 3> const& ijk) const noexcept -> math::Vector<f32, 3> {

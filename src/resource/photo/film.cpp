@@ -36,10 +36,15 @@ namespace mtt::photo {
     r(desc.r),
     g(desc.g),
     b(desc.b) {
-        auto& vec = stl::poly_vector<image::Image>::instance();
-        image = vec.push_back<image::Image>({});
-        image->size = {desc.image_size, 4, 4};
-        image->linear = true;
+        auto img = image::Image{};
+        img.size = {desc.image_size, 4, 4};
+        img.linear = true;
+        img.pixels.resize(1);
+        img.pixels.front().resize(math::prod(img.size));
+
+        auto& vec = stl::vector<image::Image>::instance();
+        auto lock = vec.lock();
+        image = vec.push_back({});
     }
 
     auto Film::operator()(

@@ -110,11 +110,10 @@ namespace mtt::scene {
         for (auto& s: impl->stages) {
             auto& b = bins[s];
             auto& f = impl->filters[s];
-            auto m = std::mutex{};
             auto g = math::Vector<usize, 1>{b.size()};
-            stl::scheduler::instance().sync_parallel(g, [&b, &f, &m](auto idx) {
+            stl::scheduler::instance().sync_parallel(g, [&b, &f](auto idx) {
                 auto [i] = idx;
-                f(b[i], m);
+                f(b[i]);
             });
         }
     }

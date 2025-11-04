@@ -35,7 +35,7 @@ namespace mtt::scene {
         auto& hierarchy = Hierarchy::instance();
 
         [&] {
-            auto& vec = stl::poly_vector<spectra::Spectrum>::instance();
+            auto& vec = stl::vector<spectra::Spectrum>::instance();
             vec.emplace_type<spectra::Constant_Spectrum>();
             vec.emplace_type<spectra::Rgb_Spectrum>();
             vec.emplace_type<spectra::Visible_Spectrum>();
@@ -48,6 +48,7 @@ namespace mtt::scene {
             auto data = std::to_array<f32>({
                 0.f, 1.f,
             });
+            vec.reserve<spectra::Constant_Spectrum>(name.size());
             for (auto i = 0uz; i < name.size(); i++) {
                 spectra::Spectrum::spectra.emplace(
                     name[i],
@@ -69,6 +70,12 @@ namespace mtt::scene {
                 && (it.path().extension() == ".dspd" || it.path().extension() == ".vspd");
             })
             | std::ranges::to<std::vector<std::filesystem::path>>();
+            vec.reserve<spectra::Discrete_Spectrum>(std::ranges::count_if(spectra,
+                [] (auto const& p) { return p.extension() == ".dspd"; })
+            );
+            vec.reserve<spectra::Visible_Spectrum>(std::ranges::count_if(spectra,
+                [] (auto const& p) { return p.extension() == ".vspd"; })
+            );
 
             auto mutex = std::mutex{};
             auto grid = math::Vector<usize, 1>{spectra.size()};
@@ -88,7 +95,7 @@ namespace mtt::scene {
                 name += stem;
 
                 auto attach = [&]<typename S>(S&& spec) {
-                    auto lock = std::lock_guard(mutex);
+                    auto lock = vec.lock<S>();
                     auto entity = ("/spectrum/" + name) / et;
                     auto handle = hierarchy.attach<spectra::Spectrum>(entity, std::forward<S>(spec));
                     spectra::Spectrum::spectra.emplace(name, handle);
@@ -99,11 +106,8 @@ namespace mtt::scene {
         }();
 
         [&] {
-            auto& tvec = stl::poly_vector<color::Transfer_Function>::instance();
-            tvec.emplace_type<color::Transfer_Function>();
-
-            auto& cvec = stl::poly_vector<color::Color_Space>::instance();
-            cvec.emplace_type<color::Color_Space>();
+            auto& tvec = stl::vector<color::Transfer_Function>::instance();
+            auto& cvec = stl::vector<color::Color_Space>::instance();
 
             auto transfer = std::to_array({
                 [](f32 x) -> f32 {
@@ -119,7 +123,7 @@ namespace mtt::scene {
             });
 
             for (auto i = 0uz; i < transfer.size(); i++)
-                tvec.emplace_back<color::Transfer_Function>(transfer[i], linearize[i]);
+                tvec.emplace_back(transfer[i], linearize[i]);
 
             auto name = std::to_array<std::string>({
                 "sRGB",
@@ -157,7 +161,7 @@ namespace mtt::scene {
                 };
 
                 {
-                    auto lock = std::lock_guard(mutex);
+                    auto lock = cvec.lock();
                     hierarchy.attach<color::Color_Space>(entity, std::move(cs));
                     auto cs = hierarchy.fetch<color::Color_Space>(entity);
                     color::Color_Space::color_spaces[name[i]] = cs;
@@ -166,14 +170,11 @@ namespace mtt::scene {
         }();
 
         [&] {
-            auto& ivec = stl::poly_vector<image::Image>::instance();
-            ivec.emplace_type<image::Image>();
-
-            auto& vvec = stl::poly_vector<texture::Vector_Texture>::instance();
+            auto& vvec = stl::vector<texture::Vector_Texture>::instance();
             vvec.emplace_type<texture::Constant_Vector_Texture>();
             vvec.emplace_type<texture::Image_Vector_Texture>();
 
-            auto& svec = stl::poly_vector<texture::Spectrum_Texture>::instance();
+            auto& svec = stl::vector<texture::Spectrum_Texture>::instance();
             svec.emplace_type<texture::Constant_Spectrum_Texture>();
             svec.emplace_type<texture::Image_Spectrum_Texture>();
             svec.emplace_type<texture::Checkerboard_Texture>();
@@ -188,7 +189,7 @@ namespace mtt::scene {
         }();
 
         [&] {
-            auto& vec = stl::poly_vector<light::Light>::instance();
+            auto& vec = stl::vector<light::Light>::instance();
             vec.emplace_type<light::Parallel_Light>();
             vec.emplace_type<light::Point_Light>();
             vec.emplace_type<light::Spot_Light>();
@@ -198,32 +199,28 @@ namespace mtt::scene {
         }();
 
         [&] {
-            auto& vec = stl::poly_vector<material::Material>::instance();
+            auto& vec = stl::vector<material::Material>::instance();
             vec.emplace_type<material::Interface_Material>();
             vec.emplace_type<material::Physical_Material>();
         }();
 
         [&] {
-            auto& vec = stl::poly_vector<volume::Volume>::instance();
+            auto& vec = stl::vector<volume::Volume>::instance();
             vec.emplace_type<volume::Uniform_Volume>();
             vec.emplace_type<volume::Nanovdb_Volume>();
-
-            auto& nvec = stl::poly_vector<nanovdb::GridHandle<>>::instance();
-            nvec.emplace_type<nanovdb::GridHandle<>>();
         }();
 
         [&] {
-            auto& vec = stl::poly_vector<media::Medium>::instance();
+            auto& vec = stl::vector<media::Medium>::instance();
             vec.emplace_type<media::Vaccum_Medium>();
             vec.emplace_type<media::Homogeneous_Medium>();
             vec.emplace_type<media::Heterogeneous_Medium>();
         }();
     }
 
-    // TODO: generate textures on cpu
     auto test() noexcept -> void {
         auto path = "/home/tsssni/metatron-scenes/cloud/volume/disney-cloud.nvdb";
-        auto& vec = stl::poly_vector<nanovdb::GridHandle<>>::instance();
+        auto& vec = stl::vector<nanovdb::GridHandle<>>::instance();
         auto& hierarchy = Hierarchy::instance();
         hierarchy.attach<volume::Volume>(
             "/volume/test" / et,
@@ -243,13 +240,13 @@ namespace mtt::scene {
                 .density_scale = 4.f,
             }}
         );
-        auto h = hierarchy.attach<texture::Spectrum_Texture>(
-            "/texture/test" / et,
-            texture::Image_Spectrum_Texture{{
-                "/home/tsssni/metatron-scenes/dispersion/texture/env.exr",
-                color::Color_Space::Spectrum_Type::illuminant,
-                texture::Image_Distribution::spherical,
-            }}
-        );
+        // auto h = hierarchy.attach<texture::Spectrum_Texture>(
+        //     "/texture/test" / et,
+        //     texture::Image_Spectrum_Texture{{
+        //         "/home/tsssni/metatron-scenes/dispersion/texture/env.exr",
+        //         color::Color_Space::Spectrum_Type::illuminant,
+        //         texture::Image_Distribution::spherical,
+        //     }}
+        // );
     }
 }

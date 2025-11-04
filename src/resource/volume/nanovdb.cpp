@@ -26,7 +26,8 @@ namespace mtt::volume {
     }
 
     Nanovdb_Volume::Nanovdb_Volume(std::string_view path) noexcept {
-        auto& vec = stl::poly_vector<nanovdb::GridHandle<>>::instance();
+        auto& vec = stl::vector<nanovdb::GridHandle<>>::instance();
+        auto lock = vec.lock();
         handle = vec.push_back(nanovdb::io::readGrid(std::string{path}));
     }
 

@@ -13,16 +13,12 @@ namespace mtt::media {
     sigma_e(desc.sigma_e),
     density(desc.density),
     density_scale(desc.density_scale) {
-        auto& vec = stl::poly_vector<volume::Volume>::instance();
-        sigma_majorant = vec.emplace_back<volume::Uniform_Volume>(
-            density->bounding_box(),
-            desc.dimensions
-        );
+        auto sigmaj = volume::Uniform_Volume{density->bounding_box(), desc.dimensions};
         stl::scheduler::instance().sync_parallel(
-            sigma_majorant->dimensions(),
-            [&](math::Vector<usize, 3> const& xyz) {
+            sigmaj.dimensions(),
+            [&](math::Vector<usize, 3> const& xyz) mutable {
                 auto ijk = math::Vector<i32, 3>{xyz};
-                auto voxel_bbox = sigma_majorant->bounding_box(ijk);
+                auto voxel_bbox = sigmaj.bounding_box(ijk);
                 auto maj = math::low<f32>;
 
                 std::swap(voxel_bbox.p_min[2], voxel_bbox.p_max[2]);
@@ -35,9 +31,13 @@ namespace mtt::media {
                     for (auto j = p_min[1]; j <= p_max[1]; ++j)
                         for (auto k = p_min[2]; k <= p_max[2]; ++k)
                             maj = std::max(maj, (*density.data())[{i, j, k}]);
-                (*sigma_majorant.data())[ijk] = maj;
+                sigmaj[ijk] = maj;
             }
         );
+
+        auto& vec = stl::vector<volume::Volume>::instance();
+        auto lock = vec.lock<volume::Uniform_Volume>();
+        sigma_majorant = vec.push_back<volume::Uniform_Volume>(std::move(sigmaj));
     }
 
     auto Heterogeneous_Medium::sample(

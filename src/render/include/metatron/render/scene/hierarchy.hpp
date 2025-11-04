@@ -3,7 +3,6 @@
 #include <metatron/render/scene/json.hpp>
 #include <metatron/core/stl/capsule.hpp>
 #include <metatron/core/stl/singleton.hpp>
-#include <mutex>
 
 namespace mtt::scene {
     struct Hierarchy final: stl::singleton<Hierarchy>, stl::capsule<Hierarchy> {
@@ -19,14 +18,14 @@ namespace mtt::scene {
         auto parent(Entity entity) const noexcept -> Entity;
         auto children(Entity entity) const noexcept -> std::span<Entity const>;
 
-        using filter_function = std::function<auto (json const&, std::mutex&) -> void>;
+        using filter_function = std::function<auto (json const&) -> void>;
         auto bundle(std::span<std::string_view> types) noexcept -> void;
         auto filter(std::string_view type, filter_function f) noexcept -> void;
         auto populate(std::string_view path) noexcept -> void;
 
         template<typename F, typename T>
         auto attach(Entity entity, T&& component = {}) noexcept -> stl::proxy<F> {
-            auto idx = stl::poly_vector<F>::instance().push_back(std::forward<T>(component));
+            auto idx = stl::vector<F>::instance().push_back(std::forward<T>(component));
             auto handle = stl::proxy<F>{idx};
             registry.emplace<stl::proxy<F>>(entity, handle);
             return handle;

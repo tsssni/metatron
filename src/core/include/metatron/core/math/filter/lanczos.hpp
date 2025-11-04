@@ -15,7 +15,7 @@ namespace mtt::math {
                     matrix[j][i] = (*this)({x, y});
                 }
             }
-            distribution = Piecewise_Distribution<f32, 2>{
+            distribution = Piecewise_Distribution<2>{
                 std::span{matrix.data(), matrix.size()},
                 {64, 64},
                 {-radius[1], -radius[0]},
@@ -38,7 +38,7 @@ namespace mtt::math {
         }
 
     private:
-        Piecewise_Distribution<f32, 2> distribution;
+        Piecewise_Distribution<2> distribution;
         Vector<f32, 2> radius;
         f32 tau;
     };

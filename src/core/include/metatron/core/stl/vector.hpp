@@ -5,10 +5,56 @@
 #include <vector>
 #include <functional>
 #include <typeindex>
+#include <mutex>
 
 namespace mtt::stl {
-    template<typename F>
-    struct poly_vector final: singleton<poly_vector<F>> {
+    template<typename T>
+    struct vector final: singleton<vector<T>> {
+        vector() noexcept: mutex(make_poly<std::mutex>()) {}
+        vector(vector&&) noexcept = default;
+
+        template<typename... Args>
+        requires std::is_constructible_v<T, Args...>
+        auto emplace_back(Args&&... args) noexcept -> u32 {
+            storage.emplace_back(std::forward<Args>(args)...);
+            return storage.size() - 1;
+        }
+        
+        auto push_back(T&& x) noexcept -> u32 {
+            return emplace_back(std::forward<T>(x));
+        }
+
+        auto operator[](u32 i) noexcept -> mut<T> {
+            return &storage[i];
+        }
+
+        auto operator[](u32 i) const noexcept -> view<T> {
+            return &storage[i];
+        }
+
+        auto data() noexcept -> T* {
+            return storage.data();
+        }
+
+        auto size() noexcept -> usize {
+            return storage.size();
+        }
+
+        auto reserve(usize n) noexcept -> void {
+            storage.reserve(n);
+        }
+
+        auto lock() noexcept -> std::unique_lock<std::mutex> {
+            return std::unique_lock{*mutex};
+        }
+
+    private:
+        std::vector<T> storage;
+        poly<std::mutex> mutex;
+    };
+
+    template<pro::facade F>
+    struct vector<F> final: singleton<vector<F>> {
         template<typename T>
         requires std::is_constructible_v<mut<F>, mut<T>>
         auto emplace_type() noexcept -> void {
@@ -16,6 +62,7 @@ namespace mtt::stl {
             map[typeid(T)] = idx;
             storage.push_back({});
             length.push_back(sizeof(T));
+            mutex.push_back(make_poly<std::mutex>());
             reinterpreter.push_back([] (byte const* ptr) {
                 return make_view<F>(*(T*)ptr);
             });
@@ -45,7 +92,7 @@ namespace mtt::stl {
             return reinterpreter[t](ptr);
         }
 
-        auto at(u32 i) const noexcept -> view<F> {
+        auto operator[](u32 i) const noexcept -> view<F> {
             auto t = (i >> 24) & 0xff;
             auto idx = (i & 0xffffff);
             auto ptr = storage[t].data() + length[t] * idx;
@@ -62,34 +109,44 @@ namespace mtt::stl {
             return storage[map.at(typeid(T))].size() / sizeof(T);
         }
 
+        template<typename T>
+        auto reserve(usize n) noexcept -> void {
+            storage[map.at(typeid(T))].reserve(n);
+        }
+
+        template<typename T>
+        auto lock() noexcept -> std::unique_lock<std::mutex> {
+            return std::unique_lock{*mutex[map.at(typeid(T))]};
+        }
+
     private:
         std::vector<std::vector<byte>> storage;
         std::vector<u32> length;
         std::vector<std::function<auto (byte const* ptr) -> mut<F>>> reinterpreter;
+        std::vector<poly<std::mutex>> mutex;
         std::unordered_map<std::type_index, u32> map;
     };
 
-
-    template<typename F>
+    template<typename T>
     struct proxy final {
-        using vec = poly_vector<F>;
+        using vec = vector<T>;
 
         proxy(): idx(math::maxv<u32>) {};
         proxy(u32 idx): idx(idx) {}
 
-        auto data() -> mut<F> {
+        auto data() -> mut<T> {
             return vec::instance()[idx];
         }
 
-        auto data() const -> view<F> {
-            return vec::instance().at(idx);
+        auto data() const -> view<T> {
+            return vec::instance()[idx];
         }
 
-        auto operator->() -> mut<F> {
+        auto operator->() -> mut<T> {
             return data();
         }
 
-        auto operator->() const -> view<F> {
+        auto operator->() const -> view<T> {
             return data();
         }
 
