@@ -27,7 +27,7 @@ namespace mtt::media {
     ::build {};
 
     struct Phase final {
-        enum Function {
+        enum struct Function: u32 {
             henyey_greenstein,
         } function;
         f32 g;

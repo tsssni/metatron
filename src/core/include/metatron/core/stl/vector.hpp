@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/core/stl/array.hpp>
 #include <metatron/core/stl/singleton.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <metatron/core/math/constant.hpp>
@@ -8,8 +9,11 @@
 #include <mutex>
 
 namespace mtt::stl {
+    template<typename... Ts>
+    struct vector;
+
     template<typename T>
-    struct vector final: singleton<vector<T>> {
+    struct vector<T> final: singleton<vector<T>> {
         vector() noexcept: mutex(make_poly<std::mutex>()) {}
         vector(vector&&) noexcept = default;
 
@@ -36,7 +40,7 @@ namespace mtt::stl {
             return storage.data();
         }
 
-        auto size() noexcept -> usize {
+        auto size() const noexcept -> usize {
             return storage.size();
         }
 
@@ -44,7 +48,7 @@ namespace mtt::stl {
             storage.reserve(n);
         }
 
-        auto lock() noexcept -> std::unique_lock<std::mutex> {
+        auto lock() const noexcept -> std::unique_lock<std::mutex> {
             return std::unique_lock{*mutex};
         }
 
@@ -105,7 +109,7 @@ namespace mtt::stl {
         }
 
         template<typename T>
-        auto size() noexcept -> usize {
+        auto size() const noexcept -> usize {
             return storage[map.at(typeid(T))].size() / sizeof(T);
         }
 
@@ -115,7 +119,7 @@ namespace mtt::stl {
         }
 
         template<typename T>
-        auto lock() noexcept -> std::unique_lock<std::mutex> {
+        auto lock() const noexcept -> std::unique_lock<std::mutex> {
             return std::unique_lock{*mutex[map.at(typeid(T))]};
         }
 
@@ -127,8 +131,70 @@ namespace mtt::stl {
         std::unordered_map<std::type_index, u32> map;
     };
 
+    template<pro::facade F, typename... Ts>
+    requires (sizeof...(Ts) > 1)
+    struct vector<F, Ts...> final {
+        using ts = stl::array<Ts...>;
+
+        vector() noexcept {
+            [this]<usize... idxs>(std::index_sequence<idxs...>) {
+                ((reinterpreter[idxs] = [] (byte const* ptr) -> mut<F> {
+                    return *(typename ts::template type<idxs>*)ptr;
+                 }), ...);
+            }(std::make_index_sequence<sizeof...(Ts)>{});
+        }
+        vector(vector&&) noexcept = default;
+
+        template<typename T, typename... Args>
+        requires std::is_constructible_v<T, Args...> && ts::template contains<T>
+        auto emplace(Args&&... args) noexcept -> void {
+            idx = ts::template index<T>;
+            std::construct_at(data<T>(), std::forward<Args>(args)...);
+        }
+
+        template<typename T>
+        auto push(T&& x) noexcept -> void {
+            emplace<T>(std::forward<T>(x));
+        }
+
+        auto operator()() noexcept -> mut<F> {
+            return reinterpreter[idx](data(idx));
+        }
+
+        auto operator()() const noexcept -> view<F> {
+            return reinterpreter[idx](data(idx));
+        }
+
+        auto data() noexcept -> byte* {
+            return storage.data();
+        }
+
+        template<typename T>
+        auto data() noexcept -> T* {
+            auto idx = ts::template index<T>;
+            return (T*)data(idx);
+        }
+
+        auto size() const noexcept -> usize {
+            return storage.size();
+        }
+
+    private:
+        auto data(usize idx) const -> byte const* {
+            auto offset = ((ts::template index<Ts> <= idx ? sizeof(Ts) : 0) + ...);
+            return &storage[offset];
+        }
+
+        u32 idx;
+        std::array<byte, (sizeof(Ts) + ...)> storage;
+        std::array<std::function<
+            auto (byte const* ptr) -> mut<F>>
+        , sizeof...(Ts)> reinterpreter;
+    }; template<typename... Ts>
+    struct proxy;
+
     template<typename T>
-    struct proxy final {
+    struct proxy<T> final {
         using vec = vector<T>;
 
         proxy(): idx(math::maxv<u32>) {};
@@ -160,5 +226,36 @@ namespace mtt::stl {
 
     private:
         u32 idx;
+    };
+
+    template<pro::facade F, typename... Ts>
+    requires (sizeof...(Ts) > 1)
+    struct proxy<F, Ts...> final {
+        using vec = vector<F, Ts...>;
+
+        proxy(view<vec> v = nullptr) noexcept: v(v) {}
+
+        auto data() -> mut<F> {
+            return (*v)();
+        }
+
+        auto data() const -> view<F> {
+            return (*v)();
+        }
+
+        auto operator->() -> mut<F> {
+            return data();
+        }
+
+        auto operator->() const -> view<F> {
+            return data();
+        }
+
+        operator bool() const {
+            return v;
+        }
+
+    private:
+        view<vec> v;
     };
 }

@@ -2,7 +2,7 @@
 
 namespace mtt::sampler {
     Independent_Sampler::Independent_Sampler(i32 seed) noexcept:
-    rng(seed), dist(1e-4, 1.f - 1e-4) {}
+    rng(seed), distr(1e-4, 1.f - 1e-4) {}
 
     auto Independent_Sampler::start(math::Vector<usize, 2> const& pixel, usize idx, usize dim) noexcept -> void {
         this->pixel = pixel;
@@ -11,7 +11,7 @@ namespace mtt::sampler {
     }
 
     auto Independent_Sampler::generate_1d() noexcept -> f32 {
-        return dist(rng);
+        return distr(rng);
     }
 
     auto Independent_Sampler::generate_2d() noexcept -> math::Vector<f32, 2> {

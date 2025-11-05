@@ -38,7 +38,6 @@ namespace mtt::photo {
         struct Descriptor final {
             math::Vector<f32, 2> film_size;
             math::Vector<f32, 2> image_size;
-            stl::proxy<filter::Filter> filter;
             stl::proxy<spectra::Spectrum> r;
             stl::proxy<spectra::Spectrum> g;
             stl::proxy<spectra::Spectrum> b;
@@ -47,12 +46,12 @@ namespace mtt::photo {
         Film(Descriptor const& desc) noexcept;
 
         auto operator()(
+            view<filter::Filter> filter,
             math::Vector<usize, 2> const& pixel,
             math::Vector<f32, 2> const& u
         ) noexcept -> Fixel;
 
     private:
-        stl::proxy<filter::Filter> const filter;
         stl::proxy<spectra::Spectrum> const r;
         stl::proxy<spectra::Spectrum> const g;
         stl::proxy<spectra::Spectrum> const b;

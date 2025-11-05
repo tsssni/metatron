@@ -4,10 +4,6 @@
 #include <metatron/core/math/vector.hpp>
 
 namespace mtt::phase {
-    struct Attribute final {
-        spectra::Stochastic_Spectrum spectrum;
-    };
-
     struct Interaction final {
         spectra::Stochastic_Spectrum f;
         math::Vector<f32, 3> wi;

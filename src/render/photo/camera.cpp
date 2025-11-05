@@ -4,13 +4,12 @@
 namespace mtt::photo {
     auto Camera::sample(
         math::Vector<usize, 2> pixel,
-        usize idx,
-        mut<sampler::Sampler> sampler
+        usize idx
     ) noexcept -> std::optional<Interaction> {
         sampler->start(pixel, idx, 0);
         auto intr = Interaction{
             {}, {},
-            (*film.data())(pixel, sampler->generate_pixel_2d()),
+            (*film)(filter, pixel, sampler->generate_pixel_2d()),
         };
 
         {
@@ -32,8 +31,8 @@ namespace mtt::photo {
         {
             auto& ray = intr.default_differential;
             auto r_pos = math::Vector<f32, 2>{0.f};
-            auto rx_pos = r_pos + math::Vector<f32, 2>{this->film->dxdy[0], 0.f};
-            auto ry_pos = r_pos + math::Vector<f32, 2>{0.f, this->film->dxdy[1]};
+            auto rx_pos = r_pos + math::Vector<f32, 2>{film->dxdy[0], 0.f};
+            auto ry_pos = r_pos + math::Vector<f32, 2>{0.f, film->dxdy[1]};
 
             MTT_OPT_OR_RETURN(r_intr, lens->sample(r_pos, {0.f}), {});
             MTT_OPT_OR_RETURN(rx_intr, lens->sample(rx_pos, {0.f}), {});

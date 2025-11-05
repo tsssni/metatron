@@ -13,13 +13,15 @@ namespace mtt::photo {
     };
 
     struct Camera final {
-        stl::proxy<Lens> const lens;
-        stl::proxy<Film> film;
+        view<Lens> lens;
+        mut<Film> film;
+
+        view<filter::Filter> filter;
+        mut<sampler::Sampler> sampler;
 
         auto sample(
             math::Vector<usize, 2> pixel,
-            usize idx,
-            mut<sampler::Sampler> sampler
+            usize idx
         ) noexcept -> std::optional<Interaction>;
     };
 }

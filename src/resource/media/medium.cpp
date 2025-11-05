@@ -6,7 +6,7 @@ namespace mtt::media {
         spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> poly<phase::Phase_Function> {
         switch (function) {
-        case henyey_greenstein:
+        case Phase::Function::henyey_greenstein:
             return make_poly<
                 phase::Phase_Function,
                 phase::Henyey_Greenstein_Phase_Function

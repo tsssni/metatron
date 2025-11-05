@@ -32,7 +32,6 @@ namespace mtt::photo {
     Film::Film(Descriptor const& desc) noexcept:
     film_size(desc.film_size),
     dxdy(desc.film_size / desc.image_size),
-    filter(desc.filter),
     r(desc.r),
     g(desc.g),
     b(desc.b) {
@@ -48,6 +47,7 @@ namespace mtt::photo {
     }
 
     auto Film::operator()(
+        view<filter::Filter> filter,
         math::Vector<usize, 2> const& pixel,
         math::Vector<f32, 2> const& u
     ) noexcept -> Fixel {
