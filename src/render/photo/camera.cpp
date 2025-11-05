@@ -1,11 +1,11 @@
-#include <metatron/resource/photo/camera.hpp>
+#include <metatron/render/photo/camera.hpp>
 #include <metatron/core/stl/optional.hpp>
 
 namespace mtt::photo {
     auto Camera::sample(
         math::Vector<usize, 2> pixel,
         usize idx,
-        mut<math::Sampler> sampler
+        mut<sampler::Sampler> sampler
     ) noexcept -> std::optional<Interaction> {
         sampler->start(pixel, idx, 0);
         auto intr = Interaction{

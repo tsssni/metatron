@@ -1,9 +1,9 @@
 #pragma once
-#include <metatron/resource/photo/film.hpp>
-#include <metatron/resource/photo/lens/lens.hpp>
+#include <metatron/render/photo/film.hpp>
+#include <metatron/render/photo/lens/lens.hpp>
+#include <metatron/render/sampler/sampler.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/ray.hpp>
-#include <metatron/core/math/sampler/sampler.hpp>
 
 namespace mtt::photo {
     struct Interaction final {
@@ -19,7 +19,7 @@ namespace mtt::photo {
         auto sample(
             math::Vector<usize, 2> pixel,
             usize idx,
-            mut<math::Sampler> sampler
+            mut<sampler::Sampler> sampler
         ) noexcept -> std::optional<Interaction>;
     };
 }

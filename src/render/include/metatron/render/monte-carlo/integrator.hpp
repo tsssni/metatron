@@ -1,10 +1,10 @@
 #pragma once
 #include <metatron/render/emitter/emitter.hpp>
 #include <metatron/render/accel/accel.hpp>
-#include <metatron/resource/photo/camera.hpp>
+#include <metatron/render/photo/camera.hpp>
+#include <metatron/render/sampler/sampler.hpp>
 #include <metatron/resource/media/medium.hpp>
 #include <metatron/resource/spectra/stochastic.hpp>
-#include <metatron/core/math/sampler/sampler.hpp>
 
 namespace mtt::monte_carlo {
     struct Status final {
@@ -26,7 +26,7 @@ namespace mtt::monte_carlo {
         Status initial_status,
         view<accel::Acceleration> accel,
         view<emitter::Emitter> emitter,
-        mut<math::Sampler> sampler
+        mut<sampler::Sampler> sampler
     ) const noexcept -> std::optional<spectra::Stochastic_Spectrum>>
     ::add_skill<pro::skills::as_view>
     ::build {};

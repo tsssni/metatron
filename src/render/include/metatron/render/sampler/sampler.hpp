@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
 
-namespace mtt::math {
+namespace mtt::sampler {
     MTT_POLY_METHOD(sampler_start, start);
     MTT_POLY_METHOD(sampler_generate_1d, generate_1d);
     MTT_POLY_METHOD(sampler_generate_2d, generate_2d);

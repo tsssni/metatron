@@ -10,7 +10,7 @@ namespace mtt::monte_carlo {
         Status initial_status,
         view<accel::Acceleration> accel,
         view<emitter::Emitter> emitter,
-        mut<math::Sampler> sampler
+        mut<sampler::Sampler> sampler
     ) const noexcept -> std::optional<spectra::Stochastic_Spectrum> {
         auto lambda_u = sampler->generate_1d();
         auto emission = spectra::Stochastic_Spectrum{lambda_u};

@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/resource/photo/lens/lens.hpp>
+#include <metatron/render/photo/lens/lens.hpp>
 
 namespace mtt::photo {
     struct Pinhole_Lens final {

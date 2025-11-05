@@ -1,8 +1,8 @@
 #pragma once
+#include <metatron/render/filter/filter.hpp>
 #include <metatron/resource/spectra/stochastic.hpp>
 #include <metatron/resource/color/color-space.hpp>
 #include <metatron/resource/image/image.hpp>
-#include <metatron/core/math/filter/filter.hpp>
 #include <metatron/core/math/vector.hpp>
 
 namespace mtt::photo {
@@ -38,7 +38,7 @@ namespace mtt::photo {
         struct Descriptor final {
             math::Vector<f32, 2> film_size;
             math::Vector<f32, 2> image_size;
-            stl::proxy<math::Filter> filter;
+            stl::proxy<filter::Filter> filter;
             stl::proxy<spectra::Spectrum> r;
             stl::proxy<spectra::Spectrum> g;
             stl::proxy<spectra::Spectrum> b;
@@ -52,7 +52,7 @@ namespace mtt::photo {
         ) noexcept -> Fixel;
 
     private:
-        stl::proxy<math::Filter> const filter;
+        stl::proxy<filter::Filter> const filter;
         stl::proxy<spectra::Spectrum> const r;
         stl::proxy<spectra::Spectrum> const g;
         stl::proxy<spectra::Spectrum> const b;
