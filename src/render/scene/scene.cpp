@@ -1,5 +1,6 @@
 #include <metatron/render/scene/scene.hpp>
 #include <metatron/render/scene/hierarchy.hpp>
+#include <metatron/render/scene/reflection.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 

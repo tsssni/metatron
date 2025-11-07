@@ -1,118 +1,65 @@
-#pragma once
-#include <metatron/render/scene/entity.hpp>
 #include <metatron/render/scene/hierarchy.hpp>
-#include <metatron/core/math/matrix.hpp>
-#include <metatron/core/math/quaternion.hpp>
+#include <metatron/render/scene/descriptor.hpp>
+#include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/vector.hpp>
-#include <metatron/core/stl/variant.hpp>
-#include <metatron/core/stl/print.hpp>
-#include <glaze/glaze.hpp>
+#include <metatron/core/stl/array.hpp>
 
-namespace glz {
+namespace mtt::scene {
     template<typename T>
-    concept has_descriptor = requires {
-        typename T::Descriptor;
-    };
-
-    template<typename T>
-    struct descriptor final {
-        using type = T;
-    };
-
-    template<typename T>
-    requires has_descriptor<T>
-    struct descriptor<T> final {
-        using type = T::Descriptor;
-    };
-
-    template<>
-    struct from<JSON, mtt::scene::Entity> {
-        template<auto Opts>
-        auto static op(mtt::scene::Entity& v, auto&&... args) noexcept -> void {
-            auto path = std::string{};
-            parse<JSON>::op<Opts>(path, args...);
-            v = path / mtt::scene::et;
+    auto deserialize(json&& j) {
+        auto d = T{descriptor<T>{}};
+        if (auto er = glz::read_json<T>(d, j.serialized.str); er) {
+            std::println(
+                "desrialize {} with glaze error: {}",
+                j.serialized.str, glz::format_error(er)
+            );
+            std::abort();
+        } else {
+            Hierarchy::instance().attach(j.entity, std::move(d));
         }
-    };
+    }
 
-    template<typename F>
-    struct from<JSON, mtt::stl::proxy<F>> {
-        template<auto Opts>
-        auto static op(mtt::stl::proxy<F>& v, auto&&... args) noexcept -> void {
-            auto entity = mtt::scene::Entity{};
-            parse<JSON>::op<Opts>(entity, args...);
-            v = mtt::scene::Hierarchy::instance().fetch<F>(entity);
-        }
-    };
+    template<typename... Ts>
+    auto deserialize(
+        std::array<std::string_view, sizeof...(Ts)>&& type,
+        Hierarchy::binmap const& bins
+    ) noexcept -> void {
+        auto list = type
+        | std::views::transform([&bins](auto x){return bins[x];})
+        | std::views::join
+        | std::ranges::to<std::vector<json>>();
+        auto grid = math::Vector<usize, 1>{list.size()};
+        stl::scheduler::instance().sync_parallel(grid, [&list, &type](auto idx) {
+            auto [i] = idx;
+            auto json = std::move(list[i]);
+            [i, &json]<usize... idxs>(std::index_sequence<idxs...>) {
+                ((i == idxs ? (deserialize<Ts>(std::move(json)), true) : false), ...);
+            }(std::make_index_sequence<sizeof...(Ts)>{});
+        });
+    }
 
-    template<typename T>
-    requires has_descriptor<T>
-    struct to<JSON, T> {
-        template<auto Opts>
-        auto static op(T& v, auto&&... args) noexcept -> void {
-            auto desc = (typename descriptor<T>::type){};
-            serialize<JSON>::op<Opts>(desc, args...);
-            v = desc;
-        }
-    };
-
-    template<pro::facade F, typename... Ts>
-    struct to<JSON, mtt::stl::variant<F, Ts...>> {
-        template<auto Opts>
-        auto static op(mtt::stl::variant<F, Ts...>& v, auto&&... args) noexcept -> void {
-            auto var = std::variant<typename descriptor<Ts>::type...>{};
-            serialize<JSON>::op<Opts>(var, args...);
-            std::visit([&v](auto&& desc) {
-                ([&v]<typename T>(auto&& d) {
-                    if constexpr (std::is_same_v<
-                        typename descriptor<T>::type,
-                        std::remove_cvref_t<decltype(desc)>
-                    >) v.template emplace<T>(std::forward<decltype(d)>(d));
-                }.template operator()<Ts>(desc), ...);
-            }, var);
-        }
-    };
-
-    template<typename T, mtt::usize first_dim, mtt::usize... rest_dims>
-    struct from<JSON, mtt::math::Matrix<T, first_dim, rest_dims...>> {
-        template<auto Opts>
-        auto static op(mtt::math::Matrix<T, first_dim, rest_dims...>& v, auto&&... args) noexcept -> void {
-            using M = mtt::math::Matrix<T, first_dim, rest_dims...>;
-            using E = M::Element;
-            auto data = std::array<E, first_dim>{};
-            parse<JSON>::op<Opts>(data, args...);
-            v = M{std::span<E const>{data}};
-        }
-    };
-
-    template<typename T, mtt::usize first_dim, mtt::usize... rest_dims>
-    struct to<JSON, mtt::math::Matrix<T, first_dim, rest_dims...>> {
-        template<auto Opts>
-        auto static op(mtt::math::Matrix<T, first_dim, rest_dims...>& v, auto&&... args) noexcept -> void {
-            using E = mtt::math::Matrix<T, first_dim, rest_dims...>::Element;
-            auto const& data = std::array<E, first_dim>(v);
-            serialize<JSON>::op<Opts>(data, args...);
-        }
-    };
-
-    template<typename T>
-    requires std::floating_point<T>
-    struct from<JSON, mtt::math::Quaternion<T>> {
-        template<auto Opts>
-        auto static op(mtt::math::Quaternion<T>& v, auto&&... args) noexcept -> void {
-            auto data = mtt::math::Vector<T, 4>{};
-            parse<JSON>::op<Opts>(data, args...);
-            v = mtt::math::Quaternion<T>{data};
-        }
-    };
-
-    template<typename T>
-    requires std::floating_point<T>
-    struct to<JSON, mtt::math::Quaternion<T>> {
-        template<auto Opts>
-        auto static op(mtt::math::Quaternion<T>& v, auto&&... args) noexcept -> void {
-            auto const& data = mtt::math::Vector<T, 4>{v};
-            serialize<JSON>::op<Opts>(data, args...);
-        }
-    };
+    template<
+        typename T,
+        typename... Ts,
+        bool polied = (sizeof...(Ts) > 0) && (poliable<T, Ts> && ...)
+    >
+    auto deserialize(
+        std::array<std::string_view, sizeof...(Ts) + usize(polied)>&& type,
+        std::function<auto () -> void> pre = []{},
+        std::function<auto () -> void> post = []{}
+    ) noexcept -> void {
+        Hierarchy::instance().filter([type = std::move(type), pre, post](auto bins) {
+            using ts = std::conditional_t<polied, stl::array<Ts...>, stl::array<T, Ts...>>;
+            if constexpr (sizeof...(Ts) > 0 && (poliable<T, Ts> && ...)) {
+                auto& vec = stl::vector<T>::instance();
+                (vec.template reserve<Ts>(bins[type[ts::template index<Ts>]].size()), ...);
+            } else {
+                stl::vector<T>::instance.reserve(bins[ts::template index<T>].size());
+                (stl::vector<Ts>::instance().reserve(bins[type[ts::template index<Ts>]].size()), ...);
+            }
+            pre();
+            deserialize(std::move(type), bins);
+            post();
+        });
+    }
 }
