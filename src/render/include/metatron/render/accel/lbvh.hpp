@@ -1,3 +1,4 @@
+#pragma once
 #include <metatron/render/accel/accel.hpp>
 #include <vector>
 

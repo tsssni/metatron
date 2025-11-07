@@ -65,7 +65,7 @@ namespace mtt::sampler {
     }
 
     auto Sobol_Sampler::permute_idx() noexcept -> usize {
-        auto static const permutations = math::Matrix<byte, 24, 4>{
+        auto static constexpr permutations = math::Matrix<byte, 24, 4>{
             {0, 1, 2, 3},
             {0, 1, 3, 2},
             {0, 2, 1, 3},

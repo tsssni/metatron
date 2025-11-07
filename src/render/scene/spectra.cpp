@@ -8,6 +8,7 @@
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/thread.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::scene {
     auto spectra_init() noexcept -> void {

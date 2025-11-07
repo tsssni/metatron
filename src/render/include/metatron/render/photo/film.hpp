@@ -1,12 +1,12 @@
 #pragma once
 #include <metatron/render/filter/filter.hpp>
+#include <metatron/render/scene/entity.hpp>
 #include <metatron/resource/spectra/stochastic.hpp>
 #include <metatron/resource/color/color-space.hpp>
 #include <metatron/resource/image/image.hpp>
 #include <metatron/core/math/vector.hpp>
 
 namespace mtt::photo {
-    struct Camera;
     struct Film;
 
     struct Fixel final {

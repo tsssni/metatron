@@ -57,6 +57,9 @@ namespace mtt::inline prelude {
         return &x;
     }
 
+    template<typename F, typename T>
+    concept poliable = pro::facade<F> && std::is_constructible_v<mut<F>, mut<T>>;
+
     template<typename T>
     auto make_view(T const& x) -> view<T> {
         return &x;

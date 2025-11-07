@@ -17,7 +17,7 @@ namespace mtt::math {
         using Element = std::conditional_t<sizeof...(rest_dims) == 0, T, Matrix<T, rest_dims...>>;
         auto static constexpr dimensions = std::array<usize, 1 + sizeof...(rest_dims)>{first_dim, rest_dims...};
 
-        Matrix() noexcept {
+        constexpr Matrix() noexcept {
             if constexpr (std::is_floating_point_v<Element> || std::is_integral_v<Element>)
                 storage.fill(Element{0});
             else

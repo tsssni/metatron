@@ -3,8 +3,9 @@
 #include <metatron/render/scene/hierarchy.hpp>
 #include <metatron/core/math/matrix.hpp>
 #include <metatron/core/math/quaternion.hpp>
-#include <metatron/core/stl/print.hpp>
 #include <metatron/core/stl/vector.hpp>
+#include <metatron/core/stl/variant.hpp>
+#include <metatron/core/stl/print.hpp>
 #include <glaze/glaze.hpp>
 
 namespace glz {
@@ -56,10 +57,9 @@ namespace glz {
     };
 
     template<pro::facade F, typename... Ts>
-    requires (sizeof...(Ts) > 1)
-    struct to<JSON, mtt::stl::vector<F, Ts...>> {
+    struct to<JSON, mtt::stl::variant<F, Ts...>> {
         template<auto Opts>
-        auto static op(mtt::stl::vector<F, Ts...>& v, auto&&... args) noexcept -> void {
+        auto static op(mtt::stl::variant<F, Ts...>& v, auto&&... args) noexcept -> void {
             auto var = std::variant<typename descriptor<Ts>::type...>{};
             serialize<JSON>::op<Opts>(var, args...);
             std::visit([&v](auto&& desc) {
