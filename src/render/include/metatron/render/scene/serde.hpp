@@ -99,10 +99,19 @@ namespace mtt::scene {
     ) noexcept -> void {
         auto i = 0;
         auto type = std::array<std::string, sizeof...(Ts)>{};
-        for (auto t: std::views::split(text, ',')) {
-            type[i] = std::string{t.begin(), t.end()};
-            std::ranges::transform(type[i], type[i].begin(), ::tolower);
-            i++;
+        for (auto t: text
+        | std::views::split(',')
+        | std::views::transform([](auto&& x) {
+            auto y = std::string{x.begin(), x.end()};
+            auto l = y.find_first_not_of(" \t\r\n");
+            auto r = y.find_last_not_of(" \t\r\n");
+            if (l == std::string::npos) {
+                std::println("serialized type invalid");
+                std::abort();
+            } else return y.substr(l, r - l + 1);
+        })) {
+            std::ranges::transform(t, t.begin(), ::tolower);
+            type[i++] = t;
         }
         deserialize<Ts...>(std::move(type), pre, post);
     }

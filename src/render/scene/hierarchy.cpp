@@ -1,4 +1,5 @@
 #include <metatron/render/scene/hierarchy.hpp>
+#include <metatron/render/scene/reflection.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/print.hpp>
@@ -89,7 +90,6 @@ namespace mtt::scene {
         auto jsons = std::vector<scene::json>{};
         if (auto e = glz::read_file_json(jsons, std::string{path} + "scene.json", std::string{}); e)
             std::println("read scene {} with glaze error: {}", path, glz::format_error(e));
-
         auto bins = binmap{};
         for (auto& j: jsons) bins[j.type].push_back(std::move(j));
         for (auto& f: impl->filters) f(bins);

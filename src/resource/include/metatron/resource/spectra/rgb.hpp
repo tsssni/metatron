@@ -12,7 +12,7 @@ namespace mtt::spectra {
         struct Descriptor final {
             math::Vector<f32, 3> c;
             color::Color_Space::Spectrum_Type type;
-            stl::proxy<color::Color_Space> color_space;
+            stl::proxy<color::Color_Space> color_space = color::Color_Space::color_spaces["sRGB"];
         };
         Rgb_Spectrum(Descriptor const& desc) noexcept;
         auto operator()(f32 lambda) const noexcept -> f32;

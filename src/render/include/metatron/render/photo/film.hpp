@@ -31,17 +31,21 @@ namespace mtt::photo {
     };
 
     struct Film final {
+        usize spp;
+        usize depth;
         stl::proxy<image::Image> image;
         math::Vector<f32, 2> film_size;
         math::Vector<f32, 2> dxdy;
 
         struct Descriptor final {
-            math::Vector<f32, 2> film_size;
-            math::Vector<f32, 2> image_size;
-            stl::proxy<spectra::Spectrum> r;
-            stl::proxy<spectra::Spectrum> g;
-            stl::proxy<spectra::Spectrum> b;
-            stl::proxy<color::Color_Space> color_space;
+            usize spp = 16uz;
+            usize depth = 64uz;
+            math::Vector<f32, 2> film_size = {0.036f, 0.024f};
+            math::Vector<f32, 2> image_size = {1280uz, 720uz};
+            stl::proxy<spectra::Spectrum> r = spectra::Spectrum::spectra["CIE-X"];
+            stl::proxy<spectra::Spectrum> g = spectra::Spectrum::spectra["CIE-Y"];
+            stl::proxy<spectra::Spectrum> b = spectra::Spectrum::spectra["CIE-Z"];
+            stl::proxy<color::Color_Space> color_space = color::Color_Space::color_spaces["sRGB"];
         };
         Film(Descriptor const& desc) noexcept;
 

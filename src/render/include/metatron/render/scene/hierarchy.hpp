@@ -18,7 +18,7 @@ namespace mtt::scene {
         auto parent(Entity entity) const noexcept -> Entity;
         auto children(Entity entity) const noexcept -> std::span<Entity const>;
 
-        using binmap = std::unordered_map<std::string_view, std::vector<json>>;
+        using binmap = std::unordered_map<std::string, std::vector<json>>;
         using filter_function = std::function<auto (binmap const&) -> void>;
         auto filter(filter_function f) noexcept -> void;
         auto populate(std::string_view path) noexcept -> void;

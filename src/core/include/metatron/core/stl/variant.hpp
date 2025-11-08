@@ -9,6 +9,13 @@ namespace mtt::stl {
 
         template<typename T, typename... Args>
         requires std::is_constructible_v<T, Args...> && ts::template contains<T>
+        variant(Args&&... args) noexcept {emplace<T>(std::forward<Args>(args)...);};
+
+        template<typename T>
+        variant(T&& x) noexcept {push(std::forward<T>(x));};
+
+        template<typename T, typename... Args>
+        requires std::is_constructible_v<T, Args...> && ts::template contains<T>
         auto emplace(Args&&... args) noexcept -> void {
             idx = ts::template index<T>;
             std::construct_at(data<T>(), std::forward<Args>(args)...);
