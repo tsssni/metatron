@@ -7,7 +7,7 @@
 
 namespace mtt::monte_carlo {
     auto Volume_Path_Integrator::sample(
-        Status initial_status,
+        Context context,
         view<accel::Acceleration> accel,
         view<emitter::Emitter> emitter,
         mut<sampler::Sampler> sampler
@@ -19,7 +19,7 @@ namespace mtt::monte_carlo {
         auto mis_e = emission; mis_e = 0.f;
 
         auto depth = 0uz;
-        auto max_depth = initial_status.max_depth;
+        auto max_depth = context.max_depth;
 
         auto scattered = false;
         auto crossed = true;
@@ -32,16 +32,15 @@ namespace mtt::monte_carlo {
 
         auto trace_ctx = eval::Context{};
         auto history_ctx = eval::Context{};
-        trace_ctx.r = initial_status.ray_differential.r;
+        trace_ctx.r = context.ray_differential.r;
         trace_ctx.spec = emission;
 
         auto acc_opt = std::optional<accel::Interaction>{};
-        auto medium = initial_status.medium;
-        auto medium_to_world = initial_status.local_to_world;
-        auto& rdiff = initial_status.ray_differential;
-        auto& ddiff = initial_status.default_differential;
-        auto& rt = *initial_status.world_to_render;
-        auto& ct = *initial_status.render_to_camera;
+        auto medium = view<media::Medium>{};
+        auto medium_to_render = view<math::Transform>{nullptr};
+        auto& rdiff = context.ray_differential;
+        auto& ddiff = context.default_differential;
+        auto& ct = context.render_to_camera;
 
         while (true) {
             depth += usize(scattered);
@@ -63,9 +62,9 @@ namespace mtt::monte_carlo {
 
                 auto direct_ctx = trace_ctx;
                 MTT_OPT_OR_RETURN(e_intr, emitter->sample(direct_ctx, sampler->generate_1d()));
-                auto& et = *e_intr.divider->local_to_world;
+                auto& et = *e_intr.divider->local_to_render;
                 auto light = e_intr.divider->light;
-                auto l_ctx = et ^ rt ^ direct_ctx;
+                auto l_ctx = et ^ direct_ctx;
                 MTT_OPT_OR_RETURN(l_intr, light->sample(l_ctx, sampler->generate_2d()));
 
                 auto e_pdf = emitter->pdf(*e_intr.divider);
@@ -73,8 +72,8 @@ namespace mtt::monte_carlo {
                 auto p_e = e_pdf * l_pdf;
                 if (math::abs(p_e) < math::epsilon<f32>) return;
 
-                l_intr.p = rt | et | math::expand(l_intr.p, 1.f);
-                l_intr.wi = math::normalize(rt | et | math::expand(l_intr.wi, 0.f));
+                l_intr.p = et | math::expand(l_intr.p, 1.f);
+                l_intr.wi = math::normalize(et | math::expand(l_intr.wi, 0.f));
                 direct_ctx.r.d = l_intr.wi;
 
                 auto q = 0.f;
@@ -101,7 +100,7 @@ namespace mtt::monte_carlo {
                 auto crossed = true;
 
                 auto volume = medium;
-                auto direct_to_world = medium_to_world;
+                auto direct_to_render = medium_to_render;
                 auto gamma = beta * (g / p_e) / (f / p);
                 auto mis_d = mis_s * q / p_e * f32(!(e_intr.divider->light->flags() & light::Flags::delta));
                 auto mis_l = mis_s;
@@ -135,13 +134,13 @@ namespace mtt::monte_carlo {
                         auto& intr = acc_opt->intr_opt.value();
 
                         auto& div = *acc.divider;
-                        auto lt = math::Transform{rt, *div.local_to_world};
+                        auto& lt = *div.local_to_render;
 
                         intr.p = lt | math::expand(intr.p, 1.f);
                         intr.n = math::normalize(lt | intr.n);
                         direct_ctx.inside = math::dot(-direct_ctx.r.d, intr.n) < 0.f;
                         volume = direct_ctx.inside ? div.int_medium : div.ext_medium;
-                        direct_to_world = direct_ctx.inside ? div.int_to_world : div.ext_to_world;
+                        direct_to_render = direct_ctx.inside ? div.int_to_render : div.ext_to_render;
                         intr.n *= direct_ctx.inside ? -1.f : 1.f;
 
                         auto close_to_light = math::length(intr.p - l_intr.p) < 0.001f;
@@ -174,14 +173,14 @@ namespace mtt::monte_carlo {
                     auto& div = acc.divider;
                     auto& intr = acc.intr_opt.value();
 
-                    auto& mt = *direct_to_world;
-                    auto m_ctx = mt ^ rt ^ direct_ctx;
+                    auto& mt = *direct_to_render;
+                    auto m_ctx = mt ^ direct_ctx;
                     MTT_OPT_OR_CALLBACK(m_intr, volume->sample(m_ctx, intr.t, sampler->generate_1d()), {
                         gamma = 0.f;
                         terminated = true;
                         break;
                     });
-                    m_intr.p = rt | mt | math::expand(m_intr.p, 1.f);
+                    m_intr.p = mt | math::expand(m_intr.p, 1.f);
                     l_intr.t -= m_intr.t;
 
                     auto hit = m_intr.t >= intr.t;
@@ -217,9 +216,9 @@ namespace mtt::monte_carlo {
 
                 MTT_OPT_OR_CONTINUE(e_intr, emitter->sample_infinite(trace_ctx, sampler->generate_1d()));
                 auto light = e_intr.divider->light;
-                auto& lt = *e_intr.divider->local_to_world;
+                auto& lt = *e_intr.divider->local_to_render;
 
-                auto l_ctx = lt ^ rt ^ trace_ctx;
+                auto l_ctx = lt ^ trace_ctx;
                 MTT_OPT_OR_CONTINUE(l_intr, (*light)(l_ctx.r, l_ctx.spec));
 
                 auto e_pdf = emitter->pdf_infinite(*e_intr.divider);
@@ -235,14 +234,14 @@ namespace mtt::monte_carlo {
             auto& acc = acc_opt.value();
             auto& div = acc.divider;
             auto& intr = acc.intr_opt.value();
-            auto lt = math::Transform{rt, *div->local_to_world};
+            auto& lt = *div->local_to_render;
 
             if (scattered || crossed) {
                 intr.p = lt | math::expand(intr.p, 1.f);
                 intr.n = math::normalize(lt | intr.n);
                 trace_ctx.inside = math::dot(-trace_ctx.r.d, intr.n) < 0.f;
                 medium = trace_ctx.inside ? div->int_medium : div->ext_medium;
-                medium_to_world = trace_ctx.inside ? div->int_to_world : div->ext_to_world;
+                medium_to_render = trace_ctx.inside ? div->int_to_render : div->ext_to_render;
 
                 auto flip_n = trace_ctx.inside ? -1.f : 1.f;
                 intr.n *= flip_n;
@@ -250,13 +249,13 @@ namespace mtt::monte_carlo {
                 intr.bn = math::normalize(lt | math::expand(intr.bn * flip_n, 0.f));
             }
 
-            auto& mt = *medium_to_world;
-            auto m_ctx = mt ^ rt ^ trace_ctx;
+            auto& mt = *medium_to_render;
+            auto m_ctx = mt ^ trace_ctx;
             MTT_OPT_OR_CALLBACK(m_intr, medium->sample(m_ctx, intr.t, sampler->generate_1d()), {
                 terminated = true;
                 continue;
             });
-            m_intr.p = rt | mt | math::expand(m_intr.p, 1.f);
+            m_intr.p = mt | math::expand(m_intr.p, 1.f);
 
             auto hit = m_intr.t >= intr.t;
             auto spectra_pdf = hit
@@ -333,7 +332,7 @@ namespace mtt::monte_carlo {
 
             [&]() {
                 if (spectra::max(mat_intr.emission) < math::epsilon<f32>) return;
-                MTT_OPT_OR_RETURN(e_intr, (*emitter)(trace_ctx, {div->light, div->local_to_world}));
+                MTT_OPT_OR_RETURN(e_intr, (*emitter)(trace_ctx, {div->light, div->local_to_render}));
 
                 auto s_pdf = div->shape->pdf(trace_ctx.r, trace_ctx.n, div->primitive);
                 auto e_pdf = emitter->pdf(*e_intr.divider);

@@ -18,34 +18,16 @@ namespace mtt::stl {
             storage.emplace_back(std::forward<Args>(args)...);
             return storage.size() - 1;
         }
-        
-        auto push_back(T&& x) noexcept -> u32 {
-            return emplace_back(std::forward<T>(x));
-        }
+        auto push_back(T&& x) noexcept -> u32 {return emplace_back(std::move(x));}
+        auto push_back(T const& x) noexcept -> u32 {return emplace_back(x);}
+        auto lock() const noexcept -> std::unique_lock<std::mutex> {return std::unique_lock{*mutex};}
 
-        auto operator[](u32 i) noexcept -> mut<T> {
-            return &storage[i];
-        }
-
-        auto operator[](u32 i) const noexcept -> view<T> {
-            return &storage[i];
-        }
-
-        auto data() const noexcept -> T* {
-            return storage.data();
-        }
-
-        auto size() const noexcept -> usize {
-            return storage.size();
-        }
-
-        auto reserve(usize n) noexcept -> void {
-            storage.reserve(n);
-        }
-
-        auto lock() const noexcept -> std::unique_lock<std::mutex> {
-            return std::unique_lock{*mutex};
-        }
+        auto operator[](u32 i) noexcept -> mut<T> {return &storage[i];}
+        auto operator[](u32 i) const noexcept -> view<T> {return &storage[i];}
+        auto data() const noexcept -> T* {return storage.data();}
+        auto size() const noexcept -> usize {return storage.size();}
+        auto capacity() const noexcept -> usize {return storage.capacity();}
+        auto reserve(usize n) noexcept -> void {storage.reserve(n);}
 
     private:
         std::vector<T> storage;
@@ -77,11 +59,14 @@ namespace mtt::stl {
             std::construct_at(ptr, std::forward<Args>(args)...);
             return ((idx & 0xff) << 24) | ((size / sizeof(T)) & 0xffffff);
         }
-        
+
         template<typename T>
         requires std::is_constructible_v<std::decay_t<T>, T>
-        auto push_back(T&& x) noexcept -> u32 {
-            return emplace_back<T>(std::forward<T>(x));
+        auto push_back(T&& x) noexcept -> u32 {return emplace_back<T>(std::forward<T>(x));}
+
+        template<typename T>
+        auto lock() const noexcept -> std::unique_lock<std::mutex> {
+            return std::unique_lock{*mutex[map.at(typeid(T))]};
         }
 
         auto operator[](u32 i) noexcept -> mut<F> {
@@ -99,24 +84,13 @@ namespace mtt::stl {
         }
 
         template<typename T>
-        auto data() const noexcept -> T* {
-            return (T*)storage[map.at(typeid(T))].data();
-        }
-
+        auto data() const noexcept -> T* {return (T*)storage[map.at(typeid(T))].data();}
         template<typename T>
-        auto size() const noexcept -> usize {
-            return storage[map.at(typeid(T))].size() / sizeof(T);
-        }
-
+        auto size() const noexcept -> usize {return storage[map.at(typeid(T))].size() / sizeof(T);}
         template<typename T>
-        auto reserve(usize n) noexcept -> void {
-            storage[map.at(typeid(T))].reserve(n);
-        }
-
+        auto capacity() const noexcept -> usize {return storage[map.at(typeid(T))].capacity() / sizeof(T);}
         template<typename T>
-        auto lock() const noexcept -> std::unique_lock<std::mutex> {
-            return std::unique_lock{*mutex[map.at(typeid(T))]};
-        }
+        auto reserve(usize n) noexcept -> void {storage[map.at(typeid(T))].reserve(n * sizeof(T));}
 
     private:
         std::vector<std::vector<byte>> storage;

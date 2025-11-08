@@ -24,18 +24,16 @@ namespace mtt::accel {
 
     LBVH::LBVH(
         std::vector<Divider>&& dividers,
-        math::Transform const* transform,
         usize num_guide_left_prims
-    ) noexcept:
-    dividers(std::move(dividers)),
-    transform(transform) {
+    ) noexcept: dividers(std::move(dividers)) {
         std::vector<LBVH_Divider> lbvh_divs;
         for (auto i = 0u; i < this->dividers.size(); ++i) {
             auto& div = this->dividers[i];
-            auto& lt = *div.local_to_world;
-            auto t = this->transform->transform | lt.transform;
             lbvh_divs.push_back(LBVH_Divider{
-                .bbox = div.shape->bounding_box(t, div.primitive),
+                .bbox = div.shape->bounding_box(
+                    div.local_to_render->transform,
+                    div.primitive
+                ),
                 .index = i,
             });
         }
@@ -201,9 +199,7 @@ namespace mtt::accel {
                     .axis = byte(node->split_axis),
                 });
                 auto idx = bvh.size() - 1;
-                self(node->left.get());
-                bvh[idx].r_idx = u32(bvh.size());
-                self(node->right.get());
+                self(node->left.get()); bvh[idx].r_idx = u32(bvh.size()); self(node->right.get());
             }
         };
         traverse(root.get());
@@ -218,9 +214,6 @@ namespace mtt::accel {
     auto LBVH::operator()(
         math::Ray const& r
     ) const noexcept -> std::optional<Interaction> {
-        auto& rt = *transform;
-        auto wr = rt ^ r;
-
         auto intr_div = (Divider const*)nullptr;
         auto intr_opt = std::optional<shape::Interaction>{};
         auto candidates = std::stack<u32>{};
@@ -237,8 +230,8 @@ namespace mtt::accel {
                 for (auto i = 0u; i < node->num_prims; ++i) {
                     auto idx = node->div_idx + i;
                     auto div = &dividers[idx];
-                    auto& lt = *div->local_to_world;
-                    auto lr = lt ^ wr;
+                    auto& lt = *div->local_to_render;
+                    auto lr = lt ^ r;
 
                     MTT_OPT_OR_CONTINUE(div_intr, (*div->shape)(lr, div->primitive));
                     if (!intr_opt || div_intr.t < intr_opt.value().t) {

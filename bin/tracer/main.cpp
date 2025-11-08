@@ -31,6 +31,5 @@ auto main(i32 argc, mut<char> argv[]) -> int {
     }
 
     scene::init();
-    scene::test();
     return 0;
 }

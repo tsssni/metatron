@@ -5,7 +5,7 @@
 namespace mtt::emitter {
     struct Divider final {
         view<light::Light> light;
-        view<math::Transform> local_to_world;
+        view<math::Transform> local_to_render;
     };
 
     struct Interaction final {

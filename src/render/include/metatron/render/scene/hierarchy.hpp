@@ -32,13 +32,19 @@ namespace mtt::scene {
         }
 
         template<typename F>
-        auto fetch(Entity entity) noexcept -> stl::proxy<F> {
+        auto fetch(Entity entity) const noexcept -> stl::proxy<F> {
             return registry.get<stl::proxy<F>>(entity);
         }
 
         template<typename F>
         auto detach(Entity entity) noexcept -> void {
             registry.erase<stl::proxy<F>>(entity);
+        }
+
+        template<typename F>
+        auto entities() const noexcept -> std::vector<Entity> {
+            return registry.view<stl::proxy<F>>()
+            | std::ranges::to<std::vector<Entity>>();
         }
     };
 }

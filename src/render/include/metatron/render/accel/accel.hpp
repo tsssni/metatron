@@ -14,9 +14,9 @@ namespace mtt::accel {
         view<media::Medium> ext_medium;
         view<light::Light> light{};
         view<material::Material> material{};
-        view<math::Transform> local_to_world{};
-        view<math::Transform> int_to_world{};
-        view<math::Transform> ext_to_world{};
+        view<math::Transform> local_to_render{};
+        view<math::Transform> int_to_render{};
+        view<math::Transform> ext_to_render{};
         usize primitive{0uz};
     };
 

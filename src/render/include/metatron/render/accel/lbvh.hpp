@@ -16,7 +16,6 @@ namespace mtt::accel {
 
         LBVH(
             std::vector<Divider>&& dividers,
-            math::Transform const* transform,
             usize num_guide_leaf_prims = 4
         ) noexcept;
         auto operator()(
@@ -26,6 +25,5 @@ namespace mtt::accel {
     private:
         std::vector<Node> bvh;
         std::vector<Divider> dividers;
-        math::Transform const* transform;
     };
 }

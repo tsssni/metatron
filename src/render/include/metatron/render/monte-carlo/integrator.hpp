@@ -7,13 +7,10 @@
 #include <metatron/resource/spectra/stochastic.hpp>
 
 namespace mtt::monte_carlo {
-    struct Status final {
+    struct Context final {
         math::Ray_Differential ray_differential;
         math::Ray_Differential default_differential;
-        math::Transform const* local_to_world;
-        math::Transform const* world_to_render;
-        math::Transform const* render_to_camera;
-        view<media::Medium> medium;
+        math::Transform render_to_camera;
         math::Vector<usize, 2> pixel;
         usize sample_index;
         usize max_depth;
@@ -23,7 +20,7 @@ namespace mtt::monte_carlo {
 
     struct Integrator final: pro::facade_builder
     ::add_convention<integrator_sample, auto (
-        Status initial_status,
+        Context context,
         view<accel::Acceleration> accel,
         view<emitter::Emitter> emitter,
         mut<sampler::Sampler> sampler

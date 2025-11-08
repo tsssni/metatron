@@ -16,4 +16,7 @@ namespace mtt::scene {
     struct descriptor<T> final {
         using type = T::Descriptor;
     };
+
+    template<typename T>
+    using descriptor_t = descriptor<T>::type;
 }
