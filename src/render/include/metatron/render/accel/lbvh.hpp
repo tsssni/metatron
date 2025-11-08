@@ -27,7 +27,8 @@ namespace mtt::accel {
         LBVH(Descriptor const& desc) noexcept;
 
         auto operator()(
-            math::Ray const& r
+            math::Ray const& r,
+            math::Vector<f32, 3> const& n
         ) const noexcept -> std::optional<Interaction>;
 
     private:

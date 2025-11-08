@@ -234,11 +234,21 @@ namespace mtt::light {
             return hosek(lambda, math::unit_to_cos_theta(wi), math::dot(d, wi));
         }, L.lambda);
 
+        auto tgmm_phi = phi + math::pi * 0.5f - phi_sun;
+        auto sun_pdf = 0.f;
+        auto sky_pdf = 0.f;
+        for (auto i = 0; cos_theta >= 0.f && i < tgmm_num_gaussian; ++i)
+            sky_pdf += tgmm_phi_distr[i].pdf(tgmm_phi) * tgmm_theta_distr[i].pdf(theta) * tgmm_distr.pdf[i];
+        sky_pdf = math::guarded_div(sky_pdf, std::sin(theta));
+        sun_pdf = cos_gamma >= cos_sun ? math::Cone_Distribution{cos_sun}.pdf() : 0.f;
+        auto pdf = math::lerp(sun_pdf, sky_pdf, w_sky);
+
         return Interaction{
             .L = L,
             .wi = r.d,
             .p = r.o + r.d * 65504.f,
             .t = 65504.f,
+            .pdf = pdf,
         };
     }
 
@@ -267,26 +277,6 @@ namespace mtt::light {
             wi = math::normalize(math::Vector<f32, 3>{t | math::expand(distr.sample(u), 0.f)});
         }
         return (*this)({ctx.r.o, wi}, ctx.spec);
-    }
-
-    auto Sunsky_Light::pdf(
-        math::Ray const& r,
-        math::Vector<f32, 3> const& np
-    ) const noexcept -> f32 {
-        auto [theta, phi] = math::cartesian_to_unit_spherical(r.d);
-        auto cos_theta = math::unit_to_cos_theta(r.d);
-        auto sin_theta = math::unit_to_sin_theta(r.d);
-        auto cos_gamma = math::dot(d, r.d);
-        auto tgmm_phi = phi + math::pi * 0.5f - phi_sun;
-
-        auto sun_pdf = 0.f;
-        auto sky_pdf = 0.f;
-        if (cos_theta >= 0.f)
-            for (auto i = 0; i < tgmm_num_gaussian; ++i)
-                sky_pdf += tgmm_phi_distr[i].pdf(tgmm_phi) * tgmm_theta_distr[i].pdf(theta) * tgmm_distr.pdf[i];
-        sky_pdf = math::guarded_div(sky_pdf, std::sin(theta));
-        sun_pdf = cos_gamma >= cos_sun ? math::Cone_Distribution{cos_sun}.pdf() : 0.f;
-        return math::lerp(sun_pdf, sky_pdf, w_sky);
     }
 
     auto Sunsky_Light::flags() const noexcept -> Flags {

@@ -13,6 +13,7 @@ namespace mtt::shape {
         ) const noexcept -> math::Bounding_Box;
         auto operator()(
             math::Ray const& r,
+            math::Vector<f32, 3> const& np,
             usize idx = 0uz
         ) const noexcept -> std::optional<Interaction>;
         auto sample(
@@ -20,10 +21,9 @@ namespace mtt::shape {
             math::Vector<f32, 2> const& u,
             usize idx = 0uz
         ) const noexcept -> std::optional<Interaction>;
-        auto pdf(
+        auto query(
             math::Ray const& r,
-            math::Vector<f32, 3> const& np = {},
             usize idx = 0uz
-        ) const noexcept -> f32;
+        ) const noexcept -> std::optional<f32>;
     };
 }

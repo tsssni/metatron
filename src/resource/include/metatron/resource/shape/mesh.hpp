@@ -15,6 +15,7 @@ namespace mtt::shape {
         ) const noexcept -> math::Bounding_Box;
         auto operator()(
             math::Ray const& r,
+            math::Vector<f32, 3> const& np,
             usize idx
         ) const noexcept -> std::optional<Interaction>;
         // sphere triangle sampling: https://pbr-book.org/4ed/Shapes/Triangle_Meshes
@@ -23,11 +24,10 @@ namespace mtt::shape {
             math::Vector<f32, 2> const& u,
             usize idx
         ) const noexcept -> std::optional<Interaction>;
-        auto pdf(
+        auto query(
             math::Ray const& r,
-            math::Vector<f32, 3> const& np = {},
-            usize idx = 0uz
-        ) const noexcept -> f32;
+            usize idx
+        ) const noexcept -> std::optional<f32>;
 
     private:
         template<typename T>
@@ -46,6 +46,17 @@ namespace mtt::shape {
                 }, b
             );
         }
+
+        auto intersect(
+            math::Ray const& r,
+            usize idx
+        ) const noexcept -> std::optional<math::Vector<f32, 4>>;
+
+        auto pdf(
+            math::Ray const& r,
+            math::Vector<f32, 3> const& np,
+            usize idx
+        ) const noexcept -> f32;
 
         std::vector<math::Vector<usize, 3>> indices;
 

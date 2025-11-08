@@ -197,10 +197,11 @@ namespace mtt::accel {
     }
 
     auto LBVH::operator()(
-        math::Ray const& r
+        math::Ray const& r,
+        math::Vector<f32, 3> const& n
     ) const noexcept -> std::optional<Interaction> {
         auto prim = view<Primitive>{};
-        auto intr_opt = std::optional<shape::Interaction>{};
+        auto q_opt = std::optional<f32>{};
         auto candidates = std::stack<u32>{};
         candidates.push(0u);
 
@@ -208,20 +209,19 @@ namespace mtt::accel {
             auto idx = candidates.top();
             candidates.pop();
             auto node = &bvh[idx];
-            auto t_opt = math::hit(r, node->bbox);
-            if (!t_opt || (intr_opt && intr_opt->t < t_opt.value()[0])) continue;
+            auto b_opt = math::hit(r, node->bbox);
+            if (!b_opt || (q_opt && *q_opt < b_opt.value()[0])) continue;
 
             if (node->num_prims < 0) {
                 for (auto i = 0u; i < -node->num_prims; ++i) {
                     auto idx = node->prim + i;
                     auto& p = prims[idx];
                     auto div = p.instance;
-                    auto s = div->shape.data();
-                    auto lr = (*div->local_to_render) ^ r;
+                    auto lr = (*p.instance->local_to_render) ^ r;
 
-                    MTT_OPT_OR_CONTINUE(div_intr, (*s)(lr, p.primitive));
-                    if (!intr_opt || div_intr.t < intr_opt.value().t) {
-                        intr_opt = div_intr_opt;
+                    MTT_OPT_OR_CONTINUE(t, div->shape->query(lr, p.primitive));
+                    if (!q_opt || t < *q_opt) {
+                        q_opt = t_opt;
                         prim = &p;
                     }
                 }
@@ -239,7 +239,11 @@ namespace mtt::accel {
         return Interaction{
             .divider = prim->instance,
             .primitive = prim->primitive,
-            .intr_opt = intr_opt,
+            .intr_opt = (*prim->instance->shape.data())(
+                (*prim->instance->local_to_render) ^ r,
+                (*prim->instance->local_to_render) ^ n,
+                prim->primitive
+            ),
         };
     }
 }

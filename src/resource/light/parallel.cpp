@@ -18,14 +18,8 @@ namespace mtt::light {
             .wi = wi,
             .p = ctx.r.o + 65504.f * wi,
             .t = 65504.f,
+            .pdf = 1.f,
         };
-    }
-
-    auto Parallel_Light::pdf(
-        math::Ray const& r,
-        math::Vector<f32, 3> const& np
-    ) const noexcept -> f32 {
-        return 1.f;
     }
 
     auto Parallel_Light::flags() const noexcept -> Flags {

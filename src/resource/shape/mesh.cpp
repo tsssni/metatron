@@ -133,54 +133,13 @@ namespace mtt::shape {
 
     auto Mesh::operator()(
         math::Ray const& r,
+        math::Vector<f32, 3> const& np,
         usize idx
     ) const noexcept -> std::optional<Interaction> {
-        auto rs = r.d;
-        auto ri = math::maxi(math::abs(rs));
-        std::swap(rs[2], rs[ri]);
-        auto rt = math::Vector<f32, 3>{
-            -rs[0], -rs[1], 1.f
-        } / rs[2];
-
-        auto local_to_shear = [&](auto const& x) {
-            auto y = x - r.o;
-            std::swap(y[2], y[ri]);
-            auto z = y[2] * rt;
-            y[2] = 0.f;
-            return y + z;
-        };
-
-        auto prim = indices[idx];
-        auto v = math::Vector<math::Vector<f32, 4>, 3>{
-            local_to_shear(vertices[prim[0]]),
-            local_to_shear(vertices[prim[1]]),
-            local_to_shear(vertices[prim[2]]),
-        };
-
-        auto ef = [](
-            math::Vector<f32, 2> p,
-            math::Vector<f32, 2> v0,
-            math::Vector<f32, 2> v1
-        ) -> f32 {
-            return math::determinant(math::Matrix<f32, 2, 2>{v1 - v0, p - v0});
-        };
-        auto e = math::Vector<f32, 3>{
-            ef({0.f}, v[1], v[2]),
-            ef({0.f}, v[2], v[0]),
-            ef({0.f}, v[0], v[1]),
-        };
-        auto det = math::sum(e);
-        auto bary = e / det;
-
-        if (false
-        || math::abs(det) < math::epsilon<f32>
-        || std::signbit(e[0]) != std::signbit(e[1])
-        || std::signbit(e[1]) != std::signbit(e[2])
-        ) return {};
-
-        auto t = math::blerp(v, bary)[2];
-        if (t < math::epsilon<f32>) return {};
-
+        MTT_OPT_OR_RETURN(isec, intersect(r, idx), {});
+        auto bary = math::shrink(isec);
+        auto t = isec[3];
+        auto pdf = this->pdf(r, np, idx);
         auto p = blerp(vertices, bary, idx);
         auto n = blerp(normals, bary, idx);
         auto tn = math::gram_schmidt(dpdu[idx], n);
@@ -188,7 +147,7 @@ namespace mtt::shape {
         auto uv = blerp(uvs, bary, idx);
 
         return shape::Interaction{
-            p, n, tn, bn, uv, t,
+            p, n, tn, bn, uv, t, pdf,
             dpdu[idx], dpdv[idx],
             dndu[idx], dndv[idx],
         };
@@ -265,6 +224,7 @@ namespace mtt::shape {
         }
         auto bary = math::Vector<f32, 3>{1.f - b_1 - b_2, b_1, b_2};
 
+        auto pdf = this->pdf({ctx.r.o, d}, ctx.n, idx);
         auto p = ctx.r.o + t * d;
         auto n = blerp(normals, bary, idx);
         auto tn = math::gram_schmidt(dpdu[idx], n);
@@ -272,10 +232,70 @@ namespace mtt::shape {
         auto uv = blerp(uvs, bary, idx);
 
         return shape::Interaction{
-            p, n, tn, bn, uv, t,
+            p, n, tn, bn, uv, t, pdf,
             dpdu[idx], dpdv[idx],
             dndu[idx], dndv[idx],
         };
+    }
+
+    auto Mesh::query(
+        math::Ray const& r,
+        usize idx
+    ) const noexcept -> std::optional<f32> {
+        MTT_OPT_OR_RETURN(isec, intersect(r, idx), {});
+        return isec[3];
+    }
+
+    auto Mesh::intersect(
+        math::Ray const& r,
+        usize idx
+    ) const noexcept -> std::optional<math::Vector<f32, 4>> {
+        auto rs = r.d;
+        auto ri = math::maxi(math::abs(rs));
+        std::swap(rs[2], rs[ri]);
+        auto rt = math::Vector<f32, 3>{
+            -rs[0], -rs[1], 1.f
+        } / rs[2];
+
+        auto local_to_shear = [&](auto const& x) {
+            auto y = x - r.o;
+            std::swap(y[2], y[ri]);
+            auto z = y[2] * rt;
+            y[2] = 0.f;
+            return y + z;
+        };
+
+        auto prim = indices[idx];
+        auto v = math::Vector<math::Vector<f32, 4>, 3>{
+            local_to_shear(vertices[prim[0]]),
+            local_to_shear(vertices[prim[1]]),
+            local_to_shear(vertices[prim[2]]),
+        };
+
+        auto ef = [](
+            math::Vector<f32, 2> p,
+            math::Vector<f32, 2> v0,
+            math::Vector<f32, 2> v1
+        ) -> f32 {
+            return math::determinant(math::Matrix<f32, 2, 2>{v1 - v0, p - v0});
+        };
+        auto e = math::Vector<f32, 3>{
+            ef({0.f}, v[1], v[2]),
+            ef({0.f}, v[2], v[0]),
+            ef({0.f}, v[0], v[1]),
+        };
+        auto det = math::sum(e);
+
+        if (false
+        || math::abs(det) < math::epsilon<f32>
+        || std::signbit(e[0]) != std::signbit(e[1])
+        || std::signbit(e[1]) != std::signbit(e[2])
+        ) return {};
+
+        auto bary = e / det;
+        auto t = math::blerp(v, bary)[2];
+        if (t < math::epsilon<f32>) return {};
+        return math::Vector<f32, 4>{bary, t};
     }
 
     auto Mesh::pdf(

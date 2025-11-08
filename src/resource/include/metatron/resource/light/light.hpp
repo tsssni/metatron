@@ -9,6 +9,7 @@ namespace mtt::light {
         math::Vector<f32, 3> wi;
         math::Vector<f32, 3> p;
         f32 t;
+        f32 pdf;
     };
 
     enum Flags {
@@ -17,7 +18,6 @@ namespace mtt::light {
     };
 
     MTT_POLY_METHOD(light_sample, sample);
-    MTT_POLY_METHOD(light_pdf, pdf);
     MTT_POLY_METHOD(light_flags, flags);
 
     struct Light final: pro::facade_builder
@@ -29,10 +29,6 @@ namespace mtt::light {
         eval::Context const& ctx,
         math::Vector<f32, 2> const& u
     ) const noexcept -> std::optional<Interaction>>
-    ::add_convention<light_pdf, auto (
-        math::Ray const& r,
-        math::Vector<f32, 3> const& np
-    ) const noexcept -> f32>
     ::add_convention<light_flags, auto () const noexcept -> Flags>
     ::add_skill<pro::skills::as_view>
     ::build {};

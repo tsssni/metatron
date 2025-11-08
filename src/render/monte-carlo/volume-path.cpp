@@ -50,8 +50,7 @@ namespace mtt::monte_carlo {
             if (q < 1.f && depth > 1uz) {
                 auto rr_u = sampler->generate_1d();
                 if (rr_u > q) {
-                    terminated = true;
-                    continue;
+                    terminated = true; continue;
                 } else {
                     beta /= q;
                 }
@@ -68,7 +67,7 @@ namespace mtt::monte_carlo {
                 MTT_OPT_OR_RETURN(l_intr, light->sample(l_ctx, sampler->generate_2d()));
 
                 auto e_pdf = e_intr.pdf;
-                auto l_pdf = e_intr.light->pdf({l_ctx.r.o, l_intr.wi}, l_ctx.n);
+                auto l_pdf = l_intr.pdf;
                 auto p_e = e_pdf * l_pdf;
                 if (math::abs(p_e) < math::epsilon<f32>) return;
 
@@ -111,28 +110,17 @@ namespace mtt::monte_carlo {
                     if (spectra::max(gamma * math::guarded_div(1.f, spectra::avg(mis_d + mis_l))) < 0.05f) {
                         auto q = 0.25f;
                         if (sampler->generate_1d() > q) {
-                            gamma = 0.f;
-                            terminated = true;
-                            continue;
+                            gamma = 0.f; terminated = true; continue;
                         } else {
                             gamma /= q;
                         }
                     }
 
                     if (crossed) {
-                        acc_opt = (*accel)(direct_ctx.r);
-                        if (!acc_opt) {
-                            terminated = true;
-                            continue;
-                        }
-                        auto& acc = acc_opt.value();
-
-                        if (!acc.intr_opt) {
-                            terminated = true;
-                            continue;
-                        }
-                        auto& intr = acc_opt->intr_opt.value();
-
+                        acc_opt = (*accel)(direct_ctx.r, direct_ctx.n);
+                        if (!acc_opt || !acc_opt->intr_opt) { terminated = true; continue; }
+                        auto& acc = *acc_opt;
+                        auto& intr = *acc.intr_opt;
                         auto& div = *acc.divider;
                         auto& lt = *div.local_to_render;
 
@@ -146,9 +134,7 @@ namespace mtt::monte_carlo {
                         auto close_to_light = math::length(intr.p - l_intr.p) < 0.001f;
                         auto is_interface = div.material->flags() & material::Flags::interface;
                         if (!close_to_light && !is_interface) {
-                            terminated = true;
-                            gamma = 0.f;
-                            continue;
+                            terminated = true; gamma = 0.f; continue;
                         } else if (close_to_light) {
                             auto st = math::Transform{math::Matrix<f32, 4, 4>{
                                 math::Quaternion<f32>::from_rotation_between(ddiff.r.d, math::normalize(intr.p))
@@ -169,16 +155,14 @@ namespace mtt::monte_carlo {
                         }
                     }
 
-                    auto& acc = acc_opt.value();
+                    auto& acc = *acc_opt;
+                    auto& intr = *acc.intr_opt;
                     auto& div = acc.divider;
-                    auto& intr = acc.intr_opt.value();
 
                     auto& mt = *direct_to_render;
                     auto m_ctx = mt ^ direct_ctx;
                     MTT_OPT_OR_CALLBACK(m_intr, volume->sample(m_ctx, intr.t, sampler->generate_1d()), {
-                        gamma = 0.f;
-                        terminated = true;
-                        break;
+                        gamma = 0.f; terminated = true; break;
                     });
                     m_intr.p = mt | math::expand(m_intr.p, 1.f);
                     l_intr.t -= m_intr.t;
@@ -210,8 +194,8 @@ namespace mtt::monte_carlo {
                 emission += gamma * mis_u * l_intr.L;
             }();
 
-            if (scattered || crossed) acc_opt = (*accel)(trace_ctx.r);
-            if (!acc_opt || !acc_opt.value().intr_opt) {
+            if (scattered || crossed) acc_opt = (*accel)(trace_ctx.r, trace_ctx.n);
+            if (!acc_opt || !acc_opt->intr_opt) {
                 terminated = true;
 
                 MTT_OPT_OR_CONTINUE(e_intr, emitter->sample_infinite(trace_ctx, sampler->generate_1d()));
@@ -222,7 +206,7 @@ namespace mtt::monte_carlo {
                 MTT_OPT_OR_CONTINUE(l_intr, (*light.data())(l_ctx.r, l_ctx.spec));
 
                 auto e_pdf = e_intr.pdf;
-                auto l_pdf = light->pdf(l_ctx.r, l_ctx.n);
+                auto l_pdf = l_intr.pdf;
                 auto p_e = e_pdf * l_pdf;
 
                 mis_e *= math::guarded_div(p_e, p);
@@ -231,9 +215,9 @@ namespace mtt::monte_carlo {
                 continue;
             }
 
-            auto& acc = acc_opt.value();
+            auto& acc = *acc_opt;
+            auto& intr = *acc.intr_opt;
             auto& div = acc.divider;
-            auto& intr = acc.intr_opt.value();
             auto& lt = *div->local_to_render;
 
             if (scattered || crossed) {
@@ -252,8 +236,7 @@ namespace mtt::monte_carlo {
             auto& mt = *medium_to_render;
             auto m_ctx = mt ^ trace_ctx;
             MTT_OPT_OR_CALLBACK(m_intr, medium->sample(m_ctx, intr.t, sampler->generate_1d()), {
-                terminated = true;
-                continue;
+                terminated = true; continue;
             });
             m_intr.p = mt | math::expand(m_intr.p, 1.f);
 
@@ -288,8 +271,7 @@ namespace mtt::monte_carlo {
 
                     auto p_ctx = pt | trace_ctx;
                     MTT_OPT_OR_CALLBACK(p_intr, phase->sample(p_ctx, sampler->generate_2d()), {
-                        terminated = true;
-                        continue;
+                        terminated = true; continue;
                     });
                     p_intr.wi = math::normalize(pt ^ math::expand(p_intr.wi, 0.f));
 
@@ -324,7 +306,7 @@ namespace mtt::monte_carlo {
             }
             rdiff.differentiable = false;
             auto ldiff = lt ^ rdiff;
-            auto l_intr = acc.intr_opt.value();
+            auto l_intr = intr;
             l_intr.p = lt ^ l_intr.p;
             l_intr.n = lt ^ l_intr.n;
             MTT_OPT_OR_BREAK(tcoord, texture::grad(ldiff, l_intr));
@@ -332,7 +314,7 @@ namespace mtt::monte_carlo {
 
             [&]() {
                 if (spectra::max(mat_intr.emission) < math::epsilon<f32>) return;
-                auto s_pdf = div->shape->pdf(trace_ctx.r, trace_ctx.n, acc.primitive);
+                auto s_pdf = intr.pdf;
                 auto e_pdf = 1.f; // TODO: need better way to fetch area light pdf on GPU
                 auto p_e = e_pdf * s_pdf;
 
@@ -359,8 +341,7 @@ namespace mtt::monte_carlo {
 
             auto b_ctx = bt | trace_ctx;
             MTT_OPT_OR_CALLBACK(b_intr, bsdf->sample(b_ctx, {uc, u[0], u[1]}), {
-                terminated = true;
-                continue;
+                terminated = true; continue;
             });
 
             if (b_ctx.r.d == b_intr.wi) {

@@ -19,14 +19,8 @@ namespace mtt::light {
             .wi = wi,
             .p = {0.f},
             .t = r,
+            .pdf = 1.f,
         };
-    }
-
-    auto Point_Light::pdf(
-        math::Ray const& r,
-        math::Vector<f32, 3> const& np
-    ) const noexcept -> f32 {
-        return 1.f;
     }
 
     auto Point_Light::flags() const noexcept -> Flags {

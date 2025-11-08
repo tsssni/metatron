@@ -14,11 +14,13 @@ namespace mtt::light {
         auto u = 1.f - phi / (2.f * math::pi);
         auto v = theta / math::pi;
         auto t = (*env_map.data())({{u, v}}, spec);
+        auto J = 2.f * math::sqr(math::pi) * std::sin(theta);
         return Interaction{
             .L = t,
             .wi = r.d,
             .p = r.o + r.d * 65504.f,
             .t = 65504.f,
+            .pdf = math::guarded_div(env_map->pdf({u, v}), J),
         };
     }
 
@@ -31,17 +33,6 @@ namespace mtt::light {
         auto theta = uv[1] * math::pi;
         auto wi = math::unit_spherical_to_cartesian({theta, phi});
         return (*this)({ctx.r.o, wi}, ctx.spec);
-    }
-
-    auto Environment_Light::pdf(
-        math::Ray const& r,
-        math::Vector<f32, 3> const& np
-    ) const noexcept -> f32 {
-        auto [theta, phi] = math::cartesian_to_unit_spherical(r.d);
-        auto u = 1.f - phi / (2.f * math::pi);
-        auto v = theta / math::pi;
-        auto J = 2.f * math::sqr(math::pi) * std::sin(theta);
-        return math::guarded_div(env_map->pdf({u, v}), J);
     }
 
     auto Environment_Light::flags() const noexcept -> Flags {
