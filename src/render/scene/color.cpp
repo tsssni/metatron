@@ -6,8 +6,6 @@
 
 namespace mtt::scene {
     auto color_init() noexcept -> void {
-        auto& hierarchy = Hierarchy::instance();
-
         auto& tvec = stl::vector<color::Transfer_Function>::instance();
         auto& cvec = stl::vector<color::Color_Space>::instance();
 
@@ -58,14 +56,14 @@ namespace mtt::scene {
                 red_primitive[i],
                 green_primitive[i],
                 blue_primitive[i],
-                hierarchy.fetch<spectra::Spectrum>(white),
-                stl::proxy<color::Transfer_Function>{transfer_function[i]},
+                fetch<spectra::Spectrum>(white),
+                proxy<color::Transfer_Function>{transfer_function[i]},
             };
 
             {
                 auto lock = cvec.lock();
-                hierarchy.attach<color::Color_Space>(entity, std::move(cs));
-                auto cs = hierarchy.fetch<color::Color_Space>(entity);
+                attach<color::Color_Space>(entity, std::move(cs));
+                auto cs = fetch<color::Color_Space>(entity);
                 color::Color_Space::color_spaces[name[i]] = cs;
             }
         });

@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/render/emitter/emitter.hpp>
+#include <metatron/render/scene/hierarchy.hpp>
 #include <metatron/resource/shape/shape.hpp>
 #include <metatron/resource/material/material.hpp>
 #include <metatron/resource/media/medium.hpp>
@@ -8,20 +8,21 @@
 #include <metatron/core/math/transform.hpp>
 
 namespace mtt::accel {
+    auto constexpr default_medium = "/hierarchy/medium/vaccum";
+
     struct Divider final {
-        view<shape::Shape> shape{};
-        view<media::Medium> int_medium;
-        view<media::Medium> ext_medium;
-        view<light::Light> light{};
-        view<material::Material> material{};
-        view<math::Transform> local_to_render{};
-        view<math::Transform> int_to_render{};
-        view<math::Transform> ext_to_render{};
-        usize primitive{0uz};
+        proxy<shape::Shape> shape{};
+        proxy<media::Medium> int_medium{scene::fetch<media::Medium>(default_medium / et)};
+        proxy<media::Medium> ext_medium{scene::fetch<media::Medium>(default_medium / et)};
+        proxy<material::Material> material{};
+        proxy<math::Transform> local_to_render{};
+        proxy<math::Transform> int_to_render{scene::fetch<math::Transform>(default_medium / et)};
+        proxy<math::Transform> ext_to_render{scene::fetch<math::Transform>(default_medium / et)};
     };
 
     struct Interaction final {
-        view<Divider> divider{nullptr};
+        proxy<Divider> divider;
+        usize primitive{0uz};
         std::optional<shape::Interaction> intr_opt;
     };
 

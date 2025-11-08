@@ -18,7 +18,7 @@ namespace mtt::renderer {
             Sampler sampler;
             Filter filter;
             Lens lens;
-            photo::Film film;
+            photo::Film film = photo::Film::Descriptor{};
         };
         Renderer(Descriptor&& desc) noexcept;
     };

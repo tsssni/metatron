@@ -7,8 +7,6 @@
 
 namespace mtt::scene {
     auto media_init() noexcept -> void {
-        auto& hierarchy = Hierarchy::instance();
-
         auto& vvec = stl::vector<volume::Volume>::instance();
         vvec.emplace_type<volume::Uniform_Volume>();
         vvec.emplace_type<volume::Nanovdb_Volume>();
@@ -17,5 +15,7 @@ namespace mtt::scene {
         mvec.emplace_type<media::Homogeneous_Medium>();
         mvec.emplace_type<media::Heterogeneous_Medium>();
         mvec.emplace_type<media::Vaccum_Medium>();
+
+        attach<media::Medium>("/hierarchy/medium/vaccum"_et, media::Vaccum_Medium{});
     }
 }

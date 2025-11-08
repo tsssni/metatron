@@ -71,7 +71,7 @@ namespace mtt::volume {
 
     auto Uniform_Volume::operator[](math::Vector<i32, 3> const& ijk) noexcept -> f32& {
         auto [i, j, k] = ijk;
-        auto ptr = (*storage.data())[i, j, k].data();
+        auto ptr = (*storage)[i, j, k].data();
         return *(f32*)ptr;
     }
 

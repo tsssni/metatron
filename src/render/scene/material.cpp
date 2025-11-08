@@ -9,8 +9,6 @@
 
 namespace mtt::scene {
     auto material_init() noexcept -> void {
-        auto& hierarchy = Hierarchy::instance();
-
         auto& vvec = stl::vector<texture::Vector_Texture>::instance();
         vvec.emplace_type<texture::Constant_Vector_Texture>();
         vvec.emplace_type<texture::Image_Vector_Texture>();
@@ -25,10 +23,10 @@ namespace mtt::scene {
         mvec.emplace_type<material::Interface_Material>();
 
         for (auto& [spec, _]: spectra::Spectrum::spectra)
-            hierarchy.attach<texture::Spectrum_Texture>(
+            attach<texture::Spectrum_Texture>(
                 ("/texture/" + spec) / et,
                 texture::Constant_Spectrum_Texture{
-                    hierarchy.fetch<spectra::Spectrum>(("/spectrum/" + spec) / et),
+                    fetch<spectra::Spectrum>(("/spectrum/" + spec) / et),
                 }
             );
 

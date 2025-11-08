@@ -6,6 +6,8 @@ namespace mtt::stl {
     requires (sizeof...(Ts) > 0) && (poliable<F, Ts> && ...)
     struct variant final {
         using ts = stl::array<Ts...>;
+        variant() noexcept = default;
+        variant(variant&&) noexcept = default;
 
         template<typename T, typename... Args>
         requires std::is_constructible_v<T, Args...> && ts::template contains<T>

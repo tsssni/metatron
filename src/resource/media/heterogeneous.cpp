@@ -37,7 +37,7 @@ namespace mtt::media {
 
         auto& vec = stl::vector<volume::Volume>::instance();
         auto lock = vec.lock<volume::Uniform_Volume>();
-        sigma_majorant = vec.push_back<volume::Uniform_Volume>(std::move(sigmaj));
+        majorant = vec.push_back<volume::Uniform_Volume>(std::move(sigmaj));
     }
 
     auto Heterogeneous_Medium::sample(
@@ -54,7 +54,7 @@ namespace mtt::media {
         auto distr = math::Exponential_Distribution{0.f};
 
         auto r = ctx.r;
-        auto cell = this->sigma_majorant->to_index(r.o); auto offset = math::Vector<i32, 3>{0};
+        auto cell = majorant->to_index(r.o); auto offset = math::Vector<i32, 3>{0};
         auto direction = math::foreach([](f32 x, auto){return math::sign(x);}, r.d);
 
         auto t_cell = t_max;
@@ -62,14 +62,14 @@ namespace mtt::media {
         auto t_transmitted = 0.f;
 
         auto update_majorant = [&](f32 t_max) -> void {
-            auto inside = sigma_majorant->inside(cell);
-            auto next_inside = sigma_majorant->inside(cell + offset);
+            auto inside = majorant->inside(cell);
+            auto next_inside = majorant->inside(cell + offset);
             if (inside && !next_inside) {
                 t_cell = t_boundary;
                 return;
             }
 
-            auto bbox = sigma_majorant->bounding_box(cell + offset);
+            auto bbox = majorant->bounding_box(cell + offset);
             auto [t_enter, t_next, i_enter, i_next] = math::hitvi(r, bbox).value_or(
                 std::make_tuple(t_boundary, t_boundary, 0uz, 0uz)
             );
@@ -79,18 +79,18 @@ namespace mtt::media {
                 i_next == 0, i_next == 1, i_next == 2
             };
 
-            density_maj = (*sigma_majorant.data())[cell];
+            density_maj = (*majorant.data())[cell];
             sigma_maj = density_maj * sigma_t;
             distr = math::Exponential_Distribution(sigma_maj.value[0]);
         };
 
-        if (!sigma_majorant->inside(cell)) {
-            auto [t_enter, t_exit] = math::hit(r, sigma_majorant->bounding_box()).value_or(
+        if (!majorant->inside(cell)) {
+            auto [t_enter, t_exit] = math::hit(r, majorant->bounding_box()).value_or(
                 math::Vector<f32, 2>{0.f}
             );
             r.o = r.o + t_enter * r.d;
             cell = math::clamp<i32, 3>(
-                sigma_majorant->to_index(r.o), math::Vector<i32, 3>{0}, sigma_majorant->dimensions() - 1
+                majorant->to_index(r.o), math::Vector<i32, 3>{0}, majorant->dimensions() - 1
             );
         }
         update_majorant(t_max);

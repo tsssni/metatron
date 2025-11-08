@@ -80,7 +80,7 @@ namespace mtt::texture {
     auto Image_Vector_Texture::operator()(
         image::Coordinate const& coord
     ) const noexcept -> math::Vector<f32, 4> {
-        return (*texture.data())(coord);
+        return (*texture)(coord);
     }
 
     auto Image_Vector_Texture::sample(

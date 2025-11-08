@@ -37,7 +37,7 @@ namespace mtt::scene {
                         std::abort();
                     } else {
                         auto lock = stl::vector<Ts>::instance().lock();
-                        Hierarchy::instance().attach<Ts, Ts>(j.entity, std::move(d));
+                        attach<Ts, Ts>(j.entity, std::move(d));
                     }
                 }(), true) : false) || ...);
                 if (!v) std::println(
@@ -79,7 +79,7 @@ namespace mtt::scene {
                         std::abort();
                     } else {
                         auto lock = stl::vector<F>::instance().template lock<Ts>();
-                        Hierarchy::instance().attach<F, Ts>(j.entity, std::move(d));
+                        attach<F, Ts>(j.entity, std::move(d));
                     }
                 }(), true) : false) || ...);
                 if (!v) std::println(

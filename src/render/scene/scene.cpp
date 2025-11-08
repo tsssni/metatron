@@ -1,6 +1,8 @@
 #include <metatron/render/scene/scene.hpp>
 #include <metatron/render/scene/hierarchy.hpp>
 #include <metatron/render/scene/args.hpp>
+#include <metatron/render/scene/serde.hpp>
+#include <metatron/render/renderer/renderer.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 
@@ -27,6 +29,8 @@ namespace mtt::scene {
         material_init();
         light_init();
 
+        // using namespace renderer;
+        // MTT_DESERIALIZE(Renderer);
         hierarchy.populate(args.scene);
     }
 }

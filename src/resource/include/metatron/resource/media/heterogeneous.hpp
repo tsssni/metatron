@@ -8,11 +8,11 @@ namespace mtt::media {
     struct Heterogeneous_Medium final {
         struct Descriptor final {
             Phase phase;
-            stl::proxy<spectra::Spectrum> sigma_a;
-            stl::proxy<spectra::Spectrum> sigma_s;
-            stl::proxy<spectra::Spectrum> sigma_e;
+            proxy<spectra::Spectrum> sigma_a;
+            proxy<spectra::Spectrum> sigma_s;
+            proxy<spectra::Spectrum> sigma_e;
             math::Vector<usize, 3> dimensions;
-            stl::proxy<volume::Volume> density;
+            proxy<volume::Volume> density;
             f32 density_scale;
         };
         Heterogeneous_Medium(Descriptor const& desc) noexcept;
@@ -23,11 +23,11 @@ namespace mtt::media {
 
     private:
         Phase phase;
-        stl::proxy<spectra::Spectrum> sigma_a;
-        stl::proxy<spectra::Spectrum> sigma_s;
-        stl::proxy<spectra::Spectrum> sigma_e;
-        stl::proxy<volume::Volume> sigma_majorant;
-        stl::proxy<volume::Volume> const density;
+        proxy<spectra::Spectrum> sigma_a;
+        proxy<spectra::Spectrum> sigma_s;
+        proxy<spectra::Spectrum> sigma_e;
+        proxy<volume::Volume> majorant;
+        proxy<volume::Volume> const density;
         f32 density_scale;
     };
 }

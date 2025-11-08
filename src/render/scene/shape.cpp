@@ -4,8 +4,6 @@
 
 namespace mtt::scene {
     auto shape_init() noexcept -> void {
-        auto& hierarchy = Hierarchy::instance();
-
         auto& vec = stl::vector<shape::Shape>::instance();
         vec.emplace_type<shape::Mesh>();
         vec.emplace_type<shape::Sphere>();

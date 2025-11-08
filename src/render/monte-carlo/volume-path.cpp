@@ -36,8 +36,8 @@ namespace mtt::monte_carlo {
         trace_ctx.spec = emission;
 
         auto acc_opt = std::optional<accel::Interaction>{};
-        auto medium = view<media::Medium>{};
-        auto medium_to_render = view<math::Transform>{nullptr};
+        auto medium = proxy<media::Medium>{};
+        auto medium_to_render = proxy<math::Transform>{};
         auto& rdiff = context.ray_differential;
         auto& ddiff = context.default_differential;
         auto& ct = context.render_to_camera;
@@ -62,13 +62,13 @@ namespace mtt::monte_carlo {
 
                 auto direct_ctx = trace_ctx;
                 MTT_OPT_OR_RETURN(e_intr, emitter->sample(direct_ctx, sampler->generate_1d()));
-                auto& et = *e_intr.divider->local_to_render;
-                auto light = e_intr.divider->light;
+                auto& et = *(e_intr.local_to_render);
+                auto light = e_intr.light;
                 auto l_ctx = et ^ direct_ctx;
                 MTT_OPT_OR_RETURN(l_intr, light->sample(l_ctx, sampler->generate_2d()));
 
-                auto e_pdf = emitter->pdf(*e_intr.divider);
-                auto l_pdf = e_intr.divider->light->pdf({l_ctx.r.o, l_intr.wi}, l_ctx.n);
+                auto e_pdf = e_intr.pdf;
+                auto l_pdf = e_intr.light->pdf({l_ctx.r.o, l_intr.wi}, l_ctx.n);
                 auto p_e = e_pdf * l_pdf;
                 if (math::abs(p_e) < math::epsilon<f32>) return;
 
@@ -102,7 +102,7 @@ namespace mtt::monte_carlo {
                 auto volume = medium;
                 auto direct_to_render = medium_to_render;
                 auto gamma = beta * (g / p_e) / (f / p);
-                auto mis_d = mis_s * q / p_e * f32(!(e_intr.divider->light->flags() & light::Flags::delta));
+                auto mis_d = mis_s * q / p_e * f32(!(e_intr.light->flags() & light::Flags::delta));
                 auto mis_l = mis_s;
 
                 while (true) {
@@ -215,13 +215,13 @@ namespace mtt::monte_carlo {
                 terminated = true;
 
                 MTT_OPT_OR_CONTINUE(e_intr, emitter->sample_infinite(trace_ctx, sampler->generate_1d()));
-                auto light = e_intr.divider->light;
-                auto& lt = *e_intr.divider->local_to_render;
+                auto light = e_intr.light;
+                auto& lt = *e_intr.local_to_render;
 
                 auto l_ctx = lt ^ trace_ctx;
-                MTT_OPT_OR_CONTINUE(l_intr, (*light)(l_ctx.r, l_ctx.spec));
+                MTT_OPT_OR_CONTINUE(l_intr, (*light.data())(l_ctx.r, l_ctx.spec));
 
-                auto e_pdf = emitter->pdf_infinite(*e_intr.divider);
+                auto e_pdf = e_intr.pdf;
                 auto l_pdf = light->pdf(l_ctx.r, l_ctx.n);
                 auto p_e = e_pdf * l_pdf;
 
@@ -332,10 +332,8 @@ namespace mtt::monte_carlo {
 
             [&]() {
                 if (spectra::max(mat_intr.emission) < math::epsilon<f32>) return;
-                MTT_OPT_OR_RETURN(e_intr, (*emitter)(trace_ctx, {div->light, div->local_to_render}));
-
-                auto s_pdf = div->shape->pdf(trace_ctx.r, trace_ctx.n, div->primitive);
-                auto e_pdf = emitter->pdf(*e_intr.divider);
+                auto s_pdf = div->shape->pdf(trace_ctx.r, trace_ctx.n, acc.primitive);
+                auto e_pdf = 1.f; // TODO: need better way to fetch area light pdf on GPU
                 auto p_e = e_pdf * s_pdf;
 
                 mis_e *= math::guarded_div(p_e, p);

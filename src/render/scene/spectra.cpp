@@ -12,8 +12,6 @@
 
 namespace mtt::scene {
     auto spectra_init() noexcept -> void {
-        auto& hierarchy = Hierarchy::instance();
-
         auto& vec = stl::vector<spectra::Spectrum>::instance();
         vec.emplace_type<spectra::Constant_Spectrum>();
         vec.emplace_type<spectra::Rgb_Spectrum>();
@@ -31,7 +29,7 @@ namespace mtt::scene {
         for (auto i = 0uz; i < name.size(); i++) {
             spectra::Spectrum::spectra.emplace(
                 name[i],
-                hierarchy.attach<spectra::Spectrum>(
+                attach<spectra::Spectrum>(
                     ("/spectrum/" + name[i]) / et,
                     spectra::Constant_Spectrum{data[i]}
                 )
@@ -73,14 +71,14 @@ namespace mtt::scene {
                 }
             name += stem;
 
-            auto attach = [&]<typename S>(S&& spec) {
+            auto push = [&]<typename S>(S&& spec) {
                 auto lock = vec.lock<S>();
                 auto entity = ("/spectrum/" + name) / et;
-                auto handle = hierarchy.attach<spectra::Spectrum>(entity, std::forward<S>(spec));
+                auto handle = attach<spectra::Spectrum>(entity, std::forward<S>(spec));
                 spectra::Spectrum::spectra.emplace(name, handle);
             };
-            if (ext == ".vspd") attach(spectra::Visible_Spectrum{{path}});
-            else if (ext == ".dspd") attach(spectra::Discrete_Spectrum{{path}});
+            if (ext == ".vspd") push(spectra::Visible_Spectrum{{path}});
+            else if (ext == ".dspd") push(spectra::Discrete_Spectrum{{path}});
         });
     }
 }

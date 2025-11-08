@@ -13,7 +13,7 @@ namespace mtt::spectra {
     ::build {
         // IOR data: https://github.com/mitsuba-renderer/mitsuba-data/tree/master/ior
         // CIE data: https://github.com/mmp/pbrt-v4/tree/master/src/pbrt/util/spectrum.cpp
-        std::unordered_map<std::string, stl::proxy<Spectrum>> static spectra;
+        std::unordered_map<std::string, proxy<Spectrum>> static spectra;
     };
 
     auto inline operator|(view<Spectrum> x, view<Spectrum> y) noexcept -> f32 {

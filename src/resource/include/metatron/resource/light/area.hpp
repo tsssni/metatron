@@ -5,7 +5,7 @@
 
 namespace mtt::light {
     struct Area_Light final {
-        stl::proxy<shape::Shape> shape;
+        proxy<shape::Shape> shape;
         usize primitive;
 
         auto operator()(

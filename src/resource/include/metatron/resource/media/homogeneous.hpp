@@ -4,9 +4,9 @@
 namespace mtt::media {
     struct Homogeneous_Medium final {
         Phase phase;
-        stl::proxy<spectra::Spectrum> sigma_a;
-        stl::proxy<spectra::Spectrum> sigma_s;
-        stl::proxy<spectra::Spectrum> sigma_e;
+        proxy<spectra::Spectrum> sigma_a;
+        proxy<spectra::Spectrum> sigma_s;
+        proxy<spectra::Spectrum> sigma_e;
 
         auto sample(
             eval::Context const& ctx, f32 t_max, f32 u

@@ -8,7 +8,7 @@ namespace mtt::spectra {
     Rgb_Spectrum::Rgb_Spectrum(Descriptor const& desc) noexcept {
         auto rgb = desc.c;
         auto cs = desc.color_space;
-        illuminant = desc.type == Spectrum_Type::illuminant ? desc.color_space->illuminant : stl::proxy<Spectrum>{};
+        illuminant = desc.type == Spectrum_Type::illuminant ? desc.color_space->illuminant : proxy<Spectrum>{};
 
         s = 1.f;
         switch (desc.type) {

@@ -6,10 +6,12 @@ namespace mtt::scene {
         return Hierarchy::instance().path(entity);
     }
 
-    auto to_entity(std::string const& path) -> Entity {
+    auto to_entity(std::string_view path) -> Entity {
         return Hierarchy::instance().entity(path);
     }
+}
 
+namespace mtt {
     auto operator""_et(view<char> path, usize size) -> scene::Entity {
         return scene::to_entity(path);
     }

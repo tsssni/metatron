@@ -22,29 +22,34 @@ namespace mtt::scene {
         using filter_function = std::function<auto (binmap const&) -> void>;
         auto filter(filter_function f) noexcept -> void;
         auto populate(std::string_view path) noexcept -> void;
-
-        template<typename F, typename T>
-        auto attach(Entity entity, T&& component = {}) noexcept -> stl::proxy<F> {
-            auto idx = stl::vector<F>::instance().push_back(std::forward<T>(component));
-            auto handle = stl::proxy<F>{idx};
-            registry.emplace<stl::proxy<F>>(entity, handle);
-            return handle;
-        }
-
-        template<typename F>
-        auto fetch(Entity entity) const noexcept -> stl::proxy<F> {
-            return registry.get<stl::proxy<F>>(entity);
-        }
-
-        template<typename F>
-        auto detach(Entity entity) noexcept -> void {
-            registry.erase<stl::proxy<F>>(entity);
-        }
-
-        template<typename F>
-        auto entities() const noexcept -> std::vector<Entity> {
-            return registry.view<stl::proxy<F>>()
-            | std::ranges::to<std::vector<Entity>>();
-        }
     };
+
+    template<typename F, typename T = F>
+    auto attach(Entity entity, T&& component = {}) noexcept -> proxy<F> {
+        auto idx = stl::vector<F>::instance().push_back(std::forward<T>(component));
+        auto handle = proxy<F>{idx};
+        Hierarchy::instance().registry.emplace<proxy<F>>(entity, handle);
+        return handle;
+    }
+
+    template<typename F>
+    auto exist(Entity entity) noexcept -> bool {
+        return Hierarchy::instance().registry.any_of<F>(entity);
+    }
+
+    template<typename F>
+    auto fetch(Entity entity) noexcept -> proxy<F> {
+        return Hierarchy::instance().registry.get<proxy<F>>(entity);
+    }
+
+    template<typename F>
+    auto detach(Entity entity) noexcept -> void {
+        Hierarchy::instance().registry.erase<proxy<F>>(entity);
+    }
+
+    template<typename F>
+    auto entities() noexcept -> std::vector<Entity> {
+        return Hierarchy::instance().registry.view<proxy<F>>()
+        | std::ranges::to<std::vector<Entity>>();
+    }
 }

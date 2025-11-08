@@ -26,7 +26,7 @@ namespace mtt::photo {
             spectrum(film->b.data()),
         };
         auto rgb = film->color_space->from_XYZ | xyz;
-        (*film->image.data())[pixel[0], pixel[1]] += {rgb * weight, weight};
+        (*film->image)[pixel[0], pixel[1]] += {rgb * weight, weight};
     }
 
     Film::Film(Descriptor const& desc) noexcept:

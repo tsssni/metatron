@@ -15,17 +15,17 @@ namespace glz {
         auto static op(mtt::scene::Entity& v, auto&&... args) noexcept -> void {
             auto path = std::string{};
             parse<JSON>::op<Opts>(path, args...);
-            v = path / mtt::scene::et;
+            v = path / mtt::et;
         }
     };
 
     template<typename F>
-    struct from<JSON, mtt::stl::proxy<F>> {
+    struct from<JSON, mtt::proxy<F>> {
         template<auto Opts>
-        auto static op(mtt::stl::proxy<F>& v, auto&&... args) noexcept -> void {
+        auto static op(mtt::proxy<F>& v, auto&&... args) noexcept -> void {
             auto entity = mtt::scene::Entity{};
             parse<JSON>::op<Opts>(entity, args...);
-            v = mtt::scene::Hierarchy::instance().fetch<F>(entity);
+            v = mtt::scene::fetch<F>(entity);
         }
     };
 

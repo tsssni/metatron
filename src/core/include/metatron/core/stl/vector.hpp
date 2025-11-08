@@ -99,37 +99,26 @@ namespace mtt::stl {
         std::vector<poly<std::mutex>> mutex;
         std::unordered_map<std::type_index, u32> map;
     };
+}
 
+namespace mtt {
     template<typename T>
     struct proxy final {
-        using vec = vector<T>;
+        using vec = stl::vector<T>;
 
         proxy(): idx(math::maxv<u32>) {};
         proxy(u32 idx): idx(idx) {}
 
-        auto data() -> mut<T> {
-            return vec::instance()[idx];
-        }
+        auto data() -> mut<T> {return vec::instance()[idx];}
+        auto data() const -> view<T> {return vec::instance()[idx];}
 
-        auto data() const -> view<T> {
-            return vec::instance()[idx];
-        }
+        auto operator->() -> mut<T> {return data();}
+        auto operator->() const -> view<T> {return data();}
+        auto operator*() -> T& requires(!pro::facade<T>) {return *data();}
+        auto operator*() const -> T const& requires(!pro::facade<T>) {return *data();}
 
-        auto operator->() -> mut<T> {
-            return data();
-        }
-
-        auto operator->() const -> view<T> {
-            return data();
-        }
-
-        explicit operator u32() const {
-            return idx;
-        }
-
-        operator bool() const {
-            return idx != math::maxv<u32>;
-        }
+        explicit operator u32() const {return idx;}
+        operator bool() const {return idx != math::maxv<u32>;}
 
     private:
         u32 idx;

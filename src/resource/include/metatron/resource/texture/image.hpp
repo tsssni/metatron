@@ -30,7 +30,7 @@ namespace mtt::texture {
         ) const noexcept -> f32;
 
     private:
-        stl::proxy<image::Image> texture;
+        proxy<image::Image> texture;
         math::Piecewise_Distribution<2> distr;
     };
 
@@ -39,7 +39,7 @@ namespace mtt::texture {
             std::string path;
             color::Color_Space::Spectrum_Type type;
             Image_Distribution distr;
-            stl::proxy<color::Color_Space> color_space = color::Color_Space::color_spaces["sRGB"];
+            proxy<color::Color_Space> color_space = color::Color_Space::color_spaces["sRGB"];
         };
         Image_Spectrum_Texture(Descriptor const& desc) noexcept;
 
@@ -56,7 +56,7 @@ namespace mtt::texture {
         ) const noexcept -> f32;
 
     private:
-        stl::proxy<color::Color_Space> color_space;
+        proxy<color::Color_Space> color_space;
         color::Color_Space::Spectrum_Type type;
         Image_Vector_Texture image_tex;
     };

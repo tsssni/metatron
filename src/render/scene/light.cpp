@@ -8,8 +8,6 @@
 
 namespace mtt::scene {
     auto light_init() noexcept -> void {
-        auto& hierarchy = Hierarchy::instance();
-
         auto& vec = stl::vector<light::Light>::instance();
         vec.emplace_type<light::Parallel_Light>();
         vec.emplace_type<light::Point_Light>();

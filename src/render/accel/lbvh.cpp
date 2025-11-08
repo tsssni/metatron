@@ -1,4 +1,5 @@
 #include <metatron/render/accel/lbvh.hpp>
+#include <metatron/render/scene/hierarchy.hpp>
 #include <metatron/core/math/encode.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/thread.hpp>
@@ -6,85 +7,77 @@
 #include <stack>
 
 namespace mtt::accel {
-    struct LBVH_Divider final {
-        math::Bounding_Box bbox;
-        u32 index;
-        u32 morton_code;
-    };
+    LBVH::LBVH(Descriptor const& desc) noexcept {
+        struct Node final {
+            math::Bounding_Box bbox;
+            poly<Node> left;
+            poly<Node> right;
+            u32 morton_code;
+            u32 split_axis;
+            u32 div_idx;
+            u32 num_prims{0u};
+        };
 
-    struct LBVH_Node final {
-        math::Bounding_Box bbox;
-        poly<LBVH_Node> left;
-        poly<LBVH_Node> right;
-        u32 morton_code;
-        u32 split_axis;
-        u32 div_idx;
-        u32 num_prims{0u};
-    };
-
-    LBVH::LBVH(
-        std::vector<Divider>&& dividers,
-        usize num_guide_left_prims
-    ) noexcept: dividers(std::move(dividers)) {
-        std::vector<LBVH_Divider> lbvh_divs;
-        for (auto i = 0u; i < this->dividers.size(); ++i) {
-            auto& div = this->dividers[i];
-            lbvh_divs.push_back(LBVH_Divider{
-                .bbox = div.shape->bounding_box(
-                    div.local_to_render->transform,
-                    div.primitive
-                ),
-                .index = i,
-            });
+        auto& divs = stl::vector<Divider>::instance();
+        for (auto i = 0u; i < divs.size(); ++i) {
+            auto div = divs[i];
+            auto s = div->shape;
+            for (auto j = 0u; j < s->size(); j++) {
+                auto lt = div->local_to_render;
+                prims.push_back(Primitive{
+                    .bbox = s->bounding_box(lt->transform, j),
+                    .instance = i,
+                    .primitive = j,
+                });
+            }
         }
 
         auto render_bbox = math::Bounding_Box{};
-        for (auto& div: lbvh_divs)
-            render_bbox = math::merge(render_bbox, div.bbox);
-        for (auto& div: lbvh_divs) {
+        for (auto& p: prims)
+            render_bbox = math::merge(render_bbox, p.bbox);
+        for (auto& p: prims) {
             auto extent = render_bbox.p_max - render_bbox.p_min;
-            auto pos = math::lerp(div.bbox.p_min, div.bbox.p_max, 0.5f) - render_bbox.p_min;
+            auto pos = math::lerp(p.bbox.p_min, p.bbox.p_max, 0.5f) - render_bbox.p_min;
             auto voxel = math::Vector<u32, 3>{pos / extent * 1024};
-            div.morton_code = math::morton_encode(voxel);
+            p.morton_code = math::morton_encode(voxel);
         }
-        std::ranges::sort(lbvh_divs, [](auto& a, auto& b) {
+        std::ranges::sort(prims, [](auto& a, auto& b) {
             return a.morton_code < b.morton_code;
         });
 
         auto intervals = std::vector<math::Vector<u32, 2>>{};
-        for (auto start = 0u, end = 0u; end <= lbvh_divs.size(); ++end) {
+        for (auto start = 0u, end = 0u; end <= prims.size(); ++end) {
             auto constexpr mask = 0x3ffc0000;
             if (false
-            || end == lbvh_divs.size()
-            || (lbvh_divs[start].morton_code & mask) != (lbvh_divs[end].morton_code & mask)) {
+            || end == prims.size()
+            || (prims[start].morton_code & mask) != (prims[end].morton_code & mask)) {
                 intervals.push_back({start, end});
                 start = end;
             }
         }
 
-        auto morton_split = [&](this auto self, math::Vector<u32, 2> interval, i32 bit) -> poly<LBVH_Node> {
+        auto morton_split = [&](this auto self, math::Vector<u32, 2> interval, i32 bit) -> poly<Node> {
             auto [start, end] = interval;
             auto n = end - start;
-            if (n <= num_guide_left_prims || bit < 0) {
-                auto node = make_poly<LBVH_Node>();
+            if (bit < 0 || n <= desc.num_guide_leaf_prims) {
+                auto node = make_poly<Node>();
                 node->div_idx = start;
                 node->num_prims = n;
                 node->bbox = math::Bounding_Box{};
-                for (auto i = start; i < end; ++i) {
-                    node->bbox = math::merge(node->bbox, lbvh_divs[i].bbox);
-                }
+                for (auto i = start; i < end; ++i)
+                    node->bbox = math::merge(node->bbox, prims[i].bbox);
                 return node;
             } else {
                 auto mask = 1u << bit;
-                auto start_split_bit = lbvh_divs[start].morton_code & mask;
+                auto start_split_bit = prims[start].morton_code & mask;
                 auto split = start + 1;
                 for (; split < end; ++split) {
-                    auto split_bit = lbvh_divs[split].morton_code & mask;
+                    auto split_bit = prims[split].morton_code & mask;
                     if (split_bit != start_split_bit) break;
                 }
                 if (split == end) return self(interval, bit - 1);
 
-                auto node = make_poly<LBVH_Node>();
+                auto node = make_poly<Node>();
                 node->left = self({start, split}, bit - 1);
                 node->right = self({split, end}, bit - 1);
                 node->bbox = math::merge(node->left->bbox, node->right->bbox);
@@ -92,7 +85,7 @@ namespace mtt::accel {
                 return node;
             }
         };
-        auto lbvh_nodes = std::vector<poly<LBVH_Node>>(intervals.size());
+        auto lbvh_nodes = std::vector<poly<Node>>(intervals.size());
         stl::scheduler::instance().sync_parallel(
             math::Vector<usize, 1>{intervals.size()},
             [&](auto idx) {
@@ -102,11 +95,11 @@ namespace mtt::accel {
             }
         );
 
-        auto area_split = [&](this auto self, std::vector<poly<LBVH_Node>>&& nodes) -> poly<LBVH_Node> {
+        auto area_split = [&](this auto self, std::vector<poly<Node>>&& nodes) -> poly<Node> {
             if (nodes.size() == 0) return nullptr;
             else if (nodes.size() == 1) return std::move(nodes.front());
 
-            auto root = make_poly<LBVH_Node>();
+            auto root = make_poly<Node>();
             root->bbox = math::Bounding_Box{};
             for (auto& node: nodes)
                 root->bbox = math::merge(root->bbox, node->bbox);
@@ -172,8 +165,8 @@ namespace mtt::accel {
 
             auto range_split = [](auto&& begin, auto&& end){
                 return std::ranges::subrange(begin, end)
-                     | std::views::transform([](auto& n) { return std::move(n); })
-                     | std::ranges::to<std::vector<poly<LBVH_Node>>>();
+                    | std::views::transform([](auto& n) { return std::move(n); })
+                    | std::ranges::to<std::vector<poly<Node>>>();
             };
             auto left = range_split(std::ranges::begin(nodes), std::ranges::begin(splitted_iter));
             auto right = range_split(std::ranges::begin(splitted_iter), std::ranges::end(nodes));
@@ -184,37 +177,29 @@ namespace mtt::accel {
         auto root = area_split(std::move(lbvh_nodes));
 
         // pre-order binary tree traversal
-        auto traverse = [&bvh = this->bvh](this auto self, LBVH_Node const* node) -> void {
+        auto traverse = [&bvh = this->bvh](this auto self, view<Node> node) -> void {
             if (node->num_prims > 0) {
                 bvh.push_back({
                     .bbox = node->bbox,
-                    .div_idx = node->div_idx,
-                    .num_prims = u16(node->num_prims),
-                    .axis = byte(node->split_axis),
+                    .prim = node->div_idx,
+                    .num_prims = -i32(node->num_prims),
                 });
             } else {
                 bvh.push_back({
                     .bbox = node->bbox,
-                    .num_prims = 0u,
-                    .axis = byte(node->split_axis),
+                    .axis = node->split_axis,
                 });
                 auto idx = bvh.size() - 1;
-                self(node->left.get()); bvh[idx].r_idx = u32(bvh.size()); self(node->right.get());
+                self(node->left.get()); bvh[idx].right = u32(bvh.size()); self(node->right.get());
             }
         };
         traverse(root.get());
-
-        auto divs = std::vector<Divider>();
-        divs.reserve(lbvh_divs.size());
-        for (auto i = 0u; i < lbvh_divs.size(); ++i)
-            divs.emplace_back(this->dividers[lbvh_divs[i].index]);
-        std::swap(divs, this->dividers);
     }
 
     auto LBVH::operator()(
         math::Ray const& r
     ) const noexcept -> std::optional<Interaction> {
-        auto intr_div = (Divider const*)nullptr;
+        auto prim = view<Primitive>{};
         auto intr_opt = std::optional<shape::Interaction>{};
         auto candidates = std::stack<u32>{};
         candidates.push(0u);
@@ -226,30 +211,35 @@ namespace mtt::accel {
             auto t_opt = math::hit(r, node->bbox);
             if (!t_opt || (intr_opt && intr_opt->t < t_opt.value()[0])) continue;
 
-            if (node->num_prims > 0) {
-                for (auto i = 0u; i < node->num_prims; ++i) {
-                    auto idx = node->div_idx + i;
-                    auto div = &dividers[idx];
-                    auto& lt = *div->local_to_render;
-                    auto lr = lt ^ r;
+            if (node->num_prims < 0) {
+                for (auto i = 0u; i < -node->num_prims; ++i) {
+                    auto idx = node->prim + i;
+                    auto& p = prims[idx];
+                    auto div = p.instance;
+                    auto s = div->shape.data();
+                    auto lr = (*div->local_to_render) ^ r;
 
-                    MTT_OPT_OR_CONTINUE(div_intr, (*div->shape)(lr, div->primitive));
+                    MTT_OPT_OR_CONTINUE(div_intr, (*s)(lr, p.primitive));
                     if (!intr_opt || div_intr.t < intr_opt.value().t) {
                         intr_opt = div_intr_opt;
-                        intr_div = div;
+                        prim = &p;
                     }
                 }
             } else {
                 if (r.d[node->axis] < 0.f) {
                     candidates.push(idx + 1);
-                    candidates.push(node->r_idx);
+                    candidates.push(node->right);
                 } else {
-                    candidates.push(node->r_idx);
+                    candidates.push(node->right);
                     candidates.push(idx + 1);
                 }
             }
         }
 
-        return Interaction{intr_div, intr_opt};
+        return Interaction{
+            .divider = prim->instance,
+            .primitive = prim->primitive,
+            .intr_opt = intr_opt,
+        };
     }
 }

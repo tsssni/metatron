@@ -8,10 +8,10 @@ namespace mtt::scene {
     auto constexpr null = entt::null;
 
     auto to_path(Entity entity) -> std::string_view;
-    auto to_entity(std::string const& path) -> Entity;
+    auto to_entity(std::string_view path) -> Entity;
 }
 
-namespace mtt::scene {
+namespace mtt {
     struct Entity_Divider final {} inline constexpr et;
     struct Path_Divider final {} inline constexpr pt;
 

@@ -41,9 +41,8 @@ namespace mtt::scene {
     };
 
     auto merge() noexcept -> void {
-        auto& hierarchy = Hierarchy::instance();
-        auto lces = hierarchy.entities<Local_Transform>();
-        auto laes = hierarchy.entities<Look_At_Transform>();
+        auto lces = entities<Local_Transform>();
+        auto laes = entities<Look_At_Transform>();
 
         auto es = std::vector<Entity>{};
         std::ranges::copy(lces, std::back_inserter(es));
@@ -58,29 +57,29 @@ namespace mtt::scene {
             auto [i] = idx;
             auto e = es[i];
             auto t = i < lces.size()
-            ? math::Transform{*hierarchy.fetch<Local_Transform>(e).data()}
-            : math::Transform{*hierarchy.fetch<Look_At_Transform>(e).data()};
+            ? math::Transform{*fetch<Local_Transform>(e)}
+            : math::Transform{*fetch<Look_At_Transform>(e)};
 
             auto lock = tv.lock();
-            hierarchy.attach<math::Transform>(e, std::move(t));
+            attach<math::Transform>(e, std::move(t));
         });
     }
 
     auto trace(Entity et) noexcept -> void {
         auto& hierarchy = Hierarchy::instance();
-        auto& rt = *hierarchy.fetch<math::Transform>(et).data();
+        auto& rt = *fetch<math::Transform>(et);
 
         for (auto child: hierarchy.children(et)) {
-            auto& t = *hierarchy.fetch<math::Transform>(child).data();
+            auto& t = exist<math::Transform>(child)
+            ? *fetch<math::Transform>(child)
+            : *attach<math::Transform>(child);
             t = math::Transform{rt, t};
             trace(child);
         }
     }
 
     auto trace() noexcept -> void {
-        auto& hierarchy = Hierarchy::instance();
-
-        auto wt = *hierarchy.fetch<math::Transform>("/hierarchy/camera"_et).data();
+        auto wt = *fetch<math::Transform>("/hierarchy/camera"_et);
         auto t = wt.transform;
         auto inv_t = wt.inv_transform;
 
@@ -94,10 +93,10 @@ namespace mtt::scene {
         ct.inv_transform = t;
         ct.transform = inv_t;
 
-        hierarchy.attach<math::Transform>("/hierarchy/camera/render"_et, ct);
-        hierarchy.attach<math::Transform>("/hierarchy/shape"_et, rt);
-        hierarchy.attach<math::Transform>("/hierarchy/medium"_et, rt);
-        hierarchy.attach<math::Transform>("/hierarchy/light"_et, rt);
+        attach<math::Transform>("/hierarchy/camera/render"_et, ct);
+        attach<math::Transform>("/hierarchy/shape"_et, rt);
+        attach<math::Transform>("/hierarchy/medium"_et, rt);
+        attach<math::Transform>("/hierarchy/light"_et, rt);
 
         trace("/hierarchy/shape"_et);
         trace("/hierarchy/medium"_et);
