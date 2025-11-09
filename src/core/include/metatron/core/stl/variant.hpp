@@ -8,6 +8,7 @@ namespace mtt::stl {
     struct variant final {
         using ts = stl::array<Ts...>;
         variant() noexcept = default;
+        variant(variant const&) noexcept = default;
         variant(variant&&) noexcept = default;
         ~variant() noexcept { destroy(); }
 
@@ -24,7 +25,7 @@ namespace mtt::stl {
         auto emplace(Args&&... args) noexcept -> void {
             destroy();
             idx = ts::template index<T>;
-            std::construct_at(data<T>(), std::forward<Args>(args)...);
+            std::construct_at((T*)data(idx), std::forward<Args>(args)...);
         }
 
         template<typename T>
@@ -33,34 +34,40 @@ namespace mtt::stl {
             emplace<std::decay_t<T>>(std::forward<T>(x));
         }
 
-        auto operator->() noexcept -> mut<F> {
+        auto data() noexcept -> mut<F> {
             auto ref = mut<F>{};
-            ((
+            auto v = ((
               idx == ts::template index<Ts>
-              ? (ref = *(Ts*)data(idx), true) : false
+              ? (ref = make_view(*(Ts*)data(idx)), true) : false
             ) || ...);
             return ref;
         }
 
-        auto operator->() const noexcept -> view<F> {
-            return const_cast<variant*>(this)->operator->();
+        auto data() const noexcept -> view<F> {
+            return const_cast<variant*>(this)->data();
         }
 
-        template<typename T>
-        auto data() noexcept -> T* {
-            auto idx = ts::template index<T>;
-            return (T*)data(idx);
+        auto clone() const noexcept -> poly<F>
+        requires(F::copyability != pro::constraint_level::none) {
+            auto ref = poly<F>{};
+            auto v = ((
+              idx == ts::template index<Ts>
+              ? (ref = make_poly<F, Ts>(*(Ts const*)data(idx)), true) : false
+            ) || ...);
+            return ref;
         }
 
+        auto operator->() noexcept -> mut<F> {return data();}
+        auto operator->() const noexcept -> mut<F> {return data();}
+        auto operator*() const noexcept -> poly<F> {return clone();}
         auto index() const noexcept -> u32 {return idx;}
-        auto data() noexcept -> byte* {return storage.data();}
         auto size() const noexcept -> usize {return storage.size();}
 
     private:
         auto destroy() noexcept -> void {
             if (idx != math::maxv<u32>) auto v = ((
               idx == ts::template index<Ts>
-              ? (std::destroy_at(data<Ts>()), true) : false
+              ? (std::destroy_at(data(idx)), true) : false
             ) || ...);
         }
 

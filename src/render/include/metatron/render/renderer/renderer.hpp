@@ -22,5 +22,6 @@ namespace mtt::renderer {
         };
         Renderer() noexcept = default;
         Renderer(Descriptor&& desc) noexcept;
+        auto render() noexcept -> void;
     };
 }

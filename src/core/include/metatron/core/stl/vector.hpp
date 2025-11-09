@@ -54,6 +54,10 @@ namespace mtt::stl {
             mutex.push_back(make_poly<std::mutex>());
             reinterpreter.push_back([](byte const* ptr) {return make_view<F>(*(T*)ptr);});
             destroier.push_back([](byte* ptr) {std::destroy_at((T*)ptr);});
+            if constexpr (F::copyability != pro::constraint_level::none)
+                copier.push_back([](byte const* ptr) {
+                    auto x = *(T*)ptr; return make_poly<F, T>(std::move(x));
+                });
         }
 
         template<typename T, typename... Args>
@@ -92,6 +96,14 @@ namespace mtt::stl {
             return reinterpreter.at(t)(ptr);
         }
 
+        auto operator()(u32 i) const noexcept -> poly<F>
+        requires(F::copyability != pro::constraint_level::none) {
+            auto t = (i >> 24) & 0xff;
+            auto idx = (i & 0xffffff);
+            auto ptr = storage[t].data() + length[t] * idx;
+            return copier.at(t)(ptr);
+        }
+
         template<typename T>
         auto data() const noexcept -> T* {return (T*)storage[map.at(typeid(T))].data();}
         template<typename T>
@@ -105,6 +117,7 @@ namespace mtt::stl {
         std::vector<std::vector<byte>> storage;
         std::vector<u32> length;
         std::vector<std::function<auto (byte const* ptr) -> mut<F>>> reinterpreter;
+        std::vector<std::function<auto (byte const* ptr) -> poly<F>>> copier;
         std::vector<std::function<auto (byte* ptr) -> void>> destroier;
         std::vector<poly<std::mutex>> mutex;
         std::unordered_map<std::type_index, u32> map;
@@ -126,6 +139,10 @@ namespace mtt {
         auto operator->() const -> view<T> {return data();}
         auto operator*() -> T& requires(!pro::facade<T>) {return *data();}
         auto operator*() const -> T const& requires(!pro::facade<T>) {return *data();}
+        auto operator*() const -> poly<T>
+        requires(pro::facade<T> && T::copyability != pro::constraint_level::none) {
+            return vec::instance()(idx);
+        }
 
         explicit operator u32() const {return idx;}
         operator bool() const {return idx != math::maxv<u32>;}

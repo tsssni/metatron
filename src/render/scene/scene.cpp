@@ -16,7 +16,9 @@ namespace mtt::scene {
     auto light_init() noexcept -> void;
 
     auto run(i32 argc, mut<char> argv[]) noexcept -> void {
+        using namespace renderer;
         auto& hierarchy = Hierarchy::instance();
+        sampler::Sobol_Sampler::init();
 
         auto& args = Args::instance();
         args.parse(argc, argv);
@@ -29,7 +31,7 @@ namespace mtt::scene {
         material_init();
         light_init();
 
-        auto renderer = poly<renderer::Renderer>();
+        auto renderer = poly<Renderer>();
         hierarchy.filter([&renderer](auto bins){
             auto key = std::string{"renderer"};
             if (!bins.contains(key)) {
@@ -38,7 +40,7 @@ namespace mtt::scene {
             }
             auto j = bins[key].front();
 
-            using Descriptor = renderer::Renderer::Descriptor;
+            using Descriptor = Renderer::Descriptor;
             auto desc = Descriptor{};
             auto er = glz::read_json<Descriptor>(desc, j.serialized.str);
             if (er) {
@@ -48,8 +50,9 @@ namespace mtt::scene {
                 );
                 std::abort();
             }
-            renderer = make_poly<renderer::Renderer>(std::move(desc));
+            renderer = make_poly<Renderer>(std::move(desc));
         });
         hierarchy.populate(args.scene);
+        renderer->render();
     }
 }

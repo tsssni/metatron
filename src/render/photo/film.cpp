@@ -34,6 +34,12 @@ namespace mtt::photo {
     film_size(desc.film_size),
     dxdy(desc.film_size / desc.image_size),
     r(desc.r), g(desc.g), b(desc.b) {
+        film_size = desc.film_size;
+        auto aspect_ratio = f32(desc.image_size[0]) / f32(desc.image_size[1]);
+        if (aspect_ratio > 1.f) film_size[1] = film_size[0] / aspect_ratio;
+        else film_size[0] = film_size[1] * aspect_ratio;
+        dxdy = desc.film_size / desc.image_size;
+
         auto img = image::Image{};
         img.size = {desc.image_size, 4, 4};
         img.linear = true;
@@ -42,7 +48,7 @@ namespace mtt::photo {
 
         auto& vec = stl::vector<image::Image>::instance();
         auto lock = vec.lock();
-        image = vec.push_back({});
+        image = vec.push_back(std::move(img));
     }
 
     auto Film::operator()(
@@ -50,7 +56,7 @@ namespace mtt::photo {
         math::Vector<usize, 2> const& pixel,
         math::Vector<f32, 2> const& u
     ) noexcept -> Fixel {
-        auto f_intr = filter->sample(u).value();
+        auto f_intr = *filter->sample(u);
         auto pixel_position = math::Vector<f32, 2>{pixel} + 0.5f + f_intr.p;
         auto uv = pixel_position / image->size;
         auto film_position = (uv - 0.5f) * math::Vector<f32, 2>{-1.f, 1.f} * film_size;

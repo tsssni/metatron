@@ -33,9 +33,10 @@ namespace mtt::photo {
     struct Film final {
         usize spp;
         usize depth;
-        proxy<image::Image> image;
         math::Vector<f32, 2> film_size;
         math::Vector<f32, 2> dxdy;
+        proxy<image::Image> image;
+        proxy<color::Color_Space> color_space;
 
         struct Descriptor final {
             usize spp = 16uz;
@@ -59,7 +60,6 @@ namespace mtt::photo {
         proxy<spectra::Spectrum> r;
         proxy<spectra::Spectrum> g;
         proxy<spectra::Spectrum> b;
-        proxy<color::Color_Space> color_space;
         friend Fixel;
     };
 }
