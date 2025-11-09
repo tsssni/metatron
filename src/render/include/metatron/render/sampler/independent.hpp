@@ -5,7 +5,7 @@
 namespace mtt::sampler {
     struct Independent_Sampler final {
         Independent_Sampler() noexcept;
-        Independent_Sampler(Independent_Sampler const&) noexcept;
+        Independent_Sampler(Independent_Sampler const&) noexcept = default;
 
         auto start(
             math::Vector<usize, 2> const& pixel,

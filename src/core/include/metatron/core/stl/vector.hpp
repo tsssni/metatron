@@ -36,6 +36,14 @@ namespace mtt::stl {
 
     template<pro::facade F>
     struct vector<F> final: singleton<vector<F>> {
+        ~vector() noexcept {
+            for (auto i = 0; i < destroier.size(); i++) {
+                auto& d = destroier[i];
+                for (auto j = 0; j < storage[i].size() / length[i]; j++)
+                    d(storage[i].data() + j * length[i]);
+            }
+        }
+
         template<typename T>
         requires poliable<F, T>
         auto emplace_type() noexcept -> void {
@@ -44,9 +52,8 @@ namespace mtt::stl {
             storage.push_back({});
             length.push_back(sizeof(T));
             mutex.push_back(make_poly<std::mutex>());
-            reinterpreter.push_back([] (byte const* ptr) {
-                return make_view<F>(*(T*)ptr);
-            });
+            reinterpreter.push_back([](byte const* ptr) {return make_view<F>(*(T*)ptr);});
+            destroier.push_back([](byte* ptr) {std::destroy_at((T*)ptr);});
         }
 
         template<typename T, typename... Args>
@@ -62,7 +69,9 @@ namespace mtt::stl {
 
         template<typename T>
         requires std::is_constructible_v<std::decay_t<T>, T>
-        auto push_back(T&& x) noexcept -> u32 {return emplace_back<T>(std::forward<T>(x));}
+        auto push_back(T&& x) noexcept -> u32 {
+            return emplace_back<std::decay_t<T>>(std::forward<T>(x));
+        }
 
         template<typename T>
         auto lock() const noexcept -> std::unique_lock<std::mutex> {
@@ -96,6 +105,7 @@ namespace mtt::stl {
         std::vector<std::vector<byte>> storage;
         std::vector<u32> length;
         std::vector<std::function<auto (byte const* ptr) -> mut<F>>> reinterpreter;
+        std::vector<std::function<auto (byte* ptr) -> void>> destroier;
         std::vector<poly<std::mutex>> mutex;
         std::unordered_map<std::type_index, u32> map;
     };

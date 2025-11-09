@@ -29,6 +29,27 @@ namespace mtt::scene {
         material_init();
         light_init();
 
+        auto renderer = poly<renderer::Renderer>();
+        hierarchy.filter([&renderer](auto bins){
+            auto key = std::string{"renderer"};
+            if (!bins.contains(key)) {
+                std::println("renderer must be defined");
+                std::abort();
+            }
+            auto j = bins[key].front();
+
+            using Descriptor = renderer::Renderer::Descriptor;
+            auto desc = Descriptor{};
+            auto er = glz::read_json<Descriptor>(desc, j.serialized.str);
+            if (er) {
+                std::println(
+                    "deserialize {} with glaze error: {}",
+                    j.serialized.str, glz::format_error(er)
+                );
+                std::abort();
+            }
+            renderer = make_poly<renderer::Renderer>(std::move(desc));
+        });
         hierarchy.populate(args.scene);
     }
 }

@@ -1,5 +1,4 @@
 #include <metatron/resource/texture/checkerboard.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::texture {
     Checkerboard_Texture::Checkerboard_Texture(Descriptor const& desc) noexcept

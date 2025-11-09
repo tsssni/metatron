@@ -47,7 +47,7 @@ namespace glz {
         auto static op(T& v, auto&&... args) noexcept -> void {
             auto desc = (typename mtt::scene::descriptor<T>::type){};
             parse<JSON>::op<Opts>(desc, args...);
-            v = desc;
+            v = std::move(desc);
         }
     };
 

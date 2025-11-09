@@ -56,10 +56,10 @@ namespace mtt::photo {
         ) noexcept -> Fixel;
 
     private:
-        proxy<spectra::Spectrum> const r;
-        proxy<spectra::Spectrum> const g;
-        proxy<spectra::Spectrum> const b;
-        proxy<color::Color_Space> const color_space;
+        proxy<spectra::Spectrum> r;
+        proxy<spectra::Spectrum> g;
+        proxy<spectra::Spectrum> b;
+        proxy<color::Color_Space> color_space;
         friend Fixel;
     };
 }
