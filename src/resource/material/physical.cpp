@@ -14,7 +14,7 @@ namespace mtt::material {
         };
 
         auto invalid_spec = spectra::Stochastic_Spectrum{};
-        auto zero_spec = ctx.spec & spectra::Spectrum::spectra["zero"].data();
+        auto zero_spec = ctx.spec & spectra::Spectrum::spectra["zero"];
         auto reflectance = guarded_sample(this->reflectance, invalid_spec);
         auto eta = guarded_sample(this->eta, invalid_spec);
         auto k = guarded_sample(this->k, invalid_spec);

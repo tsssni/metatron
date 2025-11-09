@@ -13,9 +13,10 @@ namespace mtt::texture {
     struct Image_Vector_Texture final {
         struct Descriptor final {
             std::string path;
-            Image_Distribution distr;
+            Image_Distribution distr = Image_Distribution::none;
             bool linear = true;
         };
+        Image_Vector_Texture() noexcept = default;
         Image_Vector_Texture(Descriptor const& desc) noexcept;
 
         auto operator()(
@@ -41,6 +42,7 @@ namespace mtt::texture {
             Image_Distribution distr;
             proxy<color::Color_Space> color_space = color::Color_Space::color_spaces["sRGB"];
         };
+        Image_Spectrum_Texture() noexcept = default;
         Image_Spectrum_Texture(Descriptor const& desc) noexcept;
 
         auto operator()(

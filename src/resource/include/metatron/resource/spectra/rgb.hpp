@@ -14,6 +14,7 @@ namespace mtt::spectra {
             color::Color_Space::Spectrum_Type type;
             proxy<color::Color_Space> color_space = color::Color_Space::color_spaces["sRGB"];
         };
+        Rgb_Spectrum() noexcept = default;
         Rgb_Spectrum(Descriptor const& desc) noexcept;
         auto operator()(f32 lambda) const noexcept -> f32;
 

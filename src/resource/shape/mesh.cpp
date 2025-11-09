@@ -2,6 +2,7 @@
 #include <metatron/core/math/transform.hpp>
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/distribution/linear.hpp>
+#include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <assimp/scene.h>
@@ -10,8 +11,12 @@
 
 namespace mtt::shape {
     Mesh::Mesh(Descriptor const& desc) noexcept {
+        MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(desc.path), {
+            std::println("mesh {} not exists", desc.path);
+            std::abort();
+        });
         auto importer = Assimp::Importer{};
-        auto* scene = importer.ReadFile(desc.path.data(), 0
+        auto* scene = importer.ReadFile(path.data(), 0
             | aiProcess_FlipUVs
             | aiProcess_FlipWindingOrder
             | aiProcess_MakeLeftHanded

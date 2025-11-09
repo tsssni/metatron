@@ -6,12 +6,10 @@
 
 namespace mtt::sampler {
     Halton_Sampler::Halton_Sampler(
-        usize seed,
         math::Vector<i32, 2> const& scale_exponential
     ) noexcept:
     exponential(scale_exponential),
-    scale({1 << scale_exponential[0], math::pow(3, scale_exponential[1])}),
-    seed(seed) {
+    scale({1 << scale_exponential[0], math::pow(3, scale_exponential[1])}) {
         stride = scale[0] * scale[1];
         scale_mulinv = scale * math::Vector<usize, 2>{
             math::multiplicative_inverse(scale[0], scale[1]),
@@ -19,10 +17,14 @@ namespace mtt::sampler {
         };
     }
 
-    auto Halton_Sampler::start(math::Vector<usize, 2> const& pixel, usize idx, usize dim) noexcept -> void {
+    auto Halton_Sampler::start(
+        math::Vector<usize, 2> const& pixel,
+        usize idx, usize dim, usize seed
+    ) noexcept -> void {
         this->pixel = pixel;
         this->idx = idx;
         this->dim = math::clamp(dim, 2uz, math::primes.size() - 1uz);
+        this->seed = seed;
 
         // high num_exponetial bits of radical_inverse(halton_index) equals pixel % (base ^ num_exoinential),
         // so low num_exponetial bits of halton_index equals radical_inverse(pixel % (base ^ num_exoinetial))

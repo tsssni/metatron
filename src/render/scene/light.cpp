@@ -1,4 +1,4 @@
-#include <metatron/render/scene/hierarchy.hpp>
+#include <metatron/render/scene/serde.hpp>
 #include <metatron/resource/light/parallel.hpp>
 #include <metatron/resource/light/point.hpp>
 #include <metatron/resource/light/spot.hpp>
@@ -8,14 +8,23 @@
 
 namespace mtt::scene {
     auto light_init() noexcept -> void {
-        auto& vec = stl::vector<light::Light>::instance();
-        vec.emplace_type<light::Parallel_Light>();
-        vec.emplace_type<light::Point_Light>();
-        vec.emplace_type<light::Spot_Light>();
-        vec.emplace_type<light::Area_Light>();
-        vec.emplace_type<light::Environment_Light>();
-        vec.emplace_type<light::Sunsky_Light>();
-
+        using namespace light;
         light::Sunsky_Light::init();
+
+        auto& vec = stl::vector<Light>::instance();
+        vec.emplace_type<Parallel_Light>();
+        vec.emplace_type<Point_Light>();
+        vec.emplace_type<Spot_Light>();
+        vec.emplace_type<Area_Light>();
+        vec.emplace_type<Environment_Light>();
+        vec.emplace_type<Sunsky_Light>();
+
+        MTT_DESERIALIZE(Light
+        , Parallel_Light
+        , Point_Light
+        , Spot_Light
+        , Area_Light
+        , Environment_Light
+        , Sunsky_Light);
     }
 }

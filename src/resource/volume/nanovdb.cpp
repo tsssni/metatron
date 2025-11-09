@@ -1,4 +1,6 @@
 #include <metatron/resource/volume/nanovdb.hpp>
+#include <metatron/core/stl/filesystem.hpp>
+#include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <nanovdb/math/SampleFromVoxels.h>
 
@@ -26,10 +28,14 @@ namespace mtt::volume {
         return math::Bounding_Box{p_min, p_max};
     }
 
-    Nanovdb_Volume::Nanovdb_Volume(std::string_view path) noexcept {
+    Nanovdb_Volume::Nanovdb_Volume(Descriptor const& desc) noexcept {
+        MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(desc.path), {
+            std::println("volume {} not exists", desc.path);
+            std::abort();
+        });
         auto& vec = stl::vector<nanovdb::GridHandle<>>::instance();
         auto lock = vec.lock();
-        handle = vec.push_back(nanovdb::io::readGrid(std::string{path}));
+        handle = vec.push_back(nanovdb::io::readGrid(path));
     }
 
     auto Nanovdb_Volume::to_local(math::Vector<i32, 3> const& ijk) const noexcept -> math::Vector<f32, 3> {

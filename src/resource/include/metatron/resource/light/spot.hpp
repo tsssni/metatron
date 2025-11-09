@@ -9,6 +9,7 @@ namespace mtt::light {
             f32 falloff_start_theta;
             f32 falloff_end_theta;
         };
+        Spot_Light() noexcept = default;
         Spot_Light(Descriptor const& desc) noexcept;
 
         auto operator()(

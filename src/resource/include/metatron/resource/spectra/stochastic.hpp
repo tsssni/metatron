@@ -14,7 +14,9 @@ namespace mtt::spectra {
 
         auto operator()(f32 lambda) const noexcept -> f32;
         auto operator()(view<Spectrum> spectrum) const noexcept -> f32;
+        auto operator()(proxy<Spectrum> spectrum) const noexcept -> f32;
         auto operator&(view<Spectrum> spectrum) const noexcept -> Stochastic_Spectrum;
+        auto operator&(proxy<Spectrum> spectrum) const noexcept -> Stochastic_Spectrum;
 
         auto operator+(Stochastic_Spectrum const& spectrum) const noexcept -> Stochastic_Spectrum;
         auto operator+=(Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum&;

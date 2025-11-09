@@ -13,7 +13,7 @@ namespace mtt::media {
     sigma_e(desc.sigma_e),
     density(desc.density),
     density_scale(desc.density_scale) {
-        auto sigmaj = volume::Uniform_Volume{density->bounding_box(), desc.dimensions};
+        auto sigmaj = volume::Uniform_Volume{{density->bounding_box(), desc.dimensions}};
         stl::scheduler::instance().sync_parallel(
             sigmaj.dimensions(),
             [&](math::Vector<usize, 3> const& xyz) mutable {
@@ -30,7 +30,7 @@ namespace mtt::media {
                 for (auto i = p_min[0]; i <= p_max[0]; ++i)
                     for (auto j = p_min[1]; j <= p_max[1]; ++j)
                         for (auto k = p_min[2]; k <= p_max[2]; ++k)
-                            maj = std::max(maj, (*density.data())[{i, j, k}]);
+                            maj = std::max(maj, (*std::as_const(density).data())[{i, j, k}]);
                 sigmaj[ijk] = maj;
             }
         );
@@ -45,11 +45,11 @@ namespace mtt::media {
         f32 t_max, 
         f32 u
     ) const noexcept -> std::optional<Interaction> {
-        auto sigma_a = (ctx.spec & this->sigma_a.data()) * density_scale;
-        auto sigma_s = (ctx.spec & this->sigma_s.data()) * density_scale;
+        auto sigma_a = (ctx.spec & this->sigma_a) * density_scale;
+        auto sigma_s = (ctx.spec & this->sigma_s) * density_scale;
         auto sigma_t = sigma_a + sigma_s;
         auto sigma_maj = sigma_t;
-        auto transmittance = ctx.spec & spectra::Spectrum::spectra["one"].data();
+        auto transmittance = ctx.spec & spectra::Spectrum::spectra["one"];
         auto density_maj = 0.f;
         auto distr = math::Exponential_Distribution{0.f};
 
@@ -125,7 +125,7 @@ namespace mtt::media {
             } else {
                 update_transmittance(t_u);
                 auto spectra_pdf = sigma_maj * transmittance;
-                auto density = (*this->density.data())(r.o);
+                auto density = (*std::as_const(this->density).data())(r.o);
 
                 return Interaction{
                     r.o,
@@ -137,8 +137,8 @@ namespace mtt::media {
                     spectra::max(sigma_maj - density * sigma_t, {0.f}),
                     sigma_maj,
                     density * (sigma_e
-                    ? ctx.spec & sigma_e.data()
-                    : ctx.spec & spectra::Spectrum::spectra["zero"].data())
+                    ? ctx.spec & sigma_e
+                    : ctx.spec & spectra::Spectrum::spectra["zero"])
                 };
             }
         }

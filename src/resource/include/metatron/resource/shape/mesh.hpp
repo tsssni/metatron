@@ -6,6 +6,7 @@ namespace mtt::shape {
         struct Descriptor final {
             std::string path;
         };
+        Mesh() noexcept = default;
         Mesh(Descriptor const& desc) noexcept;
 
         auto size() const noexcept -> usize;

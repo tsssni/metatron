@@ -11,8 +11,8 @@
 namespace mtt::sampler {
     inline std::vector<u32> Sobol_Sampler::sobol_matrices;
 
-    Sobol_Sampler::Sobol_Sampler(usize seed, usize spp, math::Vector<usize, 2> size) noexcept:
-    seed(seed), log2_spp(math::log2i(spp)) {
+    Sobol_Sampler::Sobol_Sampler(usize spp, math::Vector<usize, 2> size) noexcept:
+    log2_spp(math::log2i(spp)) {
         auto res = std::bit_ceil(u32(math::max(size)));
         auto log4_spp = (log2_spp + 1) / 2;
         base4_digits = math::log2i(res) + log4_spp;
@@ -39,8 +39,12 @@ namespace mtt::sampler {
         f.close();
     }
 
-    auto Sobol_Sampler::start(math::Vector<usize, 2> const& pixel, usize idx, usize dim) noexcept -> void {
+    auto Sobol_Sampler::start(
+        math::Vector<usize, 2> const& pixel,
+        usize idx, usize dim, usize seed
+    ) noexcept -> void {
         this->dim = dim;
+        this->seed = seed;
         morton_idx = (morton_encode(math::Vector<u32, 2>{pixel}) << log2_spp) | idx;
     }
 

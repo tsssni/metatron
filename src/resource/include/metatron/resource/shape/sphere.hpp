@@ -4,6 +4,7 @@
 namespace mtt::shape {
     struct Sphere final {
         struct Descriptor final {};
+        Sphere() noexcept = default;
         Sphere(Descriptor const& desc) noexcept;
         
         auto size() const noexcept -> usize;

@@ -1,13 +1,16 @@
 #include <metatron/render/sampler/independent.hpp>
 
 namespace mtt::sampler {
-    Independent_Sampler::Independent_Sampler(i32 seed) noexcept:
-    rng(seed), distr(1e-4, 1.f - 1e-4) {}
+    Independent_Sampler::Independent_Sampler() noexcept: distr(1e-4, 1.f - 1e-4) {}
 
-    auto Independent_Sampler::start(math::Vector<usize, 2> const& pixel, usize idx, usize dim) noexcept -> void {
+    auto Independent_Sampler::start(
+        math::Vector<usize, 2> const& pixel,
+        usize idx, usize dim, usize seed
+    ) noexcept -> void {
         this->pixel = pixel;
         this->idx = idx;
         this->dim = dim;
+        rng = std::mt19937{u32(seed)};
     }
 
     auto Independent_Sampler::generate_1d() noexcept -> f32 {

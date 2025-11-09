@@ -15,6 +15,7 @@ namespace mtt::media {
             proxy<volume::Volume> density;
             f32 density_scale;
         };
+        Heterogeneous_Medium() noexcept = default;
         Heterogeneous_Medium(Descriptor const& desc) noexcept;
 
         auto sample(
@@ -27,7 +28,7 @@ namespace mtt::media {
         proxy<spectra::Spectrum> sigma_s;
         proxy<spectra::Spectrum> sigma_e;
         proxy<volume::Volume> majorant;
-        proxy<volume::Volume> const density;
+        proxy<volume::Volume> density;
         f32 density_scale;
     };
 }

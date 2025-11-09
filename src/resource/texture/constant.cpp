@@ -6,7 +6,7 @@ namespace mtt::texture {
         image::Coordinate const& coord,
         spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> spectra::Stochastic_Spectrum {
-        return spec & x.data();
+        return spec & x;
     }
 
     auto Constant_Spectrum_Texture::sample(

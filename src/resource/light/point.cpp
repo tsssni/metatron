@@ -15,7 +15,7 @@ namespace mtt::light {
         auto wi = math::normalize(-ctx.r.o);
         auto r = math::length(ctx.r.o);
         return Interaction{
-            .L = (ctx.spec & L.data()) / (r * r),
+            .L = (ctx.spec & L) / (r * r),
             .wi = wi,
             .p = {0.f},
             .t = r,

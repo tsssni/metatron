@@ -7,49 +7,40 @@
 #include <metatron/core/stl/print.hpp>
 
 namespace mtt::scene {
-    template<typename... Ts>
-    auto constexpr deserialize(
-        std::array<std::string, sizeof...(Ts)>&& type,
-        std::function<auto () -> void> pre,
-        std::function<auto () -> void> post
-    ) noexcept -> void {
-        Hierarchy::instance().filter([type = std::move(type), pre, post](auto bins) {
-            using ts = stl::array<Ts...>;
-            (stl::vector<Ts>::instance().reserve(bins[type[ts::template index<Ts>]].size()), ...);
-            pre();
-
-            auto list = type
-            | std::views::transform([&bins](auto x){return bins[x];})
-            | std::views::join
-            | std::ranges::to<std::vector<json>>();
-
-            auto grid = math::Vector<usize, 1>{list.size()};
-            stl::scheduler::instance().sync_parallel(grid, [&list, &type](auto idx) {
-                auto [i] = idx;
-                auto j = std::move(list[i]);
-                auto v = ((j.type == type[ts::template index<Ts>] ? ([&j]{
-                    auto d = Ts{descriptor_t<Ts>{}};
-                    if (auto er = glz::read_json<Ts>(d, j.serialized.str); er) {
-                        std::println(
-                            "desrialize {} with glaze error: {}",
-                            j.serialized.str, glz::format_error(er)
-                        );
-                        std::abort();
-                    } else {
-                        auto lock = stl::vector<Ts>::instance().lock();
-                        attach<Ts, Ts>(j.entity, std::move(d));
-                    }
-                }(), true) : false) || ...);
-                if (!v) std::println(
-                    "desrialize {} with invalid type {}",
-                    j.serialized.str, j.type
-                );
-            });
-            post();
-        });
+    template<typename F, typename T = F>
+    auto reserve(usize n) noexcept -> void {
+        if constexpr (pro::facade<F>) {
+            auto& vec = stl::vector<F>::instance();
+            vec.template reserve<T>(vec.template size<T>() + n);
+        } else {
+            auto& vec = stl::vector<T>::instance();
+            vec.reserve(vec.size() + n);
+        }
     }
 
-    template<pro::facade F, typename... Ts>
+    template<typename F, typename T = F>
+    auto attach(json const& j, std::string_view type) noexcept -> bool {
+        if (j.type != type) return false;
+        auto d = T{};
+        if (auto er = glz::read_json<T>(d, j.serialized.str); er) {
+            std::println(
+                "deserialize {} with glaze error: {}",
+                j.serialized.str, glz::format_error(er)
+            );
+            std::abort();
+        } else {
+            if constexpr (pro::facade<F>) {
+                auto lock = stl::vector<F>::instance().template lock<T>();
+                attach<F, T>(j.entity, std::move(d));
+            } else {
+                auto lock = stl::vector<T>::instance().lock();
+                attach<T>(j.entity, std::move(d));
+            }
+        }
+        return true;
+    }
+
+    template<typename F, typename... Ts>
     auto constexpr deserialize(
         std::array<std::string, sizeof...(Ts) + 1>&& type,
         std::function<auto () -> void> pre,
@@ -57,7 +48,9 @@ namespace mtt::scene {
     ) noexcept -> void {
         Hierarchy::instance().filter([type = std::move(type), pre, post](auto bins) {
             using ts = stl::array<F, Ts...>;
-            (stl::vector<F>::instance().template reserve<Ts>(bins[type[ts::template index<Ts>]].size()), ...);
+            if constexpr (!pro::facade<F>)
+                reserve<F>(bins[type[ts::template index<F>]].size());
+            (reserve<F, Ts>(bins[type[ts::template index<Ts>]].size()), ...);
             pre();
 
             auto list = type
@@ -69,21 +62,12 @@ namespace mtt::scene {
             stl::scheduler::instance().sync_parallel(grid, [&list, &type](auto idx) {
                 auto [i] = idx;
                 auto j = std::move(list[i]);
-                auto v = ((j.type == type[ts::template index<Ts>] ? ([&j]{
-                    auto d = Ts{descriptor_t<Ts>{}};
-                    if (auto er = glz::read_json<Ts>(d, j.serialized.str); er) {
-                        std::println(
-                            "desrialize {} of type {} with glaze error: {}",
-                            j.serialized.str, j.type, glz::format_error(er)
-                        );
-                        std::abort();
-                    } else {
-                        auto lock = stl::vector<F>::instance().template lock<Ts>();
-                        attach<F, Ts>(j.entity, std::move(d));
-                    }
-                }(), true) : false) || ...);
+                auto v = false;
+                if constexpr (!pro::facade<F>)
+                    v = attach<F>(j, type[ts::template index<F>]);
+                v = v || (attach<F, Ts>(j, type[ts::template index<Ts>]) || ...);
                 if (!v) std::println(
-                    "desrialize {} with invalid type {}",
+                    "deserialize {} with invalid type {}",
                     j.serialized.str, j.type
                 );
             });

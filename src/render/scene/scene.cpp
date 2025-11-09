@@ -29,8 +29,6 @@ namespace mtt::scene {
         material_init();
         light_init();
 
-        // using namespace renderer;
-        // MTT_DESERIALIZE(Renderer);
         hierarchy.populate(args.scene);
     }
 }

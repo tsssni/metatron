@@ -8,7 +8,7 @@ namespace mtt::material {
     ) const noexcept -> std::optional<Interaction> {
         return Interaction{
             .bsdf = make_poly<bsdf::Bsdf, bsdf::Interface_Bsdf>(ctx.spec),
-            .emission = ctx.spec & spectra::Spectrum::spectra["zero"].data(),
+            .emission = ctx.spec & spectra::Spectrum::spectra["zero"],
             .normal = {0.f, 0.f, 1.f},
             .degraded = false,
         };

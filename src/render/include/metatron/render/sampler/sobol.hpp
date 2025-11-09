@@ -7,10 +7,13 @@ namespace mtt::sampler {
     auto constexpr sobol_matrix_size = 52;
 
     struct Sobol_Sampler final {
-        Sobol_Sampler(usize seed, usize spp, math::Vector<usize, 2> size) noexcept;
+        Sobol_Sampler(usize spp, math::Vector<usize, 2> size) noexcept;
         Sobol_Sampler(Sobol_Sampler const&) noexcept = default;
         auto static init() noexcept -> void;
-        auto start(math::Vector<usize, 2> const& pixel, usize idx, usize dim = 0uz) noexcept -> void;
+        auto start(
+            math::Vector<usize, 2> const& pixel,
+            usize idx, usize dim, usize seed
+        ) noexcept -> void;
         auto generate_1d() noexcept -> f32;
         auto generate_2d() noexcept -> math::Vector<f32, 2>;
         auto generate_pixel_2d() noexcept -> math::Vector<f32, 2>;

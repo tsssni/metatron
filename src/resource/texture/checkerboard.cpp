@@ -1,11 +1,12 @@
 #include <metatron/resource/texture/checkerboard.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::texture {
     Checkerboard_Texture::Checkerboard_Texture(Descriptor const& desc) noexcept
     : x(desc.x), y(desc.y), uv_scale(desc.uv_scale) {
-        auto CIE_Y = spectra::Spectrum::spectra["CIE-Y"].data();
-        auto Y_x = CIE_Y | x.data();
-        auto Y_y = CIE_Y | y.data();
+        auto CIE_Y = spectra::Spectrum::spectra["CIE-Y"];
+        auto Y_x = CIE_Y | x;
+        auto Y_y = CIE_Y | y;
         w_x = Y_x / (Y_x + Y_y);
         w_y = Y_y / (Y_x + Y_y);
     }
@@ -16,7 +17,7 @@ namespace mtt::texture {
     ) const noexcept -> spectra::Stochastic_Spectrum {
         auto [u, v] = math::Vector<usize, 2>{coord.uv * uv_scale};
         auto z = ((u + v) % 2 == 0) ? x : y;
-        return spec & z.data();
+        return spec & z;
     }
 
     auto Checkerboard_Texture::sample(
@@ -38,7 +39,6 @@ namespace mtt::texture {
         if (usize(math::sum(math::floor(uv))) % 2 != i)
             uv[0] = math::mod(uv[0] + 1.f, f32(uv_scale[0]));
         return uv;
-
     }
 
     auto Checkerboard_Texture::pdf(

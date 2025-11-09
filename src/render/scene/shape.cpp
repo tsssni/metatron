@@ -1,11 +1,13 @@
-#include <metatron/render/scene/hierarchy.hpp>
+#include <metatron/render/scene/serde.hpp>
 #include <metatron/resource/shape/mesh.hpp>
 #include <metatron/resource/shape/sphere.hpp>
 
 namespace mtt::scene {
     auto shape_init() noexcept -> void {
-        auto& vec = stl::vector<shape::Shape>::instance();
-        vec.emplace_type<shape::Mesh>();
-        vec.emplace_type<shape::Sphere>();
+        using namespace shape;
+        auto& vec = stl::vector<Shape>::instance();
+        vec.emplace_type<Mesh>();
+        vec.emplace_type<Sphere>();
+        MTT_DESERIALIZE(Shape, Mesh, Sphere);
     }
 }

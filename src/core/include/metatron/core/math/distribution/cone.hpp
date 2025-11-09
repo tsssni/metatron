@@ -4,6 +4,7 @@
 
 namespace mtt::math {
     struct Cone_Distribution final {
+        Cone_Distribution() noexcept = default;
         Cone_Distribution(f32 cos_theta_max) noexcept: cos_theta_max(cos_theta_max) {}
 
         auto sample(Vector<f32, 2> const& u) const noexcept -> Vector<f32, 3> {

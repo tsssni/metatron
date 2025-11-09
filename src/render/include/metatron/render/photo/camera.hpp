@@ -9,19 +9,15 @@ namespace mtt::photo {
     struct Interaction final {
         math::Ray_Differential ray_differential;
         math::Ray_Differential default_differential;
-        Fixel fixel;
+        f32 pdf;
     };
 
     struct Camera final {
-        view<Lens> lens;
-        mut<Film> film;
-
-        view<filter::Filter> filter;
-        mut<sampler::Sampler> sampler;
-
         auto sample(
-            math::Vector<usize, 2> pixel,
-            usize idx
+            view<Lens> lens,
+            math::Vector<f32, 2> pos,
+            math::Vector<f32, 2> dxdy,
+            math::Vector<f32, 2> u
         ) noexcept -> std::optional<Interaction>;
     };
 }

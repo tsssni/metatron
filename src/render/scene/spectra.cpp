@@ -1,4 +1,4 @@
-#include <metatron/render/scene/hierarchy.hpp>
+#include <metatron/render/scene/serde.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/resource/spectra/constant.hpp>
 #include <metatron/resource/spectra/rgb.hpp>
@@ -12,12 +12,14 @@
 
 namespace mtt::scene {
     auto spectra_init() noexcept -> void {
-        auto& vec = stl::vector<spectra::Spectrum>::instance();
-        vec.emplace_type<spectra::Constant_Spectrum>();
-        vec.emplace_type<spectra::Rgb_Spectrum>();
-        vec.emplace_type<spectra::Visible_Spectrum>();
-        vec.emplace_type<spectra::Discrete_Spectrum>();
-        vec.emplace_type<spectra::Blackbody_Spectrum>();
+        using namespace spectra;
+
+        auto& vec = stl::vector<Spectrum>::instance();
+        vec.emplace_type<Constant_Spectrum>();
+        vec.emplace_type<Rgb_Spectrum>();
+        vec.emplace_type<Blackbody_Spectrum>();
+        vec.emplace_type<Visible_Spectrum>();
+        vec.emplace_type<Discrete_Spectrum>();
 
         auto name = std::to_array<std::string>({
             "zero", "one",
@@ -25,13 +27,13 @@ namespace mtt::scene {
         auto data = std::to_array<f32>({
             0.f, 1.f,
         });
-        vec.reserve<spectra::Constant_Spectrum>(name.size());
+        vec.reserve<Constant_Spectrum>(name.size());
         for (auto i = 0uz; i < name.size(); i++) {
-            spectra::Spectrum::spectra.emplace(
+            Spectrum::spectra.emplace(
                 name[i],
-                attach<spectra::Spectrum>(
+                attach<Spectrum>(
                     ("/spectrum/" + name[i]) / et,
-                    spectra::Constant_Spectrum{data[i]}
+                    Constant_Spectrum{data[i]}
                 )
             );
         }
@@ -47,10 +49,10 @@ namespace mtt::scene {
             && (it.path().extension() == ".dspd" || it.path().extension() == ".vspd");
         })
         | std::ranges::to<std::vector<std::filesystem::path>>();
-        vec.reserve<spectra::Discrete_Spectrum>(std::ranges::count_if(spectra,
+        vec.reserve<Discrete_Spectrum>(std::ranges::count_if(spectra,
             [] (auto const& p) { return p.extension() == ".dspd"; })
         );
-        vec.reserve<spectra::Visible_Spectrum>(std::ranges::count_if(spectra,
+        vec.reserve<Visible_Spectrum>(std::ranges::count_if(spectra,
             [] (auto const& p) { return p.extension() == ".vspd"; })
         );
 
@@ -74,11 +76,19 @@ namespace mtt::scene {
             auto push = [&]<typename S>(S&& spec) {
                 auto lock = vec.lock<S>();
                 auto entity = ("/spectrum/" + name) / et;
-                auto handle = attach<spectra::Spectrum>(entity, std::forward<S>(spec));
-                spectra::Spectrum::spectra.emplace(name, handle);
+                auto handle = attach<Spectrum>(entity, std::forward<S>(spec));
+                Spectrum::spectra.emplace(name, handle);
             };
-            if (ext == ".vspd") push(spectra::Visible_Spectrum{{path}});
-            else if (ext == ".dspd") push(spectra::Discrete_Spectrum{{path}});
+            if (ext == ".vspd") push(Visible_Spectrum{{path}});
+            else if (ext == ".dspd") push(Discrete_Spectrum{{path}});
         });
+
+        MTT_DESERIALIZE(Spectrum
+        , Constant_Spectrum
+        , Rgb_Spectrum
+        , Blackbody_Spectrum
+        , Visible_Spectrum
+        , Discrete_Spectrum
+        );
     }
 }

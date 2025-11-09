@@ -16,18 +16,20 @@ namespace mtt::spectra {
         std::unordered_map<std::string, proxy<Spectrum>> static spectra;
     };
 
-    auto inline operator|(view<Spectrum> x, view<Spectrum> y) noexcept -> f32 {
+    auto inline operator|(proxy<Spectrum> x, proxy<Spectrum> y) noexcept -> f32 {
         auto integral = 0.f;
+        auto a = x.data();
+        auto b = y.data();
         for (auto lambda = visible_lambda[0]; lambda <= visible_lambda[1]; ++lambda)
-            integral += (*x)(lambda) * (*y)(lambda);
+            integral += (*a)(lambda) * (*b)(lambda);
         return integral;
     }
 
-    auto inline operator~(view<Spectrum> s) noexcept -> math::Vector<f32, 3> {
+    auto inline operator~(proxy<Spectrum> s) noexcept -> math::Vector<f32, 3> {
         return math::Vector<f32, 3>{
-            Spectrum::spectra["CIE-X"].data() | s,
-            Spectrum::spectra["CIE-Y"].data() | s,
-            Spectrum::spectra["CIE-Z"].data() | s,
+            Spectrum::spectra["CIE-X"] | s,
+            Spectrum::spectra["CIE-Y"] | s,
+            Spectrum::spectra["CIE-Z"] | s,
         };
     }
 }

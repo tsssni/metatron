@@ -5,10 +5,12 @@
 
 namespace mtt::volume {
     struct Uniform_Volume final {
-        Uniform_Volume(
-            math::Bounding_Box const& bbox,
-            math::Vector<usize, 3> const& dimensions
-        ) noexcept;
+        struct Descriptor final {
+            math::Bounding_Box bbox;
+            math::Vector<usize, 3> dimensions;
+        };
+        Uniform_Volume() noexcept = default;
+        Uniform_Volume(Descriptor const& desc) noexcept;
 
         auto to_local(math::Vector<i32, 3> const& ijk) const noexcept -> math::Vector<f32, 3>;
         auto to_index(math::Vector<f32, 3> const& pos) const noexcept -> math::Vector<i32, 3>;

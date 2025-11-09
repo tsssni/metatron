@@ -1,17 +1,14 @@
 #include <metatron/resource/volume/uniform.hpp>
 
 namespace mtt::volume {
-    Uniform_Volume::Uniform_Volume(
-        math::Bounding_Box const& bbox,
-        math::Vector<usize, 3> const& dimensions
-    ) noexcept:
-    bbox(bbox),
-    dims(dimensions),
-    voxel_size((bbox.p_max - bbox.p_min) / dimensions) {
+    Uniform_Volume::Uniform_Volume(Descriptor const& desc) noexcept:
+    bbox(desc.bbox),
+    dims(desc.dimensions),
+    voxel_size((bbox.p_max - bbox.p_min) / dims) {
         auto img = image::Image{};
-        img.size = math::Vector<f32, 4>{math::shrink(dimensions), 1uz, sizeof(f32)};
-        img.pixels.resize(dimensions[2]);
-        for (auto i = 0; i < dimensions[2]; ++i)
+        img.size = math::Vector<f32, 4>{math::shrink(dims), 1uz, sizeof(f32)};
+        img.pixels.resize(dims[2]);
+        for (auto i = 0; i < dims[2]; ++i)
             img.pixels[i].resize(math::prod(img.size));
 
         auto& vec = stl::vector<image::Image>::instance();

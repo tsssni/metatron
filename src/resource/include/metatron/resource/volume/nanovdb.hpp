@@ -5,7 +5,11 @@
 
 namespace mtt::volume {
     struct Nanovdb_Volume final {
-        Nanovdb_Volume(std::string_view path) noexcept;
+        struct Descriptor final {
+            std::string path;
+        };
+        Nanovdb_Volume() noexcept = default;
+        Nanovdb_Volume(Descriptor const& desc) noexcept;
 
         auto to_local(math::Vector<i32, 3> const& ijk) const noexcept -> math::Vector<f32, 3>;
         auto to_index(math::Vector<f32, 3> const& pos) const noexcept -> math::Vector<i32, 3>;

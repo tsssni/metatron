@@ -29,12 +29,20 @@ namespace mtt::spectra {
         return math::sum(spec) / stochastic_samples;
     }
 
+    auto Stochastic_Spectrum::operator()(proxy<Spectrum> spectrum) const noexcept -> f32 {
+        return (*this)(spectrum.data());
+    }
+
     auto Stochastic_Spectrum::operator&(view<Spectrum> spectrum) const noexcept -> Stochastic_Spectrum {
         auto spec = *this;
         spec.value = math::foreach([&](f32 lambda, usize i) {
             return (*spectrum)(lambda);
         }, lambda);
         return spec;
+    }
+
+    auto Stochastic_Spectrum::operator&(proxy<Spectrum> spectrum) const noexcept -> Stochastic_Spectrum {
+        return (*this)(spectrum.data());
     }
 
     auto Stochastic_Spectrum::operator+(Stochastic_Spectrum const& spectrum) const noexcept -> Stochastic_Spectrum {

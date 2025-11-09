@@ -27,7 +27,7 @@ namespace mtt::bsdf {
         auto has_base = spectra::valid(reflectance);
         auto has_surface = spectra::valid(eta);
         auto has_conductor = spectra::valid(k);
-        auto null_spec = spectrum & spectra::Spectrum::spectra["zero"].data();
+        auto null_spec = spectrum & spectra::Spectrum::spectra["zero"];
         auto invalid_spec = spectra::Stochastic_Spectrum{};
 
         auto bitmask = has_base | (has_surface << 1) | (has_conductor << 2);

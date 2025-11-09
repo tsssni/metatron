@@ -5,11 +5,13 @@ namespace mtt::sampler {
     // halton with owen scrambling: https://pbr-book.org/4ed/Sampling_and_Reconstruction/Halton_Sampler
     struct Halton_Sampler final {
         Halton_Sampler(
-            usize seed,
             math::Vector<i32, 2> const& scale_exponential = {7, 4}
         ) noexcept;
         Halton_Sampler(Halton_Sampler const&) noexcept = default;
-        auto start(math::Vector<usize, 2> const& pixel, usize idx, usize dim = 2) noexcept -> void;
+        auto start(
+            math::Vector<usize, 2> const& pixel,
+            usize idx, usize dim, usize seed
+        ) noexcept -> void;
         auto generate_1d() noexcept -> f32;
         auto generate_2d() noexcept -> math::Vector<f32, 2>;
         auto generate_pixel_2d() noexcept -> math::Vector<f32, 2>;

@@ -1,6 +1,7 @@
 #pragma once
 #include <metatron/render/scene/hierarchy.hpp>
 #include <metatron/render/scene/descriptor.hpp>
+#include <metatron/resource/color/color-space.hpp>
 #include <metatron/core/math/matrix.hpp>
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/stl/vector.hpp>
@@ -9,6 +10,16 @@
 #include <glaze/glaze.hpp>
 
 namespace glz {
+    template<>
+    struct meta<mtt::color::Color_Space::Spectrum_Type> {
+        using enum mtt::color::Color_Space::Spectrum_Type;
+        auto constexpr static value = glz::enumerate(
+            albedo,
+            unbounded,
+            illuminant
+        );
+    };
+
     template<>
     struct from<JSON, mtt::scene::Entity> {
         template<auto Opts>
@@ -31,21 +42,21 @@ namespace glz {
 
     template<typename T>
     requires mtt::scene::has_descriptor<T>
-    struct to<JSON, T> {
+    struct from<JSON, T> {
         template<auto Opts>
         auto static op(T& v, auto&&... args) noexcept -> void {
             auto desc = (typename mtt::scene::descriptor<T>::type){};
-            serialize<JSON>::op<Opts>(desc, args...);
+            parse<JSON>::op<Opts>(desc, args...);
             v = desc;
         }
     };
 
     template<pro::facade F, typename... Ts>
-    struct to<JSON, mtt::stl::variant<F, Ts...>> {
+    struct from<JSON, mtt::stl::variant<F, Ts...>> {
         template<auto Opts>
         auto static op(mtt::stl::variant<F, Ts...>& v, auto&&... args) noexcept -> void {
             auto var = std::variant<typename mtt::scene::descriptor<Ts>::type...>{};
-            serialize<JSON>::op<Opts>(var, args...);
+            parse<JSON>::op<Opts>(var, args...);
             std::visit([&v](auto&& desc) {
                 ([&v]<typename T>(auto&& d) {
                     if constexpr (std::is_same_v<
@@ -69,16 +80,6 @@ namespace glz {
         }
     };
 
-    template<typename T, mtt::usize first_dim, mtt::usize... rest_dims>
-    struct to<JSON, mtt::math::Matrix<T, first_dim, rest_dims...>> {
-        template<auto Opts>
-        auto static op(mtt::math::Matrix<T, first_dim, rest_dims...>& v, auto&&... args) noexcept -> void {
-            using E = mtt::math::Matrix<T, first_dim, rest_dims...>::Element;
-            auto const& data = std::array<E, first_dim>(v);
-            serialize<JSON>::op<Opts>(data, args...);
-        }
-    };
-
     template<typename T>
     requires std::floating_point<T>
     struct from<JSON, mtt::math::Quaternion<T>> {
@@ -87,16 +88,6 @@ namespace glz {
             auto data = mtt::math::Vector<T, 4>{};
             parse<JSON>::op<Opts>(data, args...);
             v = mtt::math::Quaternion<T>{data};
-        }
-    };
-
-    template<typename T>
-    requires std::floating_point<T>
-    struct to<JSON, mtt::math::Quaternion<T>> {
-        template<auto Opts>
-        auto static op(mtt::math::Quaternion<T>& v, auto&&... args) noexcept -> void {
-            auto const& data = mtt::math::Vector<T, 4>{v};
-            serialize<JSON>::op<Opts>(data, args...);
         }
     };
 }

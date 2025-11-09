@@ -1,5 +1,6 @@
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::spectra {
     using Color_Space = color::Color_Space;
@@ -30,6 +31,7 @@ namespace mtt::spectra {
                 (rgb[0] - 0.5f) / math::sqrt(rgb[0] * (1.f - rgb[0])),
                 0.f, 0.f,
             };
+            return;
         }
 
         auto maxc = math::maxi(rgb);
@@ -80,6 +82,6 @@ namespace mtt::spectra {
         };
         return s
         * sigmoid(math::polynomial(lambda, c))
-        * (!illuminant ? (*illuminant.data())(lambda) : 1.f);
+        * (illuminant ? (*illuminant.data())(lambda) : 1.f);
     }
 }

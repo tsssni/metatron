@@ -21,20 +21,19 @@ namespace mtt::photo {
 
     auto Fixel::operator=(spectra::Stochastic_Spectrum const& spectrum) noexcept -> void {
         auto xyz = math::Vector<f32, 3>{
-            spectrum(film->r.data()),
-            spectrum(film->g.data()),
-            spectrum(film->b.data()),
+            spectrum(film->r),
+            spectrum(film->g),
+            spectrum(film->b),
         };
         auto rgb = film->color_space->from_XYZ | xyz;
         (*film->image)[pixel[0], pixel[1]] += {rgb * weight, weight};
     }
 
     Film::Film(Descriptor const& desc) noexcept:
+    spp(desc.spp), depth(desc.depth),
     film_size(desc.film_size),
     dxdy(desc.film_size / desc.image_size),
-    r(desc.r),
-    g(desc.g),
-    b(desc.b) {
+    r(desc.r), g(desc.g), b(desc.b) {
         auto img = image::Image{};
         img.size = {desc.image_size, 4, 4};
         img.linear = true;

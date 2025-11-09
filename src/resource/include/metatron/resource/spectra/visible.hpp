@@ -8,6 +8,7 @@ namespace mtt::spectra {
         struct Descriptor final {
             std::string path;
         };
+        Visible_Spectrum() noexcept = default;
         Visible_Spectrum(Descriptor const& desc) noexcept;
         auto operator()(f32 lambda) const noexcept -> f32;
 

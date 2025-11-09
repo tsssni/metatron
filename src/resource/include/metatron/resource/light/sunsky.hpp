@@ -40,6 +40,7 @@ namespace mtt::light {
             f32 temperature;
             f32 intensity;
         };
+        Sunsky_Light() noexcept = default;
         Sunsky_Light(Descriptor const& desc) noexcept;
 
         auto static init() noexcept -> void;
@@ -86,7 +87,7 @@ namespace mtt::light {
         math::Matrix<f32, sun_num_segments, sunsky_num_lambda, sun_num_ctls> sun_radiance;
         math::Vector<math::Truncated_Gaussian_Distribution, tgmm_num_gaussian> tgmm_phi_distr;
         math::Vector<math::Truncated_Gaussian_Distribution, tgmm_num_gaussian> tgmm_theta_distr;
-        math::Discrete_Distribution tgmm_distr{{}};
-        math::Cone_Distribution sun_distr{1.f};
+        math::Discrete_Distribution tgmm_distr;
+        math::Cone_Distribution sun_distr;
     };
 }

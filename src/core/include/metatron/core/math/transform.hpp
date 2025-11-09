@@ -78,8 +78,7 @@ namespace mtt::math {
         Matrix<f32, 4, 4> transform{1.f};
         Matrix<f32, 4, 4> inv_transform{1.f};
 
-        Transform() = default;
-
+        Transform() noexcept = default;
         Transform(std::initializer_list<math::Transform> list) {
             for (auto const& t: list)
                 transform = transform | t.transform;

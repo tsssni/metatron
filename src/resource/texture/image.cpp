@@ -1,6 +1,7 @@
 #include <metatron/resource/texture/image.hpp>
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <OpenImageIO/imageio.h>
@@ -8,7 +9,11 @@
 
 namespace mtt::texture {
     Image_Vector_Texture::Image_Vector_Texture(Descriptor const& desc) noexcept {
-        auto in = OIIO::ImageInput::open(std::string{desc.path});
+        MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(desc.path), {
+            std::println("mesh {} not exists", desc.path);
+            std::abort();
+        });
+        auto in = OIIO::ImageInput::open(path.c_str());
         if (!in) {
             std::println("cannot find image {}", desc.path);
             std::abort();

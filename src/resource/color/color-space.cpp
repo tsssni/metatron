@@ -19,10 +19,10 @@ namespace mtt::color {
         proxy<Transfer_Function> transfer_function
     ): 
     illuminant(illuminant),
-    illuminant_Y_integral(spectra::Spectrum::spectra["CIE-Y"].data() | illuminant.data()),
+    illuminant_Y_integral(spectra::Spectrum::spectra["CIE-Y"] | illuminant),
     transfer_function(transfer_function) {
         // project color primaries and white point to Y=1
-        auto w = ~illuminant.data();
+        auto w = ~illuminant;
         w /= math::sum(w);
         w = xyY_to_XYZ({w[0], w[1], 1.f});
         auto r = xyY_to_XYZ({r_chroma, 1.f});

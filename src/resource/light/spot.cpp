@@ -36,7 +36,7 @@ namespace mtt::light {
         );
 
         return Interaction{
-            .L = (ctx.spec & L.data()) * intensity / (r * r),
+            .L = (ctx.spec & L) * intensity / (r * r),
             .wi = wi,
             .p = {0.f},
             .t = r,
