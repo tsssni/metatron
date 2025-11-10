@@ -1,7 +1,6 @@
 #include <metatron/render/photo/lens/thin.hpp>
 #include <metatron/core/math/distribution/disk.hpp>
 #include <metatron/core/math/constant.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::photo {
     Thin_Lens::Thin_Lens(Descriptor const& desc) noexcept:

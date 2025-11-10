@@ -4,6 +4,7 @@
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/thread.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::media {
     Heterogeneous_Medium::Heterogeneous_Medium(Descriptor const& desc) noexcept:
@@ -21,11 +22,10 @@ namespace mtt::media {
                 auto voxel_bbox = sigmaj.bounding_box(ijk);
                 auto maj = math::low<f32>;
 
-                std::swap(voxel_bbox.p_min[2], voxel_bbox.p_max[2]);
-                auto p_min = density->to_index(voxel_bbox.p_min);
-                auto p_max = density->to_index(voxel_bbox.p_max);
-                p_min[2] *= -1;
-                p_max[2] *= -1;
+                auto b_min = density->to_index(voxel_bbox.p_min);
+                auto b_max = density->to_index(voxel_bbox.p_max);
+                auto p_min = math::min(b_min, b_max);
+                auto p_max = math::max(b_min, b_max);
 
                 for (auto i = p_min[0]; i <= p_max[0]; ++i)
                     for (auto j = p_min[1]; j <= p_max[1]; ++j)

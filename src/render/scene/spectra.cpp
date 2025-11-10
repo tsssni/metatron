@@ -74,7 +74,7 @@ namespace mtt::scene {
             name += stem;
 
             auto push = [&]<typename S>(S&& spec) {
-                auto lock = vec.lock<S>();
+                auto lock = vec.lock();
                 auto entity = ("/spectrum/" + name) / et;
                 auto handle = attach<Spectrum>(entity, std::forward<S>(spec));
                 Spectrum::spectra.emplace(name, handle);

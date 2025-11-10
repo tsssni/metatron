@@ -36,6 +36,7 @@ namespace mtt::stl {
 
     template<pro::facade F>
     struct vector<F> final: singleton<vector<F>> {
+        vector() noexcept {gutex = make_poly<std::mutex>();}
         ~vector() noexcept {
             for (auto i = 0; i < destroier.size(); i++) {
                 auto& d = destroier[i];
@@ -82,6 +83,10 @@ namespace mtt::stl {
             return std::unique_lock{*mutex[map.at(typeid(T))]};
         }
 
+        auto lock() const noexcept -> std::unique_lock<std::mutex> {
+            return std::unique_lock{*gutex};
+        }
+
         auto operator[](u32 i) noexcept -> mut<F> {
             auto t = (i >> 24) & 0xff;
             auto idx = (i & 0xffffff);
@@ -120,6 +125,7 @@ namespace mtt::stl {
         std::vector<std::function<auto (byte const* ptr) -> poly<F>>> copier;
         std::vector<std::function<auto (byte* ptr) -> void>> destroier;
         std::vector<poly<std::mutex>> mutex;
+        poly<std::mutex> gutex;
         std::unordered_map<std::type_index, u32> map;
     };
 }

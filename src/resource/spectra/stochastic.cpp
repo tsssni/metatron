@@ -42,7 +42,7 @@ namespace mtt::spectra {
     }
 
     auto Stochastic_Spectrum::operator&(proxy<Spectrum> spectrum) const noexcept -> Stochastic_Spectrum {
-        return (*this)(spectrum.data());
+        return (*this) & spectrum.data();
     }
 
     auto Stochastic_Spectrum::operator+(Stochastic_Spectrum const& spectrum) const noexcept -> Stochastic_Spectrum {

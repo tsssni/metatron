@@ -142,7 +142,10 @@ namespace mtt::bsdf {
         eval::Context const& ctx,
         math::Vector<f32, 3> const& u
     ) const noexcept -> std::optional<Interaction> {
-        auto Fo = plastic ? fresnel(math::unit_to_cos_theta(-ctx.r.d), eta, k) : 0.f;
+        auto Fo = plastic
+        ? fresnel(math::unit_to_cos_theta(-ctx.r.d), eta, k)
+        : ctx.spec & spectra::Spectrum::spectra["zero"];
+
         if (dieletric || conductive || (plastic && u[0] < Fo.value[0])) {
             auto wo = ctx.r.d;
             if (math::abs(wo[1]) < math::epsilon<f32>) return {};

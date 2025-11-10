@@ -40,7 +40,7 @@ namespace mtt::remote {
             packet.setUpdateImage(
                 name, false, desc,
                 0, 0, image.width, image.height,
-                {(f32*)image.pixels.data(), image.pixels.size() / sizeof(f32)}
+                {(f32*)image.pixels.front().data(), image.pixels.front().size() / sizeof(f32)}
             );
 
             if (!socket.send({(byte*)packet.data(), packet.size()}))

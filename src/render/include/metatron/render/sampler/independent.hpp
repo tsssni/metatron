@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
+#include <metatron/render/sampler/sampler.hpp>
 #include <random>
 
 namespace mtt::sampler {
@@ -7,10 +7,7 @@ namespace mtt::sampler {
         Independent_Sampler() noexcept;
         Independent_Sampler(Independent_Sampler const&) noexcept = default;
 
-        auto start(
-            math::Vector<usize, 2> const& pixel,
-            usize idx, usize dim, usize seed
-        ) noexcept -> void;
+        auto start(Context ctx) noexcept -> void;
         auto generate_1d() noexcept -> f32;
         auto generate_2d() noexcept -> math::Vector<f32, 2>;
         auto generate_pixel_2d() noexcept -> math::Vector<f32, 2>;

@@ -4,7 +4,7 @@
 
 namespace mtt::texture {
     struct Constant_Spectrum_Texture final {
-        proxy<spectra::Spectrum> const x;
+        proxy<spectra::Spectrum> x;
 
         auto operator()(
             image::Coordinate const& coord,

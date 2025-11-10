@@ -34,7 +34,7 @@ namespace mtt::scene {
 
     template<typename F>
     auto exist(Entity entity) noexcept -> bool {
-        return Hierarchy::instance().registry.any_of<F>(entity);
+        return Hierarchy::instance().registry.any_of<proxy<F>>(entity);
     }
 
     template<typename F>

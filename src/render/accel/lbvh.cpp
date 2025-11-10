@@ -236,7 +236,7 @@ namespace mtt::accel {
             }
         }
 
-        return Interaction{
+        return !prim ? std::optional<Interaction>{} : Interaction{
             .divider = prim->instance,
             .primitive = prim->primitive,
             .intr_opt = (*prim->instance->shape.data())(

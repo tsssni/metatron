@@ -33,7 +33,8 @@ namespace mtt::photo {
     spp(desc.spp), depth(desc.depth),
     film_size(desc.film_size),
     dxdy(desc.film_size / desc.image_size),
-    r(desc.r), g(desc.g), b(desc.b) {
+    r(desc.r), g(desc.g), b(desc.b),
+    color_space(desc.color_space) {
         film_size = desc.film_size;
         auto aspect_ratio = f32(desc.image_size[0]) / f32(desc.image_size[1]);
         if (aspect_ratio > 1.f) film_size[1] = film_size[0] / aspect_ratio;

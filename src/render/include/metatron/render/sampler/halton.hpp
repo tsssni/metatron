@@ -1,17 +1,16 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
+#include <metatron/render/sampler/sampler.hpp>
 
 namespace mtt::sampler {
     // halton with owen scrambling: https://pbr-book.org/4ed/Sampling_and_Reconstruction/Halton_Sampler
     struct Halton_Sampler final {
-        Halton_Sampler(
-            math::Vector<i32, 2> const& scale_exponential = {7, 4}
-        ) noexcept;
+        struct Descriptor final {
+            math::Vector<i32, 2> scale_exponential = {7, 4};
+        };
+        Halton_Sampler() noexcept = default;
         Halton_Sampler(Halton_Sampler const&) noexcept = default;
-        auto start(
-            math::Vector<usize, 2> const& pixel,
-            usize idx, usize dim, usize seed
-        ) noexcept -> void;
+        Halton_Sampler(Descriptor const& desc) noexcept;
+        auto start(Context ctx) noexcept -> void;
         auto generate_1d() noexcept -> f32;
         auto generate_2d() noexcept -> math::Vector<f32, 2>;
         auto generate_pixel_2d() noexcept -> math::Vector<f32, 2>;

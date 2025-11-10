@@ -36,7 +36,7 @@ namespace mtt::color {
             math::Vector<f32, 2> const& b,
             proxy<spectra::Spectrum> illuminant,
             proxy<Transfer_Function> transfer_function
-        );
+        ) noexcept;
     };
 
     auto constexpr xyY_to_XYZ(math::Vector<f32, 3> const& xyY) -> math::Vector<f32, 3> {

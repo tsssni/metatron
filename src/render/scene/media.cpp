@@ -29,7 +29,7 @@ namespace mtt::scene {
         mvec.emplace_type<Heterogeneous_Medium>();
         mvec.emplace_type<Vaccum_Medium>();
 
-        attach<Medium>("/hierarchy/medium/vaccum"_et, Vaccum_Medium{});
+        attach<Medium>("/medium/vaccum"_et, Vaccum_Medium{});
         MTT_DESERIALIZE(Volume, Uniform_Volume, Nanovdb_Volume);
         MTT_DESERIALIZE_CALLBACK([]{
             auto size = stl::vector<Volume>::instance().size<Uniform_Volume>();

@@ -16,8 +16,8 @@ namespace mtt::renderer {
             Integrator integrator = monte_carlo::Volume_Path_Integrator{};
             Acceleration accel = accel::LBVH{{}};
             Emitter emitter = emitter::Uniform_Emitter{};
-            Sampler sampler = sampler::Sobol_Sampler{film.spp, film.image->size};
-            Filter filter = filter::Lanczos_Filter{};
+            Sampler sampler = sampler::Sobol_Sampler{};
+            Filter filter = filter::Lanczos_Filter{{}};
             Lens lens = photo::Thin_Lens{{}};
         };
         Renderer() noexcept = default;

@@ -22,7 +22,6 @@ namespace mtt::volume {
         auto bounding_box(math::Vector<f32, 3> const& pos) const noexcept -> math::Bounding_Box;
         auto bounding_box(math::Vector<i32, 3> const& ijk) const noexcept -> math::Bounding_Box;
 
-        auto at(math::Vector<i32, 3> const& ijk) const noexcept -> f32;
         auto operator()(math::Vector<f32, 3> const& pos) const noexcept -> f32;
         auto operator[](math::Vector<i32, 3> const& ijk) noexcept -> f32&;
         auto operator[](math::Vector<i32, 3> const& ijk) const noexcept -> f32;

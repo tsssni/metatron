@@ -34,11 +34,11 @@ namespace mtt::light {
     struct Sunsky_Light final {
         struct Descriptor final {
             math::Vector<f32, 2> direction;
-            f32 turbidity;
-            f32 albedo;
-            f32 aperture;
-            f32 temperature;
-            f32 intensity;
+            f32 turbidity = 1.0f;
+            f32 albedo = 0.2f;
+            f32 aperture = sun_aperture;
+            f32 temperature = 6504.f;
+            f32 intensity = 1.f;
         };
         Sunsky_Light() noexcept = default;
         Sunsky_Light(Descriptor const& desc) noexcept;

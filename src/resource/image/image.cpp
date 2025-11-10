@@ -49,7 +49,7 @@ namespace mtt::image {
     auto Image::operator[](usize x, usize y, usize lod) noexcept -> Pixel {
         auto width = (pixels.size() == 1 || pixels[0].size() == pixels[1].size())
         ? this->width : (this->width >> lod);
-        auto offset = (y * (width >> lod) + x) * channels * stride;
+        auto offset = (y * width + x) * channels * stride;
         return Pixel{this, &pixels[lod][offset]};
     }
 

@@ -17,7 +17,7 @@ namespace mtt::color {
         math::Vector<f32, 2> const& b_chroma,
         proxy<spectra::Spectrum> illuminant,
         proxy<Transfer_Function> transfer_function
-    ): 
+    ) noexcept:
     illuminant(illuminant),
     illuminant_Y_integral(spectra::Spectrum::spectra["CIE-Y"] | illuminant),
     transfer_function(transfer_function) {

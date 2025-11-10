@@ -6,10 +6,7 @@ namespace mtt::monte_carlo {
         // null scattering: https://cs.dartmouth.edu/~wjarosz/publications/miller19null.html
         // mis method: https://pbr-book.org/4ed/Light_Transport_II_Volume_Rendering/Volume_Scattering_Integrators
         auto sample(
-            Context context,
-            view<accel::Acceleration> accel,
-            view<emitter::Emitter> emitter,
-            mut<sampler::Sampler> sampler
+            Context ctx
         ) const noexcept -> std::optional<spectra::Stochastic_Spectrum>;
     };
 }

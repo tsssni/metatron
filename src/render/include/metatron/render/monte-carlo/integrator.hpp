@@ -8,6 +8,9 @@
 
 namespace mtt::monte_carlo {
     struct Context final {
+        view<accel::Acceleration> accel;
+        view<emitter::Emitter> emitter;
+        mut<sampler::Sampler> sampler;
         math::Ray_Differential ray_differential;
         math::Ray_Differential default_differential;
         math::Transform render_to_camera;
@@ -20,10 +23,7 @@ namespace mtt::monte_carlo {
 
     struct Integrator final: pro::facade_builder
     ::add_convention<integrator_sample, auto (
-        Context context,
-        view<accel::Acceleration> accel,
-        view<emitter::Emitter> emitter,
-        mut<sampler::Sampler> sampler
+        Context ctx
     ) const noexcept -> std::optional<spectra::Stochastic_Spectrum>>
     ::add_skill<pro::skills::as_view>
     ::build {};

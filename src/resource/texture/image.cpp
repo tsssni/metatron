@@ -114,7 +114,6 @@ namespace mtt::texture {
         spectra::Stochastic_Spectrum const& spec
     ) const noexcept -> spectra::Stochastic_Spectrum {
         auto rgba = image_tex(coord);
-        std::println("{}", rgba);
         auto rgb_spec = spectra::Rgb_Spectrum{{
             rgba,
             type,

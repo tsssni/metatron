@@ -30,7 +30,7 @@ namespace mtt::scene {
             std::abort();
         } else {
             if constexpr (pro::facade<F>) {
-                auto lock = stl::vector<F>::instance().template lock<T>();
+                auto lock = stl::vector<F>::instance().lock();
                 attach<F, T>(j.entity, std::move(d));
             } else {
                 auto lock = stl::vector<T>::instance().lock();

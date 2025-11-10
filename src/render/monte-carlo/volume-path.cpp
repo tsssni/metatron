@@ -7,11 +7,12 @@
 
 namespace mtt::monte_carlo {
     auto Volume_Path_Integrator::sample(
-        Context context,
-        view<accel::Acceleration> accel,
-        view<emitter::Emitter> emitter,
-        mut<sampler::Sampler> sampler
+        Context ctx
     ) const noexcept -> std::optional<spectra::Stochastic_Spectrum> {
+        auto accel = ctx.accel;
+        auto emitter = ctx.emitter;
+        auto sampler = ctx.sampler;
+
         auto lambda_u = sampler->generate_1d();
         auto emission = spectra::Stochastic_Spectrum{lambda_u};
         auto beta = emission; beta = 1.f;
@@ -19,7 +20,7 @@ namespace mtt::monte_carlo {
         auto mis_e = emission; mis_e = 0.f;
 
         auto depth = 0uz;
-        auto max_depth = context.max_depth;
+        auto max_depth = ctx.max_depth;
 
         auto scattered = false;
         auto crossed = true;
@@ -32,15 +33,15 @@ namespace mtt::monte_carlo {
 
         auto trace_ctx = eval::Context{};
         auto history_ctx = eval::Context{};
-        trace_ctx.r = context.ray_differential.r;
+        trace_ctx.r = ctx.ray_differential.r;
         trace_ctx.spec = emission;
 
         auto acc_opt = std::optional<accel::Interaction>{};
         auto medium = proxy<media::Medium>{};
         auto medium_to_render = proxy<math::Transform>{};
-        auto& rdiff = context.ray_differential;
-        auto& ddiff = context.default_differential;
-        auto& ct = context.render_to_camera;
+        auto& rdiff = ctx.ray_differential;
+        auto& ddiff = ctx.default_differential;
+        auto& ct = ctx.render_to_camera;
 
         while (true) {
             depth += usize(scattered);

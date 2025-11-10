@@ -97,6 +97,7 @@ namespace mtt::scene {
         attach<math::Transform>("/hierarchy/shape"_et, rt);
         attach<math::Transform>("/hierarchy/medium"_et, rt);
         attach<math::Transform>("/hierarchy/light"_et, rt);
+        attach<math::Transform>("/hierarchy/medium/vaccum"_et, {});
 
         trace("/hierarchy/shape"_et);
         trace("/hierarchy/medium"_et);

@@ -2,8 +2,8 @@
 #include <metatron/core/math/trigonometric.hpp>
 
 namespace mtt::filter {
-    Lanczos_Filter::Lanczos_Filter(math::Vector<f32, 2> const& radius, f32 tau) noexcept:
-    radius(radius), tau(tau) {
+    Lanczos_Filter::Lanczos_Filter(Descriptor const& desc) noexcept:
+    radius(desc.radius), tau(desc.tau) {
         auto matrix = math::Matrix<f32, 64, 64>{};
         for (auto j = 0uz; j < 64; ++j) {
             auto y = math::lerp(-radius[1], radius[1], (f32(j) + 0.5f) / 64.f);

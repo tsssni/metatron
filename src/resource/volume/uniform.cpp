@@ -58,10 +58,6 @@ namespace mtt::volume {
         }
     }
 
-    auto Uniform_Volume::at(math::Vector<i32, 3> const& ijk) const noexcept -> f32 {
-        return (*this)[ijk];
-    }
-
     auto Uniform_Volume::operator()(math::Vector<f32, 3> const& pos) const noexcept -> f32 {
         return (*this)[to_index(pos)];
     }
