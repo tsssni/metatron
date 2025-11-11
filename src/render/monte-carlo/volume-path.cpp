@@ -4,6 +4,7 @@
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/plane.hpp>
 #include <metatron/core/stl/optional.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::monte_carlo {
     auto Volume_Path_Integrator::sample(
@@ -134,7 +135,8 @@ namespace mtt::monte_carlo {
 
                         auto close_to_light = math::length(intr.p - l_intr.p) < 0.001f;
                         auto is_interface = div.material->flags() & material::Flags::interface;
-                        if (!close_to_light && !is_interface) {
+                        auto is_emissive = div.material->flags() & material::Flags::emissive;
+                        if (!is_interface && (!is_emissive || !close_to_light)) {
                             terminated = true; gamma = 0.f; continue;
                         } else if (close_to_light) {
                             auto st = math::Transform{math::Matrix<f32, 4, 4>{

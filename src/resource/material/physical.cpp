@@ -45,6 +45,6 @@ namespace mtt::material {
     }
 
     auto Physical_Material::flags() const noexcept -> Flags {
-        return Flags(0);
+        return emission ? Flags::emissive : Flags(0);
     }
 }

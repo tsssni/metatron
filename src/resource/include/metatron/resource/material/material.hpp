@@ -15,7 +15,8 @@ namespace mtt::material {
     MTT_POLY_METHOD(material_flags, flags);
 
     enum Flags {
-        interface,
+        interface = 1 << 0,
+        emissive = 1 << 1,
     };
 
     struct Material final: pro::facade_builder

@@ -3,6 +3,7 @@
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/stl/thread.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::emitter {
     Uniform_Emitter::Uniform_Emitter() {
@@ -21,8 +22,7 @@ namespace mtt::emitter {
     ) const noexcept -> std::optional<Interaction> {
         if (prims.empty() && inf_prims.empty()) return {};
         auto idx = math::clamp(usize(u * prims.size()), 0uz, prims.size() - 1);
-        auto prim = idx < prims.size()
-        ? prims[idx] : inf_prims[idx - prims.size()];
+        auto prim = prims[idx];
         return Interaction{
             prim.light,
             prim.local_to_render,

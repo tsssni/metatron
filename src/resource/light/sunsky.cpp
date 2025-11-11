@@ -272,7 +272,6 @@ namespace mtt::light {
             auto theta = math::clamp(tgmm_theta, 1e-2f, math::pi * 0.5f - 1e-2f);
             wi = math::unit_spherical_to_cartesian({theta, phi});
         } else {
-            auto intr = Interaction{};
             auto distr = math::Cone_Distribution{cos_sun};
             wi = math::normalize(math::Vector<f32, 3>{t | math::expand(distr.sample(u), 0.f)});
         }
@@ -417,7 +416,7 @@ namespace mtt::light {
                     auto [cos_gamma_phi, cos_theta, cartesian_w] = zipped;
                     auto [cos_gamma, phi] = cos_gamma_phi;
                     auto [w_theta, w_gamma] = cartesian_w;
-                    return hosek_sun(i, cos_theta) * hosek_limb(i, cos_gamma) * w_theta * w_gamma;
+                    return area * hosek_sun(i, cos_theta) * hosek_limb(i, cos_gamma) * w_theta * w_gamma;
                 });
                 auto integral = std::ranges::fold_left(radiance, 0.f, std::plus{}) * J;
                 auto&& CIE_Y = *spectra::Spectrum::spectra["CIE-Y"].data();
