@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/render/renderer/variant.hpp>
 #include <metatron/render/photo/lens/lens.hpp>
 #include <metatron/render/photo/lens/pinhole.hpp>
 #include <metatron/render/photo/lens/thin.hpp>
@@ -15,7 +16,7 @@ namespace mtt::renderer {
 
 namespace glz {
     template<>
-    struct meta<mtt::renderer::Lens> {
+    struct meta<mtt::renderer::underlying_variant_t<mtt::renderer::Lens>> {
         auto static constexpr tag = std::string_view{"variant"};
         auto static constexpr ids = std::array{
             "pinhole",

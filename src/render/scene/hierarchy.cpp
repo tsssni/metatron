@@ -86,9 +86,8 @@ namespace mtt::scene {
 
     auto Hierarchy::populate(std::string_view path) noexcept -> void {
         stl::filesystem::instance().push(path);
-
         auto jsons = std::vector<scene::json>{};
-        if (auto e = glz::read_file_json(jsons, std::string{path} + "scene.json", std::string{}); e)
+        if (auto e = glz::read_file_json(jsons, std::string{path} + "/scene.json", std::string{}); e)
             std::println("read scene {} with glaze error: {}", path, glz::format_error(e));
         auto bins = binmap{};
         for (auto& j: jsons) bins[j.type].push_back(std::move(j));

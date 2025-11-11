@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/render/renderer/variant.hpp>
 #include <metatron/render/monte-carlo/integrator.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/core/stl/variant.hpp>
@@ -13,7 +14,7 @@ namespace mtt::renderer {
 
 namespace glz {
     template<>
-    struct meta<mtt::renderer::Integrator> {
+    struct meta<mtt::renderer::underlying_variant_t<mtt::renderer::Integrator>> {
         auto static constexpr tag = std::string_view{"variant"};
         auto static constexpr ids = std::array{
             "volume_path",

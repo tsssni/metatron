@@ -8,9 +8,9 @@ namespace mtt::media {
     struct Heterogeneous_Medium final {
         struct Descriptor final {
             Phase phase;
-            proxy<spectra::Spectrum> sigma_a;
-            proxy<spectra::Spectrum> sigma_s;
-            proxy<spectra::Spectrum> sigma_e;
+            proxy<spectra::Spectrum> sigma_a = spectra::Spectrum::spectra["zero"];
+            proxy<spectra::Spectrum> sigma_s = spectra::Spectrum::spectra["zero"];
+            proxy<spectra::Spectrum> sigma_e = spectra::Spectrum::spectra["zero"];
             math::Vector<usize, 3> dimensions;
             proxy<volume::Volume> density;
             f32 density_scale;

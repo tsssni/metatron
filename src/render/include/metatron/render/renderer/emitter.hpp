@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/render/renderer/variant.hpp>
 #include <metatron/render/emitter/emitter.hpp>
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/core/stl/variant.hpp>
@@ -13,7 +14,7 @@ namespace mtt::renderer {
 
 namespace glz {
     template<>
-    struct meta<mtt::renderer::Emitter> {
+    struct meta<mtt::renderer::underlying_variant_t<mtt::renderer::Emitter>> {
         auto static constexpr tag = std::string_view{"variant"};
         auto static constexpr ids = std::array{
             "uniform",

@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/render/renderer/variant.hpp>
 #include <metatron/render/filter/filter.hpp>
 #include <metatron/render/filter/box.hpp>
 #include <metatron/render/filter/gaussian.hpp>
@@ -17,7 +18,7 @@ namespace mtt::renderer {
 
 namespace glz {
     template<>
-    struct meta<mtt::renderer::Filter> {
+    struct meta<mtt::renderer::underlying_variant_t<mtt::renderer::Filter>> {
         auto static constexpr tag = std::string_view{"variant"};
         auto static constexpr ids = std::array{
             "box",

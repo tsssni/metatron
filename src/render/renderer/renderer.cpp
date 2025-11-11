@@ -57,7 +57,7 @@ namespace mtt::renderer {
             auto store = [
                 path = args.output,
                 fcs = desc.film.color_space
-            ](image::Image&& img) {
+            ](image::Image const& img) {
                 auto type = img.stride == 1
                 ? OIIO::TypeDesc::UINT8 : OIIO::TypeDesc::FLOAT;
                 auto spec = OIIO::ImageSpec{
@@ -99,8 +99,7 @@ namespace mtt::renderer {
                 next = std::min(next * 2uz, 64uz);
 
                 auto finished = range[0] == spp;
-                auto& film = *desc.film.image;
-                auto&& image = image::Image{finished ? std::move(film) : film};
+                auto image = *desc.film.image;
                 scheduler.sync_parallel(
                     math::Vector<usize, 2>{image.size},
                     [&image](auto const& px) {
@@ -110,9 +109,9 @@ namespace mtt::renderer {
                         image[i, j] = pixel;
                     }
                 );
-                if (finished) store(std::move(image));
+                if (finished) store(image);
 
-                futures.push_back(scheduler.async_dispatch(
+                if (!addr.host.empty()) futures.push_back(scheduler.async_dispatch(
                     [
                         image = std::move(image),
                         &f = futures.back(),

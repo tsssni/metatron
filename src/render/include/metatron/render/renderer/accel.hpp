@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/render/renderer/variant.hpp>
 #include <metatron/render/accel/accel.hpp>
 #include <metatron/render/accel/lbvh.hpp>
 #include <metatron/core/stl/variant.hpp>
@@ -13,7 +14,7 @@ namespace mtt::renderer {
 
 namespace glz {
     template<>
-    struct meta<mtt::renderer::Acceleration> {
+    struct meta<mtt::renderer::underlying_variant_t<mtt::renderer::Acceleration>> {
         auto static constexpr tag = std::string_view{"variant"};
         auto static constexpr ids = std::array{
             "lbvh",

@@ -7,9 +7,12 @@ namespace mtt::stl {
     requires (sizeof...(Ts) > 0) && (poliable<F, Ts> && ...)
     struct variant final {
         using ts = stl::array<Ts...>;
-        variant() noexcept = default;
-        variant(variant const&) noexcept = default;
-        variant(variant&&) noexcept = default;
+        variant(variant const&) noexcept = delete;
+        variant(variant&& rhs) noexcept {
+            idx = rhs.idx;
+            storage = std::move(rhs.storage);
+            rhs.idx = math::maxv<u32>; // skip destroy
+        };
         ~variant() noexcept { destroy(); }
 
         template<typename T, typename... Args>

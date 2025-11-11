@@ -61,7 +61,7 @@ namespace glz {
                 ([&v]<typename T>(auto&& d) {
                     if constexpr (std::is_same_v<
                         typename mtt::scene::descriptor<T>::type,
-                        std::remove_cvref_t<decltype(desc)>
+                        std::decay_t<decltype(desc)>
                     >) v.template emplace<T>(std::forward<decltype(d)>(d));
                 }.template operator()<Ts>(desc), ...);
             }, var);

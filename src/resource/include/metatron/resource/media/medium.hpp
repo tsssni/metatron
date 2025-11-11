@@ -29,8 +29,8 @@ namespace mtt::media {
     struct Phase final {
         enum struct Function: u32 {
             henyey_greenstein,
-        } function;
-        f32 g;
+        } function = Function::henyey_greenstein;
+        f32 g = 0.f;
 
         auto to_phase(
             spectra::Stochastic_Spectrum const& spec

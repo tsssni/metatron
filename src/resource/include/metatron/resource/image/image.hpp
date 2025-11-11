@@ -32,7 +32,7 @@ namespace mtt::image {
                 usize stride;
             };
             math::Vector<usize, 4> size;
-        } const;
+        };
         // only sRGB is supported by hardware so boolean value is enough.
         bool linear;
         // specify mip size by resizing the vector.

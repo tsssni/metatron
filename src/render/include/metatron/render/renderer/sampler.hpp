@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/render/renderer/variant.hpp>
 #include <metatron/render/sampler/sampler.hpp>
 #include <metatron/render/sampler/independent.hpp>
 #include <metatron/render/sampler/halton.hpp>
@@ -17,7 +18,7 @@ namespace mtt::renderer {
 
 namespace glz {
     template<>
-    struct meta<mtt::renderer::Sampler> {
+    struct meta<mtt::renderer::underlying_variant_t<mtt::renderer::Sampler>> {
         auto static constexpr tag = std::string_view{"variant"};
         auto static constexpr ids = std::array{
             "independent",

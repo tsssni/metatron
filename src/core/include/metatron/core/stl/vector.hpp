@@ -10,7 +10,6 @@ namespace mtt::stl {
     template<typename T>
     struct vector final: singleton<vector<T>> {
         vector() noexcept: mutex(make_poly<std::mutex>()) {}
-        vector(vector&&) noexcept = default;
 
         template<typename... Args>
         requires std::is_constructible_v<T, Args...>
