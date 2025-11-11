@@ -8,6 +8,11 @@ namespace mtt::image {
         else return std::pow((x + 0.055f) / 1.055f, 2.4f);
     };
 
+    auto sRGB_transfer(f32 x) noexcept -> f32 {
+        if (x <= 0.0031308f) return 12.92f * x;
+        else return 1.055f * std::pow(x, 1.f / 2.4f) - 0.055f;
+    }
+
     Image::Pixel::Pixel(view<Image> image, mut<byte> start) noexcept
     : image(image), start(start) {}
 
@@ -31,11 +36,21 @@ namespace mtt::image {
     }
 
     auto Image::Pixel::operator=(math::Vector<f32, 4> const& v) noexcept -> void {
-        if (image->stride != 4) {
-            std::println("texture is readonly");
-            std::abort();
+        for (auto i = 0; i < image->size[2]; ++i) {
+            auto* pixel = start + image->size[3] * i; 
+            switch (image->size[3]) {
+                case 1:
+                    *pixel = image->linear
+                        ? byte(v[i] * 255.f)
+                        : byte(sRGB_transfer(v[i]) * 255.f);
+                    break;
+                case 4:
+                    *((f32*)pixel) = v[i];
+                    break;
+                default:
+                    break;
+            }
         }
-        *((math::Vector<f32, 4>*)start) = v;
     }
 
     auto Image::Pixel::operator+=(math::Vector<f32, 4> const& v) noexcept -> void {

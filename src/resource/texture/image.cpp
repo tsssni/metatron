@@ -10,12 +10,12 @@
 namespace mtt::texture {
     Image_Vector_Texture::Image_Vector_Texture(Descriptor const& desc) noexcept {
         MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(desc.path), {
-            std::println("mesh {} not exists", desc.path);
+            std::println("image {} not exists", desc.path);
             std::abort();
         });
         auto in = OIIO::ImageInput::open(path.c_str());
         if (!in) {
-            std::println("cannot find image {}", desc.path);
+            std::println("oiio error: cannot open image {}", desc.path);
             std::abort();
         }
 
@@ -56,20 +56,25 @@ namespace mtt::texture {
         });
         distr = {std::span{pdf}, math::reverse(size), {0.f}, {1.f}};
 
-        for (auto mip = 1uz; mip < tex.pixels.size(); ++mip) {
+        for (auto mip = 1uz; mip < tex.pixels.size() - 1; ++mip) {
+            auto fetch = [mip, size, &tex](math::Vector<usize, 2> const& src) {
+                auto px = math::clamp(src, {0}, size - 1);
+                return math::Vector<f32, 4>{tex[px[0], px[1], mip - 1]};
+            };
             size[0] = std::max(1uz, size[0] >> 1uz);
             size[1] = std::max(1uz, size[1] >> 1uz);
             tex.pixels[mip].resize(math::prod(size) * channels * stride);
 
-            auto down = [this, mip, &tex](math::Vector<usize, 2> const& px) mutable {
+            auto down = [fetch, mip, &tex](math::Vector<usize, 2> const& px) mutable {
                 auto [i, j] = px;
                 tex[i, j, mip] = 0.25f * (0.f
-                + math::Vector<f32, 4>{tex[i * 2uz + 0, j * 2uz + 0, mip - 1]}
-                + math::Vector<f32, 4>{tex[i * 2uz + 0, j * 2uz + 1, mip - 1]}
-                + math::Vector<f32, 4>{tex[i * 2uz + 1, j * 2uz + 0, mip - 1]}
-                + math::Vector<f32, 4>{tex[i * 2uz + 1, j * 2uz + 1, mip - 1]}
+                + fetch({i * 2uz + 0, j * 2uz + 0})
+                + fetch({i * 2uz + 0, j * 2uz + 1})
+                + fetch({i * 2uz + 1, j * 2uz + 0})
+                + fetch({i * 2uz + 1, j * 2uz + 1})
                 );
             };
+
             if (math::prod(size) > 1024)
                 stl::scheduler::instance().sync_parallel(size, down);
             else for (auto j = 0; j < size[1]; ++j)

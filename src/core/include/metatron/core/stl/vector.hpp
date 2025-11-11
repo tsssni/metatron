@@ -37,11 +37,8 @@ namespace mtt::stl {
     struct vector<F> final: singleton<vector<F>> {
         vector() noexcept {gutex = make_poly<std::mutex>();}
         ~vector() noexcept {
-            for (auto i = 0; i < destroier.size(); i++) {
-                auto& d = destroier[i];
-                for (auto j = 0; j < storage[i].size() / length[i]; j++)
-                    d(storage[i].data() + j * length[i]);
-            }
+            for (auto i = 0; i < destroier.size(); i++)
+                destroier[i](storage[i]);
         }
 
         template<typename T>
@@ -52,8 +49,12 @@ namespace mtt::stl {
             storage.push_back({});
             length.push_back(sizeof(T));
             mutex.push_back(make_poly<std::mutex>());
-            reinterpreter.push_back([](byte const* ptr) {return make_view<F>(*(T*)ptr);});
-            destroier.push_back([](byte* ptr) {std::destroy_at((T*)ptr);});
+            destroier.push_back([](std::vector<byte>& vec) {
+                std::destroy_n((T*)vec.data(), vec.size() / sizeof(T));
+            });
+            reinterpreter.push_back([](byte const* ptr) {
+                return make_view<F>(*(T*)ptr);
+            });
             if constexpr (F::copyability != pro::constraint_level::none)
                 copier.push_back([](byte const* ptr) {
                     auto x = *(T*)ptr; return make_poly<F, T>(std::move(x));
@@ -120,9 +121,9 @@ namespace mtt::stl {
     private:
         std::vector<std::vector<byte>> storage;
         std::vector<u32> length;
+        std::vector<std::function<auto (std::vector<byte>& vec) -> void>> destroier;
         std::vector<std::function<auto (byte const* ptr) -> mut<F>>> reinterpreter;
         std::vector<std::function<auto (byte const* ptr) -> poly<F>>> copier;
-        std::vector<std::function<auto (byte* ptr) -> void>> destroier;
         std::vector<poly<std::mutex>> mutex;
         poly<std::mutex> gutex;
         std::unordered_map<std::type_index, u32> map;
