@@ -18,6 +18,6 @@ namespace mtt::photo {
         auto lens_p = math::Vector<f32, 3>{distr.sample(u) * radius, 0};
         auto direction = math::normalize(focused - lens_p);
 
-        return lens::Interaction{{lens_p, direction}, distr.pdf()};
+        return lens::Interaction{{lens_p, direction}, 1.f};
     }
 }

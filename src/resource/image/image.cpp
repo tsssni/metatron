@@ -97,14 +97,12 @@ namespace mtt::image {
             return math::Vector<f32, 4>{(*this)[x, y]};
         }
 
-        auto lod = std::min(
-            pixels.size() - 1.f,
-            pixels.size() - 1.f + std::log2(sl)
-        );
+        auto lodm = pixels.size() - 1.f;
+        auto lod = math::clamp(lodm + std::log2(sl), 0.f, lodm);
 
         auto filter = [&](i32 lod) -> math::Vector<f32, 4> {
-            auto width = this->width >> lod;
-            auto height = this->height >> lod;
+            auto width = std::max(1uz, this->width >> lod);
+            auto height = std::max(1uz, this->height >> lod);
             auto& pixels = this->pixels[lod];
             auto uv = coord.uv * math::Vector<usize, 2>{width, height} - 0.5f;
             auto ux = coord.dudx * width;
@@ -179,20 +177,18 @@ namespace mtt::image {
 
                     auto idx = std::min<usize>(r2 * ewa_lut.size(), ewa_lut.size() - 1);
                     auto w = ewa_lut[idx];
-                    sum_t += w * math::Vector<f32, 4>{(*this)[i, j, lod]};
+                    auto wi = math::pmod(i, i32(width));
+                    auto wj = math::pmod(j, i32(height));
+                    sum_t += w * math::Vector<f32, 4>{(*this)[wi, wj, lod]};
                     sum_w += w;
                 }
             }
             return sum_t / sum_w;
         };
 
-        auto lodi = std::min(pixels.size() - 2, usize(lod));
-        auto x = math::lerp(
-            filter(lodi),
-            filter(lodi + 1),
-            lod - lodi
-        );
-        return x;
+        auto lodi = std::min(i32(lod), std::max(0, i32(pixels.size()) - 2));
+        return pixels.size() == 1 ? filter(lodi)
+        : math::lerp(filter(lodi), filter(lodi + 1), lod - lodi);
     }
 
     auto Image::operator()(math::Vector<f32, 3> const& uvw) const -> math::Vector<f32, 4> {

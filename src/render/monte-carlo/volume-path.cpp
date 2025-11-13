@@ -4,7 +4,6 @@
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/plane.hpp>
 #include <metatron/core/stl/optional.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::monte_carlo {
     auto Volume_Path_Integrator::sample(
@@ -13,12 +12,12 @@ namespace mtt::monte_carlo {
         auto accel = ctx.accel;
         auto emitter = ctx.emitter;
         auto sampler = ctx.sampler;
+        auto& spec = ctx.spectrum;
 
-        auto lambda_u = sampler->generate_1d();
-        auto emission = spectra::Stochastic_Spectrum{lambda_u};
-        auto beta = emission; beta = 1.f;
-        auto mis_s = emission; mis_s = 1.f;
-        auto mis_e = emission; mis_e = 0.f;
+        auto emission = spec & spectra::Spectrum::spectra["zero"];
+        auto beta = spec & spectra::Spectrum::spectra["one"];
+        auto mis_s = spec & spectra::Spectrum::spectra["one"];
+        auto mis_e = spec & spectra::Spectrum::spectra["zero"];
 
         auto depth = 0uz;
         auto max_depth = ctx.max_depth;
@@ -28,14 +27,14 @@ namespace mtt::monte_carlo {
         auto terminated = false;
 
         auto p = 0.f;
-        auto f = emission;
+        auto f = spec;
         auto bsdf = poly<bsdf::Bsdf>{};
         auto phase = poly<phase::Phase_Function>{};
 
         auto trace_ctx = eval::Context{};
         auto history_ctx = eval::Context{};
         trace_ctx.r = ctx.ray_differential.r;
-        trace_ctx.spec = emission;
+        trace_ctx.spec = spec;
 
         auto acc_opt = std::optional<accel::Interaction>{};
         auto medium = proxy<media::Medium>{};
@@ -43,6 +42,145 @@ namespace mtt::monte_carlo {
         auto& rdiff = ctx.ray_differential;
         auto& ddiff = ctx.default_differential;
         auto& ct = ctx.render_to_camera;
+
+        auto direct_lighting = [&]() {
+            if (!scattered) return;
+
+            auto direct_ctx = trace_ctx;
+            MTT_OPT_OR_RETURN(e_intr, emitter->sample(direct_ctx, sampler->generate_1d()));
+            auto& et = *(e_intr.local_to_render);
+            auto light = e_intr.light;
+            auto l_ctx = et ^ direct_ctx;
+            MTT_OPT_OR_RETURN(l_intr, light->sample(l_ctx, sampler->generate_2d()));
+
+            auto e_pdf = e_intr.pdf;
+            auto l_pdf = l_intr.pdf;
+            auto p_e = e_pdf * l_pdf;
+            if (math::abs(p_e) < math::epsilon<f32>) return;
+
+            l_intr.p = et | math::expand(l_intr.p, 1.f);
+            l_intr.wi = math::normalize(et | math::expand(l_intr.wi, 0.f));
+            direct_ctx.r.d = l_intr.wi;
+
+            auto q = 0.f;
+            auto g = spectra::Stochastic_Spectrum{};
+
+            if (direct_ctx.n != math::Vector<f32, 3>{0.f}) {
+                auto flip_n = math::dot(-history_ctx.r.d, direct_ctx.n) < 0.f ? -1.f : 1.f;
+                auto t = math::Transform{math::Matrix<f32, 4, 4>{
+                    math::Quaternion<f32>::from_rotation_between(flip_n * direct_ctx.n, {0.f, 1.f, 0.f})
+                }};
+                auto wo = math::normalize(t | math::expand(history_ctx.r.d, 0.f));
+                auto wi = math::normalize(t | math::expand(l_intr.wi, 0.f));
+                MTT_OPT_OR_RETURN(b_intr, (*bsdf)(wo, wi));
+                g = b_intr.f * math::abs(math::dot(l_intr.wi, direct_ctx.n));
+                q = b_intr.pdf;
+            } else {
+                MTT_OPT_OR_RETURN(p_intr, (*phase)(history_ctx.r.d, l_intr.wi));
+                g = p_intr.f;
+                q = p_intr.pdf;
+            }
+
+            auto acc_opt = std::optional<accel::Interaction>{};
+            auto terminated = false;
+            auto crossed = true;
+
+            auto volume = medium;
+            auto direct_to_render = medium_to_render;
+            auto gamma = beta * (g / p_e) / (f / p);
+            auto mis_d = mis_s * q / p_e * f32(!(e_intr.light->flags() & light::Flags::delta));
+            auto mis_l = mis_s;
+
+            while (true) {
+                if (terminated || l_intr.t < 0.001f) break;
+
+                if (spectra::max(gamma * math::guarded_div(1.f, spectra::avg(mis_d + mis_l))) < 0.05f) {
+                    auto q = 0.25f;
+                    if (sampler->generate_1d() > q) {
+                        gamma = 0.f; terminated = true; continue;
+                    } else {
+                        gamma /= q;
+                    }
+                }
+
+                if (crossed) {
+                    acc_opt = (*accel)(direct_ctx.r, direct_ctx.n);
+                    if (!acc_opt || !acc_opt->intr_opt) { terminated = true; continue; }
+                    auto& acc = *acc_opt;
+                    auto& intr = *acc.intr_opt;
+                    auto& div = *acc.divider;
+                    auto& lt = *div.local_to_render;
+
+                    intr.p = lt | math::expand(intr.p, 1.f);
+                    intr.n = math::normalize(lt | intr.n);
+                    direct_ctx.inside = math::dot(-direct_ctx.r.d, intr.n) < 0.f;
+                    volume = direct_ctx.inside ? div.int_medium : div.ext_medium;
+                    direct_to_render = direct_ctx.inside ? div.int_to_render : div.ext_to_render;
+                    intr.n *= direct_ctx.inside ? -1.f : 1.f;
+
+                    auto close_to_light = math::length(intr.p - l_intr.p) < 0.001f;
+                    auto is_interface = div.material->flags() & material::Flags::interface;
+                    auto is_emissive = div.material->flags() & material::Flags::emissive;
+                    if (!is_interface && (!is_emissive || !close_to_light)) {
+                        terminated = true; gamma = 0.f; continue;
+                    } else if (close_to_light) {
+                        auto st = math::Transform{math::Matrix<f32, 4, 4>{
+                            math::Quaternion<f32>::from_rotation_between(ddiff.r.d, math::normalize(intr.p))
+                        }};
+                        auto rd = st | ddiff;
+
+                        auto ldiff = lt ^ rd;
+                        auto d_intr = intr;
+                        d_intr.p = lt ^ d_intr.p;
+                        d_intr.n = lt ^ d_intr.n;
+                        MTT_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, d_intr), {
+                            terminated = true; gamma = 0.f; continue;
+                        });
+                        MTT_OPT_OR_CALLBACK(mat_intr, div.material->sample(direct_ctx, tcoord), {
+                            terminated = true; gamma = 0.f; continue;
+                        });
+                        l_intr.L = mat_intr.emission;
+                    }
+                }
+
+                auto& acc = *acc_opt;
+                auto& intr = *acc.intr_opt;
+                auto& div = acc.divider;
+
+                auto& mt = *direct_to_render;
+                auto m_ctx = mt ^ direct_ctx;
+                MTT_OPT_OR_CALLBACK(m_intr, volume->sample(m_ctx, intr.t, sampler->generate_1d()), {
+                    gamma = 0.f; terminated = true; break;
+                });
+                m_intr.p = mt | math::expand(m_intr.p, 1.f);
+                l_intr.t -= m_intr.t;
+
+                auto hit = m_intr.t >= intr.t;
+                auto spectra_pdf = hit
+                ? m_intr.transmittance
+                : m_intr.sigma_maj * m_intr.transmittance;
+                auto flight_pdf = spectra_pdf.value[0];
+
+                gamma *= m_intr.transmittance / flight_pdf;
+                mis_d *= spectra_pdf / flight_pdf;
+                mis_l *= spectra_pdf / flight_pdf;
+
+                if (!hit) {
+                    gamma *= m_intr.sigma_n;
+                    mis_d *= m_intr.sigma_n / m_intr.sigma_maj;
+                    intr.t -= m_intr.t;
+                    direct_ctx.r.o = m_intr.p;
+                    crossed = false;
+                } else {
+                    direct_ctx.r.o = intr.p - 0.001f * intr.n;
+                    crossed = true;
+                }
+                continue;
+            }
+
+            auto mis_u = math::guarded_div(1.f, spectra::avg(mis_d + mis_l));
+            emission += gamma * mis_u * l_intr.L;
+        };
 
         while (true) {
             depth += usize(scattered);
@@ -58,145 +196,7 @@ namespace mtt::monte_carlo {
                 }
             }
 
-            [&]() {
-                if (!scattered) return;
-
-                auto direct_ctx = trace_ctx;
-                MTT_OPT_OR_RETURN(e_intr, emitter->sample(direct_ctx, sampler->generate_1d()));
-                auto& et = *(e_intr.local_to_render);
-                auto light = e_intr.light;
-                auto l_ctx = et ^ direct_ctx;
-                MTT_OPT_OR_RETURN(l_intr, light->sample(l_ctx, sampler->generate_2d()));
-
-                auto e_pdf = e_intr.pdf;
-                auto l_pdf = l_intr.pdf;
-                auto p_e = e_pdf * l_pdf;
-                if (math::abs(p_e) < math::epsilon<f32>) return;
-
-                l_intr.p = et | math::expand(l_intr.p, 1.f);
-                l_intr.wi = math::normalize(et | math::expand(l_intr.wi, 0.f));
-                direct_ctx.r.d = l_intr.wi;
-
-                auto q = 0.f;
-                auto g = spectra::Stochastic_Spectrum{};
-
-                if (direct_ctx.n != math::Vector<f32, 3>{0.f}) {
-                    auto flip_n = math::dot(-history_ctx.r.d, direct_ctx.n) < 0.f ? -1.f : 1.f;
-                    auto t = math::Transform{math::Matrix<f32, 4, 4>{
-                        math::Quaternion<f32>::from_rotation_between(flip_n * direct_ctx.n, {0.f, 1.f, 0.f})
-                    }};
-                    auto wo = math::normalize(t | math::expand(history_ctx.r.d, 0.f));
-                    auto wi = math::normalize(t | math::expand(l_intr.wi, 0.f));
-                    MTT_OPT_OR_RETURN(b_intr, (*bsdf)(wo, wi));
-                    g = b_intr.f * math::abs(math::dot(l_intr.wi, direct_ctx.n));
-                    q = b_intr.pdf;
-                } else {
-                    MTT_OPT_OR_RETURN(p_intr, (*phase)(history_ctx.r.d, l_intr.wi));
-                    g = p_intr.f;
-                    q = p_intr.pdf;
-                }
-
-                auto acc_opt = std::optional<accel::Interaction>{};
-                auto terminated = false;
-                auto crossed = true;
-
-                auto volume = medium;
-                auto direct_to_render = medium_to_render;
-                auto gamma = beta * (g / p_e) / (f / p);
-                auto mis_d = mis_s * q / p_e * f32(!(e_intr.light->flags() & light::Flags::delta));
-                auto mis_l = mis_s;
-
-                while (true) {
-                    if (terminated || l_intr.t < 0.001f) break;
-
-                    if (spectra::max(gamma * math::guarded_div(1.f, spectra::avg(mis_d + mis_l))) < 0.05f) {
-                        auto q = 0.25f;
-                        if (sampler->generate_1d() > q) {
-                            gamma = 0.f; terminated = true; continue;
-                        } else {
-                            gamma /= q;
-                        }
-                    }
-
-                    if (crossed) {
-                        acc_opt = (*accel)(direct_ctx.r, direct_ctx.n);
-                        if (!acc_opt || !acc_opt->intr_opt) { terminated = true; continue; }
-                        auto& acc = *acc_opt;
-                        auto& intr = *acc.intr_opt;
-                        auto& div = *acc.divider;
-                        auto& lt = *div.local_to_render;
-
-                        intr.p = lt | math::expand(intr.p, 1.f);
-                        intr.n = math::normalize(lt | intr.n);
-                        direct_ctx.inside = math::dot(-direct_ctx.r.d, intr.n) < 0.f;
-                        volume = direct_ctx.inside ? div.int_medium : div.ext_medium;
-                        direct_to_render = direct_ctx.inside ? div.int_to_render : div.ext_to_render;
-                        intr.n *= direct_ctx.inside ? -1.f : 1.f;
-
-                        auto close_to_light = math::length(intr.p - l_intr.p) < 0.001f;
-                        auto is_interface = div.material->flags() & material::Flags::interface;
-                        auto is_emissive = div.material->flags() & material::Flags::emissive;
-                        if (!is_interface && (!is_emissive || !close_to_light)) {
-                            terminated = true; gamma = 0.f; continue;
-                        } else if (close_to_light) {
-                            auto st = math::Transform{math::Matrix<f32, 4, 4>{
-                                math::Quaternion<f32>::from_rotation_between(ddiff.r.d, math::normalize(intr.p))
-                            }};
-                            auto rd = st | ddiff;
-
-                            auto ldiff = lt ^ rd;
-                            auto d_intr = intr;
-                            d_intr.p = lt ^ d_intr.p;
-                            d_intr.n = lt ^ d_intr.n;
-                            MTT_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, d_intr), {
-                                terminated = true; gamma = 0.f; continue;
-                            });
-                            MTT_OPT_OR_CALLBACK(mat_intr, div.material->sample(direct_ctx, tcoord), {
-                                terminated = true; gamma = 0.f; continue;
-                            });
-                            l_intr.L = mat_intr.emission;
-                        }
-                    }
-
-                    auto& acc = *acc_opt;
-                    auto& intr = *acc.intr_opt;
-                    auto& div = acc.divider;
-
-                    auto& mt = *direct_to_render;
-                    auto m_ctx = mt ^ direct_ctx;
-                    MTT_OPT_OR_CALLBACK(m_intr, volume->sample(m_ctx, intr.t, sampler->generate_1d()), {
-                        gamma = 0.f; terminated = true; break;
-                    });
-                    m_intr.p = mt | math::expand(m_intr.p, 1.f);
-                    l_intr.t -= m_intr.t;
-
-                    auto hit = m_intr.t >= intr.t;
-                    auto spectra_pdf = hit
-                    ? m_intr.transmittance
-                    : m_intr.sigma_maj * m_intr.transmittance;
-                    auto flight_pdf = spectra_pdf.value[0];
-
-                    gamma *= m_intr.transmittance / flight_pdf;
-                    mis_d *= spectra_pdf / flight_pdf;
-                    mis_l *= spectra_pdf / flight_pdf;
-
-                    if (!hit) {
-                        gamma *= m_intr.sigma_n;
-                        mis_d *= m_intr.sigma_n / m_intr.sigma_maj;
-                        intr.t -= m_intr.t;
-                        direct_ctx.r.o = m_intr.p;
-                        crossed = false;
-                    } else {
-                        direct_ctx.r.o = intr.p - 0.001f * intr.n;
-                        crossed = true;
-                    }
-                    continue;
-                }
-
-                auto mis_u = math::guarded_div(1.f, spectra::avg(mis_d + mis_l));
-                emission += gamma * mis_u * l_intr.L;
-            }();
-
+            direct_lighting();
             if (scattered || crossed) acc_opt = (*accel)(trace_ctx.r, trace_ctx.n);
             if (!acc_opt || !acc_opt->intr_opt) {
                 terminated = true;
@@ -287,7 +287,7 @@ namespace mtt::monte_carlo {
                     f = p_intr.f;
                     p = p_intr.pdf;
                     history_ctx = trace_ctx;
-                    trace_ctx = {{m_intr.p, p_intr.wi}, {}, emission};
+                    trace_ctx = {{m_intr.p, p_intr.wi}, {}, spec};
                 } else {
                     beta *= m_intr.sigma_n / p_n;
                     mis_s *= (m_intr.sigma_n / m_intr.sigma_maj) / p_n;
@@ -329,10 +329,10 @@ namespace mtt::monte_carlo {
             auto tbn = math::transpose(math::Matrix<f32, 3, 3>{intr.tn, intr.bn, intr.n});
             intr.n = tbn | mat_intr.normal;
 
-            if (mat_intr.degraded && !spectra::coherent(emission)) {
+            if (mat_intr.degraded && !spectra::coherent(spec)) {
                 spectra::degrade(emission); spectra::degrade(beta);
                 spectra::degrade(mis_s); spectra::degrade(mis_e);
-                trace_ctx.spec = emission;
+                spectra::degrade(spec); trace_ctx.spec = spec;
             }
 
             bsdf = std::move(mat_intr.bsdf);
@@ -364,7 +364,7 @@ namespace mtt::monte_carlo {
             b_intr.f *= math::abs(math::dot(b_intr.wi, trace_n));
 
             history_ctx = trace_ctx;
-            trace_ctx = {{trace_p, b_intr.wi}, trace_n, emission};
+            trace_ctx = {{trace_p, b_intr.wi}, trace_n, spec};
             beta *= b_intr.f / b_intr.pdf;
             mis_e = mis_s;
             f = b_intr.f;

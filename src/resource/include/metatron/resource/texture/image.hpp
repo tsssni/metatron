@@ -39,7 +39,7 @@ namespace mtt::texture {
         struct Descriptor final {
             std::string path;
             color::Color_Space::Spectrum_Type type;
-            Image_Distribution distr;
+            Image_Distribution distr = Image_Distribution::none;
             proxy<color::Color_Space> color_space = color::Color_Space::color_spaces["sRGB"];
         };
         Image_Spectrum_Texture() noexcept = default;

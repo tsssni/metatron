@@ -11,6 +11,7 @@ namespace mtt::monte_carlo {
         view<accel::Acceleration> accel;
         view<emitter::Emitter> emitter;
         mut<sampler::Sampler> sampler;
+        spectra::Stochastic_Spectrum spectrum;
         math::Ray_Differential ray_differential;
         math::Ray_Differential default_differential;
         math::Transform render_to_camera;

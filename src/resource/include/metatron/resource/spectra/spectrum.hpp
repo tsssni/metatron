@@ -18,10 +18,10 @@ namespace mtt::spectra {
 
     auto inline operator|(proxy<Spectrum> x, proxy<Spectrum> y) noexcept -> f32 {
         auto integral = 0.f;
-        auto a = x.data();
-        auto b = y.data();
+        auto z = x.data();
+        auto w = y.data();
         for (auto lambda = visible_lambda[0]; lambda <= visible_lambda[1]; ++lambda)
-            integral += (*a)(lambda) * (*b)(lambda);
+            integral += (*z)(lambda) * (*w)(lambda);
         return integral;
     }
 

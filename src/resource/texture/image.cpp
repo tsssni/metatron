@@ -41,22 +41,8 @@ namespace mtt::texture {
         auto size = math::Vector<usize, 2>(tex.size);
         auto channels = tex.size[2];
         auto stride = tex.size[3];
-        if (desc.distr == Image_Distribution::none) return;
 
-        auto pdf = std::vector<f32>(math::prod(size));
-        stl::scheduler::instance().sync_parallel(size, [&](auto px) mutable {
-            auto c = math::Vector<f32, 4>{tex[px[0], px[1]]};
-            auto w = 1.f;
-            if (desc.distr == Image_Distribution::spherical) {
-                auto v = (px[1] + 0.5f) / size[1];
-                auto theta = v * math::pi;
-                w = std::sin(theta);
-            }
-            pdf[px[0] + px[1] * size[0]] = math::avg(math::shrink(c)) * w;
-        });
-        distr = {std::span{pdf}, math::reverse(size), {0.f}, {1.f}};
-
-        for (auto mip = 1uz; mip < tex.pixels.size() - 1; ++mip) {
+        for (auto mip = 1uz; mip < tex.pixels.size(); ++mip) {
             auto fetch = [mip, size, &tex](math::Vector<usize, 2> const& src) {
                 auto px = math::clamp(src, {0}, size - 1);
                 return math::Vector<f32, 4>{tex[px[0], px[1], mip - 1]};
@@ -80,6 +66,21 @@ namespace mtt::texture {
             else for (auto j = 0; j < size[1]; ++j)
                     for (auto i = 0; i < size[0]; ++i)
                         down({i, j});
+        }
+
+        if (desc.distr != Image_Distribution::none) {
+            auto pdf = std::vector<f32>(math::prod(size));
+            stl::scheduler::instance().sync_parallel(size, [&](auto px) mutable {
+                auto c = math::Vector<f32, 4>{tex[px[0], px[1]]};
+                auto w = 1.f;
+                if (desc.distr == Image_Distribution::spherical) {
+                    auto v = (px[1] + 0.5f) / size[1];
+                    auto theta = v * math::pi;
+                    w = std::sin(theta);
+                }
+                pdf[px[0] + px[1] * size[0]] = math::avg(math::shrink(c)) * w;
+            });
+            distr = {std::span{pdf}, math::reverse(size), {0.f}, {1.f}};
         }
 
         auto& vec = stl::vector<image::Image>::instance();

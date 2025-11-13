@@ -321,7 +321,7 @@ namespace mtt::shape {
         auto beta = math::angle(n_bc, -n_ab);
         auto gamma = math::angle(n_ca, -n_bc);
 
-        auto c_2 = r.d;
+        auto c_2 = math::normalize(r.d);
         auto c_1 = math::normalize(math::cross(math::cross(b, c_2), math::cross(c, a)));
         if (math::dot(c_1, a + c) < 0.f) c_1 *= -1.f;
 

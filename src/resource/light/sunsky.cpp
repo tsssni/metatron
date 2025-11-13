@@ -260,7 +260,7 @@ namespace mtt::light {
         if (u[0] < w_sky) {
             auto idx = tgmm_distr.sample(u[0]);
             auto u_phi = math::guarded_div(
-                u[0] - tgmm_distr.cdf[idx],
+                u[0] / w_sky - tgmm_distr.cdf[idx],
                 tgmm_distr.cdf[idx + 1] - tgmm_distr.cdf[idx]
             );
             auto u_theta = u[1];
@@ -273,7 +273,8 @@ namespace mtt::light {
             wi = math::unit_spherical_to_cartesian({theta, phi});
         } else {
             auto distr = math::Cone_Distribution{cos_sun};
-            wi = math::normalize(math::Vector<f32, 3>{t | math::expand(distr.sample(u), 0.f)});
+            auto u_sun = math::Vector<f32, 2>{(u[0] - w_sky) / (1.f - w_sky), u[1]};
+            wi = math::normalize(math::Vector<f32, 3>{t | math::expand(distr.sample(u_sun), 0.f)});
         }
         return (*this)({ctx.r.o, wi}, ctx.spec);
     }
@@ -381,8 +382,8 @@ namespace mtt::light {
                     return hosek_sky(i, cos_theta, cos_gamma) * w_theta * w_gamma;
                 });
                 auto integral = std::ranges::fold_left(radiance, 0.f, std::plus{}) * J;
-                auto&& CIE_Y = *spectra::Spectrum::spectra["CIE-Y"].data();
-                luminance += integral * CIE_Y(sunsky_lambda[i]);
+                auto CIE_Y = spectra::Spectrum::spectra["CIE-Y"].data();
+                luminance += integral * (*CIE_Y)(sunsky_lambda[i]);
             }
             return luminance;
         }();
@@ -419,8 +420,8 @@ namespace mtt::light {
                     return area * hosek_sun(i, cos_theta) * hosek_limb(i, cos_gamma) * w_theta * w_gamma;
                 });
                 auto integral = std::ranges::fold_left(radiance, 0.f, std::plus{}) * J;
-                auto&& CIE_Y = *spectra::Spectrum::spectra["CIE-Y"].data();
-                luminance += integral * CIE_Y(sunsky_lambda[i]);
+                auto CIE_Y = spectra::Spectrum::spectra["CIE-Y"].data();
+                luminance += integral * (*CIE_Y)(sunsky_lambda[i]);
             }
             return luminance;
         }();
