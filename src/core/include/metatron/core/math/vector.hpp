@@ -165,14 +165,14 @@ namespace mtt::math {
     auto constexpr min(Vector<T, size> const& x) noexcept -> T {
         auto y = x[0];
         for (auto i = 1uz; i < size; ++i)
-            y = std::min(y, x[i]);
+            y = math::min(y, x[i]);
         return y;
     }
 
     template<typename... Ts, usize size>
-    auto constexpr min(Vector<Ts, size> const&... xs) {
+    auto constexpr min(Vector<Ts, size> const&... xs) requires(sizeof...(xs) > 1) {
         return foreach([](Ts const&... xs, usize i) {
-            return std::min({xs...});
+            return math::min(xs...);
         }, xs...);
     }
 
@@ -199,14 +199,14 @@ namespace mtt::math {
     auto constexpr max(Vector<T, size> const& x) noexcept -> T {
         auto y = x[0];
         for (auto i = 1uz; i < size; ++i)
-            y = std::max(y, x[i]);
+            y = math::max(y, x[i]);
         return y;
     }
 
     template<typename... Ts, usize size>
-    auto constexpr max(Vector<Ts, size> const&... xs) {
+    auto constexpr max(Vector<Ts, size> const&... xs) requires(sizeof...(xs) > 1) {
         return foreach([](Ts const&... xs, usize i) {
-            return std::max({xs...});
+            return math::max(xs...);
         }, xs...);
     }
 

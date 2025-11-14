@@ -13,7 +13,7 @@ namespace mtt::media {
 
         auto distr = math::Exponential_Distribution{sigma_t.value[0]};
         auto t_u = distr.sample(u);
-        auto t = std::min(t_u, t_max);
+        auto t = math::min(t_u, t_max);
         auto pdf = t < t_max ? distr.pdf(t) : distr.pdf(t) / sigma_t.value[0];
 
         auto sigma_e = ctx.spec & this->sigma_e;

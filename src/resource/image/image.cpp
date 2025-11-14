@@ -77,8 +77,8 @@ namespace mtt::image {
         auto dv = math::Vector<f32, 2>{coord.dvdx, coord.dvdy};
         auto ul = math::length(du);
         auto vl = math::length(dv);
-        auto sl = std::min(ul, vl);
-        auto ll = std::max(ul, vl);
+        auto sl = math::min(ul, vl);
+        auto ll = math::max(ul, vl);
 
         auto constexpr anisotropy = 16.f;
         auto c = coord;
@@ -101,8 +101,8 @@ namespace mtt::image {
         auto lod = math::clamp(lodm + std::log2(sl), 0.f, lodm);
 
         auto filter = [&](i32 lod) -> math::Vector<f32, 4> {
-            auto width = std::max(1uz, this->width >> lod);
-            auto height = std::max(1uz, this->height >> lod);
+            auto width = math::max(1uz, this->width >> lod);
+            auto height = math::max(1uz, this->height >> lod);
             auto& pixels = this->pixels[lod];
             auto uv = coord.uv * math::Vector<usize, 2>{width, height} - 0.5f;
             auto ux = coord.dudx * width;
@@ -175,7 +175,7 @@ namespace mtt::image {
                         0.0065472275f, 0.00433036685f, 0.0021481365f, 0.f,
                     });
 
-                    auto idx = std::min<usize>(r2 * ewa_lut.size(), ewa_lut.size() - 1);
+                    auto idx = math::min<usize>(r2 * ewa_lut.size(), ewa_lut.size() - 1);
                     auto w = ewa_lut[idx];
                     auto wi = math::pmod(i, i32(width));
                     auto wj = math::pmod(j, i32(height));
@@ -186,7 +186,7 @@ namespace mtt::image {
             return sum_t / sum_w;
         };
 
-        auto lodi = std::min(i32(lod), std::max(0, i32(pixels.size()) - 2));
+        auto lodi = math::min(i32(lod), math::max(0, i32(pixels.size()) - 2));
         return pixels.size() == 1 ? filter(lodi)
         : math::lerp(filter(lodi), filter(lodi + 1), lod - lodi);
     }

@@ -28,7 +28,7 @@ namespace mtt::texture {
             usize(spec.nchannels),
             spec.format.size(),
         };
-        tex.pixels.resize(std::bit_width(std::max(tex.width, tex.height)));
+        tex.pixels.resize(std::bit_width(math::max(tex.width, tex.height)));
         tex.pixels.front().resize(math::prod(tex.size));
 
         auto success = in->read_image(0, 0, 0, spec.nchannels, spec.format, tex.pixels.front().data());
@@ -47,8 +47,8 @@ namespace mtt::texture {
                 auto px = math::clamp(src, {0}, size - 1);
                 return math::Vector<f32, 4>{tex[px[0], px[1], mip - 1]};
             };
-            size[0] = std::max(1uz, size[0] >> 1uz);
-            size[1] = std::max(1uz, size[1] >> 1uz);
+            size[0] = math::max(1uz, size[0] >> 1uz);
+            size[1] = math::max(1uz, size[1] >> 1uz);
             tex.pixels[mip].resize(math::prod(size) * channels * stride);
 
             auto down = [fetch, mip, &tex](math::Vector<usize, 2> const& px) mutable {

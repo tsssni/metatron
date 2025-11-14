@@ -115,7 +115,7 @@ namespace mtt::accel {
             auto buckets = std::vector<std::tuple<math::Bounding_Box, i32>>(num_buckets);
             for (auto& node: nodes) {
                 auto c = math::lerp(node->bbox.p_min, node->bbox.p_max, 0.5f);
-                auto b = std::min(num_buckets - 1, i32(num_buckets
+                auto b = math::min(num_buckets - 1, i32(num_buckets
                 * math::guarded_div(
                     c[root->split_axis] - cbox.p_min[root->split_axis],
                     cbox.p_max[root->split_axis] - cbox.p_min[root->split_axis]
@@ -148,7 +148,7 @@ namespace mtt::accel {
             auto split_idx = std::ranges::distance(sah.begin(), std::ranges::min_element(sah)) + 1;
             auto splitted_iter = std::ranges::partition(nodes, [&](auto& node) {
                 auto c = math::lerp(node->bbox.p_min, node->bbox.p_max, 0.5f);
-                auto b = std::min(num_buckets - 1, i32(num_buckets
+                auto b = math::min(num_buckets - 1, i32(num_buckets
                 * math::guarded_div(
                     c[root->split_axis] - cbox.p_min[root->split_axis],
                     cbox.p_max[root->split_axis] - cbox.p_min[root->split_axis]

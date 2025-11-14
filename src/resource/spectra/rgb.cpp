@@ -21,7 +21,7 @@ namespace mtt::spectra {
                 s = 2.f;
                 break;
             case Spectrum_Type::illuminant:
-                s = 2.f * std::max(rgb[0], std::max(rgb[1], rgb[2]));
+                s = 2.f * math::max(rgb[0], math::max(rgb[1], rgb[2]));
                 break;
         }
         rgb = rgb / s;
@@ -42,8 +42,8 @@ namespace mtt::spectra {
         auto y = rgb[(maxc + 2) % 3] * (cs->table_res - 1) / z;
 
         // compute integer indices and offsets for coefficient interpolation
-        auto xi = std::min((i32)x, cs->table_res - 2);
-        auto yi = std::min((i32)y, cs->table_res - 2);
+        auto xi = math::min((i32)x, cs->table_res - 2);
+        auto yi = math::min((i32)y, cs->table_res - 2);
         auto zi = math::clamp(
             i32(std::ranges::lower_bound(cs->scale, z) - std::begin(cs->scale)) - 1,
             0, cs->table_res - 2

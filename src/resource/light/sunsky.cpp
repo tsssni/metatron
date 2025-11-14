@@ -108,13 +108,13 @@ namespace mtt::light {
         auto load_tgmm = [&]() {
             auto t_idx = math::clamp(turbidity - 2.f, 0.f, f32(tgmm_num_turbility - 1));
             auto t_low = i32(t_idx);
-            auto t_high = std::min(t_low + 1, tgmm_num_turbility - 1);
+            auto t_high = math::min(t_low + 1, tgmm_num_turbility - 1);
             auto t_alpha = t_idx - t_low;
 
             auto eta_deg = math::degrees(eta);
             auto eta_idx = math::clamp((eta_deg - 2.f) / 3.f, 0.f, f32(sun_num_segments - 1));
             auto eta_low = i32(eta_idx);
-            auto eta_high = std::min(eta_low + 1, sun_num_segments - 1);
+            auto eta_high = math::min(eta_low + 1, sun_num_segments - 1);
             auto eta_alpha = eta_idx - eta_low;
 
             auto t_eta = math::Matrix<i32, 4, 2>{
@@ -329,7 +329,7 @@ namespace mtt::light {
 
     auto Sunsky_Light::hosek_sun(i32 idx, f32 cos_theta) const noexcept -> f32 {
         auto eta = math::pi * 0.5f - math::acos(cos_theta);
-        auto segment = std::min(
+        auto segment = math::min(
             sun_num_segments - 1,
             i32(std::pow(eta / (math::pi * 0.5f), 1.f / 3.f) * sun_num_segments)
         );
@@ -431,7 +431,7 @@ namespace mtt::light {
 
     auto Sunsky_Light::split(f32 lambda) const noexcept -> std::tuple<i32, i32, f32> {
         auto norm = (lambda - sunsky_lambda.front()) / sunsky_step;
-        auto low = std::min(sunsky_lambda.size() - 2, usize(norm));
+        auto low = math::min(sunsky_lambda.size() - 2, usize(norm));
         auto high = low + 1;
         auto alpha = norm - low;
         return {low, high, alpha};

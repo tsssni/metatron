@@ -27,7 +27,7 @@ namespace mtt::math {
         // directly use Element instead of template type to enable auto inference
         constexpr Matrix(std::initializer_list<Element const> initializer_list) noexcept {
             if (initializer_list.size() > 1)
-                std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), storage.begin());
+                std::copy_n(initializer_list.begin(), math::min(first_dim, initializer_list.size()), storage.begin());
             else for (auto& line: storage)
                 line = *initializer_list.begin();
         }
@@ -37,7 +37,7 @@ namespace mtt::math {
         requires (dimensions.size() == 1uz && std::is_convertible_v<E, Element>)
         constexpr Matrix(std::initializer_list<E const> initializer_list) noexcept {
             if (initializer_list.size() > 1)
-                std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), storage.begin());
+                std::copy_n(initializer_list.begin(), math::min(first_dim, initializer_list.size()), storage.begin());
             else for (auto& line: storage)
                 line = *initializer_list.begin();
         }
@@ -47,7 +47,7 @@ namespace mtt::math {
         constexpr Matrix(std::span<E const> initializer_list) noexcept
         {
             if (initializer_list.size() > 1)
-                std::copy_n(initializer_list.begin(), std::min(first_dim, initializer_list.size()), storage.begin());
+                std::copy_n(initializer_list.begin(), math::min(first_dim, initializer_list.size()), storage.begin());
             else for (auto& line: storage)
                 line = *initializer_list.begin();
         }
@@ -58,7 +58,7 @@ namespace mtt::math {
             if constexpr (dimensions.size() == 1) {
                 storage.fill(scalar);
             } else if constexpr (dimensions.size() == 2) {
-                auto constexpr diagonal_n = std::min(dimensions[0], dimensions[1]);
+                auto constexpr diagonal_n = math::min(dimensions[0], dimensions[1]);
                 for (auto i = 0; i < diagonal_n; ++i)
                     storage[i][i] = std::forward<U>(scalar);
             } else for (auto& line: storage) {
@@ -70,7 +70,7 @@ namespace mtt::math {
         requires (true
             && (std::is_convertible_v<Args, T> && ...)
             && dimensions.size() > 1
-            && sizeof...(Args) <= std::min(*(dimensions.end() - 2), *(dimensions.end() - 1))
+            && sizeof...(Args) <= math::min(*(dimensions.end() - 2), *(dimensions.end() - 1))
         )
         explicit constexpr Matrix(Args&&... args) noexcept {
             if constexpr (dimensions.size() > 2)
@@ -91,7 +91,7 @@ namespace mtt::math {
             if constexpr (first_dim > rhs_first_dim)
                 [this, &rest...]<usize... idxs>(std::index_sequence<idxs...>) {
                     ((storage[rhs_first_dim + idxs] = std::forward<Args>(rest)), ...);
-                }(std::make_index_sequence<std::min(sizeof...(rest), first_dim - rhs_first_dim)>{});
+                }(std::make_index_sequence<math::min(sizeof...(rest), first_dim - rhs_first_dim)>{});
         }
 
         template<typename U, typename... Args, usize rhs_first_dim>
@@ -104,7 +104,7 @@ namespace mtt::math {
             if constexpr (first_dim > rhs_first_dim)
                 [this, &rest...]<usize... idxs>(std::index_sequence<idxs...>) {
                     ((storage[rhs_first_dim + idxs] = std::forward<Args>(rest)), ...);
-                }(std::make_index_sequence<std::min(sizeof...(rest), first_dim - rhs_first_dim)>{});
+                }(std::make_index_sequence<math::min(sizeof...(rest), first_dim - rhs_first_dim)>{});
         }
 
         template<usize rhs_first_dim0, usize rhs_first_dim1>
@@ -114,7 +114,7 @@ namespace mtt::math {
         ) noexcept {
             *this = rhs0;
             if constexpr (first_dim > rhs_first_dim0)
-                std::copy_n(rhs1.storage.begin(), std::min(first_dim, rhs_first_dim1) - rhs_first_dim0, storage.begin() + rhs_first_dim0);
+                std::copy_n(rhs1.storage.begin(), math::min(first_dim, rhs_first_dim1) - rhs_first_dim0, storage.begin() + rhs_first_dim0);
         }
 
         template<usize rhs_first_dim0, usize rhs_first_dim1>
@@ -124,7 +124,7 @@ namespace mtt::math {
         ) {
             *this = std::move(rhs0);
             if constexpr (first_dim > rhs_first_dim0)
-                std::move(rhs1.storage.begin(), rhs1.storage.begin() + (std::min(first_dim, rhs_first_dim1) - rhs_first_dim0), storage.begin() + rhs_first_dim0);
+                std::move(rhs1.storage.begin(), rhs1.storage.begin() + (math::min(first_dim, rhs_first_dim1) - rhs_first_dim0), storage.begin() + rhs_first_dim0);
         }
 
         template<typename U, usize rhs_first_dim, usize... rhs_rest_dims>
@@ -132,7 +132,7 @@ namespace mtt::math {
             && std::is_convertible_v<U, T>
             && (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
         auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...> const& rhs) noexcept -> Matrix& {
-            std::copy_n(rhs.storage.begin(), std::min(first_dim, rhs_first_dim), storage.begin());
+            std::copy_n(rhs.storage.begin(), math::min(first_dim, rhs_first_dim), storage.begin());
             return *this;
         }
 
@@ -141,7 +141,7 @@ namespace mtt::math {
             && std::is_convertible_v<U, T>
             && (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
         auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...>&& rhs) noexcept -> Matrix& {
-            std::move(rhs.storage.begin(), rhs.storage.begin() + std::min(first_dim, rhs_first_dim), storage.begin());
+            std::move(rhs.storage.begin(), rhs.storage.begin() + math::min(first_dim, rhs_first_dim), storage.begin());
             return *this;
         }
 
@@ -157,24 +157,21 @@ namespace mtt::math {
             usize... rhs_dims,
             usize l_n = dimensions.size(),
             usize r_n = sizeof...(rhs_dims),
-            usize shorter_n = std::min(l_n, r_n),
-            usize longer_n = std::max(l_n, r_n),
-            usize higher_n = std::max(usize(0), longer_n - 2),
+            usize shorter_n = math::min(l_n, r_n),
+            usize longer_n = math::max(l_n, r_n),
+            usize higher_n = math::max(usize(0), longer_n - 2),
             std::array<usize, l_n> lds = dimensions,
             std::array<usize, r_n> rds = {rhs_dims...}
         >
         requires (true
             && longer_n > 1
-            && (false
-                || i32(l_n) - i32(r_n) < 2
-                || i32(r_n) - i32(l_n) < 2
-            ) // clangd could not use math::abs
-            && []() noexcept -> bool {
-                return std::equal(
-                    lds.begin(), lds.begin() + higher_n,
-                    rds.begin(), rds.begin() + higher_n
-                );
-            }()
+            // abs and other cmath functions are not constexpr in libstdc++
+            && i32(l_n) - i32(r_n) < 2
+            && i32(r_n) - i32(l_n) < 2
+            && []() noexcept -> bool {return std::equal(
+                lds.begin(), lds.begin() + higher_n,
+                rds.begin(), rds.begin() + higher_n
+            );}()
             && []() noexcept -> bool {
                 return lds[higher_n + (l_n > 1 ? 1 : 0)] == rds[higher_n];
             }()
@@ -184,9 +181,8 @@ namespace mtt::math {
         ) const noexcept {
             using Product_Matrix = decltype([]<usize... dims>(std::index_sequence<dims...>) {
                 return Matrix<T, (
-                    dims < higher_n ? lds[dims] : 
-                    dims == higher_n ? (l_n < r_n ? rds[higher_n + 1] : lds[higher_n]) : 
-                    rds[higher_n + 1]
+                    dims < higher_n ? lds[dims] : dims > higher_n ? rds[higher_n + 1] :
+                    (l_n < r_n ? rds[higher_n + 1] : lds[higher_n])
                 )...>{};
             }(std::make_index_sequence<shorter_n>{}));
             auto constexpr pds = Product_Matrix::dimensions;

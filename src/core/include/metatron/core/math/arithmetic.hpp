@@ -3,6 +3,18 @@
 #include <cmath>
 
 namespace mtt::math {
+    template<typename... Ts>
+    requires (std::totally_ordered<Ts> && ...)
+    auto constexpr min(Ts... xs) noexcept requires(sizeof...(xs) > 1) {
+        return std::min({xs...});
+    }
+
+    template<typename... Ts>
+    requires (std::totally_ordered<Ts> && ...)
+    auto constexpr max(Ts... xs) noexcept requires(sizeof...(xs) > 1) {
+        return std::max({xs...});
+    }
+
     template<typename T>
     auto constexpr abs(T x) noexcept -> T {
         return std::abs(x);
@@ -69,7 +81,7 @@ namespace mtt::math {
     template<typename T>
     requires std::floating_point<T>
     auto constexpr sqrt(T x) noexcept -> T {
-        return std::sqrt(std::max(T{0}, x));
+        return std::sqrt(math::max(T{0}, x));
     }
 
     template<typename T>

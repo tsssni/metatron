@@ -34,7 +34,7 @@ namespace mtt::spectra {
     auto Discrete_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
         if (lambda < this->lambda[0] || lambda > this->lambda[size - 1]) return 0.f;
 
-        auto idx = std::max(0uz, std::min(
+        auto idx = math::max(0uz, math::min(
             size - 2,
             std::lower_bound(
                 this->lambda.begin(),

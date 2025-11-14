@@ -51,7 +51,7 @@ namespace mtt::math {
     }
 
     auto inline constexpr unit_to_sin2_theta(math::Vector<f32, 3> const& d) noexcept -> f32 {
-        return std::max(0.f, 1.f - d[1] * d[1]);
+        return math::max(0.f, 1.f - d[1] * d[1]);
     }
 
     auto inline constexpr unit_to_sin_theta(math::Vector<f32, 3> const& d) noexcept -> f32 {

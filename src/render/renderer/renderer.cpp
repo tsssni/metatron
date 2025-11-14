@@ -96,8 +96,8 @@ namespace mtt::renderer {
             while (range[0] < spp) {
                 stl::scheduler::instance().sync_parallel(size, trace);
                 range[0] = range[1];
-                range[1] = std::min(spp, range[1] + next);
-                next = std::min(next * 2uz, 64uz);
+                range[1] = math::min(spp, range[1] + next);
+                next = math::min(next * 2uz, 64uz);
 
                 auto finished = range[0] == spp;
                 auto image = *desc.film.image;

@@ -20,7 +20,7 @@ namespace mtt::bsdf {
             using T = decltype(eta);
             auto constexpr is_complex = std::is_same_v<T, math::Complex<f32>>;
 
-            auto sin2_theta_i = std::max(0.f, 1.f - cos_theta_i * cos_theta_i);
+            auto sin2_theta_i = math::max(0.f, 1.f - cos_theta_i * cos_theta_i);
             auto sin2_theta_t = math::guarded_div(sin2_theta_i, eta * eta);
             auto cos_theta_t = math::sqrt(1.f - sin2_theta_t);
 

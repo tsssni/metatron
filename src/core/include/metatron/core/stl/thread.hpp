@@ -137,7 +137,7 @@ namespace mtt::stl {
 
             {
                 auto lock = std::lock_guard{mutex};
-                for (auto i = 0uz; i < std::min(threads.size(), n - usize(sync)); ++i)
+                for (auto i = 0uz; i < math::min(threads.size(), n - usize(sync)); ++i)
                     tasks.emplace(task);
             }
 

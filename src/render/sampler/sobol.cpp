@@ -120,6 +120,6 @@ namespace mtt::sampler {
             if (idx & 1) x ^= sobol_matrices[i];
 
         x = math::fast_binary_owen_scramble(x, hash);
-        return std::min(x * 0x1p-32f, 1.f - math::epsilon<f32>);
+        return math::min(x * 0x1p-32f, 1.f - math::epsilon<f32>);
     }
 }
