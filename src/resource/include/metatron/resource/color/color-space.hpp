@@ -17,12 +17,12 @@ namespace mtt::color {
             illuminant,
         };
 
-        std::unordered_map<std::string, proxy<Color_Space>> static color_spaces;
+        std::unordered_map<std::string, tag<Color_Space>> static color_spaces;
 
         math::Matrix<f32, 3, 3> from_XYZ;
         math::Matrix<f32, 3, 3> to_XYZ;
-        proxy<spectra::Spectrum> illuminant;
-        proxy<Transfer_Function> transfer_function;
+        tag<spectra::Spectrum> illuminant;
+        tag<Transfer_Function> transfer_function;
 
         i32 table_res;
         f32 illuminant_Y_integral;
@@ -34,8 +34,8 @@ namespace mtt::color {
             math::Vector<f32, 2> const& r,
             math::Vector<f32, 2> const& g,
             math::Vector<f32, 2> const& b,
-            proxy<spectra::Spectrum> illuminant,
-            proxy<Transfer_Function> transfer_function
+            tag<spectra::Spectrum> illuminant,
+            tag<Transfer_Function> transfer_function
         ) noexcept;
     };
 

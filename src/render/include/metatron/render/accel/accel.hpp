@@ -12,17 +12,17 @@ namespace mtt::accel {
     auto constexpr default_transform = "/hierarchy/medium/vaccum";
 
     struct Divider final {
-        proxy<shape::Shape> shape{};
-        proxy<media::Medium> int_medium{scene::fetch<media::Medium>(default_medium / et)};
-        proxy<media::Medium> ext_medium{scene::fetch<media::Medium>(default_medium / et)};
-        proxy<material::Material> material{};
-        proxy<math::Transform> local_to_render{};
-        proxy<math::Transform> int_to_render{scene::fetch<math::Transform>(default_transform / et)};
-        proxy<math::Transform> ext_to_render{scene::fetch<math::Transform>(default_transform / et)};
+        tag<shape::Shape> shape{};
+        tag<media::Medium> int_medium{scene::fetch<media::Medium>(default_medium / et)};
+        tag<media::Medium> ext_medium{scene::fetch<media::Medium>(default_medium / et)};
+        tag<material::Material> material{};
+        tag<math::Transform> local_to_render{};
+        tag<math::Transform> int_to_render{scene::fetch<math::Transform>(default_transform / et)};
+        tag<math::Transform> ext_to_render{scene::fetch<math::Transform>(default_transform / et)};
     };
 
     struct Interaction final {
-        proxy<Divider> divider{};
+        tag<Divider> divider{};
         usize primitive{0uz};
         std::optional<shape::Interaction> intr_opt{};
     };

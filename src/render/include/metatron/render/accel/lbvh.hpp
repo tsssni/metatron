@@ -6,7 +6,7 @@ namespace mtt::accel {
     struct LBVH final {
         struct Primitive final {
             math::Bounding_Box bbox;
-            proxy<Divider> instance;
+            tag<Divider> instance;
             u32 primitive;
             u32 morton_code;
         };

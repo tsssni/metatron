@@ -8,15 +8,15 @@
 #include <cstring>
 
 namespace mtt::color {
-    std::unordered_map<std::string, proxy<Color_Space>> Color_Space::color_spaces;
+    std::unordered_map<std::string, tag<Color_Space>> Color_Space::color_spaces;
 
     Color_Space::Color_Space(
         std::string_view name,
         math::Vector<f32, 2> const& r_chroma,
         math::Vector<f32, 2> const& g_chroma,
         math::Vector<f32, 2> const& b_chroma,
-        proxy<spectra::Spectrum> illuminant,
-        proxy<Transfer_Function> transfer_function
+        tag<spectra::Spectrum> illuminant,
+        tag<Transfer_Function> transfer_function
     ) noexcept:
     illuminant(illuminant),
     illuminant_Y_integral(spectra::Spectrum::spectra["CIE-Y"] | illuminant),

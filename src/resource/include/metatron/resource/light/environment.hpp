@@ -5,7 +5,7 @@
 
 namespace mtt::light {
     struct Environment_Light final {
-        proxy<texture::Spectrum_Texture> env_map;
+        tag<texture::Spectrum_Texture> env_map;
 
         auto operator()(
             math::Ray const& r,

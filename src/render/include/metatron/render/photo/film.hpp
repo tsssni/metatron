@@ -35,18 +35,18 @@ namespace mtt::photo {
         usize depth;
         math::Vector<f32, 2> film_size;
         math::Vector<f32, 2> dxdy;
-        proxy<image::Image> image;
-        proxy<color::Color_Space> color_space;
+        tag<image::Image> image;
+        tag<color::Color_Space> color_space;
 
         struct Descriptor final {
             usize spp = 16uz;
             usize depth = 64uz;
             math::Vector<f32, 2> film_size = {0.036f, 0.024f};
             math::Vector<f32, 2> image_size = {1280uz, 720uz};
-            proxy<spectra::Spectrum> r = spectra::Spectrum::spectra["CIE-X"];
-            proxy<spectra::Spectrum> g = spectra::Spectrum::spectra["CIE-Y"];
-            proxy<spectra::Spectrum> b = spectra::Spectrum::spectra["CIE-Z"];
-            proxy<color::Color_Space> color_space = color::Color_Space::color_spaces["sRGB"];
+            tag<spectra::Spectrum> r = spectra::Spectrum::spectra["CIE-X"];
+            tag<spectra::Spectrum> g = spectra::Spectrum::spectra["CIE-Y"];
+            tag<spectra::Spectrum> b = spectra::Spectrum::spectra["CIE-Z"];
+            tag<color::Color_Space> color_space = color::Color_Space::color_spaces["sRGB"];
         };
         Film(Descriptor const& desc) noexcept;
 
@@ -57,9 +57,9 @@ namespace mtt::photo {
         ) noexcept -> Fixel;
 
     private:
-        proxy<spectra::Spectrum> r;
-        proxy<spectra::Spectrum> g;
-        proxy<spectra::Spectrum> b;
+        tag<spectra::Spectrum> r;
+        tag<spectra::Spectrum> g;
+        tag<spectra::Spectrum> b;
         friend Fixel;
     };
 }

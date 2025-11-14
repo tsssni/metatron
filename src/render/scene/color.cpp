@@ -57,7 +57,7 @@ namespace mtt::scene {
                 green_primitive[i],
                 blue_primitive[i],
                 fetch<spectra::Spectrum>(white),
-                proxy<color::Transfer_Function>{transfer_function[i]},
+                tag<color::Transfer_Function>{transfer_function[i]},
             };
 
             {

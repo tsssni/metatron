@@ -29,7 +29,7 @@ namespace mtt::spectra {
         return math::sum(spec) / stochastic_samples;
     }
 
-    auto Stochastic_Spectrum::operator()(proxy<Spectrum> spectrum) const noexcept -> f32 {
+    auto Stochastic_Spectrum::operator()(tag<Spectrum> spectrum) const noexcept -> f32 {
         return (*this)(spectrum.data());
     }
 
@@ -41,7 +41,7 @@ namespace mtt::spectra {
         return spec;
     }
 
-    auto Stochastic_Spectrum::operator&(proxy<Spectrum> spectrum) const noexcept -> Stochastic_Spectrum {
+    auto Stochastic_Spectrum::operator&(tag<Spectrum> spectrum) const noexcept -> Stochastic_Spectrum {
         return (*this) & spectrum.data();
     }
 

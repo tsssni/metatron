@@ -9,7 +9,8 @@ namespace mtt::spectra {
     Rgb_Spectrum::Rgb_Spectrum(Descriptor const& desc) noexcept {
         auto rgb = desc.c;
         auto cs = desc.color_space;
-        illuminant = desc.type == Spectrum_Type::illuminant ? desc.color_space->illuminant : proxy<Spectrum>{};
+        illuminant = desc.type == Spectrum_Type::illuminant
+        ? desc.color_space->illuminant : tag<Spectrum>{};
 
         s = 1.f;
         switch (desc.type) {
@@ -24,7 +25,8 @@ namespace mtt::spectra {
                 break;
         }
         rgb = rgb / s;
-        s /= desc.type == Spectrum_Type::illuminant ? desc.color_space->illuminant_Y_integral : 1.f;
+        s /= desc.type == Spectrum_Type::illuminant
+        ? desc.color_space->illuminant_Y_integral : 1.f;
 
         if (rgb[0] == rgb[1] && rgb[1] == rgb[2]) {
             this->c = math::Vector<f32, 3>{
@@ -42,7 +44,11 @@ namespace mtt::spectra {
         // compute integer indices and offsets for coefficient interpolation
         auto xi = std::min((i32)x, cs->table_res - 2);
         auto yi = std::min((i32)y, cs->table_res - 2);
-        auto zi = math::clamp(i32(std::ranges::lower_bound(cs->scale, z) - std::begin(cs->scale)) - 1, 0, cs->table_res - 2);
+        auto zi = math::clamp(
+            i32(std::ranges::lower_bound(cs->scale, z) - std::begin(cs->scale)) - 1,
+            0, cs->table_res - 2
+        );
+
         auto dx = x - xi;
         auto dy = y - yi;
         auto dz = (z - cs->scale[zi]) / (cs->scale[zi + 1] - cs->scale[zi]);

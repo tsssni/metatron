@@ -5,8 +5,8 @@
 namespace mtt::texture {
     struct Checkerboard_Texture final {
         struct Descriptor final {
-            proxy<spectra::Spectrum> x;
-            proxy<spectra::Spectrum> y;
+            tag<spectra::Spectrum> x;
+            tag<spectra::Spectrum> y;
             math::Vector<usize, 2> uv_scale = math::Vector<usize, 2>{1uz};
         };
         Checkerboard_Texture() noexcept = default;
@@ -25,8 +25,8 @@ namespace mtt::texture {
         ) const noexcept -> f32;
 
     private:
-        proxy<spectra::Spectrum> x;
-        proxy<spectra::Spectrum> y;
+        tag<spectra::Spectrum> x;
+        tag<spectra::Spectrum> y;
         math::Vector<usize, 2> uv_scale;
 
         f32 w_x;

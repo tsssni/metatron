@@ -132,11 +132,11 @@ namespace mtt::stl {
 
 namespace mtt {
     template<typename T>
-    struct proxy final {
+    struct tag final {
         using vec = stl::vector<T>;
 
-        proxy(): idx(math::maxv<u32>) {};
-        proxy(u32 idx): idx(idx) {}
+        tag(): idx(math::maxv<u32>) {};
+        tag(u32 idx): idx(idx) {}
 
         auto data() -> mut<T> {return vec::instance()[idx];}
         auto data() const -> view<T> {return vec::instance()[idx];}

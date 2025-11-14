@@ -13,10 +13,10 @@ namespace mtt::spectra {
     ::build {
         // IOR data: https://github.com/mitsuba-renderer/mitsuba-data/tree/master/ior
         // CIE data: https://github.com/mmp/pbrt-v4/tree/master/src/pbrt/util/spectrum.cpp
-        std::unordered_map<std::string, proxy<Spectrum>> static spectra;
+        std::unordered_map<std::string, tag<Spectrum>> static spectra;
     };
 
-    auto inline operator|(proxy<Spectrum> x, proxy<Spectrum> y) noexcept -> f32 {
+    auto inline operator|(tag<Spectrum> x, tag<Spectrum> y) noexcept -> f32 {
         auto integral = 0.f;
         auto z = x.data();
         auto w = y.data();
@@ -25,7 +25,7 @@ namespace mtt::spectra {
         return integral;
     }
 
-    auto inline operator~(proxy<Spectrum> s) noexcept -> math::Vector<f32, 3> {
+    auto inline operator~(tag<Spectrum> s) noexcept -> math::Vector<f32, 3> {
         return math::Vector<f32, 3>{
             Spectrum::spectra["CIE-X"] | s,
             Spectrum::spectra["CIE-Y"] | s,

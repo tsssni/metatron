@@ -3,7 +3,7 @@
 
 namespace mtt::light {
     struct Point_Light final {
-        proxy<spectra::Spectrum> L;
+        tag<spectra::Spectrum> L;
 
         auto operator()(
             math::Ray const& r,

@@ -25,31 +25,31 @@ namespace mtt::scene {
     };
 
     template<typename F, typename T = F>
-    auto attach(Entity entity, T&& component = {}) noexcept -> proxy<F> {
+    auto attach(Entity entity, T&& component = {}) noexcept -> tag<F> {
         auto idx = stl::vector<F>::instance().push_back(std::forward<T>(component));
-        auto handle = proxy<F>{idx};
-        Hierarchy::instance().registry.emplace<proxy<F>>(entity, handle);
+        auto handle = tag<F>{idx};
+        Hierarchy::instance().registry.emplace<tag<F>>(entity, handle);
         return handle;
     }
 
     template<typename F>
     auto exist(Entity entity) noexcept -> bool {
-        return Hierarchy::instance().registry.any_of<proxy<F>>(entity);
+        return Hierarchy::instance().registry.any_of<tag<F>>(entity);
     }
 
     template<typename F>
-    auto fetch(Entity entity) noexcept -> proxy<F> {
-        return Hierarchy::instance().registry.get<proxy<F>>(entity);
+    auto fetch(Entity entity) noexcept -> tag<F> {
+        return Hierarchy::instance().registry.get<tag<F>>(entity);
     }
 
     template<typename F>
     auto detach(Entity entity) noexcept -> void {
-        Hierarchy::instance().registry.erase<proxy<F>>(entity);
+        Hierarchy::instance().registry.erase<tag<F>>(entity);
     }
 
     template<typename F>
     auto entities() noexcept -> std::vector<Entity> {
-        return Hierarchy::instance().registry.view<proxy<F>>()
+        return Hierarchy::instance().registry.view<tag<F>>()
         | std::ranges::to<std::vector<Entity>>();
     }
 }

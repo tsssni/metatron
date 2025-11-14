@@ -6,8 +6,8 @@
 namespace mtt::emitter {
     struct Uniform_Emitter final {
         struct Primitive final {
-            proxy<light::Light> light;
-            proxy<math::Transform> local_to_render;
+            tag<light::Light> light;
+            tag<math::Transform> local_to_render;
         };
         Uniform_Emitter();
 

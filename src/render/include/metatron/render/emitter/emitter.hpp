@@ -5,8 +5,8 @@
 
 namespace mtt::emitter {
     struct Interaction final {
-        proxy<light::Light> light;
-        proxy<math::Transform> local_to_render;
+        tag<light::Light> light;
+        tag<math::Transform> local_to_render;
         f32 pdf;
     };
 

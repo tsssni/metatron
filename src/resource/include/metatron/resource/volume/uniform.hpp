@@ -31,6 +31,6 @@ namespace mtt::volume {
         math::Bounding_Box bbox;
         math::Vector<i32, 3> dims;
         math::Vector<f32, 3> voxel_size;
-        proxy<image::Image> storage;
+        tag<image::Image> storage;
     };
 }

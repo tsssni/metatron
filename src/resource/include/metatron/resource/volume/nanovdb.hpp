@@ -28,6 +28,6 @@ namespace mtt::volume {
 
     private:
         auto grid() const -> view<nanovdb::FloatGrid>;
-        proxy<nanovdb::GridHandle<>> handle;
+        tag<nanovdb::GridHandle<>> handle;
     };
 }

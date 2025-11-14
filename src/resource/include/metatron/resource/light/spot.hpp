@@ -5,7 +5,7 @@
 namespace mtt::light {
     struct Spot_Light final {
         struct Descriptor final {
-            proxy<spectra::Spectrum> L;
+            tag<spectra::Spectrum> L;
             f32 falloff_start_theta;
             f32 falloff_end_theta;
         };
@@ -23,7 +23,7 @@ namespace mtt::light {
         auto flags() const noexcept -> Flags;
 
     private:
-        proxy<spectra::Spectrum> L;
+        tag<spectra::Spectrum> L;
         f32 falloff_start_cos_theta;
         f32 falloff_end_cos_theta;
     };

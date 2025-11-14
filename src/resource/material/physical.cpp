@@ -8,7 +8,7 @@ namespace mtt::material {
     ) const noexcept -> std::optional<Interaction> {
         auto guarded_sample = [&]<typename T>(T tex, auto const& fallback) {
             if (!tex) return fallback;
-            if constexpr (std::is_same_v<T, proxy<texture::Spectrum_Texture>>)
+            if constexpr (std::is_same_v<T, tag<texture::Spectrum_Texture>>)
                 return (*tex.data())(coord, ctx.spec);
             else return (*tex.data())(coord);
         };

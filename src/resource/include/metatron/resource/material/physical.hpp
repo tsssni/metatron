@@ -5,15 +5,15 @@
 
 namespace mtt::material {
     struct Physical_Material final {
-        proxy<texture::Spectrum_Texture> reflectance;
-        proxy<texture::Spectrum_Texture> eta;
-        proxy<texture::Spectrum_Texture> k;
-        proxy<texture::Spectrum_Texture> emission;
+        tag<texture::Spectrum_Texture> reflectance;
+        tag<texture::Spectrum_Texture> eta;
+        tag<texture::Spectrum_Texture> k;
+        tag<texture::Spectrum_Texture> emission;
 
-        proxy<texture::Vector_Texture> alpha;
-        proxy<texture::Vector_Texture> alpha_u;
-        proxy<texture::Vector_Texture> alpha_v;
-        proxy<texture::Vector_Texture> normal;
+        tag<texture::Vector_Texture> alpha;
+        tag<texture::Vector_Texture> alpha_u;
+        tag<texture::Vector_Texture> alpha_v;
+        tag<texture::Vector_Texture> normal;
 
         auto sample (
             eval::Context const& ctx,

@@ -37,8 +37,8 @@ namespace mtt::monte_carlo {
         trace_ctx.spec = spec;
 
         auto acc_opt = std::optional<accel::Interaction>{};
-        auto medium = proxy<media::Medium>{};
-        auto medium_to_render = proxy<math::Transform>{};
+        auto medium = tag<media::Medium>{};
+        auto medium_to_render = tag<math::Transform>{};
         auto& rdiff = ctx.ray_differential;
         auto& ddiff = ctx.default_differential;
         auto& ct = ctx.render_to_camera;

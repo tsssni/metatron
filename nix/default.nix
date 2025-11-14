@@ -7,7 +7,6 @@
   entt,
   glaze,
   lib,
-  mimalloc,
   ninja,
   openimageio,
   openvdb,
@@ -20,7 +19,7 @@ let
 in
 stdenv.mkDerivation {
   pname = "metatron";
-  version = "0.1.0";
+  version = "0.2.0";
 
   src = ../.;
   # src = fetchFromGitHub {
@@ -41,7 +40,6 @@ stdenv.mkDerivation {
     assimp
     entt
     glaze
-    mimalloc
     openimageio
     openvdb
     proxy

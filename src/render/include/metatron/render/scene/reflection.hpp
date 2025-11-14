@@ -31,9 +31,9 @@ namespace glz {
     };
 
     template<typename F>
-    struct from<JSON, mtt::proxy<F>> {
+    struct from<JSON, mtt::tag<F>> {
         template<auto Opts>
-        auto static op(mtt::proxy<F>& v, auto&&... args) noexcept -> void {
+        auto static op(mtt::tag<F>& v, auto&&... args) noexcept -> void {
             auto entity = mtt::scene::Entity{};
             parse<JSON>::op<Opts>(entity, args...);
             v = mtt::scene::fetch<F>(entity);

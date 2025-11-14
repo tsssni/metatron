@@ -8,11 +8,11 @@ namespace mtt::media {
     struct Heterogeneous_Medium final {
         struct Descriptor final {
             Phase phase;
-            proxy<spectra::Spectrum> sigma_a = spectra::Spectrum::spectra["zero"];
-            proxy<spectra::Spectrum> sigma_s = spectra::Spectrum::spectra["zero"];
-            proxy<spectra::Spectrum> sigma_e = spectra::Spectrum::spectra["zero"];
+            tag<spectra::Spectrum> sigma_a = spectra::Spectrum::spectra["zero"];
+            tag<spectra::Spectrum> sigma_s = spectra::Spectrum::spectra["zero"];
+            tag<spectra::Spectrum> sigma_e = spectra::Spectrum::spectra["zero"];
             math::Vector<usize, 3> dimensions;
-            proxy<volume::Volume> density;
+            tag<volume::Volume> density;
             f32 density_scale;
         };
         Heterogeneous_Medium() noexcept = default;
@@ -24,11 +24,11 @@ namespace mtt::media {
 
     private:
         Phase phase;
-        proxy<spectra::Spectrum> sigma_a;
-        proxy<spectra::Spectrum> sigma_s;
-        proxy<spectra::Spectrum> sigma_e;
-        proxy<volume::Volume> majorant;
-        proxy<volume::Volume> density;
+        tag<spectra::Spectrum> sigma_a;
+        tag<spectra::Spectrum> sigma_s;
+        tag<spectra::Spectrum> sigma_e;
+        tag<volume::Volume> majorant;
+        tag<volume::Volume> density;
         f32 density_scale;
     };
 }
