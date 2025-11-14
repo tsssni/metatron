@@ -7,27 +7,24 @@
 #include <metatron/core/math/distribution/cone.hpp>
 
 namespace mtt::shape {
-    Sphere::Sphere(Descriptor const& desc) noexcept {}
+    Sphere::Sphere(cref<Descriptor> desc) noexcept {}
 
     auto Sphere::size() const noexcept -> usize {
         return 1uz;
     }
 
     auto Sphere::bounding_box(
-        math::Matrix<f32, 4, 4> const& t,
-        usize idx
+        cref<fm44> t, usize idx
     ) const noexcept -> math::Bounding_Box {
-        auto c = t | math::Vector<f32, 4>{0.f, 0.f, 0.f, 1.f};
-        auto d = t | math::Vector<f32, 4>{0.f, 1.f, 0.f, 0.f};
-        auto r = math::Vector<f32, 3>{math::length(d - c)};
+        auto c = t | fv4{0.f, 0.f, 0.f, 1.f};
+        auto d = t | fv4{0.f, 1.f, 0.f, 0.f};
+        auto r = fv3{math::length(d - c)};
         return {c - r, c + r};
     }
 
     auto Sphere::operator()(
-        math::Ray const& r,
-        math::Vector<f32, 3> const& np,
-        usize idx
-    ) const noexcept -> std::optional<Interaction> {
+        cref<math::Ray> r, cref<fv3> np, usize idx
+    ) const noexcept -> opt<Interaction> {
         MTT_OPT_OR_RETURN(t, query(r, idx), {});
         auto p = r.o + t * r.d;
         auto n = p;
@@ -35,17 +32,17 @@ namespace mtt::shape {
         auto s = math::cartesian_to_unit_spherical(p);
         auto& theta = s[0];
         auto& phi = s[1];
-        auto uv = math::Vector<f32, 2>{
+        auto uv = fv2{
             theta / math::pi,
             phi / (2.f * math::pi)
         };
 
-        auto dpdu = math::Vector<f32, 3>{
+        auto dpdu = fv3{
             std::cos(theta) * std::cos(phi),
             -std::sin(theta),
             std::cos(theta) * std::sin(phi),
         } / math::pi;
-        auto dpdv = math::Vector<f32, 3>{
+        auto dpdv = fv3{
             -std::sin(theta) * std::sin(phi),
             0.f,
             std::sin(theta) * std::cos(phi),
@@ -70,10 +67,8 @@ namespace mtt::shape {
     }
 
     auto Sphere::sample(
-        eval::Context const& ctx,
-        math::Vector<f32, 2> const& u,
-        usize idx
-    ) const noexcept -> std::optional<Interaction> {
+        cref<eval::Context> ctx, cref<fv2> u, usize idx
+    ) const noexcept -> opt<Interaction> {
         auto d = math::length(ctx.r.o);
         if (d < 1.f) {
             auto distr = math::Sphere_Distribution{};
@@ -87,7 +82,7 @@ namespace mtt::shape {
             auto dir = math::normalize(-ctx.r.o);
 
             auto sdir = distr.sample(u);
-            auto rot = math::Quaternion<f32>::from_rotation_between({0.f, 0.f, 1.f}, dir);
+            auto rot = fq::from_rotation_between({0.f, 0.f, 1.f}, dir);
             sdir = math::rotate(math::expand(sdir, 0.f), rot);
 
             return (*this)({ctx.r.o, sdir}, ctx.n);
@@ -95,9 +90,8 @@ namespace mtt::shape {
     }
 
     auto Sphere::query(
-        math::Ray const& r,
-        usize idx
-    ) const noexcept -> std::optional<f32> {
+        cref<math::Ray> r, usize idx
+    ) const noexcept -> opt<f32> {
         auto a = math::dot(r.d, r.d);
         auto b = math::dot(r.o, r.d) * 2.f;
         auto c = math::dot(r.o, r.o) - 1.f;

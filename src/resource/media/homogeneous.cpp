@@ -4,7 +4,9 @@
 #include <metatron/core/math/distribution/exponential.hpp>
 
 namespace mtt::media {
-    auto Homogeneous_Medium::sample(eval::Context const& ctx, f32 t_max, f32 u) const noexcept -> std::optional<Interaction> {
+    auto Homogeneous_Medium::sample(
+        cref<eval::Context> ctx, f32 t_max, f32 u
+    ) const noexcept -> opt<Interaction> {
         auto sigma_a = ctx.spec & this->sigma_a;
         auto sigma_s = ctx.spec & this->sigma_s;
         auto sigma_t = sigma_a + sigma_s;

@@ -4,7 +4,7 @@
 #include <sstream>
 
 namespace mtt::spectra {
-    Visible_Spectrum::Visible_Spectrum(Descriptor const& desc) noexcept {
+    Visible_Spectrum::Visible_Spectrum(cref<Descriptor> desc) noexcept {
         auto idx = 0;
         auto file = std::ifstream{desc.path};
         if (!file.is_open()) {

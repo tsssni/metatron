@@ -7,27 +7,23 @@ namespace mtt::texture {
         struct Descriptor final {
             tag<spectra::Spectrum> x;
             tag<spectra::Spectrum> y;
-            math::Vector<usize, 2> uv_scale = math::Vector<usize, 2>{1uz};
+            uzv2 uv_scale = uzv2{1uz};
         };
         Checkerboard_Texture() noexcept = default;
-        Checkerboard_Texture(Descriptor const& desc) noexcept;
+        Checkerboard_Texture(cref<Descriptor> desc) noexcept;
 
         auto operator()(
-            image::Coordinate const& coord,
-            spectra::Stochastic_Spectrum const& spec
-        ) const noexcept -> spectra::Stochastic_Spectrum;
+            cref<image::Coordinate> coord, cref<stsp> spec
+        ) const noexcept -> stsp;
         auto sample(
-            eval::Context const& ctx,
-            math::Vector<f32, 2> const& u
-        ) const noexcept -> math::Vector<f32, 2>;
-        auto pdf(
-            math::Vector<f32, 2> const& uv
-        ) const noexcept -> f32;
+            cref<eval::Context> ctx, cref<fv2> u
+        ) const noexcept -> fv2;
+        auto pdf(cref<fv2> uv) const noexcept -> f32;
 
     private:
         tag<spectra::Spectrum> x;
         tag<spectra::Spectrum> y;
-        math::Vector<usize, 2> uv_scale;
+        uzv2 uv_scale;
 
         f32 w_x;
         f32 w_y;

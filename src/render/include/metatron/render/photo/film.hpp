@@ -10,21 +10,19 @@ namespace mtt::photo {
     struct Film;
 
     struct Fixel final {
-        math::Vector<usize, 2> const pixel;
-        math::Vector<f32, 2> const position;
-        math::Vector<f32, 2> const dxdy;
+        uzv2 const pixel;
+        fv2 const position;
+        fv2 const dxdy;
         f32 const weight;
 
         Fixel(
             mut<Film> film,
-            math::Vector<usize, 2> const& pixel,
-            math::Vector<f32, 2> const& position,
+            cref<uzv2> pixel,
+            cref<fv2> position,
             f32 weight
         ) noexcept;
 
-        auto operator=(
-            spectra::Stochastic_Spectrum const& spectrum
-        ) noexcept -> void;
+        auto operator=(cref<stsp> spectrum) noexcept -> void;
 
     private:
         mut<Film> film;
@@ -33,27 +31,27 @@ namespace mtt::photo {
     struct Film final {
         usize spp;
         usize depth;
-        math::Vector<f32, 2> film_size;
-        math::Vector<f32, 2> dxdy;
+        fv2 film_size;
+        fv2 dxdy;
         tag<image::Image> image;
         tag<color::Color_Space> color_space;
 
         struct Descriptor final {
             usize spp = 16uz;
             usize depth = 64uz;
-            math::Vector<f32, 2> film_size = {0.036f, 0.024f};
-            math::Vector<f32, 2> image_size = {1280uz, 720uz};
+            fv2 film_size = {0.036f, 0.024f};
+            fv2 image_size = {1280uz, 720uz};
             tag<spectra::Spectrum> r = spectra::Spectrum::spectra["CIE-X"];
             tag<spectra::Spectrum> g = spectra::Spectrum::spectra["CIE-Y"];
             tag<spectra::Spectrum> b = spectra::Spectrum::spectra["CIE-Z"];
             tag<color::Color_Space> color_space = color::Color_Space::color_spaces["sRGB"];
         };
-        Film(Descriptor const& desc) noexcept;
+        Film(cref<Descriptor> desc) noexcept;
 
         auto operator()(
             view<filter::Filter> filter,
-            math::Vector<usize, 2> const& pixel,
-            math::Vector<f32, 2> const& u
+            cref<uzv2> pixel,
+            cref<fv2> u
         ) noexcept -> Fixel;
 
     private:

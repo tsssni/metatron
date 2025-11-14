@@ -5,8 +5,8 @@
 
 namespace mtt::phase {
     struct Interaction final {
-        spectra::Stochastic_Spectrum f;
-        math::Vector<f32, 3> wi;
+        stsp f;
+        fv3 wi;
         f32 pdf;
     };
 
@@ -14,12 +14,11 @@ namespace mtt::phase {
 
     struct Phase_Function final: pro::facade_builder
     ::add_convention<pro::operator_dispatch<"()">, auto (
-        math::Vector<f32, 3> const& wo,
-        math::Vector<f32, 3> const& wi
-    ) const noexcept -> std::optional<Interaction>>
+        cref<fv3> wo, cref<fv3> wi
+    ) const noexcept -> opt<Interaction>>
     ::add_convention<phase_function_sample, auto (
-        eval::Context const& ctx, math::Vector<f32, 2> const& u
-    ) const noexcept -> std::optional<Interaction>>
+        cref<eval::Context> ctx, cref<fv2> u
+    ) const noexcept -> opt<Interaction>>
     ::support_copy<pro::constraint_level::nontrivial>
     ::build {};
 }

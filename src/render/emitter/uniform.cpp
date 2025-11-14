@@ -17,9 +17,8 @@ namespace mtt::emitter {
     }
 
     auto Uniform_Emitter::sample(
-        eval::Context const& ctx,
-        f32 u
-    ) const noexcept -> std::optional<Interaction> {
+        cref<eval::Context> ctx, f32 u
+    ) const noexcept -> opt<Interaction> {
         if (prims.empty() && inf_prims.empty()) return {};
         auto idx = math::clamp(usize(u * prims.size()), 0uz, prims.size() - 1);
         auto prim = prims[idx];
@@ -31,9 +30,8 @@ namespace mtt::emitter {
     }
 
     auto Uniform_Emitter::sample_infinite(
-        eval::Context const& ctx,
-        f32 u
-    ) const noexcept -> std::optional<Interaction> {
+        cref<eval::Context> ctx, f32 u
+    ) const noexcept -> opt<Interaction> {
         if (inf_prims.empty()) return {};
         auto idx = math::clamp(usize(u * prims.size()), 0uz, inf_prims.size() - 1);
         auto prim = inf_prims[idx];

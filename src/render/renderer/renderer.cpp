@@ -9,7 +9,7 @@
 namespace mtt::renderer {
     struct Renderer::Impl final {
         Descriptor desc;
-        Impl(Descriptor&& desc): desc(std::move(desc)) {}
+        Impl(rref<Descriptor> desc): desc(std::move(desc)) {}
 
         auto render() noexcept -> void {
             auto rd = std::random_device{};
@@ -22,16 +22,16 @@ namespace mtt::renderer {
             auto ct = *scene::fetch<math::Transform>("/hierarchy/camera/render"_et);
             auto spp = desc.film.spp;
             auto depth = desc.film.depth;
-            auto size = math::Vector<usize, 2>{desc.film.image->size};
+            auto size = uzv2{desc.film.image->size};
 
-            auto range = math::Vector<usize, 2>{0uz, addr.host.empty() ? spp : 1uz};
+            auto range = uzv2{0uz, addr.host.empty() ? spp : 1uz};
             auto progress = stl::progress{math::prod(size) * spp};
-            auto trace = [&](math::Vector<usize, 2> const& px) {
+            auto trace = [&](cref<uzv2> px) {
                 auto sp = *desc.sampler;
                 for (auto n = range[0]; n < range[1]; ++n) {
                     sp->start({px, size, n, spp, 0uz, seed});
                     auto fixel = desc.film(desc.filter.data(), px, sp->generate_pixel_2d());
-                    auto spec = spectra::Stochastic_Spectrum{sp->generate_1d()};
+                    auto spec = stsp{sp->generate_1d()};
                     MTT_OPT_OR_CALLBACK(s, photo::Camera{}.sample(
                         desc.lens.data(), fixel.position, fixel.dxdy, sp->generate_2d()
                     ), {
@@ -58,7 +58,7 @@ namespace mtt::renderer {
             auto store = [
                 path = args.output,
                 fcs = desc.film.color_space
-            ](image::Image const& img) {
+            ](cref<image::Image> img) {
                 auto type = img.stride == 1
                 ? OIIO::TypeDesc::UINT8 : OIIO::TypeDesc::FLOAT;
                 auto spec = OIIO::ImageSpec{
@@ -102,10 +102,10 @@ namespace mtt::renderer {
                 auto finished = range[0] == spp;
                 auto image = *desc.film.image;
                 scheduler.sync_parallel(
-                    math::Vector<usize, 2>{image.size},
+                    uzv2{image.size},
                     [&image](auto const& px) {
                         auto [i, j] = px;
-                        auto pixel = math::Vector<f32, 4>{image[i, j]};
+                        auto pixel = fv4{image[i, j]};
                         pixel /= pixel[3];
                         image[i, j] = pixel;
                     }
@@ -129,7 +129,7 @@ namespace mtt::renderer {
         }
     };
 
-    Renderer::Renderer(Descriptor&& desc) noexcept:
+    Renderer::Renderer(rref<Descriptor> desc) noexcept:
     stl::capsule<Renderer>(std::move(desc)) {}
 
     auto Renderer::render() noexcept -> void {return impl->render();}

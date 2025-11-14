@@ -24,14 +24,13 @@ namespace mtt::accel {
     struct Interaction final {
         tag<Divider> divider{};
         usize primitive{0uz};
-        std::optional<shape::Interaction> intr_opt{};
+        opt<shape::Interaction> intr_opt{};
     };
 
     struct Acceleration final: pro::facade_builder
     ::add_convention<pro::operator_dispatch<"()">, auto (
-        math::Ray const& r,
-        math::Vector<f32, 3> const& n
-    ) const noexcept -> std::optional<Interaction>>
+        cref<math::Ray> r, cref<fv3> n
+    ) const noexcept -> opt<Interaction>>
     ::add_skill<pro::skills::as_view>
     ::build {};
 }

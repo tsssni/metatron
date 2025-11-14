@@ -6,8 +6,8 @@ namespace mtt::spectra {
     auto constexpr stochastic_samples = 4uz;
 
     struct Stochastic_Spectrum final {
-        math::Vector<f32, stochastic_samples> lambda{};
-        math::Vector<f32, stochastic_samples> value{};
+        fv<stochastic_samples> lambda{};
+        fv<stochastic_samples> value{};
 
         Stochastic_Spectrum() noexcept = default;
         Stochastic_Spectrum(f32 u, f32 v = 0.f) noexcept;
@@ -18,42 +18,46 @@ namespace mtt::spectra {
         auto operator&(view<Spectrum> spectrum) const noexcept -> Stochastic_Spectrum;
         auto operator&(tag<Spectrum> spectrum) const noexcept -> Stochastic_Spectrum;
 
-        auto operator+(Stochastic_Spectrum const& spectrum) const noexcept -> Stochastic_Spectrum;
-        auto operator+=(Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum&;
-        auto operator-(Stochastic_Spectrum const& spectrum) const noexcept -> Stochastic_Spectrum;
-        auto operator-=(Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum&;
-        auto operator*(Stochastic_Spectrum const& spectrum) const noexcept -> Stochastic_Spectrum;
-        auto operator*=(Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum&;
-        auto operator/(Stochastic_Spectrum const& spectrum) const noexcept -> Stochastic_Spectrum;
-        auto operator/=(Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum&;
+        auto operator+(cref<Stochastic_Spectrum> spectrum) const noexcept -> Stochastic_Spectrum;
+        auto operator+=(cref<Stochastic_Spectrum> spectrum) noexcept -> ref<Stochastic_Spectrum>;
+        auto operator-(cref<Stochastic_Spectrum> spectrum) const noexcept -> Stochastic_Spectrum;
+        auto operator-=(cref<Stochastic_Spectrum> spectrum) noexcept -> ref<Stochastic_Spectrum>;
+        auto operator*(cref<Stochastic_Spectrum> spectrum) const noexcept -> Stochastic_Spectrum;
+        auto operator*=(cref<Stochastic_Spectrum> spectrum) noexcept -> ref<Stochastic_Spectrum>;
+        auto operator/(cref<Stochastic_Spectrum> spectrum) const noexcept -> Stochastic_Spectrum;
+        auto operator/=(cref<Stochastic_Spectrum> spectrum) noexcept -> ref<Stochastic_Spectrum>;
 
-        auto operator=(f32 s) noexcept -> Stochastic_Spectrum&;
+        auto operator=(f32 s) noexcept -> ref<Stochastic_Spectrum>;
         auto operator+(f32 s) const noexcept -> Stochastic_Spectrum;
-        auto operator+=(f32 s) noexcept -> Stochastic_Spectrum&;
+        auto operator+=(f32 s) noexcept -> ref<Stochastic_Spectrum>;
         auto operator-(f32 s) const noexcept -> Stochastic_Spectrum;
         auto operator-() const noexcept -> Stochastic_Spectrum;
-        auto operator-=(f32 s) noexcept -> Stochastic_Spectrum&;
+        auto operator-=(f32 s) noexcept -> ref<Stochastic_Spectrum>;
         auto operator*(f32 s) const noexcept -> Stochastic_Spectrum;
-        auto operator*=(f32 s) noexcept -> Stochastic_Spectrum&;
+        auto operator*=(f32 s) noexcept -> ref<Stochastic_Spectrum>;
         auto operator/(f32 s) const noexcept -> Stochastic_Spectrum;
-        auto operator/=(f32 s) noexcept -> Stochastic_Spectrum&;
+        auto operator/=(f32 s) noexcept -> ref<Stochastic_Spectrum>;
 
         explicit operator bool() const noexcept;
     };
 
-    auto operator+(f32 s, Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum;
-    auto operator-(f32 s, Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum;
-    auto operator*(f32 s, Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum;
-    auto operator/(f32 s, Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum;
+    auto operator+(f32 s, cref<Stochastic_Spectrum> spectrum) noexcept -> Stochastic_Spectrum;
+    auto operator-(f32 s, cref<Stochastic_Spectrum> spectrum) noexcept -> Stochastic_Spectrum;
+    auto operator*(f32 s, cref<Stochastic_Spectrum> spectrum) noexcept -> Stochastic_Spectrum;
+    auto operator/(f32 s, cref<Stochastic_Spectrum> spectrum) noexcept -> Stochastic_Spectrum;
 
-    auto min(Stochastic_Spectrum const& spectrum) noexcept -> f32;
-    auto min(Stochastic_Spectrum const& spectrum, math::Vector<f32, 4> x) noexcept -> Stochastic_Spectrum;
-    auto max(Stochastic_Spectrum const& spectrum) noexcept -> f32;
-    auto max(Stochastic_Spectrum const& spectrum, math::Vector<f32, 4> x) noexcept -> Stochastic_Spectrum;
-    auto avg(Stochastic_Spectrum const& spectrum) noexcept -> f32;
+    auto min(cref<Stochastic_Spectrum> spectrum) noexcept -> f32;
+    auto min(cref<Stochastic_Spectrum> spectrum, fv4 x) noexcept -> Stochastic_Spectrum;
+    auto max(cref<Stochastic_Spectrum> spectrum) noexcept -> f32;
+    auto max(cref<Stochastic_Spectrum> spectrum, fv4 x) noexcept -> Stochastic_Spectrum;
+    auto avg(cref<Stochastic_Spectrum> spectrum) noexcept -> f32;
 
-    auto valid(Stochastic_Spectrum const& spectrum) noexcept -> bool;
-    auto constant(Stochastic_Spectrum const& spectrum) noexcept -> bool;
-    auto coherent(Stochastic_Spectrum const& spectrum) noexcept -> bool;
-    auto degrade(Stochastic_Spectrum& spectrum) noexcept -> void;
+    auto valid(cref<Stochastic_Spectrum> spectrum) noexcept -> bool;
+    auto constant(cref<Stochastic_Spectrum> spectrum) noexcept -> bool;
+    auto coherent(cref<Stochastic_Spectrum> spectrum) noexcept -> bool;
+    auto degrade(ref<Stochastic_Spectrum> spectrum) noexcept -> void;
+}
+
+namespace mtt {
+    using stsp = spectra::Stochastic_Spectrum;
 }

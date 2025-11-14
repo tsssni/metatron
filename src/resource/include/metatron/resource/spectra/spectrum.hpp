@@ -4,7 +4,7 @@
 #include <unordered_map>
 
 namespace mtt::spectra {
-    auto constexpr visible_lambda = math::Vector<f32, 2>{360.f, 830.f};
+    auto constexpr visible_lambda = fv2{360.f, 830.f};
     auto constexpr CIE_Y_integral = 106.7502593994140625f;
 
     struct Spectrum final: pro::facade_builder
@@ -25,8 +25,8 @@ namespace mtt::spectra {
         return integral;
     }
 
-    auto inline operator~(tag<Spectrum> s) noexcept -> math::Vector<f32, 3> {
-        return math::Vector<f32, 3>{
+    auto inline operator~(tag<Spectrum> s) noexcept -> fv3 {
+        return fv3{
             Spectrum::spectra["CIE-X"] | s,
             Spectrum::spectra["CIE-Y"] | s,
             Spectrum::spectra["CIE-Z"] | s,

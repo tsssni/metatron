@@ -9,7 +9,7 @@ namespace mtt::spectra {
             std::string path;
         };
         Visible_Spectrum() noexcept = default;
-        Visible_Spectrum(Descriptor const& desc) noexcept;
+        Visible_Spectrum(cref<Descriptor> desc) noexcept;
         auto operator()(f32 lambda) const noexcept -> f32;
 
     private:

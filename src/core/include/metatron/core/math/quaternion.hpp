@@ -8,9 +8,9 @@ namespace mtt::math {
     public:
         Quaternion() = default;
         Quaternion(T x, T y, T z, T w): data{x, y, z, w} {}
-        explicit Quaternion(Vector<T, 4> const& v): data{v} {}
+        explicit Quaternion(cref<Vector<T, 4>> v): data{v} {}
 
-        auto constexpr static from_axis_angle(Vector<T, 3> const& axis, T const& angle) noexcept -> Quaternion<T> {
+        auto constexpr static from_axis_angle(cref<Vector<T, 3>> axis, cref<T> angle) noexcept -> Quaternion<T> {
             auto half_angle = angle * T{0.5};
             auto sin_half = std::sin(half_angle);
             auto cos_half = std::cos(half_angle);
@@ -22,7 +22,7 @@ namespace mtt::math {
             };
         }
 
-        auto constexpr static from_rotation_between(Vector<T, 3> const& from, Vector<T, 3> const& to) noexcept -> Quaternion<T> {
+        auto constexpr static from_rotation_between(cref<Vector<T, 3>> from, cref<Vector<T, 3>> to) noexcept -> Quaternion<T> {
             auto axis = cross(from, to);
             if (math::length(axis) < math::epsilon<f32>) {
                 auto perp = math::abs(math::dot(from, math::Vector<T, 3>{0, 1, 0})) >= 1 - 1e-6f
@@ -34,15 +34,15 @@ namespace mtt::math {
             return from_axis_angle(math::normalize(axis), rad);
         }
 
-        auto constexpr operator[](usize idx) noexcept -> T& {
+        auto constexpr operator[](usize idx) noexcept -> ref<T> {
             return data[idx];
         }
 
-        auto constexpr operator[](usize idx) const noexcept -> T const& {
+        auto constexpr operator[](usize idx) const noexcept -> cref<T> {
             return data[idx];
         }
 
-        auto constexpr operator*(Quaternion const& rhs) const noexcept -> Quaternion<T> {
+        auto constexpr operator*(cref<Quaternion> rhs) const noexcept -> Quaternion<T> {
             // Hamilton
             auto [x, y, z, w] = data;
             auto [rx, ry, rz, rw] = rhs.data;
@@ -54,11 +54,11 @@ namespace mtt::math {
             };
         }
 
-        auto constexpr operator*(T const& scalar) const noexcept -> Quaternion<T> {
+        auto constexpr operator*(cref<T> scalar) const noexcept -> Quaternion<T> {
             return Quaternion{data * scalar};
         }
 
-        auto constexpr operator+(Quaternion const& rhs) const noexcept -> Quaternion<T> {
+        auto constexpr operator+(cref<Quaternion> rhs) const noexcept -> Quaternion<T> {
             return Quaternion{data + rhs.data};
         }
 
@@ -66,7 +66,7 @@ namespace mtt::math {
             return Quaternion{-data};
         }
 
-        auto constexpr operator<=>(Quaternion<T> const&) const = default;
+        auto constexpr operator<=>(cref<Quaternion<T>>) const = default;
 
         explicit constexpr operator Vector<T, 4>() const {
             return data;
@@ -88,7 +88,7 @@ namespace mtt::math {
 
     template<typename T>
     requires std::floating_point<T>
-    auto constexpr slerp(Quaternion<T> const& q0, Quaternion<T> const& q1, T const& t) noexcept -> Quaternion<T> {
+    auto constexpr slerp(cref<Quaternion<T>> q0, cref<Quaternion<T>> q1, cref<T> t) noexcept -> Quaternion<T> {
         // quaternion fits x^2 + y^2 + z^2 + w^2 = 1, so it's 4D sphere which could use slerp
 
         auto q0v = Vector<T, 4>{q0};
@@ -117,15 +117,23 @@ namespace mtt::math {
 
     template<typename T>
     requires std::floating_point<T>
-    auto constexpr conj(Quaternion<T> const& q) noexcept -> Quaternion<T> {
+    auto constexpr conj(cref<Quaternion<T>> q) noexcept -> Quaternion<T> {
         return {-q[0], -q[1], -q[2], q[3]};
     }
 
     template<typename T>
     requires std::floating_point<T>
-    auto constexpr rotate(Vector<T, 4> const& x, Quaternion<T> const& q) noexcept -> math::Vector<T, 4> {
+    auto constexpr rotate(cref<Vector<T, 4>> x, cref<Quaternion<T>> q) noexcept -> math::Vector<T, 4> {
         auto p = Quaternion{x[0], x[1], x[2], T{0}};
         auto r = q * p * conj(q);
         return {r[0], r[1], r[2], T{0}};
     }
+}
+
+namespace mtt {
+    #define MTT_QUATERNION_ALIAS(p, T)\
+    using p##q = math::Quaternion<T>;
+
+    MTT_QUATERNION_ALIAS(f, f32)
+    MTT_QUATERNION_ALIAS(d, f64)
 }

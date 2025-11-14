@@ -4,14 +4,14 @@
 namespace mtt::filter {
     struct Box_Filter final {
         struct Descriptor final {
-            math::Vector<f32, 2> radius = {0.5f};
+            fv2 radius = {0.5f};
         };
         Box_Filter() noexcept = default;
-        Box_Filter(Descriptor const& desc) noexcept;
-        auto operator()(math::Vector<f32, 2> const& p) const noexcept -> f32;
-        auto sample(math::Vector<f32, 2> const& u) const noexcept -> std::optional<filter::Interaction>;
+        Box_Filter(cref<Descriptor> desc) noexcept;
+        auto operator()(cref<fv2> p) const noexcept -> f32;
+        auto sample(cref<fv2> u) const noexcept -> opt<filter::Interaction>;
 
     private:
-        math::Vector<f32, 2> radius;
+        fv2 radius;
     };
 }

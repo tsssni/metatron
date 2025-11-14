@@ -3,10 +3,10 @@
 
 namespace mtt::material {
     struct Interface_Material final {
-        auto sample (
-            eval::Context const& ctx,
-            image::Coordinate const& coord
-        ) const noexcept -> std::optional<Interaction>;
+        auto sample(
+            cref<eval::Context> ctx,
+            cref<image::Coordinate> coord
+        ) const noexcept -> opt<Interaction>;
         auto flags() const noexcept -> Flags;
     };
 }

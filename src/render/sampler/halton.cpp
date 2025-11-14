@@ -5,11 +5,11 @@
 #include <metatron/core/math/number-theory.hpp>
 
 namespace mtt::sampler {
-    Halton_Sampler::Halton_Sampler(Descriptor const& desc) noexcept:
+    Halton_Sampler::Halton_Sampler(cref<Descriptor> desc) noexcept:
     exponential(desc.scale_exponential),
     scale({1 << desc.scale_exponential[0], math::pow(3, desc.scale_exponential[1])}) {
         stride = scale[0] * scale[1];
-        scale_mulinv = scale * math::Vector<usize, 2>{
+        scale_mulinv = scale * uzv2{
             math::multiplicative_inverse(scale[0], scale[1]),
             math::multiplicative_inverse(scale[1], scale[0])
         };
@@ -25,7 +25,7 @@ namespace mtt::sampler {
         // so low num_exponetial bits of halton_index equals radical_inverse(pixel % (base ^ num_exoinetial))
         auto halton_low_digits = foreach([&](usize x, usize i) -> usize {
             return math::inverse_radical(x, math::primes[i], exponential[i]);
-        }, math::mod(math::Vector<i32, 2>{pixel}, scale));
+        }, math::mod(iv2{pixel}, scale));
 
         // halton_index≡halton_low_digits[i](mod base^num_exponential[i])
         // use precomputed multiplicative inverse of scale to evaluate CRT
@@ -45,11 +45,11 @@ namespace mtt::sampler {
         return scrambled;
     }
 
-    auto Halton_Sampler::generate_2d() noexcept -> math::Vector<f32, 2> {
+    auto Halton_Sampler::generate_2d() noexcept -> fv2 {
         return {generate_1d(), generate_1d()};
     }
 
-    auto Halton_Sampler::generate_pixel_2d() noexcept -> math::Vector<f32, 2> {
+    auto Halton_Sampler::generate_pixel_2d() noexcept -> fv2 {
         // remove integer part by dividing scale
         return {
             math::radical_inverse(halton_idx >> exponential[0], math::primes[0]),

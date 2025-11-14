@@ -8,9 +8,9 @@ namespace mtt::photo {
             f32 focal_length = 0.035f;
             f32 focus_distance = 10.f;
         };
-        Thin_Lens(Descriptor const& desc) noexcept;
-        auto sample(math::Vector<f32, 2> o, math::Vector<f32, 2> u) const noexcept -> std::optional<lens::Interaction>;
-    
+        Thin_Lens(cref<Descriptor> desc) noexcept;
+        auto sample(fv2 o, fv2 u) const noexcept -> opt<lens::Interaction>;
+
     private:
         f32 aperture;
         f32 focal_length;

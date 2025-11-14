@@ -3,14 +3,13 @@
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/distribution/linear.hpp>
 #include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 
 namespace mtt::shape {
-    Mesh::Mesh(Descriptor const& desc) noexcept {
+    Mesh::Mesh(cref<Descriptor> desc) noexcept {
         MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(desc.path), {
             std::println("mesh {} not exists", desc.path);
             std::abort();
@@ -49,13 +48,13 @@ namespace mtt::shape {
                 mesh->mNormals[i].z
             });
             uvs.push_back(mesh->mTextureCoords[0]
-                ? math::Vector<f32, 2>{
+                ? fv2{
                     mesh->mTextureCoords[0][i].x,
                     mesh->mTextureCoords[0][i].y
                 }
                 : 1.f
                 * math::cartesian_to_unit_spherical(math::normalize(vertices.back()))
-                / math::Vector<f32, 2>{math::pi, 2.f * math::pi}
+                / fv2{math::pi, 2.f * math::pi}
             );
         }
 
@@ -66,25 +65,25 @@ namespace mtt::shape {
 
         for (auto i = 0uz; i < this->indices.size(); ++i) {
             auto prim = this->indices[i];
-            auto v = math::Matrix<f32, 3, 3>{
+            auto v = fm33{
                 this->vertices[prim[0]],
                 this->vertices[prim[1]],
                 this->vertices[prim[2]],
             };
-            auto n = math::Matrix<f32, 3, 3>{
+            auto n = fm33{
                 this->normals[prim[0]],
                 this->normals[prim[1]],
                 this->normals[prim[2]],
             };
-            auto uv = math::Matrix<f32, 3, 2>{
+            auto uv = fm32{
                 this->uvs[prim[0]],
                 this->uvs[prim[1]],
                 this->uvs[prim[2]],
             };
 
-            auto A = math::Matrix<f32, 2, 2>{uv[0] - uv[2], uv[1] - uv[2]};
+            auto A = fm22{uv[0] - uv[2], uv[1] - uv[2]};
             auto dpduv_opt = math::cramer(A,
-                math::Matrix<f32, 2, 3>{v[0] - v[2], v[1] - v[2]}
+                fm23{v[0] - v[2], v[1] - v[2]}
             );
             // remove parallel dpduv
             if (dpduv_opt) {
@@ -99,12 +98,12 @@ namespace mtt::shape {
             }
 
             auto dnduv_opt = math::cramer(A,
-                math::Matrix<f32, 2, 3>{n[0] - n[2], n[1] - n[2]}
+                fm23{n[0] - n[2], n[1] - n[2]}
             );
             if (!dnduv_opt) {
                 auto dn = math::normalize(math::cross(n[2] - n[0], n[1] - n[0]));
                 dnduv_opt = math::length(dn) == 0
-                ? math::Matrix<f32, 2, 3>{0.f}
+                ? fm23{0.f}
                 : math::orthogonalize(dn);
             }
 
@@ -122,11 +121,10 @@ namespace mtt::shape {
     }
 
     auto Mesh::bounding_box(
-        math::Matrix<f32, 4, 4> const& t,
-        usize idx
+        cref<fm44> t, usize idx
     ) const noexcept -> math::Bounding_Box {
         auto prim = indices[idx];
-        auto v = math::Vector<math::Vector<f32, 4>, 3>{
+        auto v = math::Vector<fv4, 3>{
             t | math::expand(vertices[prim[0]], 1.f),
             t | math::expand(vertices[prim[1]], 1.f),
             t | math::expand(vertices[prim[2]], 1.f)
@@ -137,10 +135,8 @@ namespace mtt::shape {
     }
 
     auto Mesh::operator()(
-        math::Ray const& r,
-        math::Vector<f32, 3> const& np,
-        usize idx
-    ) const noexcept -> std::optional<Interaction> {
+        cref<math::Ray> r, cref<fv3> np, usize idx
+    ) const noexcept -> opt<Interaction> {
         MTT_OPT_OR_RETURN(isec, intersect(r, idx), {});
         auto bary = math::shrink(isec);
         auto t = isec[3];
@@ -159,12 +155,10 @@ namespace mtt::shape {
     }
 
     auto Mesh::sample(
-        eval::Context const& ctx,
-        math::Vector<f32, 2> const& u,
-        usize idx
-    ) const noexcept -> std::optional<Interaction> {
+        cref<eval::Context> ctx, cref<fv2> u, usize idx
+    ) const noexcept -> opt<Interaction> {
         auto prim = indices[idx];
-        auto validate_vector = [](math::Vector<f32, 3> const& v) -> bool {
+        auto validate_vector = [](cref<fv3> v) -> bool {
             return math::dot(v, v) >= math::epsilon<f32>;
         };
 
@@ -211,13 +205,13 @@ namespace mtt::shape {
         auto sin_bc2 = math::sqrt(1.f - cos_bc2 * cos_bc2);
         auto d = cos_bc2 * b + sin_bc2 * math::normalize(math::gram_schmidt(c_1, b));
 
-        auto v = math::Vector<math::Vector<f32, 3>, 3>{
+        auto v = math::Vector<fv3, 3>{
             vertices[prim[0]],
             vertices[prim[1]],
             vertices[prim[2]],
         };
         MTT_OPT_OR_RETURN(cramer, math::cramer(
-            math::transpose(math::Matrix<f32, 3, 3>{-d, v[1] - v[0], v[2] - v[0]}),
+            math::transpose(fm33{-d, v[1] - v[0], v[2] - v[0]}),
             ctx.r.o - v[0]
         ), {});
         auto [t, b_1, b_2] = cramer;
@@ -227,7 +221,7 @@ namespace mtt::shape {
             b_1 /= (b_1 + b_2);
             b_2 /= (b_1 + b_2);
         }
-        auto bary = math::Vector<f32, 3>{1.f - b_1 - b_2, b_1, b_2};
+        auto bary = fv3{1.f - b_1 - b_2, b_1, b_2};
 
         auto pdf = this->pdf({ctx.r.o, d}, ctx.n, idx);
         auto p = ctx.r.o + t * d;
@@ -244,21 +238,19 @@ namespace mtt::shape {
     }
 
     auto Mesh::query(
-        math::Ray const& r,
-        usize idx
-    ) const noexcept -> std::optional<f32> {
+        cref<math::Ray> r, usize idx
+    ) const noexcept -> opt<f32> {
         MTT_OPT_OR_RETURN(isec, intersect(r, idx), {});
         return isec[3];
     }
 
     auto Mesh::intersect(
-        math::Ray const& r,
-        usize idx
-    ) const noexcept -> std::optional<math::Vector<f32, 4>> {
+        cref<math::Ray> r, usize idx
+    ) const noexcept -> opt<fv4> {
         auto rs = r.d;
         auto ri = math::maxi(math::abs(rs));
         std::swap(rs[2], rs[ri]);
-        auto rt = math::Vector<f32, 3>{
+        auto rt = fv3{
             -rs[0], -rs[1], 1.f
         } / rs[2];
 
@@ -271,20 +263,20 @@ namespace mtt::shape {
         };
 
         auto prim = indices[idx];
-        auto v = math::Vector<math::Vector<f32, 4>, 3>{
+        auto v = math::Vector<fv4, 3>{
             local_to_shear(vertices[prim[0]]),
             local_to_shear(vertices[prim[1]]),
             local_to_shear(vertices[prim[2]]),
         };
 
         auto ef = [](
-            math::Vector<f32, 2> p,
-            math::Vector<f32, 2> v0,
-            math::Vector<f32, 2> v1
+            fv2 p,
+            fv2 v0,
+            fv2 v1
         ) -> f32 {
-            return math::determinant(math::Matrix<f32, 2, 2>{v1 - v0, p - v0});
+            return math::determinant(fm22{v1 - v0, p - v0});
         };
-        auto e = math::Vector<f32, 3>{
+        auto e = fv3{
             ef({0.f}, v[1], v[2]),
             ef({0.f}, v[2], v[0]),
             ef({0.f}, v[0], v[1]),
@@ -300,13 +292,11 @@ namespace mtt::shape {
         auto bary = e / det;
         auto t = math::blerp(v, bary)[2];
         if (t < math::epsilon<f32>) return {};
-        return math::Vector<f32, 4>{bary, t};
+        return fv4{bary, t};
     }
 
     auto Mesh::pdf(
-        math::Ray const& r,
-        math::Vector<f32, 3> const& np,
-        usize idx
+        cref<math::Ray> r, cref<fv3> np, usize idx
     ) const noexcept -> f32 {
         auto prim = vertices[idx];
         auto a = math::normalize(vertices[prim[0]] - r.o);
@@ -325,7 +315,7 @@ namespace mtt::shape {
         auto c_1 = math::normalize(math::cross(math::cross(b, c_2), math::cross(c, a)));
         if (math::dot(c_1, a + c) < 0.f) c_1 *= -1.f;
 
-        auto u = math::Vector<f32, 2>{};
+        auto u = fv2{};
         auto pdf = 1.f;
         u[1] = math::guarded_div(1.f - math::dot(b, c_2), (1.f - math::dot(b, c_1)));
         pdf = math::guarded_div(pdf, 1.f - math::dot(b, c_1));
@@ -345,7 +335,7 @@ namespace mtt::shape {
             }
         }
 
-        if (np != math::Vector<f32, 3>{0.f}) {
+        if (np != fv3{0.f}) {
             auto distr = math::Bilinear_Distribution{
                 math::dot(np, b),
                 math::dot(np, a),

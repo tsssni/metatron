@@ -17,18 +17,15 @@ namespace mtt::texture {
             bool linear = true;
         };
         Image_Vector_Texture() noexcept = default;
-        Image_Vector_Texture(Descriptor const& desc) noexcept;
+        Image_Vector_Texture(cref<Descriptor> desc) noexcept;
 
         auto operator()(
-            image::Coordinate const& coord
-        ) const noexcept -> math::Vector<f32, 4>;
+            cref<image::Coordinate> coord
+        ) const noexcept -> fv4;
         auto sample(
-            eval::Context const& ctx,
-            math::Vector<f32, 2> const& u
-        ) const noexcept -> math::Vector<f32, 2>;
-        auto pdf(
-            math::Vector<f32, 2> const& uv
-        ) const noexcept -> f32;
+            cref<eval::Context> ctx, cref<fv2> u
+        ) const noexcept -> fv2;
+        auto pdf(cref<fv2> uv) const noexcept -> f32;
 
     private:
         tag<image::Image> texture;
@@ -43,19 +40,15 @@ namespace mtt::texture {
             tag<color::Color_Space> color_space = color::Color_Space::color_spaces["sRGB"];
         };
         Image_Spectrum_Texture() noexcept = default;
-        Image_Spectrum_Texture(Descriptor const& desc) noexcept;
+        Image_Spectrum_Texture(cref<Descriptor> desc) noexcept;
 
         auto operator()(
-            image::Coordinate const& coord,
-            spectra::Stochastic_Spectrum const& spec
-        ) const noexcept -> spectra::Stochastic_Spectrum;
+            cref<image::Coordinate> coord, cref<stsp> spec
+        ) const noexcept -> stsp;
         auto sample(
-            eval::Context const& ctx,
-            math::Vector<f32, 2> const& u
-        ) const noexcept -> math::Vector<f32, 2>;
-        auto pdf(
-            math::Vector<f32, 2> const& uv
-        ) const noexcept -> f32;
+            cref<eval::Context> ctx, cref<fv2> u
+        ) const noexcept -> fv2;
+        auto pdf(cref<fv2> uv) const noexcept -> f32;
 
     private:
         tag<color::Color_Space> color_space;

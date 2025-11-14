@@ -5,9 +5,9 @@
 
 namespace mtt::light {
     struct Interaction final {
-        spectra::Stochastic_Spectrum L;
-        math::Vector<f32, 3> wi;
-        math::Vector<f32, 3> p;
+        stsp L;
+        fv3 wi;
+        fv3 p;
         f32 t;
         f32 pdf;
     };
@@ -22,13 +22,11 @@ namespace mtt::light {
 
     struct Light final: pro::facade_builder
     ::add_convention<pro::operator_dispatch<"()">, auto (
-        math::Ray const& r,
-        spectra::Stochastic_Spectrum const& spec
-    ) const noexcept -> std::optional<Interaction>>
+        cref<math::Ray> r, cref<stsp> spec
+    ) const noexcept -> opt<Interaction>>
     ::add_convention<light_sample, auto (
-        eval::Context const& ctx,
-        math::Vector<f32, 2> const& u
-    ) const noexcept -> std::optional<Interaction>>
+        cref<eval::Context> ctx, cref<fv2> u
+    ) const noexcept -> opt<Interaction>>
     ::add_convention<light_flags, auto () const noexcept -> Flags>
     ::add_skill<pro::skills::as_view>
     ::build {};

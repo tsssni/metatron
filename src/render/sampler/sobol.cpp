@@ -4,7 +4,6 @@
 #include <metatron/core/math/hash.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <fstream>
 
@@ -40,7 +39,7 @@ namespace mtt::sampler {
 
         dim = ctx.dim;
         seed = ctx.seed;
-        morton_idx = (morton_encode(math::Vector<u32, 2>{ctx.pixel}) << log2_spp) | ctx.idx;
+        morton_idx = (morton_encode(uv2{ctx.pixel}) << log2_spp) | ctx.idx;
     }
 
     auto Sobol_Sampler::generate_1d() noexcept -> f32 {
@@ -49,7 +48,7 @@ namespace mtt::sampler {
         return sobol(idx, 0, math::hash(dim, seed));
     }
 
-    auto Sobol_Sampler::generate_2d() noexcept -> math::Vector<f32, 2> {
+    auto Sobol_Sampler::generate_2d() noexcept -> fv2 {
         auto idx = permute_idx();
         this->dim += 2;
         auto bits = math::hash(dim, seed);
@@ -59,12 +58,12 @@ namespace mtt::sampler {
         };
     }
 
-    auto Sobol_Sampler::generate_pixel_2d() noexcept -> math::Vector<f32, 2> {
+    auto Sobol_Sampler::generate_pixel_2d() noexcept -> fv2 {
         return generate_2d();
     }
 
     auto Sobol_Sampler::permute_idx() noexcept -> usize {
-        auto static constexpr permutations = math::Matrix<byte, 24, 4>{
+        auto static constexpr permutations = bm<24, 4>{
             {0, 1, 2, 3},
             {0, 1, 3, 2},
             {0, 2, 1, 3},

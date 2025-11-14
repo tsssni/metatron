@@ -4,7 +4,7 @@
 
 namespace mtt::image {
     struct Coordinate final {
-        math::Vector<f32, 2> uv{};
+        fv2 uv{};
         f32 dudx{0.f};
         f32 dudy{0.f};
         f32 dvdx{0.f};
@@ -14,9 +14,9 @@ namespace mtt::image {
     struct Image final {
         struct Pixel final {
             Pixel(view<Image> image, mut<byte> start) noexcept;
-            explicit operator math::Vector<f32, 4>() const noexcept;
-            auto operator=(math::Vector<f32, 4> const& v) noexcept -> void;
-            auto operator+=(math::Vector<f32, 4> const& v) noexcept -> void;
+            explicit operator fv4() const noexcept;
+            auto operator=(cref<fv4> v) noexcept -> void;
+            auto operator+=(cref<fv4> v) noexcept -> void;
             auto data() noexcept -> mut<byte>;
         private:
             view<Image> image;
@@ -31,7 +31,7 @@ namespace mtt::image {
                 usize channels;
                 usize stride;
             };
-            math::Vector<usize, 4> size;
+            uzv4 size;
         };
         // only sRGB is supported by hardware so boolean value is enough.
         bool linear;
@@ -43,7 +43,7 @@ namespace mtt::image {
 
         auto operator[](usize x, usize y, usize lod = 0) noexcept -> Pixel;
         auto operator[](usize x, usize y, usize lod = 0) const noexcept -> Pixel const;
-        auto operator()(Coordinate const& coord) const -> math::Vector<f32, 4>;
-        auto operator()(math::Vector<f32, 3> const& uvw) const -> math::Vector<f32, 4>;
+        auto operator()(cref<Coordinate> coord) const -> fv4;
+        auto operator()(cref<fv3> uvw) const -> fv4;
     };
 }

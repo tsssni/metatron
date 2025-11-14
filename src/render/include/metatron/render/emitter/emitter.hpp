@@ -15,13 +15,11 @@ namespace mtt::emitter {
 
     struct Emitter final: pro::facade_builder
     ::add_convention<emitter_sample, auto (
-        eval::Context const& ctx,
-        f32 u
-    ) const noexcept -> std::optional<Interaction>>
+        cref<eval::Context> ctx, f32 u
+    ) const noexcept -> opt<Interaction>>
     ::add_convention<emitter_sample_infinite, auto (
-        eval::Context const& ctx,
-        f32 u
-    ) const noexcept -> std::optional<Interaction>>
+        cref<eval::Context> ctx, f32 u
+    ) const noexcept -> opt<Interaction>>
     ::add_skill<pro::skills::as_view>
     ::build {};
 }

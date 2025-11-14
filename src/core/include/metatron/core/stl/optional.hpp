@@ -10,3 +10,8 @@ namespace mtt::stl {
     #define MTT_OPT_OR_CONTINUE(x, opt) MTT_OPT_OR_CALLBACK(x, opt, {continue;})
     #define MTT_OPT_OR_RETURN(x, opt, ...) MTT_OPT_OR_CALLBACK(x, opt, {return __VA_ARGS__;})
 }
+
+namespace mtt {
+    template<typename T>
+    using opt = std::optional<T>;
+}

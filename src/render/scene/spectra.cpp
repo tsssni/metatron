@@ -45,8 +45,8 @@ namespace mtt::scene {
 
         auto spectra = std::filesystem::directory_iterator(spectra_dir)
         | std::views::filter([](auto& it) { return true
-            && it.is_regular_file()
-            && (it.path().extension() == ".dspd" || it.path().extension() == ".vspd");
+        && it.is_regular_file()
+        && (it.path().extension() == ".dspd" || it.path().extension() == ".vspd");
         })
         | std::ranges::to<std::vector<std::filesystem::path>>();
         vec.reserve<Discrete_Spectrum>(std::ranges::count_if(spectra,
@@ -57,7 +57,7 @@ namespace mtt::scene {
         );
 
         auto mutex = std::mutex{};
-        auto grid = math::Vector<usize, 1>{spectra.size()};
+        auto grid = uzv1{spectra.size()};
         stl::scheduler::instance().sync_parallel(grid, [&](auto idx) {
             auto [i] = idx;
             auto path = spectra[i];

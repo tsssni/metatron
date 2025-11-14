@@ -1,6 +1,7 @@
 #pragma once
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <metatron/core/stl/optional.hpp>
 #include <algorithm>
 #include <array>
 #include <span>
@@ -68,9 +69,9 @@ namespace mtt::math {
 
         template<typename... Args>
         requires (true
-            && (std::is_convertible_v<Args, T> && ...)
-            && dimensions.size() > 1
-            && sizeof...(Args) <= math::min(*(dimensions.end() - 2), *(dimensions.end() - 1))
+        && (std::is_convertible_v<Args, T> && ...)
+        && dimensions.size() > 1
+        && sizeof...(Args) <= math::min(*(dimensions.end() - 2), *(dimensions.end() - 1))
         )
         explicit constexpr Matrix(Args&&... args) noexcept {
             if constexpr (dimensions.size() > 2)
@@ -83,10 +84,10 @@ namespace mtt::math {
 
         template<typename U, typename... Args, usize rhs_first_dim>
         requires (true
-            && std::is_convertible_v<U, T>
-            && (std::is_convertible_v<Args, Element> && ...)
+        && std::is_convertible_v<U, T>
+        && (std::is_convertible_v<Args, Element> && ...)
         )
-        constexpr Matrix(Matrix<U, rhs_first_dim, rest_dims...> const& rhs, Args&&... rest) noexcept {
+        constexpr Matrix(cref<Matrix<U, rhs_first_dim, rest_dims...>> rhs, Args&&... rest) noexcept {
             *this = rhs;
             if constexpr (first_dim > rhs_first_dim)
                 [this, &rest...]<usize... idxs>(std::index_sequence<idxs...>) {
@@ -96,8 +97,8 @@ namespace mtt::math {
 
         template<typename U, typename... Args, usize rhs_first_dim>
         requires (true
-            && std::is_convertible_v<U, T>
-            && (std::is_convertible_v<Args, Element> && ...)
+        && std::is_convertible_v<U, T>
+        && (std::is_convertible_v<Args, Element> && ...)
         )
         constexpr Matrix(Matrix<U, rhs_first_dim, rest_dims...>&& rhs, Args&&... rest) noexcept {
             *this = std::move(rhs);
@@ -109,8 +110,8 @@ namespace mtt::math {
 
         template<usize rhs_first_dim0, usize rhs_first_dim1>
         constexpr Matrix(
-            Matrix<T, rhs_first_dim0, rest_dims...> const& rhs0,
-            Matrix<T, rhs_first_dim1, rest_dims...> const& rhs1
+            cref<Matrix<T, rhs_first_dim0, rest_dims...>> rhs0,
+            cref<Matrix<T, rhs_first_dim1, rest_dims...>> rhs1
         ) noexcept {
             *this = rhs0;
             if constexpr (first_dim > rhs_first_dim0)
@@ -129,27 +130,27 @@ namespace mtt::math {
 
         template<typename U, usize rhs_first_dim, usize... rhs_rest_dims>
         requires true
-            && std::is_convertible_v<U, T>
-            && (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
-        auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...> const& rhs) noexcept -> Matrix& {
+        && std::is_convertible_v<U, T>
+        && (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
+        auto constexpr operator=(cref<Matrix<U, rhs_first_dim, rhs_rest_dims...>> rhs) noexcept -> ref<Matrix> {
             std::copy_n(rhs.storage.begin(), math::min(first_dim, rhs_first_dim), storage.begin());
             return *this;
         }
 
         template<typename U, usize rhs_first_dim, usize... rhs_rest_dims>
         requires true
-            && std::is_convertible_v<U, T>
-            && (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
-        auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...>&& rhs) noexcept -> Matrix& {
+        && std::is_convertible_v<U, T>
+        && (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
+        auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...>&& rhs) noexcept -> ref<Matrix> {
             std::move(rhs.storage.begin(), rhs.storage.begin() + math::min(first_dim, rhs_first_dim), storage.begin());
             return *this;
         }
 
-        auto constexpr operator[](usize idx) noexcept -> Element& {
+        auto constexpr operator[](usize idx) noexcept -> ref<Element> {
             return storage[idx];
         }
 
-        auto constexpr operator[](usize idx) const noexcept -> Element const& {
+        auto constexpr operator[](usize idx) const noexcept -> cref<Element> {
             return storage[idx];
         }
 
@@ -164,20 +165,19 @@ namespace mtt::math {
             std::array<usize, r_n> rds = {rhs_dims...}
         >
         requires (true
-            && longer_n > 1
-            // abs and other cmath functions are not constexpr in libstdc++
-            && i32(l_n) - i32(r_n) < 2
-            && i32(r_n) - i32(l_n) < 2
-            && []() noexcept -> bool {return std::equal(
-                lds.begin(), lds.begin() + higher_n,
-                rds.begin(), rds.begin() + higher_n
-            );}()
-            && []() noexcept -> bool {
-                return lds[higher_n + (l_n > 1 ? 1 : 0)] == rds[higher_n];
-            }()
-        )
+        && longer_n > 1
+        // abs and other cmath functions are not constexpr in libstdc++
+        && i32(l_n) - i32(r_n) < 2
+        && i32(r_n) - i32(l_n) < 2
+        && []() noexcept -> bool {return std::equal(
+            lds.begin(), lds.begin() + higher_n,
+            rds.begin(), rds.begin() + higher_n
+        );}()
+        && []() noexcept -> bool {
+            return lds[higher_n + (l_n > 1 ? 1 : 0)] == rds[higher_n];
+        }())
         auto constexpr operator|(
-            Matrix<T, rhs_dims...> const& rhs
+            cref<Matrix<T, rhs_dims...>> rhs
         ) const noexcept {
             using Product_Matrix = decltype([]<usize... dims>(std::index_sequence<dims...>) {
                 return Matrix<T, (
@@ -193,7 +193,7 @@ namespace mtt::math {
                     product[i] = storage[i] | rhs[i];
             } else {
                 using U = Matrix<T, pds.front()>;
-                auto constexpr reduce = [](U const& x, U const& y) -> T {
+                auto constexpr reduce = [](cref<U> x, cref<U> y) -> T {
                     auto z = x * y;
                     T sum = T{0};
                     for (auto i = 0uz; i < U::dimensions.front(); ++i)
@@ -218,26 +218,26 @@ namespace mtt::math {
             return product;
         }
 
-        auto constexpr operator+(Matrix const& rhs) const noexcept -> Matrix {
+        auto constexpr operator+(cref<Matrix> rhs) const noexcept -> Matrix {
             auto result = Matrix{};
             for (auto i = 0; i < first_dim; ++i)
                 result[i] = storage[i] + rhs[i];
             return result;
         }
 
-        auto constexpr operator+=(Matrix const& rhs) noexcept -> Matrix& {
+        auto constexpr operator+=(cref<Matrix> rhs) noexcept -> ref<Matrix> {
             *this = *this + rhs;
             return *this;
         }
 
-        auto constexpr operator+(T const& rhs) const noexcept -> Matrix {
+        auto constexpr operator+(cref<T> rhs) const noexcept -> Matrix {
             auto result = Matrix{};
             for (auto i = 0; i < first_dim; ++i)
                 result[i] = storage[i] + rhs;
             return result;
         }
 
-        auto constexpr operator+=(T const& rhs) noexcept -> Matrix& {
+        auto constexpr operator+=(cref<T> rhs) noexcept -> ref<Matrix> {
             *this = *this + rhs;
             return *this;
         }
@@ -246,26 +246,26 @@ namespace mtt::math {
             return *this;
         }
 
-        auto constexpr operator-(Matrix const& rhs) const noexcept -> Matrix {
+        auto constexpr operator-(cref<Matrix> rhs) const noexcept -> Matrix {
             auto result = Matrix{};
             for (auto i = 0; i < first_dim; ++i)
                 result[i] = storage[i] - rhs[i];
             return result;
         }
 
-        auto constexpr operator-=(Matrix const& rhs) noexcept -> Matrix& {
+        auto constexpr operator-=(cref<Matrix> rhs) noexcept -> ref<Matrix> {
             *this = *this - rhs;
             return *this;
         }
 
-        auto constexpr operator-(T const& rhs) const noexcept -> Matrix {
+        auto constexpr operator-(cref<T> rhs) const noexcept -> Matrix {
             auto result = Matrix{};
             for (auto i = 0; i < first_dim; ++i)
                 result[i] = storage[i] - rhs;
             return result;
         }
 
-        auto constexpr operator-=(T const& rhs) noexcept -> Matrix& {
+        auto constexpr operator-=(cref<T> rhs) noexcept -> ref<Matrix> {
             *this = *this - rhs;
             return *this;
         }
@@ -277,61 +277,61 @@ namespace mtt::math {
             return result;
         }
 
-        auto constexpr operator*(Matrix const& rhs) const noexcept -> Matrix {
+        auto constexpr operator*(cref<Matrix> rhs) const noexcept -> Matrix {
             auto result = Matrix{};
             for (auto i = 0; i < first_dim; ++i)
                 result[i] = storage[i] * rhs[i];
             return result;
         }
 
-        auto constexpr operator*=(Matrix const& rhs) noexcept -> Matrix& {
+        auto constexpr operator*=(cref<Matrix> rhs) noexcept -> ref<Matrix> {
             *this = *this * rhs;
             return *this;
         }
 
-        auto constexpr operator*(T const& rhs) const noexcept -> Matrix {
+        auto constexpr operator*(cref<T> rhs) const noexcept -> Matrix {
             auto result = Matrix{};
             for (auto i = 0; i < first_dim; ++i)
                 result[i] = storage[i] * rhs;
             return result;
         }
 
-        auto constexpr operator*=(T const& rhs) noexcept -> Matrix& {
+        auto constexpr operator*=(cref<T> rhs) noexcept -> ref<Matrix> {
             *this = *this * rhs;
             return *this;
         }
 
-        auto constexpr operator/(Matrix const& rhs) const noexcept -> Matrix {
+        auto constexpr operator/(cref<Matrix> rhs) const noexcept -> Matrix {
             auto result = Matrix{};
             for (auto i = 0; i < first_dim; ++i)
                 result[i] = math::guarded_div(storage[i], rhs[i]);
             return result;
         }
 
-        auto constexpr operator/=(Matrix const& rhs) noexcept -> Matrix& {
+        auto constexpr operator/=(cref<Matrix> rhs) noexcept -> ref<Matrix> {
             *this = *this / rhs;
             return *this;
         }
 
-        auto constexpr operator/(T const& rhs) const noexcept -> Matrix {
+        auto constexpr operator/(cref<T> rhs) const noexcept -> Matrix {
             auto result = Matrix{};
             for (auto i = 0; i < first_dim; ++i)
                 result[i] = math::guarded_div(storage[i], rhs);
             return result;
         }
 
-        auto constexpr operator/=(T const& rhs) noexcept -> Matrix& {
+        auto constexpr operator/=(cref<T> rhs) noexcept -> ref<Matrix> {
             *this = *this / rhs;
             return *this;
         }
 
-        auto constexpr operator<=>(Matrix const& rhs) const = default;
+        auto constexpr operator<=>(cref<Matrix> rhs) const = default;
 
-        operator std::array<Element, first_dim>&() {
+        operator ref<std::array<Element, first_dim>>() {
             return storage;
         };
 
-        operator std::array<Element, first_dim> const&() const {
+        operator cref<std::array<Element, first_dim>>() const {
             return storage;
         };
 
@@ -351,13 +351,13 @@ namespace mtt::math {
         }
 
         template<usize idx>
-        auto constexpr get() const noexcept -> Element const& {
+        auto constexpr get() const noexcept -> cref<Element> {
             static_assert(idx < first_dim, "index out of bounds");
             return storage[idx];
         }
 
         template<usize idx>
-        auto constexpr get() noexcept -> Element& {
+        auto constexpr get() noexcept -> ref<Element> {
             static_assert(idx < first_dim, "index out of bounds");
             return storage[idx];
         }
@@ -370,39 +370,39 @@ namespace mtt::math {
     };
 
     template<typename T, usize... dims>
-    auto constexpr operator+(T const& lhs, Matrix<T, dims...> const& rhs) noexcept -> Matrix<T, dims...> {
+    auto constexpr operator+(cref<T> lhs, cref<Matrix<T, dims...>> rhs) noexcept -> Matrix<T, dims...> {
         return rhs + lhs;
     }
 
     template<typename T, usize... dims>
-    auto constexpr operator-(T const& lhs, Matrix<T, dims...> const& rhs) noexcept -> Matrix<T, dims...> {
+    auto constexpr operator-(cref<T> lhs, cref<Matrix<T, dims...>> rhs) noexcept -> Matrix<T, dims...> {
         return -rhs + lhs;
     }
 
     template<typename T, usize... dims>
-    auto constexpr operator*(T const& lhs, Matrix<T, dims...> const& rhs) noexcept -> Matrix<T, dims...> {
+    auto constexpr operator*(cref<T> lhs, cref<Matrix<T, dims...>> rhs) noexcept -> Matrix<T, dims...> {
         return rhs * lhs;
     }
 
     template<typename T, usize... dims>
-    auto constexpr operator/(T const& lhs, Matrix<T, dims...> const& rhs) noexcept -> Matrix<T, dims...> {
+    auto constexpr operator/(cref<T> lhs, cref<Matrix<T, dims...>> rhs) noexcept -> Matrix<T, dims...> {
         return Matrix<T, dims...>{lhs} / rhs;
     }
 
     template<usize idx, typename T, usize first_dim, usize... rest_dims>
-    auto constexpr get(Matrix<T, first_dim, rest_dims...> const& m) 
-        noexcept -> typename Matrix<T, first_dim, rest_dims...>::Element const& {
+    auto constexpr get(cref<Matrix<T, first_dim, rest_dims...>> m) 
+    noexcept -> cref<typename Matrix<T, first_dim, rest_dims...>::Element> {
         return m.template get<idx>();
     }
 
     template<usize idx, typename T, usize first_dim, usize... rest_dims>
-    auto constexpr get(Matrix<T, first_dim, rest_dims...>& m) 
-        noexcept -> typename Matrix<T, first_dim, rest_dims...>::Element& {
+    auto constexpr get(ref<Matrix<T, first_dim, rest_dims...>> m) 
+        noexcept -> ref<typename Matrix<T, first_dim, rest_dims...>::Element> {
         return m.template get<idx>();
     }
 
     template<typename T, usize h, usize w>
-    auto constexpr transpose(Matrix<T, h, w> const& m) noexcept -> Matrix<T, w, h> {
+    auto constexpr transpose(cref<Matrix<T, h, w>> m) noexcept -> Matrix<T, w, h> {
         auto result = Matrix<T, w, h>{};
         for (auto i = 0; i < w; ++i)
             for (auto j = 0; j < h; ++j)
@@ -412,7 +412,7 @@ namespace mtt::math {
 
     template<typename T, usize n>
     requires std::floating_point<T>
-    auto constexpr determinant(Matrix<T, n, n> const& m) noexcept -> T {
+    auto constexpr determinant(cref<Matrix<T, n, n>> m) noexcept -> T {
         if constexpr (n == 1) {
             return m[0][0];
         } else if constexpr (n == 2) {
@@ -457,7 +457,7 @@ namespace mtt::math {
 
     template<typename T, usize h>
     requires std::floating_point<T>
-    auto constexpr inverse(Matrix<T, h, h> const& m) noexcept -> Matrix<T, h, h> {
+    auto constexpr inverse(cref<Matrix<T, h, h>> m) noexcept -> Matrix<T, h, h> {
         auto augmented = Matrix<T, h, h * 2>{};
         for (auto i = 0uz; i < h; ++i)
             for (auto j = 0uz; j < h; ++j)
@@ -496,7 +496,7 @@ namespace mtt::math {
 
     template<typename T, usize h, usize w>
     requires std::floating_point<T>
-    auto constexpr least_squares(Matrix<T, h, w> const& a, Matrix<T, h> const& b) noexcept -> Matrix<T, w> {
+    auto constexpr least_squares(cref<Matrix<T, h, w>> a, cref<Matrix<T, h>> b) noexcept -> Matrix<T, w> {
         auto a_t = math::transpose(a);
         return math::inverse(a_t | a) | (a_t | b);
     }
@@ -504,9 +504,9 @@ namespace mtt::math {
     template<typename T, usize n>
     requires std::floating_point<T>
     auto constexpr cramer(
-        Matrix<T, n, n> const& a, 
-        Matrix<T, n> const& b
-    ) noexcept -> std::optional<Matrix<T, n>> {
+        cref<Matrix<T, n, n>> a, 
+        cref<Matrix<T, n>> b
+    ) noexcept -> opt<Matrix<T, n>> {
         T det_a = determinant(a);
         if (math::abs(det_a) < epsilon<T>) return {};
 
@@ -524,9 +524,9 @@ namespace mtt::math {
     template<typename T, usize n, usize m>
     requires std::floating_point<T>
     auto constexpr cramer(
-        Matrix<T, n, n> const& a, 
-        Matrix<T, n, m> const& b
-    ) noexcept -> std::optional<Matrix<T, n, m>> {
+        cref<Matrix<T, n, n>> a, 
+        cref<Matrix<T, n, m>> b
+    ) noexcept -> opt<Matrix<T, n, m>> {
         T det_a = determinant(a);
         if (math::abs(det_a) < 1e-9) return {};
 
@@ -550,14 +550,52 @@ namespace mtt::math {
 }
 
 namespace std {
-    using namespace mtt;
-
-    template<typename T, usize first_dim, usize... rest_dims>
-    struct tuple_size<math::Matrix<T, first_dim, rest_dims...>> 
+    template<typename T, mtt::usize first_dim, mtt::usize... rest_dims>
+    struct tuple_size<mtt::math::Matrix<T, first_dim, rest_dims...>> 
         : std::integral_constant<size_t, first_dim> {};
 
-    template<size_t I, typename T, usize first_dim, usize... rest_dims>
-    struct tuple_element<I, math::Matrix<T, first_dim, rest_dims...>> {
-        using type = typename math::Matrix<T, first_dim, rest_dims...>::Element;
+    template<mtt::usize I, typename T, mtt::usize first_dim, mtt::usize... rest_dims>
+    struct tuple_element<I, mtt::math::Matrix<T, first_dim, rest_dims...>> {
+        using type = typename mtt::math::Matrix<T, first_dim, rest_dims...>::Element;
     };
+}
+
+namespace mtt {
+    #define MTT_MATRIX_ALIAS(p, T)\
+    template<usize... dims>\
+    using p##m = math::Matrix<T, dims...>;\
+    \
+    using p##m11 = p##m<1, 1>;\
+    using p##m12 = p##m<1, 2>;\
+    using p##m13 = p##m<1, 3>;\
+    using p##m14 = p##m<1, 4>;\
+    \
+    using p##m21 = p##m<2, 1>;\
+    using p##m22 = p##m<2, 2>;\
+    using p##m23 = p##m<2, 3>;\
+    using p##m24 = p##m<2, 4>;\
+    \
+    using p##m31 = p##m<3, 1>;\
+    using p##m32 = p##m<3, 2>;\
+    using p##m33 = p##m<3, 3>;\
+    using p##m34 = p##m<3, 4>;\
+    \
+    using p##m41 = p##m<4, 1>;\
+    using p##m42 = p##m<4, 2>;\
+    using p##m43 = p##m<4, 3>;\
+    using p##m44 = p##m<4, 4>;\
+    \
+    using p##m1 = p##m11;\
+    using p##m2 = p##m22;\
+    using p##m3 = p##m33;\
+    using p##m4 = p##m44;
+
+    MTT_MATRIX_ALIAS(f, f32)
+    MTT_MATRIX_ALIAS(d, f64)
+    MTT_MATRIX_ALIAS(i, i32)
+    MTT_MATRIX_ALIAS(u, u32)
+    MTT_MATRIX_ALIAS(ill, i64)
+    MTT_MATRIX_ALIAS(ull, u64)
+    MTT_MATRIX_ALIAS(b, byte)
+    MTT_MATRIX_ALIAS(uz, usize)
 }

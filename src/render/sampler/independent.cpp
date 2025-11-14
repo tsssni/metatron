@@ -14,11 +14,11 @@ namespace mtt::sampler {
         return distr(rng);
     }
 
-    auto Independent_Sampler::generate_2d() noexcept -> math::Vector<f32, 2> {
+    auto Independent_Sampler::generate_2d() noexcept -> fv2 {
         return {generate_1d(), generate_1d()};
     }
 
-    auto Independent_Sampler::generate_pixel_2d() noexcept -> math::Vector<f32, 2> {
+    auto Independent_Sampler::generate_pixel_2d() noexcept -> fv2 {
         return generate_2d();
     }
 }

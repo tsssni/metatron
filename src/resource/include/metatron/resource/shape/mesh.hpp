@@ -7,34 +7,28 @@ namespace mtt::shape {
             std::string path;
         };
         Mesh() noexcept = default;
-        Mesh(Descriptor const& desc) noexcept;
+        Mesh(cref<Descriptor> desc) noexcept;
 
         auto size() const noexcept -> usize;
         auto bounding_box(
-            math::Matrix<f32, 4, 4> const& t,
-            usize idx
+            cref<fm44> t, usize idx
         ) const noexcept -> math::Bounding_Box;
         auto operator()(
-            math::Ray const& r,
-            math::Vector<f32, 3> const& np,
-            usize idx
-        ) const noexcept -> std::optional<Interaction>;
+            cref<math::Ray> r, cref<fv3> np, usize idx
+        ) const noexcept -> opt<Interaction>;
         // sphere triangle sampling: https://pbr-book.org/4ed/Shapes/Triangle_Meshes
         auto sample(
-            eval::Context const& ctx,
-            math::Vector<f32, 2> const& u,
-            usize idx
-        ) const noexcept -> std::optional<Interaction>;
+            cref<eval::Context> ctx, cref<fv2> u, usize idx
+        ) const noexcept -> opt<Interaction>;
         auto query(
-            math::Ray const& r,
-            usize idx
-        ) const noexcept -> std::optional<f32>;
+            cref<math::Ray> r, usize idx
+        ) const noexcept -> opt<f32>;
 
     private:
         template<typename T>
         auto blerp(
-            std::vector<T> const& traits,
-            math::Vector<f32, 3> const& b,
+            cref<std::vector<T>> traits,
+            cref<fv3> b,
             usize idx
         ) const noexcept -> T {
             if (traits.empty()) return {};
@@ -49,25 +43,22 @@ namespace mtt::shape {
         }
 
         auto intersect(
-            math::Ray const& r,
-            usize idx
-        ) const noexcept -> std::optional<math::Vector<f32, 4>>;
+            cref<math::Ray> r, usize idx
+        ) const noexcept -> opt<fv4>;
 
         auto pdf(
-            math::Ray const& r,
-            math::Vector<f32, 3> const& np,
-            usize idx
+            cref<math::Ray> r, cref<fv3> np, usize idx
         ) const noexcept -> f32;
 
-        std::vector<math::Vector<usize, 3>> indices;
+        std::vector<uzv3> indices;
 
-        std::vector<math::Vector<f32, 3>> vertices;
-        std::vector<math::Vector<f32, 3>> normals;
-        std::vector<math::Vector<f32, 2>> uvs;
+        std::vector<fv3> vertices;
+        std::vector<fv3> normals;
+        std::vector<fv2> uvs;
 
-        std::vector<math::Vector<f32, 3>> dpdu;
-        std::vector<math::Vector<f32, 3>> dpdv;
-        std::vector<math::Vector<f32, 3>> dndu;
-        std::vector<math::Vector<f32, 3>> dndv;
+        std::vector<fv3> dpdu;
+        std::vector<fv3> dpdv;
+        std::vector<fv3> dndu;
+        std::vector<fv3> dndv;
     };
 }

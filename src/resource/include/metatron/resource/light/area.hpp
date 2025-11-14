@@ -9,13 +9,11 @@ namespace mtt::light {
         usize primitive;
 
         auto operator()(
-            math::Ray const& r,
-            spectra::Stochastic_Spectrum const& spec
-        ) const noexcept -> std::optional<Interaction>;
+            cref<math::Ray> r, cref<stsp> spec
+        ) const noexcept -> opt<Interaction>;
         auto sample(
-            eval::Context const& ctx,
-            math::Vector<f32, 2> const& u
-        ) const noexcept -> std::optional<Interaction>;
+            cref<eval::Context> ctx, cref<fv2> u
+        ) const noexcept -> opt<Interaction>;
         auto flags() const noexcept -> Flags;
     };
 }

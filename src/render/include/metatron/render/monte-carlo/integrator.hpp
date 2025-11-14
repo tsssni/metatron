@@ -11,11 +11,11 @@ namespace mtt::monte_carlo {
         view<accel::Acceleration> accel;
         view<emitter::Emitter> emitter;
         mut<sampler::Sampler> sampler;
-        spectra::Stochastic_Spectrum spectrum;
+        stsp spectrum;
         math::Ray_Differential ray_differential;
         math::Ray_Differential default_differential;
         math::Transform render_to_camera;
-        math::Vector<usize, 2> pixel;
+        uzv2 pixel;
         usize sample_index;
         usize max_depth;
     };
@@ -23,9 +23,7 @@ namespace mtt::monte_carlo {
     MTT_POLY_METHOD(integrator_sample, sample);
 
     struct Integrator final: pro::facade_builder
-    ::add_convention<integrator_sample, auto (
-        Context ctx
-    ) const noexcept -> std::optional<spectra::Stochastic_Spectrum>>
+    ::add_convention<integrator_sample, auto (Context ctx) const noexcept -> opt<stsp>>
     ::add_skill<pro::skills::as_view>
     ::build {};
 }

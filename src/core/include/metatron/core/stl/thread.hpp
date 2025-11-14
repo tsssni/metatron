@@ -11,7 +11,10 @@
 namespace mtt::stl {
     struct scheduler final: singleton<scheduler> {
         scheduler(usize num_threads = std::thread::hardware_concurrency() - 1uz) noexcept {
+            auto storage = std::vector<task>{};
+            storage.reserve(64);
             threads.reserve(num_threads);
+            tasks = decltype(tasks){std::move(storage)};
             for (auto i = 0; i < num_threads; ++i) {
                 threads.emplace_back([this]() {
                     while (true) {
@@ -38,20 +41,18 @@ namespace mtt::stl {
         }
 
         template<typename F, usize size>
-        requires (std::is_invocable_v<F, math::Vector<usize, size>> && size >= 1 && size <= 3)
+        requires (std::is_invocable_v<F, uzv<size>> && size >= 1 && size <= 3)
         auto sync_parallel(
-            math::Vector<usize, size> const& grid,
-            F&& f
+            cref<uzv<size>> grid, F&& f
         ) noexcept -> void {
             auto future = parallel(grid, std::forward<F>(f), true);
             future.wait();
         }
 
         template<typename F, usize size>
-        requires (std::is_invocable_v<F, math::Vector<usize, size>> && size >= 1 && size <= 3)
+        requires (std::is_invocable_v<F, uzv<size>> && size >= 1 && size <= 3)
         auto async_parallel(
-            math::Vector<usize, size> const& grid,
-            F&& f
+            cref<uzv<size>> grid, F&& f
         ) noexcept -> std::shared_future<void> {
             return parallel(grid, std::forward<F>(f), false);
         }
@@ -91,9 +92,7 @@ namespace mtt::stl {
         template<typename F, usize size>
         requires (std::is_invocable_v<F, math::Vector<usize, size>> && size >= 1 && size <= 3)
         auto parallel(
-            math::Vector<usize, size> const& grid,
-            F&& f,
-            bool sync
+            cref<uzv<size>> grid, F&& f, bool sync
         ) noexcept -> std::shared_future<void> {
             auto promise = std::make_shared<std::promise<void>>();
             auto future = promise->get_future().share();
@@ -115,14 +114,14 @@ namespace mtt::stl {
                 auto dispatched = 0u;
                 while((i = index_counter->fetch_add(1)) < n) {
                     if constexpr (size == 1) {
-                        f(math::Vector<usize, size>{i});
+                        f(uzv<size>{i});
                     } else if constexpr (size == 2) {
-                        f(math::Vector<usize, size>{
+                        f(uzv<size>{
                             i / grid[1],
                             i % grid[1],
                         });
                     } else if constexpr (size == 3) {
-                        f(math::Vector<usize, size>{
+                        f(uzv<size>{
                             i / (grid[2] * grid[1]),
                             (i / grid[2]) % grid[1],
                             i % grid[2],
@@ -146,10 +145,11 @@ namespace mtt::stl {
             return future;
         }
 
+        using task = std::shared_ptr<std::function<void()>>;
         std::mutex mutex;
         std::condition_variable cv;
         std::vector<std::thread> threads;
-        std::stack<std::shared_ptr<std::function<void()>>> tasks;
+        std::stack<task, std::vector<task>> tasks;
         bool stop{false};
     };
 }

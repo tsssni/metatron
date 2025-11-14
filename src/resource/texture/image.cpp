@@ -8,7 +8,7 @@
 #include <bit>
 
 namespace mtt::texture {
-    Image_Vector_Texture::Image_Vector_Texture(Descriptor const& desc) noexcept {
+    Image_Vector_Texture::Image_Vector_Texture(cref<Descriptor> desc) noexcept {
         MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(desc.path), {
             std::println("image {} not exists", desc.path);
             std::abort();
@@ -38,20 +38,20 @@ namespace mtt::texture {
         }
         in->close();
 
-        auto size = math::Vector<usize, 2>(tex.size);
+        auto size = uzv2(tex.size);
         auto channels = tex.size[2];
         auto stride = tex.size[3];
 
         for (auto mip = 1uz; mip < tex.pixels.size(); ++mip) {
-            auto fetch = [mip, size, &tex](math::Vector<usize, 2> const& src) {
+            auto fetch = [mip, size, &tex](cref<uzv2> src) {
                 auto px = math::clamp(src, {0}, size - 1);
-                return math::Vector<f32, 4>{tex[px[0], px[1], mip - 1]};
+                return fv4{tex[px[0], px[1], mip - 1]};
             };
             size[0] = math::max(1uz, size[0] >> 1uz);
             size[1] = math::max(1uz, size[1] >> 1uz);
             tex.pixels[mip].resize(math::prod(size) * channels * stride);
 
-            auto down = [fetch, mip, &tex](math::Vector<usize, 2> const& px) mutable {
+            auto down = [fetch, mip, &tex](cref<uzv2> px) mutable {
                 auto [i, j] = px;
                 tex[i, j, mip] = 0.25f * (0.f
                 + fetch({i * 2uz + 0, j * 2uz + 0})
@@ -71,7 +71,7 @@ namespace mtt::texture {
         if (desc.distr != Image_Distribution::none) {
             auto pdf = std::vector<f32>(math::prod(size));
             stl::scheduler::instance().sync_parallel(size, [&](auto px) mutable {
-                auto c = math::Vector<f32, 4>{tex[px[0], px[1]]};
+                auto c = fv4{tex[px[0], px[1]]};
                 auto w = 1.f;
                 if (desc.distr == Image_Distribution::spherical) {
                     auto v = (px[1] + 0.5f) / size[1];
@@ -89,26 +89,23 @@ namespace mtt::texture {
     }
 
     auto Image_Vector_Texture::operator()(
-        image::Coordinate const& coord
-    ) const noexcept -> math::Vector<f32, 4> {
+        cref<image::Coordinate> coord
+    ) const noexcept -> fv4 {
         return (*texture)(coord);
     }
 
     auto Image_Vector_Texture::sample(
-        eval::Context const& ctx,
-        math::Vector<f32, 2> const& u
-    ) const noexcept -> math::Vector<f32, 2> {
+        cref<eval::Context> ctx, cref<fv2> u
+    ) const noexcept -> fv2 {
         return math::reverse(distr.sample(u));
     }
 
-    auto Image_Vector_Texture::pdf(
-        math::Vector<f32, 2> const& uv
-    ) const noexcept -> f32 {
+    auto Image_Vector_Texture::pdf(cref<fv2> uv) const noexcept -> f32 {
         return distr.pdf(math::reverse(uv));
     }
 
     Image_Spectrum_Texture::Image_Spectrum_Texture(
-        Descriptor const& desc
+        cref<Descriptor> desc
     ) noexcept:
     image_tex({desc.path, desc.distr, false}),
     type(desc.type),
@@ -116,9 +113,8 @@ namespace mtt::texture {
 
 
     auto Image_Spectrum_Texture::operator()(
-        image::Coordinate const& coord,
-        spectra::Stochastic_Spectrum const& spec
-    ) const noexcept -> spectra::Stochastic_Spectrum {
+        cref<image::Coordinate> coord, cref<stsp> spec
+    ) const noexcept -> stsp {
         auto rgba = image_tex(coord);
         auto rgb_spec = spectra::Rgb_Spectrum{{
             rgba,
@@ -129,15 +125,12 @@ namespace mtt::texture {
     }
 
     auto Image_Spectrum_Texture::sample(
-        eval::Context const& ctx,
-        math::Vector<f32, 2> const& u
-    ) const noexcept -> math::Vector<f32, 2> {
+        cref<eval::Context> ctx, cref<fv2> u
+    ) const noexcept -> fv2 {
         return image_tex.sample(ctx, u);
     }
 
-    auto Image_Spectrum_Texture::pdf(
-        math::Vector<f32, 2> const& uv
-    ) const noexcept -> f32 {
+    auto Image_Spectrum_Texture::pdf(cref<fv2> uv) const noexcept -> f32 {
         return image_tex.pdf(uv);
     }
 }

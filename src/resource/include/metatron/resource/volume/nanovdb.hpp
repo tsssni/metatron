@@ -9,22 +9,22 @@ namespace mtt::volume {
             std::string path;
         };
         Nanovdb_Volume() noexcept = default;
-        Nanovdb_Volume(Descriptor const& desc) noexcept;
+        Nanovdb_Volume(cref<Descriptor> desc) noexcept;
 
-        auto to_local(math::Vector<i32, 3> const& ijk) const noexcept -> math::Vector<f32, 3>;
-        auto to_index(math::Vector<f32, 3> const& pos) const noexcept -> math::Vector<i32, 3>;
-        auto dimensions() const noexcept -> math::Vector<usize, 3>;
+        auto to_local(cref<iv3> ijk) const noexcept -> fv3;
+        auto to_index(cref<fv3> pos) const noexcept -> iv3;
+        auto dimensions() const noexcept -> uzv3;
 
-        auto inside(math::Vector<i32, 3> const& pos) const noexcept -> bool;
-        auto inside(math::Vector<f32, 3> const& pos) const noexcept -> bool;
+        auto inside(cref<iv3> pos) const noexcept -> bool;
+        auto inside(cref<fv3> pos) const noexcept -> bool;
 
         auto bounding_box() const noexcept -> math::Bounding_Box;
-        auto bounding_box(math::Vector<f32, 3> const& pos) const noexcept -> math::Bounding_Box;
-        auto bounding_box(math::Vector<i32, 3> const& ijk) const noexcept -> math::Bounding_Box;
+        auto bounding_box(cref<fv3> pos) const noexcept -> math::Bounding_Box;
+        auto bounding_box(cref<iv3> ijk) const noexcept -> math::Bounding_Box;
 
-        auto operator()(math::Vector<f32, 3> const& pos) const noexcept -> f32;
-        auto operator[](math::Vector<i32, 3> const& ijk) noexcept -> f32&;
-        auto operator[](math::Vector<i32, 3> const& ijk) const noexcept -> f32;
+        auto operator()(cref<fv3> pos) const noexcept -> f32;
+        auto operator[](cref<iv3> ijk) noexcept -> ref<f32>;
+        auto operator[](cref<iv3> ijk) const noexcept -> f32;
 
     private:
         auto grid() const -> view<nanovdb::FloatGrid>;

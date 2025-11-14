@@ -3,7 +3,7 @@
 
 namespace mtt::filter {
     struct Interaction final {
-        math::Vector<f32, 2> p;
+        fv2 p;
         f32 weight;
         f32 pdf;
     };
@@ -11,12 +11,8 @@ namespace mtt::filter {
     MTT_POLY_METHOD(filter_sample, sample);
 
     struct Filter final: pro::facade_builder
-    ::add_convention<pro::operator_dispatch<"()">, auto (
-        math::Vector<f32, 2> const& p
-    ) const noexcept -> f32>
-    ::add_convention<filter_sample, auto (
-        math::Vector<f32, 2> const& u
-    ) const -> std::optional<filter::Interaction>>
+    ::add_convention<pro::operator_dispatch<"()">, auto (cref<fv2> p) const noexcept -> f32>
+    ::add_convention<filter_sample, auto (cref<fv2> u) const -> opt<filter::Interaction>>
     ::add_skill<pro::skills::as_view>
     ::build {};
 }

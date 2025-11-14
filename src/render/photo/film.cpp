@@ -6,8 +6,8 @@
 namespace mtt::photo {
     Fixel::Fixel(
         mut<Film> film,
-        math::Vector<usize, 2> const& pixel,
-        math::Vector<f32, 2> const& position,
+        cref<uzv2> pixel,
+        cref<fv2> position,
         f32 weight
     ) noexcept:
     film(film),
@@ -19,8 +19,8 @@ namespace mtt::photo {
     ) * film->dxdy),
     weight(weight) {}
 
-    auto Fixel::operator=(spectra::Stochastic_Spectrum const& spectrum) noexcept -> void {
-        auto xyz = math::Vector<f32, 3>{
+    auto Fixel::operator=(cref<stsp> spectrum) noexcept -> void {
+        auto xyz = fv3{
             spectrum(film->r),
             spectrum(film->g),
             spectrum(film->b),
@@ -29,7 +29,7 @@ namespace mtt::photo {
         (*film->image)[pixel[0], pixel[1]] += {rgb * weight, weight};
     }
 
-    Film::Film(Descriptor const& desc) noexcept:
+    Film::Film(cref<Descriptor> desc) noexcept:
     spp(desc.spp), depth(desc.depth),
     film_size(desc.film_size),
     dxdy(desc.film_size / desc.image_size),
@@ -54,13 +54,13 @@ namespace mtt::photo {
 
     auto Film::operator()(
         view<filter::Filter> filter,
-        math::Vector<usize, 2> const& pixel,
-        math::Vector<f32, 2> const& u
+        cref<uzv2> pixel,
+        cref<fv2> u
     ) noexcept -> Fixel {
         auto f_intr = *filter->sample(u);
-        auto pixel_position = math::Vector<f32, 2>{pixel} + 0.5f + f_intr.p;
+        auto pixel_position = fv2{pixel} + 0.5f + f_intr.p;
         auto uv = pixel_position / image->size;
-        auto film_position = (uv - 0.5f) * math::Vector<f32, 2>{-1.f, 1.f} * film_size;
+        auto film_position = (uv - 0.5f) * fv2{-1.f, 1.f} * film_size;
 
         return {
             this,

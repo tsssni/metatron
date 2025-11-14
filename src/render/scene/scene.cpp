@@ -3,7 +3,6 @@
 #include <metatron/render/scene/args.hpp>
 #include <metatron/render/scene/serde.hpp>
 #include <metatron/render/renderer/renderer.hpp>
-#include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 
 namespace mtt::scene {
@@ -31,7 +30,7 @@ namespace mtt::scene {
         material_init();
         light_init();
 
-        auto renderer = poly<Renderer>();
+        auto renderer = obj<Renderer>();
         hierarchy.filter([&renderer](auto bins){
             auto key = std::string{"renderer"};
             if (!bins.contains(key)) {
@@ -50,7 +49,7 @@ namespace mtt::scene {
                 );
                 std::abort();
             }
-            renderer = make_poly<Renderer>(std::move(desc));
+            renderer = make_obj<Renderer>(std::move(desc));
         });
         hierarchy.populate(args.scene);
         renderer->render();

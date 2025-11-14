@@ -5,9 +5,9 @@
 
 namespace mtt::material {
     struct Interaction final {
-        poly<bsdf::Bsdf> bsdf;
-        spectra::Stochastic_Spectrum emission;
-        math::Vector<f32, 3> normal{0.f};
+        obj<bsdf::Bsdf> bsdf;
+        stsp emission;
+        fv3 normal{0.f};
         bool degraded{false};
     };
 
@@ -21,9 +21,9 @@ namespace mtt::material {
 
     struct Material final: pro::facade_builder
     ::add_convention<material_sample, auto (
-        eval::Context const& ctx,
-        image::Coordinate const& coord
-    ) const noexcept -> std::optional<Interaction>>
+        cref<eval::Context> ctx,
+        cref<image::Coordinate> coord
+    ) const noexcept -> opt<Interaction>>
     ::add_convention<material_flags, auto () const noexcept -> Flags>
     ::build {};
 }

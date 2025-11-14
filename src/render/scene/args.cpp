@@ -23,7 +23,7 @@ namespace mtt::scene {
 
         try {
             argparser.parse_args(argc, argv);
-        } catch (const std::exception& err) {
+        } catch (cref<std::exception> err) {
             std::println("argparser error: {}", err.what());
             std::cout << argparser;
             std::abort();

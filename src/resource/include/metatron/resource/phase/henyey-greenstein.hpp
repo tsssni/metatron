@@ -4,12 +4,13 @@
 namespace mtt::phase {
     struct Henyey_Greenstein_Phase_Function final {
         f32 g;
-        spectra::Stochastic_Spectrum spectrum;
+        stsp spectrum;
 
         auto operator()(
-            math::Vector<f32, 3> const& wo,
-            math::Vector<f32, 3> const& wi
-        ) const noexcept -> std::optional<Interaction>;
-        auto sample(eval::Context const& ctx, math::Vector<f32, 2> const& u) const noexcept -> std::optional<Interaction>;
+            cref<fv3> wo, cref<fv3> wi
+        ) const noexcept -> opt<Interaction>;
+        auto sample(
+            cref<eval::Context> ctx, cref<fv2> u
+        ) const noexcept -> opt<Interaction>;
     };
 }

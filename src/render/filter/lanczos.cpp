@@ -2,9 +2,9 @@
 #include <metatron/core/math/trigonometric.hpp>
 
 namespace mtt::filter {
-    Lanczos_Filter::Lanczos_Filter(Descriptor const& desc) noexcept:
+    Lanczos_Filter::Lanczos_Filter(cref<Descriptor> desc) noexcept:
     radius(desc.radius), tau(desc.tau) {
-        auto matrix = math::Matrix<f32, 64, 64>{};
+        auto matrix = fm<64, 64>{};
         for (auto j = 0uz; j < 64; ++j) {
             auto y = math::lerp(-radius[1], radius[1], (f32(j) + 0.5f) / 64.f);
             for (auto i = 0uz; i < 64; ++i) {
@@ -20,14 +20,14 @@ namespace mtt::filter {
         };
     }
 
-    auto Lanczos_Filter::operator()(math::Vector<f32, 2> const& p) const noexcept -> f32 {
+    auto Lanczos_Filter::operator()(cref<fv2> p) const noexcept -> f32 {
         auto v = foreach([&](f32 x, usize i) -> f32 {
             return math::abs(x) > radius[i] ? 0.f : math::windowed_sinc(x, tau);
         }, p);
         return prod(v);
     }
 
-    auto Lanczos_Filter::sample(math::Vector<f32, 2> const& u) const noexcept -> std::optional<filter::Interaction> {
+    auto Lanczos_Filter::sample(cref<fv2> u) const noexcept -> opt<filter::Interaction> {
         auto p = distribution.sample(u);
         auto w = (*this)(math::reverse(p));
         auto pdf = distribution.pdf(p);

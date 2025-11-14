@@ -33,7 +33,7 @@ namespace mtt::light {
 
     struct Sunsky_Light final {
         struct Descriptor final {
-            math::Vector<f32, 2> direction;
+            fv2 direction;
             f32 turbidity = 1.0f;
             f32 albedo = 0.2f;
             f32 aperture = sun_aperture;
@@ -41,21 +41,19 @@ namespace mtt::light {
             f32 intensity = 1.f;
         };
         Sunsky_Light() noexcept = default;
-        Sunsky_Light(Descriptor const& desc) noexcept;
+        Sunsky_Light(cref<Descriptor> desc) noexcept;
 
         auto static init() noexcept -> void;
 
         // Hosek atomosphere model: https://cgg.mff.cuni.cz/projects/SkylightModelling/
         // binary data: https://github.com/mitsuba-renderer/mitsuba-data/tree/master/sunsky/output
         auto operator()(
-            math::Ray const& r,
-            spectra::Stochastic_Spectrum const& spec
-        ) const noexcept -> std::optional<Interaction>;
+            cref<math::Ray> r, cref<stsp> spec
+        ) const noexcept -> opt<Interaction>;
         // TGMM sky sampling: https://diglib.eg.org/items/b3f1efca-1d13-44d0-ad60-741c4abe3d21
         auto sample(
-            eval::Context const& ctx,
-            math::Vector<f32, 2> const& u
-        ) const noexcept -> std::optional<Interaction>;
+            cref<eval::Context> ctx, cref<fv2> u
+        ) const noexcept -> opt<Interaction>;
         auto flags() const noexcept -> Flags;
 
     private:
@@ -72,8 +70,8 @@ namespace mtt::light {
         std::vector<f32> static sun_limb_table;
         std::vector<f32> static tgmm_table;
 
-        math::Vector<f32, 3> d;
-        math::Matrix<f32, 4, 4> t;
+        fv3 d;
+        fm44 t;
 
         f32 turbidity;
         f32 albedo;
@@ -82,11 +80,11 @@ namespace mtt::light {
         f32 area;
         f32 w_sky;
 
-        math::Matrix<f32, sunsky_num_lambda, sky_num_params> sky_params;
-        math::Vector<f32, sunsky_num_lambda> sky_radiance;
-        math::Matrix<f32, sun_num_segments, sunsky_num_lambda, sun_num_ctls> sun_radiance;
-        math::Vector<math::Truncated_Gaussian_Distribution, tgmm_num_gaussian> tgmm_phi_distr;
-        math::Vector<math::Truncated_Gaussian_Distribution, tgmm_num_gaussian> tgmm_theta_distr;
+        fm<sunsky_num_lambda, sky_num_params> sky_params;
+        fv<sunsky_num_lambda> sky_radiance;
+        fm<sun_num_segments, sunsky_num_lambda, sun_num_ctls> sun_radiance;
+        std::array<math::Truncated_Gaussian_Distribution, tgmm_num_gaussian> tgmm_phi_distr;
+        std::array<math::Truncated_Gaussian_Distribution, tgmm_num_gaussian> tgmm_theta_distr;
         math::Discrete_Distribution tgmm_distr;
         math::Cone_Distribution sun_distr;
     };

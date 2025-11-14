@@ -11,16 +11,16 @@ namespace mtt::media {
             tag<spectra::Spectrum> sigma_a = spectra::Spectrum::spectra["zero"];
             tag<spectra::Spectrum> sigma_s = spectra::Spectrum::spectra["zero"];
             tag<spectra::Spectrum> sigma_e = spectra::Spectrum::spectra["zero"];
-            math::Vector<usize, 3> dimensions;
+            uzv3 dimensions;
             tag<volume::Volume> density;
             f32 density_scale;
         };
         Heterogeneous_Medium() noexcept = default;
-        Heterogeneous_Medium(Descriptor const& desc) noexcept;
+        Heterogeneous_Medium(cref<Descriptor> desc) noexcept;
 
         auto sample(
-            eval::Context const& ctx, f32 t_max, f32 u
-        ) const noexcept -> std::optional<Interaction>;
+            cref<eval::Context> ctx, f32 t_max, f32 u
+        ) const noexcept -> opt<Interaction>;
 
     private:
         Phase phase;

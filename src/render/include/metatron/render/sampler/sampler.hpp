@@ -3,8 +3,8 @@
 
 namespace mtt::sampler {
     struct Context final {
-        math::Vector<usize, 2> pixel;
-        math::Vector<usize, 2> size;
+        uzv2 pixel;
+        uzv2 size;
         usize idx;
         usize spp;
         usize dim;
@@ -19,8 +19,8 @@ namespace mtt::sampler {
     struct Sampler final: pro::facade_builder
     ::add_convention<sampler_start, auto (Context ctx) noexcept -> void>
     ::add_convention<sampler_generate_1d, auto () noexcept -> f32>
-    ::add_convention<sampler_generate_2d, auto () noexcept -> math::Vector<f32, 2>>
-    ::add_convention<sampler_generate_pixel_2d, auto () noexcept -> math::Vector<f32, 2>>
+    ::add_convention<sampler_generate_2d, auto () noexcept -> fv2>
+    ::add_convention<sampler_generate_pixel_2d, auto () noexcept -> fv2>
     ::support_copy<pro::constraint_level::nontrivial>
     ::add_skill<pro::skills::as_view>
     ::build {};

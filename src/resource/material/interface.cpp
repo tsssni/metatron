@@ -2,12 +2,12 @@
 #include <metatron/resource/bsdf/interface.hpp>
 
 namespace mtt::material {
-    auto Interface_Material::sample (
-        eval::Context const& ctx,
-        image::Coordinate const& coord
-    ) const noexcept -> std::optional<Interaction> {
+    auto Interface_Material::sample(
+        cref<eval::Context> ctx,
+        cref<image::Coordinate> coord
+    ) const noexcept -> opt<Interaction> {
         return Interaction{
-            .bsdf = make_poly<bsdf::Bsdf, bsdf::Interface_Bsdf>(ctx.spec),
+            .bsdf = make_obj<bsdf::Bsdf, bsdf::Interface_Bsdf>(ctx.spec),
             .emission = ctx.spec & spectra::Spectrum::spectra["zero"],
             .normal = {0.f, 0.f, 1.f},
             .degraded = false,

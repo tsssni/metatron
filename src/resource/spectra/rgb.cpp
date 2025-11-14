@@ -6,7 +6,7 @@ namespace mtt::spectra {
     using Color_Space = color::Color_Space;
     using Spectrum_Type = Color_Space::Spectrum_Type;
 
-    Rgb_Spectrum::Rgb_Spectrum(Descriptor const& desc) noexcept {
+    Rgb_Spectrum::Rgb_Spectrum(cref<Descriptor> desc) noexcept {
         auto rgb = desc.c;
         auto cs = desc.color_space;
         illuminant = desc.type == Spectrum_Type::illuminant
@@ -29,7 +29,7 @@ namespace mtt::spectra {
         ? desc.color_space->illuminant_Y_integral : 1.f;
 
         if (rgb[0] == rgb[1] && rgb[1] == rgb[2]) {
-            this->c = math::Vector<f32, 3>{
+            this->c = fv3{
                 (rgb[0] - 0.5f) / math::sqrt(rgb[0] * (1.f - rgb[0])),
                 0.f, 0.f,
             };

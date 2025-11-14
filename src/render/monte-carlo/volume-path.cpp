@@ -3,12 +3,9 @@
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/plane.hpp>
-#include <metatron/core/stl/optional.hpp>
 
 namespace mtt::monte_carlo {
-    auto Volume_Path_Integrator::sample(
-        Context ctx
-    ) const noexcept -> std::optional<spectra::Stochastic_Spectrum> {
+    auto Volume_Path_Integrator::sample(Context ctx) const noexcept -> opt<stsp> {
         auto accel = ctx.accel;
         auto emitter = ctx.emitter;
         auto sampler = ctx.sampler;
@@ -28,15 +25,15 @@ namespace mtt::monte_carlo {
 
         auto p = 0.f;
         auto f = spec;
-        auto bsdf = poly<bsdf::Bsdf>{};
-        auto phase = poly<phase::Phase_Function>{};
+        auto bsdf = obj<bsdf::Bsdf>{};
+        auto phase = obj<phase::Phase_Function>{};
 
         auto trace_ctx = eval::Context{};
         auto history_ctx = eval::Context{};
         trace_ctx.r = ctx.ray_differential.r;
         trace_ctx.spec = spec;
 
-        auto acc_opt = std::optional<accel::Interaction>{};
+        auto acc_opt = opt<accel::Interaction>{};
         auto medium = tag<media::Medium>{};
         auto medium_to_render = tag<math::Transform>{};
         auto& rdiff = ctx.ray_differential;
@@ -63,12 +60,12 @@ namespace mtt::monte_carlo {
             direct_ctx.r.d = l_intr.wi;
 
             auto q = 0.f;
-            auto g = spectra::Stochastic_Spectrum{};
+            auto g = stsp{};
 
-            if (direct_ctx.n != math::Vector<f32, 3>{0.f}) {
+            if (direct_ctx.n != fv3{0.f}) {
                 auto flip_n = math::dot(-history_ctx.r.d, direct_ctx.n) < 0.f ? -1.f : 1.f;
-                auto t = math::Transform{math::Matrix<f32, 4, 4>{
-                    math::Quaternion<f32>::from_rotation_between(flip_n * direct_ctx.n, {0.f, 1.f, 0.f})
+                auto t = math::Transform{fm44{
+                    fq::from_rotation_between(flip_n * direct_ctx.n, {0.f, 1.f, 0.f})
                 }};
                 auto wo = math::normalize(t | math::expand(history_ctx.r.d, 0.f));
                 auto wi = math::normalize(t | math::expand(l_intr.wi, 0.f));
@@ -81,7 +78,7 @@ namespace mtt::monte_carlo {
                 q = p_intr.pdf;
             }
 
-            auto acc_opt = std::optional<accel::Interaction>{};
+            auto acc_opt = opt<accel::Interaction>{};
             auto terminated = false;
             auto crossed = true;
 
@@ -124,8 +121,8 @@ namespace mtt::monte_carlo {
                     if (!is_interface && (!is_emissive || !close_to_light)) {
                         terminated = true; gamma = 0.f; continue;
                     } else if (close_to_light) {
-                        auto st = math::Transform{math::Matrix<f32, 4, 4>{
-                            math::Quaternion<f32>::from_rotation_between(ddiff.r.d, math::normalize(intr.p))
+                        auto st = math::Transform{fm44{
+                            fq::from_rotation_between(ddiff.r.d, math::normalize(intr.p))
                         }};
                         auto rd = st | ddiff;
 
@@ -268,8 +265,8 @@ namespace mtt::monte_carlo {
                     terminated = true;
                 } else if (mode == 1uz) {
                     phase = std::move(m_intr.phase);
-                    auto pt = math::Transform{math::Matrix<f32, 4, 4>{
-                        math::Quaternion<f32>::from_rotation_between(-trace_ctx.r.d, {0.f, 1.f, 0.f})
+                    auto pt = math::Transform{fm44{
+                        fq::from_rotation_between(-trace_ctx.r.d, {0.f, 1.f, 0.f})
                     }};
 
                     auto p_ctx = pt | trace_ctx;
@@ -302,8 +299,8 @@ namespace mtt::monte_carlo {
             }
 
             if (!rdiff.differentiable) {
-                auto st = math::Transform{math::Matrix<f32, 4, 4>{
-                    math::Quaternion<f32>::from_rotation_between(ddiff.r.d, math::normalize(intr.p))
+                auto st = math::Transform{fm44{
+                    fq::from_rotation_between(ddiff.r.d, math::normalize(intr.p))
                 }};
                 rdiff = st | ddiff;
             }
@@ -326,7 +323,7 @@ namespace mtt::monte_carlo {
                 emission += mis_w * beta * mat_intr.emission;
             }();
 
-            auto tbn = math::transpose(math::Matrix<f32, 3, 3>{intr.tn, intr.bn, intr.n});
+            auto tbn = math::transpose(fm33{intr.tn, intr.bn, intr.n});
             intr.n = tbn | mat_intr.normal;
 
             if (mat_intr.degraded && !spectra::coherent(spec)) {
@@ -336,8 +333,8 @@ namespace mtt::monte_carlo {
             }
 
             bsdf = std::move(mat_intr.bsdf);
-            auto bt = math::Transform{math::Matrix<f32, 4, 4>{
-                math::Quaternion<f32>::from_rotation_between(intr.n, {0.f, 1.f, 0.f})
+            auto bt = math::Transform{fm44{
+                fq::from_rotation_between(intr.n, {0.f, 1.f, 0.f})
             }};
             auto uc = sampler->generate_1d();
             auto u = sampler->generate_2d();

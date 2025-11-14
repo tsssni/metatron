@@ -2,8 +2,8 @@
 
 namespace mtt::media {
     auto Vaccum_Medium::sample(
-        eval::Context const& ctx, f32 t_max, f32 u
-    ) const noexcept -> std::optional<Interaction> {
+        cref<eval::Context> ctx, f32 t_max, f32 u
+    ) const noexcept -> opt<Interaction> {
         auto transmittance = ctx.spec;
         transmittance = 1.f;
 

@@ -6,7 +6,6 @@
 #include <metatron/core/math/integral.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/ranges.hpp>
-#include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <ranges>
 #include <fstream>
@@ -20,12 +19,12 @@ namespace mtt::light {
     std::vector<f32> Sunsky_Light::sun_limb_table;
     std::vector<f32> Sunsky_Light::tgmm_table;
 
-    Sunsky_Light::Sunsky_Light(Descriptor const& desc) noexcept:
+    Sunsky_Light::Sunsky_Light(cref<Descriptor> desc) noexcept:
     d(math::unit_spherical_to_cartesian(desc.direction)),
-    t(math::Quaternion<f32>::from_rotation_between({0.f, 1.f, 0.f}, d)),
+    t(fq::from_rotation_between({0.f, 1.f, 0.f}, d)),
     turbidity(desc.turbidity), 
     albedo(desc.albedo) {
-        auto bezier = [](std::vector<f32> const& data, usize block_size, usize offset, f32 x) -> std::vector<f32> {
+        auto bezier = [](cref<std::vector<f32>> data, usize block_size, usize offset, f32 x) -> std::vector<f32> {
             auto interpolated = std::vector<f32>(block_size, 0.f);
             auto c = std::array<f32, 6>{1, 5, 10, 10, 5, 1};
             for (auto i = 0; i < 6; ++i) {
@@ -41,7 +40,7 @@ namespace mtt::light {
             return interpolated;
         };
 
-        auto lerp = [](std::vector<f32> const& x, std::vector<f32> const& y, f32 alpha) -> std::vector<f32> {
+        auto lerp = [](cref<std::vector<f32>> x, cref<std::vector<f32>> y, f32 alpha) -> std::vector<f32> {
             auto z = std::vector<f32>(x.size());
             std::ranges::transform(x, y, z.begin(), [alpha](f32 x, f32 y){return math::lerp(x, y, alpha);});
             return z;
@@ -57,7 +56,7 @@ namespace mtt::light {
         auto a_high = a_low + 1;
         auto a_alpha = albedo - a_low;
 
-        auto load_sky = [&](mut<f32> storage, std::vector<f32> const& data) -> void {
+        auto load_sky = [&](mut<f32> storage, cref<std::vector<f32>> data) -> void {
             auto size = data.size();
             auto turbidity_size = size / sunsky_num_turbility;
             auto albedo_size = turbidity_size / sunsky_num_albedo;
@@ -75,7 +74,7 @@ namespace mtt::light {
         };
 
         auto load_sun = [&]() {
-            auto& sun_table = *(math::Matrix<f32,
+            auto& sun_table = *(fm<
                 sunsky_num_turbility, sun_num_segments, sunsky_num_lambda, sun_num_ctls
             >*)(sun_radiance_table.data());
             auto t0 = sun_table[t_low];
@@ -83,7 +82,7 @@ namespace mtt::light {
             sun_radiance = t0 * (1.f - t_alpha) + t1 * t_alpha;
 
             auto bspec = spectra::Blackbody_Spectrum{desc.temperature};
-            auto sun_scale = math::Vector<f32, sunsky_num_lambda>{};
+            auto sun_scale = fv<sunsky_num_lambda>{};
             for (auto i = 0; i < sunsky_num_lambda; ++i) {
                 auto lambda = sunsky_lambda[i];
                 auto Lp = sun_perp_radiance[i];
@@ -117,17 +116,17 @@ namespace mtt::light {
             auto eta_high = math::min(eta_low + 1, sun_num_segments - 1);
             auto eta_alpha = eta_idx - eta_low;
 
-            auto t_eta = math::Matrix<i32, 4, 2>{
+            auto t_eta = im<4, 2>{
                 {t_low, eta_low}, {t_low, eta_high},
                 {t_high, eta_low}, {t_high, eta_high},
             };
-            auto b_w = math::Vector<f32, 4>{
+            auto b_w = fv4{
                 (1.f - t_alpha) * (1.f - eta_alpha),
                 (1.f - t_alpha) * eta_alpha,
                 t_alpha * (1.f - eta_alpha),
                 t_alpha * eta_alpha,
             };
-            auto& tgmm = *(math::Matrix<f32,
+            auto& tgmm = *(fm<
                 tgmm_num_turbility, tgmm_num_segments, tgmm_num_mixture, tgmm_num_gaussian_params + 1
             >*)(tgmm_table.data());
 
@@ -157,7 +156,7 @@ namespace mtt::light {
     auto Sunsky_Light::init() noexcept -> void {
         auto read = []
         <typename T, typename U>
-        (std::vector<T>& storage, std::vector<U>&& intermediate, std::string const& file) -> void {
+        (ref<std::vector<T>> storage, rref<std::vector<U>> intermediate, cref<std::string> file) -> void {
             auto& fs = stl::filesystem::instance();
             auto prefix = std::string{"sunsky/"};
             auto postfix = std::string{".bin"};
@@ -213,9 +212,8 @@ namespace mtt::light {
     }
 
     auto Sunsky_Light::operator()(
-        math::Ray const& r,
-        spectra::Stochastic_Spectrum const& spec
-    ) const noexcept -> std::optional<Interaction> {
+        cref<math::Ray> r, cref<stsp> spec
+    ) const noexcept -> opt<Interaction> {
         auto wi = math::normalize(r.d);
         auto cos_theta = math::unit_to_cos_theta(wi);
         auto sin_theta = math::unit_to_sin_theta(wi);
@@ -253,10 +251,9 @@ namespace mtt::light {
     }
 
     auto Sunsky_Light::sample(
-        eval::Context const& ctx,
-        math::Vector<f32, 2> const& u
-    ) const noexcept -> std::optional<Interaction> {
-        auto wi = math::Vector<f32, 3>{};
+        cref<eval::Context> ctx, cref<fv2> u
+    ) const noexcept -> opt<Interaction> {
+        auto wi = fv3{};
         if (u[0] < w_sky) {
             auto idx = tgmm_distr.sample(u[0]);
             auto u_phi = math::guarded_div(
@@ -273,8 +270,8 @@ namespace mtt::light {
             wi = math::unit_spherical_to_cartesian({theta, phi});
         } else {
             auto distr = math::Cone_Distribution{cos_sun};
-            auto u_sun = math::Vector<f32, 2>{(u[0] - w_sky) / (1.f - w_sky), u[1]};
-            wi = math::normalize(math::Vector<f32, 3>{t | math::expand(distr.sample(u_sun), 0.f)});
+            auto u_sun = fv2{(u[0] - w_sky) / (1.f - w_sky), u[1]};
+            wi = math::normalize(fv3{t | math::expand(distr.sample(u_sun), 0.f)});
         }
         return (*this)({ctx.r.o, wi}, ctx.spec);
     }
@@ -341,7 +338,7 @@ namespace mtt::light {
     }
 
     auto Sunsky_Light::hosek_limb(i32 idx, f32 cos_gamma) const noexcept -> f32 {
-        auto& sun_limb = *(math::Matrix<f32, sunsky_num_lambda, sun_num_limb_params>*)(sun_limb_table.data());
+        auto& sun_limb = *(fm<sunsky_num_lambda, sun_num_limb_params>*)(sun_limb_table.data());
         auto sin_gamma_sqr = 1.f - math::sqr(cos_gamma);
         auto cos_psi_sqr = 1.f - sin_gamma_sqr / (1.f - math::sqr(cos_sun));
         auto cos_psi = math::sqrt(cos_psi_sqr);
@@ -368,7 +365,7 @@ namespace mtt::light {
                 auto sin_theta = math::sqrt(1.f - math::sqr(cos_theta));
                 auto cos_phi = std::cos(phi);
                 auto sin_phi = std::sin(phi);
-                auto wi = math::Vector<f32, 3>{sin_theta * cos_phi, cos_theta, sin_theta * sin_phi};
+                auto wi = fv3{sin_theta * cos_phi, cos_theta, sin_theta * sin_phi};
                 return math::dot(wi, d);
             });
 
@@ -405,8 +402,8 @@ namespace mtt::light {
                 auto sin_gamma = math::sqrt(1.f - math::sqr(cos_gamma));
                 auto cos_phi = std::cos(phi);
                 auto sin_phi = std::sin(phi);
-                auto wi_sun = math::Vector<f32, 3>{sin_gamma * cos_phi, cos_gamma, sin_gamma * sin_phi};
-                auto wi = math::normalize(math::Vector<f32, 3>{t | math::expand(wi_sun, 0.f)});
+                auto wi_sun = fv3{sin_gamma * cos_phi, cos_gamma, sin_gamma * sin_phi};
+                auto wi = math::normalize(fv3{t | math::expand(wi_sun, 0.f)});
                 return math::unit_to_cos_theta(wi);
             });
 

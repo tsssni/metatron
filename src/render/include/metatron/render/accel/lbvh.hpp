@@ -13,23 +13,16 @@ namespace mtt::accel {
 
         struct Index final {
             math::Bounding_Box bbox;
-            union {
-                u32 prim;
-                u32 right;
-            };
-            union {
-                i32 num_prims;
-                u32 axis;
-            };
+            union { u32 prim; u32 right; };
+            union { i32 num_prims; u32 axis; };
         };
 
         struct Descriptor final {usize num_guide_leaf_prims = 4;};
-        LBVH(Descriptor const& desc) noexcept;
+        LBVH(cref<Descriptor> desc) noexcept;
 
         auto operator()(
-            math::Ray const& r,
-            math::Vector<f32, 3> const& n
-        ) const noexcept -> std::optional<Interaction>;
+            cref<math::Ray> r, cref<fv3> n
+        ) const noexcept -> opt<Interaction>;
 
     private:
         std::vector<Primitive> prims;

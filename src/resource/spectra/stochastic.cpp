@@ -11,7 +11,7 @@ namespace mtt::spectra {
             auto ui = math::mod(u + i / f32(stochastic_samples), 1.f);
             return math::Spectrum_Distribution{}.sample(ui);
         }, lambda);
-        value = math::Vector<f32, stochastic_samples>{v};
+        value = fv<stochastic_samples>{v};
     }
 
     auto Stochastic_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
@@ -45,60 +45,60 @@ namespace mtt::spectra {
         return (*this) & spectrum.data();
     }
 
-    auto Stochastic_Spectrum::operator+(Stochastic_Spectrum const& spectrum) const noexcept -> Stochastic_Spectrum {
+    auto Stochastic_Spectrum::operator+(cref<Stochastic_Spectrum> spectrum) const noexcept -> Stochastic_Spectrum {
         auto spec = *this;
         spec += spectrum;
         return spec;
     }
     
-    auto Stochastic_Spectrum::operator+=(Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum& {
+    auto Stochastic_Spectrum::operator+=(cref<Stochastic_Spectrum> spectrum) noexcept -> ref<Stochastic_Spectrum> {
         value += math::foreach([&](f32 lambda, usize i) {
             return spectrum(lambda);
         }, lambda);
         return *this;
     }
 
-    auto Stochastic_Spectrum::operator-(Stochastic_Spectrum const& spectrum) const noexcept -> Stochastic_Spectrum {
+    auto Stochastic_Spectrum::operator-(cref<Stochastic_Spectrum> spectrum) const noexcept -> Stochastic_Spectrum {
         auto spec = *this;
         spec -= spectrum;
         return spec;
     }
     
-    auto Stochastic_Spectrum::operator-=(Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum& {
+    auto Stochastic_Spectrum::operator-=(cref<Stochastic_Spectrum> spectrum) noexcept -> ref<Stochastic_Spectrum> {
         value -= math::foreach([&](f32 lambda, usize i) {
             return spectrum(lambda);
         }, lambda);
         return *this;
     }
 
-    auto Stochastic_Spectrum::operator*(Stochastic_Spectrum const& spectrum) const noexcept -> Stochastic_Spectrum {
+    auto Stochastic_Spectrum::operator*(cref<Stochastic_Spectrum> spectrum) const noexcept -> Stochastic_Spectrum {
         auto spec = *this;
         spec *= spectrum;
         return spec;
     }
     
-    auto Stochastic_Spectrum::operator*=(Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum& {
+    auto Stochastic_Spectrum::operator*=(cref<Stochastic_Spectrum> spectrum) noexcept -> ref<Stochastic_Spectrum> {
         value *= math::foreach([&](f32 lambda, usize i) {
             return spectrum(lambda);
         }, lambda);
         return *this;
     }
 
-    auto Stochastic_Spectrum::operator/(Stochastic_Spectrum const& spectrum) const noexcept -> Stochastic_Spectrum {
+    auto Stochastic_Spectrum::operator/(cref<Stochastic_Spectrum> spectrum) const noexcept -> Stochastic_Spectrum {
         auto spec = *this;
         spec /= spectrum;
         return spec;
     }
     
-    auto Stochastic_Spectrum::operator/=(Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum& {
+    auto Stochastic_Spectrum::operator/=(cref<Stochastic_Spectrum> spectrum) noexcept -> ref<Stochastic_Spectrum> {
         value = math::foreach([&](f32 value, f32 lambda, usize i) {
             return math::guarded_div(value, spectrum(lambda));
         }, value, lambda);
         return *this;
     }
 
-    auto Stochastic_Spectrum::operator=(f32 s) noexcept -> Stochastic_Spectrum& {
-        value = math::Vector<f32, stochastic_samples>{s};
+    auto Stochastic_Spectrum::operator=(f32 s) noexcept -> ref<Stochastic_Spectrum> {
+        value = fv<stochastic_samples>{s};
         return *this;
     }
 
@@ -108,8 +108,8 @@ namespace mtt::spectra {
         return spec;
     };
 
-    auto Stochastic_Spectrum::operator+=(f32 s) noexcept -> Stochastic_Spectrum& {
-        value += math::Vector<f32, stochastic_samples>{s};
+    auto Stochastic_Spectrum::operator+=(f32 s) noexcept -> ref<Stochastic_Spectrum> {
+        value += fv<stochastic_samples>{s};
         return *this;
     };
 
@@ -125,8 +125,8 @@ namespace mtt::spectra {
         return spec;
     };
 
-    auto Stochastic_Spectrum::operator-=(f32 s) noexcept -> Stochastic_Spectrum& {
-        value -= math::Vector<f32, stochastic_samples>{s};
+    auto Stochastic_Spectrum::operator-=(f32 s) noexcept -> ref<Stochastic_Spectrum> {
+        value -= fv<stochastic_samples>{s};
         return *this;
     };
 
@@ -136,8 +136,8 @@ namespace mtt::spectra {
         return spec;
     };
 
-    auto Stochastic_Spectrum::operator*=(f32 s) noexcept -> Stochastic_Spectrum& {
-        value *= math::Vector<f32, stochastic_samples>{s};
+    auto Stochastic_Spectrum::operator*=(f32 s) noexcept -> ref<Stochastic_Spectrum> {
+        value *= fv<stochastic_samples>{s};
         return *this;
     };
 
@@ -147,8 +147,8 @@ namespace mtt::spectra {
         return spec;
     };
 
-    auto Stochastic_Spectrum::operator/=(f32 s) noexcept -> Stochastic_Spectrum& {
-        value /= math::Vector<f32, stochastic_samples>{s};
+    auto Stochastic_Spectrum::operator/=(f32 s) noexcept -> ref<Stochastic_Spectrum> {
+        value /= fv<stochastic_samples>{s};
         return *this;
     };
 
@@ -156,19 +156,19 @@ namespace mtt::spectra {
         return math::any([](f32 x, usize i) { return x > 0.f; }, value);
     }
 
-    auto operator+(f32 s, Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum {
+    auto operator+(f32 s, cref<Stochastic_Spectrum> spectrum) noexcept -> Stochastic_Spectrum {
         return spectrum + s;
     }
 
-    auto operator-(f32 s, Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum {
+    auto operator-(f32 s, cref<Stochastic_Spectrum> spectrum) noexcept -> Stochastic_Spectrum {
         return -spectrum + s;
     }
 
-    auto operator*(f32 s, Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum {
+    auto operator*(f32 s, cref<Stochastic_Spectrum> spectrum) noexcept -> Stochastic_Spectrum {
         return spectrum * s;
     }
 
-    auto operator/(f32 s, Stochastic_Spectrum const& spectrum) noexcept -> Stochastic_Spectrum {
+    auto operator/(f32 s, cref<Stochastic_Spectrum> spectrum) noexcept -> Stochastic_Spectrum {
         auto spec = spectrum;
         spec.value = math::foreach([&](f32 v, usize i) {
             return math::guarded_div(s, v);
@@ -176,43 +176,43 @@ namespace mtt::spectra {
         return spec;
     }
 
-    auto min(Stochastic_Spectrum const& spectrum) noexcept -> f32 {
+    auto min(cref<Stochastic_Spectrum> spectrum) noexcept -> f32 {
         return math::min(spectrum.value);
     }
 
-    auto min(Stochastic_Spectrum const& spectrum, math::Vector<f32, 4> x) noexcept -> Stochastic_Spectrum {
+    auto min(cref<Stochastic_Spectrum> spectrum, fv4 x) noexcept -> Stochastic_Spectrum {
         auto spec = spectrum;
         spec.value = math::min(spec.value, x);
         return spec;
     }
 
-    auto max(Stochastic_Spectrum const& spectrum) noexcept -> f32 {
+    auto max(cref<Stochastic_Spectrum> spectrum) noexcept -> f32 {
         return math::max(spectrum.value);
     }
 
-    auto max(Stochastic_Spectrum const& spectrum, math::Vector<f32, 4> x) noexcept -> Stochastic_Spectrum {
+    auto max(cref<Stochastic_Spectrum> spectrum, fv4 x) noexcept -> Stochastic_Spectrum {
         auto spec = spectrum;
         spec.value = math::max(spec.value, x);
         return spec;
     }
 
-    auto avg(Stochastic_Spectrum const& spectrum) noexcept -> f32 {
+    auto avg(cref<Stochastic_Spectrum> spectrum) noexcept -> f32 {
         return math::sum(spectrum.value / stochastic_samples);
     }
 
-    auto valid(Stochastic_Spectrum const& spectrum) noexcept -> bool {
+    auto valid(cref<Stochastic_Spectrum> spectrum) noexcept -> bool {
         return spectrum.lambda[0] != 0.f;
     }
 
-    auto constant(Stochastic_Spectrum const& spectrum) noexcept -> bool {
+    auto constant(cref<Stochastic_Spectrum> spectrum) noexcept -> bool {
         return math::all([&](f32 x, usize i) { return x == spectrum.value[0]; }, spectrum.value);
     }
 
-    auto coherent(Stochastic_Spectrum const& spectrum) noexcept -> bool {
+    auto coherent(cref<Stochastic_Spectrum> spectrum) noexcept -> bool {
         return math::all([&](f32 x, usize i) { return x == spectrum.lambda[0]; }, spectrum.lambda);
     }
 
-    auto degrade(Stochastic_Spectrum& spectrum) noexcept -> void {
+    auto degrade(ref<Stochastic_Spectrum> spectrum) noexcept -> void {
         spectrum.value = {spectrum.value[0]};
         spectrum.lambda = {spectrum.lambda[0]};
     }

@@ -12,13 +12,11 @@ namespace mtt::emitter {
         Uniform_Emitter();
 
         auto sample(
-            eval::Context const& ctx,
-            f32 u
-        ) const noexcept -> std::optional<Interaction>;
+            cref<eval::Context> ctx, f32 u
+        ) const noexcept -> opt<Interaction>;
         auto sample_infinite(
-            eval::Context const& ctx,
-            f32 u
-        ) const noexcept -> std::optional<Interaction>;
+            cref<eval::Context> ctx, f32 u
+        ) const noexcept -> opt<Interaction>;
 
     private:
         std::vector<Primitive> prims;

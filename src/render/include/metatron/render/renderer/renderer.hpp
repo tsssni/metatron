@@ -21,7 +21,7 @@ namespace mtt::renderer {
             Lens lens = photo::Thin_Lens{{}};
         };
         Renderer() noexcept = default;
-        Renderer(Descriptor&& desc) noexcept;
+        Renderer(rref<Descriptor> desc) noexcept;
         auto render() noexcept -> void;
     };
 }

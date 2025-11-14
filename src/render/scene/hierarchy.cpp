@@ -44,7 +44,7 @@ namespace mtt::scene {
         }
 
         template<typename T, typename U>
-        auto fetch(std::unordered_map<T, U> const& map, T const& key) const -> U const& {
+        auto fetch(cref<std::unordered_map<T, U>> map, cref<T> key) const -> cref<U> {
             auto it = map.find(key);
             if (it != map.end()) {
                 return it->second;

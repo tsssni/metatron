@@ -2,9 +2,9 @@
 #include <metatron/core/math/gaussian.hpp>
 
 namespace mtt::filter {
-    Gaussian_Filter::Gaussian_Filter(Descriptor const& desc) noexcept:
+    Gaussian_Filter::Gaussian_Filter(cref<Descriptor> desc) noexcept:
     radius(desc.radius), sigma(desc.sigma) {
-        auto matrix = math::Matrix<f32, 64, 64>{};
+        auto matrix = fm<64, 64>{};
         for (auto j = 0uz; j < 64; ++j) {
             auto y = math::lerp(-radius[1], radius[1], (f32(j) + 0.5f) / 64.f);
             for (auto i = 0uz; i < 64; ++i) {
@@ -20,13 +20,13 @@ namespace mtt::filter {
         };
     }
 
-    auto Gaussian_Filter::operator()(math::Vector<f32, 2> const& p) const noexcept -> f32 {
+    auto Gaussian_Filter::operator()(cref<fv2> p) const noexcept -> f32 {
         auto vx = math::gaussian(p[0], 0.f, sigma) - math::gaussian(radius[0], 0.f, sigma);
         auto vy = math::gaussian(p[1], 0.f, sigma) - math::gaussian(radius[1], 0.f, sigma);
         return vx * vy;
     }
 
-    auto Gaussian_Filter::sample(math::Vector<f32, 2> const& u) const noexcept -> std::optional<filter::Interaction> {
+    auto Gaussian_Filter::sample(cref<fv2> u) const noexcept -> opt<filter::Interaction> {
         auto p = piecewise.sample(u);
         auto w = (*this)(math::reverse(p));
         auto pdf = piecewise.pdf(p);

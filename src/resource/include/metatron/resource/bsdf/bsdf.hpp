@@ -5,8 +5,8 @@
 
 namespace mtt::bsdf {
     struct Interaction final {
-        spectra::Stochastic_Spectrum f;
-        math::Vector<f32, 3> wi;
+        stsp f;
+        fv3 wi;
         f32 pdf;
         bool degraded{false};
     };
@@ -23,64 +23,32 @@ namespace mtt::bsdf {
 
     struct Bsdf final: pro::facade_builder
     ::add_convention<pro::operator_dispatch<"()">, auto (
-        math::Vector<f32, 3> const& wo,
-        math::Vector<f32, 3> const& wi
-    ) const noexcept -> std::optional<Interaction>>
+        cref<fv3> wo, cref<fv3> wi
+    ) const noexcept -> opt<Interaction>>
     ::add_convention<bsdf_sample, auto (
-        eval::Context const& ctx,
-        math::Vector<f32, 3> const& u
-    ) const noexcept -> std::optional<Interaction>>
+        cref<eval::Context> ctx, cref<fv3> u
+    ) const noexcept -> opt<Interaction>>
     ::add_convention<bsdf_flags, auto () const noexcept -> Flags>
     ::add_convention<bsdf_degrade, auto () noexcept -> bool>
     ::add_skill<pro::skills::as_view>
     ::build {};
 
     auto lambert(f32 reflectance) -> f32;
-    auto lambert(spectra::Stochastic_Spectrum const& reflectance) -> spectra::Stochastic_Spectrum;
+    auto lambert(cref<stsp> reflectance) -> stsp;
 
     auto fresnel(f32 cos_theta_i, f32 eta, f32 k) -> f32;
-    auto fresnel(
-        f32 cos_theta_i,
-        spectra::Stochastic_Spectrum const& eta,
-        spectra::Stochastic_Spectrum const& k
-    ) noexcept -> spectra::Stochastic_Spectrum;
+    auto fresnel(f32 cos_theta_i, cref<stsp> eta, cref<stsp> k) noexcept -> stsp;
 
-    auto lambda(
-        math::Vector<f32, 3> const& wo,
-        f32 alpha_u,
-        f32 alpha_v
-    ) noexcept -> f32;
-    auto smith_mask(
-        math::Vector<f32, 3> const& wo,
-        f32 alpha_u,
-        f32 alpha_v
-    ) noexcept -> f32;
-    auto smith_shadow(
-        math::Vector<f32, 3> const& wo,
-        math::Vector<f32, 3> const& wi,
-        f32 alpha_u,
-        f32 alpha_v
-    ) noexcept -> f32;
+    auto lambda(cref<fv3> wo, f32 alpha_u, f32 alpha_v) noexcept -> f32;
+    auto smith_mask(cref<fv3> wo, f32 alpha_u, f32 alpha_v) noexcept -> f32;
+    auto smith_shadow(cref<fv3> wo, cref<fv3> wi, f32 alpha_u, f32 alpha_v) noexcept -> f32;
 
-    auto trowbridge_reitz(
-        math::Vector<f32, 3> const& wm,
-        f32 alpha_u,
-        f32 alpha_v
-    ) noexcept -> f32;
-    auto visible_trowbridge_reitz(
-        math::Vector<f32, 3> const& wo,
-        math::Vector<f32, 3> const& wm,
-        f32 alpha_u,
-        f32 alpha_v
-    ) noexcept -> f32;
+    auto trowbridge_reitz(cref<fv3> wm, f32 alpha_u, f32 alpha_v) noexcept -> f32;
+    auto visible_trowbridge_reitz(cref<fv3> wo, cref<fv3> wm, f32 alpha_u, f32 alpha_v) noexcept -> f32;
     auto torrance_sparrow(
         bool reflective, f32 pr, f32 pt,
-        spectra::Stochastic_Spectrum const& F, f32 D, f32 G,
-        math::Vector<f32, 3> const& wo,
-        math::Vector<f32, 3> const& wi,
-        math::Vector<f32, 3> const& wm,
-        spectra::Stochastic_Spectrum const& eta,
-        f32 alpha_u,
-        f32 alpha_v
-    ) noexcept -> std::optional<Interaction>;
+        cref<stsp> F, f32 D, f32 G,
+        cref<fv3> wo, cref<fv3> wi, cref<fv3> wm,
+        cref<stsp> eta, f32 alpha_u, f32 alpha_v
+    ) noexcept -> opt<Interaction>;
 }

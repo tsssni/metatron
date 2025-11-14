@@ -3,8 +3,8 @@
 
 namespace mtt::math {
     struct Ray final {
-        math::Vector<f32, 3> o;
-        math::Vector<f32, 3> d;
+        fv3 o;
+        fv3 d;
     };
 
     struct Ray_Differential final {

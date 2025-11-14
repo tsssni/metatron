@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/core/stl/singleton.hpp>
+#include <metatron/core/stl/optional.hpp>
 #include <vector>
 #include <cstdlib>
 #include <sstream>
@@ -28,8 +29,8 @@ namespace mtt::stl {
             pathes.pop_back();
         }
 
-        auto find(std::string_view path) noexcept -> std::optional<std::string> {
-            for (const auto& base : pathes | std::views::reverse) {
+        auto find(std::string_view path) noexcept -> opt<std::string> {
+            for (auto const& base : pathes | std::views::reverse) {
                 auto full = std::filesystem::path(base) / path;
                 if (std::filesystem::exists(full)) return full.string();
             }

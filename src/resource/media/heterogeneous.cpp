@@ -2,12 +2,11 @@
 #include <metatron/resource/phase/henyey-greenstein.hpp>
 #include <metatron/resource/volume/uniform.hpp>
 #include <metatron/core/math/arithmetic.hpp>
-#include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/print.hpp>
 
 namespace mtt::media {
-    Heterogeneous_Medium::Heterogeneous_Medium(Descriptor const& desc) noexcept:
+    Heterogeneous_Medium::Heterogeneous_Medium(cref<Descriptor> desc) noexcept:
     phase(desc.phase),
     sigma_a(desc.sigma_a),
     sigma_s(desc.sigma_s),
@@ -17,8 +16,8 @@ namespace mtt::media {
         auto sigmaj = volume::Uniform_Volume{{density->bounding_box(), desc.dimensions}};
         stl::scheduler::instance().sync_parallel(
             sigmaj.dimensions(),
-            [&](math::Vector<usize, 3> const& xyz) mutable {
-                auto ijk = math::Vector<i32, 3>{xyz};
+            [&](cref<uzv3> xyz) mutable {
+                auto ijk = iv3{xyz};
                 auto voxel_bbox = sigmaj.bounding_box(ijk);
                 auto maj = math::low<f32>;
 
@@ -41,10 +40,8 @@ namespace mtt::media {
     }
 
     auto Heterogeneous_Medium::sample(
-        eval::Context const& ctx, 
-        f32 t_max, 
-        f32 u
-    ) const noexcept -> std::optional<Interaction> {
+        cref<eval::Context> ctx, f32 t_max, f32 u
+    ) const noexcept -> opt<Interaction> {
         auto sigma_a = (ctx.spec & this->sigma_a) * density_scale;
         auto sigma_s = (ctx.spec & this->sigma_s) * density_scale;
         auto sigma_t = sigma_a + sigma_s;
@@ -54,7 +51,7 @@ namespace mtt::media {
         auto distr = math::Exponential_Distribution{0.f};
 
         auto r = ctx.r;
-        auto cell = majorant->to_index(r.o); auto offset = math::Vector<i32, 3>{0};
+        auto cell = majorant->to_index(r.o); auto offset = iv3{0};
         auto direction = math::foreach([](f32 x, auto){return math::sign(x);}, r.d);
 
         auto t_cell = t_max;
@@ -75,7 +72,7 @@ namespace mtt::media {
             );
             t_cell = t_next;
             cell += offset;
-            offset = direction * math::Vector<i32, 3>{
+            offset = direction * iv3{
                 i_next == 0, i_next == 1, i_next == 2
             };
 
@@ -86,11 +83,11 @@ namespace mtt::media {
 
         if (!majorant->inside(cell)) {
             auto [t_enter, t_exit] = math::hit(r, majorant->bounding_box()).value_or(
-                math::Vector<f32, 2>{0.f}
+                fv2{0.f}
             );
             r.o = r.o + t_enter * r.d;
             cell = math::clamp<i32, 3>(
-                majorant->to_index(r.o), math::Vector<i32, 3>{0}, majorant->dimensions() - 1
+                majorant->to_index(r.o), iv3{0}, majorant->dimensions() - 1
             );
         }
         update_majorant(t_max);

@@ -15,33 +15,33 @@ namespace mtt::phase {
 namespace mtt::eval {
     struct Context final {
         math::Ray r{};
-        math::Vector<f32, 3> n{};
-        spectra::Stochastic_Spectrum spec{};
+        fv3 n{};
+        stsp spec{};
         bool inside;
     };
 
-    auto inline operator|(math::Transform const& t, Context const& ctx) -> Context {
+    auto inline operator|(cref<math::Transform> t, cref<Context> ctx) -> Context {
         auto result = ctx;
         result.r = t | result.r;
         result.n = t | result.n;
         return result;
     }
 
-    auto inline operator^(math::Transform const& t, Context const& ctx) -> Context {
+    auto inline operator^(cref<math::Transform> t, cref<Context> ctx) -> Context {
         auto result = ctx;
         result.r = t ^ result.r;
         result.n = t ^ result.n;
         return result;
     }
 
-    auto inline operator|(math::Transform::Chain&& chain, Context const& ctx) -> Context {
+    auto inline operator|(rref<math::Transform::Chain> chain, cref<Context> ctx) -> Context {
         auto result = ctx;
         result.r = chain | result.r;
         result.n = chain | result.n;
         return result;
     }
 
-    auto inline operator^(math::Transform::Chain&& chain, Context const& ctx) -> Context {
+    auto inline operator^(rref<math::Transform::Chain> chain, cref<Context> ctx) -> Context {
         auto result = ctx;
         result.r = chain ^ result.r;
         result.n = chain ^ result.n;

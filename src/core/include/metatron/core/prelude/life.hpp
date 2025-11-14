@@ -3,27 +3,27 @@
 
 namespace mtt::inline prelude {
     template<typename T>
-    struct poly_impl final {
+    struct obj_impl final {
         using type = std::unique_ptr<T>;
     };
 
     template<pro::facade F>
-    struct poly_impl<F> final {
+    struct obj_impl<F> final {
         using type = pro::proxy<F>;
     };
 
     template<typename T>
-    using poly = poly_impl<T>::type;
+    using obj = obj_impl<T>::type;
 
     template<typename T, typename... Args>
     requires std::is_constructible_v<T, Args...>
-    auto make_poly(Args&&... args) -> poly<T> {
+    auto make_obj(Args&&... args) -> obj<T> {
         return std::make_unique<T>(std::forward<Args>(args)...);
     }
 
     template<pro::facade F, typename T, typename... Args>
     requires std::is_constructible_v<T, Args...>
-    auto make_poly(Args&&... args) -> poly<F> {
+    auto make_obj(Args&&... args) -> obj<F> {
         return pro::make_proxy<F, T>(std::forward<Args>(args)...);
     }
 
@@ -53,25 +53,34 @@ namespace mtt::inline prelude {
     using view = view_impl<std::add_const_t<std::remove_const_t<T>>>::type;
 
     template<typename T>
-    auto make_view(T& x) -> mut<T> {
-        return &x;
-    }
+    using ref = T&;
+
+    template<typename T>
+    using cref = T const&;
+
+    template<typename T>
+    using rref = T&&;
 
     template<typename F, typename T>
     concept poliable = pro::facade<F> && std::is_constructible_v<mut<F>, mut<T>>;
 
     template<typename T>
-    auto make_view(T const& x) -> view<T> {
+    auto make_mut(ref<T> x) -> mut<T> {
+        return &x;
+    }
+
+    template<typename T>
+    auto make_view(cref<T> x) -> view<T> {
         return &x;
     }
 
     template<pro::facade F, typename T>
-    auto make_view(T& x) -> mut<F> {
+    auto make_mut(ref<T> x) -> mut<F> {
         return pro::make_proxy_view<F>(x);
     }
 
     template<pro::facade F, typename T>
-    auto make_view(T const& x) -> view<F> {
+    auto make_view(cref<T> x) -> view<F> {
         return pro::make_proxy_view<F>(x);
     }
 

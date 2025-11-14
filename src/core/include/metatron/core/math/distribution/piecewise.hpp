@@ -14,9 +14,9 @@ namespace mtt::math {
 
         Piecewise_Distribution(
             std::span<f32> data,
-            Vector<usize, n> const& dimensions,
-            Vector<f32, n> const& low,
-            Vector<f32, n> const& high
+            cref<Vector<usize, n>> dimensions,
+            cref<Vector<f32, n>> low,
+            cref<Vector<f32, n>> high
         ) noexcept {
             integral = f32{0};
             this->low = low[0];
@@ -45,7 +45,7 @@ namespace mtt::math {
                 else cdf[i] /= integral;
         }
 
-        auto sample(Vector<f32, n> const& u) const noexcept -> Vector<f32, n> {
+        auto sample(cref<Vector<f32, n>> u) const noexcept -> Vector<f32, n> {
             auto idx = 1uz;
             for (; idx < dim && cdf[idx] <= u[0]; ++idx);
             idx--;
@@ -57,7 +57,7 @@ namespace mtt::math {
             else return consume(rows[idx].sample(cut(u)), p);
         }
 
-        auto pdf(Vector<f32, n> const& p) const noexcept -> f32 {
+        auto pdf(cref<Vector<f32, n>> p) const noexcept -> f32 {
             auto idx = math::clamp(
                 usize((p[0] - low) / delta),
                 0uz, dim - 1uz

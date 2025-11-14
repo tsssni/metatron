@@ -5,26 +5,20 @@ namespace mtt::shape {
     struct Sphere final {
         struct Descriptor final {};
         Sphere() noexcept = default;
-        Sphere(Descriptor const& desc) noexcept;
+        Sphere(cref<Descriptor> desc) noexcept;
         
         auto size() const noexcept -> usize;
         auto bounding_box(
-            math::Matrix<f32, 4, 4> const& t,
-            usize idx
+            cref<fm44> t, usize idx
         ) const noexcept -> math::Bounding_Box;
         auto operator()(
-            math::Ray const& r,
-            math::Vector<f32, 3> const& np,
-            usize idx = 0uz
-        ) const noexcept -> std::optional<Interaction>;
+            cref<math::Ray> r, cref<fv3> np, usize idx = 0uz
+        ) const noexcept -> opt<Interaction>;
         auto sample(
-            eval::Context const& ctx,
-            math::Vector<f32, 2> const& u,
-            usize idx = 0uz
-        ) const noexcept -> std::optional<Interaction>;
+            cref<eval::Context> ctx, cref<fv2> u, usize idx = 0uz
+        ) const noexcept -> opt<Interaction>;
         auto query(
-            math::Ray const& r,
-            usize idx = 0uz
-        ) const noexcept -> std::optional<f32>;
+            cref<math::Ray> r, usize idx = 0uz
+        ) const noexcept -> opt<f32>;
     };
 }

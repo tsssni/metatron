@@ -9,7 +9,7 @@
 namespace mtt::stl {
     template<typename T>
     struct vector final: singleton<vector<T>> {
-        vector() noexcept: mutex(make_poly<std::mutex>()) {}
+        vector() noexcept: mutex(make_obj<std::mutex>()) {}
 
         template<typename... Args>
         requires std::is_constructible_v<T, Args...>
@@ -17,25 +17,25 @@ namespace mtt::stl {
             storage.emplace_back(std::forward<Args>(args)...);
             return storage.size() - 1;
         }
-        auto push_back(T&& x) noexcept -> u32 {return emplace_back(std::move(x));}
-        auto push_back(T const& x) noexcept -> u32 {return emplace_back(x);}
+        auto push_back(rref<T> x) noexcept -> u32 {return emplace_back(std::move(x));}
+        auto push_back(cref<T> x) noexcept -> u32 {return emplace_back(x);}
         auto lock() const noexcept -> std::unique_lock<std::mutex> {return std::unique_lock{*mutex};}
 
         auto operator[](u32 i) noexcept -> mut<T> {return &storage[i];}
         auto operator[](u32 i) const noexcept -> view<T> {return &storage[i];}
-        auto data() const noexcept -> T* {return storage.data();}
+        auto data() const noexcept -> mut<T> {return storage.data();}
         auto size() const noexcept -> usize {return storage.size();}
         auto capacity() const noexcept -> usize {return storage.capacity();}
         auto reserve(usize n) noexcept -> void {storage.reserve(n);}
 
     private:
         std::vector<T> storage;
-        poly<std::mutex> mutex;
+        obj<std::mutex> mutex;
     };
 
     template<pro::facade F>
     struct vector<F> final: singleton<vector<F>> {
-        vector() noexcept {gutex = make_poly<std::mutex>();}
+        vector() noexcept {gutex = make_obj<std::mutex>();}
         ~vector() noexcept {
             for (auto i = 0; i < destroier.size(); i++)
                 destroier[i](storage[i]);
@@ -48,16 +48,16 @@ namespace mtt::stl {
             map[typeid(T)] = idx;
             storage.push_back({});
             length.push_back(sizeof(T));
-            mutex.push_back(make_poly<std::mutex>());
-            destroier.push_back([](std::vector<byte>& vec) {
-                std::destroy_n((T*)vec.data(), vec.size() / sizeof(T));
+            mutex.push_back(make_obj<std::mutex>());
+            destroier.push_back([](ref<std::vector<byte>> vec) {
+                std::destroy_n((mut<T>)vec.data(), vec.size() / sizeof(T));
             });
-            reinterpreter.push_back([](byte const* ptr) {
-                return make_view<F>(*(T*)ptr);
+            reinterpreter.push_back([](view<byte> ptr) {
+                return make_mut<F>(*(mut<T>)ptr);
             });
             if constexpr (F::copyability != pro::constraint_level::none)
-                copier.push_back([](byte const* ptr) {
-                    auto x = *(T*)ptr; return make_poly<F, T>(std::move(x));
+                copier.push_back([](view<byte> ptr) {
+                    auto x = *(mut<T>)ptr; return make_obj<F, T>(std::move(x));
                 });
         }
 
@@ -67,7 +67,7 @@ namespace mtt::stl {
             auto idx = map[typeid(T)];
             auto size = storage[idx].size();
             storage[idx].resize(size + sizeof(T));
-            auto ptr = (T*)(storage[idx].data() + size);
+            auto ptr = mut<T>(storage[idx].data() + size);
             std::construct_at(ptr, std::forward<Args>(args)...);
             return ((idx & 0xff) << 24) | ((size / sizeof(T)) & 0xffffff);
         }
@@ -101,7 +101,7 @@ namespace mtt::stl {
             return reinterpreter.at(t)(ptr);
         }
 
-        auto operator()(u32 i) const noexcept -> poly<F>
+        auto operator()(u32 i) const noexcept -> obj<F>
         requires(F::copyability != pro::constraint_level::none) {
             auto t = (i >> 24) & 0xff;
             auto idx = (i & 0xffffff);
@@ -110,7 +110,7 @@ namespace mtt::stl {
         }
 
         template<typename T>
-        auto data() const noexcept -> T* {return (T*)storage[map.at(typeid(T))].data();}
+        auto data() const noexcept -> mut<T> {return (mut<T>)storage[map.at(typeid(T))].data();}
         template<typename T>
         auto size() const noexcept -> usize {return storage[map.at(typeid(T))].size() / sizeof(T);}
         template<typename T>
@@ -121,11 +121,11 @@ namespace mtt::stl {
     private:
         std::vector<std::vector<byte>> storage;
         std::vector<u32> length;
-        std::vector<std::function<auto (std::vector<byte>& vec) -> void>> destroier;
-        std::vector<std::function<auto (byte const* ptr) -> mut<F>>> reinterpreter;
-        std::vector<std::function<auto (byte const* ptr) -> poly<F>>> copier;
-        std::vector<poly<std::mutex>> mutex;
-        poly<std::mutex> gutex;
+        std::vector<std::function<auto (ref<std::vector<byte>> vec) -> void>> destroier;
+        std::vector<std::function<auto (view<byte> ptr) -> mut<F>>> reinterpreter;
+        std::vector<std::function<auto (view<byte> ptr) -> obj<F>>> copier;
+        std::vector<obj<std::mutex>> mutex;
+        obj<std::mutex> gutex;
         std::unordered_map<std::type_index, u32> map;
     };
 }
@@ -143,9 +143,9 @@ namespace mtt {
 
         auto operator->() -> mut<T> {return data();}
         auto operator->() const -> view<T> {return data();}
-        auto operator*() -> T& requires(!pro::facade<T>) {return *data();}
-        auto operator*() const -> T const& requires(!pro::facade<T>) {return *data();}
-        auto operator*() const -> poly<T>
+        auto operator*() -> ref<T> requires(!pro::facade<T>) {return *data();}
+        auto operator*() const -> cref<T> requires(!pro::facade<T>) {return *data();}
+        auto operator*() const -> obj<T>
         requires(pro::facade<T> && T::copyability != pro::constraint_level::none) {
             return vec::instance()(idx);
         }

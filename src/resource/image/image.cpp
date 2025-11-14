@@ -16,8 +16,8 @@ namespace mtt::image {
     Image::Pixel::Pixel(view<Image> image, mut<byte> start) noexcept
     : image(image), start(start) {}
 
-    Image::Pixel::operator math::Vector<f32, 4>() const noexcept {
-        auto pixel = math::Vector<f32, 4>{};
+    Image::Pixel::operator fv4() const noexcept {
+        auto pixel = fv4{};
         for (auto i = 0; i < image->channels; ++i) {
             switch (image->stride) {
                 case 1:
@@ -35,7 +35,7 @@ namespace mtt::image {
         return pixel;
     }
 
-    auto Image::Pixel::operator=(math::Vector<f32, 4> const& v) noexcept -> void {
+    auto Image::Pixel::operator=(cref<fv4> v) noexcept -> void {
         for (auto i = 0; i < image->size[2]; ++i) {
             auto* pixel = start + image->size[3] * i; 
             switch (image->size[3]) {
@@ -53,8 +53,8 @@ namespace mtt::image {
         }
     }
 
-    auto Image::Pixel::operator+=(math::Vector<f32, 4> const& v) noexcept -> void {
-        *this = math::Vector<f32, 4>(*this) + v;
+    auto Image::Pixel::operator+=(cref<fv4> v) noexcept -> void {
+        *this = fv4(*this) + v;
     }
 
     auto Image::Pixel::data() noexcept -> mut<byte> {
@@ -72,9 +72,9 @@ namespace mtt::image {
         return (*const_cast<Image*>(this))[x, y, lod];
     }
 
-    auto Image::operator()(Coordinate const& coord) const -> math::Vector<f32, 4> {
-        auto du = math::Vector<f32, 2>{coord.dudx, coord.dudy};
-        auto dv = math::Vector<f32, 2>{coord.dvdx, coord.dvdy};
+    auto Image::operator()(cref<Coordinate> coord) const -> fv4 {
+        auto du = fv2{coord.dudx, coord.dudy};
+        auto dv = fv2{coord.dvdx, coord.dvdy};
         auto ul = math::length(du);
         auto vl = math::length(dv);
         auto sl = math::min(ul, vl);
@@ -93,18 +93,18 @@ namespace mtt::image {
                 c.dvdy *= s;
             }
         } else if (sl == 0.f) {
-            auto [x, y] = math::round(coord.uv * math::Vector<f32, 2>{width, height} - 0.5f);
-            return math::Vector<f32, 4>{(*this)[x, y]};
+            auto [x, y] = math::round(coord.uv * fv2{width, height} - 0.5f);
+            return fv4{(*this)[x, y]};
         }
 
         auto lodm = pixels.size() - 1.f;
         auto lod = math::clamp(lodm + std::log2(sl), 0.f, lodm);
 
-        auto filter = [&](i32 lod) -> math::Vector<f32, 4> {
+        auto filter = [&](i32 lod) -> fv4 {
             auto width = math::max(1uz, this->width >> lod);
             auto height = math::max(1uz, this->height >> lod);
             auto& pixels = this->pixels[lod];
-            auto uv = coord.uv * math::Vector<usize, 2>{width, height} - 0.5f;
+            auto uv = coord.uv * uzv2{width, height} - 0.5f;
             auto ux = coord.dudx * width;
             auto uy = coord.dudy * height;
             auto vx = coord.dvdx * width;
@@ -121,16 +121,16 @@ namespace mtt::image {
             auto det = -B * B + 4.f * A * C;
             auto u_tan = 2.f * math::guarded_div(math::sqrt(det * C), det);
             auto v_tan = 2.f * math::guarded_div(math::sqrt(det * A), det);
-            auto u_range = math::Vector<i32, 2>{
+            auto u_range = iv2{
                 i32(std::ceil(uv[0] - u_tan)),
                 i32(std::ceil(uv[0] + u_tan)),
             };
-            auto v_range = math::Vector<i32, 2>{
+            auto v_range = iv2{
                 i32(std::ceil(uv[1] - v_tan)),
                 i32(std::ceil(uv[1] + v_tan)),
             };
 
-            auto sum_t = math::Vector<f32, 4>{0.f};
+            auto sum_t = fv4{0.f};
             auto sum_w = 0.f;
             for (auto j = v_range[0]; j <= v_range[1]; ++j) {
                 auto ud = j - uv[1];
@@ -179,7 +179,7 @@ namespace mtt::image {
                     auto w = ewa_lut[idx];
                     auto wi = math::pmod(i, i32(width));
                     auto wj = math::pmod(j, i32(height));
-                    sum_t += w * math::Vector<f32, 4>{(*this)[wi, wj, lod]};
+                    sum_t += w * fv4{(*this)[wi, wj, lod]};
                     sum_w += w;
                 }
             }
@@ -191,38 +191,38 @@ namespace mtt::image {
         : math::lerp(filter(lodi), filter(lodi + 1), lod - lodi);
     }
 
-    auto Image::operator()(math::Vector<f32, 3> const& uvw) const -> math::Vector<f32, 4> {
-        auto pixel = uvw * math::Vector<f32, 3>{width, height, pixels.size()};
+    auto Image::operator()(cref<fv3> uvw) const -> fv4 {
+        auto pixel = uvw * fv3{width, height, pixels.size()};
         auto base = math::clamp(
             math::floor(pixel - 0.5f),
-            math::Vector<f32, 3>{0.f},
-            math::Vector<f32, 3>{width - 2, height - 2, pixels.size() - 2}
+            fv3{0.f},
+            fv3{width - 2, height - 2, pixels.size() - 2}
         );
         auto frac = math::clamp(
             pixel - 0.5f - base,
-            math::Vector<f32, 3>{0.f},
-            math::Vector<f32, 3>{1.f}
+            fv3{0.f},
+            fv3{1.f}
         );
 
-        auto weights = math::Vector<std::function<auto(f32) -> f32>, 2>{
+        auto weights = std::array<std::function<auto(f32) -> f32>, 2>{
             [] (f32 x) { return 1.f - x; },
             [] (f32 x) { return x; },
         };
-        auto offsets = math::Vector<i32, 2>{0, 1};
+        auto offsets = iv2{0, 1};
 
-        auto r = math::Vector<f32, 4>{0.f};
+        auto r = fv4{0.f};
         for (auto i = 0; i < 4; i++) {
             auto b0 = i & 1;
             auto b1 = (i & 2) >> 1;
             auto w = weights[b0](frac[0]) * weights[b1](frac[1]);
-            auto o = base + math::Vector<usize, 2>{offsets[b0], offsets[b1]};
+            auto o = base + uzv2{offsets[b0], offsets[b1]};
 
             if (base[2] + 1 >= pixels.size())
-                r += w * math::Vector<f32, 4>{(*this)[o[0], o[1], base[2]]};
+                r += w * fv4{(*this)[o[0], o[1], base[2]]};
             else
                 r += w * math::lerp(
-                    math::Vector<f32, 4>{(*this)[o[0], o[1], base[2]]},
-                    math::Vector<f32, 4>{(*this)[o[0], o[1], base[2] + 1]},
+                    fv4{(*this)[o[0], o[1], base[2]]},
+                    fv4{(*this)[o[0], o[1], base[2] + 1]},
                     frac[2]
                 );
         }

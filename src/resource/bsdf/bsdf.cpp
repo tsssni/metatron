@@ -8,9 +8,7 @@ namespace mtt::bsdf {
         return reflectance / math::pi;
     }
 
-    auto lambert(
-        spectra::Stochastic_Spectrum const& reflectance
-    ) -> spectra::Stochastic_Spectrum {
+    auto lambert(cref<stsp> reflectance) -> stsp {
         return reflectance / math::pi;
     }
 
@@ -49,11 +47,7 @@ namespace mtt::bsdf {
         }
     }
 
-    auto fresnel(
-        f32 cos_theta_i,
-        spectra::Stochastic_Spectrum const& eta,
-        spectra::Stochastic_Spectrum const& k
-    ) noexcept -> spectra::Stochastic_Spectrum {
+    auto fresnel(f32 cos_theta_i, cref<stsp> eta, cref<stsp> k) noexcept -> stsp {
         auto F = eta;
         F.value = math::foreach([&](f32 lambda, usize i) {
             return fresnel(cos_theta_i, eta.value[i], k.value[i]);
@@ -61,11 +55,7 @@ namespace mtt::bsdf {
         return F;
     }
 
-    auto lambda(
-        math::Vector<f32, 3> const& wo,
-        f32 alpha_u,
-        f32 alpha_v
-    ) noexcept -> f32 {
+    auto lambda(cref<fv3> wo, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
         auto tan2_theta = math::unit_to_tan2_theta(wo);
         if (std::isinf(tan2_theta)) return 0.f;
         auto alpha2 = 0.f
@@ -74,28 +64,15 @@ namespace mtt::bsdf {
         return (math::sqrt(1.f + alpha2 * tan2_theta) - 1.f) / 2.f;
     }
 
-    auto smith_mask(
-        math::Vector<f32, 3> const& wo,
-        f32 alpha_u,
-        f32 alpha_v
-    ) noexcept -> f32 {
+    auto smith_mask(cref<fv3> wo, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
         return 1.f / (1.f + lambda(-wo, alpha_u, alpha_v));
     }
 
-    auto smith_shadow(
-        math::Vector<f32, 3> const& wo,
-        math::Vector<f32, 3> const& wi,
-        f32 alpha_u,
-        f32 alpha_v
-    ) noexcept -> f32 {
+    auto smith_shadow(cref<fv3> wo, cref<fv3> wi, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
         return 1.f / (1.f + lambda(-wo, alpha_u, alpha_v) + lambda(wi, alpha_u, alpha_v));
     }
 
-    auto trowbridge_reitz(
-        math::Vector<f32, 3> const& wm,
-        f32 alpha_u,
-        f32 alpha_v
-    ) noexcept -> f32 {
+    auto trowbridge_reitz(cref<fv3> wm, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
         auto tan2_theta = math::unit_to_tan2_theta(wm);
         if (std::isinf(tan2_theta)) return 0.f;
 
@@ -112,12 +89,7 @@ namespace mtt::bsdf {
         return 1.f / (math::pi * alpha_u * alpha_v * cos4_theta * math::sqr(1.f + e));
     }
 
-    auto visible_trowbridge_reitz(
-        math::Vector<f32, 3> const& wo,
-        math::Vector<f32, 3> const& wm,
-        f32 alpha_u,
-        f32 alpha_v
-    ) noexcept -> f32 {
+    auto visible_trowbridge_reitz(cref<fv3> wo, cref<fv3> wm, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
         return 1.f
         * trowbridge_reitz(wm, alpha_u, alpha_v)
         * smith_mask(-wo, alpha_u, alpha_v)
@@ -127,14 +99,10 @@ namespace mtt::bsdf {
 
     auto torrance_sparrow(
         bool reflective, f32 pr, f32 pt,
-        spectra::Stochastic_Spectrum const& F, f32 D, f32 G,
-        math::Vector<f32, 3> const& wo,
-        math::Vector<f32, 3> const& wi,
-        math::Vector<f32, 3> const& wm,
-        spectra::Stochastic_Spectrum const& eta,
-        f32 alpha_u,
-        f32 alpha_v
-    ) noexcept -> std::optional<Interaction> {
+        cref<stsp> F, f32 D, f32 G,
+        cref<fv3> wo, cref<fv3> wi, cref<fv3> wm,
+        cref<stsp> eta, f32 alpha_u, f32 alpha_v
+    ) noexcept -> opt<Interaction> {
         auto cos_theta_o = math::unit_to_cos_theta(-wo);
         auto cos_theta_i = math::unit_to_cos_theta(wi);
         auto cos_theta_om = math::dot(-wo, wm);

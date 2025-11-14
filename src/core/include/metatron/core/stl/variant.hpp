@@ -7,8 +7,8 @@ namespace mtt::stl {
     requires (sizeof...(Ts) > 0) && (poliable<F, Ts> && ...)
     struct variant final {
         using ts = stl::array<Ts...>;
-        variant(variant const&) noexcept = delete;
-        variant(variant&& rhs) noexcept {
+        variant(cref<variant>) noexcept = delete;
+        variant(rref<variant> rhs) noexcept {
             idx = rhs.idx;
             storage = std::move(rhs.storage);
             rhs.idx = math::maxv<u32>; // skip destroy
@@ -41,7 +41,7 @@ namespace mtt::stl {
             auto ref = mut<F>{};
             auto v = ((
               idx == ts::template index<Ts>
-              ? (ref = make_view(*(Ts*)data(idx)), true) : false
+              ? (ref = make_mut(*(Ts*)data(idx)), true) : false
             ) || ...);
             return ref;
         }
@@ -50,19 +50,19 @@ namespace mtt::stl {
             return const_cast<variant*>(this)->data();
         }
 
-        auto clone() const noexcept -> poly<F>
+        auto clone() const noexcept -> obj<F>
         requires(F::copyability != pro::constraint_level::none) {
-            auto ref = poly<F>{};
+            auto ref = obj<F>{};
             auto v = ((
               idx == ts::template index<Ts>
-              ? (ref = make_poly<F, Ts>(*(Ts const*)data(idx)), true) : false
+              ? (ref = make_obj<F, Ts>(*(Ts const*)data(idx)), true) : false
             ) || ...);
             return ref;
         }
 
         auto operator->() noexcept -> mut<F> {return data();}
         auto operator->() const noexcept -> mut<F> {return data();}
-        auto operator*() const noexcept -> poly<F> {return clone();}
+        auto operator*() const noexcept -> obj<F> {return clone();}
         auto index() const noexcept -> u32 {return idx;}
         auto size() const noexcept -> usize {return storage.size();}
 

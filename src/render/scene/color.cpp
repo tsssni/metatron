@@ -1,7 +1,6 @@
 #include <metatron/render/scene/hierarchy.hpp>
 #include <metatron/resource/color/color-space.hpp>
 #include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::scene {
@@ -28,13 +27,13 @@ namespace mtt::scene {
         auto name = std::to_array<std::string>({
             "sRGB",
         });
-        auto red_primitive = std::to_array<math::Vector<f32, 2>>({
+        auto red_primitive = std::to_array<fv2>({
             {0.64f, 0.33f},
         });
-        auto green_primitive = std::to_array<math::Vector<f32, 2>>({
+        auto green_primitive = std::to_array<fv2>({
             {0.30f, 0.60f},
         });
-        auto blue_primitive = std::to_array<math::Vector<f32, 2>>({
+        auto blue_primitive = std::to_array<fv2>({
             {0.15f, 0.06f},
         });
         auto white_point = std::to_array<std::string>({
@@ -45,7 +44,7 @@ namespace mtt::scene {
         });
 
         auto mutex = std::mutex{};
-        auto grid = math::Vector<usize, 1>{name.size()};
+        auto grid = uzv1{name.size()};
         stl::scheduler::instance().sync_parallel(grid, [&](auto idx) {
             auto i = idx[0];
             auto entity = ("/color-space/" + name[i]) / et;

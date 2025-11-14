@@ -6,23 +6,23 @@
 
 namespace mtt::media {
     struct Interaction final {
-        math::Vector<f32, 3> p;
-        poly<phase::Phase_Function> phase;
+        fv3 p;
+        obj<phase::Phase_Function> phase;
         f32 t;
-        spectra::Stochastic_Spectrum transmittance;
-        spectra::Stochastic_Spectrum sigma_a;
-        spectra::Stochastic_Spectrum sigma_s;
-        spectra::Stochastic_Spectrum sigma_n;
-        spectra::Stochastic_Spectrum sigma_maj;
-        spectra::Stochastic_Spectrum sigma_e;
+        stsp transmittance;
+        stsp sigma_a;
+        stsp sigma_s;
+        stsp sigma_n;
+        stsp sigma_maj;
+        stsp sigma_e;
     };
 
     MTT_POLY_METHOD(medium_sample, sample);
 
     struct Medium final: pro::facade_builder
     ::add_convention<medium_sample, auto (
-        eval::Context const& ctx, f32 t_max, f32 u
-    ) const noexcept -> std::optional<Interaction>>
+        cref<eval::Context> ctx, f32 t_max, f32 u
+    ) const noexcept -> opt<Interaction>>
     ::add_skill<pro::skills::as_view>
     ::build {};
 
@@ -33,7 +33,7 @@ namespace mtt::media {
         f32 g = 0.f;
 
         auto to_phase(
-            spectra::Stochastic_Spectrum const& spec
-        ) const noexcept -> poly<phase::Phase_Function>;
+            cref<stsp> spec
+        ) const noexcept -> obj<phase::Phase_Function>;
     };
 }

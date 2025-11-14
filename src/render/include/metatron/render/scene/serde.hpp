@@ -19,7 +19,7 @@ namespace mtt::scene {
     }
 
     template<typename F, typename T = F>
-    auto attach(json const& j, std::string_view type) noexcept -> bool {
+    auto attach(cref<json> j, std::string_view type) noexcept -> bool {
         if (j.type != type) return false;
         auto d = T{};
         if (auto er = glz::read_json<T>(d, j.serialized.str); er) {
@@ -58,7 +58,7 @@ namespace mtt::scene {
             | std::views::join
             | std::ranges::to<std::vector<json>>();
 
-            auto grid = math::Vector<usize, 1>{list.size()};
+            auto grid = uzv1{list.size()};
             stl::scheduler::instance().sync_parallel(grid, [&list, &type](auto idx) {
                 auto [i] = idx;
                 auto j = std::move(list[i]);

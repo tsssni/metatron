@@ -3,22 +3,20 @@
 
 namespace mtt::bsdf {
     Interface_Bsdf::Interface_Bsdf(
-        spectra::Stochastic_Spectrum const& spectrum
+        cref<stsp> spectrum
     ) noexcept: spectrum(spectrum) {}
 
     auto Interface_Bsdf::operator()(
-        math::Vector<f32, 3> const& wo,
-        math::Vector<f32, 3> const& wi
-    ) const noexcept -> std::optional<Interaction> {
+        cref<fv3> wo, cref<fv3> wi
+    ) const noexcept -> opt<Interaction> {
         auto f = spectrum;
         f = 1.f;
         return Interaction{f, wo, 1.f};
     }
 
     auto Interface_Bsdf::sample(
-        eval::Context const& ctx,
-        math::Vector<f32, 3> const& u
-    ) const noexcept -> std::optional<Interaction> {
+        cref<eval::Context> ctx, cref<fv3> u
+    ) const noexcept -> opt<Interaction> {
         auto f = spectrum;
         f = 1.f;
         return Interaction{f, ctx.r.d, 1.f};

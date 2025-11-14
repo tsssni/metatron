@@ -5,7 +5,6 @@
 #include <metatron/core/math/distribution/sphere.hpp>
 #include <metatron/core/math/distribution/disk.hpp>
 #include <metatron/core/math/integral.hpp>
-#include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/ranges.hpp>
 
@@ -16,10 +15,10 @@ namespace mtt::bsdf {
     std::vector<f32> Physical_Bsdf::fresnel_reflectance_table;
 
     Physical_Bsdf::Physical_Bsdf(
-        spectra::Stochastic_Spectrum const& spectrum,
-        spectra::Stochastic_Spectrum const& reflectance,
-        spectra::Stochastic_Spectrum const& eta,
-        spectra::Stochastic_Spectrum const& k,
+        cref<stsp> spectrum,
+        cref<stsp> reflectance,
+        cref<stsp> eta,
+        cref<stsp> k,
         f32 alpha_u,
         f32 alpha_v,
         bool inside
@@ -28,7 +27,7 @@ namespace mtt::bsdf {
         auto has_surface = spectra::valid(eta);
         auto has_conductor = spectra::valid(k);
         auto null_spec = spectrum & spectra::Spectrum::spectra["zero"];
-        auto invalid_spec = spectra::Stochastic_Spectrum{};
+        auto invalid_spec = stsp{};
 
         auto bitmask = has_base | (has_surface << 1) | (has_conductor << 2);
         lambertian = bitmask == 0b001;
@@ -62,7 +61,7 @@ namespace mtt::bsdf {
 
     auto Physical_Bsdf::init() noexcept -> void {
         fresnel_reflectance_table.resize(fresnel_length + 1);
-        stl::scheduler::instance().sync_parallel(math::Vector<usize, 1>{fresnel_length + 1}, [&](auto idx) {
+        stl::scheduler::instance().sync_parallel(uzv1{fresnel_length + 1}, [&](auto idx) {
             auto i = idx[0];
             auto integral = 0.0;
             auto eta = i * 3.f / fresnel_length;
@@ -75,13 +74,12 @@ namespace mtt::bsdf {
             }
             fresnel_reflectance_table[i] = integral;
         });
-        auto& m = *(math::Vector<f32, fresnel_length + 1>*)(fresnel_reflectance_table.data());
+        auto& m = *(fv<fresnel_length + 1>*)(fresnel_reflectance_table.data());
     }
 
     auto Physical_Bsdf::operator()(
-        math::Vector<f32, 3> const& wo,
-        math::Vector<f32, 3> const& wi
-    ) const noexcept -> std::optional<Interaction> {
+        cref<fv3> wo, cref<fv3> wi
+    ) const noexcept -> opt<Interaction> {
         if (false
         || math::abs(wo[1]) < math::epsilon<f32>
         || math::abs(wi[1]) < math::epsilon<f32>
@@ -139,9 +137,8 @@ namespace mtt::bsdf {
     }
 
     auto Physical_Bsdf::sample(
-        eval::Context const& ctx,
-        math::Vector<f32, 3> const& u
-    ) const noexcept -> std::optional<Interaction> {
+        cref<eval::Context> ctx, cref<fv3> u
+    ) const noexcept -> opt<Interaction> {
         auto Fo = plastic
         ? fresnel(math::unit_to_cos_theta(-ctx.r.d), eta, k)
         : ctx.spec & spectra::Spectrum::spectra["zero"];
@@ -150,10 +147,10 @@ namespace mtt::bsdf {
             auto wo = ctx.r.d;
             if (math::abs(wo[1]) < math::epsilon<f32>) return {};
 
-            auto wy = math::normalize(-wo * math::Vector<f32, 3>{alpha_u, 1.f, alpha_v});
+            auto wy = math::normalize(-wo * fv3{alpha_u, 1.f, alpha_v});
             auto wx = wy[1] < 1.f - math::epsilon<f32>
-            ? math::cross(wy, math::Vector<f32, 3>{0.f, 1.f, 0.f})
-            : math::Vector<f32, 3>{1.f, 0.f, 0.f};
+            ? math::cross(wy, fv3{0.f, 1.f, 0.f})
+            : fv3{1.f, 0.f, 0.f};
             auto wz = math::cross(wx, wy);
 
             // use polar disk distribution to fetch more samples near center
@@ -168,7 +165,7 @@ namespace mtt::bsdf {
             || math::abs(wm[1]) < math::epsilon<f32>
             || math::dot(-wo, wm) < 0.f) return {};
             // normal transformation with inverse transposed matrix
-            wm = math::normalize(wm * math::Vector<f32, 3>{alpha_u, 1.f, alpha_v});
+            wm = math::normalize(wm * fv3{alpha_u, 1.f, alpha_v});
 
             auto F = fresnel(math::dot(-wo, wm), eta, k);
             auto D = trowbridge_reitz(wm, alpha_u, alpha_v);

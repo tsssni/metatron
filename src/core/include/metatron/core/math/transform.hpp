@@ -9,38 +9,38 @@
 namespace mtt::math {
     template<typename T>
     concept Transformable = false
-    || std::is_same_v<std::remove_cvref_t<T>, Vector<f32, 4>>
-    || std::is_same_v<std::remove_cvref_t<T>, Vector<f32, 3>> // for normal
+    || std::is_same_v<std::remove_cvref_t<T>, fv4>
+    || std::is_same_v<std::remove_cvref_t<T>, fv3> // for normal
     || std::is_same_v<std::remove_cvref_t<T>, Ray>
     || std::is_same_v<std::remove_cvref_t<T>, Ray_Differential>;
 
     struct Transform final {
         struct Chain final {
-            auto operator|(Transform const& t) noexcept -> Chain& {
+            auto operator|(cref<Transform> t) noexcept -> ref<Chain> {
                 store(t);
                 ops.push_back(0);
                 return *this;
             }
 
-            auto operator^(Transform const& t) noexcept -> Chain& {
+            auto operator^(cref<Transform> t) noexcept -> ref<Chain> {
                 store(t);
                 ops.push_back(1);
                 return *this;
             }
 
             template<Transformable T>
-            auto operator|(T const& t) {
+            auto operator|(cref<T> t) {
                 ops.push_back(0);
                 return dechain(t);
             }
 
             template<Transformable T>
-            auto operator^(T const& t) {
+            auto operator^(cref<T> t) {
                 ops.push_back(1);
                 return dechain(t);
             }
 
-            explicit operator Matrix<f32, 4, 4>() const {
+            explicit operator fm44() const {
                 auto ret = transforms.back()->transform;
                 for (auto i = i32(transforms.size()) - 2; i >= 0; i--)
                     ret = (ops[i] == 0)
@@ -50,16 +50,16 @@ namespace mtt::math {
             }
 
         private:
-            Chain(Transform const& t) {
+            Chain(cref<Transform> t) {
                 store(t);
             }
 
-            auto store(Transform const& t) noexcept -> void {
+            auto store(cref<Transform> t) noexcept -> void {
                 transforms.push_back(&t);
             }
 
             template<Transformable T, typename Type = std::remove_cvref_t<T>>
-            auto dechain(T const& rhs) noexcept -> Type {
+            auto dechain(cref<T> rhs) noexcept -> Type {
                 auto ret = rhs;
                 for (auto i = i32(transforms.size()) - 1; i >= 0; i--)
                     ret = (ops[i] == 0)
@@ -75,8 +75,8 @@ namespace mtt::math {
             friend Transform;
         };
 
-        Matrix<f32, 4, 4> transform{1.f};
-        Matrix<f32, 4, 4> inv_transform{1.f};
+        fm44 transform{1.f};
+        fm44 inv_transform{1.f};
 
         Transform() noexcept = default;
         Transform(std::initializer_list<math::Transform> list) {
@@ -86,18 +86,18 @@ namespace mtt::math {
                 inv_transform = inv_transform | t.inv_transform;
         }
 
-        explicit Transform(Matrix<f32, 4, 4> const& m)
+        explicit Transform(cref<fm44> m)
         : transform(m), inv_transform(math::inverse(m)) {}
 
-        explicit operator Matrix<f32, 4, 4>() const {
+        explicit operator fm44() const {
             return transform;
         }
 
         template<Transformable T, typename Type = std::remove_cvref_t<T>>
         auto operator|(T&& rhs) const {
-            if constexpr (std::is_same_v<Type, Vector<f32, 4>>) {
+            if constexpr (std::is_same_v<Type, fv4>) {
                 return transform | rhs;
-            } else if constexpr (std::is_same_v<Type, Vector<f32, 3>>) {
+            } else if constexpr (std::is_same_v<Type, fv3>) {
                 return math::normalize(shrink(expand(rhs, 0.f) | inv_transform));
             } else if constexpr (std::is_same_v<Type, Ray>) {
                 auto r = rhs;
@@ -113,15 +113,15 @@ namespace mtt::math {
             }
         }
 
-        auto operator|(Transform const& rhs) const noexcept -> Chain {
+        auto operator|(cref<Transform> rhs) const noexcept -> Chain {
             return std::move(Chain{*this} | rhs);
         }
 
         template<Transformable T, typename Type = std::remove_cvref_t<T>>
         auto operator^(T&& rhs) const {
-            if constexpr (std::is_same_v<Type, Vector<f32, 4>>) {
+            if constexpr (std::is_same_v<Type, fv4>) {
                 return inv_transform | rhs;
-            } else if constexpr (std::is_same_v<Type, Vector<f32, 3>>) {
+            } else if constexpr (std::is_same_v<Type, fv3>) {
                 return math::normalize(shrink(expand(rhs, 0.f) | transform));
             } else if constexpr (std::is_same_v<Type, Ray>) {
                 auto r = rhs;
@@ -144,7 +144,7 @@ namespace mtt::math {
         }
     };
 
-    auto inline inverse(math::Transform const& t) -> math::Transform {
+    auto inline inverse(cref<math::Transform> t) -> math::Transform {
         auto inv_t = math::Transform{};
         inv_t.transform = t.inv_transform;
         inv_t.inv_transform = t.transform;

@@ -3,40 +3,37 @@
 
 namespace mtt::texture {
     auto Constant_Spectrum_Texture::operator()(
-        image::Coordinate const& coord,
-        spectra::Stochastic_Spectrum const& spec
-    ) const noexcept -> spectra::Stochastic_Spectrum {
+        cref<image::Coordinate> coord, cref<stsp> spec
+    ) const noexcept -> stsp {
         return spec & x;
     }
 
     auto Constant_Spectrum_Texture::sample(
-        eval::Context const& ctx,
-        math::Vector<f32, 2> const& u
-    ) const noexcept -> math::Vector<f32, 2> {
+        cref<eval::Context> ctx, cref<fv2> u
+    ) const noexcept -> fv2 {
         return u;
     }
 
     auto Constant_Spectrum_Texture::pdf(
-        math::Vector<f32, 2> const& uv
+        cref<fv2> uv
     ) const noexcept -> f32 {
         return 1.f;
     }
 
     auto Constant_Vector_Texture::operator()(
-        image::Coordinate const& coord
-    ) const noexcept -> math::Vector<f32, 4> {
+        cref<image::Coordinate> coord
+    ) const noexcept -> fv4 {
         return x;
     }
 
     auto Constant_Vector_Texture::sample(
-        eval::Context const& ctx,
-        math::Vector<f32, 2> const& u
-    ) const noexcept -> math::Vector<f32, 2> {
+        cref<eval::Context> ctx, cref<fv2> u
+    ) const noexcept -> fv2 {
         return u;
     }
 
     auto Constant_Vector_Texture::pdf(
-        math::Vector<f32, 2> const& uv
+        cref<fv2> uv
     ) const noexcept -> f32 {
         return 1.f;
     }
