@@ -228,7 +228,7 @@ namespace mtt::light {
         wi = math::unit_spherical_to_cartesian({theta, phi});
 
         auto L = lambda & spectra::Spectrum::spectra["zero"];
-        L = math::foreach([&](f32 lambda, usize i) {
+        L = spectra::visit([&](f32 lambda, usize i) {
             return hosek(lambda, math::unit_to_cos_theta(wi), math::dot(d, wi));
         }, lambda);
 

@@ -7,11 +7,7 @@ namespace mtt::math {
     template<typename T, usize size>
     using Vector = Matrix<T, size>;
 
-    template<
-        typename Func,
-        typename... Ts,
-        usize size
-    >
+    template<typename Func, typename... Ts, usize size>
     auto constexpr foreach(Func f, cref<Vector<Ts, size>>... vectors)
     noexcept -> Vector<decltype(f(vectors[0]..., 0uz)), size> {
         using Return_Type = decltype(f(vectors[0]..., 0uz));
@@ -21,11 +17,7 @@ namespace mtt::math {
         return r;
     }
 
-    template<
-        typename Func,
-        typename... Ts,
-        usize size
-    >
+    template<typename Func, typename... Ts, usize size>
     auto constexpr any(Func f, cref<Vector<Ts, size>>... vectors) noexcept -> bool {
         using Return_Type = decltype(f(vectors[0]..., 0uz));
         static_assert(std::is_same_v<Return_Type, bool>, "f must return bool");
@@ -36,11 +28,7 @@ namespace mtt::math {
         return false;
     }
 
-    template<
-        typename Func,
-        typename... Ts,
-        usize size
-    >
+    template<typename Func, typename... Ts, usize size>
     auto constexpr all(Func f, cref<Vector<Ts, size>>... vectors) noexcept -> bool {
         using Return_Type = decltype(f(vectors[0]..., 0uz));
         static_assert(std::is_same_v<Return_Type, bool>, "f must return bool");

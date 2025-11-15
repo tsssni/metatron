@@ -23,6 +23,7 @@ namespace mtt::monte_carlo {
 
         auto scattered = false;
         auto crossed = true;
+        auto specular = false;
         auto terminated = false;
 
         auto p = 0.f;
@@ -43,7 +44,7 @@ namespace mtt::monte_carlo {
         auto& ct = ctx.render_to_camera;
 
         auto direct_lighting = [&]() {
-            if (!scattered) return;
+            if (!scattered || specular) return;
 
             auto direct_ctx = trace_ctx;
             MTT_OPT_OR_RETURN(e_intr, emitter->sample(direct_ctx, sampler->generate_1d()));
@@ -207,11 +208,7 @@ namespace mtt::monte_carlo {
                 auto l_ctx = lt ^ trace_ctx;
                 MTT_OPT_OR_CONTINUE(l_intr, (*light.data())(l_ctx.r, l_ctx.lambda));
 
-                auto e_pdf = e_intr.pdf;
-                auto l_pdf = l_intr.pdf;
-                auto p_e = e_pdf * l_pdf;
-
-                mis_e *= math::guarded_div(p_e, p);
+                mis_e *= specular ? 0.f : math::guarded_div(e_intr.pdf * l_intr.pdf, p);
                 auto mis_w = math::guarded_div(1.f, math::avg(mis_s + mis_e));
                 emission += beta * mis_w * l_intr.L;
                 continue;
@@ -282,6 +279,7 @@ namespace mtt::monte_carlo {
                     mis_e = mis_s;
 
                     scattered = true;
+                    specular = false;
                     crossed = false;
                     f = p_intr.f;
                     p = p_intr.pdf;
@@ -316,11 +314,8 @@ namespace mtt::monte_carlo {
 
             [&]() {
                 if (math::max(mat_intr.emission) < math::epsilon<f32>) return;
-                auto s_pdf = intr.pdf;
-                auto e_pdf = 1.f; // TODO: need better way to fetch area light pdf on GPU
-                auto p_e = e_pdf * s_pdf;
-
-                mis_e *= math::guarded_div(p_e, p);
+                // TODO: need correct way to fetch area light pdf on GPU, use 1.f now
+                mis_e *= specular ? 0.f : math::guarded_div(intr.pdf * 1.f, p);
                 auto mis_w = math::guarded_div(1.f, math::avg(mis_s + mis_e));
                 emission += mis_w * beta * mat_intr.emission;
             }();
@@ -328,7 +323,7 @@ namespace mtt::monte_carlo {
             auto tbn = math::transpose(fm33{intr.tn, intr.bn, intr.n});
             intr.n = tbn | mat_intr.normal;
 
-            if (mat_intr.degraded && lambda != fv4{lambda[0]}) {
+            if (mat_intr.degraded && !math::constant(lambda)) {
                 emission = fv4{emission[0]}; beta = fv4{beta[0]};
                 mis_s = fv4{mis_s[0]}; mis_e = fv4{mis_e[0]};
                 lambda = fv4{lambda[0]}; trace_ctx.lambda = lambda;
@@ -342,6 +337,7 @@ namespace mtt::monte_carlo {
             auto u = sampler->generate_2d();
 
             auto b_ctx = bt | trace_ctx;
+            b_ctx.r.d = math::normalize(b_ctx.r.d);
             MTT_OPT_OR_CALLBACK(b_intr, bsdf->sample(b_ctx, {uc, u[0], u[1]}), {
                 terminated = true; continue;
             });
@@ -355,6 +351,7 @@ namespace mtt::monte_carlo {
             }
 
             scattered = true;
+            specular = bsdf->flags() & bsdf::Flags::specular;
             crossed = b_intr.wi[1] < 0.f;
 
             auto trace_n = (crossed ? -1.f : 1.f) * intr.n;

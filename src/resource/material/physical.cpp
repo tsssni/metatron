@@ -17,14 +17,11 @@ namespace mtt::material {
         auto k = guarded_sample(this->k, fv4{0.f});
         auto emission = guarded_sample(this->emission, fv4{0.f});
 
-        auto alpha_u = 0.001f;
-        auto alpha_v = 0.001f;
-        if (this->alpha) {
-            alpha_u = alpha_v = (*this->alpha.data())(coord)[0];
-        } else {
-            alpha_u = guarded_sample(this->alpha_u, fv4{alpha_u})[0];
-            alpha_v = guarded_sample(this->alpha_v, fv4{alpha_v})[0];
-        }
+        auto alpha_u = 0.f;
+        auto alpha_v = 0.f;
+        if (this->alpha) alpha_u = alpha_v = (*this->alpha.data())(coord)[0];
+        if (this->alpha_u) alpha_u = guarded_sample(this->alpha_u, fv4{alpha_u})[0];
+        if (this->alpha_v) alpha_v = guarded_sample(this->alpha_v, fv4{alpha_v})[0];
         auto normal = guarded_sample(this->normal, fv4{0.5f, 0.5f, 1.f, 0.f});
 
         auto lambda = ctx.lambda;

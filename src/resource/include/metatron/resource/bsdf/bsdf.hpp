@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/resource/eval/context.hpp>
+#include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/math/vector.hpp>
 
 namespace mtt::bsdf {
@@ -16,7 +17,8 @@ namespace mtt::bsdf {
     enum Flags {
         reflective = 1 << 0,
         transmissive = 1 << 1,
-        interface = 1 << 2,
+        specular = 1 << 2,
+        interface = 1 << 3,
     };
 
     struct Bsdf final: pro::facade_builder

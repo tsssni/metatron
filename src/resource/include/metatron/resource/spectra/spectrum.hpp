@@ -34,6 +34,7 @@ namespace mtt::spectra {
     }
 
     auto inline operator&(cref<fv4> lambda, view<Spectrum> s) noexcept -> fv4 {
+        if (math::constant(lambda)) return fv4{(*s)(lambda[0])};
         return math::foreach([&](f32 lambda, auto) {
             return (*s)(lambda);
         }, lambda);
@@ -41,5 +42,11 @@ namespace mtt::spectra {
 
     auto inline operator&(cref<fv4> lambda, tag<Spectrum> s) noexcept -> fv4 {
         return lambda & s.data();
+    }
+
+    template<typename Func>
+    auto inline visit(Func f, cref<fv4> lambda) noexcept -> fv4 {
+        if (math::constant(lambda)) return fv4{f(lambda[0], 0)};
+        else return math::foreach(f, lambda);
     }
 }

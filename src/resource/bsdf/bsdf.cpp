@@ -48,9 +48,9 @@ namespace mtt::bsdf {
     }
 
     auto fresnel(f32 cos_theta_i, cref<fv4> eta, cref<fv4> k) noexcept -> fv4 {
-        return math::foreach([&](f32 eta, f32 k, usize i) {
-            return fresnel(cos_theta_i, eta, k);
-        }, eta, k);
+        return spectra::visit([&](auto, usize i) {
+            return fresnel(cos_theta_i, eta[i], k[i]);
+        }, eta);
     }
 
     auto lambda(cref<fv3> wo, f32 alpha_u, f32 alpha_v) noexcept -> f32 {

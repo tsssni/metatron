@@ -44,7 +44,8 @@ namespace mtt::bsdf {
             std::abort();
         }
 
-        fresnel_reflectance = !plastic ? fv4{0.f} : math::foreach([](auto eta, auto) {
+        fresnel_reflectance = !plastic && !specular ? fv4{0.f} :
+        math::foreach([](auto eta, auto) {
             auto idx = eta / 3.f * fresnel_length;
             auto low = i32(idx);
             auto high = math::clamp(low + 1, 0, fresnel_num_samples);
@@ -74,7 +75,9 @@ namespace mtt::bsdf {
     auto Physical_Bsdf::operator()(
         cref<fv3> wo, cref<fv3> wi
     ) const noexcept -> opt<Interaction> {
+        auto flags = this->flags();
         if (false
+        || flags & Flags::specular
         || math::abs(wo[1]) < math::epsilon<f32>
         || math::abs(wi[1]) < math::epsilon<f32>
         ) {
@@ -104,7 +107,6 @@ namespace mtt::bsdf {
 
         auto pr = F[0];
         auto pt = 1.f - F[0];
-        auto flags = this->flags();
         pr *= bool(flags & Flags::reflective);
         pt *= bool(flags & Flags::transmissive);
         if (pr == 0.f && pt == 0.f) return {};
@@ -133,10 +135,37 @@ namespace mtt::bsdf {
     auto Physical_Bsdf::sample(
         cref<eval::Context> ctx, cref<fv3> u
     ) const noexcept -> opt<Interaction> {
-        auto Fo = plastic ? fresnel(math::unit_to_cos_theta(-ctx.r.d), eta, k) : fv4{0.f};
+        auto wo = ctx.r.d;
+        auto flags = this->flags();
+        auto Fo = !plastic ? fv4{0.f} :
+        fresnel(math::unit_to_cos_theta(-ctx.r.d), eta, k);
 
-        if (dieletric || conductive || (plastic && u[0] < Fo[0])) {
-            auto wo = ctx.r.d;
+        if (flags & Flags::specular) {
+            auto wm = fv3{0.f, 1.f, 0.f};
+            auto cos_theta_o = math::unit_to_cos_theta(-wo);
+            if (math::abs(wo[1]) < math::epsilon<f32>) return {};
+
+            auto stochastic = plastic || (flags & (Flags::transmissive | Flags::reflective));
+            auto F = stochastic ? fresnel(cos_theta_o, eta, k) : fv4{f32(flags & Flags::reflective)};
+            auto reflective = u[0] < F[0];
+            auto wi = reflective ? math::reflect(wo, wm) : math::refract(wo, wm, eta[0]);
+            auto cos_theta_i = math::unit_to_cos_theta(wi);
+            if (math::abs(wi[1]) < math::epsilon<f32>) return {};
+
+            auto pdf = stochastic ? 1.f : reflective ? F[0] : 1.f - F[0];
+            auto f = fv4{0.f};
+            if (reflective) f = F;
+            else if (!plastic) f = (1.f - F) / math::sqr(eta[0]);
+            else {
+                auto Fi = fresnel(cos_theta_i, eta, k);
+                f *= 1.f
+                * (1.f - Fi) * (1.f - Fo) / (math::pi * math::sqr(eta))
+                * (reflectance / (1.f - reflectance * fresnel_reflectance));
+            }
+            f /= math::abs(cos_theta_i);
+
+            return Interaction{f, wi, pdf};
+        } else if (dieletric || conductive || (plastic && u[0] < Fo[0])) {
             if (math::abs(wo[1]) < math::epsilon<f32>) return {};
 
             auto wy = math::normalize(-wo * fv3{alpha_u, 1.f, alpha_v});
@@ -164,7 +193,6 @@ namespace mtt::bsdf {
 
             auto pr = F[0];
             auto pt = 1.f - F[0];
-            auto flags = this->flags();
             pr *= bool(flags & Flags::reflective);
             pt *= bool(flags & Flags::transmissive);
             if (pr == 0.f && pt == 0.f) return {};
@@ -204,12 +232,10 @@ namespace mtt::bsdf {
 
     auto Physical_Bsdf::flags() const noexcept -> Flags {
         auto flags = 0;
-        if (reflectance != fv4{0.f} || math::max(k) > 0.f)
-            flags |= Flags::reflective;
-        else if (eta == fv4{1.f})
-            flags |= Flags::transmissive;
-        else
-            flags |= (Flags::transmissive | Flags::reflective);
+        if (reflectance != fv4{0.f} || math::max(k) > 0.f) flags |= Flags::reflective;
+        else if (eta == fv4{1.f}) flags |= Flags::transmissive;
+        else flags |= Flags::transmissive | Flags::reflective;
+        if (!lambertian && (alpha_u == 0.f || alpha_v == 0.f)) flags |= Flags::specular;
         return Flags(flags);
     }
 }
