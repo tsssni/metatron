@@ -3,7 +3,7 @@
 
 namespace mtt::math {
     template<usize n>
-    auto inline constexpr morton_encode(math::Vector<u32, n> x) noexcept -> u32 {
+    auto inline constexpr morton_encode(uv<n> x) noexcept -> u32 {
         if constexpr (n == 2) {
             auto constexpr spread_bits = [](u32 x) noexcept -> u32 {
                 x = (x | (x << 16)) & 0x0000ffff;
@@ -27,7 +27,7 @@ namespace mtt::math {
     }
 
     template<usize n>
-    auto inline constexpr morton_decode(u32 x) noexcept -> math::Vector<u32, n> {
+    auto inline constexpr morton_decode(u32 x) noexcept -> uv<n> {
         if constexpr (n == 2) {
             auto constexpr compact_bits = [](u32 x) noexcept -> u32 {
                 x &= 0x55555555;

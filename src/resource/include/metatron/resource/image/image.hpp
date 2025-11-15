@@ -1,24 +1,29 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
-#include <metatron/resource/color/color-space.hpp>
 #include <vector>
-#include <string_view>
 
 namespace mtt::image {
+    struct Coordinate final {
+        fv2 uv{};
+        f32 dudx{0.f};
+        f32 dudy{0.f};
+        f32 dvdx{0.f};
+        f32 dvdy{0.f};
+    };
+
     struct Image final {
         struct Pixel final {
-            Pixel(Image const* image, byte* start) noexcept;
-            explicit operator math::Vector<f32, 4>() const noexcept;
-            auto operator=(math::Vector<f32, 4> const& v) noexcept -> void;
-            auto operator+=(math::Vector<f32, 4> const& v) noexcept -> void;
+            Pixel(view<Image> image, mut<byte> start) noexcept;
+            explicit operator fv4() const noexcept;
+            auto operator=(cref<fv4> v) noexcept -> void;
+            auto operator+=(cref<fv4> v) noexcept -> void;
+            auto data() noexcept -> mut<byte>;
         private:
-            Image const* image;
-            byte* start;
+            view<Image> image;
+            mut<byte> start;
         };
         friend Pixel;
-        std::vector<byte> pixels;
 
-        // 0: width, 1: height, 2: channels, 3: stride
         union {
             struct {
                 usize width;
@@ -26,24 +31,19 @@ namespace mtt::image {
                 usize channels;
                 usize stride;
             };
-            math::Vector<usize, 4> size;
-        } const;
-        color::Color_Space const* color_space;
+            uzv4 size;
+        };
+        // only sRGB is supported by hardware so boolean value is enough.
         bool linear;
+        // specify mip size by resizing the vector.
+        // if just fill mip 0 then mipmap auto generated.
+        // if mip 0 empty, auto fill zero for mipmap.
+        // if all mips have same size, treated as 3d image.
+        std::vector<std::vector<byte>> pixels;
 
-        Image(
-            math::Vector<usize, 4> const& size,
-            color::Color_Space const* color_space,
-            bool linear = false
-        ) noexcept;
-
-        auto operator[](usize x, usize y) noexcept -> Pixel;
-        auto operator[](usize x, usize y) const noexcept -> Pixel const;
-
-        auto static from_path(
-            std::string_view path,
-            bool linear = false
-        ) noexcept -> poly<Image>;
-        auto to_path(std::string_view path) const noexcept -> void;
+        auto operator[](usize x, usize y, usize lod = 0) noexcept -> Pixel;
+        auto operator[](usize x, usize y, usize lod = 0) const noexcept -> Pixel const;
+        auto operator()(cref<Coordinate> coord) const -> fv4;
+        auto operator()(cref<fv3> uvw) const -> fv4;
     };
 }

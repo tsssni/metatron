@@ -7,8 +7,8 @@ namespace mtt::remote {
     struct Previewer final: stl::capsule<Previewer> {
         struct Impl;
         Previewer() noexcept = default;
-        Previewer(wired::Address const& address, std::string_view name) noexcept;
+        Previewer(cref<wired::Address> address, std::string_view name) noexcept;
 
-        auto update(image::Image&& image) noexcept -> void;
+        auto update(rref<image::Image> image) noexcept -> void;
     };
 }

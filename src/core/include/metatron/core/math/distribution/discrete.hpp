@@ -6,7 +6,8 @@ namespace mtt::math {
         std::vector<f32> pdf;
         std::vector<f32> cdf;
 
-        Discrete_Distribution(std::vector<f32> const& ws) noexcept
+        Discrete_Distribution() noexcept = default;
+        Discrete_Distribution(cref<std::vector<f32>> ws) noexcept
         : pdf(ws) {
             cdf.push_back(0.f);
             for (auto w: this->pdf)

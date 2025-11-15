@@ -11,7 +11,7 @@ namespace mtt::wired {
         Address address;
         Socket socket{invalid_socket};
 
-        Impl(Address const& address) noexcept: address(address) {
+        Impl(cref<Address> address) noexcept: address(address) {
             ::signal(SIGPIPE, SIG_IGN);
         }
 
@@ -71,7 +71,7 @@ namespace mtt::wired {
         }
     };
 
-    Tcp_Socket::Tcp_Socket(Address const& address) noexcept
+    Tcp_Socket::Tcp_Socket(cref<Address> address) noexcept
     : stl::capsule<Tcp_Socket>(address) {}
 
     auto Tcp_Socket::send(std::span<byte const> data) noexcept -> bool {

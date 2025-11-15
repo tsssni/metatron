@@ -5,56 +5,44 @@
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>
 #include <metatron/core/math/distribution/cone.hpp>
-#include <metatron/core/stl/optional.hpp>
 
 namespace mtt::shape {
+    Sphere::Sphere(cref<Descriptor> desc) noexcept {}
+
     auto Sphere::size() const noexcept -> usize {
         return 1uz;
     }
 
     auto Sphere::bounding_box(
-        math::Matrix<f32, 4, 4> const& t,
-        usize idx
+        cref<fm44> t, usize idx
     ) const noexcept -> math::Bounding_Box {
-        auto c = t | math::Vector<f32, 4>{0.f, 0.f, 0.f, 1.f};
-        auto d = t | math::Vector<f32, 4>{0.f, 1.f, 0.f, 0.f};
-        auto r = math::Vector<f32, 3>{math::length(d - c)};
+        auto c = t | fv4{0.f, 0.f, 0.f, 1.f};
+        auto d = t | fv4{0.f, 1.f, 0.f, 0.f};
+        auto r = fv3{math::length(d - c)};
         return {c - r, c + r};
     }
 
     auto Sphere::operator()(
-        math::Ray const& r,
-        usize idx
-    ) const noexcept -> std::optional<Interaction> {
-        auto a = math::dot(r.d, r.d);
-        auto b = math::dot(r.o, r.d) * 2.f;
-        auto c = math::dot(r.o, r.o) - 1.f;
-
-        auto delta = b * b - 4.f * a * c;
-        if (delta < 0.f) return {};
-
-        auto x0 = (-b - math::sqrt(delta)) / (2.f * a);
-        auto x1 = (-b + math::sqrt(delta)) / (2.f * a);
-        if (x1 < 0.f) return {};
-
-        auto t = x0 < 0.f ? x1 : x0;
+        cref<math::Ray> r, cref<fv3> np, usize idx
+    ) const noexcept -> opt<Interaction> {
+        MTT_OPT_OR_RETURN(t, query(r, idx), {});
         auto p = r.o + t * r.d;
         auto n = p;
 
         auto s = math::cartesian_to_unit_spherical(p);
         auto& theta = s[0];
         auto& phi = s[1];
-        auto uv = math::Vector<f32, 2>{
+        auto uv = fv2{
             theta / math::pi,
             phi / (2.f * math::pi)
         };
 
-        auto dpdu = math::Vector<f32, 3>{
+        auto dpdu = fv3{
             std::cos(theta) * std::cos(phi),
             -std::sin(theta),
             std::cos(theta) * std::sin(phi),
         } / math::pi;
-        auto dpdv = math::Vector<f32, 3>{
+        auto dpdv = fv3{
             -std::sin(theta) * std::sin(phi),
             0.f,
             std::sin(theta) * std::cos(phi),
@@ -66,41 +54,6 @@ namespace mtt::shape {
         tn = math::gram_schmidt(tn, n);
         auto bn = math::cross(tn, n);
 
-        return Interaction{p, n, tn, bn, uv, t, dpdu, dpdv, dndu, dndv};
-    }
-
-    auto Sphere::sample(
-        eval::Context const& ctx,
-        math::Vector<f32, 2> const& u,
-        usize idx
-    ) const noexcept -> std::optional<Interaction> {
-        auto d = math::length(ctx.r.o);
-        if (d < 1.f) {
-            auto distr = math::Sphere_Distribution{};
-            auto p = distr.sample(u);
-            auto dir = math::normalize(p - ctx.r.o);
-
-            MTT_OPT_OR_RETURN(intr, (*this)({ctx.r.o, dir}), {});
-            return intr;
-        } else {
-            auto cos_theta_max = math::sqrt(1.f - 1.f / (d * d));
-            auto distr = math::Cone_Distribution{cos_theta_max};
-            auto dir = math::normalize(-ctx.r.o);
-
-            auto sdir = distr.sample(u);
-            auto rot = math::Quaternion<f32>::from_rotation_between({0.f, 0.f, 1.f}, dir);
-            sdir = math::rotate(math::expand(sdir, 0.f), rot);
-
-            MTT_OPT_OR_RETURN(intr, (*this)({ctx.r.o, sdir}), {});
-            return intr;
-        }
-    }
-
-    auto Sphere::pdf(
-        math::Ray const& r,
-        math::Vector<f32, 3> const& np,
-        usize idx
-    ) const noexcept -> f32 {
         auto pdf = 1.f;
         auto d = math::length(r.o);
         if (d < 1.f) {
@@ -109,7 +62,46 @@ namespace mtt::shape {
             auto cos_theta_max = math::sqrt(1.f - 1.f / (d * d));
             pdf = math::Cone_Distribution{cos_theta_max}.pdf();
         }
-        return pdf;
+
+        return Interaction{p, n, tn, bn, uv, t, pdf, dpdu, dpdv, dndu, dndv};
     }
 
+    auto Sphere::sample(
+        cref<eval::Context> ctx, cref<fv2> u, usize idx
+    ) const noexcept -> opt<Interaction> {
+        auto d = math::length(ctx.r.o);
+        if (d < 1.f) {
+            auto distr = math::Sphere_Distribution{};
+            auto p = distr.sample(u);
+            auto dir = math::normalize(p - ctx.r.o);
+
+            return (*this)({ctx.r.o, dir}, ctx.n);
+        } else {
+            auto cos_theta_max = math::sqrt(1.f - 1.f / (d * d));
+            auto distr = math::Cone_Distribution{cos_theta_max};
+            auto dir = math::normalize(-ctx.r.o);
+
+            auto sdir = distr.sample(u);
+            auto rot = fq::from_rotation_between({0.f, 0.f, 1.f}, dir);
+            sdir = math::rotate(math::expand(sdir, 0.f), rot);
+
+            return (*this)({ctx.r.o, sdir}, ctx.n);
+        }
+    }
+
+    auto Sphere::query(
+        cref<math::Ray> r, usize idx
+    ) const noexcept -> opt<f32> {
+        auto a = math::dot(r.d, r.d);
+        auto b = math::dot(r.o, r.d) * 2.f;
+        auto c = math::dot(r.o, r.o) - 1.f;
+
+        auto delta = b * b - 4.f * a * c;
+        if (delta < 0.f) return {};
+
+        auto x0 = (-b - math::sqrt(delta)) / (2.f * a);
+        auto x1 = (-b + math::sqrt(delta)) / (2.f * a);
+        if (x1 < 0.f) return {};
+        return x0 < 0.f ? x1 : x0;
+    }
 }

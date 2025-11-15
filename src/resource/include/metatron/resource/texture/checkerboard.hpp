@@ -1,31 +1,29 @@
 #pragma once
 #include <metatron/resource/texture/texture.hpp>
+#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::texture {
     struct Checkerboard_Texture final {
-        Checkerboard_Texture(
-            view<spectra::Spectrum> x,
-            view<spectra::Spectrum> y,
-            math::Vector<usize, 2> uv_scale
-        ) noexcept;
+        struct Descriptor final {
+            tag<spectra::Spectrum> x;
+            tag<spectra::Spectrum> y;
+            uzv2 uv_scale = uzv2{1uz};
+        };
+        Checkerboard_Texture() noexcept = default;
+        Checkerboard_Texture(cref<Descriptor> desc) noexcept;
 
         auto operator()(
-            Sampler const& sampler,
-            Coordinate const& coord,
-            spectra::Stochastic_Spectrum const& spec
-        ) const noexcept -> spectra::Stochastic_Spectrum;
+            cref<image::Coordinate> coord, cref<fv4> lambda
+        ) const noexcept -> fv4;
         auto sample(
-            eval::Context const& ctx,
-            math::Vector<f32, 2> const& u
-        ) const noexcept -> math::Vector<f32, 2>;
-        auto pdf(
-            math::Vector<f32, 2> const& uv
-        ) const noexcept -> f32;
+            cref<eval::Context> ctx, cref<fv2> u
+        ) const noexcept -> fv2;
+        auto pdf(cref<fv2> uv) const noexcept -> f32;
 
     private:
-        view<spectra::Spectrum> x;
-        view<spectra::Spectrum> y;
-        math::Vector<usize, 2> uv_scale;
+        tag<spectra::Spectrum> x;
+        tag<spectra::Spectrum> y;
+        uzv2 uv_scale;
 
         f32 w_x;
         f32 w_y;

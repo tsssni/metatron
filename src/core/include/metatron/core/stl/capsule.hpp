@@ -20,11 +20,11 @@ namespace mtt::stl {
                 if (impl) deleter(impl);
             }
 
-            Impl(Impl&& impl) noexcept {
+            Impl(rref<Impl> impl) noexcept {
                 *this = std::move(impl);
             }
 
-            auto operator=(Impl&& impl) noexcept {
+            auto operator=(rref<Impl> impl) noexcept {
                 if (impl) deleter(impl);
                 impl = impl.impl;
                 impl.impl = nullptr;

@@ -5,20 +5,20 @@
 
 namespace mtt::math {
     struct Bounding_Box final {
-        Vector<f32, 3> p_min{high<f32>};
-        Vector<f32, 3> p_max{low<f32>};
+        fv3 p_min{high<f32>};
+        fv3 p_max{low<f32>};
     };
 
-    auto inline constexpr inside(math::Vector<f32, 3> const& p, Bounding_Box const& bbox) noexcept -> bool {
+    auto inline constexpr inside(cref<fv3> p, cref<Bounding_Box> bbox) noexcept -> bool {
         return math::all([](f32 x, f32 y, f32 z, auto) {
             return x >= y && x < z;
         }, p, bbox.p_min, bbox.p_max);
     }
 
     auto inline constexpr hit(
-        Ray const& r,
-        Bounding_Box const& bbox
-    ) noexcept -> std::optional<math::Vector<f32, 2>> {
+        cref<Ray> r,
+        cref<Bounding_Box> bbox
+    ) noexcept -> opt<fv2> {
         auto hit_min = (bbox.p_min - r.o) / r.d;
         auto hit_max = (bbox.p_max - r.o) / r.d;
         for (auto i = 0uz; i < 3uz; ++i)
@@ -32,13 +32,13 @@ namespace mtt::math {
         auto t_enter = max(hit_min);
         auto t_exit = min(hit_max);
         if (t_exit < -epsilon<f32> || t_enter > t_exit + epsilon<f32>) return {};
-        return math::Vector<f32, 2>{t_enter, t_exit};
+        return fv2{t_enter, t_exit};
     }
 
     auto inline constexpr hitvi(
-        Ray const& r,
-        Bounding_Box const& bbox
-    ) noexcept -> std::optional<std::tuple<f32, f32, usize, usize>> {
+        cref<Ray> r,
+        cref<Bounding_Box> bbox
+    ) noexcept -> opt<std::tuple<f32, f32, usize, usize>> {
         auto hit_min = (bbox.p_min - r.o) / r.d;
         auto hit_max = (bbox.p_max - r.o) / r.d;
         for (auto i = 0uz; i < 3uz; ++i)
@@ -56,8 +56,8 @@ namespace mtt::math {
     }
 
     auto inline constexpr merge(
-        Bounding_Box const& a,
-        Bounding_Box const& b
+        cref<Bounding_Box> a,
+        cref<Bounding_Box> b
     ) noexcept -> Bounding_Box {
         return Bounding_Box{
             .p_min = math::min(a.p_min, b.p_min),
@@ -65,7 +65,7 @@ namespace mtt::math {
         };
     }
 
-    auto inline constexpr area(Bounding_Box const& bbox) noexcept -> f32 {
+    auto inline constexpr area(cref<Bounding_Box> bbox) noexcept -> f32 {
         if(math::any([](f32 x, f32 y, usize) {
             return x >= y;
         }, bbox.p_min, bbox.p_max)) return 0.f;

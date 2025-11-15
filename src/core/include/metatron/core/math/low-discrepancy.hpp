@@ -19,7 +19,7 @@ namespace mtt::math {
             x = next;
         }
 
-        return std::min(reversed / f32(inv_b), 1.f - epsilon<f32>);
+        return math::min(reversed / f32(inv_b), 1.f - epsilon<f32>);
     };
 
     auto inline constexpr inverse_radical(usize reversed, i32 b, i32 n) noexcept -> usize {
@@ -47,7 +47,7 @@ namespace mtt::math {
             x = next;
         }
 
-        return std::min(reversed / f32(inv_b), 1.f - epsilon<f32>);
+        return math::min(reversed / f32(inv_b), 1.f - epsilon<f32>);
     }
 
     auto inline constexpr fast_binary_owen_scramble(u32 x, u32 hash) noexcept -> u32 {

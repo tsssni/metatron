@@ -4,18 +4,11 @@
 namespace mtt::bsdf {
     struct Interface_Bsdf final {
         auto operator()(
-            math::Vector<f32, 3> const& wo,
-            math::Vector<f32, 3> const& wi
-        ) const noexcept -> std::optional<Interaction>;
+            cref<fv3> wo, cref<fv3> wi
+        ) const noexcept -> opt<Interaction>;
         auto sample(
-            eval::Context const& ctx,
-            math::Vector<f32, 3> const& u
-        ) const noexcept -> std::optional<Interaction>;
-        auto configure(Attribute const& attr) noexcept -> void;
+            cref<eval::Context> ctx, cref<fv3> u
+        ) const noexcept -> opt<Interaction>;
         auto flags() const noexcept -> Flags;
-        auto degrade() noexcept -> bool;
-
-    private:
-        spectra::Stochastic_Spectrum spectrum;
     };
 }

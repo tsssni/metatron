@@ -1,26 +1,20 @@
 #include <metatron/resource/light/spot.hpp>
 
 namespace mtt::light {
-    Spot_Light::Spot_Light(
-        view<spectra::Spectrum> L,
-        f32 falloff_start_theta,
-        f32 falloff_end_theta
-    ) noexcept:
-    L(L),
-    falloff_start_cos_theta(std::cos(falloff_start_theta)),
-    falloff_end_cos_theta(std::cos(falloff_end_theta)) {}
+    Spot_Light::Spot_Light(cref<Descriptor> desc) noexcept:
+    L(desc.L),
+    falloff_start_cos_theta(std::cos(desc.falloff_start_theta)),
+    falloff_end_cos_theta(std::cos(desc.falloff_end_theta)) {}
 
     auto Spot_Light::operator()(
-        math::Ray const& r,
-        spectra::Stochastic_Spectrum const& spec
-    ) const noexcept -> std::optional<Interaction> {
+        cref<math::Ray> r, cref<fv4> lambda
+    ) const noexcept -> opt<Interaction> {
         return {};
     }
 
     auto Spot_Light::sample(
-        eval::Context const& ctx,
-        math::Vector<f32, 2> const& u
-    ) const noexcept -> std::optional<Interaction> {
+        cref<eval::Context> ctx, cref<fv2> u
+    ) const noexcept -> opt<Interaction> {
         auto smoothstep = [](f32 start, f32 end, f32 x) -> f32 {
             if (x < start) return 0.f;
             else if (x > end) return 1.f;
@@ -28,7 +22,7 @@ namespace mtt::light {
             return t * t * (3.f - 2.f * t);
         };
 
-        auto constexpr d = math::Vector<f32, 3>{0.f, 0.f, 1.f};
+        auto constexpr d = fv3{0.f, 0.f, 1.f};
         auto wi = math::normalize(-ctx.r.o);
         auto r = math::length(ctx.r.o);
 
@@ -40,18 +34,12 @@ namespace mtt::light {
         );
 
         return Interaction{
-            .L = (ctx.spec & L) * intensity / (r * r),
+            .L = (ctx.lambda & L) * intensity / (r * r),
             .wi = wi,
             .p = {0.f},
             .t = r,
+            .pdf = 1.f,
         };
-    }
-
-    auto Spot_Light::pdf(
-        math::Ray const& r,
-        math::Vector<f32, 3> const& np
-    ) const noexcept -> f32 {
-        return 1.f;
     }
 
     auto Spot_Light::flags() const noexcept -> Flags {

@@ -1,0 +1,90 @@
+#pragma once
+#include <proxy/proxy.h>
+
+namespace mtt::inline prelude {
+    template<typename T>
+    struct obj_impl final {
+        using type = std::unique_ptr<T>;
+    };
+
+    template<pro::facade F>
+    struct obj_impl<F> final {
+        using type = pro::proxy<F>;
+    };
+
+    template<typename T>
+    using obj = obj_impl<T>::type;
+
+    template<typename T, typename... Args>
+    requires std::is_constructible_v<T, Args...>
+    auto make_obj(Args&&... args) -> obj<T> {
+        return std::make_unique<T>(std::forward<Args>(args)...);
+    }
+
+    template<pro::facade F, typename T, typename... Args>
+    requires std::is_constructible_v<T, Args...>
+    auto make_obj(Args&&... args) -> obj<F> {
+        return pro::make_proxy<F, T>(std::forward<Args>(args)...);
+    }
+
+    template<typename T>
+    struct view_impl final {
+        using type = std::conditional_t<
+            std::is_const_v<T>,
+            T const*,
+            T*
+        >;
+    };
+
+    template<pro::facade F>
+    struct view_impl<F> final {
+        using facade = std::remove_const_t<F>;
+        using type = std::conditional_t<
+            std::is_const_v<F>,
+            pro::proxy_view<facade> const,
+            pro::proxy_view<facade>
+        >;
+    };
+
+    template<typename T>
+    using mut = view_impl<std::remove_const_t<T>>::type;
+
+    template<typename T>
+    using view = view_impl<std::add_const_t<std::remove_const_t<T>>>::type;
+
+    template<typename T>
+    using ref = T&;
+
+    template<typename T>
+    using cref = T const&;
+
+    template<typename T>
+    using rref = T&&;
+
+    template<typename F, typename T>
+    concept poliable = pro::facade<F> && std::is_constructible_v<mut<F>, mut<T>>;
+
+    template<typename T>
+    auto make_mut(ref<T> x) -> mut<T> {
+        return &x;
+    }
+
+    template<typename T>
+    auto make_view(cref<T> x) -> view<T> {
+        return &x;
+    }
+
+    template<pro::facade F, typename T>
+    auto make_mut(ref<T> x) -> mut<F> {
+        return pro::make_proxy_view<F>(x);
+    }
+
+    template<pro::facade F, typename T>
+    auto make_view(cref<T> x) -> view<F> {
+        return pro::make_proxy_view<F>(x);
+    }
+
+    #define MTT_POLY_METHOD(x, ...) PRO_DEF_MEM_DISPATCH(x, __VA_ARGS__)
+    #define MTT_POLY_FUNCTION(x, ...) PRO_DEF_FREE_DISPATCH(x, __VA_ARGS__)
+    #define MTT_POLY_FUNCTION_METHOD(x, ...) PRO_DEF_FREE_AS_MEM_DISPATCH(x, __VA_ARGS__)
+}

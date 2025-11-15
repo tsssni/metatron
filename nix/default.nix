@@ -7,16 +7,19 @@
   entt,
   glaze,
   lib,
-  mimalloc,
   ninja,
   openimageio,
   openvdb,
   proxy,
+  vulkan-tools,
   zlib,
 }:
-clangStdenv.mkDerivation {
+let
+  stdenv = clangStdenv;
+in
+stdenv.mkDerivation {
   pname = "metatron";
-  version = "0.1.0";
+  version = "0.2.0";
 
   src = ../.;
   # src = fetchFromGitHub {
@@ -37,12 +40,14 @@ clangStdenv.mkDerivation {
     assimp
     entt
     glaze
-    mimalloc
     openimageio
     openvdb
     proxy
     zlib
-  ];
+  ]
+  ++ (lib.optionals stdenv.isLinux [
+    vulkan-tools
+  ]);
 
   cmakeFlags = [
     "--preset rel"
@@ -63,9 +68,9 @@ clangStdenv.mkDerivation {
     homepage = "github.com/tsssni/metatron";
     license = licenses.gpl3;
     platforms = [
-        "x86_64-linux"
-        "aarch64-linux"
-        "aarch64-darwin"
+      "x86_64-linux"
+      "aarch64-linux"
+      "aarch64-darwin"
     ];
   };
 }

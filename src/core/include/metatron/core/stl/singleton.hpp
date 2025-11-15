@@ -4,12 +4,12 @@ namespace mtt::stl {
     template<typename T, bool local = false>
     struct singleton {
         singleton() noexcept = default;
-        singleton(singleton const&) = delete;
-        singleton(singleton&&) = delete;
-        auto operator=(singleton const&) -> singleton& = delete;
-        auto operator=(singleton&&) -> singleton& = delete;
+        singleton(cref<singleton>) = delete;
+        singleton(rref<singleton>) = delete;
+        auto operator=(cref<singleton>) -> singleton& = delete;
+        auto operator=(rref<singleton>) -> singleton& = delete;
 
-        static auto instance() noexcept -> T& {
+        static auto instance() noexcept -> ref<T> {
             if constexpr (local) {
                 T thread_local instance;
                 return instance;

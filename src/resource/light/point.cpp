@@ -1,34 +1,24 @@
 #include <metatron/resource/light/point.hpp>
 
 namespace mtt::light {
-    Point_Light::Point_Light(view<spectra::Spectrum> L) noexcept: L(L) {}
-
     auto Point_Light::operator()(
-        math::Ray const& r,
-        spectra::Stochastic_Spectrum const& spec
-    ) const noexcept -> std::optional<Interaction> {
+        cref<math::Ray> r, cref<fv4> lambda
+    ) const noexcept -> opt<Interaction> {
         return {};
     }
 
     auto Point_Light::sample(
-        eval::Context const& ctx,
-        math::Vector<f32, 2> const& u
-    ) const noexcept -> std::optional<Interaction> {
+        cref<eval::Context> ctx, cref<fv2> u
+    ) const noexcept -> opt<Interaction> {
         auto wi = math::normalize(-ctx.r.o);
         auto r = math::length(ctx.r.o);
         return Interaction{
-            .L = (ctx.spec & L) / (r * r),
+            .L = (ctx.lambda & L) / (r * r),
             .wi = wi,
             .p = {0.f},
             .t = r,
+            .pdf = 1.f,
         };
-    }
-
-    auto Point_Light::pdf(
-        math::Ray const& r,
-        math::Vector<f32, 3> const& np
-    ) const noexcept -> f32 {
-        return 1.f;
     }
 
     auto Point_Light::flags() const noexcept -> Flags {
