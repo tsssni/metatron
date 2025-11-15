@@ -6,7 +6,7 @@
 namespace mtt::material {
     struct Interaction final {
         obj<bsdf::Bsdf> bsdf;
-        stsp emission;
+        fv4 emission;
         fv3 normal{0.f};
         bool degraded{false};
     };

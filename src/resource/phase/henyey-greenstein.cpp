@@ -11,11 +11,8 @@ namespace mtt::phase {
         cref<fv3> wo, cref<fv3> wi
     ) const noexcept -> opt<Interaction> {
         auto f = math::guarded_div((1.f - g * g) / (4.f * math::pi), std::pow(1.f + g * g + 2.f * g * math::dot(-wo, wi), 1.5f));
-        auto spec_f = spectra::Constant_Spectrum{f};
         return Interaction{
-            spectrum & (&spec_f),
-            wi,
-            f
+            fv4{f}, wi, f
         };
     }
 

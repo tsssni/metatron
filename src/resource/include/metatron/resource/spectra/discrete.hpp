@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
+#include <metatron/resource/spectra/spectrum.hpp>
 
 namespace mtt::spectra {
     struct Discrete_Spectrum final {
@@ -13,6 +13,6 @@ namespace mtt::spectra {
     private:
         std::array<f32, 256> lambda;
         std::array<f32, 256> storage;
-        usize size;
+        i32 size;
     };
 }

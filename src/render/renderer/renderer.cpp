@@ -31,7 +31,7 @@ namespace mtt::renderer {
                 for (auto n = range[0]; n < range[1]; ++n) {
                     sp->start({px, size, n, spp, 0uz, seed});
                     auto fixel = desc.film(desc.filter.data(), px, sp->generate_pixel_2d());
-                    auto spec = stsp{sp->generate_1d()};
+                    auto spec = spectra::Stochastic_Spectrum{sp->generate_1d()};
                     MTT_OPT_OR_CALLBACK(s, photo::Camera{}.sample(
                         desc.lens.data(), fixel.position, fixel.dxdy, sp->generate_2d()
                     ), {
@@ -42,7 +42,7 @@ namespace mtt::renderer {
                     s.default_differential = ct ^ s.default_differential;
 
                     auto ctx = monte_carlo::Context{
-                        desc.accel.data(), desc.emitter.data(), sp, spec,
+                        desc.accel.data(), desc.emitter.data(), sp, spec.lambda,
                         s.ray_differential, s.default_differential,
                         ct, px, n, depth,
                     };
@@ -50,7 +50,8 @@ namespace mtt::renderer {
                         std::println("invalid value appears in pixel {} sample {}", px, n);
                         std::abort();
                     });
-                    fixel = Li / s.pdf;
+                    Li.value /= s.pdf;
+                    fixel = Li;
                     ++progress;
                 }
             };

@@ -19,7 +19,7 @@ namespace mtt::photo {
     ) * film->dxdy),
     weight(weight) {}
 
-    auto Fixel::operator=(cref<stsp> spectrum) noexcept -> void {
+    auto Fixel::operator=(cref<spectra::Stochastic_Spectrum> spectrum) noexcept -> void {
         auto xyz = fv3{
             spectrum(film->r),
             spectrum(film->g),

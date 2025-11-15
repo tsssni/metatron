@@ -3,8 +3,8 @@
 
 namespace mtt::texture {
     auto Constant_Spectrum_Texture::operator()(
-        cref<image::Coordinate> coord, cref<stsp> spec
-    ) const noexcept -> stsp {
+        cref<image::Coordinate> coord, cref<fv4> spec
+    ) const noexcept -> fv4 {
         return spec & x;
     }
 

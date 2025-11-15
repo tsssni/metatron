@@ -7,12 +7,12 @@
 
 namespace mtt::light {
     auto Environment_Light::operator()(
-        cref<math::Ray> r, cref<stsp> spec
+        cref<math::Ray> r, cref<fv4> lambda
     ) const noexcept -> opt<Interaction> {
         auto [radius, theta, phi] = math::cartesian_to_spherical(r.d);
         auto u = 1.f - phi / (2.f * math::pi);
         auto v = theta / math::pi;
-        auto t = (*env_map.data())({{u, v}}, spec);
+        auto t = (*env_map.data())({{u, v}}, lambda);
         auto J = 2.f * math::sqr(math::pi) * std::sin(theta);
         return Interaction{
             .L = t,
@@ -31,7 +31,7 @@ namespace mtt::light {
         auto phi = (1.f - uv[0]) * 2.f * math::pi;
         auto theta = uv[1] * math::pi;
         auto wi = math::unit_spherical_to_cartesian({theta, phi});
-        return (*this)({ctx.r.o, wi}, ctx.spec);
+        return (*this)({ctx.r.o, wi}, ctx.lambda);
     }
 
     auto Environment_Light::flags() const noexcept -> Flags {

@@ -52,6 +52,14 @@ namespace mtt::math {
     }
 
     template<typename T, usize size>
+    requires std::totally_ordered<T>
+    auto constexpr constant(cref<Vector<T, size>> x) noexcept -> bool {
+        return all([y = x[0]](T x, auto) {
+            return x == y;
+        }, x);
+    }
+
+    template<typename T, usize size>
     requires std::floating_point<T>
     auto constexpr isnan(cref<Vector<T, size>> x) noexcept -> bool {
         return any([](T x, auto){

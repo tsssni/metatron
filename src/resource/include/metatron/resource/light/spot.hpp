@@ -13,7 +13,7 @@ namespace mtt::light {
         Spot_Light(cref<Descriptor> desc) noexcept;
 
         auto operator()(
-            cref<math::Ray> r, cref<stsp> spec
+            cref<math::Ray> r, cref<fv4> lambda
         ) const noexcept -> opt<Interaction>;
         auto sample(
             cref<eval::Context> ctx, cref<fv2> u

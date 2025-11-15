@@ -4,7 +4,6 @@
 namespace mtt::phase {
     struct Henyey_Greenstein_Phase_Function final {
         f32 g;
-        stsp spectrum;
 
         auto operator()(
             cref<fv3> wo, cref<fv3> wi

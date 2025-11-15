@@ -32,4 +32,14 @@ namespace mtt::spectra {
             Spectrum::spectra["CIE-Z"] | s,
         };
     }
+
+    auto inline operator&(cref<fv4> lambda, view<Spectrum> s) noexcept -> fv4 {
+        return math::foreach([&](f32 lambda, auto) {
+            return (*s)(lambda);
+        }, lambda);
+    }
+
+    auto inline operator&(cref<fv4> lambda, tag<Spectrum> s) noexcept -> fv4 {
+        return lambda & s.data();
+    }
 }

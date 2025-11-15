@@ -2,7 +2,7 @@
 
 namespace mtt::light {
     auto Parallel_Light::operator()(
-        cref<math::Ray> r, cref<stsp> spec
+        cref<math::Ray> r, cref<fv4> lambda
     ) const noexcept -> opt<Interaction> {
         return {};
     }
@@ -12,7 +12,7 @@ namespace mtt::light {
     ) const noexcept -> opt<Interaction> {
         auto constexpr wi = fv3{0.f, 0.f, -1.f};
         return Interaction{
-            .L = ctx.spec & L,
+            .L = ctx.lambda & L,
             .wi = wi,
             .p = ctx.r.o + 65504.f * wi,
             .t = 65504.f,

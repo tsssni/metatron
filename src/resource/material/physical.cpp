@@ -9,16 +9,13 @@ namespace mtt::material {
         auto guarded_sample = [&]<typename T>(T tex, auto const& fallback) {
             if (!tex) return fallback;
             if constexpr (std::is_same_v<T, tag<texture::Spectrum_Texture>>)
-                return (*tex.data())(coord, ctx.spec);
+                return (*tex.data())(coord, ctx.lambda);
             else return (*tex.data())(coord);
         };
-
-        auto invalid_spec = stsp{};
-        auto zero_spec = ctx.spec & spectra::Spectrum::spectra["zero"];
-        auto reflectance = guarded_sample(this->reflectance, invalid_spec);
-        auto eta = guarded_sample(this->eta, invalid_spec);
-        auto k = guarded_sample(this->k, invalid_spec);
-        auto emission = guarded_sample(this->emission, zero_spec);
+        auto reflectance = guarded_sample(this->reflectance, fv4{0.f});
+        auto eta = guarded_sample(this->eta, fv4{0.f});
+        auto k = guarded_sample(this->k, fv4{0.f});
+        auto emission = guarded_sample(this->emission, fv4{0.f});
 
         auto alpha_u = 0.001f;
         auto alpha_v = 0.001f;
@@ -30,11 +27,20 @@ namespace mtt::material {
         }
         auto normal = guarded_sample(this->normal, fv4{0.5f, 0.5f, 1.f, 0.f});
 
+        auto lambda = ctx.lambda;
+        auto degraded = true
+        && eta != fv4{0.f} && reflectance == fv4{0.f} && k == fv4{0.f}
+        && !math::constant(eta);
+        if (degraded) {
+            lambda = fv4{lambda[0]};
+            reflectance = fv4{reflectance[0]};
+            eta = fv4{eta[0]}; k = fv4{k[0]};
+            emission = fv4{emission[0]};
+        }
         auto bsdf = make_obj<bsdf::Bsdf, bsdf::Physical_Bsdf>(
-            ctx.spec, reflectance, eta, k,
+            reflectance, eta, k,
             alpha_u, alpha_v, ctx.inside
         );
-        auto degraded = bsdf->degrade();
 
         return Interaction{
             .bsdf = std::move(bsdf),

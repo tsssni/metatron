@@ -7,7 +7,7 @@ namespace mtt::light {
     falloff_end_cos_theta(std::cos(desc.falloff_end_theta)) {}
 
     auto Spot_Light::operator()(
-        cref<math::Ray> r, cref<stsp> spec
+        cref<math::Ray> r, cref<fv4> lambda
     ) const noexcept -> opt<Interaction> {
         return {};
     }
@@ -34,7 +34,7 @@ namespace mtt::light {
         );
 
         return Interaction{
-            .L = (ctx.spec & L) * intensity / (r * r),
+            .L = (ctx.lambda & L) * intensity / (r * r),
             .wi = wi,
             .p = {0.f},
             .t = r,

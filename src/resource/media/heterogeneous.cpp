@@ -42,11 +42,11 @@ namespace mtt::media {
     auto Heterogeneous_Medium::sample(
         cref<eval::Context> ctx, f32 t_max, f32 u
     ) const noexcept -> opt<Interaction> {
-        auto sigma_a = (ctx.spec & this->sigma_a) * density_scale;
-        auto sigma_s = (ctx.spec & this->sigma_s) * density_scale;
+        auto sigma_a = (ctx.lambda & this->sigma_a) * density_scale;
+        auto sigma_s = (ctx.lambda & this->sigma_s) * density_scale;
         auto sigma_t = sigma_a + sigma_s;
         auto sigma_maj = sigma_t;
-        auto transmittance = ctx.spec & spectra::Spectrum::spectra["one"];
+        auto transmittance = fv4{1.f};
         auto density_maj = 0.f;
         auto distr = math::Exponential_Distribution{0.f};
 
@@ -78,7 +78,7 @@ namespace mtt::media {
 
             density_maj = (*majorant.data())[cell];
             sigma_maj = density_maj * sigma_t;
-            distr = math::Exponential_Distribution(sigma_maj.value[0]);
+            distr = math::Exponential_Distribution(sigma_maj[0]);
         };
 
         if (!majorant->inside(cell)) {
@@ -96,9 +96,9 @@ namespace mtt::media {
             t_transmitted += t;
             t_boundary -= t;
             r.o += t * r.d;
-            transmittance.value *= math::foreach([&](f32 value, usize i) {
+            transmittance *= math::foreach([&](f32 value, usize i) {
                 return std::exp(-value * t);
-            }, sigma_maj.value);
+            }, sigma_maj);
         };
 
         while (true) {
@@ -109,7 +109,7 @@ namespace mtt::media {
                 update_transmittance(t_boundary);
                 return Interaction{
                     r.o,
-                    phase.to_phase(ctx.spec),
+                    phase.to_phase(),
                     t_max,
                     transmittance,
                     {}, {}, {}, {}, {},
@@ -126,16 +126,14 @@ namespace mtt::media {
 
                 return Interaction{
                     r.o,
-                    phase.to_phase(ctx.spec),
+                    phase.to_phase(),
                     t_transmitted,
                     transmittance,
                     density * sigma_a,
                     density * sigma_s,
-                    spectra::max(sigma_maj - density * sigma_t, {0.f}),
+                    math::max(sigma_maj - density * sigma_t, fv4{0.f}),
                     sigma_maj,
-                    density * (sigma_e
-                    ? ctx.spec & sigma_e
-                    : ctx.spec & spectra::Spectrum::spectra["zero"])
+                    density * (sigma_e ? (ctx.lambda & sigma_e) : fv4{0.f}),
                 };
             }
         }

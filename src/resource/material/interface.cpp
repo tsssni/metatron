@@ -7,8 +7,8 @@ namespace mtt::material {
         cref<image::Coordinate> coord
     ) const noexcept -> opt<Interaction> {
         return Interaction{
-            .bsdf = make_obj<bsdf::Bsdf, bsdf::Interface_Bsdf>(ctx.spec),
-            .emission = ctx.spec & spectra::Spectrum::spectra["zero"],
+            .bsdf = make_obj<bsdf::Bsdf, bsdf::Interface_Bsdf>(),
+            .emission = fv4{0.f},
             .normal = {0.f, 0.f, 1.f},
             .degraded = false,
         };

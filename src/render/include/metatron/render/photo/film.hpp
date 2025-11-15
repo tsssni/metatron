@@ -10,10 +10,10 @@ namespace mtt::photo {
     struct Film;
 
     struct Fixel final {
-        uzv2 const pixel;
-        fv2 const position;
-        fv2 const dxdy;
-        f32 const weight;
+        uzv2 pixel;
+        fv2 position;
+        fv2 dxdy;
+        f32 weight;
 
         Fixel(
             mut<Film> film,
@@ -22,7 +22,7 @@ namespace mtt::photo {
             f32 weight
         ) noexcept;
 
-        auto operator=(cref<stsp> spectrum) noexcept -> void;
+        auto operator=(cref<spectra::Stochastic_Spectrum> spectrum) noexcept -> void;
 
     private:
         mut<Film> film;

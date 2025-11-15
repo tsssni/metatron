@@ -4,15 +4,15 @@
 #include <metatron/core/math/sphere.hpp>
 
 namespace mtt::bsdf {
-    auto lambert(f32 reflectance) -> f32 {
+    auto lambert(f32 reflectance) noexcept -> f32 {
         return reflectance / math::pi;
     }
 
-    auto lambert(cref<stsp> reflectance) -> stsp {
+    auto lambert(cref<fv4> reflectance) noexcept -> fv4 {
         return reflectance / math::pi;
     }
 
-    auto fresnel(f32 cos_theta_i, f32 eta, f32 k) -> f32 {
+    auto fresnel(f32 cos_theta_i, f32 eta, f32 k) noexcept -> f32 {
         cos_theta_i = math::clamp(cos_theta_i, -1.f, 1.f);
         auto F = [cos_theta_i](auto eta) {
             using T = decltype(eta);
@@ -47,12 +47,10 @@ namespace mtt::bsdf {
         }
     }
 
-    auto fresnel(f32 cos_theta_i, cref<stsp> eta, cref<stsp> k) noexcept -> stsp {
-        auto F = eta;
-        F.value = math::foreach([&](f32 lambda, usize i) {
-            return fresnel(cos_theta_i, eta.value[i], k.value[i]);
-        }, F.lambda);
-        return F;
+    auto fresnel(f32 cos_theta_i, cref<fv4> eta, cref<fv4> k) noexcept -> fv4 {
+        return math::foreach([&](f32 eta, f32 k, usize i) {
+            return fresnel(cos_theta_i, eta, k);
+        }, eta, k);
     }
 
     auto lambda(cref<fv3> wo, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
@@ -99,9 +97,9 @@ namespace mtt::bsdf {
 
     auto torrance_sparrow(
         bool reflective, f32 pr, f32 pt,
-        cref<stsp> F, f32 D, f32 G,
+        cref<fv4> F, f32 D, f32 G,
         cref<fv3> wo, cref<fv3> wi, cref<fv3> wm,
-        cref<stsp> eta, f32 alpha_u, f32 alpha_v
+        cref<fv4> eta, f32 alpha_u, f32 alpha_v
     ) noexcept -> opt<Interaction> {
         auto cos_theta_o = math::unit_to_cos_theta(-wo);
         auto cos_theta_i = math::unit_to_cos_theta(wi);
@@ -115,8 +113,8 @@ namespace mtt::bsdf {
             f = F * D * G / math::abs(4.f * cos_theta_o * cos_theta_i);
             pdf = visible_trowbridge_reitz(wo, wm, alpha_u, alpha_v) / (4.f * math::abs(cos_theta_om)) * pr / (pr + pt);
         } else {
-            denom = math::sqr(cos_theta_im + cos_theta_om / eta.value[0]);
-            f = (1.f - F) * D * G * math::abs(cos_theta_om * cos_theta_im / (denom * cos_theta_i * cos_theta_o)) / math::sqr(eta.value[0]);
+            denom = math::sqr(cos_theta_im + cos_theta_om / eta[0]);
+            f = (1.f - F) * D * G * math::abs(cos_theta_om * cos_theta_im / (denom * cos_theta_i * cos_theta_o)) / math::sqr(eta[0]);
             pdf = visible_trowbridge_reitz(wo, wm, alpha_u, alpha_v) * math::abs(cos_theta_im) / denom * pt / (pr + pt);
         }
 

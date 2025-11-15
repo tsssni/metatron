@@ -212,7 +212,7 @@ namespace mtt::light {
     }
 
     auto Sunsky_Light::operator()(
-        cref<math::Ray> r, cref<stsp> spec
+        cref<math::Ray> r, cref<fv4> lambda
     ) const noexcept -> opt<Interaction> {
         auto wi = math::normalize(r.d);
         auto cos_theta = math::unit_to_cos_theta(wi);
@@ -227,10 +227,10 @@ namespace mtt::light {
         );
         wi = math::unit_spherical_to_cartesian({theta, phi});
 
-        auto L = spec & spectra::Spectrum::spectra["zero"];
-        L.value = math::foreach([&](f32 lambda, usize i) {
+        auto L = lambda & spectra::Spectrum::spectra["zero"];
+        L = math::foreach([&](f32 lambda, usize i) {
             return hosek(lambda, math::unit_to_cos_theta(wi), math::dot(d, wi));
-        }, L.lambda);
+        }, lambda);
 
         auto tgmm_phi = phi + math::pi * 0.5f - phi_sun;
         auto sun_pdf = 0.f;
@@ -273,7 +273,7 @@ namespace mtt::light {
             auto u_sun = fv2{(u[0] - w_sky) / (1.f - w_sky), u[1]};
             wi = math::normalize(fv3{t | math::expand(distr.sample(u_sun), 0.f)});
         }
-        return (*this)({ctx.r.o, wi}, ctx.spec);
+        return (*this)({ctx.r.o, wi}, ctx.lambda);
     }
 
     auto Sunsky_Light::flags() const noexcept -> Flags {

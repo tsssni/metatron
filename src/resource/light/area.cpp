@@ -2,7 +2,7 @@
 
 namespace mtt::light {
     auto Area_Light::operator()(
-        cref<math::Ray> r, cref<stsp> spec
+        cref<math::Ray> r, cref<fv4> lambda
     ) const noexcept -> opt<Interaction> {
         return {};
     }
@@ -11,9 +11,8 @@ namespace mtt::light {
         cref<eval::Context> ctx, cref<fv2> u
     ) const noexcept -> opt<Interaction> {
         MTT_OPT_OR_RETURN(s_intr, shape->sample(ctx, u, primitive), {});
-        auto L = ctx.spec; L = 0.f; // delay fetching L in integrator material interaction
         return Interaction{
-            .L = ctx.spec & spectra::Spectrum::spectra["zero"],
+            .L = fv4{0.f}, // delay fetching L in integrator material interaction
             .wi = math::normalize(s_intr.p - ctx.r.o),
             .p = s_intr.p,
             .t = s_intr.t,

@@ -4,10 +4,9 @@
 namespace mtt::bsdf {
     struct Physical_Bsdf final {
         Physical_Bsdf(
-            cref<stsp> spectrum,
-            cref<stsp> reflectance,
-            cref<stsp> eta,
-            cref<stsp> k,
+            cref<fv4> reflectance,
+            cref<fv4> eta,
+            cref<fv4> k,
             f32 alpha_u,
             f32 alpha_v,
             bool inside
@@ -36,11 +35,11 @@ namespace mtt::bsdf {
     private:
         std::vector<f32> static fresnel_reflectance_table;
 
-        stsp spectrum;
-        stsp reflectance;
-        stsp fresnel_reflectance;
-        stsp eta;
-        stsp k;
+        fv4 spectrum;
+        fv4 reflectance;
+        fv4 fresnel_reflectance;
+        fv4 eta;
+        fv4 k;
         f32 alpha_u;
         f32 alpha_v;
 

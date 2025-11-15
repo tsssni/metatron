@@ -93,7 +93,9 @@ namespace mtt::image {
                 c.dvdy *= s;
             }
         } else if (sl == 0.f) {
-            auto [x, y] = math::round(coord.uv * fv2{width, height} - 0.5f);
+            auto [x, y] = iv2{math::round(coord.uv * fv2{width, height} - 0.5f)};
+            x = math::pmod(x, i32(width));
+            y = math::pmod(y, i32(height));
             return fv4{(*this)[x, y]};
         }
 

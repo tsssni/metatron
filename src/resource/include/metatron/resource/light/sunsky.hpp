@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/resource/light/light.hpp>
-#include <metatron/resource/spectra/stochastic.hpp>
 #include <metatron/core/math/distribution/discrete.hpp>
 #include <metatron/core/math/distribution/gaussian.hpp>
 #include <metatron/core/math/distribution/cone.hpp>
@@ -48,7 +47,7 @@ namespace mtt::light {
         // Hosek atomosphere model: https://cgg.mff.cuni.cz/projects/SkylightModelling/
         // binary data: https://github.com/mitsuba-renderer/mitsuba-data/tree/master/sunsky/output
         auto operator()(
-            cref<math::Ray> r, cref<stsp> spec
+            cref<math::Ray> r, cref<fv4> lambda
         ) const noexcept -> opt<Interaction>;
         // TGMM sky sampling: https://diglib.eg.org/items/b3f1efca-1d13-44d0-ad60-741c4abe3d21
         auto sample(

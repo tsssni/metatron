@@ -2,7 +2,7 @@
 
 namespace mtt::light {
     auto Point_Light::operator()(
-        cref<math::Ray> r, cref<stsp> spec
+        cref<math::Ray> r, cref<fv4> lambda
     ) const noexcept -> opt<Interaction> {
         return {};
     }
@@ -13,7 +13,7 @@ namespace mtt::light {
         auto wi = math::normalize(-ctx.r.o);
         auto r = math::length(ctx.r.o);
         return Interaction{
-            .L = (ctx.spec & L) / (r * r),
+            .L = (ctx.lambda & L) / (r * r),
             .wi = wi,
             .p = {0.f},
             .t = r,

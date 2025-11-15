@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/resource/shape/sphere.hpp>
+#include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/resource/eval/context.hpp>
 #include <metatron/resource/image/image.hpp>
 
@@ -9,8 +10,8 @@ namespace mtt::texture {
 
     struct Spectrum_Texture final: pro::facade_builder
     ::add_convention<pro::operator_dispatch<"()">, auto (
-        cref<image::Coordinate> coord, cref<stsp> spec
-    ) const noexcept -> stsp>
+        cref<image::Coordinate> coord, cref<fv4> lambda
+    ) const noexcept -> fv4>
     ::add_convention<texture_sample, auto (
         cref<eval::Context> ctx, cref<fv2> u
     ) const noexcept -> fv2>

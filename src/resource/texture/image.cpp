@@ -113,8 +113,8 @@ namespace mtt::texture {
 
 
     auto Image_Spectrum_Texture::operator()(
-        cref<image::Coordinate> coord, cref<stsp> spec
-    ) const noexcept -> stsp {
+        cref<image::Coordinate> coord, cref<fv4> spec
+    ) const noexcept -> fv4 {
         auto rgba = image_tex(coord);
         auto rgb_spec = spectra::Rgb_Spectrum{{
             rgba,

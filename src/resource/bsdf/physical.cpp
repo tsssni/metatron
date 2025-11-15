@@ -15,19 +15,21 @@ namespace mtt::bsdf {
     std::vector<f32> Physical_Bsdf::fresnel_reflectance_table;
 
     Physical_Bsdf::Physical_Bsdf(
-        cref<stsp> spectrum,
-        cref<stsp> reflectance,
-        cref<stsp> eta,
-        cref<stsp> k,
+        cref<fv4> reflectance,
+        cref<fv4> eta,
+        cref<fv4> k,
         f32 alpha_u,
         f32 alpha_v,
         bool inside
-    ) noexcept {
-        auto has_base = spectra::valid(reflectance);
-        auto has_surface = spectra::valid(eta);
-        auto has_conductor = spectra::valid(k);
-        auto null_spec = spectrum & spectra::Spectrum::spectra["zero"];
-        auto invalid_spec = stsp{};
+    ) noexcept:
+    reflectance(reflectance),
+    eta(inside ? 1.f / eta : eta),
+    k(k),
+    alpha_u(alpha_u),
+    alpha_v(alpha_v) {
+        auto has_base = reflectance != fv4{0.f};
+        auto has_surface = eta != fv4{0.f};
+        auto has_conductor = k != fv4{0.f};
 
         auto bitmask = has_base | (has_surface << 1) | (has_conductor << 2);
         lambertian = bitmask == 0b001;
@@ -36,27 +38,19 @@ namespace mtt::bsdf {
         plastic = bitmask == 0b011;
         if (!lambertian && !dieletric && !conductive && ! plastic) {
             std::println("bsdf not physically possible with these attributes:");
+            std::println("reflectance: {}", reflectance);
+            std::println("eta: {}", eta);
+            std::println("k: {}", k);
             std::abort();
         }
 
-        if (has_surface) {
-            this->eta = eta;
-            this->eta = inside ? 1.f / eta : eta;
-            this->alpha_u = alpha_u;
-            this->alpha_v = alpha_v;
-        }
-        if (plastic) {
-            fresnel_reflectance = eta;
-            fresnel_reflectance.value = math::foreach([](auto eta, auto) {
-                auto idx = eta / 3.f * fresnel_length;
-                auto low = i32(idx);
-                auto high = math::clamp(low + 1, 0, fresnel_num_samples);
-                auto alpha = idx - low;
-                return math::lerp(fresnel_reflectance_table[low], fresnel_reflectance_table[high], alpha);
-            }, eta.value);
-        }
-        this->reflectance = has_base ? reflectance : invalid_spec;
-        this->k = has_conductor ? k : null_spec;
+        fresnel_reflectance = !plastic ? fv4{0.f} : math::foreach([](auto eta, auto) {
+            auto idx = eta / 3.f * fresnel_length;
+            auto low = i32(idx);
+            auto high = math::clamp(low + 1, 0, fresnel_num_samples);
+            auto alpha = idx - low;
+            return math::lerp(fresnel_reflectance_table[low], fresnel_reflectance_table[high], alpha);
+        }, eta);
     }
 
     auto Physical_Bsdf::init() noexcept -> void {
@@ -89,7 +83,7 @@ namespace mtt::bsdf {
 
         auto reflective = -wo[1] * wi[1] > 0.f;
         auto forward = wi[1] > 0.f;
-        auto wm = math::normalize(reflective ? -wo + wi : -wo + wi * eta.value[0]);
+        auto wm = math::normalize(reflective ? -wo + wi : -wo + wi * eta[0]);
         if (wm[1] < 0.f) wm *= -1.f;
         if (false
         || (!dieletric && (!reflective || !forward))
@@ -108,8 +102,8 @@ namespace mtt::bsdf {
         auto D = trowbridge_reitz(wm, alpha_u, alpha_v);
         auto G = smith_shadow(wo, wi, alpha_u, alpha_v);
 
-        auto pr = F.value[0];
-        auto pt = 1.f - F.value[0];
+        auto pr = F[0];
+        auto pt = 1.f - F[0];
         auto flags = this->flags();
         pr *= bool(flags & Flags::reflective);
         pt *= bool(flags & Flags::transmissive);
@@ -130,8 +124,8 @@ namespace mtt::bsdf {
             * (1.f - Fi) * (1.f - Fo) / (math::pi * math::sqr(eta))
             * (reflectance / (1.f - reflectance * fresnel_reflectance));
             R.f += internal;
-            R.pdf *= Fo.value[0];
-            R.pdf += (1.f - Fo.value[0]) * pdf;
+            R.pdf *= Fo[0];
+            R.pdf += (1.f - Fo[0]) * pdf;
         }
         return R;
     }
@@ -139,11 +133,9 @@ namespace mtt::bsdf {
     auto Physical_Bsdf::sample(
         cref<eval::Context> ctx, cref<fv3> u
     ) const noexcept -> opt<Interaction> {
-        auto Fo = plastic
-        ? fresnel(math::unit_to_cos_theta(-ctx.r.d), eta, k)
-        : ctx.spec & spectra::Spectrum::spectra["zero"];
+        auto Fo = plastic ? fresnel(math::unit_to_cos_theta(-ctx.r.d), eta, k) : fv4{0.f};
 
-        if (dieletric || conductive || (plastic && u[0] < Fo.value[0])) {
+        if (dieletric || conductive || (plastic && u[0] < Fo[0])) {
             auto wo = ctx.r.d;
             if (math::abs(wo[1]) < math::epsilon<f32>) return {};
 
@@ -170,15 +162,15 @@ namespace mtt::bsdf {
             auto F = fresnel(math::dot(-wo, wm), eta, k);
             auto D = trowbridge_reitz(wm, alpha_u, alpha_v);
 
-            auto pr = F.value[0];
-            auto pt = 1.f - F.value[0];
+            auto pr = F[0];
+            auto pt = 1.f - F[0];
             auto flags = this->flags();
             pr *= bool(flags & Flags::reflective);
             pt *= bool(flags & Flags::transmissive);
             if (pr == 0.f && pt == 0.f) return {};
 
             auto reflective = (plastic || conductive) ? true : u[0] < pr / (pr + pt);
-            auto wi = reflective ? math::reflect(wo, wm) : math::refract(wo, wm, eta.value[0]);
+            auto wi = reflective ? math::reflect(wo, wm) : math::refract(wo, wm, eta[0]);
             auto G = smith_shadow(wo, wi, alpha_u, alpha_v);
             if (math::abs(wi[1]) < math::epsilon<f32>) return {};
 
@@ -188,7 +180,7 @@ namespace mtt::bsdf {
                 wo, wi, wm,
                 eta, alpha_u, alpha_v
             ), {});
-            R.pdf *= plastic ? Fo.value[0] : 1.f;
+            R.pdf *= plastic ? Fo[0] : 1.f;
             return R;
         } else {
             auto distr = math::Cosine_Hemisphere_Distribution{};
@@ -204,27 +196,17 @@ namespace mtt::bsdf {
                 auto f = 1.f
                 * (1.f - Fi) * (1.f - Fo) / (math::pi * math::sqr(eta))
                 * (reflectance / (1.f - reflectance * fresnel_reflectance));
-                pdf *= (1.f - Fo.value[0]);
+                pdf *= (1.f - Fo[0]);
                 return Interaction{f, wi, pdf};
             }
         }
     }
 
-    auto Physical_Bsdf::degrade() noexcept -> bool {
-        if (spectra::max(k) == 0.f && !spectra::constant(eta)) {
-            spectra::degrade(eta);
-            spectra::degrade(k);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     auto Physical_Bsdf::flags() const noexcept -> Flags {
         auto flags = 0;
-        if (spectra::valid(reflectance) || spectra::max(k) > 0.f)
+        if (reflectance != fv4{0.f} || math::max(k) > 0.f)
             flags |= Flags::reflective;
-        else if (spectra::constant(eta) && eta.value[0] == 1.f)
+        else if (eta == fv4{1.f})
             flags |= Flags::transmissive;
         else
             flags |= (Flags::transmissive | Flags::reflective);

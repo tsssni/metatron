@@ -1,11 +1,10 @@
 #pragma once
-#include <metatron/resource/spectra/stochastic.hpp>
 #include <metatron/resource/eval/context.hpp>
 #include <metatron/core/math/vector.hpp>
 
 namespace mtt::phase {
     struct Interaction final {
-        stsp f;
+        fv4 f;
         fv3 wi;
         f32 pdf;
     };

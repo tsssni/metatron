@@ -2,7 +2,6 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/math/transform.hpp>
-#include <metatron/resource/spectra/stochastic.hpp>
 
 namespace mtt::bsdf {
     struct Bsdf;
@@ -16,7 +15,7 @@ namespace mtt::eval {
     struct Context final {
         math::Ray r{};
         fv3 n{};
-        stsp spec{};
+        fv4 lambda{};
         bool inside;
     };
 
