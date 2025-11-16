@@ -1,32 +1,25 @@
 #pragma once
 #include <metatron/render/emitter/emitter.hpp>
 #include <metatron/core/math/distribution/discrete.hpp>
+#include <metatron/core/stl/arena.hpp>
 
 namespace mtt::emitter {
     struct Uniform_Emitter final {
-        Uniform_Emitter(
-            std::vector<Divider>&& dividers,
-            std::vector<Divider>&& infinite_dividers
-        );
-        auto operator()(
-            eval::Context const& ctx,
-            Divider const& divider
-        ) const noexcept -> std::optional<emitter::Interaction>;
+        struct Primitive final {
+            tag<light::Light> light;
+            tag<math::Transform> local_to_render;
+        };
+        Uniform_Emitter();
+
         auto sample(
-            eval::Context const& ctx,
-            f32 u
-        ) const noexcept -> std::optional<emitter::Interaction>;
+            cref<eval::Context> ctx, f32 u
+        ) const noexcept -> opt<Interaction>;
         auto sample_infinite(
-            eval::Context const& ctx,
-            f32 u
-        ) const noexcept -> std::optional<emitter::Interaction>;
-        auto pdf(Divider const& divider) const noexcept -> f32;
-        auto pdf_infinite(Divider const& divider) const noexcept -> f32;
+            cref<eval::Context> ctx, f32 u
+        ) const noexcept -> opt<Interaction>;
 
     private:
-        std::vector<Divider> dividers;
-        std::vector<Divider> inf_dividers;
-        math::Discrete_Distribution distr;
-        math::Discrete_Distribution inf_distr;
+        buf<Primitive> prims;
+        buf<Primitive> inf_prims;
     };
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/render/emitter/emitter.hpp>
+#include <metatron/render/scene/hierarchy.hpp>
 #include <metatron/resource/shape/shape.hpp>
 #include <metatron/resource/material/material.hpp>
 #include <metatron/resource/media/medium.hpp>
@@ -8,27 +8,29 @@
 #include <metatron/core/math/transform.hpp>
 
 namespace mtt::accel {
+    auto constexpr default_medium = "/medium/vaccum";
+    auto constexpr default_transform = "/hierarchy/medium/vaccum";
+
     struct Divider final {
-        view<shape::Shape> shape{};
-        view<media::Medium> int_medium;
-        view<media::Medium> ext_medium;
-        view<light::Light> light{};
-        material::Material const* material{};
-        math::Transform const* local_to_world{};
-        math::Transform const* int_to_world{};
-        math::Transform const* ext_to_world{};
-        usize primitive{0uz};
+        tag<shape::Shape> shape{};
+        tag<media::Medium> int_medium{scene::fetch<media::Medium>(default_medium / et)};
+        tag<media::Medium> ext_medium{scene::fetch<media::Medium>(default_medium / et)};
+        tag<material::Material> material{};
+        tag<math::Transform> local_to_render{};
+        tag<math::Transform> int_to_render{scene::fetch<math::Transform>(default_transform / et)};
+        tag<math::Transform> ext_to_render{scene::fetch<math::Transform>(default_transform / et)};
     };
 
     struct Interaction final {
-        Divider const* divider{nullptr};
-        std::optional<shape::Interaction> intr_opt;
+        tag<Divider> divider{};
+        usize primitive{0uz};
+        opt<shape::Interaction> intr_opt{};
     };
 
     struct Acceleration final: pro::facade_builder
     ::add_convention<pro::operator_dispatch<"()">, auto (
-        math::Ray const& r
-    ) const noexcept -> std::optional<Interaction>>
+        cref<math::Ray> r, cref<fv3> n
+    ) const noexcept -> opt<Interaction>>
     ::add_skill<pro::skills::as_view>
     ::build {};
 }

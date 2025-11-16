@@ -1,63 +1,50 @@
 #include <metatron/render/emitter/uniform.hpp>
+#include <metatron/render/scene/hierarchy.hpp>
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/constant.hpp>
+#include <metatron/core/stl/thread.hpp>
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::emitter {
-    Uniform_Emitter::Uniform_Emitter(
-        std::vector<Divider>&& dividers,
-        std::vector<Divider>&& infinite_dividers
-    ):
-    dividers(std::move(dividers)),
-    inf_dividers(std::move(infinite_dividers)),
-    distr(std::vector<f32>(
-        this->dividers.size() + this->inf_dividers.size(),
-        math::guarded_div(1.f, f32(this->dividers.size() + this->inf_dividers.size()))
-    )),
-    inf_distr(std::vector<f32>(
-        this->inf_dividers.size(),
-        math::guarded_div(1.f, f32(this->inf_dividers.size()))
-    )) {}
+    Uniform_Emitter::Uniform_Emitter() {
+        auto prims = std::vector<Primitive>{};
+        auto inf_prims = std::vector<Primitive>{};
+        for (auto et: scene::entities<light::Light>()) {
+            auto light = scene::fetch<light::Light>(et);
+            auto t = scene::fetch<math::Transform>(et);
+            prims.emplace_back(light, t);
+            if (light->flags() & light::Flags::inf)
+                inf_prims.emplace_back(light, t);
+        }
 
-    auto Uniform_Emitter::operator()(
-        eval::Context const& ctx,
-        Divider const& divider
-    ) const noexcept -> std::optional<emitter::Interaction> {
-        return emitter::Interaction{
-            &divider,
-        };
+        auto lock = stl::arena::instance().lock();
+        this->prims = std::span{prims};
+        this->inf_prims = std::span{inf_prims};
     }
 
     auto Uniform_Emitter::sample(
-        eval::Context const& ctx,
-        f32 u
-    ) const noexcept -> std::optional<emitter::Interaction> {
-        if (dividers.empty() && inf_dividers.empty()) return {};
-
-        auto idx = distr.sample(u);
-        return emitter::Interaction{
-            idx < dividers.size()
-            ? &dividers[idx]
-            : &inf_dividers[idx - dividers.size()],
+        cref<eval::Context> ctx, f32 u
+    ) const noexcept -> opt<Interaction> {
+        if (prims.empty() && inf_prims.empty()) return {};
+        auto idx = math::clamp(usize(u * prims.size()), 0uz, prims.size() - 1);
+        auto prim = prims[idx];
+        return Interaction{
+            prim.light,
+            prim.local_to_render,
+            math::guarded_div(1.f, f32(prims.size()))
         };
     }
 
     auto Uniform_Emitter::sample_infinite(
-        eval::Context const& ctx,
-        f32 u
-    ) const noexcept -> std::optional<emitter::Interaction> {
-        if (inf_dividers.empty()) return {};
-
-        auto idx = inf_distr.sample(u);
-        return emitter::Interaction{
-            &inf_dividers[idx],
+        cref<eval::Context> ctx, f32 u
+    ) const noexcept -> opt<Interaction> {
+        if (inf_prims.empty()) return {};
+        auto idx = math::clamp(usize(u * prims.size()), 0uz, inf_prims.size() - 1);
+        auto prim = inf_prims[idx];
+        return Interaction{
+            prim.light,
+            prim.local_to_render,
+            math::guarded_div(1.f, f32(inf_prims.size()))
         };
-    }
-
-    auto Uniform_Emitter::pdf(Divider const& divider) const noexcept -> f32 {
-        return math::guarded_div(1.f, f32(dividers.size() + inf_dividers.size()));
-    }
-
-    auto Uniform_Emitter::pdf_infinite(Divider const& divider) const noexcept -> f32 {
-        return math::guarded_div(1.f, f32(inf_dividers.size()));
     }
 }

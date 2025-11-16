@@ -3,23 +3,14 @@
 
 namespace mtt::light {
     struct Point_Light final {
-        Point_Light(view<spectra::Spectrum> L) noexcept;
+        tag<spectra::Spectrum> L;
 
         auto operator()(
-            math::Ray const& r,
-            spectra::Stochastic_Spectrum const& spec
-        ) const noexcept -> std::optional<Interaction>;
+            cref<math::Ray> r, cref<fv4> lambda
+        ) const noexcept -> opt<Interaction>;
         auto sample(
-            eval::Context const& ctx,
-            math::Vector<f32, 2> const& u
-        ) const noexcept -> std::optional<Interaction>;
-        auto pdf(
-            math::Ray const& r,
-            math::Vector<f32, 3> const& np
-        ) const noexcept -> f32;
+            cref<eval::Context> ctx, cref<fv2> u
+        ) const noexcept -> opt<Interaction>;
         auto flags() const noexcept -> Flags;
-
-    private:
-        view<spectra::Spectrum> L;
     };
 }

@@ -6,7 +6,7 @@ namespace mtt::wired {
     struct Tcp_Socket final: stl::capsule<Tcp_Socket> {
         struct Impl;
         Tcp_Socket() noexcept = default;
-        Tcp_Socket(Address const& address) noexcept;
+        Tcp_Socket(cref<Address> address) noexcept;
 
         auto send(std::span<byte const> data) noexcept -> bool;
     };

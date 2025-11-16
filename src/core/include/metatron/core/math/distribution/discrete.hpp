@@ -1,16 +1,18 @@
 #pragma once
-#include <vector>
+#include <metatron/core/math/arithmetic.hpp>
 
 namespace mtt::math {
+    template<usize n>
     struct Discrete_Distribution final {
-        std::vector<f32> pdf;
-        std::vector<f32> cdf;
+        std::array<f32, n> pdf{0.f};
+        std::array<f32, n> cdf{0.f};
 
-        Discrete_Distribution(std::vector<f32> const& ws) noexcept
+        Discrete_Distribution() noexcept = default;
+        Discrete_Distribution(std::array<f32, n>&& ws) noexcept
         : pdf(ws) {
-            cdf.push_back(0.f);
-            for (auto w: this->pdf)
-                cdf.push_back(cdf.back() + w);
+            cdf[0] = 0.f;
+            for (auto i = 1; i <= n; i++)
+                cdf[i] = cdf[i - 1] + pdf[i - 1];
             for (auto& w: this->pdf)
                 w /= cdf.back();
         }

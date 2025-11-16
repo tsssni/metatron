@@ -1,6 +1,6 @@
 #pragma once
-#include <cstddef>
 #include <cstdint>
+#include <cstddef>
 
 namespace mtt::inline prelude {
     using i8 = std::int8_t;
@@ -14,7 +14,7 @@ namespace mtt::inline prelude {
     using u64 = std::uint64_t;
 
     using byte = u8;
-    using uptr = u64;
+    using uptr = std::uintptr_t;
     using usize = std::size_t;
 
     using f32 = float;

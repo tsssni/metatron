@@ -7,23 +7,18 @@
 #include <metatron/core/math/quaternion.hpp>
 
 namespace mtt::phase {
-    Henyey_Greenstein_Phase_Function::Henyey_Greenstein_Phase_Function(f32 g) noexcept: g(g) {}
-
     auto Henyey_Greenstein_Phase_Function::operator()(
-        math::Vector<f32, 3> const& wo,
-        math::Vector<f32, 3> const& wi
-    ) const noexcept -> std::optional<Interaction> {
+        cref<fv3> wo, cref<fv3> wi
+    ) const noexcept -> opt<Interaction> {
         auto f = math::guarded_div((1.f - g * g) / (4.f * math::pi), std::pow(1.f + g * g + 2.f * g * math::dot(-wo, wi), 1.5f));
-        auto spec_f = spectra::Constant_Spectrum{f};
         return Interaction{
-            spectrum & (&spec_f),
-            wi,
-            f
+            fv4{f}, wi, f
         };
     }
 
-    auto Henyey_Greenstein_Phase_Function::sample(eval::Context const& ctx, math::Vector<f32, 2> const& u)
-        const noexcept -> std::optional<Interaction> {
+    auto Henyey_Greenstein_Phase_Function::sample(
+        cref<eval::Context> ctx, cref<fv2> u
+    ) const noexcept -> opt<Interaction> {
         auto cos_theta = math::abs(g) < math::epsilon<f32>
             ? 1.f - 2.f * u[0]
             : -1.f / (2.f * g) * (1.f + g * g - std::pow(math::guarded_div(1.f - g * g, 1.f + g - 2.f * g * u[0]), 2.f));
@@ -32,9 +27,5 @@ namespace mtt::phase {
         auto wi = math::unit_spherical_to_cartesian(cos_theta, phi);
         auto x = (*this)({0.f, -1.f, 0.f}, wi);
         return x;
-    }
-
-    auto Henyey_Greenstein_Phase_Function::configure(Attribute const& attr) noexcept -> void {
-        spectrum = attr.spectrum;
     }
 }

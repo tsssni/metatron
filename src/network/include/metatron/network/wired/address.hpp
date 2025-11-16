@@ -7,7 +7,7 @@ namespace mtt::wired {
         std::string port{};
         Address() noexcept = default;
         Address(std::string_view address) noexcept;
-        Address(Address const&) noexcept = default;
+        Address(cref<Address>) noexcept = default;
     };
 }
 
@@ -17,7 +17,10 @@ struct std::formatter<mtt::wired::Address> {
         return ctx.begin();
     }
 
-    auto format(mtt::wired::Address const& addr, std::format_context& ctx) const {
+    auto format(
+        mtt::cref<mtt::wired::Address> addr,
+        mtt::ref<std::format_context> ctx
+    ) const {
         return std::format_to(ctx.out(), "{}:{}", addr.host, addr.port);
     }
 };
