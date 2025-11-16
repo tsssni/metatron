@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/render/sampler/sampler.hpp>
-#include <vector>
+#include <metatron/core/stl/arena.hpp>
 
 namespace mtt::sampler {
     auto constexpr num_sobol_dimensions = 2;
@@ -19,7 +19,7 @@ namespace mtt::sampler {
         auto permute_idx() noexcept -> usize;
         auto sobol(usize idx, i32 dim, u32 hash) noexcept -> f32;
 
-        std::vector<u32> static sobol_matrices;
+        buf<u32> static sobol_matrices;
 
         i32 log2_spp;
         i32 base4_digits;

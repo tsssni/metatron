@@ -27,58 +27,61 @@ namespace mtt::shape {
         }
         auto* mesh = scene->mMeshes[0];
 
+        auto indices = std::vector<uv3>(mesh->mNumFaces);
         for (auto i = 0uz; i < mesh->mNumFaces; ++i) {
             auto face = mesh->mFaces[i];
-            indices.push_back({
+            indices[i] = {
                 face.mIndices[0],
                 face.mIndices[1],
                 face.mIndices[2]
-            });
+            };
         }
 
+        auto vertices = std::vector<fv3>(mesh->mNumVertices);
+        auto normals = std::vector<fv3>(mesh->mNumVertices);
+        auto uvs = std::vector<fv2>(mesh->mNumVertices);
         for (auto i = 0uz; i < mesh->mNumVertices; ++i) {
-            vertices.push_back({
+            vertices[i] = {
                 mesh->mVertices[i].x,
                 mesh->mVertices[i].y,
                 mesh->mVertices[i].z
-            });
-            normals.push_back({
+            };
+            normals[i] = {
                 mesh->mNormals[i].x,
                 mesh->mNormals[i].y,
                 mesh->mNormals[i].z
-            });
-            uvs.push_back(mesh->mTextureCoords[0]
-                ? fv2{
-                    mesh->mTextureCoords[0][i].x,
-                    mesh->mTextureCoords[0][i].y
-                }
-                : 1.f
-                * math::cartesian_to_unit_spherical(math::normalize(vertices.back()))
-                / fv2{math::pi, 2.f * math::pi}
-            );
+            };
+            uvs[i] = mesh->mTextureCoords[0]
+            ? fv2{
+                mesh->mTextureCoords[0][i].x,
+                mesh->mTextureCoords[0][i].y
+            }
+            : 1.f
+            * math::cartesian_to_unit_spherical(math::normalize(vertices.back()))
+            / fv2{math::pi, 2.f * math::pi};
         }
 
-        dpdu.resize(this->indices.size());
-        dpdv.resize(this->indices.size());
-        dndu.resize(this->indices.size());
-        dndv.resize(this->indices.size());
+        auto dpdu = std::vector<fv3>(indices.size());
+        auto dpdv = std::vector<fv3>(indices.size());
+        auto dndu = std::vector<fv3>(indices.size());
+        auto dndv = std::vector<fv3>(indices.size());
 
-        for (auto i = 0uz; i < this->indices.size(); ++i) {
-            auto prim = this->indices[i];
+        for (auto i = 0uz; i < indices.size(); ++i) {
+            auto prim = indices[i];
             auto v = fm33{
-                this->vertices[prim[0]],
-                this->vertices[prim[1]],
-                this->vertices[prim[2]],
+                vertices[prim[0]],
+                vertices[prim[1]],
+                vertices[prim[2]],
             };
             auto n = fm33{
-                this->normals[prim[0]],
-                this->normals[prim[1]],
-                this->normals[prim[2]],
+                normals[prim[0]],
+                normals[prim[1]],
+                normals[prim[2]],
             };
             auto uv = fm32{
-                this->uvs[prim[0]],
-                this->uvs[prim[1]],
-                this->uvs[prim[2]],
+                uvs[prim[0]],
+                uvs[prim[1]],
+                uvs[prim[2]],
             };
 
             auto A = fm22{uv[0] - uv[2], uv[1] - uv[2]};
@@ -114,6 +117,16 @@ namespace mtt::shape {
             dndu[i] = dnduv[0];
             dndv[i] = dnduv[1];
         }
+
+        auto lock = stl::arena::instance().lock();
+        this->indices = std::span{indices};
+        this->vertices = std::span{vertices};
+        this->normals = std::span{normals};
+        this->uvs = std::span{uvs};
+        this->dpdu = std::span{dpdu};
+        this->dpdv = std::span{dpdv};
+        this->dndu = std::span{dndu};
+        this->dndv = std::span{dndv};
     }
 
     auto Mesh::size() const noexcept -> usize {

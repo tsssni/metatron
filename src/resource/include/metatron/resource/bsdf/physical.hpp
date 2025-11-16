@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/resource/bsdf/bsdf.hpp>
+#include <metatron/core/stl/arena.hpp>
 
 namespace mtt::bsdf {
     struct Physical_Bsdf final {
@@ -33,7 +34,7 @@ namespace mtt::bsdf {
         auto degrade() noexcept -> bool;
 
     private:
-        std::vector<f32> static fresnel_reflectance_table;
+        buf<f32> static fresnel_reflectance_table;
 
         fv4 spectrum;
         fv4 reflectance;

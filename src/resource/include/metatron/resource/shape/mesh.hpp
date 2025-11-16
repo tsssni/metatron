@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/resource/shape/shape.hpp>
+#include <metatron/core/stl/arena.hpp>
 
 namespace mtt::shape {
     struct Mesh final {
@@ -27,7 +28,7 @@ namespace mtt::shape {
     private:
         template<typename T>
         auto blerp(
-            cref<std::vector<T>> traits,
+            buf<T> traits,
             cref<fv3> b,
             usize idx
         ) const noexcept -> T {
@@ -50,15 +51,15 @@ namespace mtt::shape {
             cref<math::Ray> r, cref<fv3> np, usize idx
         ) const noexcept -> f32;
 
-        std::vector<uzv3> indices;
+        buf<uv3> indices;
 
-        std::vector<fv3> vertices;
-        std::vector<fv3> normals;
-        std::vector<fv2> uvs;
+        buf<fv3> vertices;
+        buf<fv3> normals;
+        buf<fv2> uvs;
 
-        std::vector<fv3> dpdu;
-        std::vector<fv3> dpdv;
-        std::vector<fv3> dndu;
-        std::vector<fv3> dndv;
+        buf<fv3> dpdu;
+        buf<fv3> dpdv;
+        buf<fv3> dndu;
+        buf<fv3> dndv;
     };
 }

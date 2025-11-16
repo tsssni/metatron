@@ -2,6 +2,7 @@
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/stl/vector.hpp>
+#include <metatron/core/stl/arena.hpp>
 #include <functional>
 
 namespace mtt::color {
@@ -26,8 +27,8 @@ namespace mtt::color {
 
         i32 table_res;
         f32 illuminant_Y_integral;
-        std::vector<f32> scale;
-        std::vector<f32> table;
+        buf<f32> scale;
+        buf<f32> table;
 
         Color_Space(
             std::string_view name,

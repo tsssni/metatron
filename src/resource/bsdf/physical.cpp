@@ -12,7 +12,7 @@ namespace mtt::bsdf {
     auto constexpr fresnel_num_samples = 65536;
     auto constexpr fresnel_length = 256;
 
-    std::vector<f32> Physical_Bsdf::fresnel_reflectance_table;
+    buf<f32> Physical_Bsdf::fresnel_reflectance_table;
 
     Physical_Bsdf::Physical_Bsdf(
         cref<fv4> reflectance,
@@ -55,7 +55,7 @@ namespace mtt::bsdf {
     }
 
     auto Physical_Bsdf::init() noexcept -> void {
-        fresnel_reflectance_table.resize(fresnel_length + 1);
+        auto table = std::vector<f32>(fresnel_length + 1);
         stl::scheduler::instance().sync_parallel(uzv1{fresnel_length + 1}, [&](auto idx) {
             auto i = idx[0];
             auto integral = 0.0;
@@ -67,9 +67,11 @@ namespace mtt::bsdf {
                 auto f1 = fresnel(cos_theta, eta, 0.f);
                 integral += (f0 + f1) * 0.5f / fresnel_num_samples;
             }
-            fresnel_reflectance_table[i] = integral;
+            table[i] = integral;
         });
-        auto& m = *(fv<fresnel_length + 1>*)(fresnel_reflectance_table.data());
+
+        auto lock = stl::arena::instance().lock();
+        fresnel_reflectance_table = std::span{table};
     }
 
     auto Physical_Bsdf::operator()(
@@ -137,33 +139,26 @@ namespace mtt::bsdf {
     ) const noexcept -> opt<Interaction> {
         auto wo = ctx.r.d;
         auto flags = this->flags();
-        auto Fo = !plastic ? fv4{0.f} :
+        auto specular = bool(flags & Flags::specular);
+        auto Fo = (!specular && !plastic) ? fv4{0.f} :
         fresnel(math::unit_to_cos_theta(-ctx.r.d), eta, k);
 
-        if (flags & Flags::specular) {
+        if (specular && (!plastic || u[0] < Fo[0])) {
             auto wm = fv3{0.f, 1.f, 0.f};
             auto cos_theta_o = math::unit_to_cos_theta(-wo);
             if (math::abs(wo[1]) < math::epsilon<f32>) return {};
 
-            auto stochastic = plastic || (flags & (Flags::transmissive | Flags::reflective));
-            auto F = stochastic ? fresnel(cos_theta_o, eta, k) : fv4{f32(flags & Flags::reflective)};
-            auto reflective = u[0] < F[0];
+            auto pr = Fo[0] * bool(flags & Flags::reflective);
+            auto pt = (1.f - Fo[0]) * bool(flags & Flags::transmissive);
+            if (pr == 0.f && pt == 0.f) return {};
+
+            auto reflective = u[0] < pr / (pr + pt);
             auto wi = reflective ? math::reflect(wo, wm) : math::refract(wo, wm, eta[0]);
             auto cos_theta_i = math::unit_to_cos_theta(wi);
             if (math::abs(wi[1]) < math::epsilon<f32>) return {};
 
-            auto pdf = stochastic ? 1.f : reflective ? F[0] : 1.f - F[0];
-            auto f = fv4{0.f};
-            if (reflective) f = F;
-            else if (!plastic) f = (1.f - F) / math::sqr(eta[0]);
-            else {
-                auto Fi = fresnel(cos_theta_i, eta, k);
-                f *= 1.f
-                * (1.f - Fi) * (1.f - Fo) / (math::pi * math::sqr(eta))
-                * (reflectance / (1.f - reflectance * fresnel_reflectance));
-            }
-            f /= math::abs(cos_theta_i);
-
+            auto pdf = (reflective ? pr : pt) / (pr + pt);
+            auto f = (reflective ? Fo : (1.f - Fo) / math::sqr(eta[0])) / math::abs(cos_theta_i);
             return Interaction{f, wi, pdf};
         } else if (dieletric || conductive || (plastic && u[0] < Fo[0])) {
             if (math::abs(wo[1]) < math::epsilon<f32>) return {};
@@ -191,10 +186,8 @@ namespace mtt::bsdf {
             auto F = fresnel(math::dot(-wo, wm), eta, k);
             auto D = trowbridge_reitz(wm, alpha_u, alpha_v);
 
-            auto pr = F[0];
-            auto pt = 1.f - F[0];
-            pr *= bool(flags & Flags::reflective);
-            pt *= bool(flags & Flags::transmissive);
+            auto pr = F[0] * bool(flags & Flags::reflective);
+            auto pt = (1.f - F[0]) * bool(flags & Flags::transmissive);
             if (pr == 0.f && pt == 0.f) return {};
 
             auto reflective = (plastic || conductive) ? true : u[0] < pr / (pr + pt);

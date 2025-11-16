@@ -3,6 +3,7 @@
 #include <metatron/core/math/distribution/discrete.hpp>
 #include <metatron/core/math/distribution/gaussian.hpp>
 #include <metatron/core/math/distribution/cone.hpp>
+#include <metatron/core/stl/arena.hpp>
 
 namespace mtt::light {
     auto constexpr sunsky_num_lambda = 11;
@@ -63,11 +64,11 @@ namespace mtt::light {
         auto hosek_integral() const noexcept -> f32;
         auto split(f32 lambda) const noexcept -> std::tuple<i32, i32, f32>;
 
-        std::vector<f32> static sky_params_table;
-        std::vector<f32> static sky_radiance_table;
-        std::vector<f32> static sun_radiance_table;
-        std::vector<f32> static sun_limb_table;
-        std::vector<f32> static tgmm_table;
+        buf<f32> static sky_params_table;
+        buf<f32> static sky_radiance_table;
+        buf<f32> static sun_radiance_table;
+        buf<f32> static sun_limb_table;
+        buf<f32> static tgmm_table;
 
         fv3 d;
         fm44 t;
@@ -84,7 +85,7 @@ namespace mtt::light {
         fm<sun_num_segments, sunsky_num_lambda, sun_num_ctls> sun_radiance;
         std::array<math::Truncated_Gaussian_Distribution, tgmm_num_gaussian> tgmm_phi_distr;
         std::array<math::Truncated_Gaussian_Distribution, tgmm_num_gaussian> tgmm_theta_distr;
-        math::Discrete_Distribution tgmm_distr;
+        math::Discrete_Distribution<tgmm_num_gaussian> tgmm_distr;
         math::Cone_Distribution sun_distr;
     };
 }

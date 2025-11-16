@@ -7,6 +7,8 @@
 
 namespace mtt::emitter {
     Uniform_Emitter::Uniform_Emitter() {
+        auto prims = std::vector<Primitive>{};
+        auto inf_prims = std::vector<Primitive>{};
         for (auto et: scene::entities<light::Light>()) {
             auto light = scene::fetch<light::Light>(et);
             auto t = scene::fetch<math::Transform>(et);
@@ -14,6 +16,10 @@ namespace mtt::emitter {
             if (light->flags() & light::Flags::inf)
                 inf_prims.emplace_back(light, t);
         }
+
+        auto lock = stl::arena::instance().lock();
+        this->prims = std::span{prims};
+        this->inf_prims = std::span{inf_prims};
     }
 
     auto Uniform_Emitter::sample(

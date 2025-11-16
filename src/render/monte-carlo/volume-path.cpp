@@ -258,7 +258,7 @@ namespace mtt::monte_carlo {
                 auto p_n = math::guarded_div(m_intr.sigma_n[0], m_intr.sigma_maj[0]);
 
                 auto u = sampler->generate_1d();
-                auto mode = math::Discrete_Distribution{{p_a, p_s, p_n}}.sample(u);
+                auto mode = math::Discrete_Distribution<3>{{p_a, p_s, p_n}}.sample(u);
                 if (mode == 0uz) {
                     beta *= m_intr.sigma_a / p_a;
                     terminated = true;

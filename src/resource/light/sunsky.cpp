@@ -13,29 +13,26 @@
 #include <algorithm>
 
 namespace mtt::light {
-    std::vector<f32> Sunsky_Light::sky_params_table;
-    std::vector<f32> Sunsky_Light::sky_radiance_table;
-    std::vector<f32> Sunsky_Light::sun_radiance_table;
-    std::vector<f32> Sunsky_Light::sun_limb_table;
-    std::vector<f32> Sunsky_Light::tgmm_table;
+    buf<f32> Sunsky_Light::sky_params_table;
+    buf<f32> Sunsky_Light::sky_radiance_table;
+    buf<f32> Sunsky_Light::sun_radiance_table;
+    buf<f32> Sunsky_Light::sun_limb_table;
+    buf<f32> Sunsky_Light::tgmm_table;
 
     Sunsky_Light::Sunsky_Light(cref<Descriptor> desc) noexcept:
     d(math::unit_spherical_to_cartesian(desc.direction)),
     t(fq::from_rotation_between({0.f, 1.f, 0.f}, d)),
     turbidity(desc.turbidity), 
     albedo(desc.albedo) {
-        auto bezier = [](cref<std::vector<f32>> data, usize block_size, usize offset, f32 x) -> std::vector<f32> {
+        auto bezier = [](buf<f32> data, usize block_size, usize offset, f32 x) -> std::vector<f32> {
             auto interpolated = std::vector<f32>(block_size, 0.f);
             auto c = std::array<f32, 6>{1, 5, 10, 10, 5, 1};
             for (auto i = 0; i < 6; ++i) {
                 auto start = offset + i * block_size;
                 auto coeff = c[i] * std::pow(x, i) * std::pow(1.f - x, 5 - i);
-
-                auto source = data | std::views::drop(start) | std::views::take(block_size);
-                std::ranges::transform(
-                    source, interpolated, interpolated.begin(),
-                    [coeff](f32 val, f32 accum) { return accum + val * coeff;}
-                );
+                auto source = data.subbuf(start, block_size);
+                for (auto j = 0; j < block_size; j++)
+                    interpolated[j] += source[j] * coeff;
             }
             return interpolated;
         };
@@ -56,7 +53,7 @@ namespace mtt::light {
         auto a_high = a_low + 1;
         auto a_alpha = albedo - a_low;
 
-        auto load_sky = [&](mut<f32> storage, cref<std::vector<f32>> data) -> void {
+        auto load_sky = [&](mut<f32> storage, buf<f32> data) -> void {
             auto size = data.size();
             auto turbidity_size = size / sunsky_num_turbility;
             auto albedo_size = turbidity_size / sunsky_num_albedo;
@@ -130,7 +127,7 @@ namespace mtt::light {
                 tgmm_num_turbility, tgmm_num_segments, tgmm_num_mixture, tgmm_num_gaussian_params + 1
             >*)(tgmm_table.data());
 
-            auto w = std::vector<f32>(tgmm_num_gaussian);
+            auto w = std::array<f32, tgmm_num_gaussian>{};
             for (auto i = 0; i < tgmm_num_bilinear; ++i) {
                 auto [t, eta] = t_eta[i];
                 auto b = b_w[i];
@@ -142,7 +139,7 @@ namespace mtt::light {
                     w[idx] = w_g * b;
                 }
             }
-            tgmm_distr = math::Discrete_Distribution{w};
+            tgmm_distr = std::move(w);
         };
 
         load_sky(sky_params.data(), sky_params_table);
@@ -156,7 +153,7 @@ namespace mtt::light {
     auto Sunsky_Light::init() noexcept -> void {
         auto read = []
         <typename T, typename U>
-        (ref<std::vector<T>> storage, rref<std::vector<U>> intermediate, cref<std::string> file) -> void {
+        (ref<buf<T>> storage, rref<std::vector<U>> intermediate, cref<std::string> file) -> void {
             auto& fs = stl::filesystem::instance();
             auto prefix = std::string{"sunsky/"};
             auto postfix = std::string{".bin"};
@@ -197,11 +194,18 @@ namespace mtt::light {
                 elems *= s;
             }
 
-            storage.resize(elems);
             intermediate.resize(elems);
             f.read(mut<char>(intermediate.data()), intermediate.size() * sizeof(U));
             f.close();
-            std::ranges::transform(intermediate, storage.begin(), [](U x){return T(x);});
+
+            auto lock = stl::arena::instance().lock();
+            if constexpr (std::is_same_v<T, U>) {
+                storage = std::span{intermediate};
+            } else {
+                auto target = std::vector<T>(elems);
+                std::ranges::transform(intermediate, target.begin(), [](U x){return T(x);});
+                storage = std::span{target};
+            }
         };
 
         read(sky_params_table, std::vector<f64>{}, "sky-params");

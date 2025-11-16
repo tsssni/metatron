@@ -17,16 +17,17 @@ namespace mtt::stl {
             storage.emplace_back(std::forward<Args>(args)...);
             return storage.size() - 1;
         }
-        auto push_back(rref<T> x) noexcept -> u32 {return emplace_back(std::move(x));}
-        auto push_back(cref<T> x) noexcept -> u32 {return emplace_back(x);}
-        auto lock() const noexcept -> std::unique_lock<std::mutex> {return std::unique_lock{*mutex};}
+        auto push_back(rref<T> x) noexcept -> u32 { return emplace_back(std::move(x)); }
+        auto push_back(cref<T> x) noexcept -> u32 { return emplace_back(x); }
+        auto lock() const noexcept { return std::unique_lock{*mutex };}
 
-        auto operator[](u32 i) noexcept -> mut<T> {return &storage[i];}
-        auto operator[](u32 i) const noexcept -> view<T> {return &storage[i];}
-        auto data() const noexcept -> mut<T> {return storage.data();}
-        auto size() const noexcept -> usize {return storage.size();}
-        auto capacity() const noexcept -> usize {return storage.capacity();}
-        auto reserve(usize n) noexcept -> void {storage.reserve(n);}
+        auto operator[](u32 i) noexcept -> mut<T> { return &storage[i]; }
+        auto operator[](u32 i) const noexcept -> view<T> { return &storage[i]; }
+        auto data() const noexcept -> mut<T> { return storage.data(); }
+        auto size() const noexcept -> usize { return storage.size(); }
+        auto empty() const noexcept -> usize { return storage.empty(); }
+        auto capacity() const noexcept -> usize { return storage.capacity(); }
+        auto reserve(usize n) noexcept -> void { storage.reserve(n); }
 
     private:
         std::vector<T> storage;
@@ -110,13 +111,15 @@ namespace mtt::stl {
         }
 
         template<typename T>
-        auto data() const noexcept -> mut<T> {return (mut<T>)storage[map.at(typeid(T))].data();}
+        auto data() const noexcept -> mut<T> { return (mut<T>)storage[map.at(typeid(T))].data(); }
         template<typename T>
-        auto size() const noexcept -> usize {return storage[map.at(typeid(T))].size() / sizeof(T);}
+        auto size() const noexcept -> usize { return storage[map.at(typeid(T))].size() / sizeof(T); }
         template<typename T>
-        auto capacity() const noexcept -> usize {return storage[map.at(typeid(T))].capacity() / sizeof(T);}
+        auto empty() const noexcept -> usize { return storage[map.at(typeid(T))].empty(); }
         template<typename T>
-        auto reserve(usize n) noexcept -> void {storage[map.at(typeid(T))].reserve(n * sizeof(T));}
+        auto capacity() const noexcept -> usize { return storage[map.at(typeid(T))].capacity() / sizeof(T); }
+        template<typename T>
+        auto reserve(usize n) noexcept -> void { storage[map.at(typeid(T))].reserve(n * sizeof(T)); }
 
     private:
         std::vector<std::vector<byte>> storage;
@@ -138,20 +141,20 @@ namespace mtt {
         tag(): idx(math::maxv<u32>) {};
         tag(u32 idx): idx(idx) {}
 
-        auto data() -> mut<T> {return vec::instance()[idx];}
-        auto data() const -> view<T> {return vec::instance()[idx];}
+        auto data() -> mut<T> { return vec::instance()[idx]; }
+        auto data() const -> view<T> { return vec::instance()[idx]; }
 
-        auto operator->() -> mut<T> {return data();}
-        auto operator->() const -> view<T> {return data();}
-        auto operator*() -> ref<T> requires(!pro::facade<T>) {return *data();}
-        auto operator*() const -> cref<T> requires(!pro::facade<T>) {return *data();}
+        auto operator->() -> mut<T> { return data(); }
+        auto operator->() const -> view<T> { return data(); }
+        auto operator*() -> ref<T> requires(!pro::facade<T>) { return *data(); }
+        auto operator*() const -> cref<T> requires(!pro::facade<T>) { return *data(); }
         auto operator*() const -> obj<T>
         requires(pro::facade<T> && T::copyability != pro::constraint_level::none) {
             return vec::instance()(idx);
-        }
+         }
 
-        explicit operator u32() const {return idx;}
-        operator bool() const {return idx != math::maxv<u32>;}
+        explicit operator u32() const { return idx; }
+        operator bool() const { return idx != math::maxv<u32>; }
 
     private:
         u32 idx;

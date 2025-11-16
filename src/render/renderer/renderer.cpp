@@ -3,6 +3,7 @@
 #include <metatron/network/remote/preview.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/progress.hpp>
+#include <metatron/core/stl/memory.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <OpenImageIO/imageio.h>
 
@@ -15,6 +16,15 @@ namespace mtt::renderer {
             auto rd = std::random_device{};
             auto seed = rd();
             std::println("seed: {}", seed);
+            std::println("buffer: {}", stl::memory{stl::arena::instance().size()});
+            std::println("image: {}", [] {
+                auto& vec = stl::vector<image::Image>::instance();
+                auto size = 0uz;
+                for (auto i = 0; i < vec.size(); i++)
+                    for (auto j = 0; j < vec[i]->pixels.size(); j++)
+                        size += vec[i]->pixels[j].size();
+                return stl::memory{size};
+            }());
 
             auto& args = scene::Args::instance();
             auto addr = wired::Address{args.address};

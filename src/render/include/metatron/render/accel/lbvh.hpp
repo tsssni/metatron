@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/render/accel/accel.hpp>
-#include <metatron/core/stl/capsule.hpp>
+#include <metatron/core/stl/arena.hpp>
 
 namespace mtt::accel {
     struct LBVH final {
@@ -25,7 +25,7 @@ namespace mtt::accel {
         ) const noexcept -> opt<Interaction>;
 
     private:
-        std::vector<Primitive> prims;
-        std::vector<Index> bvh;
+        buf<Primitive> prims;
+        buf<Index> bvh;
     };
 }

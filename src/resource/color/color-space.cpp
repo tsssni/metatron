@@ -54,15 +54,19 @@ namespace mtt::color {
 
         auto scale_size = table_res;
         auto data_size = table_res * table_res * table_res * 3 * 3;
-        scale.resize(scale_size);
-        table.resize(data_size);
+        auto scale_storage = std::vector<f32>(scale_size);
+        auto table_storage = std::vector<f32>(data_size);
 
         if (false
-        || !file.read(mut<char>(scale.data()), scale_size * sizeof(f32))
-        || !file.read(mut<char>(table.data()), data_size * sizeof(f32))) {
+        || !file.read(mut<char>(scale_storage.data()), scale_size * sizeof(f32))
+        || !file.read(mut<char>(table_storage.data()), data_size * sizeof(f32))) {
             std::println("{} coefficient could not read table", name);
             std::abort();
         }
         file.close();
+
+        auto lock = stl::arena::instance().lock();
+        scale = std::span{scale_storage};
+        table = std::span{table_storage};
     }
 }

@@ -42,10 +42,11 @@ namespace mtt::spectra {
         auto y = rgb[(maxc + 2) % 3] * (cs->table_res - 1) / z;
 
         // compute integer indices and offsets for coefficient interpolation
+        auto scale = std::span<f32>{cs->scale};
         auto xi = math::min((i32)x, cs->table_res - 2);
         auto yi = math::min((i32)y, cs->table_res - 2);
         auto zi = math::clamp(
-            i32(std::ranges::lower_bound(cs->scale, z) - std::begin(cs->scale)) - 1,
+            i32(std::ranges::lower_bound(scale, z) - std::begin(scale)) - 1,
             0, cs->table_res - 2
         );
 

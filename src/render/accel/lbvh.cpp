@@ -18,6 +18,8 @@ namespace mtt::accel {
         };
 
         auto& divs = stl::vector<Divider>::instance();
+        auto prims = std::vector<Primitive>{};
+        auto bvh = std::vector<Index>{};
         for (auto i = 0u; i < divs.size(); ++i) {
             auto div = divs[i];
             auto s = div->shape;
@@ -176,7 +178,7 @@ namespace mtt::accel {
         auto root = area_split(std::move(lbvh_nodes));
 
         // pre-order binary tree traversal
-        auto traverse = [&bvh = this->bvh](this auto self, view<Node> node) -> void {
+        auto traverse = [&bvh](this auto self, view<Node> node) -> void {
             if (node->num_prims > 0) {
                 bvh.push_back({
                     .bbox = node->bbox,
@@ -193,6 +195,10 @@ namespace mtt::accel {
             }
         };
         traverse(root.get());
+
+        auto lock = stl::arena::instance().lock();
+        this->prims = std::span{prims};
+        this->bvh = std::span{bvh};
     }
 
     auto LBVH::operator()(

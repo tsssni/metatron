@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/render/emitter/emitter.hpp>
-#include <metatron/core/stl/capsule.hpp>
 #include <metatron/core/math/distribution/discrete.hpp>
+#include <metatron/core/stl/arena.hpp>
 
 namespace mtt::emitter {
     struct Uniform_Emitter final {
@@ -19,7 +19,7 @@ namespace mtt::emitter {
         ) const noexcept -> opt<Interaction>;
 
     private:
-        std::vector<Primitive> prims;
-        std::vector<Primitive> inf_prims;
+        buf<Primitive> prims;
+        buf<Primitive> inf_prims;
     };
 }

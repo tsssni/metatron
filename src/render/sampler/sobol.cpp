@@ -8,7 +8,7 @@
 #include <fstream>
 
 namespace mtt::sampler {
-    inline std::vector<u32> Sobol_Sampler::sobol_matrices;
+    inline buf<u32> Sobol_Sampler::sobol_matrices;
 
     auto Sobol_Sampler::init() noexcept -> void {
         auto& fs = stl::filesystem::instance();
@@ -26,9 +26,12 @@ namespace mtt::sampler {
 
         auto size = 0uz;
         f.read(mut<char>(&size), sizeof(size));
-        sobol_matrices.resize(size);
-        f.read(mut<char>(sobol_matrices.data()), size * sizeof(u32));
+        auto storage = std::vector<u32>(size);
+        f.read(mut<char>(storage.data()), size * sizeof(u32));
         f.close();
+
+        auto lock = stl::arena::instance().lock();
+        sobol_matrices = std::span{storage};
     }
 
     auto Sobol_Sampler::start(Context ctx) noexcept -> void {
