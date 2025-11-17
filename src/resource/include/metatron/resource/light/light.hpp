@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/resource/eval/context.hpp>
+#include <metatron/core/math/eval.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/math/ray.hpp>
 
@@ -25,7 +25,7 @@ namespace mtt::light {
         cref<math::Ray> r, cref<fv4> spec
     ) const noexcept -> opt<Interaction>>
     ::add_convention<light_sample, auto (
-        cref<eval::Context> ctx, cref<fv2> u
+        cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> opt<Interaction>>
     ::add_convention<light_flags, auto () const noexcept -> Flags>
     ::add_skill<pro::skills::as_view>

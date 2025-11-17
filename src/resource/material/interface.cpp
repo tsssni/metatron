@@ -3,8 +3,8 @@
 
 namespace mtt::material {
     auto Interface_Material::sample(
-        cref<eval::Context> ctx,
-        cref<image::Coordinate> coord
+        cref<math::Context> ctx,
+        cref<opaque::Coordinate> coord
     ) const noexcept -> opt<Interaction> {
         return Interaction{
             .bsdf = make_obj<bsdf::Bsdf, bsdf::Interface_Bsdf>(),

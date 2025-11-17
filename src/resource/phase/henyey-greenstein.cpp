@@ -17,7 +17,7 @@ namespace mtt::phase {
     }
 
     auto Henyey_Greenstein_Phase_Function::sample(
-        cref<eval::Context> ctx, cref<fv2> u
+        cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> opt<Interaction> {
         auto cos_theta = math::abs(g) < math::epsilon<f32>
             ? 1.f - 2.f * u[0]

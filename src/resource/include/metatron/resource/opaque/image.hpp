@@ -2,7 +2,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <vector>
 
-namespace mtt::image {
+namespace mtt::opaque {
     struct Coordinate final {
         fv2 uv{};
         f32 dudx{0.f};
@@ -37,13 +37,10 @@ namespace mtt::image {
         bool linear;
         // specify mip size by resizing the vector.
         // if just fill mip 0 then mipmap auto generated.
-        // if mip 0 empty, auto fill zero for mipmap.
-        // if all mips have same size, treated as 3d image.
         std::vector<std::vector<byte>> pixels;
 
         auto operator[](usize x, usize y, usize lod = 0) noexcept -> Pixel;
         auto operator[](usize x, usize y, usize lod = 0) const noexcept -> Pixel const;
         auto operator()(cref<Coordinate> coord) const -> fv4;
-        auto operator()(cref<fv3> uvw) const -> fv4;
     };
 }

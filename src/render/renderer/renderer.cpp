@@ -18,7 +18,7 @@ namespace mtt::renderer {
             std::println("seed: {}", seed);
             std::println("buffer: {}", stl::memory{stl::stack::instance().size()});
             std::println("image: {}", [] {
-                auto& vec = stl::vector<image::Image>::instance();
+                auto& vec = stl::vector<opaque::Image>::instance();
                 auto size = 0uz;
                 for (auto i = 0; i < vec.size(); i++)
                     for (auto j = 0; j < vec[i]->pixels.size(); j++)
@@ -69,7 +69,7 @@ namespace mtt::renderer {
             auto store = [
                 path = args.output,
                 fcs = desc.film.color_space
-            ](cref<image::Image> img) {
+            ](cref<opaque::Image> img) {
                 auto type = img.stride == 1
                 ? OIIO::TypeDesc::UINT8 : OIIO::TypeDesc::FLOAT;
                 auto spec = OIIO::ImageSpec{
@@ -77,7 +77,7 @@ namespace mtt::renderer {
                 };
 
                 auto cs_name = std::string{"sRGB"};
-                for (auto const& [name, cs]: color::Color_Space::color_spaces)
+                for (auto const& [name, cs]: spectra::Color_Space::color_spaces)
                     if (fcs == cs) {cs_name = name; break;}
                 spec.attribute("oiio::ColorSpace", cs_name);
                 spec.attribute("planarconfig", "contig");

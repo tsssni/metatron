@@ -9,7 +9,7 @@ namespace mtt::phase {
             cref<fv3> wo, cref<fv3> wi
         ) const noexcept -> opt<Interaction>;
         auto sample(
-            cref<eval::Context> ctx, cref<fv2> u
+            cref<math::Context> ctx, cref<fv2> u
         ) const noexcept -> opt<Interaction>;
     };
 }

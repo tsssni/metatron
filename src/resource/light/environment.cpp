@@ -24,7 +24,7 @@ namespace mtt::light {
     }
 
     auto Environment_Light::sample(
-        cref<eval::Context> ctx,
+        cref<math::Context> ctx,
         cref<fv2> u
     ) const noexcept -> opt<Interaction> {
         auto uv = env_map->sample(ctx, u);

@@ -8,7 +8,7 @@ namespace mtt::light {
     }
 
     auto Point_Light::sample(
-        cref<eval::Context> ctx, cref<fv2> u
+        cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> opt<Interaction> {
         auto wi = math::normalize(-ctx.r.o);
         auto r = math::length(ctx.r.o);

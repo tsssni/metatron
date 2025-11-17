@@ -8,7 +8,7 @@ namespace mtt::light {
     }
 
     auto Parallel_Light::sample(
-        cref<eval::Context> ctx, cref<fv2> u
+        cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> opt<Interaction> {
         auto constexpr wi = fv3{0.f, 0.f, -1.f};
         return Interaction{

@@ -9,7 +9,7 @@ namespace mtt::media {
         tag<spectra::Spectrum> sigma_e = spectra::Spectrum::spectra["zero"];
 
         auto sample(
-            cref<eval::Context> ctx, f32 t_max, f32 u
+            cref<math::Context> ctx, f32 t_max, f32 u
         ) const noexcept -> opt<Interaction>;
     };
 }

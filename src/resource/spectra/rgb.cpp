@@ -4,7 +4,6 @@
 #include <metatron/core/stl/print.hpp>
 
 namespace mtt::spectra {
-    using Color_Space = color::Color_Space;
     using Spectrum_Type = Color_Space::Spectrum_Type;
 
     Rgb_Spectrum::Rgb_Spectrum(cref<Descriptor> desc) noexcept {

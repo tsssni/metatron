@@ -16,8 +16,8 @@ namespace mtt::material {
         tag<texture::Vector_Texture> normal;
 
         auto sample(
-            cref<eval::Context> ctx,
-            cref<image::Coordinate> coord
+            cref<math::Context> ctx,
+            cref<opaque::Coordinate> coord
         ) const noexcept -> opt<Interaction>;
         auto flags() const noexcept -> Flags;
     };

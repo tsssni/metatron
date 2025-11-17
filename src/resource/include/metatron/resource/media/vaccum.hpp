@@ -5,7 +5,7 @@
 namespace mtt::media {
     struct Vaccum_Medium final {
         auto sample(
-            cref<eval::Context> ctx, f32 t_max, f32 u
+            cref<math::Context> ctx, f32 t_max, f32 u
         ) const noexcept -> opt<Interaction>;
     };
 }

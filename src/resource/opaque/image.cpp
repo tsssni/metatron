@@ -1,8 +1,8 @@
-#include <metatron/resource/image/image.hpp>
+#include <metatron/resource/opaque/image.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <functional>
 
-namespace mtt::image {
+namespace mtt::opaque {
     auto sRGB_linearize(f32 x) noexcept -> f32 {
         if (x <= 0.04045f) return x / 12.92f;
         else return std::pow((x + 0.055f) / 1.055f, 2.4f);
@@ -191,43 +191,5 @@ namespace mtt::image {
         auto lodi = math::min(i32(lod), math::max(0, i32(pixels.size()) - 2));
         return pixels.size() == 1 ? filter(lodi)
         : math::lerp(filter(lodi), filter(lodi + 1), lod - lodi);
-    }
-
-    auto Image::operator()(cref<fv3> uvw) const -> fv4 {
-        auto pixel = uvw * fv3{width, height, pixels.size()};
-        auto base = math::clamp(
-            math::floor(pixel - 0.5f),
-            fv3{0.f},
-            fv3{width - 2, height - 2, pixels.size() - 2}
-        );
-        auto frac = math::clamp(
-            pixel - 0.5f - base,
-            fv3{0.f},
-            fv3{1.f}
-        );
-
-        auto weights = std::array<std::function<auto(f32) -> f32>, 2>{
-            [] (f32 x) { return 1.f - x; },
-            [] (f32 x) { return x; },
-        };
-        auto offsets = iv2{0, 1};
-
-        auto r = fv4{0.f};
-        for (auto i = 0; i < 4; i++) {
-            auto b0 = i & 1;
-            auto b1 = (i & 2) >> 1;
-            auto w = weights[b0](frac[0]) * weights[b1](frac[1]);
-            auto o = base + uzv2{offsets[b0], offsets[b1]};
-
-            if (base[2] + 1 >= pixels.size())
-                r += w * fv4{(*this)[o[0], o[1], base[2]]};
-            else
-                r += w * math::lerp(
-                    fv4{(*this)[o[0], o[1], base[2]]},
-                    fv4{(*this)[o[0], o[1], base[2] + 1]},
-                    frac[2]
-                );
-        }
-        return r;
     }
 }

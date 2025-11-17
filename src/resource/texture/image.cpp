@@ -20,7 +20,7 @@ namespace mtt::texture {
         }
 
         auto& spec = in->spec();
-        auto tex = image::Image{};
+        auto tex = opaque::Image{};
         tex.linear = desc.linear;
         tex.size = {
             usize(spec.width),
@@ -84,19 +84,19 @@ namespace mtt::texture {
             distr = {std::span{pdf}, math::reverse(size), {0.f}, {1.f}};
         }
 
-        auto& vec = stl::vector<image::Image>::instance();
+        auto& vec = stl::vector<opaque::Image>::instance();
         auto lock = vec.lock();
         texture = vec.push_back(std::move(tex));
     }
 
     auto Image_Vector_Texture::operator()(
-        cref<image::Coordinate> coord
+        cref<opaque::Coordinate> coord
     ) const noexcept -> fv4 {
         return (*texture)(coord);
     }
 
     auto Image_Vector_Texture::sample(
-        cref<eval::Context> ctx, cref<fv2> u
+        cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> fv2 {
         return math::reverse(distr.sample(u));
     }
@@ -114,7 +114,7 @@ namespace mtt::texture {
 
 
     auto Image_Spectrum_Texture::operator()(
-        cref<image::Coordinate> coord, cref<fv4> spec
+        cref<opaque::Coordinate> coord, cref<fv4> spec
     ) const noexcept -> fv4 {
         auto rgba = image_tex(coord);
         auto rgb_spec = spectra::Rgb_Spectrum{{
@@ -126,7 +126,7 @@ namespace mtt::texture {
     }
 
     auto Image_Spectrum_Texture::sample(
-        cref<eval::Context> ctx, cref<fv2> u
+        cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> fv2 {
         return image_tex.sample(ctx, u);
     }

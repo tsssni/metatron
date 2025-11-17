@@ -19,7 +19,7 @@ namespace mtt::shape {
         ) const noexcept -> opt<Interaction>;
         // sphere triangle sampling: https://pbr-book.org/4ed/Shapes/Triangle_Meshes
         auto sample(
-            cref<eval::Context> ctx, cref<fv2> u, usize idx
+            cref<math::Context> ctx, cref<fv2> u, usize idx
         ) const noexcept -> opt<Interaction>;
         auto query(
             cref<math::Ray> r, usize idx

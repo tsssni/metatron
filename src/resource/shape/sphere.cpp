@@ -67,7 +67,7 @@ namespace mtt::shape {
     }
 
     auto Sphere::sample(
-        cref<eval::Context> ctx, cref<fv2> u, usize idx
+        cref<math::Context> ctx, cref<fv2> u, usize idx
     ) const noexcept -> opt<Interaction> {
         auto d = math::length(ctx.r.o);
         if (d < 1.f) {

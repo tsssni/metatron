@@ -5,17 +5,17 @@
 #include <metatron/core/stl/stack.hpp>
 #include <functional>
 
-namespace mtt::color {
-    struct Transfer_Function final {
-        std::function<f32(f32)> transfer;
-        std::function<f32(f32)> linearize;
-    };
-
+namespace mtt::spectra {
     struct Color_Space final {
         enum struct Spectrum_Type: usize {
             albedo,
             unbounded,
             illuminant,
+        };
+
+        struct Transfer_Function final {
+            std::function<f32(f32)> transfer;
+            std::function<f32(f32)> linearize;
         };
 
         std::unordered_map<std::string, tag<Color_Space>> static color_spaces;

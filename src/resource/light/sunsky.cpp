@@ -255,7 +255,7 @@ namespace mtt::light {
     }
 
     auto Sunsky_Light::sample(
-        cref<eval::Context> ctx, cref<fv2> u
+        cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> opt<Interaction> {
         auto wi = fv3{};
         if (u[0] < w_sky) {

@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/math/bounding-box.hpp>
-#include <metatron/resource/eval/context.hpp>
+#include <metatron/core/math/eval.hpp>
 
 namespace mtt::shape {
     struct Interaction final {
@@ -33,7 +33,7 @@ namespace mtt::shape {
         cref<math::Ray> r, cref<fv3> np, usize idx
     ) const noexcept -> opt<Interaction>>
     ::add_convention<shape_sample, auto (
-        cref<eval::Context> ctx, cref<fv2> u, usize idx
+        cref<math::Context> ctx, cref<fv2> u, usize idx
     ) const noexcept -> opt<Interaction>>
     ::add_convention<shape_query, auto (
         cref<math::Ray> r, usize idx

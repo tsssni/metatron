@@ -8,7 +8,6 @@
 namespace mtt::scene {
     auto transform_init() noexcept -> void;
     auto spectra_init() noexcept -> void;
-    auto color_init() noexcept -> void;
     auto shape_init() noexcept -> void;
     auto media_init() noexcept -> void;
     auto material_init() noexcept -> void;
@@ -24,7 +23,6 @@ namespace mtt::scene {
 
         transform_init();
         spectra_init();
-        color_init();
         shape_init();
         media_init();
         material_init();

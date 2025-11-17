@@ -49,18 +49,18 @@ namespace mtt::scene {
             );
 
         MTT_DESERIALIZE_CALLBACK([]{
-            auto size = stl::vector<image::Image>::instance().size();
+            auto size = stl::vector<opaque::Image>::instance().size();
             auto cap = stl::vector<Vector_Texture>::instance().capacity<Image_Vector_Texture>();
-            stl::vector<image::Image>::instance().reserve(size + cap);
+            stl::vector<opaque::Image>::instance().reserve(size + cap);
         }, []{},
         Vector_Texture, Constant_Vector_Texture, Image_Vector_Texture);
 
         MTT_DESERIALIZE_CALLBACK([]{
-            auto size = stl::vector<image::Image>::instance().size();
+            auto size = stl::vector<opaque::Image>::instance().size();
             auto scap = stl::vector<Spectrum_Texture>::instance().capacity<Image_Spectrum_Texture>();
             auto vcap = stl::vector<Vector_Texture>::instance().capacity<Image_Vector_Texture>();
             stl::vector<Vector_Texture>::instance().reserve<Image_Vector_Texture>(scap + vcap);
-            stl::vector<image::Image>::instance().reserve(size + scap);
+            stl::vector<opaque::Image>::instance().reserve(size + scap);
         }, []{},
         Spectrum_Texture, Constant_Spectrum_Texture, Image_Spectrum_Texture, Checkerboard_Texture);
 

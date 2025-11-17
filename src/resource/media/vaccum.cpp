@@ -2,7 +2,7 @@
 
 namespace mtt::media {
     auto Vaccum_Medium::sample(
-        cref<eval::Context> ctx, f32 t_max, f32 u
+        cref<math::Context> ctx, f32 t_max, f32 u
     ) const noexcept -> opt<Interaction> {
         return Interaction{
             ctx.r.o + t_max * ctx.r.d,

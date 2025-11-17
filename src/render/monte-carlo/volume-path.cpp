@@ -31,8 +31,8 @@ namespace mtt::monte_carlo {
         auto bsdf = obj<bsdf::Bsdf>{};
         auto phase = obj<phase::Phase_Function>{};
 
-        auto trace_ctx = eval::Context{};
-        auto history_ctx = eval::Context{};
+        auto trace_ctx = math::Context{};
+        auto history_ctx = math::Context{};
         trace_ctx.r = ctx.ray_differential.r;
         trace_ctx.lambda = lambda;
 

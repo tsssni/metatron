@@ -40,7 +40,7 @@ namespace mtt::media {
     }
 
     auto Heterogeneous_Medium::sample(
-        cref<eval::Context> ctx, f32 t_max, f32 u
+        cref<math::Context> ctx, f32 t_max, f32 u
     ) const noexcept -> opt<Interaction> {
         auto sigma_a = (ctx.lambda & this->sigma_a) * density_scale;
         auto sigma_s = (ctx.lambda & this->sigma_s) * density_scale;

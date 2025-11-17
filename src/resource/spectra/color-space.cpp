@@ -1,4 +1,4 @@
-#include <metatron/resource/color/color-space.hpp>
+#include <metatron/resource/spectra/color-space.hpp>
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/filesystem.hpp>
@@ -6,7 +6,7 @@
 #include <fstream>
 #include <cstring>
 
-namespace mtt::color {
+namespace mtt::spectra {
     std::unordered_map<std::string, tag<Color_Space>> Color_Space::color_spaces;
 
     Color_Space::Color_Space(

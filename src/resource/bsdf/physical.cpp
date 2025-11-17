@@ -135,7 +135,7 @@ namespace mtt::bsdf {
     }
 
     auto Physical_Bsdf::sample(
-        cref<eval::Context> ctx, cref<fv3> u
+        cref<math::Context> ctx, cref<fv3> u
     ) const noexcept -> opt<Interaction> {
         auto wo = ctx.r.d;
         auto flags = this->flags();

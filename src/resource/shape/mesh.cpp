@@ -168,7 +168,7 @@ namespace mtt::shape {
     }
 
     auto Mesh::sample(
-        cref<eval::Context> ctx, cref<fv2> u, usize idx
+        cref<math::Context> ctx, cref<fv2> u, usize idx
     ) const noexcept -> opt<Interaction> {
         auto prim = indices[idx];
         auto validate_vector = [](cref<fv3> v) -> bool {
