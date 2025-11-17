@@ -65,7 +65,7 @@ namespace mtt::color {
         }
         file.close();
 
-        auto lock = stl::arena::instance().lock();
+        auto lock = stl::stack::instance().lock();
         scale = std::span{scale_storage};
         table = std::span{table_storage};
     }

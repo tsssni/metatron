@@ -30,7 +30,7 @@ namespace mtt::sampler {
         f.read(mut<char>(storage.data()), size * sizeof(u32));
         f.close();
 
-        auto lock = stl::arena::instance().lock();
+        auto lock = stl::stack::instance().lock();
         sobol_matrices = std::span{storage};
     }
 

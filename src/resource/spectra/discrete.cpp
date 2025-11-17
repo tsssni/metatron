@@ -6,13 +6,14 @@
 
 namespace mtt::spectra {
     Discrete_Spectrum::Discrete_Spectrum(cref<Descriptor> desc) noexcept {
-        auto idx = 0;
         auto file = std::ifstream{desc.path};
         if (!file.is_open()) {
             std::println("failed to open discrete spectrum {}", desc.path);
             std::abort();
         }
         auto line = std::string{};
+        auto lambda = std::vector<f32>{}; lambda.reserve(256);
+        auto storage = std::vector<f32>{}; storage.reserve(256);
 
         while (std::getline(file, line)) {
             if (line.empty() || line.front() == '#') continue;
@@ -22,28 +23,30 @@ namespace mtt::spectra {
             auto value = 0.f;
 
             if (iss >> wavelength >> value) {
-                lambda[idx] = wavelength;
-                storage[idx] = value;
-                ++idx;
+                lambda.push_back(wavelength);
+                storage.push_back(value);
             }
         }
 
-        size = idx;
         file.close();
+        auto lock = stl::stack::instance().lock();
+        this->lambda = std::span{lambda};
+        this->storage = std::span{storage};
     }
 
-    auto Discrete_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
-        lambda = math::clamp(lambda, this->lambda[0], this->lambda[size - 1]);
+    auto Discrete_Spectrum::operator()(f32 wavelength) const noexcept -> f32 {
+        auto size = i32(lambda.size());
+        wavelength = math::clamp(wavelength, lambda[0], lambda[size - 1]);
 
-        auto idx = math::clamp(i32(std::lower_bound(
-            this->lambda.begin(),
-            this->lambda.begin() + size,
-            lambda
-        ) - this->lambda.begin() - 1), 0, size - 2);
+        auto span = std::span<f32 const>{lambda};
+        auto idx = math::clamp(
+            i32(std::ranges::lower_bound(span, wavelength) - span.begin()) - 1,
+            0, size - 2
+        );
 
         auto alpha = 1.f
-        * (lambda - this->lambda[idx])
-        / (this->lambda[idx + 1] - this->lambda[idx]);
+        * (wavelength - lambda[idx])
+        / (lambda[idx + 1] - lambda[idx]);
         return math::lerp(storage[idx], storage[idx + 1], alpha);
     }
 }

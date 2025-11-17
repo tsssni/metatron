@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/resource/spectra/spectrum.hpp>
+#include <metatron/core/stl/stack.hpp>
 
 namespace mtt::spectra {
     struct Discrete_Spectrum final {
@@ -11,8 +12,7 @@ namespace mtt::spectra {
         auto operator()(f32 lambda) const noexcept -> f32;
 
     private:
-        std::array<f32, 256> lambda;
-        std::array<f32, 256> storage;
-        i32 size;
+        buf<f32> lambda;
+        buf<f32> storage;
     };
 }

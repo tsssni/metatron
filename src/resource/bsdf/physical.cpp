@@ -70,7 +70,7 @@ namespace mtt::bsdf {
             table[i] = integral;
         });
 
-        auto lock = stl::arena::instance().lock();
+        auto lock = stl::stack::instance().lock();
         fresnel_reflectance_table = std::span{table};
     }
 

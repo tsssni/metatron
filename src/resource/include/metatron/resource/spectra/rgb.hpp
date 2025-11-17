@@ -2,7 +2,6 @@
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/resource/color/color-space.hpp>
 #include <metatron/core/math/vector.hpp>
-#include <metatron/core/math/polynomial.hpp>
 #include <metatron/core/stl/vector.hpp>
 
 namespace mtt::spectra {
@@ -19,7 +18,7 @@ namespace mtt::spectra {
         auto operator()(f32 lambda) const noexcept -> f32;
 
     private:
-        std::array<f32, 3> c;
+        fv3 c;
         f32 s;
         tag<Spectrum> illuminant;
     };

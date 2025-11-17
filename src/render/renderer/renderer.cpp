@@ -16,7 +16,7 @@ namespace mtt::renderer {
             auto rd = std::random_device{};
             auto seed = rd();
             std::println("seed: {}", seed);
-            std::println("buffer: {}", stl::memory{stl::arena::instance().size()});
+            std::println("buffer: {}", stl::memory{stl::stack::instance().size()});
             std::println("image: {}", [] {
                 auto& vec = stl::vector<image::Image>::instance();
                 auto size = 0uz;

@@ -17,7 +17,7 @@ namespace mtt::emitter {
                 inf_prims.emplace_back(light, t);
         }
 
-        auto lock = stl::arena::instance().lock();
+        auto lock = stl::stack::instance().lock();
         this->prims = std::span{prims};
         this->inf_prims = std::span{inf_prims};
     }

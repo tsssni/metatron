@@ -115,7 +115,7 @@ namespace mtt::math {
         ) noexcept {
             *this = rhs0;
             if constexpr (first_dim > rhs_first_dim0)
-                std::copy_n(rhs1.storage.begin(), math::min(first_dim, rhs_first_dim1) - rhs_first_dim0, storage.begin() + rhs_first_dim0);
+                std::copy_n(rhs1.storage.begin(), math::min(first_dim - rhs_first_dim0, rhs_first_dim1), storage.begin() + rhs_first_dim0);
         }
 
         template<usize rhs_first_dim0, usize rhs_first_dim1>
@@ -125,7 +125,7 @@ namespace mtt::math {
         ) {
             *this = std::move(rhs0);
             if constexpr (first_dim > rhs_first_dim0)
-                std::move(rhs1.storage.begin(), rhs1.storage.begin() + (math::min(first_dim, rhs_first_dim1) - rhs_first_dim0), storage.begin() + rhs_first_dim0);
+                std::move(rhs1.storage.begin(), rhs1.storage.begin() + math::min(first_dim - rhs_first_dim0, rhs_first_dim1), storage.begin() + rhs_first_dim0);
         }
 
         template<typename U, usize rhs_first_dim, usize... rhs_rest_dims>
@@ -327,11 +327,11 @@ namespace mtt::math {
 
         auto constexpr operator<=>(cref<Matrix> rhs) const = default;
 
-        operator ref<std::array<Element, first_dim>>() {
+        operator std::span<Element, first_dim>() {
             return storage;
         };
 
-        operator cref<std::array<Element, first_dim>>() const {
+        operator std::span<Element const, first_dim>() const {
             return storage;
         };
 

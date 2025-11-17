@@ -6,8 +6,8 @@ namespace mtt::stl {
         singleton() noexcept = default;
         singleton(cref<singleton>) = delete;
         singleton(rref<singleton>) = delete;
-        auto operator=(cref<singleton>) -> singleton& = delete;
-        auto operator=(rref<singleton>) -> singleton& = delete;
+        auto operator=(cref<singleton>) -> ref<singleton> = delete;
+        auto operator=(rref<singleton>) -> ref<singleton> = delete;
 
         static auto instance() noexcept -> ref<T> {
             if constexpr (local) {

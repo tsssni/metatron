@@ -65,10 +65,10 @@ namespace mtt::volume {
     auto Uniform_Volume::operator[](cref<iv3> ijk) noexcept -> ref<f32> {
         auto [i, j, k] = ijk;
         auto ptr = (*storage)[i, j, k].data();
-        return *(f32*)ptr;
+        return *(mut<f32>)ptr;
     }
 
     auto Uniform_Volume::operator[](cref<iv3> ijk) const noexcept -> f32 {
-        return const_cast<Uniform_Volume&>(*this)[ijk];
+        return const_cast<ref<Uniform_Volume>>(*this)[ijk];
     }
 }

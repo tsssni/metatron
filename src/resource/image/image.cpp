@@ -26,7 +26,7 @@ namespace mtt::image {
                     : sRGB_linearize(*(start + i) / 255.f);
                     break;
                 case 4:
-                    pixel[i] = *((f32*)(start) + i);
+                    pixel[i] = *(mut<f32>(start) + i);
                     break;
                 default:
                     break;
@@ -45,7 +45,7 @@ namespace mtt::image {
                         : byte(sRGB_transfer(v[i]) * 255.f);
                     break;
                 case 4:
-                    *((f32*)pixel) = v[i];
+                    *mut<f32>(pixel) = v[i];
                     break;
                 default:
                     break;
@@ -69,7 +69,7 @@ namespace mtt::image {
     }
 
     auto Image::operator[](usize x, usize y, usize lod) const noexcept -> Pixel const {
-        return (*const_cast<Image*>(this))[x, y, lod];
+        return (*const_cast<mut<Image>>(this))[x, y, lod];
     }
 
     auto Image::operator()(cref<Coordinate> coord) const -> fv4 {

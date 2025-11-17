@@ -68,7 +68,7 @@ namespace mtt::math {
                 return ret;
             }
 
-            std::vector<Transform const*> transforms;
+            std::vector<view<Transform>> transforms;
             std::vector<Transform> owned_transforms;
             std::vector<byte> ops;
 

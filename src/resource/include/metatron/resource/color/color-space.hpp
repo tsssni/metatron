@@ -2,7 +2,7 @@
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/stl/vector.hpp>
-#include <metatron/core/stl/arena.hpp>
+#include <metatron/core/stl/stack.hpp>
 #include <functional>
 
 namespace mtt::color {

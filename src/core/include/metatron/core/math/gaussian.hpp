@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/core/math/arithmetic.hpp>
+#include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/polynomial.hpp>
 
 namespace mtt::math {
@@ -12,21 +12,21 @@ namespace mtt::math {
         auto w1 = w - T{2.5};
         auto w2 = math::sqrt(w) - T{3};
 
-        auto p1 = T(polynomial(w1, std::to_array<T>({
+        auto p1 = T(polynomial(w1, Vector<T, 9>{
             1.50140941,     0.246640727,
             -0.00417768164, -0.00125372503,
             0.00021858087, -4.39150654e-06,
             -3.5233877e-06,  3.43273939e-07,
             2.81022636e-08
-        })));
+        }));
 
-        auto p2 = T(polynomial(w2, std::to_array<T>({
+        auto p2 = T(polynomial(w2, Vector<T, 9>{
             2.83297682,     1.00167406,
             0.00943887047, -0.0076224613,
             0.00573950773, -0.00367342844,
             0.00134934322,  0.000100950558,
             -0.000200214257
-        })));
+        }));
 
         return (w < T{5} ? p1 : p2) * x;
     }

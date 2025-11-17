@@ -198,7 +198,7 @@ namespace mtt::light {
             f.read(mut<char>(intermediate.data()), intermediate.size() * sizeof(U));
             f.close();
 
-            auto lock = stl::arena::instance().lock();
+            auto lock = stl::stack::instance().lock();
             if constexpr (std::is_same_v<T, U>) {
                 storage = std::span{intermediate};
             } else {

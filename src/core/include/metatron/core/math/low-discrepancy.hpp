@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/prime.hpp>
 #include <metatron/core/math/hash.hpp>

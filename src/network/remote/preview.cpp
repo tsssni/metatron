@@ -22,7 +22,7 @@ namespace mtt::remote {
                 image.width, image.height,
                 image.channels, channels
             );
-            created = socket.send({(byte*)packet.data(), packet.size()});
+            created = socket.send({mut<byte>(packet.data()), packet.size()});
         }
 
         auto update(rref<image::Image> image) noexcept -> void {
@@ -40,10 +40,10 @@ namespace mtt::remote {
             packet.setUpdateImage(
                 name, false, desc,
                 0, 0, image.width, image.height,
-                {(f32*)image.pixels.front().data(), image.pixels.front().size() / sizeof(f32)}
+                {mut<f32>(image.pixels.front().data()), image.pixels.front().size() / sizeof(f32)}
             );
 
-            if (!socket.send({(byte*)packet.data(), packet.size()}))
+            if (!socket.send({mut<byte>(packet.data()), packet.size()}))
                 std::println("failed to send image to remote previewer");
         }
     };

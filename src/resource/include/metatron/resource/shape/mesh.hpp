@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/resource/shape/shape.hpp>
-#include <metatron/core/stl/arena.hpp>
+#include <metatron/core/stl/stack.hpp>
 
 namespace mtt::shape {
     struct Mesh final {

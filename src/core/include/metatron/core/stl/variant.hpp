@@ -28,7 +28,7 @@ namespace mtt::stl {
         auto emplace(Args&&... args) noexcept -> void {
             destroy();
             idx = ts::template index<T>;
-            std::construct_at((T*)data(idx), std::forward<Args>(args)...);
+            std::construct_at((mut<T>)data(idx), std::forward<Args>(args)...);
         }
 
         template<typename T>
@@ -41,13 +41,13 @@ namespace mtt::stl {
             auto ref = mut<F>{};
             auto v = ((
               idx == ts::template index<Ts>
-              ? (ref = make_mut(*(Ts*)data(idx)), true) : false
+              ? (ref = make_mut(*mut<Ts>(data(idx))), true) : false
             ) || ...);
             return ref;
         }
 
         auto data() const noexcept -> view<F> {
-            return const_cast<variant*>(this)->data();
+            return const_cast<mut<variant>>(this)->data();
         }
 
         auto clone() const noexcept -> obj<F>
@@ -55,7 +55,7 @@ namespace mtt::stl {
             auto ref = obj<F>{};
             auto v = ((
               idx == ts::template index<Ts>
-              ? (ref = make_obj<F, Ts>(*(Ts const*)data(idx)), true) : false
+              ? (ref = make_obj<F, Ts>(*(view<Ts>)data(idx)), true) : false
             ) || ...);
             return ref;
         }
@@ -74,7 +74,7 @@ namespace mtt::stl {
             ) || ...);
         }
 
-        auto data(usize idx) const noexcept -> byte const* {
+        auto data(usize idx) const noexcept -> view<byte> {
             auto offset = ((ts::template index<Ts> < idx ? sizeof(Ts) : 0) + ...);
             return &storage[offset];
         }

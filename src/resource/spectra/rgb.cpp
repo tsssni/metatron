@@ -1,5 +1,6 @@
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <metatron/core/math/polynomial.hpp>
 #include <metatron/core/stl/print.hpp>
 
 namespace mtt::spectra {

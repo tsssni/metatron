@@ -3,7 +3,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/ranges.hpp>
-#include <metatron/core/stl/arena.hpp>
+#include <metatron/core/stl/stack.hpp>
 #include <vector>
 
 namespace mtt::math {
@@ -47,7 +47,7 @@ namespace mtt::math {
             for (auto i = 1; i <= dim; ++i)
                 cdf[i] = integral == 0.f ? f32(i) / f32(dim) : cdf[i] /= integral;
 
-            auto lock = stl::arena::instance().lock();
+            auto lock = stl::stack::instance().lock();
             this->rows = buf<Element>{rows};
             this->cdf = buf<f32>{cdf};
         }

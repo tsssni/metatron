@@ -7,11 +7,11 @@
 #include <mutex>
 
 namespace mtt::stl {
-    struct arena final: singleton<arena> {
-        arena() noexcept:
+    struct stack final: singleton<stack> {
+        stack() noexcept:
         storage(nullptr), length(0), capacity(0),
         mutex(make_obj<std::mutex>()) {}
-        ~arena() noexcept { if (storage) std::free(storage); }
+        ~stack() noexcept { if (storage) std::free(storage); }
 
         auto alloc(uptr length) noexcept -> uptr {
             if (this->length + length > capacity) grow();
@@ -61,17 +61,16 @@ namespace mtt {
 
         buf(std::span<T> range) noexcept {
             auto size = range.size() * sizeof(T);
-            ptr = stl::arena::instance().alloc(size);
+            ptr = stl::stack::instance().alloc(size);
             length = range.size();
             std::memcpy(data(), range.data(), size);
         }
 
-        operator std::span<T>() noexcept {
-            return {data(), size()};
-        }
+        operator std::span<T>() noexcept { return {data(), size()}; }
+        operator std::span<T const>() const noexcept { return {data(), size()}; }
 
-        auto data() noexcept -> mut<T> { return (mut<T>)(stl::arena::instance().data() + ptr); };
-        auto data() const noexcept -> view<T> { return (view<T>)(stl::arena::instance().data() + ptr); };
+        auto data() noexcept -> mut<T> { return (mut<T>)(stl::stack::instance().data() + ptr); };
+        auto data() const noexcept -> view<T> { return (view<T>)(stl::stack::instance().data() + ptr); };
         auto size() const noexcept -> usize { return length; }
         auto empty() const noexcept -> bool { return length == 0; }
         auto operator[](usize i) noexcept -> ref<T> { return data()[i]; }

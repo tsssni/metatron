@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/resource/bsdf/bsdf.hpp>
-#include <metatron/core/stl/arena.hpp>
+#include <metatron/core/stl/stack.hpp>
 
 namespace mtt::bsdf {
     struct Physical_Bsdf final {

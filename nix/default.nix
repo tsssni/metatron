@@ -1,8 +1,8 @@
 {
   argparse,
   assimp,
-  clangStdenv,
   clang-tools,
+  clangStdenv,
   cmake,
   entt,
   glaze,

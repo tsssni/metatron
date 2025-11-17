@@ -118,7 +118,7 @@ namespace mtt::shape {
             dndv[i] = dnduv[1];
         }
 
-        auto lock = stl::arena::instance().lock();
+        auto lock = stl::stack::instance().lock();
         this->indices = std::span{indices};
         this->vertices = std::span{vertices};
         this->normals = std::span{normals};
