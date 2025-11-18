@@ -196,7 +196,6 @@ namespace mtt::accel {
         };
         traverse(root.get());
 
-        auto lock = stl::stack::instance().lock();
         this->prims = std::span{prims};
         this->bvh = std::span{bvh};
     }

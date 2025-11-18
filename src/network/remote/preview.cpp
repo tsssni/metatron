@@ -25,7 +25,7 @@ namespace mtt::remote {
             created = socket.send({mut<byte>(packet.data()), packet.size()});
         }
 
-        auto update(rref<opaque::Image> image) noexcept -> void {
+        auto update(cref<opaque::Image> image) noexcept -> void {
             create(image);
             if (!created || local || image.stride != 4) return;
 
@@ -51,7 +51,7 @@ namespace mtt::remote {
     Previewer::Previewer(cref<wired::Address> address, std::string_view name) noexcept
     : stl::capsule<Previewer>(address, name) {}
 
-    auto Previewer::update(rref<opaque::Image> image) noexcept -> void {
-        impl->update(std::move(image));
+    auto Previewer::update(cref<opaque::Image> image) noexcept -> void {
+        impl->update(image);
     }
 }

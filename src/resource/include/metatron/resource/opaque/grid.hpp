@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
-#include <vector>
+#include <metatron/core/stl/stack.hpp>
 
 namespace mtt::opaque {
     struct Grid final {
@@ -12,7 +12,7 @@ namespace mtt::opaque {
             };
             uzv3 size;
         };
-        std::vector<f32> cells;
+        buf<f32> cells;
 
         auto operator[](usize x, usize y, usize z) noexcept -> f32&;
         auto operator[](usize x, usize y, usize z) const noexcept -> f32;

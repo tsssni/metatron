@@ -45,7 +45,7 @@ namespace mtt::photo {
         img.size = {desc.image_size, 4, 4};
         img.linear = true;
         img.pixels.resize(1);
-        img.pixels.front().resize(math::prod(img.size));
+        img.pixels.front() = math::prod(img.size);
 
         auto& vec = stl::vector<opaque::Image>::instance();
         auto lock = vec.lock();

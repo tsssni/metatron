@@ -28,8 +28,6 @@ namespace mtt::spectra {
             }
         }
 
-        file.close();
-        auto lock = stl::stack::instance().lock();
         this->lambda = std::span{lambda};
         this->storage = std::span{storage};
     }

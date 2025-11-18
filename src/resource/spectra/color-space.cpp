@@ -52,21 +52,15 @@ namespace mtt::spectra {
             std::abort();
         }
 
-        auto scale_size = table_res;
-        auto data_size = table_res * table_res * table_res * 3 * 3;
-        auto scale_storage = std::vector<f32>(scale_size);
-        auto table_storage = std::vector<f32>(data_size);
+        scale = table_res;
+        table = table_res * table_res * table_res * 3 * 3;
 
         if (false
-        || !file.read(mut<char>(scale_storage.data()), scale_size * sizeof(f32))
-        || !file.read(mut<char>(table_storage.data()), data_size * sizeof(f32))) {
+        || !file.read(mut<char>(scale.ptr), scale.bytelen)
+        || !file.read(mut<char>(table.ptr), table.bytelen)) {
             std::println("{} coefficient could not read table", name);
             std::abort();
         }
         file.close();
-
-        auto lock = stl::stack::instance().lock();
-        scale = std::span{scale_storage};
-        table = std::span{table_storage};
     }
 }

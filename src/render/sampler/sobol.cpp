@@ -26,12 +26,9 @@ namespace mtt::sampler {
 
         auto size = 0uz;
         f.read(mut<char>(&size), sizeof(size));
-        auto storage = std::vector<u32>(size);
-        f.read(mut<char>(storage.data()), size * sizeof(u32));
+        sobol_matrices = size;
+        f.read(mut<char>(sobol_matrices.ptr), sobol_matrices.bytelen);
         f.close();
-
-        auto lock = stl::stack::instance().lock();
-        sobol_matrices = std::span{storage};
     }
 
     auto Sobol_Sampler::start(Context ctx) noexcept -> void {

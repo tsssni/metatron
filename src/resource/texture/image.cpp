@@ -1,72 +1,10 @@
 #include <metatron/resource/texture/image.hpp>
 #include <metatron/resource/spectra/rgb.hpp>
-#include <metatron/core/math/arithmetic.hpp>
-#include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/print.hpp>
-#include <OpenImageIO/imageio.h>
-#include <bit>
 
 namespace mtt::texture {
     Image_Vector_Texture::Image_Vector_Texture(cref<Descriptor> desc) noexcept {
-        MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(desc.path), {
-            std::println("image {} not exists", desc.path);
-            std::abort();
-        });
-        auto in = OIIO::ImageInput::open(path.c_str());
-        if (!in) {
-            std::println("oiio error: cannot open image {}", desc.path);
-            std::abort();
-        }
-
-        auto& spec = in->spec();
-        auto tex = opaque::Image{};
-        tex.linear = desc.linear;
-        tex.size = {
-            usize(spec.width),
-            usize(spec.height),
-            usize(spec.nchannels),
-            spec.format.size(),
-        };
-        tex.pixels.resize(std::bit_width(math::max(tex.width, tex.height)));
-        tex.pixels.front().resize(math::prod(tex.size));
-
-        auto success = in->read_image(0, 0, 0, spec.nchannels, spec.format, tex.pixels.front().data());
-        if (!success) {
-            std::println("can not read image {}", desc.path);
-            std::abort();
-        }
-        in->close();
-
-        auto size = uzv2(tex.size);
-        auto channels = tex.size[2];
-        auto stride = tex.size[3];
-
-        for (auto mip = 1uz; mip < tex.pixels.size(); ++mip) {
-            auto fetch = [mip, size, &tex](cref<uzv2> src) {
-                auto px = math::clamp(src, {0}, size - 1);
-                return fv4{tex[px[0], px[1], mip - 1]};
-            };
-            size[0] = math::max(1uz, size[0] >> 1uz);
-            size[1] = math::max(1uz, size[1] >> 1uz);
-            tex.pixels[mip].resize(math::prod(size) * channels * stride);
-
-            auto down = [fetch, mip, &tex](cref<uzv2> px) mutable {
-                auto [i, j] = px;
-                tex[i, j, mip] = 0.25f * (0.f
-                + fetch({i * 2uz + 0, j * 2uz + 0})
-                + fetch({i * 2uz + 0, j * 2uz + 1})
-                + fetch({i * 2uz + 1, j * 2uz + 0})
-                + fetch({i * 2uz + 1, j * 2uz + 1})
-                );
-            };
-
-            if (math::prod(size) > 1024)
-                stl::scheduler::instance().sync_parallel(size, down);
-            else for (auto j = 0; j < size[1]; ++j)
-                    for (auto i = 0; i < size[0]; ++i)
-                        down({i, j});
-        }
+        auto tex = opaque::Image::from_path(desc.path, desc.linear);
 
         if (desc.distr != Image_Distribution::none) {
             auto size = uzv2{tex.size};

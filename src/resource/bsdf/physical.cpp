@@ -55,7 +55,7 @@ namespace mtt::bsdf {
     }
 
     auto Physical_Bsdf::init() noexcept -> void {
-        auto table = std::vector<f32>(fresnel_length + 1);
+        fresnel_reflectance_table = fresnel_length + 1;
         stl::scheduler::instance().sync_parallel(uzv1{fresnel_length + 1}, [&](auto idx) {
             auto i = idx[0];
             auto integral = 0.0;
@@ -67,11 +67,8 @@ namespace mtt::bsdf {
                 auto f1 = fresnel(cos_theta, eta, 0.f);
                 integral += (f0 + f1) * 0.5f / fresnel_num_samples;
             }
-            table[i] = integral;
+            fresnel_reflectance_table[i] = integral;
         });
-
-        auto lock = stl::stack::instance().lock();
-        fresnel_reflectance_table = std::span{table};
     }
 
     auto Physical_Bsdf::operator()(

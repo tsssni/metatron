@@ -1,5 +1,7 @@
 #pragma once
+#include <metatron/resource/spectra/color-space.hpp>
 #include <metatron/core/math/vector.hpp>
+#include <metatron/core/stl/stack.hpp>
 #include <vector>
 
 namespace mtt::opaque {
@@ -37,10 +39,13 @@ namespace mtt::opaque {
         bool linear;
         // specify mip size by resizing the vector.
         // if just fill mip 0 then mipmap auto generated.
-        std::vector<std::vector<byte>> pixels;
+        std::vector<buf<byte>> pixels;
 
         auto operator[](usize x, usize y, usize lod = 0) noexcept -> Pixel;
         auto operator[](usize x, usize y, usize lod = 0) const noexcept -> Pixel const;
         auto operator()(cref<Coordinate> coord) const -> fv4;
+
+        auto static from_path(std::string_view path, bool linear) noexcept -> Image;
+        auto to_path(std::string_view path, tag<spectra::Color_Space> cs) const noexcept -> void;
     };
 }

@@ -16,15 +16,6 @@ namespace mtt::renderer {
             auto rd = std::random_device{};
             auto seed = rd();
             std::println("seed: {}", seed);
-            std::println("buffer: {}", stl::memory{stl::stack::instance().size()});
-            std::println("image: {}", [] {
-                auto& vec = stl::vector<opaque::Image>::instance();
-                auto size = 0uz;
-                for (auto i = 0; i < vec.size(); i++)
-                    for (auto j = 0; j < vec[i]->pixels.size(); j++)
-                        size += vec[i]->pixels[j].size();
-                return stl::memory{size};
-            }());
 
             auto& args = scene::Args::instance();
             auto addr = wired::Address{args.address};
@@ -66,43 +57,14 @@ namespace mtt::renderer {
                 }
             };
 
-            auto store = [
-                path = args.output,
-                fcs = desc.film.color_space
-            ](cref<opaque::Image> img) {
-                auto type = img.stride == 1
-                ? OIIO::TypeDesc::UINT8 : OIIO::TypeDesc::FLOAT;
-                auto spec = OIIO::ImageSpec{
-                    i32(img.width), i32(img.height), i32(img.channels), type
-                };
-
-                auto cs_name = std::string{"sRGB"};
-                for (auto const& [name, cs]: spectra::Color_Space::color_spaces)
-                    if (fcs == cs) {cs_name = name; break;}
-                spec.attribute("oiio::ColorSpace", cs_name);
-                spec.attribute("planarconfig", "contig");
-
-                auto out = OIIO::ImageOutput::create(std::string{path});
-                if (!out || !out->open(std::string{path}, spec)) {
-                    std::println("failed to create image file {}", path);
-                    std::abort();
-                }
-
-                auto success = out->write_image(type, img.pixels.front().data());
-                if (!success) {
-                    std::println("failed to write image {}", path);
-                    std::abort();
-                }
-
-                out->close();
-            };
+            auto& film = *desc.film.image;
+            auto image = opaque::Image{.size = film.size, .linear = film.linear};
+            image.pixels.emplace_back(film.pixels.front().size());
 
             auto next = 1uz;
             auto previewer = remote::Previewer{addr, "metatron"};
             auto& scheduler = stl::scheduler::instance();
-            auto futures = std::vector<std::shared_future<void>>{};
-            futures.reserve(spp / 64 + 8);
-            futures.emplace_back(scheduler.async_dispatch([]{}));
+            auto future = std::shared_future<void>{scheduler.async_dispatch([]{})};
 
             while (range[0] < spp) {
                 stl::scheduler::instance().sync_parallel(size, trace);
@@ -111,31 +73,23 @@ namespace mtt::renderer {
                 next = math::min(next * 2uz, 64uz);
 
                 auto finished = range[0] == spp;
-                auto image = *desc.film.image;
+                future.wait();
                 scheduler.sync_parallel(
                     uzv2{image.size},
-                    [&image](auto const& px) {
+                    [&image, &film](auto const& px) {
                         auto [i, j] = px;
-                        auto pixel = fv4{image[i, j]};
+                        auto pixel = fv4{film[i, j]};
                         pixel /= pixel[3];
                         image[i, j] = pixel;
                     }
                 );
-                if (finished) store(image);
-
-                if (!addr.host.empty()) futures.push_back(scheduler.async_dispatch(
-                    [
-                        image = std::move(image),
-                        &f = futures.back(),
-                        &previewer
-                    ] mutable {
-                        f.wait();
-                        previewer.update(std::move(image));
-                    }
-                ));
+                if (finished) image.to_path(args.output, desc.film.color_space);
+                if (!addr.host.empty()) future = scheduler.async_dispatch(
+                    [&image, &previewer] { previewer.update(image); }
+                );
             }
 
-            futures.back().wait();
+            future.wait();
             ~progress;
         }
     };

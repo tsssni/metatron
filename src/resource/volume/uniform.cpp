@@ -7,7 +7,7 @@ namespace mtt::volume {
     voxel_size((bbox.p_max - bbox.p_min) / dims) {
         auto grid = opaque::Grid{};
         grid.size = dims;
-        grid.cells.resize(math::prod(dims));
+        grid.cells = math::prod(dims);
 
         auto& vec = stl::vector<opaque::Grid>::instance();
         auto lock = vec.lock();
