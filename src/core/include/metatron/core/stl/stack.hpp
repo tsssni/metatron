@@ -4,6 +4,7 @@
 #include <metatron/core/math/constant.hpp>
 #include <cstring>
 #include <vector>
+#include <mutex>
 
 namespace mtt::stl {
     struct buf {
