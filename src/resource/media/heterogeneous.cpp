@@ -3,7 +3,6 @@
 #include <metatron/resource/volume/uniform.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::media {
     Heterogeneous_Medium::Heterogeneous_Medium(cref<Descriptor> desc) noexcept:

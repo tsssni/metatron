@@ -45,11 +45,15 @@ namespace mtt::stl {
         template<typename T>
         requires poliable<F, T>
         auto emplace_type() noexcept -> void {
-            auto idx = map.size();
-            map[typeid(T)] = idx;
+            auto&& tid = typeid(T);
+            auto mid = map.size();
+            if (map.contains(tid)) return;
+
+            map[tid] = mid;
             storage.push_back({});
             length.push_back(sizeof(T));
             mutex.push_back(make_obj<std::mutex>());
+
             destroier.push_back([](ref<std::vector<byte>> vec) {
                 std::destroy_n((mut<T>)vec.data(), vec.size() / sizeof(T));
             });

@@ -46,6 +46,8 @@ namespace mtt::scene {
         std::function<auto () -> void> pre,
         std::function<auto () -> void> post
     ) noexcept -> void {
+        auto& vec = stl::vector<F>::instance();
+        if constexpr (pro::facade<F>) (vec.template emplace_type<Ts>(), ...);
         Hierarchy::instance().filter([type = std::move(type), pre, post](auto bins) {
             using ts = stl::array<F, Ts...>;
             if constexpr (!pro::facade<F>)

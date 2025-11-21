@@ -15,11 +15,13 @@ namespace mtt::scene {
         using namespace spectra;
 
         auto& svec = stl::vector<Spectrum>::instance();
-        svec.emplace_type<Constant_Spectrum>();
-        svec.emplace_type<Rgb_Spectrum>();
-        svec.emplace_type<Blackbody_Spectrum>();
-        svec.emplace_type<Visible_Spectrum>();
-        svec.emplace_type<Discrete_Spectrum>();
+        MTT_DESERIALIZE(Spectrum
+        , Constant_Spectrum
+        , Rgb_Spectrum
+        , Blackbody_Spectrum
+        , Visible_Spectrum
+        , Discrete_Spectrum
+        );
 
         auto spec_name = std::to_array<std::string>({
             "zero", "one",
@@ -140,13 +142,5 @@ namespace mtt::scene {
                 Color_Space::color_spaces[cs_name[i]] = cs;
             }
         });
-
-        MTT_DESERIALIZE(Spectrum
-        , Constant_Spectrum
-        , Rgb_Spectrum
-        , Blackbody_Spectrum
-        , Visible_Spectrum
-        , Discrete_Spectrum
-        );
     }
 }

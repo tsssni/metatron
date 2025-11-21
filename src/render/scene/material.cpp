@@ -25,28 +25,6 @@ namespace mtt::scene {
         using namespace texture;
         using namespace material;
         using namespace accel;
-        bsdf::Physical_Bsdf::init();
-
-        auto& vvec = stl::vector<Vector_Texture>::instance();
-        vvec.emplace_type<Constant_Vector_Texture>();
-        vvec.emplace_type<Image_Vector_Texture>();
-
-        auto& svec = stl::vector<Spectrum_Texture>::instance();
-        svec.emplace_type<Constant_Spectrum_Texture>();
-        svec.emplace_type<Image_Spectrum_Texture>();
-        svec.emplace_type<Checkerboard_Texture>();
-
-        auto& mvec = stl::vector<Material>::instance();
-        mvec.emplace_type<Physical_Material>();
-        mvec.emplace_type<Interface_Material>();
-
-        for (auto& [spec, _]: spectra::Spectrum::spectra)
-            attach<Spectrum_Texture>(
-                ("/texture/" + spec) / et,
-                Constant_Spectrum_Texture{
-                    fetch<spectra::Spectrum>(("/spectrum/" + spec) / et),
-                }
-            );
 
         MTT_DESERIALIZE_CALLBACK([]{
             auto size = stl::vector<opaque::Image>::instance().size();
@@ -66,5 +44,14 @@ namespace mtt::scene {
 
         MTT_DESERIALIZE(Material, Physical_Material, Interface_Material);
         MTT_DESERIALIZE(Divider);
+
+        bsdf::Physical_Bsdf::init();
+        for (auto& [spec, _]: spectra::Spectrum::spectra)
+            attach<Spectrum_Texture>(
+                ("/texture/" + spec) / et,
+                Constant_Spectrum_Texture{
+                    fetch<spectra::Spectrum>(("/spectrum/" + spec) / et),
+                }
+            );
     }
 }
