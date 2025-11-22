@@ -11,9 +11,8 @@ namespace mtt::sampler {
     inline buf<u32> Sobol_Sampler::sobol_matrices;
 
     auto Sobol_Sampler::init() noexcept -> void {
-        auto& fs = stl::filesystem::instance();
-        auto path = "sampler/sobol.bin";
-        MTT_OPT_OR_CALLBACK(data, fs.find(path), {
+        auto path = "metatron/sampler/sobol.bin";
+        MTT_OPT_OR_CALLBACK(data, stl::filesystem::instance().find(path), {
             std::println("{} not found", path);
             std::abort();
         });

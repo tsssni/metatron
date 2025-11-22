@@ -72,7 +72,7 @@ function(release)
 
     install(
         DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/share/
-        DESTINATION share/metatron
+        DESTINATION share/
     )
 endfunction()
 

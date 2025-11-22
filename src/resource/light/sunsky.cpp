@@ -155,7 +155,7 @@ namespace mtt::light {
         <typename T, typename U>
         (ref<buf<T>> storage, rref<std::vector<U>> intermediate, cref<std::string> file) -> void {
             auto& fs = stl::filesystem::instance();
-            auto prefix = std::string{"sunsky/"};
+            auto prefix = std::string{"metatron/sunsky/"};
             auto postfix = std::string{".bin"};
             auto path = prefix + file + postfix;
             MTT_OPT_OR_CALLBACK(data, fs.find(path), {

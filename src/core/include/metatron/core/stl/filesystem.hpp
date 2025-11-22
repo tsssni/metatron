@@ -50,12 +50,9 @@ namespace mtt::stl {
 
             auto ss = std::stringstream{env_value};
             auto path = std::string{};
-            auto pathes = std::vector<std::string>{};
             
-            while(std::getline(ss, path, sep))
-                if (!path.empty()) pathes.push_back(path);
-            for (auto path: pathes | std::views::reverse)
-                this->pathes.push_back(path);
+            while(std::getline(ss, path, sep)) if (!path.empty()) pathes.push_back(path);
+            pathes = pathes | std::views::reverse | std::ranges::to<decltype(pathes)>();
         }
 
         std::vector<std::string> pathes;

@@ -33,7 +33,8 @@ namespace mtt::spectra {
         to_XYZ = rgb | fm33{c[0], c[1], c[2]};
         from_XYZ = math::inverse(to_XYZ);
 
-        MTT_OPT_OR_CALLBACK(coeff, stl::filesystem::instance().find("color-space/" + std::string{name} + ".coeff"), {
+        auto path = "metatron/color-space/" + std::string{name} + ".coeff";
+        MTT_OPT_OR_CALLBACK(coeff, stl::filesystem::instance().find(path), {
             std::println("{} coefficient not exists", name);
             std::abort();
         });
