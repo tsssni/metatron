@@ -11,6 +11,8 @@
   openimageio,
   openvdb,
   proxy,
+  vulkan-loader,
+  vulkan-headers,
   vulkan-tools,
   zlib,
 }:
@@ -46,6 +48,8 @@ stdenv.mkDerivation {
     zlib
   ]
   ++ (lib.optionals stdenv.isLinux [
+    vulkan-loader
+    vulkan-headers
     vulkan-tools
   ]);
 

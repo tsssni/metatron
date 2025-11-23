@@ -8,7 +8,8 @@
 
 namespace mtt::stl {
     struct buf {
-        mut<byte> ptr = nullptr;
+        mut<byte> host = nullptr;
+        uptr device = 0ull;
         u32 bytelen = 0u;
         u32 idx = math::maxv<u32>;
     };
@@ -48,7 +49,7 @@ namespace mtt {
         operator std::span<T const>() const noexcept { return {data(), size()}; }
         auto operator=(cref<buf> rhs) noexcept -> ref<buf> {
             free();
-            ptr = rhs.ptr;
+            host = rhs.host;
             bytelen = rhs.bytelen;
             idx = math::maxv<u32>;
             return *this;
@@ -62,8 +63,8 @@ namespace mtt {
 
         buf(usize size) noexcept {
             bytelen = size * sizeof(T);
-            ptr = mut<byte>(std::malloc(bytelen));
-            if (!ptr) {
+            host = mut<byte>(std::malloc(bytelen));
+            if (!host) {
                 std::println("allocate {} bytes failed", bytelen);
                 std::abort();
             }
@@ -77,8 +78,8 @@ namespace mtt {
             std::memcpy(data(), range.data(), bytelen);
         }
 
-        auto data() noexcept -> mut<T> { return mut<T>(ptr); }
-        auto data() const noexcept -> view<T> { return view<T>(ptr); }
+        auto data() noexcept -> mut<T> { return mut<T>(host); }
+        auto data() const noexcept -> view<T> { return view<T>(host); }
         auto size() const noexcept -> usize { return bytelen / sizeof(T); }
         auto empty() const noexcept -> bool { return bytelen == 0; }
         auto operator[](usize i) noexcept -> ref<T> { return data()[i]; }
@@ -86,18 +87,18 @@ namespace mtt {
 
         auto subbuf(usize i, usize size) noexcept -> buf<T> {
             auto b = buf<T>{};
-            b.ptr = ptr + i * sizeof(T);
+            b.host = host + i * sizeof(T);
             b.bytelen = size * sizeof(T);
             return b;
         }
 
     private:
-        auto reset() noexcept -> void { ptr = nullptr; bytelen = 0; idx = math::maxv<u32>; }
+        auto reset() noexcept -> void { host = nullptr; bytelen = 0; idx = math::maxv<u32>; }
         auto free() noexcept -> void {
-            if (idx != math::maxv<u32> && ptr) {
+            if (idx != math::maxv<u32> && host) {
                 if constexpr (!std::is_trivially_constructible_v<T>)
                     std::destroy_n(data(), bytelen / sizeof(T));
-                std::free(ptr);
+                std::free(host);
             }
         }
     };

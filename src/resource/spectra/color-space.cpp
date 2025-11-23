@@ -57,8 +57,8 @@ namespace mtt::spectra {
         table = table_res * table_res * table_res * 3 * 3;
 
         if (false
-        || !file.read(mut<char>(scale.ptr), scale.bytelen)
-        || !file.read(mut<char>(table.ptr), table.bytelen)) {
+        || !file.read(mut<char>(scale.host), scale.bytelen)
+        || !file.read(mut<char>(table.host), table.bytelen)) {
             std::println("{} coefficient could not read table", name);
             std::abort();
         }
