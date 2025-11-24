@@ -40,7 +40,7 @@ namespace mtt::scene {
             );
         }
 
-        auto path = "metatron/spectra";
+        auto path = "spectra";
         MTT_OPT_OR_CALLBACK(spectra_dir, stl::filesystem::instance().find(path), {
             std::println("spectra not exist");
             std::abort();
