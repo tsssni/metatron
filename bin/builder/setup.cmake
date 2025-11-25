@@ -1,1 +1,1 @@
-list(APPEND metatron-deps device)
+list(APPEND metatron-deps device argparse)

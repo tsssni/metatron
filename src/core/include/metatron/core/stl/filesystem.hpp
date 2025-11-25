@@ -24,12 +24,12 @@ namespace mtt::stl {
 
             prefix = MTT_PREFIX;
             share = prefix / "share/metatron";
-            push(share);
+            push(share.c_str());
         }
 
-        auto push(cref<std::filesystem::path> path) noexcept -> void { data.push_back(path); }
+        auto push(std::string_view path) noexcept -> void { data.push_back(path); }
 
-        auto find(cref<std::filesystem::path> path) noexcept -> opt<std::string> {
+        auto find(std::string_view path) noexcept -> opt<std::string> {
             for (auto const& base : data | std::views::reverse) {
                 auto full = base / path;
                 if (std::filesystem::exists(full)) return full.string();
