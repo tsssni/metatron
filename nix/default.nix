@@ -11,6 +11,7 @@
   openimageio,
   openvdb,
   proxy,
+  shader-slang,
   vulkan-loader,
   vulkan-headers,
   vulkan-tools,
@@ -35,6 +36,7 @@ stdenv.mkDerivation {
     clang-tools
     cmake
     ninja
+    shader-slang
   ];
 
   buildInputs = [
