@@ -1,6 +1,7 @@
 #include <metatron/device/shader/compiler.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/print.hpp>
+#include <spirv_cross/spirv_msl.hpp>
 #include <slang-com-ptr.h>
 #include <slang.h>
 #include <filesystem>
@@ -8,13 +9,8 @@
 #include <cstring>
 
 namespace mtt::shader {
-    #ifdef __linux__
-        auto constexpr format = SLANG_SPIRV;
-        auto constexpr ext = std::string_view{".spirv"};
-    #elif __APPLE__
-        auto constexpr format = SLANG_METAL_LIB;
-        auto constexpr ext = std::string_view{".metallib"};
-    #endif
+    auto constexpr format = SLANG_SPIRV;
+    auto constexpr ext = std::string_view{".spirv"};
     auto constexpr kernel = std::string_view{".kernel.slang"};
 
     struct Compiler::Impl final {
@@ -80,9 +76,21 @@ namespace mtt::shader {
             print(code->link(linked.writeRef(), diagnostic.writeRef()));
             print(linked->getEntryPointCode(0, 0, kernel.writeRef(), diagnostic.writeRef()));
 
+        #if __APPLE__
+            cross({view<byte>(kernel->getBufferPointer()), kernel->getBufferSize()});
+        #else
             auto compiled = std::ofstream{out / file, std::ios::binary};
             std::filesystem::create_directories((out / file).parent_path());
             compiled.write(view<char>(kernel->getBufferPointer()), kernel->getBufferSize());
+        #endif
+        }
+
+        auto cross(std::span<byte const> kernel) noexcept -> void {
+            auto compiler = spirv_cross::CompilerMSL{view<u32>(kernel.data()), kernel.size() / sizeof(u32)};
+            auto options = spirv_cross::CompilerMSL::Options{};
+            options.set_msl_version(4, 0);
+            compiler.set_msl_options(options);
+            std::println("{}", compiler.compile());
         }
 
         auto build(
@@ -94,12 +102,11 @@ namespace mtt::shader {
 
             auto targets = std::array<slang::TargetDesc, 1>{};
             targets.front().format = format;
-            targets.front().forceGLSLScalarBufferLayout = true;
             auto paths = std::to_array({dir.c_str()});
             auto options = std::to_array<slang::CompilerOptionEntry>({
                 {
                     .name = slang::CompilerOptionName::ForceCLayout,
-                    .value = {.intValue0 = 1}
+                    .value = {.intValue0 = 1, .intValue1 = 0}
                 }
             });
 

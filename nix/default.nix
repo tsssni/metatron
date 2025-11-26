@@ -12,6 +12,7 @@
   openvdb,
   proxy,
   shader-slang,
+  spirv-cross,
   vulkan-loader,
   vulkan-headers,
   vulkan-tools,
@@ -37,6 +38,7 @@ stdenv.mkDerivation {
     cmake
     ninja
     shader-slang
+    spirv-cross
   ];
 
   buildInputs = [
