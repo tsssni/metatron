@@ -11,7 +11,7 @@ namespace mtt::math {
         Discrete_Distribution(std::array<f32, n>&& ws) noexcept
         : pdf(ws) {
             cdf[0] = 0.f;
-            for (auto i = 1; i <= n; i++)
+            for (auto i = 1; i <= n; ++i)
                 cdf[i] = cdf[i - 1] + pdf[i - 1];
             for (auto& w: this->pdf)
                 w /= cdf.back();

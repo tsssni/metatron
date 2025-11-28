@@ -30,7 +30,7 @@ namespace mtt::scene {
             0.f, 1.f,
         });
         svec.reserve<Constant_Spectrum>(spec_name.size());
-        for (auto i = 0uz; i < spec_name.size(); i++) {
+        for (auto i = 0uz; i < spec_name.size(); ++i) {
             Spectrum::spectra.emplace(
                 spec_name[i],
                 attach<Spectrum>(
@@ -53,10 +53,10 @@ namespace mtt::scene {
         })
         | std::ranges::to<std::vector<std::filesystem::path>>();
         svec.reserve<Discrete_Spectrum>(std::ranges::count_if(spectra,
-            [] (auto const& p) { return p.extension() == ".dspd"; })
+            [](auto const& p) { return p.extension() == ".dspd"; })
         );
         svec.reserve<Visible_Spectrum>(std::ranges::count_if(spectra,
-            [] (auto const& p) { return p.extension() == ".vspd"; })
+            [](auto const& p) { return p.extension() == ".vspd"; })
         );
 
         stl::scheduler::instance().sync_parallel(uzv1{spectra.size()}, [&](auto idx) {
@@ -100,7 +100,7 @@ namespace mtt::scene {
             }
         });
 
-        for (auto i = 0uz; i < transfer.size(); i++)
+        for (auto i = 0uz; i < transfer.size(); ++i)
             tvec.emplace_back(transfer[i], linearize[i]);
 
         auto cs_name = std::to_array<std::string>({

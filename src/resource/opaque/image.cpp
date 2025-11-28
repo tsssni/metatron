@@ -23,16 +23,16 @@ namespace mtt::opaque {
         auto pixel = fv4{};
         for (auto i = 0; i < image->channels; ++i) {
             switch (image->stride) {
-                case 1:
-                    pixel[i] = image->linear
-                    ? *(start + i) / 255.f
-                    : sRGB_linearize(*(start + i) / 255.f);
-                    break;
-                case 4:
-                    pixel[i] = *(mut<f32>(start) + i);
-                    break;
-                default:
-                    break;
+            case 1:
+                pixel[i] = image->linear
+                ? *(start + i) / 255.f
+                : sRGB_linearize(*(start + i) / 255.f);
+                break;
+            case 4:
+                pixel[i] = *(mut<f32>(start) + i);
+                break;
+            default:
+                break;
             }
         }
         return pixel;
@@ -42,16 +42,16 @@ namespace mtt::opaque {
         for (auto i = 0; i < image->size[2]; ++i) {
             auto* pixel = start + image->size[3] * i; 
             switch (image->size[3]) {
-                case 1:
-                    *pixel = image->linear
-                        ? byte(v[i] * 255.f)
-                        : byte(sRGB_transfer(v[i]) * 255.f);
-                    break;
-                case 4:
-                    *mut<f32>(pixel) = v[i];
-                    break;
-                default:
-                    break;
+            case 1:
+                *pixel = image->linear
+                    ? byte(v[i] * 255.f)
+                    : byte(sRGB_transfer(v[i]) * 255.f);
+                break;
+            case 4:
+                *mut<f32>(pixel) = v[i];
+                break;
+            default:
+                break;
             }
         }
     }

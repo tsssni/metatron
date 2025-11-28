@@ -17,13 +17,13 @@ namespace mtt::opaque {
         auto frac = math::clamp(pixel - 0.5f - base, fv3{0.f}, fv3{1.f});
 
         auto weights = std::array<std::function<auto(f32) -> f32>, 2>{
-            [] (f32 x) { return 1.f - x; },
-            [] (f32 x) { return x; },
+            [](f32 x) { return 1.f - x; },
+            [](f32 x) { return x; },
         };
         auto offsets = iv2{0, 1};
 
         auto r = fv4{0.f};
-        for (auto i = 0; i < 4; i++) {
+        for (auto i = 0; i < 4; ++i) {
             auto b0 = i & 1;
             auto b1 = (i & 2) >> 1;
             auto w = weights[b0](frac[0]) * weights[b1](frac[1]);

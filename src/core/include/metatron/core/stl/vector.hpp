@@ -47,12 +47,12 @@ namespace mtt::stl {
     struct vector<F> final: singleton<vector<F>> {
         vector() noexcept {gutex = make_obj<std::mutex>();}
         ~vector() noexcept {
-            for (auto i = 0; i < destroier.size(); i++)
+            for (auto i = 0; i < destroier.size(); ++i)
                 destroier[i](storage[i]);
         }
 
         auto pack() noexcept -> void {
-            for (auto i = 0; i < i32(buf.size()); i++) {
+            for (auto i = 0; i < i32(buf.size()); ++i) {
                 auto& b = buf[i];
                 b.host = storage[i].data();
                 b.bytelen = storage[i].size();

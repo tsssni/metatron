@@ -14,15 +14,15 @@ namespace mtt::spectra {
 
         s = 1.f;
         switch (desc.type) {
-            case Spectrum_Type::albedo:
-                s = 1.f;
-                break;
-            case Spectrum_Type::unbounded:
-                s = 2.f;
-                break;
-            case Spectrum_Type::illuminant:
-                s = 2.f * math::max(rgb[0], math::max(rgb[1], rgb[2]));
-                break;
+        case Spectrum_Type::albedo:
+            s = 1.f;
+            break;
+        case Spectrum_Type::unbounded:
+            s = 2.f;
+            break;
+        case Spectrum_Type::illuminant:
+            s = 2.f * math::max(rgb[0], math::max(rgb[1], rgb[2]));
+            break;
         }
         rgb = rgb / s;
         s /= desc.type == Spectrum_Type::illuminant

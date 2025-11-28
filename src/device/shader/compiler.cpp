@@ -9,7 +9,7 @@
 #include <cstring>
 
 namespace mtt::shader {
-    auto constexpr format = SLANG_SPIRV;
+    auto constexpr format = SLANG_SPIRV_ASM;
     auto constexpr ext = std::string_view{".spirv"};
     auto constexpr kernel = std::string_view{".kernel.slang"};
 
@@ -51,7 +51,7 @@ namespace mtt::shader {
             }
 
             auto file = src.parent_path() / std::filesystem::path{module->getName()}.stem().stem()
-            .concat("-" + std::string{entry->getFunctionReflection()->getName()}).concat(ext);
+            .concat("." + std::string{entry->getFunctionReflection()->getName()}).concat(ext);
             auto cache = (stl::filesystem::instance().cache / file).concat(".mttcache");
             std::filesystem::create_directories(cache.parent_path());
 
@@ -105,22 +105,58 @@ namespace mtt::shader {
                 std::println("failed to generate reflection");
                 std::abort();
             }
-            auto params = reflection->getGlobalParamsTypeLayout();
-            for (auto i = 0; i < params->getFieldCount(); ++i) {
-                auto field = params->getFieldByIndex(i);
-                auto set = field->getBindingSpace(slang::ParameterCategory::DescriptorTableSlot);
-                auto binding = field->getOffset(slang::ParameterCategory::DescriptorTableSlot);
-                std::println("{} {}", set, binding);
+
+            auto blob = Slang::ComPtr<slang::IBlob>{};
+            reflection->toJson(blob.writeRef());
+            if (blob && blob->getBufferSize() > 0) {
+                auto json = std::ofstream{(out / file).concat(".layout.json")};
+                std::filesystem::create_directories((out / file).parent_path());
+                json.write(view<char>(blob->getBufferPointer()), blob->getBufferSize());
             }
 
-            auto entry = reflection->getEntryPointByIndex(0);
+            struct {
+                i32 base = 1;
+                i32 set = 0;
+                i32 index = 0;
+                i32 size = 0;
+            } state;
+            auto parse_type = [&state](this auto self, mut<slang::TypeLayoutReflection> t) -> void {
+                for (auto i = 0; i < t->getFieldCount(); ++i) {
+                    using Kind = slang::TypeReflection::Kind;
+                    using Unit = slang::ParameterCategory;
+                    auto Index = Unit::DescriptorTableSlot;
+                    auto Set = Unit::SubElementRegisterSpace;
+                    auto Size = Unit::Uniform;
 
-            for (auto i = 0; i < entry->getParameterCount(); ++i) {
-                auto param = entry->getParameterByIndex(i);
-                auto set = param->getBindingSpace(slang::ParameterCategory::DescriptorTableSlot);
-                auto binding = param->getOffset(slang::ParameterCategory::DescriptorTableSlot);
-                std::println("{} {}", set, binding);
-            }
+                    auto field = t->getFieldByIndex(i);
+                    auto type = field->getTypeLayout();
+                    auto kind = field->getType()->getKind();
+                    auto name = field->getName();
+
+                    auto table = kind == Kind::ParameterBlock;
+                    auto layout = table ? type->getElementTypeLayout() : field->getTypeLayout();
+                    auto var = table ? type->getContainerVarLayout() : field;
+                    auto set = -1; auto index = -1; auto size = 0;
+                    for (auto j = 0; j < var->getCategoryCount(); ++j)
+                        if (var->getCategoryByIndex(j) == Index) {
+                            set = state.set;
+                            index = var->getOffset(Index);
+                        } else if (var->getCategoryByIndex(j) == Set) {
+                            set = state.base + var->getOffset(Set);
+                            state.set = set;
+                        }
+                    if (table && index >= 0)
+                        size = layout->getSize();
+
+                    if (set > -1) std::println(
+                        "name: {} set: {} index: {} size: {}",
+                        name, set, index, size
+                    );
+                    self(layout);
+                }
+            };
+            parse_type(reflection->getGlobalParamsTypeLayout());
+            parse_type(reflection->getEntryPointByIndex(0)->getTypeLayout());
         }
 
         auto build(
@@ -146,7 +182,8 @@ namespace mtt::shader {
             auto targets = std::to_array({target});
             auto paths = std::to_array({dir.c_str()});
             auto options = std::to_array<slang::CompilerOptionEntry>({
-                int_opt(Option::ForceCLayout, 1)
+                int_opt(Option::ForceCLayout, 1),
+                int_opt(Option::Optimization, SlangOptimizationLevel::SLANG_OPTIMIZATION_LEVEL_MAXIMAL),
             });
 
             slang::createGlobalSession(global_session.writeRef());

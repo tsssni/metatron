@@ -23,7 +23,7 @@ namespace mtt::accel {
         for (auto i = 0u; i < divs.size(); ++i) {
             auto div = divs[i];
             auto s = div->shape;
-            for (auto j = 0u; j < s->size(); j++) {
+            for (auto j = 0u; j < s->size(); ++j) {
                 auto lt = div->local_to_render;
                 prims.push_back(Primitive{
                     .bbox = s->bounding_box(lt->transform, j),

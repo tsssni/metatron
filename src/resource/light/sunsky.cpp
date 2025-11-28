@@ -31,7 +31,7 @@ namespace mtt::light {
                 auto start = offset + i * block_size;
                 auto coeff = c[i] * std::pow(x, i) * std::pow(1.f - x, 5 - i);
                 auto source = data.subbuf(start, block_size);
-                for (auto j = 0; j < block_size; j++)
+                for (auto j = 0; j < block_size; ++j)
                     interpolated[j] += source[j] * coeff;
             }
             return interpolated;
