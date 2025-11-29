@@ -11,37 +11,37 @@
 #include <cstring>
 
 namespace mtt::shader {
-    auto constexpr format = SLANG_SPIRV;
-    auto constexpr ext = std::string_view{".spirv"};
-    auto constexpr kernel = std::string_view{".kernel.slang"};
+    template<typename T>
+    using com = Slang::ComPtr<T>;
 
     struct Compiler::Impl final {
         std::filesystem::path dir;
         std::filesystem::path out;
-        Slang::ComPtr<slang::IGlobalSession> global_session;
-        Slang::ComPtr<slang::ISession> session;
+        Layout layout;
+        com<slang::IGlobalSession> global_session;
+        com<slang::ISession> session;
+        com<slang::IBlob> diagnostic;
 
         Impl() noexcept {}
+
+        auto guard(SlangResult result) {
+            if (SLANG_SUCCEEDED(result)) return;
+            std::println("slang compilation failed with {}", result);
+            std::abort();
+        }
+        auto diagnose() {
+            if (!diagnostic || diagnostic->getBufferSize() == 0) return;
+            std::println("{}", view<char>(diagnostic->getBufferPointer()));
+        }
+        auto diagnose(SlangResult result) { diagnose(); guard(result); }
+        auto diagnose(auto* ptr) { diagnose(); if (!ptr) std::abort(); return ptr; }
 
         auto compile(
             mut<slang::IModule> module, i32 idx,
             cref<std::filesystem::path> src
         ) noexcept -> void {
-            auto diagnostic = Slang::ComPtr<slang::IBlob>{};
-            auto guard = [](SlangResult result) {
-                if (SLANG_FAILED(result)) {
-                    std::println("slang compilation failed with {}", result);
-                    std::abort();
-                }
-            };
-            auto print = [&diagnostic, &guard](SlangResult result) {
-                if (diagnostic && diagnostic->getBufferSize() > 0)
-                    std::println("{}", view<char>(diagnostic->getBufferPointer()));
-                guard(result);
-            };
-
-            auto entry = Slang::ComPtr<slang::IEntryPoint>{};
-            auto hash = Slang::ComPtr<slang::IBlob>{};
+            auto entry = com<slang::IEntryPoint>{};
+            auto hash = com<slang::IBlob>{};
             guard(module->getDefinedEntryPoint(idx, entry.writeRef()));
             module->getEntryPointHash(idx, 0, hash.writeRef());
             if (!hash || hash->getBufferSize() == 0) {
@@ -52,12 +52,13 @@ namespace mtt::shader {
                 std::abort();
             }
 
-            auto file = src.parent_path() / std::filesystem::path{module->getName()}.stem().stem()
-            .concat("." + std::string{entry->getFunctionReflection()->getName()}).concat(ext);
-            auto cache = (stl::filesystem::instance().cache / file).concat(".mttcache");
+            auto path = src.parent_path() / src.stem().stem()
+            .concat("." + std::string{entry->getFunctionReflection()->getName()});
+            auto cache = (stl::filesystem::instance().cache / "shader" / path).concat(".mttcache");
+            std::filesystem::create_directories((out / path).parent_path());
             std::filesystem::create_directories(cache.parent_path());
 
-            if (false && [&] {
+            if ([&] {
                 if (!std::filesystem::exists(cache)) return false;
                 auto size = std::filesystem::file_size(cache);
                 if (size != hash->getBufferSize()) return false;
@@ -69,56 +70,54 @@ namespace mtt::shader {
             auto version = std::ofstream{cache, std::ios::binary};
             version.write(view<char>(hash->getBufferPointer()), hash->getBufferSize());
 
-            auto code = Slang::ComPtr<slang::IComponentType>{};
+            auto code = com<slang::IComponentType>{};
             auto unit = std::to_array<mut<slang::IComponentType>>({module, entry});
-            print(session->createCompositeComponentType(
+            diagnose(session->createCompositeComponentType(
                 unit.data(), unit.size(),
                 code.writeRef(), diagnostic.writeRef())
             );
 
-            auto linked = Slang::ComPtr<slang::IComponentType>{};
-            auto kernel = Slang::ComPtr<slang::IBlob>{};
-            print(code->link(linked.writeRef(), diagnostic.writeRef()));
-            print(linked->getEntryPointCode(0, 0, kernel.writeRef(), diagnostic.writeRef()));
+            auto linked = com<slang::IComponentType>{};
+            auto kernel = com<slang::IBlob>{};
+            diagnose(code->link(linked.writeRef(), diagnostic.writeRef()));
+            diagnose(linked->getEntryPointCode(0, 0, kernel.writeRef(), diagnostic.writeRef()));
 
-            auto layout = reflect(linked->getLayout(0), file);
-            auto reflection = (file.parent_path() / file.stem()).concat(".json");
-            auto serialized = std::string{};
-            if (auto e = glz::write_json(layout, serialized); e)
-                std::println(
-                    "write pipeline layout {} with glaze error {}",
-                    reflection.c_str(), glz::format_error(e)
-                );
-            auto reflected = std::ofstream{out / reflection};
-            std::filesystem::create_directories((out / reflection).parent_path());
-            reflected.write(serialized.c_str(), serialized.size());
-
+            auto layout = reflect(linked->getLayout(0), path);
         #if __APPLE__
-            cross({view<byte>(kernel->getBufferPointer()), kernel->getBufferSize()});
+            cross({view<byte>(kernel->getBufferPointer()), kernel->getBufferSize()}, layout);
         #else
-            auto compiled = std::ofstream{out / file, std::ios::binary};
-            std::filesystem::create_directories((out / file).parent_path());
+            auto compiled = std::ofstream{(out / path).concat(".spirv"), std::ios::binary};
             compiled.write(view<char>(kernel->getBufferPointer()), kernel->getBufferSize());
         #endif
         }
 
-        auto cross(std::span<byte const> kernel) noexcept -> void {
+        auto cross(
+            std::span<byte const> kernel,
+            cref<Layout> layout
+        ) noexcept -> void {
             auto compiler = spirv_cross::CompilerMSL{view<u32>(kernel.data()), kernel.size() / sizeof(u32)};
-            auto options = spirv_cross::CompilerMSL::Options{};
+
+            using Options = spirv_cross::CompilerMSL::Options;
+            auto options = Options{};
             options.set_msl_version(4, 0);
+            options.argument_buffers = true;
+            options.argument_buffers_tier = Options::ArgumentBuffersTier::Tier2;
+            options.enable_decoration_binding = true;
             compiler.set_msl_options(options);
+
+            for (auto i = 0; i <= layout.descriptors.back().set; i++)
+                compiler.set_argument_buffer_device_address_space(i, true);
             std::println("{}", compiler.compile());
         }
 
         auto reflect(
             mut<slang::ShaderReflection> reflection,
-            cref<std::filesystem::path> file
+            cref<std::filesystem::path> path
         ) noexcept -> Layout {
             if (!reflection) {
                 std::println("failed to generate reflection");
                 std::abort();
             }
-            auto serialized = shader::Layout{};
 
             auto parse_resource = [](mut<slang::TypeLayoutReflection> t) {
                 using Type = SlangResourceShape;
@@ -148,11 +147,12 @@ namespace mtt::shader {
                 return std::make_tuple(type, access);
             };
 
-            auto parse_type = [&serialized, &parse_resource](
+            auto parse_type = [&parse_resource](
                 this auto self,
                 mut<slang::TypeLayoutReflection> t,
-                std::string p = "",
-                i32 s = 0
+                ref<Layout> layout,
+                std::string path = "",
+                i32 set = 0
             ) -> void {
                 for (auto i = 0; i < t->getFieldCount(); ++i) {
                     using Kind = slang::TypeReflection::Kind;
@@ -172,8 +172,8 @@ namespace mtt::shader {
                     auto desc = Descriptor{};
 
                     auto constexpr base = 1;
-                    desc.path = p + (p.size() == 0 ? "" : ".") + name;
-                    desc.set = table ? base + field->getOffset(Set) : s;
+                    desc.path = path + (path.size() == 0 ? "" : ".") + name;
+                    desc.set = table ? base + field->getOffset(Set) : set;
                     for (auto j = 0; j < var->getCategoryCount(); ++j)
                         if (var->getCategoryByIndex(j) == Index)
                             desc.index = var->getOffset(Index);
@@ -193,17 +193,33 @@ namespace mtt::shader {
                         desc.type = t; desc.access = a;
                     }
 
-                    if (desc.index >= 0) serialized.descriptors.push_back(desc);
-                    self(table ? element : type, desc.path, desc.set);
+                    if (desc.index >= 0) layout.descriptors.push_back(desc);
+                    self(table ? element : type, layout, desc.path, desc.set);
                 }
             };
 
-            parse_type(reflection->getGlobalParamsTypeLayout());
-            parse_type(reflection->getEntryPointByIndex(0)->getTypeLayout());
-            std::ranges::sort(serialized.descriptors, [](auto&& x, auto&& y) {
-                return x.set < y.set || (x.set == y.set && x.index < y.index);
-            });
-            return serialized;
+            auto serialize = [this](ref<Layout> layout, std::string_view path) {
+                std::ranges::sort(this->layout.descriptors, [](auto&& x, auto&& y) {
+                    return x.set < y.set || (x.set == y.set && x.index < y.index);
+                });
+                auto serialized = std::string{};
+                if (auto e = glz::write_json(layout, serialized); e)
+                    std::println(
+                        "write pipeline layout {} with glaze error {}",
+                        path.data(), glz::format_error(e)
+                    );
+                auto reflected = std::ofstream{(out / path).concat(".json")};
+                reflected.write(serialized.c_str(), serialized.size());
+            };
+
+            if (layout.descriptors.empty()) {
+                parse_type(reflection->getGlobalParamsTypeLayout(), this->layout);
+                serialize(this->layout, "metatron");
+            }
+            Layout layout;
+            parse_type(reflection->getEntryPointByIndex(0)->getTypeLayout(), layout);
+            serialize(layout, path.c_str());
+            return layout;
         }
 
         auto build(
@@ -225,7 +241,7 @@ namespace mtt::shader {
                 };
             };
 
-            auto target = slang::TargetDesc{.format = format};
+            auto target = slang::TargetDesc{.format = SLANG_SPIRV};
             auto targets = std::to_array({target});
             auto paths = std::to_array({dir.c_str()});
             auto options = std::to_array<slang::CompilerOptionEntry>({
@@ -245,10 +261,11 @@ namespace mtt::shader {
             }, session.writeRef());
 
             for (auto& src: std::filesystem::recursive_directory_iterator(this->dir))
-                if (src.path().string().ends_with(kernel)) {
-                    auto module = session->loadModule(src.path().c_str());
+                if (src.path().string().ends_with(".kernel.slang")) {
+                    auto module = diagnose(session->loadModule(src.path().c_str(), diagnostic.writeRef()));
+                    auto path = std::filesystem::relative(src, this->dir);
                     for (auto i = 0; i < module->getDefinedEntryPointCount(); ++i)
-                        compile(module, i, src);
+                        compile(module, i, path);
                 }
         }
     };
