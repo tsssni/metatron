@@ -15,14 +15,39 @@ namespace mtt::shader {
     using com = Slang::ComPtr<T>;
 
     struct Compiler::Impl final {
+        Layout layout;
         std::filesystem::path dir;
         std::filesystem::path out;
-        Layout layout;
+        std::unordered_map<std::string, std::string> cache;
+
         com<slang::IGlobalSession> global_session;
         com<slang::ISession> session;
         com<slang::IBlob> diagnostic;
 
-        Impl() noexcept {}
+        Impl() noexcept {
+            auto path = stl::filesystem::instance().cache / "shader-cache.json";
+            if (!std::filesystem::exists(path)) return;
+            auto size = std::filesystem::file_size(path);
+            auto stream = std::ifstream{path};
+            auto buffer = std::string{}; buffer.resize(size);
+            stream.read(buffer.data(), buffer.size());
+            if (auto e = glz::read_json(cache, buffer); e) {
+                std::println("load cache with glaze error {}", glz::format_error(e));
+                std::abort();
+            }
+        }
+
+        ~Impl() noexcept {
+            auto path = stl::filesystem::instance().cache / "shader-cache.json";
+            std::filesystem::create_directories(path.parent_path());
+            auto buffer = std::string{};
+            if (auto e = glz::write_json(cache, buffer); e) {
+                std::println("write cache with glaze error {}", glz::format_error(e));
+                std::abort();
+            }
+            auto stream = std::ofstream{path};
+            stream.write(buffer.data(), buffer.size());
+        }
 
         auto guard(SlangResult result) {
             if (SLANG_SUCCEEDED(result)) return;
@@ -54,21 +79,20 @@ namespace mtt::shader {
 
             auto path = src.parent_path() / src.stem().stem()
             .concat("." + std::string{entry->getFunctionReflection()->getName()});
-            auto cache = (stl::filesystem::instance().cache / "shader" / path).concat(".mttcache");
             std::filesystem::create_directories((out / path).parent_path());
-            std::filesystem::create_directories(cache.parent_path());
 
             if ([&] {
-                if (!std::filesystem::exists(cache)) return false;
-                auto size = std::filesystem::file_size(cache);
-                if (size != hash->getBufferSize()) return false;
-                auto stream = std::ifstream{cache, std::ios::binary};
-                auto buffer = std::vector<char>(size);
-                stream.read(buffer.data(), buffer.size());
-                return std::memcmp(buffer.data(), hash->getBufferPointer(), size) == 0;
+                auto abs = std::filesystem::absolute(path);
+                auto pointer = hash->getBufferPointer();
+                auto size = hash->getBufferSize();
+                auto refresh = [&] {
+                    cache[abs].resize(size);
+                    std::memcpy(cache[abs].data(), pointer, size);
+                };
+                if (cache.contains(abs) && cache[abs].size() == size)
+                    return std::memcmp(cache[abs].data(), pointer, size) == 0;
+                refresh(); return false;
             }()) return;
-            auto version = std::ofstream{cache, std::ios::binary};
-            version.write(view<char>(hash->getBufferPointer()), hash->getBufferSize());
 
             auto code = com<slang::IComponentType>{};
             auto unit = std::to_array<mut<slang::IComponentType>>({module, entry});
@@ -203,11 +227,13 @@ namespace mtt::shader {
                     return x.set < y.set || (x.set == y.set && x.index < y.index);
                 });
                 auto serialized = std::string{};
-                if (auto e = glz::write_json(layout, serialized); e)
+                if (auto e = glz::write_json(layout, serialized); e) {
                     std::println(
                         "write pipeline layout {} with glaze error {}",
                         path.data(), glz::format_error(e)
                     );
+                    std::abort();
+                }
                 auto reflected = std::ofstream{(out / path).concat(".json")};
                 reflected.write(serialized.c_str(), serialized.size());
             };
