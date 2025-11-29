@@ -1,1 +1,1 @@
-list(APPEND metatron-deps resource slang vulkan spirv-cross)
+list(APPEND metatron-deps resource slang vulkan spirv-cross glaze)

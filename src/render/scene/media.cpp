@@ -9,9 +9,7 @@ namespace glz {
     template<>
     struct meta<mtt::media::Phase::Function> {
         using enum mtt::media::Phase::Function;
-        auto constexpr static value = glz::enumerate(
-            henyey_greenstein
-        );
+        auto constexpr static value = glz::enumerate(henyey_greenstein);
     };
 }
 

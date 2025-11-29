@@ -12,11 +12,7 @@ namespace glz {
     template<>
     struct meta<mtt::texture::Image_Distribution> {
         using enum mtt::texture::Image_Distribution;
-        auto constexpr static value = glz::enumerate(
-            none,
-            uniform,
-            spherical
-        );
+        auto constexpr static value = glz::enumerate(none, uniform, spherical);
     };
 }
 

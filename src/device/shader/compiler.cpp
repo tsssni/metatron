@@ -1,5 +1,7 @@
 #include <metatron/device/shader/compiler.hpp>
+#include <metatron/device/shader/layout.hpp>
 #include <metatron/core/stl/filesystem.hpp>
+#include <metatron/core/stl/ranges.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <spirv_cross/spirv_msl.hpp>
 #include <slang-com-ptr.h>
@@ -9,7 +11,7 @@
 #include <cstring>
 
 namespace mtt::shader {
-    auto constexpr format = SLANG_SPIRV_ASM;
+    auto constexpr format = SLANG_SPIRV;
     auto constexpr ext = std::string_view{".spirv"};
     auto constexpr kernel = std::string_view{".kernel.slang"};
 
@@ -78,7 +80,18 @@ namespace mtt::shader {
             auto kernel = Slang::ComPtr<slang::IBlob>{};
             print(code->link(linked.writeRef(), diagnostic.writeRef()));
             print(linked->getEntryPointCode(0, 0, kernel.writeRef(), diagnostic.writeRef()));
-            reflect(linked->getLayout(0), file);
+
+            auto layout = reflect(linked->getLayout(0), file);
+            auto reflection = (file.parent_path() / file.stem()).concat(".json");
+            auto serialized = std::string{};
+            if (auto e = glz::write_json(layout, serialized); e)
+                std::println(
+                    "write pipeline layout {} with glaze error {}",
+                    reflection.c_str(), glz::format_error(e)
+                );
+            auto reflected = std::ofstream{out / reflection};
+            std::filesystem::create_directories((out / reflection).parent_path());
+            reflected.write(serialized.c_str(), serialized.size());
 
         #if __APPLE__
             cross({view<byte>(kernel->getBufferPointer()), kernel->getBufferSize()});
@@ -100,27 +113,47 @@ namespace mtt::shader {
         auto reflect(
             mut<slang::ShaderReflection> reflection,
             cref<std::filesystem::path> file
-        ) noexcept -> void {
+        ) noexcept -> Layout {
             if (!reflection) {
                 std::println("failed to generate reflection");
                 std::abort();
             }
+            auto serialized = shader::Layout{};
 
-            auto blob = Slang::ComPtr<slang::IBlob>{};
-            reflection->toJson(blob.writeRef());
-            if (blob && blob->getBufferSize() > 0) {
-                auto json = std::ofstream{(out / file).concat(".layout.json")};
-                std::filesystem::create_directories((out / file).parent_path());
-                json.write(view<char>(blob->getBufferPointer()), blob->getBufferSize());
-            }
+            auto parse_resource = [](mut<slang::TypeLayoutReflection> t) {
+                using Type = SlangResourceShape;
+                using Access = SlangResourceAccess;
+                auto type = Descriptor::Type{};
+                auto access = Descriptor::Access{};
 
-            struct {
-                i32 base = 1;
-                i32 set = 0;
-                i32 index = 0;
-                i32 size = 0;
-            } state;
-            auto parse_type = [&state](this auto self, mut<slang::TypeLayoutReflection> t) -> void {
+                switch (t->getResourceShape()) {
+                case SLANG_TEXTURE_2D: type = Descriptor::Type::image; break;
+                case SLANG_TEXTURE_3D: type = Descriptor::Type::grid; break;
+                case SLANG_ACCELERATION_STRUCTURE: type = Descriptor::Type::accel; break;
+                default:
+                    std::println("descriptor type {} not support", i32(t->getResourceShape()));
+                    std::abort();
+                }
+
+                switch (t->getResourceAccess()) {
+                case SLANG_RESOURCE_ACCESS_NONE:
+                case SLANG_RESOURCE_ACCESS_READ: access = Descriptor::Access::readonly; break;
+                case SLANG_RESOURCE_ACCESS_READ_WRITE: access = Descriptor::Access::writeonly; break;
+                case SLANG_RESOURCE_ACCESS_WRITE: access = Descriptor::Access::writeonly; break;
+                default:
+                    std::println("descriptor access {} not supported", i32(t->getResourceAccess()));
+                    std::abort();
+                }
+
+                return std::make_tuple(type, access);
+            };
+
+            auto parse_type = [&serialized, &parse_resource](
+                this auto self,
+                mut<slang::TypeLayoutReflection> t,
+                std::string p = "",
+                i32 s = 0
+            ) -> void {
                 for (auto i = 0; i < t->getFieldCount(); ++i) {
                     using Kind = slang::TypeReflection::Kind;
                     using Unit = slang::ParameterCategory;
@@ -130,33 +163,47 @@ namespace mtt::shader {
 
                     auto field = t->getFieldByIndex(i);
                     auto type = field->getTypeLayout();
+                    auto element = type->getElementTypeLayout();
                     auto kind = field->getType()->getKind();
                     auto name = field->getName();
 
                     auto table = kind == Kind::ParameterBlock;
-                    auto layout = table ? type->getElementTypeLayout() : field->getTypeLayout();
                     auto var = table ? type->getContainerVarLayout() : field;
-                    auto set = -1; auto index = -1; auto size = 0;
-                    for (auto j = 0; j < var->getCategoryCount(); ++j)
-                        if (var->getCategoryByIndex(j) == Index) {
-                            set = state.set;
-                            index = var->getOffset(Index);
-                        } else if (var->getCategoryByIndex(j) == Set) {
-                            set = state.base + var->getOffset(Set);
-                            state.set = set;
-                        }
-                    if (table && index >= 0)
-                        size = layout->getSize();
+                    auto desc = Descriptor{};
 
-                    if (set > -1) std::println(
-                        "name: {} set: {} index: {} size: {}",
-                        name, set, index, size
-                    );
-                    self(layout);
+                    auto constexpr base = 1;
+                    desc.path = p + (p.size() == 0 ? "" : ".") + name;
+                    desc.set = table ? base + field->getOffset(Set) : s;
+                    for (auto j = 0; j < var->getCategoryCount(); ++j)
+                        if (var->getCategoryByIndex(j) == Index)
+                            desc.index = var->getOffset(Index);
+
+                    if (table && desc.index >= 0) {
+                        desc.type = Descriptor::Type::parameter;
+                        desc.size = element->getSize();
+                    } else if (kind == Kind::SamplerState) {
+                        desc.type = Descriptor::Type::sampler;
+                    } else if (kind == Kind::Resource) {
+                        auto [t, a] = parse_resource(type);
+                        desc.type = t; desc.access = a;
+                    } else if (kind == Kind::Array) {
+                        desc.size = type->getElementCount();
+                        if (desc.size == 0) desc.size = -1; // bindless
+                        auto [t, a] = parse_resource(type->getElementTypeLayout());
+                        desc.type = t; desc.access = a;
+                    }
+
+                    if (desc.index >= 0) serialized.descriptors.push_back(desc);
+                    self(table ? element : type, desc.path, desc.set);
                 }
             };
+
             parse_type(reflection->getGlobalParamsTypeLayout());
             parse_type(reflection->getEntryPointByIndex(0)->getTypeLayout());
+            std::ranges::sort(serialized.descriptors, [](auto&& x, auto&& y) {
+                return x.set < y.set || (x.set == y.set && x.index < y.index);
+            });
+            return serialized;
         }
 
         auto build(

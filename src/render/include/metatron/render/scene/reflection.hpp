@@ -13,11 +13,7 @@ namespace glz {
     template<>
     struct meta<mtt::spectra::Color_Space::Spectrum_Type> {
         using enum mtt::spectra::Color_Space::Spectrum_Type;
-        auto constexpr static value = glz::enumerate(
-            albedo,
-            unbounded,
-            illuminant
-        );
+        auto constexpr static value = glz::enumerate(albedo, unbounded, illuminant);
     };
 
     template<>
