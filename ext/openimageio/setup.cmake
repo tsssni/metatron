@@ -1,2 +1,2 @@
 extend(OpenImageIO)
-list(APPEND metatron-deps OpenImageIO::OpenImageIO)
+list(APPEND deps OpenImageIO::OpenImageIO)

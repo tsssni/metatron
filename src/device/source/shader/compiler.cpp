@@ -85,7 +85,7 @@ namespace mtt::shader {
             cref<Layout> layout,
             cref<std::filesystem::path> path
         ) noexcept -> void {
-        #if __APPLE__
+        #ifdef MTT_SYSTEM_DARWIN
             auto compiler = spirv_cross::CompilerMSL{view<u32>(kernel.data()), kernel.size() / sizeof(u32)};
 
             using Options = spirv_cross::CompilerMSL::Options;
