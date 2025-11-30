@@ -43,20 +43,17 @@ function(release)
         FILE metatron-targets.cmake
         DESTINATION lib/cmake/metatron
     )
-
     install(
         FILES ${metatron-mods}
         DESTINATION lib/cmake/metatron
     )
 
     include(CMakePackageConfigHelpers)
-
     configure_package_config_file(
         cmake/metatron-config.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/metatron-config.cmake
         INSTALL_DESTINATION lib/cmake/metatron
     )
-
     write_basic_package_version_file(
         ${CMAKE_CURRENT_BINARY_DIR}/metatron-version.cmake
         VERSION ${PROJECT_VERSION}
@@ -69,10 +66,13 @@ function(release)
             ${CMAKE_CURRENT_BINARY_DIR}/metatron-version.cmake
         DESTINATION lib/cmake/metatron
     )
-
     install(
         DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/share/
-        DESTINATION share/
+        DESTINATION share
+    )
+    install(
+        DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/shader/
+        DESTINATION share/metatron/shader
     )
 endfunction()
 

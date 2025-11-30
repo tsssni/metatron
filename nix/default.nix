@@ -5,6 +5,7 @@
   clang-tools,
   clangStdenv,
   cmake,
+  cmake-language-server,
   entt,
   glaze,
   lib,
@@ -37,6 +38,7 @@ stdenv.mkDerivation {
   nativeBuildInputs = [
     clang-tools
     cmake
+    cmake-language-server
     ninja
     shader-slang
     spirv-cross

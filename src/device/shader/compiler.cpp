@@ -1,6 +1,5 @@
 #include <metatron/device/shader/compiler.hpp>
 #include <metatron/device/shader/layout.hpp>
-#include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/ranges.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <spirv_cross/spirv_msl.hpp>
@@ -8,7 +7,6 @@
 #include <slang.h>
 #include <filesystem>
 #include <fstream>
-#include <cstring>
 
 namespace mtt::shader {
     template<typename T>
@@ -23,31 +21,6 @@ namespace mtt::shader {
         com<slang::IGlobalSession> global_session;
         com<slang::ISession> session;
         com<slang::IBlob> diagnostic;
-
-        Impl() noexcept {
-            auto path = stl::filesystem::instance().cache / "shader-cache.json";
-            if (!std::filesystem::exists(path)) return;
-            auto size = std::filesystem::file_size(path);
-            auto stream = std::ifstream{path};
-            auto buffer = std::string{}; buffer.resize(size);
-            stream.read(buffer.data(), buffer.size());
-            if (auto e = glz::read_json(cache, buffer); e) {
-                std::println("load cache with glaze error {}", glz::format_error(e));
-                std::abort();
-            }
-        }
-
-        ~Impl() noexcept {
-            auto path = stl::filesystem::instance().cache / "shader-cache.json";
-            std::filesystem::create_directories(path.parent_path());
-            auto buffer = std::string{};
-            if (auto e = glz::write_json(cache, buffer); e) {
-                std::println("write cache with glaze error {}", glz::format_error(e));
-                std::abort();
-            }
-            auto stream = std::ofstream{path};
-            stream.write(buffer.data(), buffer.size());
-        }
 
         auto guard(SlangResult result) {
             if (SLANG_SUCCEEDED(result)) return;
@@ -83,15 +56,11 @@ namespace mtt::shader {
 
             if ([&] {
                 auto abs = std::filesystem::absolute(path);
-                auto pointer = hash->getBufferPointer();
-                auto size = hash->getBufferSize();
-                auto refresh = [&] {
-                    cache[abs].resize(size);
-                    std::memcpy(cache[abs].data(), pointer, size);
-                };
-                if (cache.contains(abs) && cache[abs].size() == size)
-                    return std::memcmp(cache[abs].data(), pointer, size) == 0;
-                refresh(); return false;
+                auto hex = std::string{}; hex.reserve(hash->getBufferSize() * 2);
+                for (auto i = 0; i < hash->getBufferSize(); i++)
+                    hex += std::format("{:02x}", view<byte>(hash->getBufferPointer())[i]);
+                if (cache.contains(abs) && cache[abs] == hex) return true;
+                cache[abs] = hex; return false;
             }()) return;
 
             auto code = com<slang::IComponentType>{};
@@ -241,7 +210,7 @@ namespace mtt::shader {
                 auto serialized = std::string{};
                 if (auto e = glz::write_json(layout, serialized); e) {
                     std::println(
-                        "write pipeline layout {} with glaze error {}",
+                        "write pipeline layout {} with glaze error: {}",
                         path.data(), glz::format_error(e)
                     );
                     std::abort();
@@ -266,6 +235,18 @@ namespace mtt::shader {
         ) noexcept -> void {
             this->dir = dir;
             this->out = out;
+
+            auto database = this->out / "cache.json";
+            if (std::filesystem::exists(database)) {
+                auto size = std::filesystem::file_size(database);
+                auto stream = std::ifstream{database};
+                auto buffer = std::string{}; buffer.resize(size);
+                stream.read(buffer.data(), buffer.size());
+                if (auto e = glz::read_json(cache, buffer); e) {
+                    std::println("load cache with glaze error: {}", glz::format_error(e));
+                    std::abort();
+                }
+            }
 
             using Option = slang::CompilerOptionName;
             auto int_opt = [](Option opt, i32 v) {
@@ -305,6 +286,14 @@ namespace mtt::shader {
                     for (auto i = 0; i < module->getDefinedEntryPointCount(); ++i)
                         compile(module, i, path);
                 }
+
+            auto buffer = std::string{};
+            if (auto e = glz::write_json(cache, buffer); e) {
+                std::println("write cache with glaze error: {}", glz::format_error(e));
+                std::abort();
+            }
+            auto stream = std::ofstream{database};
+            stream.write(buffer.data(), buffer.size());
         }
     };
 
