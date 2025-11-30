@@ -11,7 +11,7 @@ namespace mtt::texture {
     }
 
     auto Checkerboard_Texture::operator()(
-        cref<image::Coordinate> coord, cref<fv4> spec
+        cref<opaque::Coordinate> coord, cref<fv4> spec
     ) const noexcept -> fv4 {
         auto [u, v] = uzv2{coord.uv * uv_scale};
         auto z = ((u + v) % 2 == 0) ? x : y;
@@ -19,7 +19,7 @@ namespace mtt::texture {
     }
 
     auto Checkerboard_Texture::sample(
-        cref<eval::Context> ctx, cref<fv2> u
+        cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> fv2 {
         auto uv = fv2{};
         auto i = 0;

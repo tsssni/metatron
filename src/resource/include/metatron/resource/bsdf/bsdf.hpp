@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/resource/eval/context.hpp>
+#include <metatron/core/math/eval.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/math/vector.hpp>
 
@@ -26,7 +26,7 @@ namespace mtt::bsdf {
         cref<fv3> wo, cref<fv3> wi
     ) const noexcept -> opt<Interaction>>
     ::add_convention<bsdf_sample, auto (
-        cref<eval::Context> ctx, cref<fv3> u
+        cref<math::Context> ctx, cref<fv3> u
     ) const noexcept -> opt<Interaction>>
     ::add_convention<bsdf_flags, auto () const noexcept -> Flags>
     ::add_skill<pro::skills::as_view>

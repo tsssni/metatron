@@ -1,9 +1,9 @@
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <metatron/core/math/polynomial.hpp>
 #include <metatron/core/stl/print.hpp>
 
 namespace mtt::spectra {
-    using Color_Space = color::Color_Space;
     using Spectrum_Type = Color_Space::Spectrum_Type;
 
     Rgb_Spectrum::Rgb_Spectrum(cref<Descriptor> desc) noexcept {
@@ -14,15 +14,15 @@ namespace mtt::spectra {
 
         s = 1.f;
         switch (desc.type) {
-            case Spectrum_Type::albedo:
-                s = 1.f;
-                break;
-            case Spectrum_Type::unbounded:
-                s = 2.f;
-                break;
-            case Spectrum_Type::illuminant:
-                s = 2.f * math::max(rgb[0], math::max(rgb[1], rgb[2]));
-                break;
+        case Spectrum_Type::albedo:
+            s = 1.f;
+            break;
+        case Spectrum_Type::unbounded:
+            s = 2.f;
+            break;
+        case Spectrum_Type::illuminant:
+            s = 2.f * math::max(rgb[0], math::max(rgb[1], rgb[2]));
+            break;
         }
         rgb = rgb / s;
         s /= desc.type == Spectrum_Type::illuminant

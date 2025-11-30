@@ -12,11 +12,7 @@ namespace glz {
     template<>
     struct meta<mtt::texture::Image_Distribution> {
         using enum mtt::texture::Image_Distribution;
-        auto constexpr static value = glz::enumerate(
-            none,
-            uniform,
-            spherical
-        );
+        auto constexpr static value = glz::enumerate(none, uniform, spherical);
     };
 }
 
@@ -25,21 +21,27 @@ namespace mtt::scene {
         using namespace texture;
         using namespace material;
         using namespace accel;
+
+        MTT_DESERIALIZE_CALLBACK([]{
+            auto size = stl::vector<opaque::Image>::instance().size();
+            auto cap = stl::vector<Vector_Texture>::instance().capacity<Image_Vector_Texture>();
+            stl::vector<opaque::Image>::instance().reserve(size + cap);
+        }, []{},
+        Vector_Texture, Constant_Vector_Texture, Image_Vector_Texture);
+
+        MTT_DESERIALIZE_CALLBACK([]{
+            auto size = stl::vector<opaque::Image>::instance().size();
+            auto scap = stl::vector<Spectrum_Texture>::instance().capacity<Image_Spectrum_Texture>();
+            auto vcap = stl::vector<Vector_Texture>::instance().capacity<Image_Vector_Texture>();
+            stl::vector<Vector_Texture>::instance().reserve<Image_Vector_Texture>(scap + vcap);
+            stl::vector<opaque::Image>::instance().reserve(size + scap);
+        }, []{},
+        Spectrum_Texture, Constant_Spectrum_Texture, Image_Spectrum_Texture, Checkerboard_Texture);
+
+        MTT_DESERIALIZE(Material, Physical_Material, Interface_Material);
+        MTT_DESERIALIZE(Divider);
+
         bsdf::Physical_Bsdf::init();
-
-        auto& vvec = stl::vector<Vector_Texture>::instance();
-        vvec.emplace_type<Constant_Vector_Texture>();
-        vvec.emplace_type<Image_Vector_Texture>();
-
-        auto& svec = stl::vector<Spectrum_Texture>::instance();
-        svec.emplace_type<Constant_Spectrum_Texture>();
-        svec.emplace_type<Image_Spectrum_Texture>();
-        svec.emplace_type<Checkerboard_Texture>();
-
-        auto& mvec = stl::vector<Material>::instance();
-        mvec.emplace_type<Physical_Material>();
-        mvec.emplace_type<Interface_Material>();
-
         for (auto& [spec, _]: spectra::Spectrum::spectra)
             attach<Spectrum_Texture>(
                 ("/texture/" + spec) / et,
@@ -47,24 +49,5 @@ namespace mtt::scene {
                     fetch<spectra::Spectrum>(("/spectrum/" + spec) / et),
                 }
             );
-
-        MTT_DESERIALIZE_CALLBACK([]{
-            auto size = stl::vector<image::Image>::instance().size();
-            auto cap = stl::vector<Vector_Texture>::instance().capacity<Image_Vector_Texture>();
-            stl::vector<image::Image>::instance().reserve(size + cap);
-        }, []{},
-        Vector_Texture, Constant_Vector_Texture, Image_Vector_Texture);
-
-        MTT_DESERIALIZE_CALLBACK([]{
-            auto size = stl::vector<image::Image>::instance().size();
-            auto scap = stl::vector<Spectrum_Texture>::instance().capacity<Image_Spectrum_Texture>();
-            auto vcap = stl::vector<Vector_Texture>::instance().capacity<Image_Vector_Texture>();
-            stl::vector<Vector_Texture>::instance().reserve<Image_Vector_Texture>(scap + vcap);
-            stl::vector<image::Image>::instance().reserve(size + scap);
-        }, []{},
-        Spectrum_Texture, Constant_Spectrum_Texture, Image_Spectrum_Texture, Checkerboard_Texture);
-
-        MTT_DESERIALIZE(Material, Physical_Material, Interface_Material);
-        MTT_DESERIALIZE(Divider);
     }
 }

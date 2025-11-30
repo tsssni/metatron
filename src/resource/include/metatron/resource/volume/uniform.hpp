@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/resource/volume/volume.hpp>
-#include <metatron/resource/image/image.hpp>
+#include <metatron/resource/opaque/grid.hpp>
 #include <metatron/core/stl/vector.hpp>
 
 namespace mtt::volume {
@@ -31,6 +31,6 @@ namespace mtt::volume {
         math::Bounding_Box bbox;
         iv3 dims;
         fv3 voxel_size;
-        tag<image::Image> storage;
+        tag<opaque::Grid> storage;
     };
 }

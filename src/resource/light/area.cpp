@@ -8,7 +8,7 @@ namespace mtt::light {
     }
 
     auto Area_Light::sample(
-        cref<eval::Context> ctx, cref<fv2> u
+        cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> opt<Interaction> {
         MTT_OPT_OR_RETURN(s_intr, shape->sample(ctx, u, primitive), {});
         return Interaction{

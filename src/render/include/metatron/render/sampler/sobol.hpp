@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/render/sampler/sampler.hpp>
-#include <metatron/core/stl/arena.hpp>
+#include <metatron/core/stl/stack.hpp>
 
 namespace mtt::sampler {
     auto constexpr num_sobol_dimensions = 2;

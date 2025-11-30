@@ -5,15 +5,13 @@ namespace mtt::volume {
     bbox(desc.bbox),
     dims(desc.dimensions),
     voxel_size((bbox.p_max - bbox.p_min) / dims) {
-        auto img = image::Image{};
-        img.size = fv4{math::shrink(dims), 1uz, sizeof(f32)};
-        img.pixels.resize(dims[2]);
-        for (auto i = 0; i < dims[2]; ++i)
-            img.pixels[i].resize(math::prod(img.size));
+        auto grid = opaque::Grid{};
+        grid.size = dims;
+        grid.cells = math::prod(dims);
 
-        auto& vec = stl::vector<image::Image>::instance();
+        auto& vec = stl::vector<opaque::Grid>::instance();
         auto lock = vec.lock();
-        storage = vec.push_back(std::move(img));
+        storage = vec.push_back(std::move(grid));
     }
 
     auto Uniform_Volume::to_local(cref<iv3> ijk) const noexcept -> fv3 {
@@ -64,11 +62,10 @@ namespace mtt::volume {
 
     auto Uniform_Volume::operator[](cref<iv3> ijk) noexcept -> ref<f32> {
         auto [i, j, k] = ijk;
-        auto ptr = (*storage)[i, j, k].data();
-        return *(f32*)ptr;
+        return (*storage)[i, j, k];
     }
 
     auto Uniform_Volume::operator[](cref<iv3> ijk) const noexcept -> f32 {
-        return const_cast<Uniform_Volume&>(*this)[ijk];
+        return const_cast<ref<Uniform_Volume>>(*this)[ijk];
     }
 }

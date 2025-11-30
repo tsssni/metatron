@@ -3,11 +3,13 @@
 !/bin/
 !/cmake/
 !/ext/
+!/shader/
 !/share/
 !/src/
 !/nix
 !/.git*
 !/.clang*
+!/.nvim.lua
 !/flake*
 !/garnix*
 !/CMake*

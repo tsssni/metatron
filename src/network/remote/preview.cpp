@@ -13,7 +13,7 @@ namespace mtt::remote {
         Impl(cref<wired::Address> address, std::string_view name) noexcept
         : socket(address), name(name), local(address.host.empty()) {}
 
-        auto create(cref<image::Image> image) noexcept -> void {
+        auto create(cref<opaque::Image> image) noexcept -> void {
             if (created || local) return;
 
             auto packet = tevipc::IpcPacket{};
@@ -22,10 +22,10 @@ namespace mtt::remote {
                 image.width, image.height,
                 image.channels, channels
             );
-            created = socket.send({(byte*)packet.data(), packet.size()});
+            created = socket.send({mut<byte>(packet.data()), packet.size()});
         }
 
-        auto update(rref<image::Image> image) noexcept -> void {
+        auto update(cref<opaque::Image> image) noexcept -> void {
             create(image);
             if (!created || local || image.stride != 4) return;
 
@@ -40,10 +40,10 @@ namespace mtt::remote {
             packet.setUpdateImage(
                 name, false, desc,
                 0, 0, image.width, image.height,
-                {(f32*)image.pixels.front().data(), image.pixels.front().size() / sizeof(f32)}
+                {mut<f32>(image.pixels.front().data()), image.pixels.front().size() / sizeof(f32)}
             );
 
-            if (!socket.send({(byte*)packet.data(), packet.size()}))
+            if (!socket.send({mut<byte>(packet.data()), packet.size()}))
                 std::println("failed to send image to remote previewer");
         }
     };
@@ -51,7 +51,7 @@ namespace mtt::remote {
     Previewer::Previewer(cref<wired::Address> address, std::string_view name) noexcept
     : stl::capsule<Previewer>(address, name) {}
 
-    auto Previewer::update(rref<image::Image> image) noexcept -> void {
-        impl->update(std::move(image));
+    auto Previewer::update(cref<opaque::Image> image) noexcept -> void {
+        impl->update(image);
     }
 }

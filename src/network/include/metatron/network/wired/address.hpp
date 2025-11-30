@@ -13,7 +13,7 @@ namespace mtt::wired {
 
 template<>
 struct std::formatter<mtt::wired::Address> {
-    constexpr auto parse(std::format_parse_context& ctx) {
+    constexpr auto parse(mtt::ref<std::format_parse_context> ctx) {
         return ctx.begin();
     }
 

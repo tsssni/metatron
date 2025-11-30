@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/resource/eval/context.hpp>
+#include <metatron/core/math/eval.hpp>
 #include <metatron/core/math/vector.hpp>
 
 namespace mtt::phase {
@@ -16,7 +16,7 @@ namespace mtt::phase {
         cref<fv3> wo, cref<fv3> wi
     ) const noexcept -> opt<Interaction>>
     ::add_convention<phase_function_sample, auto (
-        cref<eval::Context> ctx, cref<fv2> u
+        cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> opt<Interaction>>
     ::support_copy<pro::constraint_level::nontrivial>
     ::build {};

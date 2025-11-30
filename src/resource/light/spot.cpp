@@ -13,7 +13,7 @@ namespace mtt::light {
     }
 
     auto Spot_Light::sample(
-        cref<eval::Context> ctx, cref<fv2> u
+        cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> opt<Interaction> {
         auto smoothstep = [](f32 start, f32 end, f32 x) -> f32 {
             if (x < start) return 0.f;

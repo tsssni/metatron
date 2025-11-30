@@ -11,9 +11,8 @@ namespace mtt::sampler {
     inline buf<u32> Sobol_Sampler::sobol_matrices;
 
     auto Sobol_Sampler::init() noexcept -> void {
-        auto& fs = stl::filesystem::instance();
         auto path = "sampler/sobol.bin";
-        MTT_OPT_OR_CALLBACK(data, fs.find(path), {
+        MTT_OPT_OR_CALLBACK(data, stl::filesystem::instance().find(path), {
             std::println("{} not found", path);
             std::abort();
         });
@@ -26,12 +25,9 @@ namespace mtt::sampler {
 
         auto size = 0uz;
         f.read(mut<char>(&size), sizeof(size));
-        auto storage = std::vector<u32>(size);
-        f.read(mut<char>(storage.data()), size * sizeof(u32));
+        sobol_matrices = size;
+        f.read(mut<char>(sobol_matrices.host), sobol_matrices.bytelen);
         f.close();
-
-        auto lock = stl::arena::instance().lock();
-        sobol_matrices = std::span{storage};
     }
 
     auto Sobol_Sampler::start(Context ctx) noexcept -> void {

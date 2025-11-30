@@ -28,14 +28,8 @@ namespace mtt::shape {
         MTT_OPT_OR_RETURN(t, query(r, idx), {});
         auto p = r.o + t * r.d;
         auto n = p;
-
-        auto s = math::cartesian_to_unit_spherical(p);
-        auto& theta = s[0];
-        auto& phi = s[1];
-        auto uv = fv2{
-            theta / math::pi,
-            phi / (2.f * math::pi)
-        };
+        auto [theta, phi] = math::cartesian_to_unit_spherical(p);
+        auto uv = fv2{theta / math::pi, phi / (2.f * math::pi)};
 
         auto dpdu = fv3{
             std::cos(theta) * std::cos(phi),
@@ -49,25 +43,18 @@ namespace mtt::shape {
         } / (2.f * math::pi);
         auto dndu = dpdu;
         auto dndv = dpdv;
-
-        auto tn = math::normalize(dpdu);
-        tn = math::gram_schmidt(tn, n);
+        auto tn = math::gram_schmidt(math::normalize(dpdu), n);
         auto bn = math::cross(tn, n);
 
-        auto pdf = 1.f;
-        auto d = math::length(r.o);
-        if (d < 1.f) {
-            pdf = math::Sphere_Distribution{}.pdf();
-        } else {
-            auto cos_theta_max = math::sqrt(1.f - 1.f / (d * d));
-            pdf = math::Cone_Distribution{cos_theta_max}.pdf();
-        }
+        auto pdf = math::length(r.o) < 1.f
+        ? math::Sphere_Distribution{}.pdf()
+        : math::Cone_Distribution{math::sqrt(1.f - 1.f / math::dot(r.o, r.o))}.pdf();
 
         return Interaction{p, n, tn, bn, uv, t, pdf, dpdu, dpdv, dndu, dndv};
     }
 
     auto Sphere::sample(
-        cref<eval::Context> ctx, cref<fv2> u, usize idx
+        cref<math::Context> ctx, cref<fv2> u, usize idx
     ) const noexcept -> opt<Interaction> {
         auto d = math::length(ctx.r.o);
         if (d < 1.f) {

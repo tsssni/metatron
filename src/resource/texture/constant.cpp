@@ -3,13 +3,13 @@
 
 namespace mtt::texture {
     auto Constant_Spectrum_Texture::operator()(
-        cref<image::Coordinate> coord, cref<fv4> spec
+        cref<opaque::Coordinate> coord, cref<fv4> spec
     ) const noexcept -> fv4 {
         return spec & x;
     }
 
     auto Constant_Spectrum_Texture::sample(
-        cref<eval::Context> ctx, cref<fv2> u
+        cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> fv2 {
         return u;
     }
@@ -21,13 +21,13 @@ namespace mtt::texture {
     }
 
     auto Constant_Vector_Texture::operator()(
-        cref<image::Coordinate> coord
+        cref<opaque::Coordinate> coord
     ) const noexcept -> fv4 {
         return x;
     }
 
     auto Constant_Vector_Texture::sample(
-        cref<eval::Context> ctx, cref<fv2> u
+        cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> fv2 {
         return u;
     }

@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/render/emitter/emitter.hpp>
 #include <metatron/core/math/distribution/discrete.hpp>
-#include <metatron/core/stl/arena.hpp>
+#include <metatron/core/stl/stack.hpp>
 
 namespace mtt::emitter {
     struct Uniform_Emitter final {
@@ -12,10 +12,10 @@ namespace mtt::emitter {
         Uniform_Emitter();
 
         auto sample(
-            cref<eval::Context> ctx, f32 u
+            cref<math::Context> ctx, f32 u
         ) const noexcept -> opt<Interaction>;
         auto sample_infinite(
-            cref<eval::Context> ctx, f32 u
+            cref<math::Context> ctx, f32 u
         ) const noexcept -> opt<Interaction>;
 
     private:

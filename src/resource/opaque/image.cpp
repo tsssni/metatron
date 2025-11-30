@@ -1,8 +1,11 @@
-#include <metatron/resource/image/image.hpp>
+#include <metatron/resource/opaque/image.hpp>
+#include <metatron/resource/spectra/color-space.hpp>
+#include <metatron/core/stl/filesystem.hpp>
+#include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/print.hpp>
-#include <functional>
+#include <OpenImageIO/imageio.h>
 
-namespace mtt::image {
+namespace mtt::opaque {
     auto sRGB_linearize(f32 x) noexcept -> f32 {
         if (x <= 0.04045f) return x / 12.92f;
         else return std::pow((x + 0.055f) / 1.055f, 2.4f);
@@ -20,16 +23,16 @@ namespace mtt::image {
         auto pixel = fv4{};
         for (auto i = 0; i < image->channels; ++i) {
             switch (image->stride) {
-                case 1:
-                    pixel[i] = image->linear
-                    ? *(start + i) / 255.f
-                    : sRGB_linearize(*(start + i) / 255.f);
-                    break;
-                case 4:
-                    pixel[i] = *((f32*)(start) + i);
-                    break;
-                default:
-                    break;
+            case 1:
+                pixel[i] = image->linear
+                ? *(start + i) / 255.f
+                : sRGB_linearize(*(start + i) / 255.f);
+                break;
+            case 4:
+                pixel[i] = *(mut<f32>(start) + i);
+                break;
+            default:
+                break;
             }
         }
         return pixel;
@@ -39,16 +42,16 @@ namespace mtt::image {
         for (auto i = 0; i < image->size[2]; ++i) {
             auto* pixel = start + image->size[3] * i; 
             switch (image->size[3]) {
-                case 1:
-                    *pixel = image->linear
-                        ? byte(v[i] * 255.f)
-                        : byte(sRGB_transfer(v[i]) * 255.f);
-                    break;
-                case 4:
-                    *((f32*)pixel) = v[i];
-                    break;
-                default:
-                    break;
+            case 1:
+                *pixel = image->linear
+                    ? byte(v[i] * 255.f)
+                    : byte(sRGB_transfer(v[i]) * 255.f);
+                break;
+            case 4:
+                *mut<f32>(pixel) = v[i];
+                break;
+            default:
+                break;
             }
         }
     }
@@ -69,7 +72,7 @@ namespace mtt::image {
     }
 
     auto Image::operator[](usize x, usize y, usize lod) const noexcept -> Pixel const {
-        return (*const_cast<Image*>(this))[x, y, lod];
+        return (*const_cast<mut<Image>>(this))[x, y, lod];
     }
 
     auto Image::operator()(cref<Coordinate> coord) const -> fv4 {
@@ -193,41 +196,94 @@ namespace mtt::image {
         : math::lerp(filter(lodi), filter(lodi + 1), lod - lodi);
     }
 
-    auto Image::operator()(cref<fv3> uvw) const -> fv4 {
-        auto pixel = uvw * fv3{width, height, pixels.size()};
-        auto base = math::clamp(
-            math::floor(pixel - 0.5f),
-            fv3{0.f},
-            fv3{width - 2, height - 2, pixels.size() - 2}
-        );
-        auto frac = math::clamp(
-            pixel - 0.5f - base,
-            fv3{0.f},
-            fv3{1.f}
-        );
-
-        auto weights = std::array<std::function<auto(f32) -> f32>, 2>{
-            [] (f32 x) { return 1.f - x; },
-            [] (f32 x) { return x; },
-        };
-        auto offsets = iv2{0, 1};
-
-        auto r = fv4{0.f};
-        for (auto i = 0; i < 4; i++) {
-            auto b0 = i & 1;
-            auto b1 = (i & 2) >> 1;
-            auto w = weights[b0](frac[0]) * weights[b1](frac[1]);
-            auto o = base + uzv2{offsets[b0], offsets[b1]};
-
-            if (base[2] + 1 >= pixels.size())
-                r += w * fv4{(*this)[o[0], o[1], base[2]]};
-            else
-                r += w * math::lerp(
-                    fv4{(*this)[o[0], o[1], base[2]]},
-                    fv4{(*this)[o[0], o[1], base[2] + 1]},
-                    frac[2]
-                );
+    auto Image::from_path(std::string_view path, bool linear) noexcept -> Image {
+        MTT_OPT_OR_CALLBACK(absolute_path, stl::filesystem::instance().find(path), {
+            std::println("image {} not exists", path);
+            std::abort();
+        });
+        auto in = OIIO::ImageInput::open(absolute_path.c_str());
+        if (!in) {
+            std::println("cannot open image {}", path);
+            std::abort();
         }
-        return r;
+
+        auto& spec = in->spec();
+        auto img = opaque::Image{};
+        img.linear = linear;
+        img.size = {
+            usize(spec.width),
+            usize(spec.height),
+            usize(spec.nchannels),
+            spec.format.size(),
+        };
+        img.pixels.resize(std::bit_width(math::max(img.width, img.height)));
+        img.pixels.front() = math::prod(img.size);
+
+        auto success = in->read_image(0, 0, 0, spec.nchannels, spec.format, img.pixels.front().data());
+        if (!success) {
+            std::println("can not read image {}", path);
+            std::abort();
+        }
+        in->close();
+
+        auto size = uzv2(img.size);
+        auto channels = img.size[2];
+        auto stride = img.size[3];
+
+        for (auto mip = 1uz; mip < img.pixels.size(); ++mip) {
+            auto fetch = [mip, size, &img](cref<uzv2> src) {
+                auto px = math::clamp(src, {0}, size - 1);
+                return fv4{img[px[0], px[1], mip - 1]};
+            };
+            size[0] = math::max(1uz, size[0] >> 1uz);
+            size[1] = math::max(1uz, size[1] >> 1uz);
+            img.pixels[mip] = math::prod(size) * channels * stride;
+
+            auto down = [fetch, mip, &img](cref<uzv2> px) mutable {
+                auto [i, j] = px;
+                img[i, j, mip] = 0.25f * (0.f
+                + fetch({i * 2uz + 0, j * 2uz + 0})
+                + fetch({i * 2uz + 0, j * 2uz + 1})
+                + fetch({i * 2uz + 1, j * 2uz + 0})
+                + fetch({i * 2uz + 1, j * 2uz + 1})
+                );
+            };
+
+            if (math::prod(size) > 1024)
+                stl::scheduler::instance().sync_parallel(size, down);
+            else for (auto j = 0; j < size[1]; ++j)
+                    for (auto i = 0; i < size[0]; ++i)
+                        down({i, j});
+        }
+
+        return img;
+    }
+
+    auto Image::to_path(std::string_view path, tag<spectra::Color_Space> cs) const noexcept -> void {
+        auto type = stride == 1
+        ? OIIO::TypeDesc::UINT8 : OIIO::TypeDesc::FLOAT;
+        auto spec = OIIO::ImageSpec{
+            i32(width), i32(height), i32(channels), type
+        };
+
+        auto cs_name = std::string{"sRGB"};
+        for (auto const& [name, space]: spectra::Color_Space::color_spaces)
+            if (cs == space) {cs_name = name; break;}
+        spec.attribute("oiio::ColorSpace", cs_name);
+        spec.attribute("planarconfig", "contig");
+
+        auto out = OIIO::ImageOutput::create(std::string{path});
+        if (!out || !out->open(std::string{path}, spec)) {
+            std::println("failed to create image {}", path);
+            std::abort();
+        }
+
+        auto success = out->write_image(type, pixels.front().data());
+        if (!success) {
+            std::println("failed to write image {}", path);
+            std::abort();
+        }
+
+        out->close();
     }
 }

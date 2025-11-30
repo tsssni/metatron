@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/core/stl/singleton.hpp>
+#include <metatron/core/stl/stack.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <vector>
 #include <functional>
@@ -10,6 +11,12 @@ namespace mtt::stl {
     template<typename T>
     struct vector final: singleton<vector<T>> {
         vector() noexcept: mutex(make_obj<std::mutex>()) {}
+
+        auto pack() noexcept -> void {
+            buf.host = storage.data();
+            buf.bytelen = storage.size() * sizeof(T);
+            stl::stack::instance().push(&buf);
+        }
 
         template<typename... Args>
         requires std::is_constructible_v<T, Args...>
@@ -23,6 +30,7 @@ namespace mtt::stl {
 
         auto operator[](u32 i) noexcept -> mut<T> { return &storage[i]; }
         auto operator[](u32 i) const noexcept -> view<T> { return &storage[i]; }
+        auto addr() const noexcept -> uptr { return buf.device; }
         auto data() const noexcept -> mut<T> { return storage.data(); }
         auto size() const noexcept -> usize { return storage.size(); }
         auto empty() const noexcept -> usize { return storage.empty(); }
@@ -30,6 +38,7 @@ namespace mtt::stl {
         auto reserve(usize n) noexcept -> void { storage.reserve(n); }
 
     private:
+        stl::buf buf;
         std::vector<T> storage;
         obj<std::mutex> mutex;
     };
@@ -38,18 +47,32 @@ namespace mtt::stl {
     struct vector<F> final: singleton<vector<F>> {
         vector() noexcept {gutex = make_obj<std::mutex>();}
         ~vector() noexcept {
-            for (auto i = 0; i < destroier.size(); i++)
+            for (auto i = 0; i < destroier.size(); ++i)
                 destroier[i](storage[i]);
+        }
+
+        auto pack() noexcept -> void {
+            for (auto i = 0; i < i32(buf.size()); ++i) {
+                auto& b = buf[i];
+                b.host = storage[i].data();
+                b.bytelen = storage[i].size();
+                stl::stack::instance().push(&b);
+            }
         }
 
         template<typename T>
         requires poliable<F, T>
         auto emplace_type() noexcept -> void {
-            auto idx = map.size();
-            map[typeid(T)] = idx;
+            auto&& tid = typeid(T);
+            auto mid = map.size();
+            if (map.contains(tid)) return;
+
+            map[tid] = mid;
+            buf.push_back({});
             storage.push_back({});
             length.push_back(sizeof(T));
             mutex.push_back(make_obj<std::mutex>());
+
             destroier.push_back([](ref<std::vector<byte>> vec) {
                 std::destroy_n((mut<T>)vec.data(), vec.size() / sizeof(T));
             });
@@ -111,6 +134,8 @@ namespace mtt::stl {
         }
 
         template<typename T>
+        auto addr() const noexcept -> uptr { return buf[map.at(typeid(T))].device; }
+        template<typename T>
         auto data() const noexcept -> mut<T> { return (mut<T>)storage[map.at(typeid(T))].data(); }
         template<typename T>
         auto size() const noexcept -> usize { return storage[map.at(typeid(T))].size() / sizeof(T); }
@@ -122,6 +147,8 @@ namespace mtt::stl {
         auto reserve(usize n) noexcept -> void { storage[map.at(typeid(T))].reserve(n * sizeof(T)); }
 
     private:
+        std::unordered_map<std::type_index, u32> map;
+        std::vector<stl::buf> buf;
         std::vector<std::vector<byte>> storage;
         std::vector<u32> length;
         std::vector<std::function<auto (ref<std::vector<byte>> vec) -> void>> destroier;
@@ -129,7 +156,6 @@ namespace mtt::stl {
         std::vector<std::function<auto (view<byte> ptr) -> obj<F>>> copier;
         std::vector<obj<std::mutex>> mutex;
         obj<std::mutex> gutex;
-        std::unordered_map<std::type_index, u32> map;
     };
 }
 

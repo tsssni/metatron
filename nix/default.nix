@@ -1,8 +1,9 @@
 {
+  apple-sdk_15,
   argparse,
   assimp,
-  clangStdenv,
   clang-tools,
+  clangStdenv,
   cmake,
   entt,
   glaze,
@@ -11,6 +12,10 @@
   openimageio,
   openvdb,
   proxy,
+  shader-slang,
+  spirv-cross,
+  vulkan-loader,
+  vulkan-headers,
   vulkan-tools,
   zlib,
 }:
@@ -33,6 +38,8 @@ stdenv.mkDerivation {
     clang-tools
     cmake
     ninja
+    shader-slang
+    spirv-cross
   ];
 
   buildInputs = [
@@ -46,7 +53,12 @@ stdenv.mkDerivation {
     zlib
   ]
   ++ (lib.optionals stdenv.isLinux [
+    vulkan-loader
+    vulkan-headers
     vulkan-tools
+  ])
+  ++ (lib.optionals stdenv.isDarwin [
+    apple-sdk_15
   ]);
 
   cmakeFlags = [

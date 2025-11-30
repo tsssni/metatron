@@ -49,11 +49,10 @@ namespace mtt::scene {
         std::ranges::copy(laes, std::back_inserter(es));
 
         auto size = lces.size() + laes.size();
-        auto grid = uzv1{size};
         auto& tv = stl::vector<math::Transform>::instance();
         tv.reserve(size);
 
-        stl::scheduler::instance().sync_parallel(grid, [&](auto idx) {
+        stl::scheduler::instance().sync_parallel(uzv1{size}, [&](auto idx) {
             auto [i] = idx;
             auto e = es[i];
             auto t = i < lces.size()

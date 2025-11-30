@@ -3,8 +3,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/ranges.hpp>
-#include <metatron/core/stl/arena.hpp>
-#include <vector>
+#include <metatron/core/stl/stack.hpp>
 
 namespace mtt::math {
     template<usize n>
@@ -25,8 +24,9 @@ namespace mtt::math {
 
             dim = dimensions[0];
             delta = (this->high - this->low) / dim;
-            auto rows = std::vector<Element>(dim);
-            auto cdf = std::vector<f32>(dim + 1, 0.f);
+            rows = dim;
+            cdf = dim + 1;
+            cdf[0] = 0.f;
             auto size = prod(dimensions) / dim;
 
             for (auto i = 0; i < dim; ++i) {
@@ -43,13 +43,9 @@ namespace mtt::math {
                 cdf[i + 1] = cdf[i + 1] * delta + cdf[i];
             }
 
-            integral = cdf.back();
+            integral = cdf[dim];
             for (auto i = 1; i <= dim; ++i)
                 cdf[i] = integral == 0.f ? f32(i) / f32(dim) : cdf[i] /= integral;
-
-            auto lock = stl::arena::instance().lock();
-            this->rows = buf<Element>{rows};
-            this->cdf = buf<f32>{cdf};
         }
 
         auto sample(cref<Vector<f32, n>> u) const noexcept -> Vector<f32, n> {

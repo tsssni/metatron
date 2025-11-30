@@ -15,7 +15,7 @@ namespace mtt::shape {
             cref<math::Ray> r, cref<fv3> np, usize idx = 0uz
         ) const noexcept -> opt<Interaction>;
         auto sample(
-            cref<eval::Context> ctx, cref<fv2> u, usize idx = 0uz
+            cref<math::Context> ctx, cref<fv2> u, usize idx = 0uz
         ) const noexcept -> opt<Interaction>;
         auto query(
             cref<math::Ray> r, usize idx = 0uz

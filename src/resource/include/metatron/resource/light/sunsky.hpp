@@ -3,7 +3,7 @@
 #include <metatron/core/math/distribution/discrete.hpp>
 #include <metatron/core/math/distribution/gaussian.hpp>
 #include <metatron/core/math/distribution/cone.hpp>
-#include <metatron/core/stl/arena.hpp>
+#include <metatron/core/stl/stack.hpp>
 
 namespace mtt::light {
     auto constexpr sunsky_num_lambda = 11;
@@ -52,7 +52,7 @@ namespace mtt::light {
         ) const noexcept -> opt<Interaction>;
         // TGMM sky sampling: https://diglib.eg.org/items/b3f1efca-1d13-44d0-ad60-741c4abe3d21
         auto sample(
-            cref<eval::Context> ctx, cref<fv2> u
+            cref<math::Context> ctx, cref<fv2> u
         ) const noexcept -> opt<Interaction>;
         auto flags() const noexcept -> Flags;
 

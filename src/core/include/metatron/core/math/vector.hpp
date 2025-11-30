@@ -131,10 +131,7 @@ namespace mtt::math {
     template<typename T, typename... Ts, usize n, usize head = sizeof...(Ts)>
     requires (std::is_convertible_v<T, Ts> && ...)
     auto constexpr consume(cref<Vector<T, n>> x, Ts... v) noexcept -> Vector<T, n + head> {
-        auto y = Vector<T, n + head>{};
-        *(Vector<T, n>*)(y.data() + head) = x;
-        *(Vector<T, head>*)(y.data()) = reverse(Vector<T, head>{v...});
-        return y;
+        return Vector<T, n + head>{reverse(Vector<T, head>{v...}), x};
     }
 
     template<typename T, usize n, usize tail = 1uz>
@@ -206,8 +203,8 @@ namespace mtt::math {
 
     template<typename T, usize size>
     auto constexpr maxi(cref<Vector<T, size>> x) noexcept -> usize {
-        auto const& x_arr = std::array<T, size>(x);
-        return std::ranges::distance(x_arr.begin(), std::ranges::max_element(x_arr));
+        auto y = std::span<T const, size>(x);
+        return std::ranges::distance(y.begin(), std::ranges::max_element(y));
     }
 
     template<typename T, usize size>

@@ -46,6 +46,8 @@ namespace mtt::scene {
         std::function<auto () -> void> pre,
         std::function<auto () -> void> post
     ) noexcept -> void {
+        auto& vec = stl::vector<F>::instance();
+        if constexpr (pro::facade<F>) (vec.template emplace_type<Ts>(), ...);
         Hierarchy::instance().filter([type = std::move(type), pre, post](auto bins) {
             using ts = stl::array<F, Ts...>;
             if constexpr (!pro::facade<F>)
@@ -58,8 +60,7 @@ namespace mtt::scene {
             | std::views::join
             | std::ranges::to<std::vector<json>>();
 
-            auto grid = uzv1{list.size()};
-            stl::scheduler::instance().sync_parallel(grid, [&list, &type](auto idx) {
+            stl::scheduler::instance().sync_parallel(uzv1{list.size()}, [&list, &type](auto idx) {
                 auto [i] = idx;
                 auto j = std::move(list[i]);
                 auto v = false;

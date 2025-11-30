@@ -4,13 +4,10 @@ function(unite units)
     set_property(TARGET metatron-build PROPERTY metatron-units ${metatron-units})
 endfunction()
 
-function(extend exts)
-    foreach(ext ${exts})
-        find_package(${ext} REQUIRED)
-    endforeach()
-
+function(extend ext)
+    find_package(${ext} REQUIRED)
     get_property(metatron-exts TARGET metatron-build PROPERTY metatron-exts)
-    list(APPEND metatron-exts ${exts})
+    list(APPEND metatron-exts ${ext})
     set_property(TARGET metatron-build PROPERTY metatron-exts ${metatron-exts})
 endfunction()
 

@@ -3,8 +3,8 @@
 
 namespace mtt::material {
     auto Physical_Material::sample(
-        cref<eval::Context> ctx,
-        cref<image::Coordinate> coord
+        cref<math::Context> ctx,
+        cref<opaque::Coordinate> coord
     ) const noexcept -> opt<Interaction> {
         auto guarded_sample = [&]<typename T>(T tex, auto const& fallback) {
             if (!tex) return fallback;

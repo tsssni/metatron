@@ -3,7 +3,6 @@
 #include <metatron/resource/volume/uniform.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::media {
     Heterogeneous_Medium::Heterogeneous_Medium(cref<Descriptor> desc) noexcept:
@@ -40,7 +39,7 @@ namespace mtt::media {
     }
 
     auto Heterogeneous_Medium::sample(
-        cref<eval::Context> ctx, f32 t_max, f32 u
+        cref<math::Context> ctx, f32 t_max, f32 u
     ) const noexcept -> opt<Interaction> {
         auto sigma_a = (ctx.lambda & this->sigma_a) * density_scale;
         auto sigma_s = (ctx.lambda & this->sigma_s) * density_scale;

@@ -31,7 +31,7 @@ namespace mtt::light {
                 auto start = offset + i * block_size;
                 auto coeff = c[i] * std::pow(x, i) * std::pow(1.f - x, 5 - i);
                 auto source = data.subbuf(start, block_size);
-                for (auto j = 0; j < block_size; j++)
+                for (auto j = 0; j < block_size; ++j)
                     interpolated[j] += source[j] * coeff;
             }
             return interpolated;
@@ -154,11 +154,10 @@ namespace mtt::light {
         auto read = []
         <typename T, typename U>
         (ref<buf<T>> storage, rref<std::vector<U>> intermediate, cref<std::string> file) -> void {
-            auto& fs = stl::filesystem::instance();
             auto prefix = std::string{"sunsky/"};
             auto postfix = std::string{".bin"};
             auto path = prefix + file + postfix;
-            MTT_OPT_OR_CALLBACK(data, fs.find(path), {
+            MTT_OPT_OR_CALLBACK(data, stl::filesystem::instance().find(path), {
                 std::println("{} not found", path);
                 std::abort();
             });
@@ -198,7 +197,6 @@ namespace mtt::light {
             f.read(mut<char>(intermediate.data()), intermediate.size() * sizeof(U));
             f.close();
 
-            auto lock = stl::arena::instance().lock();
             if constexpr (std::is_same_v<T, U>) {
                 storage = std::span{intermediate};
             } else {
@@ -255,7 +253,7 @@ namespace mtt::light {
     }
 
     auto Sunsky_Light::sample(
-        cref<eval::Context> ctx, cref<fv2> u
+        cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> opt<Interaction> {
         auto wi = fv3{};
         if (u[0] < w_sky) {

@@ -1,4 +1,4 @@
-#include <metatron/resource/color/color-space.hpp>
+#include <metatron/resource/spectra/color-space.hpp>
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/filesystem.hpp>
@@ -6,7 +6,7 @@
 #include <fstream>
 #include <cstring>
 
-namespace mtt::color {
+namespace mtt::spectra {
     std::unordered_map<std::string, tag<Color_Space>> Color_Space::color_spaces;
 
     Color_Space::Color_Space(
@@ -33,7 +33,8 @@ namespace mtt::color {
         to_XYZ = rgb | fm33{c[0], c[1], c[2]};
         from_XYZ = math::inverse(to_XYZ);
 
-        MTT_OPT_OR_CALLBACK(coeff, stl::filesystem::instance().find("color-space/" + std::string{name} + ".coeff"), {
+        auto path = "color-space/" + std::string{name} + ".coeff";
+        MTT_OPT_OR_CALLBACK(coeff, stl::filesystem::instance().find(path), {
             std::println("{} coefficient not exists", name);
             std::abort();
         });
@@ -52,21 +53,15 @@ namespace mtt::color {
             std::abort();
         }
 
-        auto scale_size = table_res;
-        auto data_size = table_res * table_res * table_res * 3 * 3;
-        auto scale_storage = std::vector<f32>(scale_size);
-        auto table_storage = std::vector<f32>(data_size);
+        scale = table_res;
+        table = table_res * table_res * table_res * 3 * 3;
 
         if (false
-        || !file.read(mut<char>(scale_storage.data()), scale_size * sizeof(f32))
-        || !file.read(mut<char>(table_storage.data()), data_size * sizeof(f32))) {
+        || !file.read(mut<char>(scale.host), scale.bytelen)
+        || !file.read(mut<char>(table.host), table.bytelen)) {
             std::println("{} coefficient could not read table", name);
             std::abort();
         }
         file.close();
-
-        auto lock = stl::arena::instance().lock();
-        scale = std::span{scale_storage};
-        table = std::span{table_storage};
     }
 }

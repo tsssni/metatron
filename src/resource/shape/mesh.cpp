@@ -27,7 +27,7 @@ namespace mtt::shape {
         }
         auto* mesh = scene->mMeshes[0];
 
-        auto indices = std::vector<uv3>(mesh->mNumFaces);
+        indices = mesh->mNumFaces;
         for (auto i = 0uz; i < mesh->mNumFaces; ++i) {
             auto face = mesh->mFaces[i];
             indices[i] = {
@@ -37,9 +37,9 @@ namespace mtt::shape {
             };
         }
 
-        auto vertices = std::vector<fv3>(mesh->mNumVertices);
-        auto normals = std::vector<fv3>(mesh->mNumVertices);
-        auto uvs = std::vector<fv2>(mesh->mNumVertices);
+        vertices = mesh->mNumVertices;
+        normals = mesh->mNumVertices;
+        uvs = mesh->mNumVertices;
         for (auto i = 0uz; i < mesh->mNumVertices; ++i) {
             vertices[i] = {
                 mesh->mVertices[i].x,
@@ -57,14 +57,14 @@ namespace mtt::shape {
                 mesh->mTextureCoords[0][i].y
             }
             : 1.f
-            * math::cartesian_to_unit_spherical(math::normalize(vertices.back()))
+            * math::cartesian_to_unit_spherical(math::normalize(vertices[i]))
             / fv2{math::pi, 2.f * math::pi};
         }
 
-        auto dpdu = std::vector<fv3>(indices.size());
-        auto dpdv = std::vector<fv3>(indices.size());
-        auto dndu = std::vector<fv3>(indices.size());
-        auto dndv = std::vector<fv3>(indices.size());
+        dpdu = indices.size();
+        dpdv = indices.size();
+        dndu = indices.size();
+        dndv = indices.size();
 
         for (auto i = 0uz; i < indices.size(); ++i) {
             auto prim = indices[i];
@@ -117,16 +117,6 @@ namespace mtt::shape {
             dndu[i] = dnduv[0];
             dndv[i] = dnduv[1];
         }
-
-        auto lock = stl::arena::instance().lock();
-        this->indices = std::span{indices};
-        this->vertices = std::span{vertices};
-        this->normals = std::span{normals};
-        this->uvs = std::span{uvs};
-        this->dpdu = std::span{dpdu};
-        this->dpdv = std::span{dpdv};
-        this->dndu = std::span{dndu};
-        this->dndv = std::span{dndv};
     }
 
     auto Mesh::size() const noexcept -> usize {
@@ -168,7 +158,7 @@ namespace mtt::shape {
     }
 
     auto Mesh::sample(
-        cref<eval::Context> ctx, cref<fv2> u, usize idx
+        cref<math::Context> ctx, cref<fv2> u, usize idx
     ) const noexcept -> opt<Interaction> {
         auto prim = indices[idx];
         auto validate_vector = [](cref<fv3> v) -> bool {

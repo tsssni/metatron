@@ -2,8 +2,8 @@
 #include <metatron/render/filter/filter.hpp>
 #include <metatron/render/scene/entity.hpp>
 #include <metatron/resource/spectra/stochastic.hpp>
-#include <metatron/resource/color/color-space.hpp>
-#include <metatron/resource/image/image.hpp>
+#include <metatron/resource/spectra/color-space.hpp>
+#include <metatron/resource/opaque/image.hpp>
 #include <metatron/core/math/vector.hpp>
 
 namespace mtt::photo {
@@ -33,8 +33,8 @@ namespace mtt::photo {
         usize depth;
         fv2 film_size;
         fv2 dxdy;
-        tag<image::Image> image;
-        tag<color::Color_Space> color_space;
+        tag<opaque::Image> image;
+        tag<spectra::Color_Space> color_space;
 
         struct Descriptor final {
             usize spp = 16uz;
@@ -44,7 +44,7 @@ namespace mtt::photo {
             tag<spectra::Spectrum> r = spectra::Spectrum::spectra["CIE-X"];
             tag<spectra::Spectrum> g = spectra::Spectrum::spectra["CIE-Y"];
             tag<spectra::Spectrum> b = spectra::Spectrum::spectra["CIE-Z"];
-            tag<color::Color_Space> color_space = color::Color_Space::color_spaces["sRGB"];
+            tag<spectra::Color_Space> color_space = spectra::Color_Space::color_spaces["sRGB"];
         };
         Film(cref<Descriptor> desc) noexcept;
 

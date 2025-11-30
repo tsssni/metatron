@@ -12,8 +12,8 @@ namespace mtt::stl {
             template<typename... Args>
             Impl(Args&&... args) noexcept:
             impl(new typename T::Impl(std::forward<Args>(args)...)),
-            deleter([](void* impl) {
-                delete (typename T::Impl*)impl;
+            deleter([](mut<void> impl) {
+                delete mut<typename T::Impl>(impl);
             }) {}
 
             ~Impl() noexcept {
@@ -32,11 +32,11 @@ namespace mtt::stl {
             }
 
             auto operator->() noexcept {
-                return (typename T::Impl*)impl;
+                return mut<typename T::Impl>(impl);
             }
 
             auto operator->() const noexcept {
-                return (typename T::Impl const*)impl;
+                return view<typename T::Impl>(impl);
             }
 
             auto operator*() noexcept {
@@ -48,8 +48,8 @@ namespace mtt::stl {
             }
 
         private:
-            void* impl;
-            std::function<void(void*)> deleter;
+            mut<void> impl;
+            std::function<void(mut<void>)> deleter;
         };
 
     protected:

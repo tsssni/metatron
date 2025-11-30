@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/resource/phase/phase-function.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
-#include <metatron/resource/eval/context.hpp>
+#include <metatron/core/math/eval.hpp>
 #include <metatron/core/math/ray.hpp>
 
 namespace mtt::media {
@@ -21,7 +21,7 @@ namespace mtt::media {
 
     struct Medium final: pro::facade_builder
     ::add_convention<medium_sample, auto (
-        cref<eval::Context> ctx, f32 t_max, f32 u
+        cref<math::Context> ctx, f32 t_max, f32 u
     ) const noexcept -> opt<Interaction>>
     ::add_skill<pro::skills::as_view>
     ::build {};

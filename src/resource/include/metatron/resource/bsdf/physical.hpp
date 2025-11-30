@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/resource/bsdf/bsdf.hpp>
-#include <metatron/core/stl/arena.hpp>
+#include <metatron/core/stl/stack.hpp>
 
 namespace mtt::bsdf {
     struct Physical_Bsdf final {
@@ -28,7 +28,7 @@ namespace mtt::bsdf {
             cref<fv3> wo, cref<fv3> wi
         ) const noexcept -> opt<Interaction>;
         auto sample(
-            cref<eval::Context> ctx, cref<fv3> u
+            cref<math::Context> ctx, cref<fv3> u
         ) const noexcept -> opt<Interaction>;
         auto flags() const noexcept -> Flags;
         auto degrade() noexcept -> bool;

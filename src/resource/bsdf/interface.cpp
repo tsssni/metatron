@@ -9,7 +9,7 @@ namespace mtt::bsdf {
     }
 
     auto Interface_Bsdf::sample(
-        cref<eval::Context> ctx, cref<fv3> u
+        cref<math::Context> ctx, cref<fv3> u
     ) const noexcept -> opt<Interaction> {
         return Interaction{fv4{1.f}, ctx.r.d, 1.f};
     }

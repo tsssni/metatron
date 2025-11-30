@@ -5,7 +5,7 @@
 
 namespace mtt::media {
     auto Homogeneous_Medium::sample(
-        cref<eval::Context> ctx, f32 t_max, f32 u
+        cref<math::Context> ctx, f32 t_max, f32 u
     ) const noexcept -> opt<Interaction> {
         auto sigma_a = (ctx.lambda & this->sigma_a);
         auto sigma_s = (ctx.lambda & this->sigma_s);

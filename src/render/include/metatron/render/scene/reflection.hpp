@@ -1,7 +1,7 @@
 #pragma once
 #include <metatron/render/scene/hierarchy.hpp>
 #include <metatron/render/scene/descriptor.hpp>
-#include <metatron/resource/color/color-space.hpp>
+#include <metatron/resource/spectra/color-space.hpp>
 #include <metatron/core/math/matrix.hpp>
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/stl/vector.hpp>
@@ -11,13 +11,9 @@
 
 namespace glz {
     template<>
-    struct meta<mtt::color::Color_Space::Spectrum_Type> {
-        using enum mtt::color::Color_Space::Spectrum_Type;
-        auto constexpr static value = glz::enumerate(
-            albedo,
-            unbounded,
-            illuminant
-        );
+    struct meta<mtt::spectra::Color_Space::Spectrum_Type> {
+        using enum mtt::spectra::Color_Space::Spectrum_Type;
+        auto constexpr static value = glz::enumerate(albedo, unbounded, illuminant);
     };
 
     template<>
