@@ -107,18 +107,16 @@ namespace mtt::shader {
             diagnose(linked->getEntryPointCode(0, 0, kernel.writeRef(), diagnostic.writeRef()));
 
             auto layout = reflect(linked->getLayout(0), path);
-        #if __APPLE__
-            cross({view<byte>(kernel->getBufferPointer()), kernel->getBufferSize()}, layout);
-        #else
-            auto compiled = std::ofstream{(out / path).concat(".spirv"), std::ios::binary};
-            compiled.write(view<char>(kernel->getBufferPointer()), kernel->getBufferSize());
-        #endif
+            auto spirv = std::span{view<byte>(kernel->getBufferPointer()), kernel->getBufferSize()};
+            cross(spirv, layout, path);
         }
 
         auto cross(
             std::span<byte const> kernel,
-            cref<Layout> layout
+            cref<Layout> layout,
+            cref<std::filesystem::path> path
         ) noexcept -> void {
+        #if __APPLE__
             auto compiler = spirv_cross::CompilerMSL{view<u32>(kernel.data()), kernel.size() / sizeof(u32)};
 
             using Options = spirv_cross::CompilerMSL::Options;
@@ -131,7 +129,13 @@ namespace mtt::shader {
 
             for (auto i = 0; i <= layout.sets.size(); i++)
                 compiler.set_argument_buffer_device_address_space(i, true);
-            std::println("{}", compiler.compile());
+            auto metal = compiler.compile();
+            auto compiled = std::ofstream{(out / path).concat(".metal")};
+            compiled.write(metal.c_str(), metal.size());
+        #else
+            auto compiled = std::ofstream{(out / path).concat(".spirv"), std::ios::binary};
+            compiled.write(view<char>(kernel.data()), kernel.size());
+        #endif
         }
 
         auto reflect(
