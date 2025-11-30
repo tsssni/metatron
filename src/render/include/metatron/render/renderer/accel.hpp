@@ -15,8 +15,8 @@ namespace mtt::renderer {
 namespace glz {
     template<>
     struct meta<mtt::renderer::underlying_variant_t<mtt::renderer::Acceleration>> {
-        auto static constexpr tag = std::string_view{"variant"};
-        auto static constexpr ids = std::array{
+        auto constexpr static tag = std::string_view{"variant"};
+        auto constexpr static ids = std::array{
             "lbvh",
         };
     };

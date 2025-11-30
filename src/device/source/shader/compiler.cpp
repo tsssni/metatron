@@ -208,7 +208,7 @@ namespace mtt::shader {
 
             auto serialize = [this](ref<Layout> layout, std::string_view path) {
                 auto serialized = std::string{};
-                if (auto e = glz::write_json(layout, serialized); e) {
+                if (auto e = glz::write_json(layout, serialized)) {
                     std::println(
                         "write pipeline layout {} with glaze error: {}",
                         path.data(), glz::format_error(e)
@@ -242,7 +242,7 @@ namespace mtt::shader {
                 auto stream = std::ifstream{database};
                 auto buffer = std::string{}; buffer.resize(size);
                 stream.read(buffer.data(), buffer.size());
-                if (auto e = glz::read_json(cache, buffer); e) {
+                if (auto e = glz::read_json(cache, buffer)) {
                     std::println("load cache with glaze error: {}", glz::format_error(e));
                     std::abort();
                 }
@@ -288,7 +288,7 @@ namespace mtt::shader {
                 }
 
             auto buffer = std::string{};
-            if (auto e = glz::write_json(cache, buffer); e) {
+            if (auto e = glz::write_json(cache, buffer)) {
                 std::println("write cache with glaze error: {}", glz::format_error(e));
                 std::abort();
             }

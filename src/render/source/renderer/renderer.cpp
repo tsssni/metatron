@@ -1,5 +1,6 @@
 #include <metatron/render/renderer/renderer.hpp>
 #include <metatron/render/scene/args.hpp>
+#include <metatron/device/command/context.hpp>
 #include <metatron/network/remote/preview.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/progress.hpp>
@@ -12,7 +13,7 @@ namespace mtt::renderer {
         Descriptor desc;
         Impl(rref<Descriptor> desc): desc(std::move(desc)) {}
 
-        auto render() noexcept -> void {
+        auto trace() noexcept -> void {
             auto rd = std::random_device{};
             auto seed = rd();
             std::println("seed: {}", seed);
@@ -92,10 +93,20 @@ namespace mtt::renderer {
             future.wait();
             ~progress;
         }
+
+        auto wave() noexcept -> void {
+            command::init();
+        }
     };
 
     Renderer::Renderer(rref<Descriptor> desc) noexcept:
     stl::capsule<Renderer>(std::move(desc)) {}
 
-    auto Renderer::render() noexcept -> void {return impl->render();}
+    auto Renderer::render() noexcept -> void {
+        auto& args = scene::Args::instance();
+        if (args.device == "cpu")
+            return impl->trace();
+        else if (args.device == "gpu")
+            return impl->wave();
+    }
 }

@@ -18,6 +18,7 @@
   vulkan-loader,
   vulkan-headers,
   vulkan-tools,
+  vulkan-validation-layers,
   zlib,
 }:
 let
@@ -58,6 +59,7 @@ stdenv.mkDerivation {
     vulkan-loader
     vulkan-headers
     vulkan-tools
+    vulkan-validation-layers
   ])
   ++ (lib.optionals stdenv.isDarwin [
     apple-sdk_15

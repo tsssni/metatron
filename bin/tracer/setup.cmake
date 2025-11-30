@@ -1,1 +1,1 @@
-list(APPEND deps render)
+list(APPEND deps render argparse)

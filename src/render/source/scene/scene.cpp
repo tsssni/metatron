@@ -13,13 +13,11 @@ namespace mtt::scene {
     auto material_init() noexcept -> void;
     auto light_init() noexcept -> void;
 
-    auto run(i32 argc, mut<char> argv[]) noexcept -> void {
+    auto run() noexcept -> void {
         using namespace renderer;
         auto& hierarchy = Hierarchy::instance();
-        sampler::Sobol_Sampler::init();
-
         auto& args = Args::instance();
-        args.parse(argc, argv);
+        sampler::Sobol_Sampler::init();
 
         transform_init();
         spectra_init();
@@ -39,11 +37,10 @@ namespace mtt::scene {
 
             using Descriptor = Renderer::Descriptor;
             auto desc = Descriptor{};
-            auto er = glz::read_json<Descriptor>(desc, j.serialized.str);
-            if (er) {
+            if (auto e = glz::read_json<Descriptor>(desc, j.serialized.str)) {
                 std::println(
                     "deserialize {} with glaze error: {}",
-                    j.serialized.str, glz::format_error(er)
+                    j.serialized.str, glz::format_error(e)
                 );
                 std::abort();
             }

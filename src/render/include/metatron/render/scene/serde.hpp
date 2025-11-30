@@ -22,10 +22,10 @@ namespace mtt::scene {
     auto attach(cref<json> j, std::string_view type) noexcept -> bool {
         if (j.type != type) return false;
         auto d = T{};
-        if (auto er = glz::read_json<T>(d, j.serialized.str); er) {
+        if (auto e = glz::read_json<T>(d, j.serialized.str)) {
             std::println(
                 "deserialize {} with glaze error: {}",
-                j.serialized.str, glz::format_error(er)
+                j.serialized.str, glz::format_error(e)
             );
             std::abort();
         } else {
