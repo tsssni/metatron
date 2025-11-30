@@ -129,7 +129,7 @@ namespace mtt::shader {
             options.enable_decoration_binding = true;
             compiler.set_msl_options(options);
 
-            for (auto i = 0; i <= layout.descriptors.back().set; i++)
+            for (auto i = 0; i <= layout.sets.size(); i++)
                 compiler.set_argument_buffer_device_address_space(i, true);
             std::println("{}", compiler.compile());
         }
@@ -143,16 +143,17 @@ namespace mtt::shader {
                 std::abort();
             }
 
-            auto parse_resource = [](mut<slang::TypeLayoutReflection> t) {
-                using Type = SlangResourceShape;
-                using Access = SlangResourceAccess;
-                auto type = Descriptor::Type{};
-                auto access = Descriptor::Access{};
+            auto parse_resource = [](
+                mut<slang::TypeLayoutReflection> t,
+                ref<Layout::Descriptor> desc
+            ) {
+                using Type = Layout::Descriptor::Type;
+                using Access = Layout::Descriptor::Access;
 
                 switch (t->getResourceShape()) {
-                case SLANG_TEXTURE_2D: type = Descriptor::Type::image; break;
-                case SLANG_TEXTURE_3D: type = Descriptor::Type::grid; break;
-                case SLANG_ACCELERATION_STRUCTURE: type = Descriptor::Type::accel; break;
+                case SLANG_TEXTURE_2D: desc.type = Type::image; break;
+                case SLANG_TEXTURE_3D: desc.type = Type::grid; break;
+                case SLANG_ACCELERATION_STRUCTURE: desc.type = Type::accel; break;
                 default:
                     std::println("descriptor type {} not support", i32(t->getResourceShape()));
                     std::abort();
@@ -160,72 +161,79 @@ namespace mtt::shader {
 
                 switch (t->getResourceAccess()) {
                 case SLANG_RESOURCE_ACCESS_NONE:
-                case SLANG_RESOURCE_ACCESS_READ: access = Descriptor::Access::readonly; break;
-                case SLANG_RESOURCE_ACCESS_READ_WRITE: access = Descriptor::Access::writeonly; break;
-                case SLANG_RESOURCE_ACCESS_WRITE: access = Descriptor::Access::writeonly; break;
+                case SLANG_RESOURCE_ACCESS_READ: desc.access = Access::readonly; break;
+                case SLANG_RESOURCE_ACCESS_READ_WRITE: desc.access = Access::writeonly; break;
+                case SLANG_RESOURCE_ACCESS_WRITE: desc.access = Access::writeonly; break;
                 default:
                     std::println("descriptor access {} not supported", i32(t->getResourceAccess()));
                     std::abort();
                 }
-
-                return std::make_tuple(type, access);
             };
 
             auto parse_type = [&parse_resource](
                 this auto self,
-                mut<slang::TypeLayoutReflection> t,
+                mut<slang::TypeLayoutReflection> reflection,
                 ref<Layout> layout,
                 std::string path = "",
-                i32 set = 0
+                i32 block = 0
             ) -> void {
-                for (auto i = 0; i < t->getFieldCount(); ++i) {
+                for (auto i = 0; i < reflection->getFieldCount(); ++i) {
+                    using Descriptor = Layout::Descriptor;
                     using Kind = slang::TypeReflection::Kind;
                     using Unit = slang::ParameterCategory;
                     auto Index = Unit::DescriptorTableSlot;
                     auto Set = Unit::SubElementRegisterSpace;
                     auto Size = Unit::Uniform;
 
-                    auto field = t->getFieldByIndex(i);
-                    auto type = field->getTypeLayout();
+                    auto member = reflection->getFieldByIndex(i);
+                    auto type = member->getTypeLayout();
                     auto element = type->getElementTypeLayout();
-                    auto kind = field->getType()->getKind();
-                    auto name = field->getName();
+                    auto kind = member->getType()->getKind();
+                    auto name = member->getName();
 
                     auto table = kind == Kind::ParameterBlock;
-                    auto var = table ? type->getContainerVarLayout() : field;
+                    auto var = table ? type->getContainerVarLayout() : member;
                     auto desc = Descriptor{};
 
-                    auto constexpr base = 1;
-                    desc.path = path + (path.size() == 0 ? "" : ".") + name;
-                    desc.set = table ? base + field->getOffset(Set) : set;
+                    auto field = path + (path.size() == 0 ? "" : ".") + name;
+                    auto set = table ? member->getOffset(Set) : block;
+                    auto index = -1;
                     for (auto j = 0; j < var->getCategoryCount(); ++j)
                         if (var->getCategoryByIndex(j) == Index)
-                            desc.index = var->getOffset(Index);
-
-                    if (table && desc.index >= 0) {
-                        desc.type = Descriptor::Type::parameter;
-                        desc.size = element->getSize();
-                    } else if (kind == Kind::SamplerState) {
-                        desc.type = Descriptor::Type::sampler;
-                    } else if (kind == Kind::Resource) {
-                        auto [t, a] = parse_resource(type);
-                        desc.type = t; desc.access = a;
-                    } else if (kind == Kind::Array) {
-                        desc.size = type->getElementCount();
-                        if (desc.size == 0) desc.size = -1; // bindless
-                        auto [t, a] = parse_resource(type->getElementTypeLayout());
-                        desc.type = t; desc.access = a;
+                            index = var->getOffset(Index);
+                    if (layout.sets.size() <= set) layout.sets.resize(set + 1);
+                    if (layout.sets[set].size() <= index) layout.sets[set].resize(index + 1);
+                    if (index < 0) {
+                        self(table ? element : type, layout, field, set);
+                        continue;
                     }
 
-                    if (desc.index >= 0) layout.descriptors.push_back(desc);
-                    self(table ? element : type, layout, desc.path, desc.set);
+                    switch (kind) {
+                    case Kind::ParameterBlock:
+                        desc.type = Descriptor::Type::parameter;
+                        desc.size = element->getSize();
+                        break;
+                    case Kind::SamplerState:
+                        desc.type = Descriptor::Type::sampler;
+                        break;
+                    case Kind::Resource:
+                        parse_resource(type, desc);
+                        break;
+                    case Kind::Array:
+                        desc.size = type->getElementCount();
+                        if (desc.size == 0) desc.size = -1; // bindless
+                        parse_resource(type->getElementTypeLayout(), desc);
+                        break;
+                    default: break;
+                    }
+
+                    desc.path = field;
+                    layout.sets[set][index] = desc;
+                    self(table ? element : type, layout, field, set);
                 }
             };
 
             auto serialize = [this](ref<Layout> layout, std::string_view path) {
-                std::ranges::sort(this->layout.descriptors, [](auto&& x, auto&& y) {
-                    return x.set < y.set || (x.set == y.set && x.index < y.index);
-                });
                 auto serialized = std::string{};
                 if (auto e = glz::write_json(layout, serialized); e) {
                     std::println(
@@ -238,7 +246,7 @@ namespace mtt::shader {
                 reflected.write(serialized.c_str(), serialized.size());
             };
 
-            if (layout.descriptors.empty()) {
+            if (layout.sets.empty()) {
                 parse_type(reflection->getGlobalParamsTypeLayout(), this->layout);
                 serialize(this->layout, "metatron");
             }
