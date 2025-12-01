@@ -41,7 +41,7 @@ namespace mtt::scene {
         }
 
         auto path = "spectra";
-        auto spectra_dir = stl::filesystem::instance().find(path);
+        auto spectra_dir = stl::filesystem::find(path);
 
         auto spectra = std::filesystem::directory_iterator(spectra_dir)
         | std::views::filter([](auto& it) { return true

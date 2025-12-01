@@ -45,8 +45,8 @@ namespace mtt {
             }
         }
 
-        let t = textures[0].Sample(sampler, float2(0.5));
-        let g = grids[0].Sample(accessor, float3(0.5));
+        let t = textures[0].SampleLevel(sampler, float2(0.5), 0.0);
+        let g = grids[0].SampleLevel(accessor, float3(0.5), 0.0);
         in.film.Store(0, t + g);
     }
 

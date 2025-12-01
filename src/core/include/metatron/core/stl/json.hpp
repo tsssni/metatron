@@ -14,7 +14,7 @@ namespace mtt::stl {
 
         template<typename T>
         auto static load(path path, T&& buffer) noexcept -> void {
-            auto json = stl::filesystem::instance().load(path);
+            auto json = stl::filesystem::load(path);
             if (auto e = glz::read_json(buffer, json)) {
                 std::println(
                     "load {} with glaze error: {}",
@@ -44,7 +44,7 @@ namespace mtt::stl {
                 );
                 std::abort();
             }
-            stl::filesystem::instance().store(path, json);
+            stl::filesystem::store(path, json);
         }
     };
 }

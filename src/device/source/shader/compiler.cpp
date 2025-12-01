@@ -101,10 +101,10 @@ namespace mtt::shader {
             auto metal = compiler.compile();
             auto compiled = std::ofstream{(out / path).concat(".metal")};
             compiled.write(metal.c_str(), metal.size());
-            stl::filesystem::instance().store((out/ path).concat(".metal"), metal);
+            stl::filesystem::store((out/ path).concat(".metal"), metal);
         #else
             auto spirv = (out / path).concat(".spirv");
-            stl::filesystem::instance().store(spirv, kernel, std::ios::binary);
+            stl::filesystem::store(spirv, kernel, std::ios::binary);
         #endif
         }
 
@@ -245,6 +245,7 @@ namespace mtt::shader {
             auto paths = std::to_array({dir.c_str()});
             auto options = std::to_array<slang::CompilerOptionEntry>({
                 int_opt(Option::ForceCLayout, 1),
+                int_opt(Option::VulkanUseEntryPointName, 1),
                 int_opt(Option::Optimization, SlangOptimizationLevel::SLANG_OPTIMIZATION_LEVEL_MAXIMAL),
             });
 

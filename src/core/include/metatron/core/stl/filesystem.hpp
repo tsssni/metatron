@@ -31,16 +31,17 @@ namespace mtt::stl {
             home = std::getenv("HOME");
             cache = home / ".cache/metatron";
             std::filesystem::create_directories(cache);
-
             prefix = MTT_PREFIX;
             share = prefix / "share/metatron";
-            push(share.c_str());
+            data.push_back(share);
         }
 
-        auto push(cref<path> path) noexcept -> void { data.push_back(path); }
+        auto static push(cref<path> path) noexcept -> void {
+            instance().data.push_back(path);
+        }
 
-        auto find(cref<path> path) noexcept -> stl::path {
-            for (auto const& base : data | std::views::reverse) {
+        auto static find(cref<path> path) noexcept -> stl::path {
+            for (auto const& base : instance().data | std::views::reverse) {
                 auto full = base / path;
                 if (std::filesystem::exists(full)) return full;
             }
@@ -48,7 +49,13 @@ namespace mtt::stl {
             std::abort();
         }
 
-        auto load(
+        auto static hit(cref<path> path) noexcept -> opt<stl::path> {
+            auto cache = instance().cache / path;
+            if (std::filesystem::exists(cache)) return cache;
+            return {};
+        }
+
+        auto static load(
             cref<path> path, std::ios::openmode mode = {}
         ) noexcept -> std::vector<byte> {
             auto size = std::filesystem::file_size(path);
@@ -59,9 +66,10 @@ namespace mtt::stl {
         }
 
         template<buffer T>
-        auto store(
+        auto static store(
             cref<path> path, T buffer, std::ios::openmode mode = {}
         ) noexcept -> void {
+            std::filesystem::create_directory(path.parent_path());
             auto stream = std::ofstream{path, mode};
             stream.write(view<char>(buffer.data()), buffer.size());
         }

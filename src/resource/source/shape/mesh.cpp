@@ -10,7 +10,7 @@
 
 namespace mtt::shape {
     Mesh::Mesh(cref<Descriptor> desc) noexcept {
-        auto path = stl::filesystem::instance().find(desc.path);
+        auto path = stl::filesystem::find(desc.path);
         auto importer = Assimp::Importer{};
         auto* scene = importer.ReadFile(path.c_str(), 0
             | aiProcess_FlipUVs

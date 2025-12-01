@@ -157,7 +157,7 @@ namespace mtt::light {
             auto prefix = std::string{"sunsky/"};
             auto postfix = std::string{".bin"};
             auto path = prefix + file + postfix;
-            auto data = stl::filesystem::instance().find(path);
+            auto data = stl::filesystem::find(path);
 
             auto f = std::ifstream{data, std::ios::binary};
             if (!f.is_open()) {

@@ -10,8 +10,10 @@
 namespace mtt::command {
     struct Context final: stl::singleton<Context>, stl::capsule<Context> {
         vk::Device device;
+        vk::PipelineCache pipeline_cache;
         std::queue<vk::Queue> render_queues;
         std::queue<vk::Queue> copy_queues;
+
         struct Impl;
         Context() noexcept;
     };

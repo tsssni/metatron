@@ -12,7 +12,7 @@ namespace mtt::sampler {
 
     auto Sobol_Sampler::init() noexcept -> void {
         auto path = "sampler/sobol.bin";
-        auto data = stl::filesystem::instance().find(path);
+        auto data = stl::filesystem::find(path);
 
         auto f = std::ifstream{data, std::ios::binary};
         if (!f.is_open()) {

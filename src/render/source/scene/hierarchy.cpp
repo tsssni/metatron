@@ -85,7 +85,7 @@ namespace mtt::scene {
     }
 
     auto Hierarchy::populate(cref<stl::path> path) noexcept -> void {
-        stl::filesystem::instance().push(path);
+        stl::filesystem::push(path);
         auto jsons = std::vector<scene::json>{};
         stl::json::load(path / "scene.json", jsons);
         auto bins = binmap{};
