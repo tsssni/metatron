@@ -21,7 +21,7 @@ namespace mtt::scene {
         using binmap = std::unordered_map<std::string, std::vector<json>>;
         using filter_function = std::function<auto (cref<binmap>) -> void>;
         auto filter(filter_function f) noexcept -> void;
-        auto populate(std::string_view path) noexcept -> void;
+        auto populate(cref<stl::path> path) noexcept -> void;
     };
 
     template<typename F, typename T = F>

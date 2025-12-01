@@ -197,10 +197,7 @@ namespace mtt::opaque {
     }
 
     auto Image::from_path(std::string_view path, bool linear) noexcept -> Image {
-        MTT_OPT_OR_CALLBACK(absolute_path, stl::filesystem::instance().find(path), {
-            std::println("image {} not exists", path);
-            std::abort();
-        });
+        auto absolute_path = stl::filesystem::instance().find(path);
         auto in = OIIO::ImageInput::open(absolute_path.c_str());
         if (!in) {
             std::println("cannot open image {}", path);

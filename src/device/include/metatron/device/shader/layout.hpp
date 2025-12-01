@@ -1,6 +1,5 @@
 #pragma once
-#include <glaze/glaze.hpp>
-#include <vector>
+#include <metatron/core/stl/json.hpp>
 
 namespace mtt::shader {
     struct Layout final {

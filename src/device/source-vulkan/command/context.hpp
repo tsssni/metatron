@@ -5,12 +5,13 @@
 #include <metatron/core/stl/capsule.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <vulkan/vulkan.hpp>
+#include <queue>
 
 namespace mtt::command {
     struct Context final: stl::singleton<Context>, stl::capsule<Context> {
         vk::Device device;
-        u32 render_queue_family; u32 render_queue_size;
-        u32 copy_queue_family; u32 copy_queue_size;
+        std::queue<vk::Queue> render_queues;
+        std::queue<vk::Queue> copy_queues;
         struct Impl;
         Context() noexcept;
     };

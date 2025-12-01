@@ -41,10 +41,7 @@ namespace mtt::scene {
         }
 
         auto path = "spectra";
-        MTT_OPT_OR_CALLBACK(spectra_dir, stl::filesystem::instance().find(path), {
-            std::println("spectra not exist");
-            std::abort();
-        });
+        auto spectra_dir = stl::filesystem::instance().find(path);
 
         auto spectra = std::filesystem::directory_iterator(spectra_dir)
         | std::views::filter([](auto& it) { return true

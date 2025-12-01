@@ -12,10 +12,7 @@ namespace mtt::sampler {
 
     auto Sobol_Sampler::init() noexcept -> void {
         auto path = "sampler/sobol.bin";
-        MTT_OPT_OR_CALLBACK(data, stl::filesystem::instance().find(path), {
-            std::println("{} not found", path);
-            std::abort();
-        });
+        auto data = stl::filesystem::instance().find(path);
 
         auto f = std::ifstream{data, std::ios::binary};
         if (!f.is_open()) {

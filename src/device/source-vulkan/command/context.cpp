@@ -1,22 +1,16 @@
 #include "context.hpp"
 #include <metatron/device/command/context.hpp>
+#include <metatron/device/shader/pipeline.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/print.hpp>
+#include <metatron/core/math/vector.hpp>
 
 namespace mtt::command {
-    auto constexpr vulkan_versions = std::to_array({
-        vk::makeApiVersion(0, 1, 0, 0),
-        vk::makeApiVersion(0, 1, 1, 0),
-        vk::makeApiVersion(0, 1, 2, 0),
-        vk::makeApiVersion(0, 1, 3, 0),
-        vk::makeApiVersion(0, 1, 4, 0),
-    });
-
     struct Context::Impl final {
         vk::UniqueInstance instance;
         vk::UniqueDevice device;
-        u32 render_queue_family; u32 render_queue_size = 0;
-        u32 copy_queue_family; u32 copy_queue_size = 0;
+        vk::DeviceQueueCreateInfo render_queue;
+        vk::DeviceQueueCreateInfo copy_queue;
 
         Impl() noexcept {
             auto app = vk::ApplicationInfo{
@@ -53,45 +47,34 @@ namespace mtt::command {
             auto& query = chain.get<vk::PhysicalDeviceRayQueryFeaturesKHR>();
             query.rayQuery = true;
 
+            render_queue.queueCount = 0; copy_queue.queueCount = 0;
             for (auto&& physical_device: guard(instance->enumeratePhysicalDevices())) {
                 auto families = physical_device.getQueueFamilyProperties2();
                 for (auto i = 0; i < families.size(); ++i) {
                     auto const& family = families[i];
                     auto& props = family.queueFamilyProperties;
                     auto flags = props.queueFlags;
-                    if (render_queue_size == 0 && flags & vk::QueueFlags::BitsType::eGraphics) {
-                        render_queue_family = i;
-                        render_queue_size = props.queueCount;
-                    } else if (copy_queue_size == 0 && flags & vk::QueueFlags::BitsType::eTransfer) {
-                        copy_queue_family = i;
-                        copy_queue_size = props.queueCount;
-                    }
-                    if (render_queue_size && copy_queue_size) break;
+                    if (render_queue.queueCount == 0 && flags & vk::QueueFlags::BitsType::eGraphics)
+                        render_queue = {.queueFamilyIndex = u32(i), .queueCount = props.queueCount};
+                    else if (copy_queue.queueCount == 0 && flags & vk::QueueFlags::BitsType::eTransfer)
+                        copy_queue = {.queueFamilyIndex = u32(i), .queueCount = props.queueCount};
+                    if (render_queue.queueCount && copy_queue.queueCount) break;
                 }
 
-                if (!render_queue_size || !copy_queue_size) {
+                if (!render_queue.queueCount || !copy_queue.queueCount) {
                     std::println("no vulkan async copy queue");
                     std::abort();
                 }
-                auto render_priorities = std::vector<f32>(render_queue_size);
-                auto copy_priorities = std::vector<f32>(copy_queue_size);
-                for (auto i = 0; i < render_queue_size; ++i)
-                    render_priorities[i] = f32(i) / render_queue_size;
-                for (auto i = 0; i < copy_queue_size; ++i)
-                    copy_priorities[i] = f32(i) / copy_queue_size;
+                auto render_priorities = std::vector<f32>(render_queue.queueCount);
+                auto copy_priorities = std::vector<f32>(copy_queue.queueCount);
+                for (auto i = 0; i < render_queue.queueCount; ++i)
+                    render_priorities[i] = f32(i) / render_queue.queueCount;
+                for (auto i = 0; i < copy_queue.queueCount; ++i)
+                    copy_priorities[i] = f32(i) / copy_queue.queueCount;
 
-                auto queues = std::vector<vk::DeviceQueueCreateInfo>{
-                    {
-                        .queueFamilyIndex = render_queue_family,
-                        .queueCount = render_queue_size,
-                        .pQueuePriorities = render_priorities.data(),
-                    },
-                    {
-                        .queueFamilyIndex = copy_queue_family,
-                        .queueCount = copy_queue_size,
-                        .pQueuePriorities = copy_priorities.data(),
-                    },
-                };
+                render_queue.pQueuePriorities = render_priorities.data();
+                copy_queue.pQueuePriorities = copy_priorities.data();
+                auto queues = std::vector{render_queue, copy_queue};
                 auto info = vk::DeviceCreateInfo{};
                 info.setQueueCreateInfos(queues);
                 info.setPNext(chain.get());
@@ -110,13 +93,20 @@ namespace mtt::command {
 
     Context::Context() noexcept {
         device = impl->device.get();
-        render_queue_family = impl->render_queue_family;
-        render_queue_size = impl->render_queue_size;
-        copy_queue_family = impl->copy_queue_family;
-        copy_queue_size = impl->copy_queue_size;
+        for (auto i = 0u; i < impl->render_queue.queueCount; ++i)
+            render_queues.push(device.getQueue2({
+                .queueFamilyIndex = impl->render_queue.queueFamilyIndex,
+                .queueIndex = i,
+            }));
+        for (auto i = 0u; i < impl->copy_queue.queueCount; ++i)
+            copy_queues.push(device.getQueue2({
+                .queueFamilyIndex = impl->copy_queue.queueFamilyIndex,
+                .queueIndex = i,
+            }));
     }
 
     auto init() noexcept -> void {
         Context::instance();
+        auto ppl = shader::Pipeline{"trace", "trace"};
     }
 }

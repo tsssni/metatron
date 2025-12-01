@@ -10,12 +10,9 @@
 
 namespace mtt::shape {
     Mesh::Mesh(cref<Descriptor> desc) noexcept {
-        MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(desc.path), {
-            std::println("mesh {} not exists", desc.path);
-            std::abort();
-        });
+        auto path = stl::filesystem::instance().find(desc.path);
         auto importer = Assimp::Importer{};
-        auto* scene = importer.ReadFile(path.data(), 0
+        auto* scene = importer.ReadFile(path.c_str(), 0
             | aiProcess_FlipUVs
             | aiProcess_FlipWindingOrder
             | aiProcess_MakeLeftHanded

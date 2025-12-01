@@ -38,10 +38,7 @@ namespace mtt::volume {
     }
 
     Nanovdb_Volume::Nanovdb_Volume(cref<Descriptor> desc) noexcept {
-        MTT_OPT_OR_CALLBACK(path, stl::filesystem::instance().find(desc.path), {
-            std::println("volume {} not exists", desc.path);
-            std::abort();
-        });
+        auto path = stl::filesystem::instance().find(desc.path);
         auto& vec = stl::vector<nanovdb::GridHandle<>>::instance();
         auto lock = vec.lock();
         handle = vec.push_back(nanovdb::io::readGrid(path));

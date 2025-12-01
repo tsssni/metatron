@@ -34,10 +34,7 @@ namespace mtt::spectra {
         from_XYZ = math::inverse(to_XYZ);
 
         auto path = "color-space/" + std::string{name} + ".coeff";
-        MTT_OPT_OR_CALLBACK(coeff, stl::filesystem::instance().find(path), {
-            std::println("{} coefficient not exists", name);
-            std::abort();
-        });
+        auto coeff = stl::filesystem::instance().find(path);
         auto file = std::ifstream{coeff, std::ios::binary};
 
         auto header = std::string(4, '\0');

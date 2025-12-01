@@ -37,13 +37,7 @@ namespace mtt::scene {
 
             using Descriptor = Renderer::Descriptor;
             auto desc = Descriptor{};
-            if (auto e = glz::read_json<Descriptor>(desc, j.serialized.str)) {
-                std::println(
-                    "deserialize {} with glaze error: {}",
-                    j.serialized.str, glz::format_error(e)
-                );
-                std::abort();
-            }
+            stl::json::load(j.serialized.str, desc);
             renderer = make_obj<Renderer>(std::move(desc));
         });
         hierarchy.populate(args.scene);

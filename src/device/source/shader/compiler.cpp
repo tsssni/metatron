@@ -1,12 +1,12 @@
 #include <metatron/device/shader/compiler.hpp>
 #include <metatron/device/shader/layout.hpp>
+#include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/ranges.hpp>
+#include <metatron/core/stl/json.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <spirv_cross/spirv_msl.hpp>
 #include <slang-com-ptr.h>
 #include <slang.h>
-#include <filesystem>
-#include <fstream>
 
 namespace mtt::shader {
     template<typename T>
@@ -101,9 +101,10 @@ namespace mtt::shader {
             auto metal = compiler.compile();
             auto compiled = std::ofstream{(out / path).concat(".metal")};
             compiled.write(metal.c_str(), metal.size());
+            stl::filesystem::instance().store((out/ path).concat(".metal"), metal);
         #else
-            auto compiled = std::ofstream{(out / path).concat(".spirv"), std::ios::binary};
-            compiled.write(view<char>(kernel.data()), kernel.size());
+            auto spirv = (out / path).concat(".spirv");
+            stl::filesystem::instance().store(spirv, kernel, std::ios::binary);
         #endif
         }
 
@@ -206,26 +207,13 @@ namespace mtt::shader {
                 }
             };
 
-            auto serialize = [this](ref<Layout> layout, std::string_view path) {
-                auto serialized = std::string{};
-                if (auto e = glz::write_json(layout, serialized)) {
-                    std::println(
-                        "write pipeline layout {} with glaze error: {}",
-                        path.data(), glz::format_error(e)
-                    );
-                    std::abort();
-                }
-                auto reflected = std::ofstream{(out / path).concat(".json")};
-                reflected.write(serialized.c_str(), serialized.size());
-            };
-
             if (layout.sets.empty()) {
                 parse_type(reflection->getGlobalParamsTypeLayout(), this->layout);
-                serialize(this->layout, "metatron");
+                stl::json::store((out / "metatron").concat(".json"), this->layout);
             }
             Layout layout;
             parse_type(reflection->getEntryPointByIndex(0)->getTypeLayout(), layout);
-            serialize(layout, path.c_str());
+            stl::json::store((out / path).concat(".json"), layout);
             return layout;
         }
 
@@ -237,16 +225,8 @@ namespace mtt::shader {
             this->out = out;
 
             auto database = this->out / "cache.json";
-            if (std::filesystem::exists(database)) {
-                auto size = std::filesystem::file_size(database);
-                auto stream = std::ifstream{database};
-                auto buffer = std::string{}; buffer.resize(size);
-                stream.read(buffer.data(), buffer.size());
-                if (auto e = glz::read_json(cache, buffer)) {
-                    std::println("load cache with glaze error: {}", glz::format_error(e));
-                    std::abort();
-                }
-            }
+            if (std::filesystem::exists(database))
+                stl::json::load(database, cache);
 
             using Option = slang::CompilerOptionName;
             auto int_opt = [](Option opt, i32 v) {
@@ -286,14 +266,7 @@ namespace mtt::shader {
                     for (auto i = 0; i < module->getDefinedEntryPointCount(); ++i)
                         compile(module, i, path);
                 }
-
-            auto buffer = std::string{};
-            if (auto e = glz::write_json(cache, buffer)) {
-                std::println("write cache with glaze error: {}", glz::format_error(e));
-                std::abort();
-            }
-            auto stream = std::ofstream{database};
-            stream.write(buffer.data(), buffer.size());
+            stl::json::store(database, cache);
         }
     };
 

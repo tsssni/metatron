@@ -5,7 +5,7 @@
 #include <metatron/render/filter/gaussian.hpp>
 #include <metatron/render/filter/lanczos.hpp>
 #include <metatron/core/stl/variant.hpp>
-#include <glaze/glaze.hpp>
+#include <metatron/core/stl/json.hpp>
 
 namespace mtt::renderer {
     using Filter = stl::variant<

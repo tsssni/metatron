@@ -6,8 +6,8 @@
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/stl/vector.hpp>
 #include <metatron/core/stl/variant.hpp>
+#include <metatron/core/stl/json.hpp>
 #include <metatron/core/stl/print.hpp>
-#include <glaze/glaze.hpp>
 
 namespace glz {
     template<>

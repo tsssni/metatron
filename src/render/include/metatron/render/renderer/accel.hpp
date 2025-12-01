@@ -3,7 +3,7 @@
 #include <metatron/render/accel/accel.hpp>
 #include <metatron/render/accel/lbvh.hpp>
 #include <metatron/core/stl/variant.hpp>
-#include <glaze/glaze.hpp>
+#include <metatron/core/stl/json.hpp>
 
 namespace mtt::renderer {
     using Acceleration = stl::variant<

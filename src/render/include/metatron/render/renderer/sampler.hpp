@@ -5,7 +5,7 @@
 #include <metatron/render/sampler/halton.hpp>
 #include <metatron/render/sampler/sobol.hpp>
 #include <metatron/core/stl/variant.hpp>
-#include <glaze/glaze.hpp>
+#include <metatron/core/stl/json.hpp>
 
 namespace mtt::renderer {
     using Sampler = stl::variant<

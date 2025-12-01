@@ -3,7 +3,7 @@
 #include <metatron/render/monte-carlo/integrator.hpp>
 #include <metatron/render/monte-carlo/volume-path.hpp>
 #include <metatron/core/stl/variant.hpp>
-#include <glaze/glaze.hpp>
+#include <metatron/core/stl/json.hpp>
 
 namespace mtt::renderer {
     using Integrator = stl::variant<

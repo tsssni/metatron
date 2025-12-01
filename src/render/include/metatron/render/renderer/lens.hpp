@@ -4,7 +4,7 @@
 #include <metatron/render/photo/lens/pinhole.hpp>
 #include <metatron/render/photo/lens/thin.hpp>
 #include <metatron/core/stl/variant.hpp>
-#include <glaze/glaze.hpp>
+#include <metatron/core/stl/json.hpp>
 
 namespace mtt::renderer {
     using Lens = stl::variant<
