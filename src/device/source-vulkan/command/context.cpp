@@ -1,4 +1,5 @@
 #include "context.hpp"
+#include "../shader/argument.hpp"
 #include "../shader/pipeline.hpp"
 #include <metatron/device/command/context.hpp>
 #include <metatron/device/shader/pipeline.hpp>
@@ -165,7 +166,10 @@ namespace mtt::command {
 
     auto init() noexcept -> void {
         Context::instance();
-        shader::Pipeline::Impl::global_set();
-        auto ppl = shader::Pipeline{"trace", "trace"};
+        auto global = shader::Argument{"trace.global"};
+        auto argi = shader::Argument{"trace.integrate.in"};
+        auto argp = shader::Argument{"trace.postprocess.in"};
+        auto ppli = shader::Pipeline{"trace.integrate", {&global, &argi}};
+        auto pplp = shader::Pipeline{"trace.postprocess", {&global, &argp}};
     }
 }

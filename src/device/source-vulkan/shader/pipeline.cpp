@@ -1,6 +1,5 @@
 #include "pipeline.hpp"
-#include "../command/context.hpp"
-#include <metatron/device/shader/pipeline.hpp>
+#include "argument.hpp"
 #include <metatron/device/shader/layout.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/json.hpp>
@@ -9,26 +8,22 @@
 
 namespace mtt::shader {
     Pipeline::Impl::Impl(
-        std::string_view shader,
-        std::string_view entry
+        std::string_view name,
+        std::vector<view<Argument>> args
     ) noexcept {
-        auto base_path = stl::path{std::format("shader/{}.{}", shader, entry)};
+        auto base_path = stl::path{"shader"} / name;
         auto ir_path = stl::path{base_path}.concat(".spirv");
         auto table_path = stl::path{base_path}.concat(".json");
         auto spirv = stl::filesystem::load(stl::filesystem::find(ir_path));
-        auto table = Layout{};
-        stl::json::load(stl::filesystem::find(table_path), table);
 
         auto& ctx = command::Context::instance();
         auto& device = ctx.device;
         auto& cache = ctx.pipeline_cache;
 
-        sets = to_sets(table);
-        auto layouts = std::vector<vk::DescriptorSetLayout>{global_set()};
-        std::ranges::copy(
-            std::views::transform(sets, [](auto&& x){ return x.get(); }),
-            std::back_inserter(layouts)
-        );
+        auto entry = name.substr(name.find_last_of(".") + 1);
+        auto layouts = args
+        | std::views::transform([](auto&& x){ return x->impl->layout.get(); })
+        | std::ranges::to<std::vector<vk::DescriptorSetLayout>>();
 
         module = command::guard(device.createShaderModuleUnique({
             .codeSize = spirv.size(),
@@ -48,61 +43,8 @@ namespace mtt::shader {
         }));
     }
 
-    // solve the problem of destroy order
-    auto Pipeline::Impl::global_set() noexcept -> vk::DescriptorSetLayout {
-        auto static set = vk::UniqueDescriptorSetLayout{};
-        if (set) return set.get();
-        auto layout = shader::Layout{};
-        stl::json::load(stl::filesystem::find("shader/metatron.json"), layout);
-        auto layouts = to_sets(layout);
-        if (layouts.size() != 1) {
-            std::println("no valid vulkan global pipeline layout");
-            std::abort();
-        }
-        set = std::move(layouts.front());
-        return set.get();
-    }
-
-    auto Pipeline::Impl::to_sets(cref<Layout> layout) noexcept -> std::vector<vk::UniqueDescriptorSetLayout> {
-        auto sets = std::vector<vk::UniqueDescriptorSetLayout>{};
-        for (auto& s: layout.sets) {
-            auto bindings = std::vector<vk::DescriptorSetLayoutBinding>{};
-            for (auto i = 0u; i < s.size(); ++i) {
-                using Type = Layout::Descriptor::Type;
-                using Access = Layout::Descriptor::Access;
-                using Vk_Type = vk::DescriptorType;
-                auto constexpr types = std::to_array<vk::DescriptorType>({
-                    Vk_Type::eUniformBuffer,
-                    Vk_Type::eSampler,
-                    Vk_Type::eSampledImage,
-                    Vk_Type::eSampledImage,
-                    Vk_Type::eAccelerationStructureKHR,
-                });
-
-                auto& desc = s[i];
-                auto type = types[i32(desc.type)];
-                if (type == Vk_Type::eSampledImage && desc.access != Access::readonly)
-                    type = Vk_Type::eStorageImage;
-                auto count = desc.size < 0 ? 16384u : math::max(1, desc.size);
-                bindings.push_back(vk::DescriptorSetLayoutBinding{
-                    .binding = i,
-                    .descriptorType = type,
-                    .descriptorCount = count,
-                    .stageFlags = vk::ShaderStageFlagBits::eCompute,
-                });
-            }
-
-            auto device = command::Context::instance().device;
-            sets.push_back(command::guard(device.createDescriptorSetLayoutUnique({
-                .bindingCount = u32(bindings.size()),
-                .pBindings = bindings.data(),
-            })));
-        }
-        return sets;
-    }
-
     Pipeline::Pipeline(
         std::string_view shader,
-        std::string_view entry
-    ) noexcept: stl::capsule<Pipeline>(shader, entry) {}
+        std::vector<view<Argument>> args
+    ) noexcept: stl::capsule<Pipeline>(shader, args) {}
 }

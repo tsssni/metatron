@@ -4,3 +4,6 @@ InlayHints:
 Completion:
   HeaderInsertion: Never
   ArgumentLists: Delimiters
+
+Diagnostics:
+  UnusedIncludes: None

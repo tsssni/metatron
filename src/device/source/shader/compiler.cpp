@@ -9,11 +9,15 @@
 #include <slang.h>
 
 namespace mtt::shader {
+    struct Layout final {
+        std::vector<std::string> names;
+        std::vector<Set> sets;
+    };
+
     template<typename T>
     using com = Slang::ComPtr<T>;
 
     struct Compiler::Impl final {
-        Layout layout;
         std::filesystem::path dir;
         std::filesystem::path out;
         std::unordered_map<std::string, std::string> cache;
@@ -119,10 +123,10 @@ namespace mtt::shader {
 
             auto parse_resource = [](
                 mut<slang::TypeLayoutReflection> t,
-                ref<Layout::Descriptor> desc
+                ref<Descriptor> desc
             ) {
-                using Type = Layout::Descriptor::Type;
-                using Access = Layout::Descriptor::Access;
+                using Type = Descriptor::Type;
+                using Access = Descriptor::Access;
 
                 switch (t->getResourceShape()) {
                 case SLANG_TEXTURE_2D: desc.type = Type::image; break;
@@ -152,7 +156,6 @@ namespace mtt::shader {
                 i32 block = 0
             ) -> void {
                 for (auto i = 0; i < reflection->getFieldCount(); ++i) {
-                    using Descriptor = Layout::Descriptor;
                     using Kind = slang::TypeReflection::Kind;
                     using Unit = slang::ParameterCategory;
                     auto Index = Unit::DescriptorTableSlot;
@@ -175,8 +178,14 @@ namespace mtt::shader {
                     for (auto j = 0; j < var->getCategoryCount(); ++j)
                         if (var->getCategoryByIndex(j) == Index)
                             index = var->getOffset(Index);
-                    if (layout.sets.size() <= set) layout.sets.resize(set + 1);
-                    if (layout.sets[set].size() <= index) layout.sets[set].resize(index + 1);
+
+                    if (layout.sets.size() <= set) {
+                        layout.sets.resize(set + 1);
+                        layout.names.resize(set + 1);
+                    }
+                    if (table) layout.names[set] = name;
+                    if (layout.sets[set].size() <= index)
+                        layout.sets[set].resize(index + 1);
                     if (index < 0) {
                         self(table ? element : type, layout, field, set);
                         continue;
@@ -207,14 +216,25 @@ namespace mtt::shader {
                 }
             };
 
-            if (layout.sets.empty()) {
-                parse_type(reflection->getGlobalParamsTypeLayout(), this->layout);
-                stl::json::store((out / "metatron").concat(".json"), this->layout);
+            auto global = Layout{};
+            parse_type(reflection->getGlobalParamsTypeLayout(), global);
+            for (auto i = 0; i < global.sets.size(); ++i) {
+                auto index = global.sets.size() > 1 ? "-" + std::to_string(i) : "";
+                auto postfix = ".global" + index + ".json";
+                stl::json::store((out / path.stem()).concat(postfix), global.sets[i]);
             }
-            Layout layout;
+
+            auto layout = Layout{};
             parse_type(reflection->getEntryPointByIndex(0)->getTypeLayout(), layout);
-            stl::json::store((out / path).concat(".json"), layout);
-            return layout;
+            for (auto i = 0; i < layout.sets.size(); ++i) {
+                auto postfix = "." + layout.names[i] + ".json";
+                stl::json::store((out / path).concat(postfix), layout.sets[i]);
+            }
+
+            auto merged = global;
+            std::ranges::copy(layout.names, std::back_inserter(merged.names));
+            std::ranges::copy(layout.sets, std::back_inserter(merged.sets));
+            return merged;
         }
 
         auto build(

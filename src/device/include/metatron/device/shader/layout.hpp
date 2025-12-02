@@ -2,41 +2,39 @@
 #include <metatron/core/stl/json.hpp>
 
 namespace mtt::shader {
-    struct Layout final {
-        struct Descriptor final {
-            std::string path;
-            enum struct Type {
-                parameter,
-                sampler,
-                image,
-                grid,
-                accel,
-            } type;
-            enum struct Access {
-                readonly,
-                readwrite,
-                writeonly,
-            } access = Access::readonly;
-            // parameter: struct size
-            // array: size > 0 or -1 for bindless
-            i32 size = 0;
-        };
-        std::vector<std::vector<Descriptor>> sets;
+    struct Descriptor final {
+        std::string path;
+        enum struct Type {
+            parameter,
+            sampler,
+            image,
+            grid,
+            accel,
+        } type;
+        enum struct Access {
+            readonly,
+            readwrite,
+            writeonly,
+        } access = Access::readonly;
+        // parameter: struct size
+        // array: size > 0 or -1 for bindless
+        i32 size = 0;
     };
+    using Set = std::vector<Descriptor>;
 }
 
 namespace glz {
     template<>
-    struct meta<mtt::shader::Layout::Descriptor::Type> {
-        using enum mtt::shader::Layout::Descriptor::Type;
+    struct meta<mtt::shader::Descriptor::Type> {
+        using enum mtt::shader::Descriptor::Type;
         auto constexpr static value = glz::enumerate(
             parameter, sampler, image, grid, accel
         );
     };
 
     template<>
-    struct meta<mtt::shader::Layout::Descriptor::Access> {
-        using enum mtt::shader::Layout::Descriptor::Access;
+    struct meta<mtt::shader::Descriptor::Access> {
+        using enum mtt::shader::Descriptor::Access;
         auto constexpr static value = glz::enumerate(
             readonly, readwrite, writeonly
         );
