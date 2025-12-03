@@ -6,6 +6,6 @@ namespace mtt::scene {
         std::string scene;
         std::string output;
         std::string address;
-        auto parse(i32 argc, mut<char> argv[]) -> void;
+        std::string device;
     };
 }

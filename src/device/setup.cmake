@@ -1,1 +1,7 @@
-list(APPEND metatron-deps resource slang vulkan spirv-cross glaze)
+list(APPEND deps resource slang spirv-cross)
+if(system MATCHES "linux")
+    list(APPEND deps vulkan)
+    list(APPEND features vulkan)
+elseif(system MATCHES "darwin")
+    list(APPEND features metal)
+endif()

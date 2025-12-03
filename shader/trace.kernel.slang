@@ -1,7 +1,7 @@
 import metatron;
 
 namespace mtt {
-    struct Trace {
+    struct Integrate {
         Ptr<uint3> indices;
 
         Ptr<float3> vertices;
@@ -23,8 +23,9 @@ namespace mtt {
     RaytracingAccelerationStructure accel;
 
     [shader("compute"), numthreads(8, 8, 1)]
-    func trace(
-        ParameterBlock<Trace> in,
+    func integrate(
+        int3 global_idx: SV_DispatchThreadID,
+        ParameterBlock<Integrate> in,
     ) -> void {
         in.indices[0] = uint3(0, 1, 2);
         in.vertices[0] = float3(-1, -1, 0);
@@ -45,8 +46,8 @@ namespace mtt {
             }
         }
 
-        let t = textures[0].Sample(sampler, float2(0.5));
-        let g = grids[0].Sample(accessor, float3(0.5));
+        let t = textures[0].SampleLevel(sampler, float2(0.5), 0.0);
+        let g = grids[0].SampleLevel(accessor, float3(0.5), 0.0);
         in.film.Store(0, t + g);
     }
 

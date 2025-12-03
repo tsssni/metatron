@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/render/scene/entity.hpp>
-#include <glaze/glaze.hpp>
+#include <metatron/core/stl/json.hpp>
 
 namespace mtt::scene {
     struct json final {

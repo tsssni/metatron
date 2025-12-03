@@ -7,7 +7,7 @@ namespace mtt::texture {
         tag<spectra::Spectrum> x;
 
         auto operator()(
-            cref<opaque::Coordinate> coord, cref<fv4> spec
+            cref<muldim::Coordinate> coord, cref<fv4> spec
         ) const noexcept -> fv4;
         auto sample(
             cref<math::Context> ctx, cref<fv2> u
@@ -19,7 +19,7 @@ namespace mtt::texture {
         fv4 x;
 
         auto operator()(
-            cref<opaque::Coordinate> coord
+            cref<muldim::Coordinate> coord
         ) const noexcept -> fv4;
         auto sample(
             cref<math::Context> ctx, cref<fv2> u

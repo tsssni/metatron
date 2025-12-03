@@ -9,7 +9,7 @@ namespace mtt::stl {
         auto operator=(cref<singleton>) -> ref<singleton> = delete;
         auto operator=(rref<singleton>) -> ref<singleton> = delete;
 
-        static auto instance() noexcept -> ref<T> {
+        auto static instance() noexcept -> ref<T> {
             if constexpr (local) {
                 T thread_local instance;
                 return instance;

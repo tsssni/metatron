@@ -50,9 +50,6 @@ namespace mtt::stl {
         private:
             mut<void> impl;
             std::function<void(mut<void>)> deleter;
-        };
-
-    protected:
-        Impl impl;
+        } impl;
     };
 }

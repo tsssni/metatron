@@ -1,1 +1,1 @@
-list(APPEND metatron-deps render)
+list(APPEND deps render argparse)

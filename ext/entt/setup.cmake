@@ -1,2 +1,2 @@
 extend(EnTT)
-list(APPEND metatron-deps EnTT::EnTT)
+list(APPEND deps EnTT::EnTT)

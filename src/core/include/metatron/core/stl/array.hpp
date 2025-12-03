@@ -19,10 +19,10 @@ namespace mtt::stl {
     template<typename... Ts>
     struct array final {
         template<typename T>
-        static constexpr bool contains = (std::is_same_v<T, Ts> || ...);
+        auto constexpr static contains = (std::is_same_v<T, Ts> || ...);
 
         template<typename T>
-        static constexpr usize index = [] {
+        auto constexpr static index = [] -> usize {
             auto idx = 0;
             auto found = ((std::is_same_v<T, Ts> ? false : (++idx, true)) && ...);
             return idx;

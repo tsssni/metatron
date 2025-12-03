@@ -16,7 +16,7 @@ namespace mtt::math {
     template<typename T, usize first_dim, usize... rest_dims>
     struct Matrix<T, first_dim, rest_dims...> final {
         using Element = std::conditional_t<sizeof...(rest_dims) == 0, T, Matrix<T, rest_dims...>>;
-        auto static constexpr dimensions = std::array<usize, 1 + sizeof...(rest_dims)>{first_dim, rest_dims...};
+        auto constexpr static dimensions = std::array<usize, 1 + sizeof...(rest_dims)>{first_dim, rest_dims...};
 
         constexpr Matrix() noexcept {
             if constexpr (std::is_floating_point_v<Element> || std::is_integral_v<Element>)

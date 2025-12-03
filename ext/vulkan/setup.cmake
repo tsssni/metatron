@@ -1,4 +1,4 @@
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if(NOT system MATCHES "darwin")
     extend(Vulkan)
-    list(APPEND metatron-deps Vulkan::Vulkan Vulkan::Headers)
+    list(APPEND deps Vulkan::Vulkan Vulkan::Headers)
 endif()
