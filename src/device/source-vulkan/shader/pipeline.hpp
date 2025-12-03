@@ -8,6 +8,7 @@ namespace mtt::shader {
         vk::UniqueShaderModule module;
         vk::UniquePipelineLayout layout;
         vk::UniquePipeline pipeline;
+        std::vector<vk::DeviceAddress> sets;
 
         Impl(
             std::string_view name,

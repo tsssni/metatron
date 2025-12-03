@@ -24,6 +24,11 @@ namespace mtt::shader {
         auto layouts = args
         | std::views::transform([](auto&& x){ return x->impl->layout.get(); })
         | std::ranges::to<std::vector<vk::DescriptorSetLayout>>();
+        // sets = args
+        // | std::views::transform([device](auto&& x){ return device.getBufferAddress({
+        //     .buffer = x->impl->set.get()
+        // }); })
+        // | std::ranges::to<std::vector<vk::DeviceAddress>>();
 
         module = command::guard(device.createShaderModuleUnique({
             .codeSize = spirv.size(),

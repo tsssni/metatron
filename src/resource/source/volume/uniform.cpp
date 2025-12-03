@@ -5,11 +5,11 @@ namespace mtt::volume {
     bbox(desc.bbox),
     dims(desc.dimensions),
     voxel_size((bbox.p_max - bbox.p_min) / dims) {
-        auto grid = opaque::Grid{};
+        auto grid = muldim::Grid{};
         grid.size = dims;
         grid.cells = math::prod(dims);
 
-        auto& vec = stl::vector<opaque::Grid>::instance();
+        auto& vec = stl::vector<muldim::Grid>::instance();
         auto lock = vec.lock();
         storage = vec.push_back(std::move(grid));
     }

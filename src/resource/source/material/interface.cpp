@@ -4,7 +4,7 @@
 namespace mtt::material {
     auto Interface_Material::sample(
         cref<math::Context> ctx,
-        cref<opaque::Coordinate> coord
+        cref<muldim::Coordinate> coord
     ) const noexcept -> opt<Interaction> {
         return Interaction{
             .bsdf = make_obj<bsdf::Bsdf, bsdf::Interface_Bsdf>(),

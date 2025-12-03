@@ -24,7 +24,7 @@ namespace mtt::shader {
             auto type = types[i32(desc.type)];
             if (type == Vk_Type::eSampledImage && desc.access != Access::readonly)
                 type = Vk_Type::eStorageImage;
-            auto count = desc.size < 0 ? 16384u : math::max(1, desc.size);
+            auto count = desc.size < 0 ? 65536u : math::max(1, desc.size);
             bindings.push_back(vk::DescriptorSetLayoutBinding{
                 .binding = i,
                 .descriptorType = type,

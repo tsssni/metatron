@@ -1,11 +1,11 @@
-#include <metatron/resource/opaque/image.hpp>
+#include <metatron/resource/muldim/image.hpp>
 #include <metatron/resource/spectra/color-space.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <OpenImageIO/imageio.h>
 
-namespace mtt::opaque {
+namespace mtt::muldim {
     auto sRGB_linearize(f32 x) noexcept -> f32 {
         if (x <= 0.04045f) return x / 12.92f;
         else return std::pow((x + 0.055f) / 1.055f, 2.4f);
@@ -205,7 +205,7 @@ namespace mtt::opaque {
         }
 
         auto& spec = in->spec();
-        auto img = opaque::Image{};
+        auto img = muldim::Image{};
         img.linear = linear;
         img.size = {
             usize(spec.width),

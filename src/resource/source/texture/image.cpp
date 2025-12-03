@@ -4,7 +4,7 @@
 
 namespace mtt::texture {
     Image_Vector_Texture::Image_Vector_Texture(cref<Descriptor> desc) noexcept {
-        auto tex = opaque::Image::from_path(desc.path, desc.linear);
+        auto tex = muldim::Image::from_path(desc.path, desc.linear);
 
         if (desc.distr != Image_Distribution::none) {
             auto size = uzv2{tex.size};
@@ -22,13 +22,13 @@ namespace mtt::texture {
             distr = {std::span{pdf}, math::reverse(size), {0.f}, {1.f}};
         }
 
-        auto& vec = stl::vector<opaque::Image>::instance();
+        auto& vec = stl::vector<muldim::Image>::instance();
         auto lock = vec.lock();
         texture = vec.push_back(std::move(tex));
     }
 
     auto Image_Vector_Texture::operator()(
-        cref<opaque::Coordinate> coord
+        cref<muldim::Coordinate> coord
     ) const noexcept -> fv4 {
         return (*texture)(coord);
     }
@@ -52,7 +52,7 @@ namespace mtt::texture {
 
 
     auto Image_Spectrum_Texture::operator()(
-        cref<opaque::Coordinate> coord, cref<fv4> spec
+        cref<muldim::Coordinate> coord, cref<fv4> spec
     ) const noexcept -> fv4 {
         auto rgba = image_tex(coord);
         auto rgb_spec = spectra::Rgb_Spectrum{{

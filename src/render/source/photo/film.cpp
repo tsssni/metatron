@@ -41,13 +41,13 @@ namespace mtt::photo {
         else film_size[0] = film_size[1] * aspect_ratio;
         dxdy = desc.film_size / desc.image_size;
 
-        auto img = opaque::Image{};
+        auto img = muldim::Image{};
         img.size = {desc.image_size, 4, 4};
         img.linear = true;
         img.pixels.resize(1);
         img.pixels.front() = math::prod(img.size);
 
-        auto& vec = stl::vector<opaque::Image>::instance();
+        auto& vec = stl::vector<muldim::Image>::instance();
         auto lock = vec.lock();
         image = vec.push_back(std::move(img));
     }

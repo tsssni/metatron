@@ -2,7 +2,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/stl/stack.hpp>
 
-namespace mtt::opaque {
+namespace mtt::muldim {
     struct Grid final {
         union {
             struct {

@@ -11,7 +11,7 @@ namespace mtt::texture {
     }
 
     auto Checkerboard_Texture::operator()(
-        cref<opaque::Coordinate> coord, cref<fv4> spec
+        cref<muldim::Coordinate> coord, cref<fv4> spec
     ) const noexcept -> fv4 {
         auto [u, v] = uzv2{coord.uv * uv_scale};
         auto z = ((u + v) % 2 == 0) ? x : y;

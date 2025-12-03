@@ -59,7 +59,7 @@ namespace mtt::renderer {
             };
 
             auto& film = *desc.film.image;
-            auto image = opaque::Image{.size = film.size, .linear = film.linear};
+            auto image = muldim::Image{.size = film.size, .linear = film.linear};
             image.pixels.emplace_back(film.pixels.front().size());
 
             auto next = 1uz;

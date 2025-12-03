@@ -2,7 +2,7 @@
 #include <metatron/resource/shape/sphere.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/math/eval.hpp>
-#include <metatron/resource/opaque/image.hpp>
+#include <metatron/resource/muldim/image.hpp>
 
 namespace mtt::texture {
     MTT_POLY_METHOD(texture_sample, sample);
@@ -10,7 +10,7 @@ namespace mtt::texture {
 
     struct Spectrum_Texture final: pro::facade_builder
     ::add_convention<pro::operator_dispatch<"()">, auto (
-        cref<opaque::Coordinate> coord, cref<fv4> lambda
+        cref<muldim::Coordinate> coord, cref<fv4> lambda
     ) const noexcept -> fv4>
     ::add_convention<texture_sample, auto (
         cref<math::Context> ctx, cref<fv2> u
@@ -21,7 +21,7 @@ namespace mtt::texture {
 
     struct Vector_Texture final: pro::facade_builder
     ::add_convention<pro::operator_dispatch<"()">, auto (
-        cref<opaque::Coordinate> coord
+        cref<muldim::Coordinate> coord
     ) const noexcept -> fv4>
     ::add_convention<texture_sample, auto (
         cref<math::Context> ctx, fv2 u
@@ -33,5 +33,5 @@ namespace mtt::texture {
     auto grad(
         cref<math::Ray_Differential> diff,
         cref<shape::Interaction> intr
-    ) noexcept -> opt<opaque::Coordinate>;
+    ) noexcept -> opt<muldim::Coordinate>;
 }

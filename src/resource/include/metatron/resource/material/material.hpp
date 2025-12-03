@@ -22,7 +22,7 @@ namespace mtt::material {
     struct Material final: pro::facade_builder
     ::add_convention<material_sample, auto (
         cref<math::Context> ctx,
-        cref<opaque::Coordinate> coord
+        cref<muldim::Coordinate> coord
     ) const noexcept -> opt<Interaction>>
     ::add_convention<material_flags, auto () const noexcept -> Flags>
     ::build {};

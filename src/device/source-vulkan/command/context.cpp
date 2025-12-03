@@ -52,6 +52,7 @@ namespace mtt::command {
                 vk::PhysicalDeviceFeatures2,
                 vk::PhysicalDeviceBufferDeviceAddressFeatures,
                 vk::PhysicalDeviceDescriptorIndexingFeatures,
+                vk::PhysicalDeviceDescriptorBufferFeaturesEXT,
                 vk::PhysicalDeviceAccelerationStructureFeaturesKHR,
                 vk::PhysicalDeviceRayQueryFeaturesKHR
             >{};
@@ -61,6 +62,8 @@ namespace mtt::command {
             bindless.shaderSampledImageArrayNonUniformIndexing = true;
             bindless.shaderStorageImageArrayNonUniformIndexing = true;
             bindless.runtimeDescriptorArray = true;
+            auto& buffer = chain.get<vk::PhysicalDeviceDescriptorBufferFeaturesEXT>();
+            buffer.descriptorBuffer = true;
             auto& accel = chain.get<vk::PhysicalDeviceAccelerationStructureFeaturesKHR>();
             accel.accelerationStructure = true;
             auto& query = chain.get<vk::PhysicalDeviceRayQueryFeaturesKHR>();
@@ -81,10 +84,11 @@ namespace mtt::command {
                 },
                 std::vector<view<char>>{},
                 std::vector<view<char>>{
+                    "VK_EXT_descriptor_indexing",
+                    "VK_EXT_descriptor_buffer",
                     "VK_KHR_deferred_host_operations",
                     "VK_KHR_acceleration_structure",
                     "VK_KHR_ray_query",
-                    "VK_EXT_descriptor_indexing",
                 },
             });
 

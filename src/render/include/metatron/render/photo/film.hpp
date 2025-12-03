@@ -3,7 +3,7 @@
 #include <metatron/render/scene/entity.hpp>
 #include <metatron/resource/spectra/stochastic.hpp>
 #include <metatron/resource/spectra/color-space.hpp>
-#include <metatron/resource/opaque/image.hpp>
+#include <metatron/resource/muldim/image.hpp>
 #include <metatron/core/math/vector.hpp>
 
 namespace mtt::photo {
@@ -33,7 +33,7 @@ namespace mtt::photo {
         usize depth;
         fv2 film_size;
         fv2 dxdy;
-        tag<opaque::Image> image;
+        tag<muldim::Image> image;
         tag<spectra::Color_Space> color_space;
 
         struct Descriptor final {

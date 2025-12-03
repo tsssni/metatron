@@ -4,7 +4,7 @@
 #include <metatron/core/stl/stack.hpp>
 #include <vector>
 
-namespace mtt::opaque {
+namespace mtt::muldim {
     struct Coordinate final {
         fv2 uv{};
         f32 dudx{0.f};

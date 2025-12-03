@@ -3,7 +3,7 @@
 
 namespace mtt::texture {
     auto Constant_Spectrum_Texture::operator()(
-        cref<opaque::Coordinate> coord, cref<fv4> spec
+        cref<muldim::Coordinate> coord, cref<fv4> spec
     ) const noexcept -> fv4 {
         return spec & x;
     }
@@ -21,7 +21,7 @@ namespace mtt::texture {
     }
 
     auto Constant_Vector_Texture::operator()(
-        cref<opaque::Coordinate> coord
+        cref<muldim::Coordinate> coord
     ) const noexcept -> fv4 {
         return x;
     }

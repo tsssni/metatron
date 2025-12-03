@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/network/wired/address.hpp>
-#include <metatron/resource/opaque/image.hpp>
+#include <metatron/resource/muldim/image.hpp>
 #include <metatron/core/stl/capsule.hpp>
 
 namespace mtt::remote {
@@ -9,6 +9,6 @@ namespace mtt::remote {
         Previewer() noexcept = default;
         Previewer(cref<wired::Address> address, std::string_view name) noexcept;
 
-        auto update(cref<opaque::Image> image) noexcept -> void;
+        auto update(cref<muldim::Image> image) noexcept -> void;
     };
 }

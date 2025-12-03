@@ -20,7 +20,7 @@ namespace mtt::texture {
         Image_Vector_Texture(cref<Descriptor> desc) noexcept;
 
         auto operator()(
-            cref<opaque::Coordinate> coord
+            cref<muldim::Coordinate> coord
         ) const noexcept -> fv4;
         auto sample(
             cref<math::Context> ctx, cref<fv2> u
@@ -28,7 +28,7 @@ namespace mtt::texture {
         auto pdf(cref<fv2> uv) const noexcept -> f32;
 
     private:
-        tag<opaque::Image> texture;
+        tag<muldim::Image> texture;
         math::Piecewise_Distribution<2> distr;
     };
 
@@ -43,7 +43,7 @@ namespace mtt::texture {
         Image_Spectrum_Texture(cref<Descriptor> desc) noexcept;
 
         auto operator()(
-            cref<opaque::Coordinate> coord, cref<fv4> spec
+            cref<muldim::Coordinate> coord, cref<fv4> spec
         ) const noexcept -> fv4;
         auto sample(
             cref<math::Context> ctx, cref<fv2> u

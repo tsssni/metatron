@@ -5,7 +5,7 @@
 namespace mtt::shader {
     struct Argument::Impl final {
         vk::UniqueDescriptorSetLayout layout;
-        vk::UniqueDescriptorSet set;
+        vk::UniqueBuffer set;
         Impl(std::string_view name) noexcept;
     };
 }
