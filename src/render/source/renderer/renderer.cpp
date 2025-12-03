@@ -95,7 +95,7 @@ namespace mtt::renderer {
         }
 
         auto wave() noexcept -> void {
-            command::init();
+            command::Context::init();
         }
     };
 

@@ -33,7 +33,7 @@ namespace mtt::shader {
             });
         }
 
-        auto device = command::Context::instance().device;
+        auto device = command::Context::instance().impl->device.get();
         this->layout = command::guard(device.createDescriptorSetLayoutUnique({
             .bindingCount = u32(bindings.size()),
             .pBindings = bindings.data(),

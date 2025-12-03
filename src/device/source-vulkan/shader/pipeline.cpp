@@ -16,9 +16,9 @@ namespace mtt::shader {
         auto table_path = stl::path{base_path}.concat(".json");
         auto spirv = stl::filesystem::load(stl::filesystem::find(ir_path));
 
-        auto& ctx = command::Context::instance();
-        auto& device = ctx.device;
-        auto& cache = ctx.pipeline_cache;
+        auto& ctx = command::Context::instance().impl;
+        auto device = ctx->device.get();
+        auto cache = ctx->pipeline_cache.get();
 
         auto entry = name.substr(name.find_last_of(".") + 1);
         auto layouts = args
