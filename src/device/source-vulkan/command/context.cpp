@@ -7,7 +7,10 @@
 #include <metatron/core/stl/print.hpp>
 #include <metatron/core/math/vector.hpp>
 
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+
 namespace mtt::command {
+
     Context::Impl::Impl() noexcept {
         init_instance();
         init_device();
@@ -16,9 +19,15 @@ namespace mtt::command {
 
     Context::Impl::~Impl() noexcept {
         auto path = stl::filesystem::instance().cache / "pipeline.bin";
+        auto size = usize{};
+        guard(device->getPipelineCacheData(pipeline_cache.get(), &size, nullptr));
+        auto buffer = std::vector<byte>(size);
+        guard(device->getPipelineCacheData(pipeline_cache.get(), &size, buffer.data()));
+        stl::filesystem::store(path, buffer, std::ios::binary);
     }
 
     auto Context::Impl::init_instance() noexcept -> void {
+        VULKAN_HPP_DEFAULT_DISPATCHER.init();
         auto app = vk::ApplicationInfo{
             .pApplicationName = "metatron",
             .applicationVersion = vk::makeApiVersion(0, 0, 2, 0),
@@ -38,6 +47,7 @@ namespace mtt::command {
             .enabledLayerCount = u32(layers.size()),
             .ppEnabledLayerNames = layers.data(),
         }));
+        VULKAN_HPP_DEFAULT_DISPATCHER.init(instance.get());
     }
 
     auto Context::Impl::init_device() noexcept -> void {
@@ -77,6 +87,7 @@ namespace mtt::command {
             },
             std::vector<view<char>>{},
             std::vector<view<char>>{
+                "VK_EXT_external_memory_host",
                 "VK_EXT_descriptor_indexing",
                 "VK_EXT_descriptor_buffer",
                 "VK_KHR_deferred_host_operations",
@@ -85,34 +96,61 @@ namespace mtt::command {
             },
         });
 
-        auto render_info = vk::DeviceQueueCreateInfo{.queueCount = 0};
-        auto copy_info = vk::DeviceQueueCreateInfo{.queueCount = 0};
         for (auto&& physical_device: guard(instance->enumeratePhysicalDevices())) {
+            auto queues = std::vector<vk::DeviceQueueCreateInfo>{};
+            auto priorities = std::vector<f32>{1.f};
             auto families = physical_device.getQueueFamilyProperties2();
             for (auto i = 0; i < families.size(); ++i) {
                 auto const& family = families[i];
                 auto& props = family.queueFamilyProperties;
                 auto flags = props.queueFlags;
-                if (render_info.queueCount == 0 && flags & vk::QueueFlags::BitsType::eGraphics)
-                    render_info = {.queueFamilyIndex = u32(i), .queueCount = props.queueCount};
-                else if (copy_info.queueCount == 0 && flags & vk::QueueFlags::BitsType::eTransfer)
-                    copy_info = {.queueFamilyIndex = u32(i), .queueCount = props.queueCount};
-                if (render_info.queueCount && copy_info.queueCount) break;
+                if (flags & vk::QueueFlags::BitsType::eGraphics) {
+                    queues.push_back({
+                        .queueFamilyIndex = u32(i), .queueCount = 1,
+                        .pQueuePriorities = priorities.data(),
+                    });
+                    break;
+                }
             }
-
-            if (!render_info.queueCount || !copy_info.queueCount) {
-                std::println("no vulkan async copy queue");
+            if (!queues.front().queueCount) {
+                std::println("no vulkan graphics queue");
                 std::abort();
             }
-            auto render_priorities = std::vector<f32>(render_info.queueCount);
-            auto copy_priorities = std::vector<f32>(copy_info.queueCount);
-            for (auto i = 0; i < render_info.queueCount; ++i)
-                render_priorities[i] = f32(i) / render_info.queueCount;
-            for (auto i = 0; i < copy_info.queueCount; ++i)
-                copy_priorities[i] = f32(i) / copy_info.queueCount;
-            render_info.pQueuePriorities = render_priorities.data();
-            copy_info.pQueuePriorities = copy_priorities.data();
-            auto queues = std::vector{render_info, copy_info};
+
+            auto&& memprop = physical_device.getMemoryProperties2().memoryProperties;
+            auto device_heap = -1; auto host_heap = -1;
+            for (auto i = 0; i < memprop.memoryHeapCount; ++i) {
+                auto& heap = memprop.memoryHeaps[i];
+                if (device_heap < 0 && heap.flags & vk::MemoryHeapFlagBits::eDeviceLocal)
+                    device_heap = i;
+                else if (host_heap < 0 && !(heap.flags & vk::MemoryHeapFlagBits::eDeviceLocal))
+                    host_heap = i;
+            }
+            if (host_heap < 0) host_heap = device_heap;
+            if (device_heap < 0) {
+                std::println("no vulkan device local heap");
+                std::abort();
+            }
+
+            device_memory = host_memory = math::maxv<u32>;
+            for (auto i = 0; i < memprop.memoryTypeCount; ++i) {
+                auto& type = memprop.memoryTypes[i];
+                if (true
+                && device_memory == math::maxv<u32>
+                && type.heapIndex == device_heap
+                && type.propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal)
+                    device_memory = i;
+                if (true
+                && host_memory == math::maxv<u32>
+                && type.heapIndex == host_heap
+                && type.propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible)
+                    host_memory = i;
+            }
+            uma = device_memory == host_memory;
+            if (device_memory == math::maxv<u32> || host_memory == math::maxv<u32>) {
+                std::println("no vulkan local or visible memory type");
+                std::abort();
+            }
 
             auto version = vk::apiVersionMinor(physical_device.getProperties2().properties.apiVersion);
             auto extensions = std::vector<view<char>>{};
@@ -125,25 +163,23 @@ namespace mtt::command {
             info.setQueueCreateInfos(queues);
             info.setPNext(chain.get());
 
-            if (auto device = physical_device.createDeviceUnique(info);
-                device.result == vk::Result::eSuccess
-            ) { this->device = std::move(device.value); break; }
+            if (auto candidate = physical_device.createDeviceUnique(info);
+                candidate.result == vk::Result::eSuccess
+            ) {
+                device = std::move(candidate.value);
+                queue = this->device->getQueue2({
+                    .queueFamilyIndex = queues.front().queueFamilyIndex,
+                    .queueIndex = 0,
+                });
+                break;
+            }
         }
 
         if (!device) {
             std::println("no vulkan device meets requirements");
             std::abort();
         }
-        for (auto i = 0u; i < render_info.queueCount; ++i)
-            render_queues.push(device->getQueue2({
-                .queueFamilyIndex = render_info.queueFamilyIndex,
-                .queueIndex = i,
-            }));
-        for (auto i = 0u; i < copy_info.queueCount; ++i)
-            copy_queues.push(device->getQueue2({
-                .queueFamilyIndex = copy_info.queueFamilyIndex,
-                .queueIndex = i,
-            }));
+        VULKAN_HPP_DEFAULT_DISPATCHER.init(instance.get(), device.get());
     }
 
     auto Context::Impl::init_pipeline_cache() noexcept -> void {

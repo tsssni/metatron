@@ -20,14 +20,14 @@ namespace mtt::stl {
                 if (impl) deleter(impl);
             }
 
-            Impl(rref<Impl> impl) noexcept {
-                *this = std::move(impl);
+            Impl(rref<Impl> rhs) noexcept {
+                *this = std::move(rhs);
             }
 
-            auto operator=(rref<Impl> impl) noexcept {
+            auto operator=(rref<Impl> rhs) noexcept {
                 if (impl) deleter(impl);
-                impl = impl.impl;
-                impl.impl = nullptr;
+                impl = rhs.impl;
+                rhs.impl = nullptr;
                 return *this;
             }
 

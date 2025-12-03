@@ -1,6 +1,7 @@
 #pragma once
 #define VULKAN_HPP_NO_CONSTRUCTORS 1
 #define VULKAN_HPP_NO_EXCEPTIONS 1
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <metatron/device/command/context.hpp>
 #include <metatron/core/stl/singleton.hpp>
 #include <metatron/core/stl/capsule.hpp>
@@ -13,8 +14,14 @@ namespace mtt::command {
         vk::UniqueInstance instance;
         vk::UniqueDevice device;
         vk::UniquePipelineCache pipeline_cache;
-        std::queue<vk::Queue> render_queues;
-        std::queue<vk::Queue> copy_queues;
+        vk::Queue queue;
+
+        u32 device_memory;
+        u32 host_memory;
+        bool uma;
+
+        auto static constexpr ring_count = 3;
+        u32 ring_idx = 0;
 
         Impl() noexcept;
         ~Impl() noexcept;
@@ -25,12 +32,16 @@ namespace mtt::command {
         auto init_pipeline_cache() noexcept -> void;
     };
 
-    template<typename T>
-    auto guard(rref<vk::ResultValue<T>> result) {
-        if (result.result != vk::Result::eSuccess) {
-            std::println("vulkan error: {}", vk::to_string(result.result));
+    auto inline guard(vk::Result result) noexcept -> void {
+        if (result != vk::Result::eSuccess) {
+            std::println("vulkan error: {}", vk::to_string(result));
             std::abort();
         }
+    }
+
+    template<typename T>
+    auto guard(rref<vk::ResultValue<T>> result) {
+        guard(result.result);
         return std::move(result.value);
     }
 }

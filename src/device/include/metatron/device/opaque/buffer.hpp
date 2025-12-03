@@ -5,7 +5,8 @@
 namespace mtt::opaque {
     struct Buffer final: stl::capsule<Buffer> {
         struct Impl;
-        Buffer(usize size) noexcept;
-        Buffer(ref<stl::buf> buf) noexcept;
+        Buffer() noexcept = default;
+        Buffer(ref<stl::buf> buffer) noexcept;
+        Buffer(cref<stl::buf> buffer) noexcept;
     };
 }

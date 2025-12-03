@@ -12,6 +12,8 @@ namespace mtt::stl {
         uptr device = 0ull;
         u32 bytelen = 0u;
         u32 idx = math::maxv<u32>;
+        u32 flags = 0u;
+        u32 visible = 0u;
     };
 
     struct stack final: singleton<stack> {
