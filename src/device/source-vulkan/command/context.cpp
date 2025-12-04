@@ -10,10 +10,10 @@
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 namespace mtt::command {
-
     Context::Impl::Impl() noexcept {
         init_instance();
         init_device();
+        init_memory();
         init_pipeline_cache();
     }
 
@@ -37,9 +37,9 @@ namespace mtt::command {
         };
 
         auto layers = std::vector<view<char>>{};
-        for (auto&& prop: guard(vk::enumerateInstanceLayerProperties())) {
+        for (auto props: guard(vk::enumerateInstanceLayerProperties())) {
             auto constexpr validation_layer = "VK_LAYER_KHRONOS_validation";
-            if (std::string_view{prop.layerName} == validation_layer)
+            if (std::string_view{props.layerName} == validation_layer)
                 layers.push_back(validation_layer);
         }
         instance = guard(vk::createInstanceUnique({
@@ -54,19 +54,19 @@ namespace mtt::command {
         auto chain = vk::StructureChain<
             vk::PhysicalDeviceFeatures2,
             vk::PhysicalDeviceBufferDeviceAddressFeatures,
-            vk::PhysicalDeviceDescriptorIndexingFeatures,
             vk::PhysicalDeviceDescriptorBufferFeaturesEXT,
+            vk::PhysicalDeviceDescriptorIndexingFeatures,
             vk::PhysicalDeviceAccelerationStructureFeaturesKHR,
             vk::PhysicalDeviceRayQueryFeaturesKHR
         >{};
         auto& address = chain.get<vk::PhysicalDeviceBufferDeviceAddressFeatures>();
         address.bufferDeviceAddress = true;
+        auto& buffer = chain.get<vk::PhysicalDeviceDescriptorBufferFeaturesEXT>();
+        buffer.descriptorBuffer = true;
         auto& bindless = chain.get<vk::PhysicalDeviceDescriptorIndexingFeatures>();
         bindless.shaderSampledImageArrayNonUniformIndexing = true;
         bindless.shaderStorageImageArrayNonUniformIndexing = true;
         bindless.runtimeDescriptorArray = true;
-        auto& buffer = chain.get<vk::PhysicalDeviceDescriptorBufferFeaturesEXT>();
-        buffer.descriptorBuffer = true;
         auto& accel = chain.get<vk::PhysicalDeviceAccelerationStructureFeaturesKHR>();
         accel.accelerationStructure = true;
         auto& query = chain.get<vk::PhysicalDeviceRayQueryFeaturesKHR>();
@@ -97,66 +97,48 @@ namespace mtt::command {
         });
 
         for (auto&& physical_device: guard(instance->enumeratePhysicalDevices())) {
-            auto queues = std::vector<vk::DeviceQueueCreateInfo>{};
-            auto priorities = std::vector<f32>{1.f};
             auto families = physical_device.getQueueFamilyProperties2();
+            render_family = math::maxv<u32>;
+            transfer_family = math::maxv<u32>;
             for (auto i = 0; i < families.size(); ++i) {
                 auto const& family = families[i];
                 auto& props = family.queueFamilyProperties;
                 auto flags = props.queueFlags;
-                if (flags & vk::QueueFlags::BitsType::eGraphics) {
-                    queues.push_back({
-                        .queueFamilyIndex = u32(i), .queueCount = 1,
-                        .pQueuePriorities = priorities.data(),
-                    });
-                    break;
-                }
+                auto graphics = vk::QueueFlags::BitsType::eGraphics;
+                auto transfer = vk::QueueFlags::BitsType::eTransfer;
+                if (render_family == math::maxv<u32> && flags & graphics)
+                    render_family = i;
+                else if (transfer_family == math::maxv<u32> && flags & transfer)
+                    transfer_family = i;
             }
-            if (!queues.front().queueCount) {
-                std::println("no vulkan graphics queue");
+            if (render_family == math::maxv<u32> || transfer_family == math::maxv<u32>) {
+                std::println("no vulkan async transfer queue");
                 std::abort();
             }
 
-            auto&& memprop = physical_device.getMemoryProperties2().memoryProperties;
-            auto device_heap = -1; auto host_heap = -1;
-            for (auto i = 0; i < memprop.memoryHeapCount; ++i) {
-                auto& heap = memprop.memoryHeaps[i];
-                if (device_heap < 0 && heap.flags & vk::MemoryHeapFlagBits::eDeviceLocal)
-                    device_heap = i;
-                else if (host_heap < 0 && !(heap.flags & vk::MemoryHeapFlagBits::eDeviceLocal))
-                    host_heap = i;
-            }
-            if (host_heap < 0) host_heap = device_heap;
-            if (device_heap < 0) {
-                std::println("no vulkan device local heap");
-                std::abort();
-            }
+            auto priorities = std::vector<f32>{1.f};
+            auto queues = std::array<vk::DeviceQueueCreateInfo, 2>{
+                vk::DeviceQueueCreateInfo{
+                    .queueFamilyIndex = render_family,
+                    .queueCount = 1,
+                    .pQueuePriorities = priorities.data(),
+                },
+                vk::DeviceQueueCreateInfo{
+                    .queueFamilyIndex = transfer_family,
+                    .queueCount = 1,
+                    .pQueuePriorities = priorities.data(),
+                },
+            };
 
-            device_memory = host_memory = math::maxv<u32>;
-            for (auto i = 0; i < memprop.memoryTypeCount; ++i) {
-                auto& type = memprop.memoryTypes[i];
-                if (true
-                && device_memory == math::maxv<u32>
-                && type.heapIndex == device_heap
-                && type.propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal)
-                    device_memory = i;
-                if (true
-                && host_memory == math::maxv<u32>
-                && type.heapIndex == host_heap
-                && type.propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible)
-                    host_memory = i;
-            }
-            uma = device_memory == host_memory;
-            if (device_memory == math::maxv<u32> || host_memory == math::maxv<u32>) {
-                std::println("no vulkan local or visible memory type");
-                std::abort();
-            }
-
-            auto version = vk::apiVersionMinor(physical_device.getProperties2().properties.apiVersion);
+            auto version = physical_device.getProperties2().properties.apiVersion;
+            auto minor = vk::apiVersionMinor(version);
             auto extensions = std::vector<view<char>>{};
             for (auto i = 0; i < versions.size(); ++i)
-                if (version <= vk::apiVersionMinor(versions[i]))
-                    std::ranges::copy(required_extensions[i], std::back_inserter(extensions));
+                if (minor <= vk::apiVersionMinor(versions[i]))
+                    std::ranges::copy(
+                        required_extensions[i],
+                        std::back_inserter(extensions)
+                    );
 
             auto info = vk::DeviceCreateInfo{};
             info.setPEnabledExtensionNames(extensions);
@@ -167,10 +149,22 @@ namespace mtt::command {
                 candidate.result == vk::Result::eSuccess
             ) {
                 device = std::move(candidate.value);
-                queue = this->device->getQueue2({
-                    .queueFamilyIndex = queues.front().queueFamilyIndex,
+                queue = device->getQueue2({
+                    .queueFamilyIndex = render_family,
                     .queueIndex = 0,
                 });
+                dma = device->getQueue2({
+                    .queueFamilyIndex = transfer_family,
+                    .queueIndex = 0,
+                });
+
+                auto props = vk::StructureChain<
+                    vk::PhysicalDeviceProperties2,
+                    vk::PhysicalDeviceDescriptorBufferPropertiesEXT
+                >{};
+                physical_device.getProperties2(&props.get());
+                memory_props = physical_device.getMemoryProperties2();
+                descriptor_buffer_props = props.get<vk::PhysicalDeviceDescriptorBufferPropertiesEXT>();
                 break;
             }
         }
@@ -180,6 +174,45 @@ namespace mtt::command {
             std::abort();
         }
         VULKAN_HPP_DEFAULT_DISPATCHER.init(instance.get(), device.get());
+    }
+
+    auto Context::Impl::init_memory() noexcept -> void {
+        auto props = memory_props.memoryProperties;
+        auto device_heap = math::maxv<u32>;
+        auto host_heap = math::maxv<u32>;
+        for (auto i = 0; i < props.memoryHeapCount; ++i) {
+            auto& heap = props.memoryHeaps[i];
+            auto local = vk::MemoryHeapFlagBits::eDeviceLocal;
+            if (device_heap == math::maxv<u32> && heap.flags & local)
+                device_heap = i;
+            else if (host_heap < 0 && !(heap.flags & local))
+                host_heap = i;
+        }
+        if (host_heap == math::maxv<u32>) host_heap = device_heap;
+        if (device_heap == math::maxv<u32>) {
+            std::println("no vulkan device local heap");
+            std::abort();
+        }
+
+        device_memory = host_memory = math::maxv<u32>;
+        for (auto i = 0; i < props.memoryTypeCount; ++i) {
+            auto& type = props.memoryTypes[i];
+            if (true
+            && device_memory == math::maxv<u32>
+            && type.heapIndex == device_heap
+            && type.propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal)
+                device_memory = i;
+            if (true
+            && host_memory == math::maxv<u32>
+            && type.heapIndex == host_heap
+            && type.propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible)
+                host_memory = i;
+        }
+        uma = device_memory == host_memory;
+        if (device_memory == math::maxv<u32> || host_memory == math::maxv<u32>) {
+            std::println("no vulkan local or visible memory type");
+            std::abort();
+        }
     }
 
     auto Context::Impl::init_pipeline_cache() noexcept -> void {

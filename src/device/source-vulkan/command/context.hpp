@@ -14,14 +14,18 @@ namespace mtt::command {
         vk::UniqueInstance instance;
         vk::UniqueDevice device;
         vk::UniquePipelineCache pipeline_cache;
+
+        u32 render_family;
+        u32 transfer_family;
         vk::Queue queue;
+        vk::Queue dma;
 
         u32 device_memory;
         u32 host_memory;
         bool uma;
 
-        auto static constexpr ring_count = 3;
-        u32 ring_idx = 0;
+        vk::PhysicalDeviceMemoryProperties2 memory_props;
+        vk::PhysicalDeviceDescriptorBufferPropertiesEXT descriptor_buffer_props;
 
         Impl() noexcept;
         ~Impl() noexcept;
@@ -29,6 +33,7 @@ namespace mtt::command {
     private:
         auto init_instance() noexcept -> void;
         auto init_device() noexcept -> void;
+        auto init_memory() noexcept -> void;
         auto init_pipeline_cache() noexcept -> void;
     };
 

@@ -149,11 +149,11 @@ namespace mtt::shader {
             };
 
             auto parse_type = [&parse_resource](
-                this auto self,
+                this auto&& self,
                 mut<slang::TypeLayoutReflection> reflection,
                 ref<Layout> layout,
                 std::string path = "",
-                i32 block = 0
+                u32 block = 0
             ) -> void {
                 for (auto i = 0; i < reflection->getFieldCount(); ++i) {
                     using Kind = slang::TypeReflection::Kind;
@@ -174,7 +174,7 @@ namespace mtt::shader {
 
                     auto field = path + (path.size() == 0 ? "" : ".") + name;
                     auto set = table ? member->getOffset(Set) : block;
-                    auto index = -1;
+                    auto index = math::maxv<u32>;
                     for (auto j = 0; j < var->getCategoryCount(); ++j)
                         if (var->getCategoryByIndex(j) == Index)
                             index = var->getOffset(Index);
@@ -184,9 +184,9 @@ namespace mtt::shader {
                         layout.names.resize(set + 1);
                     }
                     if (table) layout.names[set] = name;
-                    if (layout.sets[set].size() <= index)
+                    if (index != math::maxv<u32> && layout.sets[set].size() <= index)
                         layout.sets[set].resize(index + 1);
-                    if (index < 0) {
+                    if (index == math::maxv<u32>) {
                         self(table ? element : type, layout, field, set);
                         continue;
                     }

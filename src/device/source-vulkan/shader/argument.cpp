@@ -49,14 +49,7 @@ namespace mtt::shader {
             | u32(vk::BufferUsageFlagBits::eResourceDescriptorBufferEXT),
             .visible = 0
         });
-        for (auto i = 0; i < command::Context::Impl::ring_count; ++i) {
-            buffer[i].resize(size);
-            imported[i] = make_obj<opaque::Buffer>(stl::buf{
-                .host = buffer[i].data(),
-                .bytelen = u32(buffer.size()),
-                .visible = 1,
-            });
-        }
+        buffer.resize(size);
     }
 
     Argument::Argument(std::string_view path) noexcept:
