@@ -40,25 +40,18 @@ namespace mtt::spectra {
         auto header = std::string(4, '\0');
         if (false
         || !file.read(header.data(), 4)
-        || header != "SPEC") {
-            std::println("{} coefficient has wrong header", name);
-            std::abort();
-        }
+        || header != "SPEC")
+            stl::abort("{} coefficient has wrong header", name);
 
-        if (!file.read(mut<char>(&table_res), sizeof(i32))) {
-            std::println("{} coefficient could not read table resolution", name);
-            std::abort();
-        }
-
+        if (!file.read(mut<char>(&table_res), sizeof(i32)))
+            stl::abort("{} coefficient could not read table resolution", name);
         scale = table_res;
         table = table_res * table_res * table_res * 3 * 3;
 
         if (false
         || !file.read(mut<char>(scale.host), scale.bytelen)
-        || !file.read(mut<char>(table.host), table.bytelen)) {
-            std::println("{} coefficient could not read table", name);
-            std::abort();
-        }
+        || !file.read(mut<char>(table.host), table.bytelen))
+            stl::abort("{} coefficient could not read table", name);
         file.close();
     }
 }

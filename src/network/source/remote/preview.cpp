@@ -44,7 +44,7 @@ namespace mtt::remote {
             );
 
             if (!socket.send({mut<byte>(packet.data()), packet.size()}))
-                std::println("failed to send image to remote previewer");
+                stl::print("failed to send image to remote previewer");
         }
     };
 

@@ -199,10 +199,7 @@ namespace mtt::muldim {
     auto Image::from_path(std::string_view path, bool linear) noexcept -> Image {
         auto absolute_path = stl::filesystem::find(path);
         auto in = OIIO::ImageInput::open(absolute_path.c_str());
-        if (!in) {
-            std::println("cannot open image {}", path);
-            std::abort();
-        }
+        if (!in) stl::abort("cannot open image {}", path);
 
         auto& spec = in->spec();
         auto img = muldim::Image{};
@@ -217,10 +214,7 @@ namespace mtt::muldim {
         img.pixels.front() = math::prod(img.size);
 
         auto success = in->read_image(0, 0, 0, spec.nchannels, spec.format, img.pixels.front().data());
-        if (!success) {
-            std::println("can not read image {}", path);
-            std::abort();
-        }
+        if (!success) stl::abort("can not read image {}", path);
         in->close();
 
         auto size = uzv2(img.size);
@@ -270,16 +264,11 @@ namespace mtt::muldim {
         spec.attribute("planarconfig", "contig");
 
         auto out = OIIO::ImageOutput::create(std::string{path});
-        if (!out || !out->open(std::string{path}, spec)) {
-            std::println("failed to create image {}", path);
-            std::abort();
-        }
+        if (!out || !out->open(std::string{path}, spec))
+            stl::abort("failed to create image {}", path);
 
         auto success = out->write_image(type, pixels.front().data());
-        if (!success) {
-            std::println("failed to write image {}", path);
-            std::abort();
-        }
+        if (!success) stl::abort("failed to write image {}", path);
 
         out->close();
     }

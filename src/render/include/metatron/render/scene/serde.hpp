@@ -60,7 +60,7 @@ namespace mtt::scene {
                 if constexpr (!pro::facade<F>)
                     v = attach<F>(j, type[ts::template index<F>]);
                 v = v || (attach<F, Ts>(j, type[ts::template index<Ts>]) || ...);
-                if (!v) std::println(
+                if (!v) stl::abort(
                     "deserialize {} with invalid type {}",
                     j.serialized.str, j.type
                 );
@@ -83,10 +83,9 @@ namespace mtt::scene {
             auto y = std::string{x.begin(), x.end()};
             auto l = y.find_first_not_of(" \t\r\n");
             auto r = y.find_last_not_of(" \t\r\n");
-            if (l == std::string::npos) {
-                std::println("serialized type invalid");
-                std::abort();
-            } else return y.substr(l, r - l + 1);
+            if (l == std::string::npos)
+                stl::abort("serialized type invalid");
+            return y.substr(l, r - l + 1);
         })) {
             std::ranges::transform(t, t.begin(), ::tolower);
             type[i++] = t;

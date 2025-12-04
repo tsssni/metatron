@@ -7,7 +7,7 @@ namespace mtt::wired {
 
         auto split = address.find_last_of(':');
         if (split == std::string::npos) {
-            std::println("wired address {} not in format host:port", address);
+            stl::print("wired address {} not in format host:port", address);
             return;
         }
 

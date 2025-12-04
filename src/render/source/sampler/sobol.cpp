@@ -15,10 +15,7 @@ namespace mtt::sampler {
         auto data = stl::filesystem::find(path);
 
         auto f = std::ifstream{data, std::ios::binary};
-        if (!f.is_open()) {
-            std::println("{} not open", path);
-            std::abort();
-        }
+        if (!f.is_open()) stl::abort("{} not open", path);
 
         auto size = 0uz;
         f.read(mut<char>(&size), sizeof(size));

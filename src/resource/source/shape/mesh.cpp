@@ -18,10 +18,8 @@ namespace mtt::shape {
             | aiProcess_MakeLeftHanded
         );
 
-        if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->HasMeshes()) {
-            std::println("assimp error: while loading {}: {}", desc.path, importer.GetErrorString());
-            std::abort();
-        }
+        if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->HasMeshes())
+            stl::abort("assimp error: while loading {}: {}", desc.path, importer.GetErrorString());
         auto* mesh = scene->mMeshes[0];
 
         indices = mesh->mNumFaces;

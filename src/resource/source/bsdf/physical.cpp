@@ -37,11 +37,11 @@ namespace mtt::bsdf {
         conductive = bitmask == 0b110;
         plastic = bitmask == 0b011;
         if (!lambertian && !dieletric && !conductive && ! plastic) {
-            std::println("bsdf not physically possible with these attributes:");
-            std::println("reflectance: {}", reflectance);
-            std::println("eta: {}", eta);
-            std::println("k: {}", k);
-            std::abort();
+            stl::print("bsdf not physically possible with these attributes:");
+            stl::print("reflectance: {}", reflectance);
+            stl::print("eta: {}", eta);
+            stl::print("k: {}", k);
+            stl::abort();
         }
 
         fresnel_reflectance = !plastic && !specular ? fv4{0.f} :

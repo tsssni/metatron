@@ -16,7 +16,7 @@ namespace mtt::renderer {
         auto trace() noexcept -> void {
             auto rd = std::random_device{};
             auto seed = rd();
-            std::println("seed: {}", seed);
+            stl::print("seed: {}", seed);
 
             auto& args = scene::Args::instance();
             auto addr = wired::Address{args.address};
@@ -36,10 +36,7 @@ namespace mtt::renderer {
                     auto spec = spectra::Stochastic_Spectrum{sp->generate_1d()};
                     MTT_OPT_OR_CALLBACK(s, photo::Camera{}.sample(
                         desc.lens.data(), fixel.position, fixel.dxdy, sp->generate_2d()
-                    ), {
-                        std::println("ray generation failed");
-                        std::abort();
-                    });
+                    ), stl::abort("ray generation failed"););
                     s.ray_differential = ct ^ s.ray_differential;
                     s.default_differential = ct ^ s.default_differential;
 
@@ -48,10 +45,9 @@ namespace mtt::renderer {
                         s.ray_differential, s.default_differential,
                         ct, px, n, depth,
                     };
-                    MTT_OPT_OR_CALLBACK(Li, desc.integrator->sample(ctx), {
-                        std::println("invalid value appears in pixel {} sample {}", px, n);
-                        std::abort();
-                    });
+                    MTT_OPT_OR_CALLBACK(Li, desc.integrator->sample(ctx),
+                        stl::abort("invalid value appears in pixel {} sample {}", px, n);
+                    );
                     Li.value /= s.pdf;
                     fixel = Li;
                     ++progress;

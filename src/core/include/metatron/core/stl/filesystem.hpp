@@ -45,8 +45,8 @@ namespace mtt::stl {
                 auto full = base / path;
                 if (std::filesystem::exists(full)) return full;
             }
-            std::println("{} not found", path.c_str());
-            std::abort();
+            stl::abort("{} not found", path.c_str());
+            return {};
         }
 
         auto static hit(cref<path> path) noexcept -> opt<stl::path> {

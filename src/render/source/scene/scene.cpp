@@ -29,10 +29,8 @@ namespace mtt::scene {
         auto renderer = obj<Renderer>();
         hierarchy.filter([&renderer](auto bins){
             auto key = std::string{"renderer"};
-            if (!bins.contains(key)) {
-                std::println("renderer must be defined");
-                std::abort();
-            }
+            if (!bins.contains(key))
+                stl::abort("renderer must be defined");
             auto j = bins[key].front();
 
             using Descriptor = Renderer::Descriptor;

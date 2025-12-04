@@ -24,10 +24,8 @@ namespace mtt::stl {
             auto lock = std::lock_guard{mutex};
             buf->idx = bufs.size();
             bufs.push_back(buf);
-            if (bufs.size() >= math::maxv<u32>) {
-                std::println("stack overflow");
-                std::abort();
-            }
+            if (bufs.size() >= math::maxv<u32>)
+                stl::abort("stack overflow");
         }
 
         auto swap(mut<buf> buf) noexcept -> void {
@@ -66,10 +64,7 @@ namespace mtt {
         buf(usize size) noexcept {
             bytelen = size * sizeof(T);
             host = mut<byte>(std::malloc(bytelen));
-            if (!host) {
-                std::println("allocate {} bytes failed", bytelen);
-                std::abort();
-            }
+            if (!host) stl::abort("allocate {} bytes failed", bytelen);
             if constexpr (!std::is_trivially_constructible_v<T>)
                 std::uninitialized_default_construct_n(data(), size);
             stl::stack::instance().push(this);

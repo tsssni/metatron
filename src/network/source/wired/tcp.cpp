@@ -26,10 +26,7 @@ namespace mtt::wired {
             hints.ai_socktype = SOCK_STREAM;
             if (auto err = ::getaddrinfo(
                 address.host.c_str(), address.port.c_str(), &hints, &info
-            )) {
-                std::println("getaddrinfo failed: {}", ::gai_strerror(err));
-                std::abort();
-            }
+            )) stl::abort("getaddrinfo failed: {}", ::gai_strerror(err));
 
             for (auto* ptr = info; ptr; ptr = ptr->ai_next) {
                 socket = ::socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
@@ -46,7 +43,7 @@ namespace mtt::wired {
 
             ::freeaddrinfo(info);
             if (socket == invalid_socket)
-                std::println("tcp could not connect to {}", address);
+                stl::print("tcp could not connect to {}", address);
         }
 
         auto disconnect() noexcept -> void {
@@ -64,7 +61,7 @@ namespace mtt::wired {
             auto sent_size = ::send(socket, view<char>(data.data()), data.size(), 0);
             if (sent_size == data.size()) return true;
 
-            std::println("send failed: {}", ::strerror(errno));
+            stl::print("send failed: {}", ::strerror(errno));
             disconnect();
             socket = invalid_socket;
             return false;

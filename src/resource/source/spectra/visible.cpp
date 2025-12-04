@@ -7,10 +7,8 @@ namespace mtt::spectra {
     Visible_Spectrum::Visible_Spectrum(cref<Descriptor> desc) noexcept {
         auto idx = 0;
         auto file = std::ifstream{desc.path};
-        if (!file.is_open()) {
-            std::println("failed to open visible spectrum {}", desc.path);
-            std::abort();
-        }
+        if (!file.is_open())
+            stl::abort("failed to open visible spectrum {}", desc.path);
         auto line = std::string{};
 
         while (std::getline(file, line)) {

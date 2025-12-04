@@ -7,10 +7,9 @@
 namespace mtt::spectra {
     Discrete_Spectrum::Discrete_Spectrum(cref<Descriptor> desc) noexcept {
         auto file = std::ifstream{desc.path};
-        if (!file.is_open()) {
-            std::println("failed to open discrete spectrum {}", desc.path);
-            std::abort();
-        }
+        if (!file.is_open())
+            stl::abort("failed to open discrete spectrum {}", desc.path);
+
         auto line = std::string{};
         auto lambda = std::vector<f32>{}; lambda.reserve(256);
         auto storage = std::vector<f32>{}; storage.reserve(256);

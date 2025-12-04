@@ -24,15 +24,10 @@ namespace mtt::math {
             auto it = 0;
 
             while (true) {
-                if (it > 20) {
-                    std::println("gauss-legendre({}) not converge", n);
-                    std::abort();
-                }
-
+                if (it > 20) stl::abort("gauss-legendre({}) not converge", n);
                 auto [y, d] = legendre_derivative(n + 1, x);
                 auto step = y / d;
                 x -= step;
-
                 if (math::abs(step) <= 4.0 * std::abs(x) * math::epsilon<f64>) break;
                 ++it;
             }

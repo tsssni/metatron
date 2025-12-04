@@ -11,19 +11,21 @@ namespace mtt::shader {
         for (auto i = 0u; i < reflection.size(); ++i) {
             using Type = Descriptor::Type;
             using Access = Descriptor::Access;
-            using Vk_Type = vk::DescriptorType;
+            using Vype = vk::DescriptorType;
             auto constexpr types = std::to_array<vk::DescriptorType>({
-                Vk_Type::eUniformBuffer,
-                Vk_Type::eSampler,
-                Vk_Type::eSampledImage,
-                Vk_Type::eSampledImage,
-                Vk_Type::eAccelerationStructureKHR,
+                Vype::eUniformBuffer,
+                Vype::eSampler,
+                Vype::eSampledImage,
+                Vype::eSampledImage,
+                Vype::eAccelerationStructureKHR,
             });
 
             auto& desc = reflection[i];
             auto type = types[i32(desc.type)];
-            if (type == Vk_Type::eSampledImage && desc.access != Access::readonly)
-                type = Vk_Type::eStorageImage;
+            if (type == Vype::eUniformBuffer)
+                constants.resize(desc.size); // compiler ensures only one uniform buffer
+            else if (type == Vype::eSampledImage && desc.access != Access::readonly)
+                type = Vype::eStorageImage;
             auto count = desc.size < 0 ? 65536u : math::max(1, desc.size);
             bindings.push_back(vk::DescriptorSetLayoutBinding{
                 .binding = i,

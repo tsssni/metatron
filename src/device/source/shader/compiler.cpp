@@ -28,15 +28,14 @@ namespace mtt::shader {
 
         auto guard(SlangResult result) {
             if (SLANG_SUCCEEDED(result)) return;
-            std::println("slang compilation failed with {}", result);
-            std::abort();
+            stl::abort("slang compilation failed with {}", result);
         }
         auto diagnose() {
             if (!diagnostic || diagnostic->getBufferSize() == 0) return;
-            std::println("{}", view<char>(diagnostic->getBufferPointer()));
+            stl::print("{}", view<char>(diagnostic->getBufferPointer()));
         }
         auto diagnose(SlangResult result) { diagnose(); guard(result); }
-        auto diagnose(auto* ptr) { diagnose(); if (!ptr) std::abort(); return ptr; }
+        auto diagnose(auto* ptr) { diagnose(); if (!ptr) stl::abort(); return ptr; }
 
         auto compile(
             mut<slang::IModule> module, i32 idx,
@@ -46,13 +45,11 @@ namespace mtt::shader {
             auto hash = com<slang::IBlob>{};
             guard(module->getDefinedEntryPoint(idx, entry.writeRef()));
             module->getEntryPointHash(idx, 0, hash.writeRef());
-            if (!hash || hash->getBufferSize() == 0) {
-                std::println(
+            if (!hash || hash->getBufferSize() == 0)
+                stl::abort(
                     "slang failed to generate hash for {} {}",
                     src.c_str(), entry->getFunctionReflection()->getName()
                 );
-                std::abort();
-            }
 
             auto path = src.parent_path() / src.stem().stem()
             .concat("." + std::string{entry->getFunctionReflection()->getName()});
@@ -116,10 +113,7 @@ namespace mtt::shader {
             mut<slang::ShaderReflection> reflection,
             cref<std::filesystem::path> path
         ) noexcept -> Layout {
-            if (!reflection) {
-                std::println("failed to generate reflection");
-                std::abort();
-            }
+            if (!reflection) stl::abort("failed to generate reflection");
 
             auto parse_resource = [](
                 mut<slang::TypeLayoutReflection> t,
@@ -133,8 +127,7 @@ namespace mtt::shader {
                 case SLANG_TEXTURE_3D: desc.type = Type::grid; break;
                 case SLANG_ACCELERATION_STRUCTURE: desc.type = Type::accel; break;
                 default:
-                    std::println("descriptor type {} not support", i32(t->getResourceShape()));
-                    std::abort();
+                    stl::abort("descriptor type {} not support", i32(t->getResourceShape()));
                 }
 
                 switch (t->getResourceAccess()) {
@@ -143,8 +136,7 @@ namespace mtt::shader {
                 case SLANG_RESOURCE_ACCESS_READ_WRITE: desc.access = Access::writeonly; break;
                 case SLANG_RESOURCE_ACCESS_WRITE: desc.access = Access::writeonly; break;
                 default:
-                    std::println("descriptor access {} not supported", i32(t->getResourceAccess()));
-                    std::abort();
+                    stl::abort("descriptor access {} not supported", i32(t->getResourceAccess()));
                 }
             };
 
@@ -153,7 +145,8 @@ namespace mtt::shader {
                 mut<slang::TypeLayoutReflection> reflection,
                 ref<Layout> layout,
                 std::string path = "",
-                u32 block = 0
+                u32 block = 0,
+                bool parameter = false
             ) -> void {
                 for (auto i = 0; i < reflection->getFieldCount(); ++i) {
                     using Kind = slang::TypeReflection::Kind;
@@ -187,7 +180,7 @@ namespace mtt::shader {
                     if (index != math::maxv<u32> && layout.sets[set].size() <= index)
                         layout.sets[set].resize(index + 1);
                     if (index == math::maxv<u32>) {
-                        self(table ? element : type, layout, field, set);
+                        self(table ? element : type, layout, field, set, parameter);
                         continue;
                     }
 
@@ -195,6 +188,8 @@ namespace mtt::shader {
                     case Kind::ParameterBlock:
                         desc.type = Descriptor::Type::parameter;
                         desc.size = element->getSize();
+                        if (!parameter) parameter = true;
+                        else stl::abort("embedded parameter block not allowed");
                         break;
                     case Kind::SamplerState:
                         desc.type = Descriptor::Type::sampler;
@@ -212,7 +207,7 @@ namespace mtt::shader {
 
                     desc.path = field;
                     layout.sets[set][index] = desc;
-                    self(table ? element : type, layout, field, set);
+                    self(table ? element : type, layout, field, set, parameter);
                 }
             };
 

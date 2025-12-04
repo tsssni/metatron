@@ -25,10 +25,7 @@ namespace mtt::scene {
             if (entities.find(path) != entities.end()) return entities[path];
 
             auto slash = path.find_last_of('/');
-            if (slash == std::string::npos) {
-                std::println("ecs: invalid path {}", path);
-                std::abort();
-            }
+            if (slash == std::string::npos) stl::abort("ecs: invalid path {}", path);
             
             auto parent_path = slash == 0 ? "/" : path.substr(0, slash);
             auto parent = create(parent_path);
@@ -46,12 +43,9 @@ namespace mtt::scene {
         template<typename T, typename U>
         auto fetch(cref<std::unordered_map<T, U>> map, cref<T> key) const -> cref<U> {
             auto it = map.find(key);
-            if (it != map.end()) {
-                return it->second;
-            } else {
-                std::println("ecs: invalid key");
-                std::abort();
-            }
+            if (it == map.end())
+                stl::abort("ecs: invalid key");
+            return it->second;
         }
     };
 

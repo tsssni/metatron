@@ -160,21 +160,14 @@ namespace mtt::light {
             auto data = stl::filesystem::find(path);
 
             auto f = std::ifstream{data, std::ios::binary};
-            if (!f.is_open()) {
-                std::println("{} not open", path);
-                std::abort();
-            }
+            if (!f.is_open()) stl::abort("{} not open", path);
 
             auto header = std::string(3, '\0');
             auto version = 0u;
             if (false
             || !f.read(header.data(), 3)
-            || (true
-            && header != "SKY"
-            && header != "SUN")) {
-                std::println("{} has wrong header {}", path, header);
-                std::abort();
-            }
+            || (header != "SKY" && header != "SUN"))
+                stl::abort("{} has wrong header {}", path, header);
             f.read(mut<char>(&version), sizeof(version));
 
             auto dims = 0uz;
@@ -183,10 +176,7 @@ namespace mtt::light {
             auto shape = std::vector<usize>(dims);
             for (auto& s: shape) {
                 f.read(mut<char>(&s), sizeof(s));
-                if (s == 0uz) {
-                    std::println("{} has zero dimension", path);
-                    std::abort();
-                }
+                if (s == 0uz) stl::abort("{} has zero dimension", path);
                 elems *= s;
             }
 

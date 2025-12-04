@@ -38,10 +38,8 @@ namespace mtt::command {
     };
 
     auto inline guard(vk::Result result) noexcept -> void {
-        if (result != vk::Result::eSuccess) {
-            std::println("vulkan error: {}", vk::to_string(result));
-            std::abort();
-        }
+        if (result != vk::Result::eSuccess)
+            stl::abort("vulkan error: {}", vk::to_string(result));
     }
 
     template<typename T>

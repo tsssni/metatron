@@ -111,10 +111,8 @@ namespace mtt::command {
                 else if (transfer_family == math::maxv<u32> && flags & transfer)
                     transfer_family = i;
             }
-            if (render_family == math::maxv<u32> || transfer_family == math::maxv<u32>) {
-                std::println("no vulkan async transfer queue");
-                std::abort();
-            }
+            if (render_family == math::maxv<u32> || transfer_family == math::maxv<u32>)
+                stl::abort("no vulkan async transfer queue");
 
             auto priorities = std::vector<f32>{1.f};
             auto queues = std::array<vk::DeviceQueueCreateInfo, 2>{
@@ -169,10 +167,7 @@ namespace mtt::command {
             }
         }
 
-        if (!device) {
-            std::println("no vulkan device meets requirements");
-            std::abort();
-        }
+        if (!device) stl::abort("no vulkan device meets requirements");
         VULKAN_HPP_DEFAULT_DISPATCHER.init(instance.get(), device.get());
     }
 
@@ -189,10 +184,7 @@ namespace mtt::command {
                 host_heap = i;
         }
         if (host_heap == math::maxv<u32>) host_heap = device_heap;
-        if (device_heap == math::maxv<u32>) {
-            std::println("no vulkan device local heap");
-            std::abort();
-        }
+        if (device_heap == math::maxv<u32>) stl::abort("no vulkan device local heap");
 
         device_memory = host_memory = math::maxv<u32>;
         for (auto i = 0; i < props.memoryTypeCount; ++i) {
@@ -209,10 +201,8 @@ namespace mtt::command {
                 host_memory = i;
         }
         uma = device_memory == host_memory;
-        if (device_memory == math::maxv<u32> || host_memory == math::maxv<u32>) {
-            std::println("no vulkan local or visible memory type");
-            std::abort();
-        }
+        if (device_memory == math::maxv<u32> || host_memory == math::maxv<u32>)
+            stl::abort("no vulkan local or visible memory type");
     }
 
     auto Context::Impl::init_pipeline_cache() noexcept -> void {

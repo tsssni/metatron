@@ -89,8 +89,8 @@ namespace mtt::volume {
     }
 
     auto Nanovdb_Volume::operator[](cref<iv3> ijk) noexcept -> ref<f32> {
-        std::println("nanovdb is readonly");
-        std::abort();
+        stl::abort("nanovdb is readonly");
+        return *(mut<f32>)handle.data();
     }
 
     auto Nanovdb_Volume::operator[](cref<iv3> ijk) const noexcept -> f32 {
