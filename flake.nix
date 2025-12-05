@@ -52,10 +52,11 @@
         {
           default = pkgs.mkShell {
             inputsFrom = [ packages.${system}.default ];
-            shellHook = "" + lib.optionalString pkgs.stdenv.isLinux ''
-              export VK_LAYER_PATH=${pkgs.vulkan-validation-layers}/share/vulkan/explicit_layer.d
+            shellHook = "
               export CMAKE_INSTALL_PREFIX=$HOME/metatron/out
               export SHELL=nu
+            " + lib.optionalString pkgs.stdenv.isLinux ''
+              export VK_LAYER_PATH=${pkgs.vulkan-validation-layers}/share/vulkan/explicit_layer.d
             '';
           };
         }
