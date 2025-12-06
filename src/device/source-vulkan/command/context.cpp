@@ -53,12 +53,18 @@ namespace mtt::command {
     auto Context::Impl::init_device() noexcept -> void {
         auto chain = vk::StructureChain<
             vk::PhysicalDeviceFeatures2,
+            vk::PhysicalDeviceTimelineSemaphoreFeatures,
             vk::PhysicalDeviceBufferDeviceAddressFeatures,
             vk::PhysicalDeviceDescriptorBufferFeaturesEXT,
             vk::PhysicalDeviceDescriptorIndexingFeatures,
             vk::PhysicalDeviceAccelerationStructureFeaturesKHR,
             vk::PhysicalDeviceRayQueryFeaturesKHR
         >{};
+        auto& features = chain.get<vk::PhysicalDeviceFeatures2>();
+        features.features.shaderInt16 = true;
+        features.features.shaderInt64 = true;
+        auto& timeline = chain.get<vk::PhysicalDeviceTimelineSemaphoreFeatures>();
+        timeline.timelineSemaphore = true;
         auto& address = chain.get<vk::PhysicalDeviceBufferDeviceAddressFeatures>();
         address.bufferDeviceAddress = true;
         auto& buffer = chain.get<vk::PhysicalDeviceDescriptorBufferFeaturesEXT>();
@@ -81,7 +87,9 @@ namespace mtt::command {
         });
         auto required_extensions = std::to_array({
             std::vector<view<char>>{},
-            std::vector<view<char>>{},
+            std::vector<view<char>>{
+                "VK_KHR_timeline_semaphore",
+            },
             std::vector<view<char>>{
                 "VK_KHR_buffer_device_address",
             },
@@ -98,8 +106,8 @@ namespace mtt::command {
 
         for (auto&& physical_device: guard(instance->enumeratePhysicalDevices())) {
             auto families = physical_device.getQueueFamilyProperties2();
-            render_family = math::maxv<u32>;
-            transfer_family = math::maxv<u32>;
+            auto render_family = math::maxv<u32>;
+            auto transfer_family = math::maxv<u32>;
             for (auto i = 0; i < families.size(); ++i) {
                 auto const& family = families[i];
                 auto& props = family.queueFamilyProperties;
@@ -147,14 +155,9 @@ namespace mtt::command {
                 candidate.result == vk::Result::eSuccess
             ) {
                 device = std::move(candidate.value);
-                queue = device->getQueue2({
-                    .queueFamilyIndex = render_family,
-                    .queueIndex = 0,
-                });
-                dma = device->getQueue2({
-                    .queueFamilyIndex = transfer_family,
-                    .queueIndex = 0,
-                });
+                render_queue.family = render_family;
+                transfer_queue.family = transfer_family;
+                init_queue();
 
                 auto props = vk::StructureChain<
                     vk::PhysicalDeviceProperties2,
@@ -169,6 +172,30 @@ namespace mtt::command {
 
         if (!device) stl::abort("no vulkan device meets requirements");
         VULKAN_HPP_DEFAULT_DISPATCHER.init(instance.get(), device.get());
+    }
+
+    auto Context::Impl::init_queue() noexcept -> void {
+        auto init_queue = [this](ref<Queue> queue) {
+            queue.queue = device->getQueue2({
+                .queueFamilyIndex = queue.family,
+                .queueIndex = 0,
+            });
+            queue.pool = guard(device->createCommandPoolUnique({
+                .queueFamilyIndex = queue.family,
+            }));
+
+            auto timeline_info = vk::StructureChain<
+                vk::SemaphoreCreateInfo,
+                vk::SemaphoreTypeCreateInfo
+            >{};
+            timeline_info.get<vk::SemaphoreTypeCreateInfo>() = {
+                .semaphoreType = vk::SemaphoreType::eTimeline,
+                .initialValue = 0ull,
+            };
+            queue.timeline = guard(device->createSemaphoreUnique(timeline_info.get()));
+        };
+        init_queue(render_queue);
+        init_queue(transfer_queue);
     }
 
     auto Context::Impl::init_memory() noexcept -> void {
@@ -186,23 +213,23 @@ namespace mtt::command {
         if (host_heap == math::maxv<u32>) host_heap = device_heap;
         if (device_heap == math::maxv<u32>) stl::abort("no vulkan device local heap");
 
-        device_memory = host_memory = math::maxv<u32>;
+        auto device_type = math::maxv<u32>;
+        auto host_type = math::maxv<u32>;
         for (auto i = 0; i < props.memoryTypeCount; ++i) {
             auto& type = props.memoryTypes[i];
-            if (true
-            && device_memory == math::maxv<u32>
-            && type.heapIndex == device_heap
-            && type.propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal)
-                device_memory = i;
-            if (true
-            && host_memory == math::maxv<u32>
-            && type.heapIndex == host_heap
-            && type.propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible)
-                host_memory = i;
+            auto init_type = [&type, i](ref<u32> t, u32 heap, vk::MemoryPropertyFlags flags) {
+                if (true
+                && t == math::maxv<u32>
+                && type.heapIndex == heap
+                && type.propertyFlags & flags) t = i;
+            };
+            init_type(device_type, device_heap, vk::MemoryPropertyFlagBits::eDeviceLocal);
+            init_type(host_type, host_heap, vk::MemoryPropertyFlagBits::eHostVisible);
         }
-        uma = device_memory == host_memory;
-        if (device_memory == math::maxv<u32> || host_memory == math::maxv<u32>)
+        if (device_type == math::maxv<u32> || host_type == math::maxv<u32>)
             stl::abort("no vulkan local or visible memory type");
+        device_memory.type = device_type;
+        host_memory.type = host_type;
     }
 
     auto Context::Impl::init_pipeline_cache() noexcept -> void {

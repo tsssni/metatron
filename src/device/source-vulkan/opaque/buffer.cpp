@@ -17,7 +17,7 @@ namespace mtt::opaque {
             auto alloc = vk::MemoryAllocateInfo{
                 .pNext = &import,
                 .allocationSize = desc.bytelen,
-                .memoryTypeIndex = ctx->host_memory,
+                .memoryTypeIndex = ctx->host_memory.type,
             };
             host_memory = command::guard(device.allocateMemoryUnique(alloc));
 
@@ -32,7 +32,7 @@ namespace mtt::opaque {
         if (!desc.visible && desc.bytelen > 0) {
             auto alloc = vk::MemoryAllocateInfo{
                 .allocationSize = desc.bytelen,
-                .memoryTypeIndex = ctx->device_memory,
+                .memoryTypeIndex = ctx->device_memory.type,
             };
             device_memory = command::guard(device.allocateMemoryUnique(alloc));
 

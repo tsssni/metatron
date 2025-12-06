@@ -7,25 +7,35 @@
 #include <metatron/core/stl/capsule.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <vulkan/vulkan.hpp>
-#include <queue>
+#include <atomic>
+#include <mutex>
 
 namespace mtt::command {
+    struct Queue final {
+        std::atomic<u64> timestamp = 0ull;
+        std::mutex mutex;
+        u32 family;
+        vk::Queue queue;
+        vk::UniqueCommandPool pool;
+        vk::UniqueSemaphore timeline;
+    };
+
+    struct Memory final {
+        u32 type;
+    };
+
     struct Context::Impl final {
         vk::UniqueInstance instance;
         vk::UniqueDevice device;
         vk::UniquePipelineCache pipeline_cache;
 
-        u32 render_family;
-        u32 transfer_family;
-        vk::Queue queue;
-        vk::Queue dma;
-
-        u32 device_memory;
-        u32 host_memory;
-        bool uma;
-
         vk::PhysicalDeviceMemoryProperties2 memory_props;
         vk::PhysicalDeviceDescriptorBufferPropertiesEXT descriptor_buffer_props;
+
+        Queue render_queue;
+        Queue transfer_queue;
+        Memory device_memory;
+        Memory host_memory;
 
         Impl() noexcept;
         ~Impl() noexcept;
@@ -33,6 +43,7 @@ namespace mtt::command {
     private:
         auto init_instance() noexcept -> void;
         auto init_device() noexcept -> void;
+        auto init_queue() noexcept -> void;
         auto init_memory() noexcept -> void;
         auto init_pipeline_cache() noexcept -> void;
     };
