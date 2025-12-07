@@ -1,32 +1,35 @@
 #pragma once
-#include <metatron/device/command/queue.hpp>
+#include <metatron/device/opaque/buffer.hpp>
+#include <metatron/resource/shape/mesh.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/bounding-box.hpp>
 
 namespace mtt::opaque {
     struct Acceleration final {
-        struct BLAS final {
+        struct Primitive final {
             enum struct Type {
                 mesh,
                 aabb,
             } type;
             union {
-                struct {
-                    std::span<uv3 const> indices;
-                    std::span<fv3 const> vertices;
-                } mesh;
+                view<shape::Mesh> mesh;
                 math::Bounding_Box aabb;
             };
         };
-        struct TLAS final { fm4 transform; };
+        struct Instance final { fm4 transform; };
 
         command::Queue::Type type;
         u64 timestamp = 0;
 
+        obj<Buffer> instance_buffer;
+        std::vector<obj<Buffer>> primtive_buffers;
+        obj<Buffer> instance_scratch;
+        std::vector<obj<Buffer>> primitive_scratches;
+
         struct Descriptor final {
             command::Queue::Type type;
-            std::vector<BLAS> blases;
-            std::vector<TLAS> tlases;
+            std::vector<Primitive> primitives;
+            std::vector<Instance> instances;
         };
 
         struct Impl;

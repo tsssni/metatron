@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/device/opaque/buffer.hpp>
-#include <metatron/device/command/queue.hpp>
 #include <metatron/resource/muldim/image.hpp>
 #include <metatron/core/stl/capsule.hpp>
 

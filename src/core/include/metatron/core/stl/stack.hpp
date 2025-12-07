@@ -10,8 +10,13 @@
 namespace mtt::stl {
     struct buf {
         mut<byte> ptr = nullptr;
-        u32 bytelen = 0u;
-        u32 idx = math::maxv<u32>;
+        union {
+            struct {
+                u32 bytelen = 0u;
+                u32 idx = math::maxv<u32>;
+            };
+            u64 handle; // store device object pointer
+        };
 
         auto reset() noexcept -> void {
             ptr = nullptr;
