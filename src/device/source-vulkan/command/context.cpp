@@ -226,19 +226,5 @@ namespace mtt::command {
     auto Context::init() noexcept -> void {
         Context::instance();
         Recorder::Impl::init();
-        auto render = Recorder{Queue::Type::render};
-        auto transfer = Recorder{Queue::Type::transfer};
-        auto global = shader::Argument{"trace.global"};
-        auto argi = shader::Argument{"trace.integrate.in"};
-        auto argp = shader::Argument{"trace.postprocess.in"};
-        auto ppli = shader::Pipeline{"trace.integrate", {&global, &argi}};
-        auto pplp = shader::Pipeline{"trace.postprocess", {&global, &argp}};
-
-        auto& vec = stl::vector<muldim::Grid>::instance();
-        auto grid = opaque::Grid{{
-            .type = Queue::Type::transfer,
-            .state = opaque::Grid::State::readonly,
-            .grid = vec[0],
-        }};
     }
 }

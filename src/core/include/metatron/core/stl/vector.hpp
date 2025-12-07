@@ -139,6 +139,16 @@ namespace mtt::stl {
         }
 
         template<typename T>
+        auto is(u32 i) const noexcept -> bool {
+            auto t = (i >> 24) & 0xff;
+            auto idx = (i & 0xffffff);
+            return true
+            && map.contains(typeid(T))
+            && t == map.at(typeid(T))
+            && idx < storage[t].size();
+        }
+
+        template<typename T>
         auto addr() const noexcept -> uptr { return uptr(buf[map.at(typeid(T))].ptr); }
         template<typename T>
         auto data() const noexcept -> mut<T> { return (mut<T>)storage[map.at(typeid(T))].data(); }
@@ -172,20 +182,22 @@ namespace mtt {
         tag(): idx(math::maxv<u32>) {};
         tag(u32 idx): idx(idx) {}
 
-        auto data() -> mut<T> { return vec::instance()[idx]; }
-        auto data() const -> view<T> { return vec::instance()[idx]; }
+        auto type() noexcept -> u32 { return (idx >> 24) & 0xff; };
+        auto index() noexcept -> u32 { return idx & 0xffffff; };
+        auto data() noexcept -> mut<T> { return vec::instance()[idx]; }
+        auto data() const noexcept -> view<T> { return vec::instance()[idx]; }
 
-        auto operator->() -> mut<T> { return data(); }
-        auto operator->() const -> view<T> { return data(); }
-        auto operator*() -> ref<T> requires(!pro::facade<T>) { return *data(); }
-        auto operator*() const -> cref<T> requires(!pro::facade<T>) { return *data(); }
-        auto operator*() const -> obj<T>
+        auto operator->() noexcept -> mut<T> { return data(); }
+        auto operator->() const noexcept -> view<T> { return data(); }
+        auto operator*() noexcept -> ref<T> requires(!pro::facade<T>) { return *data(); }
+        auto operator*() const noexcept -> cref<T> requires(!pro::facade<T>) { return *data(); }
+        auto operator*() const noexcept -> obj<T>
         requires(pro::facade<T> && T::copyability != pro::constraint_level::none) {
             return vec::instance()(idx);
          }
 
-        explicit operator u32() const { return idx; }
-        operator bool() const { return idx != math::maxv<u32>; }
+        explicit operator u32() const noexcept { return idx; }
+        operator bool() const noexcept { return idx != math::maxv<u32>; }
 
     private:
         u32 idx;
