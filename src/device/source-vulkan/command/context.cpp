@@ -1,4 +1,5 @@
 #include "context.hpp"
+#include "recorder.hpp"
 #include "../shader/argument.hpp"
 #include "../shader/pipeline.hpp"
 #include <metatron/device/command/context.hpp>
@@ -54,6 +55,7 @@ namespace mtt::command {
         auto chain = vk::StructureChain<
             vk::PhysicalDeviceFeatures2,
             vk::PhysicalDeviceTimelineSemaphoreFeatures,
+            vk::PhysicalDeviceSynchronization2Features,
             vk::PhysicalDeviceBufferDeviceAddressFeatures,
             vk::PhysicalDeviceDescriptorBufferFeaturesEXT,
             vk::PhysicalDeviceDescriptorIndexingFeatures,
@@ -65,6 +67,8 @@ namespace mtt::command {
         features.features.shaderInt64 = true;
         auto& timeline = chain.get<vk::PhysicalDeviceTimelineSemaphoreFeatures>();
         timeline.timelineSemaphore = true;
+        auto& sync = chain.get<vk::PhysicalDeviceSynchronization2Features>();
+        sync.synchronization2 = true;
         auto& address = chain.get<vk::PhysicalDeviceBufferDeviceAddressFeatures>();
         address.bufferDeviceAddress = true;
         auto& buffer = chain.get<vk::PhysicalDeviceDescriptorBufferFeaturesEXT>();
@@ -92,10 +96,12 @@ namespace mtt::command {
             },
             std::vector<view<char>>{
                 "VK_KHR_buffer_device_address",
+                "VK_KHR_synchronization2",
             },
-            std::vector<view<char>>{},
             std::vector<view<char>>{
-                "VK_EXT_external_memory_host",
+                "VK_KHR_maintenance5",
+            },
+            std::vector<view<char>>{
                 "VK_EXT_descriptor_indexing",
                 "VK_EXT_descriptor_buffer",
                 "VK_KHR_deferred_host_operations",
@@ -155,9 +161,8 @@ namespace mtt::command {
                 candidate.result == vk::Result::eSuccess
             ) {
                 device = std::move(candidate.value);
-                render_queue.family = render_family;
-                transfer_queue.family = transfer_family;
-                init_queue();
+                render_queue = render_family;
+                transfer_queue = transfer_family;
 
                 auto props = vk::StructureChain<
                     vk::PhysicalDeviceProperties2,
@@ -172,30 +177,6 @@ namespace mtt::command {
 
         if (!device) stl::abort("no vulkan device meets requirements");
         VULKAN_HPP_DEFAULT_DISPATCHER.init(instance.get(), device.get());
-    }
-
-    auto Context::Impl::init_queue() noexcept -> void {
-        auto init_queue = [this](ref<Queue> queue) {
-            queue.queue = device->getQueue2({
-                .queueFamilyIndex = queue.family,
-                .queueIndex = 0,
-            });
-            queue.pool = guard(device->createCommandPoolUnique({
-                .queueFamilyIndex = queue.family,
-            }));
-
-            auto timeline_info = vk::StructureChain<
-                vk::SemaphoreCreateInfo,
-                vk::SemaphoreTypeCreateInfo
-            >{};
-            timeline_info.get<vk::SemaphoreTypeCreateInfo>() = {
-                .semaphoreType = vk::SemaphoreType::eTimeline,
-                .initialValue = 0ull,
-            };
-            queue.timeline = guard(device->createSemaphoreUnique(timeline_info.get()));
-        };
-        init_queue(render_queue);
-        init_queue(transfer_queue);
     }
 
     auto Context::Impl::init_memory() noexcept -> void {
@@ -224,12 +205,12 @@ namespace mtt::command {
                 && type.propertyFlags & flags) t = i;
             };
             init_type(device_type, device_heap, vk::MemoryPropertyFlagBits::eDeviceLocal);
-            init_type(host_type, host_heap, vk::MemoryPropertyFlagBits::eHostVisible);
+            init_type(host_type, host_heap, vk::MemoryPropertyFlagBits::eHostCoherent);
         }
         if (device_type == math::maxv<u32> || host_type == math::maxv<u32>)
             stl::abort("no vulkan local or visible memory type");
-        device_memory.type = device_type;
-        host_memory.type = host_type;
+        device_memory = device_type;
+        host_memory = host_type;
     }
 
     auto Context::Impl::init_pipeline_cache() noexcept -> void {
@@ -244,10 +225,13 @@ namespace mtt::command {
 
     auto Context::init() noexcept -> void {
         Context::instance();
+        Recorder::Impl::init();
+        auto render = Recorder{Queue::Type::render};
+        auto transfer = Recorder{Queue::Type::transfer};
         auto global = shader::Argument{"trace.global"};
-        auto argi = shader::Argument{"trace.integrate.in"};
-        auto argp = shader::Argument{"trace.postprocess.in"};
-        auto ppli = shader::Pipeline{"trace.integrate", {&global, &argi}};
-        auto pplp = shader::Pipeline{"trace.postprocess", {&global, &argp}};
+        // auto argi = shader::Argument{"trace.integrate.in"};
+        // auto argp = shader::Argument{"trace.postprocess.in"};
+        // auto ppli = shader::Pipeline{"trace.integrate", {&global, &argi}};
+        // auto pplp = shader::Pipeline{"trace.postprocess", {&global, &argp}};
     }
 }

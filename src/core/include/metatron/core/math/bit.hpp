@@ -18,4 +18,9 @@ namespace mtt::math {
             return (n0 << 32) | n1;
         }
     }
+
+    auto inline align(usize size, usize alignment) noexcept -> usize {
+        if (!std::has_single_bit(alignment)) return 0;
+        return (size + alignment - 1) & ~(alignment - 1);
+    }
 }

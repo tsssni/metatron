@@ -10,8 +10,8 @@ namespace mtt::remote {
         bool local{false};
         bool created{false};
 
-        Impl(cref<wired::Address> address, std::string_view name) noexcept
-        : socket(address), name(name), local(address.host.empty()) {}
+        Impl(cref<wired::Address> address, std::string_view name) noexcept:
+        socket(address), name(name), local(address.host.empty()) {}
 
         auto create(cref<muldim::Image> image) noexcept -> void {
             if (created || local) return;
@@ -48,8 +48,8 @@ namespace mtt::remote {
         }
     };
 
-    Previewer::Previewer(cref<wired::Address> address, std::string_view name) noexcept
-    : stl::capsule<Previewer>(address, name) {}
+    Previewer::Previewer(cref<wired::Address> address, std::string_view name) noexcept:
+    stl::capsule<Previewer>(address, name) {}
 
     auto Previewer::update(cref<muldim::Image> image) noexcept -> void {
         impl->update(image);

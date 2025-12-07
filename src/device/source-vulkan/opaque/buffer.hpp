@@ -4,14 +4,10 @@
 
 namespace mtt::opaque {
     struct Buffer::Impl final {
-        vk::UniqueBuffer buffer;
-        vk::DeviceAddress address;
-        Impl() noexcept = default;
-        Impl(ref<stl::buf> buffer) noexcept;
-        Impl(cref<stl::buf> buffer) noexcept;
-
-    private:
-        vk::UniqueBuffer staging;
+        vk::MemoryAllocateFlags static flags;
+        vk::BufferUsageFlags2 static usages;
+        vk::UniqueBuffer device_buffer;
+        vk::UniqueBuffer host_buffer;
         vk::UniqueDeviceMemory device_memory;
         vk::UniqueDeviceMemory host_memory;
     };

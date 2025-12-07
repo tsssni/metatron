@@ -20,7 +20,7 @@ namespace mtt::sampler {
         auto size = 0uz;
         f.read(mut<char>(&size), sizeof(size));
         sobol_matrices = size;
-        f.read(mut<char>(sobol_matrices.host), sobol_matrices.bytelen);
+        f.read(mut<char>(sobol_matrices.ptr), sobol_matrices.bytelen);
         f.close();
     }
 

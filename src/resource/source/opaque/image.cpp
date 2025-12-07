@@ -16,8 +16,8 @@ namespace mtt::muldim {
         else return 1.055f * std::pow(x, 1.f / 2.4f) - 0.055f;
     }
 
-    Image::Pixel::Pixel(view<Image> image, mut<byte> start) noexcept
-    : image(image), start(start) {}
+    Image::Pixel::Pixel(view<Image> image, mut<byte> start) noexcept:
+    image(image), start(start) {}
 
     Image::Pixel::operator fv4() const noexcept {
         auto pixel = fv4{};

@@ -68,8 +68,8 @@ namespace mtt::wired {
         }
     };
 
-    Tcp_Socket::Tcp_Socket(cref<Address> address) noexcept
-    : stl::capsule<Tcp_Socket>(address) {}
+    Tcp_Socket::Tcp_Socket(cref<Address> address) noexcept:
+    stl::capsule<Tcp_Socket>(address) {}
 
     auto Tcp_Socket::send(std::span<byte const> data) noexcept -> bool {
         return impl->send(data);

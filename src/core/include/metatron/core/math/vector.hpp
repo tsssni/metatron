@@ -8,8 +8,8 @@ namespace mtt::math {
     using Vector = Matrix<T, size>;
 
     template<typename Func, typename... Ts, usize size>
-    auto constexpr foreach(Func f, cref<Vector<Ts, size>>... vectors)
-    noexcept -> Vector<decltype(f(vectors[0]..., 0uz)), size> {
+    auto constexpr foreach(Func f, cref<Vector<Ts, size>>... vectors) noexcept
+    -> Vector<decltype(f(vectors[0]..., 0uz)), size> {
         using Return_Type = decltype(f(vectors[0]..., 0uz));
         auto r = Vector<Return_Type, size>{};
         for (auto i = 0uz; i < size; ++i)

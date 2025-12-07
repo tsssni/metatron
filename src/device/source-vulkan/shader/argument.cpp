@@ -1,9 +1,9 @@
 #include "argument.hpp"
 #include <metatron/device/shader/layout.hpp>
+#include <metatron/core/math/bit.hpp>
 
 namespace mtt::shader {
-    Argument::Impl::Impl(std::string_view name) noexcept {
-        auto reflection = shader::Set{};
+    Argument::Argument(std::string_view name) noexcept {
         auto path = (stl::path{"shader"} / name).concat(".json");
         stl::json::load(stl::filesystem::find(path), reflection);
 
@@ -11,21 +11,28 @@ namespace mtt::shader {
         for (auto i = 0u; i < reflection.size(); ++i) {
             using Type = Descriptor::Type;
             using Access = Descriptor::Access;
-            using Vype = vk::DescriptorType;
-            auto constexpr types = std::to_array<vk::DescriptorType>({
-                Vype::eUniformBuffer,
-                Vype::eSampler,
-                Vype::eSampledImage,
-                Vype::eSampledImage,
-                Vype::eAccelerationStructureKHR,
+            using Binding = vk::DescriptorType;
+            auto constexpr types = std::to_array<Binding>({
+                Binding::eUniformBuffer,
+                Binding::eSampler,
+                Binding::eSampledImage,
+                Binding::eSampledImage,
+                Binding::eAccelerationStructureKHR,
             });
 
             auto& desc = reflection[i];
             auto type = types[i32(desc.type)];
-            if (type == Vype::eUniformBuffer)
-                constants.resize(desc.size); // compiler ensures only one uniform buffer
-            else if (type == Vype::eSampledImage && desc.access != Access::readonly)
-                type = Vype::eStorageImage;
+            // compiler ensures only one uniform buffer
+            if (desc.type == Type::parameter)
+                uniform = make_obj<opaque::Buffer>(opaque::Buffer::Descriptor{
+                    .type = command::Queue::Type::transfer,
+                    .state = opaque::Buffer::State::writable,
+                    .size = math::align(desc.size, 256),
+                    .flags = u64(vk::BufferUsageFlagBits2::eUniformBuffer),
+                });
+            if (type == Binding::eSampledImage && desc.access != Access::readonly)
+                type = Binding::eStorageImage;
+
             auto count = desc.size < 0 ? 65536u : math::max(1, desc.size);
             bindings.push_back(vk::DescriptorSetLayoutBinding{
                 .binding = i,
@@ -35,25 +42,24 @@ namespace mtt::shader {
             });
         }
 
-        auto device = command::Context::instance().impl->device.get();
-        layout = command::guard(device.createDescriptorSetLayoutUnique({
+        auto& ctx = command::Context::instance().impl;
+        auto device = ctx->device.get();
+        impl->layout = command::guard(device.createDescriptorSetLayoutUnique({
             .flags = vk::DescriptorSetLayoutCreateFlagBits::eDescriptorBufferEXT,
             .bindingCount = u32(bindings.size()),
             .pBindings = bindings.data(),
         }));
 
-        auto size = vk::DeviceSize{};
-        device.getDescriptorSetLayoutSizeEXT(layout.get(), &size);
-        set = make_obj<opaque::Buffer>(stl::buf{
-            .bytelen = u32(size),
+        auto& props = ctx->descriptor_buffer_props;
+        auto size = usize{};
+        device.getDescriptorSetLayoutSizeEXT(impl->layout.get(), &size);
+        set = make_obj<opaque::Buffer>(opaque::Buffer::Descriptor{
+            .type = command::Queue::Type::transfer,
+            .state = opaque::Buffer::State::writable,
+            .size = size,
             .flags = 0
-            | u32(vk::BufferUsageFlagBits::eSamplerDescriptorBufferEXT)
-            | u32(vk::BufferUsageFlagBits::eResourceDescriptorBufferEXT),
-            .visible = 0
+            | u64(vk::BufferUsageFlagBits2::eSamplerDescriptorBufferEXT)
+            | u64(vk::BufferUsageFlagBits2::eResourceDescriptorBufferEXT),
         });
-        buffer.resize(size);
     }
-
-    Argument::Argument(std::string_view path) noexcept:
-    stl::capsule<Argument>(path) {}
 }

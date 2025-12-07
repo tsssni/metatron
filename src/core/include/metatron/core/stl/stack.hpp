@@ -5,34 +5,48 @@
 #include <cstring>
 #include <vector>
 #include <mutex>
+#include <functional>
 
 namespace mtt::stl {
     struct buf {
-        mut<byte> host = nullptr;
-        uptr device = 0ull;
+        mut<byte> ptr = nullptr;
         u32 bytelen = 0u;
         u32 idx = math::maxv<u32>;
-        u32 flags = 0u;
-        u32 visible = 0u;
+
+        auto reset() noexcept -> void {
+            ptr = nullptr;
+            bytelen = 0;
+            idx = math::maxv<u32>;
+        }
     };
 
     struct stack final: singleton<stack> {
         std::vector<mut<buf>> bufs;
+        std::vector<std::function<void()>> deleters;
         std::mutex mutex;
 
-        auto push(mut<buf> buf) noexcept {
+        auto push(mut<buf> buf, std::function<void()> deleter) noexcept -> void {
             auto lock = std::lock_guard{mutex};
             buf->idx = bufs.size();
-            bufs.push_back(buf);
             if (bufs.size() >= math::maxv<u32>)
                 stl::abort("stack overflow");
+            bufs.push_back(buf);
+            deleters.push_back(deleter);
         }
 
         auto swap(mut<buf> buf) noexcept -> void {
-            auto bid = buf->idx;
-            if (bid == math::maxv<u32>) return;
+            if (buf->idx == math::maxv<u32>) return;
             auto lock = std::lock_guard{mutex};
-            bufs[bid] = buf;
+            if (bufs[buf->idx] == buf) return;
+            bufs[buf->idx] = buf;
+        }
+
+        auto pop(mut<buf> buf) noexcept -> void {
+            if (buf->idx == math::maxv<u32>) return;
+            auto idx = buf->idx;
+            auto lock = std::lock_guard{mutex};
+            if (bufs[idx] == buf)
+                deleters[buf->idx]();
         }
     };
 }
@@ -41,15 +55,15 @@ namespace mtt {
     template<typename T>
     struct buf final: stl::buf {
         buf() noexcept: stl::buf() {}
-        ~buf() noexcept { free(); }
+        ~buf() noexcept { release(); }
         buf(cref<buf> rhs) noexcept { *this = rhs; };
         buf(rref<buf> rhs) noexcept { *this = std::move(rhs); }
 
         operator std::span<T>() noexcept { return {data(), size()}; }
         operator std::span<T const>() const noexcept { return {data(), size()}; }
         auto operator=(cref<buf> rhs) noexcept -> ref<buf> {
-            free();
-            host = rhs.host;
+            release();
+            ptr = rhs.ptr;
             bytelen = rhs.bytelen;
             idx = math::maxv<u32>;
             return *this;
@@ -63,20 +77,21 @@ namespace mtt {
 
         buf(usize size) noexcept {
             bytelen = size * sizeof(T);
-            host = mut<byte>(std::malloc(bytelen));
-            if (!host) stl::abort("allocate {} bytes failed", bytelen);
+            ptr = mut<byte>(std::malloc(bytelen));
+            if (!ptr) stl::abort("allocate {} bytes failed", bytelen);
             if constexpr (!std::is_trivially_constructible_v<T>)
                 std::uninitialized_default_construct_n(data(), size);
-            stl::stack::instance().push(this);
+            stl::stack::instance().push(this, [this]() { release(); });
         }
+
         template<typename U>
         requires std::is_same_v<T, std::remove_const_t<U>>
         buf(std::span<U> range) noexcept: buf(range.size()) {
             std::memcpy(data(), range.data(), bytelen);
         }
 
-        auto data() noexcept -> mut<T> { return mut<T>(host); }
-        auto data() const noexcept -> view<T> { return view<T>(host); }
+        auto data() noexcept -> mut<T> { return mut<T>(ptr); }
+        auto data() const noexcept -> view<T> { return view<T>(ptr); }
         auto size() const noexcept -> usize { return bytelen / sizeof(T); }
         auto empty() const noexcept -> bool { return bytelen == 0; }
         auto operator[](usize i) noexcept -> ref<T> { return data()[i]; }
@@ -84,19 +99,17 @@ namespace mtt {
 
         auto subbuf(usize i, usize size) noexcept -> buf<T> {
             auto b = buf<T>{};
-            b.host = host + i * sizeof(T);
+            b.ptr = ptr + i * sizeof(T);
             b.bytelen = size * sizeof(T);
             return b;
         }
 
-    private:
-        auto reset() noexcept -> void { host = nullptr; bytelen = 0; idx = math::maxv<u32>; }
-        auto free() noexcept -> void {
-            if (idx != math::maxv<u32> && host) {
-                if constexpr (!std::is_trivially_constructible_v<T>)
-                    std::destroy_n(data(), bytelen / sizeof(T));
-                std::free(host);
-            }
+        auto release() noexcept -> void {
+            if (idx == math::maxv<u32> || !ptr) return;
+            if constexpr (!std::is_trivially_constructible_v<T>)
+                std::destroy_n(data(), bytelen / sizeof(T));
+            std::free(ptr);
+            reset();
         }
     };
 }

@@ -390,14 +390,14 @@ namespace mtt::math {
     }
 
     template<usize idx, typename T, usize first_dim, usize... rest_dims>
-    auto constexpr get(cref<Matrix<T, first_dim, rest_dims...>> m) 
-    noexcept -> cref<typename Matrix<T, first_dim, rest_dims...>::Element> {
+    auto constexpr get(cref<Matrix<T, first_dim, rest_dims...>> m) noexcept
+    -> cref<typename Matrix<T, first_dim, rest_dims...>::Element> {
         return m.template get<idx>();
     }
 
     template<usize idx, typename T, usize first_dim, usize... rest_dims>
-    auto constexpr get(ref<Matrix<T, first_dim, rest_dims...>> m) 
-        noexcept -> ref<typename Matrix<T, first_dim, rest_dims...>::Element> {
+    auto constexpr get(ref<Matrix<T, first_dim, rest_dims...>> m) noexcept
+    -> ref<typename Matrix<T, first_dim, rest_dims...>::Element> {
         return m.template get<idx>();
     }
 
@@ -551,8 +551,8 @@ namespace mtt::math {
 
 namespace std {
     template<typename T, mtt::usize first_dim, mtt::usize... rest_dims>
-    struct tuple_size<mtt::math::Matrix<T, first_dim, rest_dims...>> 
-        : std::integral_constant<size_t, first_dim> {};
+    struct tuple_size<mtt::math::Matrix<T, first_dim, rest_dims...>>:
+    std::integral_constant<size_t, first_dim> {};
 
     template<mtt::usize I, typename T, mtt::usize first_dim, mtt::usize... rest_dims>
     struct tuple_element<I, mtt::math::Matrix<T, first_dim, rest_dims...>> {

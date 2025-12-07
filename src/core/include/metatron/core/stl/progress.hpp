@@ -5,8 +5,8 @@
 
 namespace mtt::stl {
     struct progress final {
-        progress(usize total) noexcept
-        : total(total) {
+        progress(usize total) noexcept:
+        total(total) {
             start_time = std::chrono::system_clock::now();
         }
 

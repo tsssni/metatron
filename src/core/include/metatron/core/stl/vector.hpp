@@ -13,9 +13,12 @@ namespace mtt::stl {
         vector() noexcept: mutex(make_obj<std::mutex>()) {}
 
         auto pack() noexcept -> void {
-            buf.host = storage.data();
+            buf.ptr = storage.data();
             buf.bytelen = storage.size() * sizeof(T);
-            stl::stack::instance().push(&buf);
+            stl::stack::instance().push(&buf, [this] {
+                storage.clear();
+                buf.reset();
+            });
         }
 
         template<typename... Args>
@@ -30,7 +33,7 @@ namespace mtt::stl {
 
         auto operator[](u32 i) noexcept -> mut<T> { return &storage[i]; }
         auto operator[](u32 i) const noexcept -> view<T> { return &storage[i]; }
-        auto addr() const noexcept -> uptr { return buf.device; }
+        auto addr() const noexcept -> uptr { return uptr(buf.ptr); }
         auto data() const noexcept -> mut<T> { return storage.data(); }
         auto size() const noexcept -> usize { return storage.size(); }
         auto empty() const noexcept -> usize { return storage.empty(); }
@@ -53,10 +56,12 @@ namespace mtt::stl {
 
         auto pack() noexcept -> void {
             for (auto i = 0; i < i32(buf.size()); ++i) {
-                auto& b = buf[i];
-                b.host = storage[i].data();
-                b.bytelen = storage[i].size();
-                stl::stack::instance().push(&b);
+                buf[i].ptr = storage[i].data();
+                buf[i].bytelen = storage[i].size();
+                stl::stack::instance().push(&buf[i], [this, i] {
+                    storage[i].clear();
+                    buf[i].reset();
+                });
             }
         }
 
@@ -134,7 +139,7 @@ namespace mtt::stl {
         }
 
         template<typename T>
-        auto addr() const noexcept -> uptr { return buf[map.at(typeid(T))].device; }
+        auto addr() const noexcept -> uptr { return uptr(buf[map.at(typeid(T))].ptr); }
         template<typename T>
         auto data() const noexcept -> mut<T> { return (mut<T>)storage[map.at(typeid(T))].data(); }
         template<typename T>

@@ -1,8 +1,8 @@
 #include <metatron/resource/texture/checkerboard.hpp>
 
 namespace mtt::texture {
-    Checkerboard_Texture::Checkerboard_Texture(cref<Descriptor> desc) noexcept
-    : x(desc.x), y(desc.y), uv_scale(desc.uv_scale) {
+    Checkerboard_Texture::Checkerboard_Texture(cref<Descriptor> desc) noexcept:
+    x(desc.x), y(desc.y), uv_scale(desc.uv_scale) {
         auto CIE_Y = spectra::Spectrum::spectra["CIE-Y"];
         auto Y_x = CIE_Y | x;
         auto Y_y = CIE_Y | y;
