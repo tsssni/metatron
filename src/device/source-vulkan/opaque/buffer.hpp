@@ -10,5 +10,6 @@ namespace mtt::opaque {
         vk::UniqueBuffer host_buffer;
         vk::UniqueDeviceMemory device_memory;
         vk::UniqueDeviceMemory host_memory;
+        vk::AccessFlags2 access = vk::AccessFlagBits2::eNone;
     };
 }

@@ -1,7 +1,6 @@
 #pragma once
 #include <metatron/device/command/queue.hpp>
 #include <metatron/core/stl/capsule.hpp>
-#include <metatron/core/stl/stack.hpp>
 #include <metatron/core/math/vector.hpp>
 
 namespace mtt::opaque {
@@ -14,7 +13,7 @@ namespace mtt::opaque {
 
         command::Queue::Type type;
         State state;
-        u64 timestamp;
+        u64 timestamp = 0;
 
         mut<byte> ptr;
         uptr addr;

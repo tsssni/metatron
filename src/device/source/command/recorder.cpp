@@ -24,7 +24,7 @@ namespace mtt::command {
         } else if (true
         && buffer->state == opaque::Buffer::State::writable
         && buffer->dirty[1] > buffer->dirty[0]) {
-            auto static constexpr block_size = 1 << 24;
+            auto constexpr block_size = 1 << 24;
             if (next >= blocks.size() * block_size) {
                 auto desc = opaque::Buffer::Descriptor{
                     .type = type,

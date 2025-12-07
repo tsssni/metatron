@@ -8,7 +8,7 @@ namespace mtt::command {
             render,
             transfer,
         };
-        auto static constexpr num_types = u32(Type::transfer) + 1;
+        auto constexpr static num_types = u32(Type::transfer) + 1;
 
         std::atomic<u64> timestamp = 1;
         std::mutex mutex;

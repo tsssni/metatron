@@ -4,7 +4,7 @@
 
 namespace mtt::command {
     struct Retention final: stl::capsule<Retention> {
-        auto static constexpr num_recorder = 4;
+        auto constexpr static num_recorder = 4;
         std::array<std::vector<obj<opaque::Buffer>>, num_recorder> blocks;
         std::array<std::vector<obj<opaque::Buffer>>, num_recorder> update_buffers;
         std::array<std::vector<obj<opaque::Buffer>>, num_recorder> stage_buffers;

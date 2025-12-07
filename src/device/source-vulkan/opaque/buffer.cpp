@@ -25,7 +25,6 @@ namespace mtt::opaque {
         auto create = vk::BufferCreateInfo{
             .pNext = &usages,
             .size = desc.size,
-            .sharingMode = vk::SharingMode::eExclusive,
             .queueFamilyIndexCount = 1,
             .pQueueFamilyIndices = &queue.family,
         };

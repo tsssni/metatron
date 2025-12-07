@@ -66,7 +66,7 @@ namespace mtt::command {
 
         auto& ctx = Context::instance().impl;
         auto device = ctx->device.get();
-        auto static constexpr timeout = 1e9;
+        auto constexpr timeout = 1e9;
         guard(device.waitSemaphores({
             .semaphoreCount = 1,
             .pSemaphores = &impl->timeline,

@@ -1,23 +1,13 @@
 #pragma once
+#include <metatron/core/math/bit.hpp>
+#include <metatron/core/math/arithmetic.hpp>
 
 namespace mtt::stl {
-    namespace details {
-        template<usize idx, typename... Ts>
-        struct type_impl;
-
-        template<typename T, typename... Ts>
-        struct type_impl<0, T, Ts...> {
-            using type = T;
-        };
-
-        template<usize idx, typename T, typename... Ts>
-        struct type_impl<idx, T, Ts...> {
-            using type = typename type_impl<idx - 1, Ts...>::type;
-        };
-    }
-
     template<typename... Ts>
     struct array final {
+        template<usize idx>
+        using type = std::tuple_element_t<idx, std::tuple<Ts...>>;
+
         template<typename T>
         auto constexpr static contains = (std::is_same_v<T, Ts> || ...);
 
@@ -28,7 +18,25 @@ namespace mtt::stl {
             return idx;
         }();
 
-        template<usize idx>
-        using type = typename details::type_impl<idx, Ts...>::type;
+        // assure aggregate layout
+        template<typename T>
+        auto constexpr static offset = [] -> usize {
+            auto size = 0;
+            auto offset = 0;
+            auto idx = 0;
+            auto aligned = ((index<Ts> > index<T> ? false : ((
+                offset = math::align(size, alignof(Ts)),
+                size = offset + sizeof(Ts),
+            true))) && ...);
+            return offset;
+        }();
+
+        // assure aggregate layout
+        auto constexpr static size = [] -> usize {
+            using U = type<sizeof...(Ts) - 1>;
+            auto alignment = math::max(alignof(Ts)...);
+            auto size = offset<U> + sizeof(U);
+            return math::align(size, alignment);
+        }();
     };
 }
