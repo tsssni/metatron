@@ -22,7 +22,7 @@ namespace mtt::command {
             stage_buffers.push_back(buffer->upload());
             stage_dsts.push_back(buffer);
         } else if (true
-        && buffer->state == opaque::Buffer::State::writable
+        && buffer->state == opaque::Buffer::State::twin
         && buffer->dirty[1] > buffer->dirty[0]) {
             auto size = buffer->dirty[1] - buffer->dirty[0];
             auto [bid, offset] = allocate(size);
@@ -45,10 +45,30 @@ namespace mtt::command {
         image->timestamp = timestamp;
 
         if (true
-        && image->state == opaque::Image::State::sampled
+        && image->state == opaque::Image::State::samplable
         && !image->host.empty()) {
             image_buffers.push_back(std::move(image->host));
             image_dsts.push_back(image);
+        }
+    }
+
+    auto Recorder::bind(mut<opaque::Grid> grid) noexcept -> void {
+        auto& retention = Retentions::instance().retentions[u32(type)];
+        auto idx = timestamp % Retention::num_recorder;
+        auto& grid_buffers = retention.grid_buffers[idx];
+        auto& blocks = retention.blocks[idx];
+
+        if (grid->type != type) grid_transfers[u32(grid->type)].push_back(grid);
+        auto& wait = wait_timestamps[u32(grid->type)];
+        wait = std::max(wait, grid->timestamp);
+        grid->type = type;
+        grid->timestamp = timestamp;
+
+        if (true
+        && grid->state == opaque::Grid::State::readonly
+        && grid->host) {
+            grid_buffers.push_back(std::move(grid->host));
+            grid_dsts.push_back(grid);
         }
     }
 

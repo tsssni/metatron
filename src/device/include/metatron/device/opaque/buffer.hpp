@@ -8,7 +8,7 @@ namespace mtt::opaque {
         enum struct State {
             local,
             visible,
-            writable,
+            twin,
         };
 
         command::Queue::Type type;

@@ -26,7 +26,7 @@ namespace mtt::shader {
             if (desc.type == Type::parameter)
                 uniform = make_obj<opaque::Buffer>(opaque::Buffer::Descriptor{
                     .type = command::Queue::Type::transfer,
-                    .state = opaque::Buffer::State::writable,
+                    .state = opaque::Buffer::State::twin,
                     .size = math::align(desc.size, 256),
                     .flags = u64(vk::BufferUsageFlagBits2::eUniformBuffer),
                 });
@@ -55,7 +55,7 @@ namespace mtt::shader {
         device.getDescriptorSetLayoutSizeEXT(impl->layout.get(), &size);
         set = make_obj<opaque::Buffer>(opaque::Buffer::Descriptor{
             .type = command::Queue::Type::transfer,
-            .state = opaque::Buffer::State::writable,
+            .state = opaque::Buffer::State::twin,
             .size = size,
             .flags = 0
             | u64(vk::BufferUsageFlagBits2::eSamplerDescriptorBufferEXT)

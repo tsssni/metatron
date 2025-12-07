@@ -36,7 +36,7 @@ namespace mtt::opaque {
         width = desc.image->width;
         height = desc.image->height;
         mips = math::max(1uz, desc.image->pixels.size());
-        if (desc.state == State::sampled && !desc.image->pixels.empty()) {
+        if (desc.state == State::samplable && !desc.image->pixels.empty()) {
             for (auto i = 0; i < mips; ++i)
                 host.push_back(make_obj<Buffer>(Buffer::Descriptor{
                     .type = type,
@@ -52,8 +52,8 @@ namespace mtt::opaque {
         | vk::ImageUsageFlagBits::eTransferSrc
         | vk::ImageUsageFlagBits::eTransferDst;
         switch (state) {
-        case State::sampled: usages |= vk::ImageUsageFlagBits::eSampled; break;
-        case State::storage: usages |= vk::ImageUsageFlagBits::eStorage; break;
+        case State::samplable: usages |= vk::ImageUsageFlagBits::eSampled; break;
+        case State::storable: usages |= vk::ImageUsageFlagBits::eStorage; break;
         default: break;
         }
 

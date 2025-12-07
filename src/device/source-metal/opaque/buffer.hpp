@@ -2,6 +2,5 @@
 #include <metatron/device/opaque/buffer.hpp>
 
 namespace mtt::opaque {
-    struct Buffer::Impl final {
-    };
+    struct Buffer::Impl final {};
 }

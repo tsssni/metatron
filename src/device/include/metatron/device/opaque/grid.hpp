@@ -1,14 +1,14 @@
 #pragma once
 #include <metatron/device/opaque/buffer.hpp>
 #include <metatron/device/command/queue.hpp>
-#include <metatron/resource/muldim/image.hpp>
+#include <metatron/resource/muldim/grid.hpp>
 #include <metatron/core/stl/capsule.hpp>
 
 namespace mtt::opaque {
-    struct Image final: stl::capsule<Image> {
+    struct Grid final: stl::capsule<Grid> {
         enum struct State {
-            sampled,
-            storage,
+            readonly,
+            writable,
         };
 
         command::Queue::Type type;
@@ -17,16 +17,16 @@ namespace mtt::opaque {
 
         u32 width;
         u32 height;
-        u32 mips;
-        std::vector<obj<Buffer>> host;
+        u32 depth;
+        obj<Buffer> host;
 
         struct Descriptor final {
             command::Queue::Type type;
             State state;
-            mut<muldim::Image> image;
+            mut<muldim::Grid> grid;
         };
 
         struct Impl;
-        Image(cref<Descriptor> desc) noexcept;
+        Grid(cref<Descriptor> desc) noexcept;
     };
 }

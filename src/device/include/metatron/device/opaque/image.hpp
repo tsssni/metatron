@@ -7,8 +7,8 @@
 namespace mtt::opaque {
     struct Image final: stl::capsule<Image> {
         enum struct State {
-            sampled,
-            storage,
+            samplable,
+            storable,
         };
 
         command::Queue::Type type;
