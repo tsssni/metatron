@@ -211,7 +211,7 @@ namespace mtt::muldim {
             spec.format.size(),
         };
         img.pixels.resize(std::bit_width(math::max(img.width, img.height)));
-        img.pixels.front() = math::prod(img.size);
+        img.pixels.front().resize(math::prod(img.size));
 
         auto success = in->read_image(0, 0, 0, spec.nchannels, spec.format, img.pixels.front().data());
         if (!success) stl::abort("can not read image {}", path);
@@ -228,7 +228,7 @@ namespace mtt::muldim {
             };
             size[0] = math::max(1uz, size[0] >> 1uz);
             size[1] = math::max(1uz, size[1] >> 1uz);
-            img.pixels[mip] = math::prod(size) * channels * stride;
+            img.pixels[mip].resize(math::prod(size) * channels * stride);
 
             auto down = [fetch, mip, &img](cref<uzv2> px) mutable {
                 auto [i, j] = px;

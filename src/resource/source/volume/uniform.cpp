@@ -7,7 +7,7 @@ namespace mtt::volume {
     voxel_size((bbox.p_max - bbox.p_min) / dims) {
         auto grid = muldim::Grid{};
         grid.size = dims;
-        grid.cells = math::prod(dims);
+        grid.cells.resize(math::prod(dims));
 
         auto& vec = stl::vector<muldim::Grid>::instance();
         auto lock = vec.lock();

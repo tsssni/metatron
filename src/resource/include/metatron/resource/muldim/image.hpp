@@ -39,7 +39,7 @@ namespace mtt::muldim {
         bool linear;
         // specify mip size by resizing the vector.
         // if just fill mip 0 then mipmap auto generated.
-        std::vector<buf<byte>> pixels;
+        std::vector<std::vector<byte>> pixels;
 
         auto operator[](usize x, usize y, usize lod = 0) noexcept -> Pixel;
         auto operator[](usize x, usize y, usize lod = 0) const noexcept -> Pixel const;

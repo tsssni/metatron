@@ -12,7 +12,7 @@ namespace mtt::muldim {
             };
             uzv3 size;
         };
-        buf<f32> cells;
+        std::vector<f32> cells;
 
         auto operator[](usize x, usize y, usize z) noexcept -> f32&;
         auto operator[](usize x, usize y, usize z) const noexcept -> f32;
