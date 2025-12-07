@@ -1,6 +1,7 @@
 #pragma once
 #include <metatron/core/stl/capsule.hpp>
 #include <metatron/core/stl/singleton.hpp>
+#include <mutex>
 
 namespace mtt::command {
     struct Queue final: stl::capsule<Queue> {

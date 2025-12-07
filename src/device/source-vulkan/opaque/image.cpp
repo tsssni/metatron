@@ -30,11 +30,21 @@ namespace mtt::opaque {
         return vk::Format::eB8G8R8A8Unorm;
     }
 
-    Image::Image(muldim::Image&& image) noexcept {
-        width = image.width;
-        height = image.height;
-        mips = image.pixels.size();
-        host = std::move(image.pixels);
+    Image::Image(cref<Descriptor> desc) noexcept {
+        width = desc.image.width;
+        height = desc.image.height;
+        mips = desc.image.pixels.size();
+        host = std::move(desc.image.pixels);
+
+        auto format = impl->format(desc.image);
+        auto usages = vk::ImageUsageFlags{}
+        | vk::ImageUsageFlagBits::eTransferSrc
+        | vk::ImageUsageFlagBits::eTransferDst;
+        switch (desc.state) {
+        case State::sampled: usages |= vk::ImageUsageFlagBits::eSampled; break;
+        case State::storage: usages |= vk::ImageUsageFlagBits::eStorage; break;
+        default: break;
+        }
 
         auto type = command::Queue::Type::transfer;
         auto& ctx = command::Context::instance().impl;
@@ -42,10 +52,11 @@ namespace mtt::opaque {
         auto device = ctx->device.get();
         command::guard(device.createImageUnique({
             .imageType = vk::ImageType::e2D,
-            .format = impl->format(image),
+            .format = format,
             .extent = vk::Extent3D{width, height, 1},
             .mipLevels = mips,
             .arrayLayers = 1,
+            .usage = usages,
             .queueFamilyIndexCount = 1,
             .pQueueFamilyIndices = &queue.family,
         }));

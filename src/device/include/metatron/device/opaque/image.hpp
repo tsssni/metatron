@@ -5,6 +5,11 @@
 
 namespace mtt::opaque {
     struct Image final: stl::capsule<Image> {
+        enum struct State {
+            sampled,
+            storage,
+        };
+
         command::Queue::Type type;
         u64 timestamp = 0;
 
@@ -13,7 +18,12 @@ namespace mtt::opaque {
         u32 mips;
         std::vector<std::vector<byte>> host;
 
+        struct Descriptor final {
+            muldim::Image image;
+            State state;
+        };
+
         struct Impl;
-        Image(muldim::Image&& image) noexcept;
+        Image(cref<Descriptor> desc) noexcept;
     };
 }
