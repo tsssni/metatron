@@ -1,6 +1,6 @@
 #pragma once
 #include "context.hpp"
-#include <metatron/device/command/recorder.hpp>
+#include <metatron/device/command/queue.hpp>
 
 namespace mtt::command {
     struct Queue::Impl final {

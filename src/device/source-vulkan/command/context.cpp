@@ -234,9 +234,11 @@ namespace mtt::command {
         auto ppli = shader::Pipeline{"trace.integrate", {&global, &argi}};
         auto pplp = shader::Pipeline{"trace.postprocess", {&global, &argp}};
 
+        auto env = muldim::Image::from_path("texture/env.exr", false);
         auto image = opaque::Image{{
-            muldim::Image::from_path("texture/env.exr", false),
+            Queue::Type::transfer,
             opaque::Image::State::sampled,
+            &env,
         }};
     }
 }

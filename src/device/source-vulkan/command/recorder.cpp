@@ -57,6 +57,7 @@ namespace mtt::command {
         auto idx = timestamp % Retention::num_recorder;
         retention.update_buffers[idx].clear();
         retention.stage_buffers[idx].clear();
+        retention.image_buffers[idx].clear();
 
         impl->timestamp = timestamp;
         impl->queue = queue.impl->queue;

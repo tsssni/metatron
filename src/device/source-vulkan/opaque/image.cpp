@@ -30,23 +30,33 @@ namespace mtt::opaque {
         return vk::Format::eB8G8R8A8Unorm;
     }
 
-    Image::Image(cref<Descriptor> desc) noexcept {
-        width = desc.image.width;
-        height = desc.image.height;
-        mips = desc.image.pixels.size();
-        host = std::move(desc.image.pixels);
+    Image::Image(cref<Descriptor> desc) noexcept:
+    type(desc.type),
+    state(desc.state) {
+        width = desc.image->width;
+        height = desc.image->height;
+        mips = math::max(1uz, desc.image->pixels.size());
+        if (desc.state == State::sampled && !desc.image->pixels.empty()) {
+            for (auto i = 0; i < mips; ++i)
+                host.push_back(make_obj<Buffer>(Buffer::Descriptor{
+                    .type = type,
+                    .state = Buffer::State::visible,
+                    .ptr = desc.image->pixels[i].data(),
+                    .size = desc.image->pixels[i].size(),
+                }));
+            desc.image->pixels.clear();
+        }
 
-        auto format = impl->format(desc.image);
+        auto format = impl->format(*desc.image);
         auto usages = vk::ImageUsageFlags{}
         | vk::ImageUsageFlagBits::eTransferSrc
         | vk::ImageUsageFlagBits::eTransferDst;
-        switch (desc.state) {
+        switch (state) {
         case State::sampled: usages |= vk::ImageUsageFlagBits::eSampled; break;
         case State::storage: usages |= vk::ImageUsageFlagBits::eStorage; break;
         default: break;
         }
 
-        auto type = command::Queue::Type::transfer;
         auto& ctx = command::Context::instance().impl;
         auto& queue = command::Queues::instance().queues[u32(type)];
         auto device = ctx->device.get();
