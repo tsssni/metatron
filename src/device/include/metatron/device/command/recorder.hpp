@@ -1,6 +1,7 @@
 #pragma once
 #include <metatron/device/command/queue.hpp>
 #include <metatron/device/opaque/buffer.hpp>
+#include <metatron/device/opaque/image.hpp>
 
 namespace mtt::command {
     struct Retention final: stl::capsule<Retention> {

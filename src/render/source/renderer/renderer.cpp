@@ -24,7 +24,7 @@ namespace mtt::renderer {
             auto ct = *scene::fetch<math::Transform>("/hierarchy/camera/render"_et);
             auto spp = desc.film.spp;
             auto depth = desc.film.depth;
-            auto size = uzv2{desc.film.image->size};
+            auto size = uzv2{desc.film.image.size};
 
             auto range = uzv2{0uz, addr.host.empty() ? spp : 1uz};
             auto progress = stl::progress{math::prod(size) * spp};
@@ -54,7 +54,7 @@ namespace mtt::renderer {
                 }
             };
 
-            auto& film = *desc.film.image;
+            auto& film = desc.film.image;
             auto image = muldim::Image{.size = film.size, .linear = film.linear};
             image.pixels.emplace_back(film.pixels.front().size());
 

@@ -4,6 +4,8 @@
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::photo {
+    muldim::Image Film::image;
+
     Fixel::Fixel(
         mut<Film> film,
         cref<uzv2> pixel,
@@ -26,7 +28,7 @@ namespace mtt::photo {
             spectrum(film->b),
         };
         auto rgb = film->color_space->from_XYZ | xyz;
-        (*film->image)[pixel[0], pixel[1]] += {rgb * weight, weight};
+        film->image[pixel[0], pixel[1]] += {rgb * weight, weight};
     }
 
     Film::Film(cref<Descriptor> desc) noexcept:
@@ -41,15 +43,10 @@ namespace mtt::photo {
         else film_size[0] = film_size[1] * aspect_ratio;
         dxdy = desc.film_size / desc.image_size;
 
-        auto img = muldim::Image{};
-        img.size = {desc.image_size, 4, 4};
-        img.linear = true;
-        img.pixels.resize(1);
-        img.pixels.front().resize(math::prod(img.size));
-
-        auto& vec = stl::vector<muldim::Image>::instance();
-        auto lock = vec.lock();
-        image = vec.push_back(std::move(img));
+        image.size = {desc.image_size, 4, 4};
+        image.linear = true;
+        image.pixels.resize(1);
+        image.pixels.front().resize(math::prod(image.size));
     }
 
     auto Film::operator()(
@@ -59,7 +56,7 @@ namespace mtt::photo {
     ) noexcept -> Fixel {
         auto f_intr = *filter->sample(u);
         auto pixel_position = fv2{pixel} + 0.5f + f_intr.p;
-        auto uv = pixel_position / image->size;
+        auto uv = pixel_position / image.size;
         auto film_position = (uv - 0.5f) * fv2{-1.f, 1.f} * film_size;
 
         return {

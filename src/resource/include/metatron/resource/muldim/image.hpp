@@ -33,7 +33,7 @@ namespace mtt::muldim {
                 usize channels;
                 usize stride;
             };
-            uzv4 size;
+            uzv4 size{};
         };
         // only sRGB is supported by hardware so boolean value is enough.
         bool linear;

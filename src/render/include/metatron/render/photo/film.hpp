@@ -29,11 +29,15 @@ namespace mtt::photo {
     };
 
     struct Film final {
+        // opaque type are not allowed in shader struct,
+        // and film image is not included in bindless sampled images,
+        // so use static to make it external to film struct.
+        muldim::Image static image;
+
         usize spp;
         usize depth;
         fv2 film_size;
         fv2 dxdy;
-        tag<muldim::Image> image;
         tag<spectra::Color_Space> color_space;
 
         struct Descriptor final {

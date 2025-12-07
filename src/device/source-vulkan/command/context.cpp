@@ -229,9 +229,12 @@ namespace mtt::command {
         auto render = Recorder{Queue::Type::render};
         auto transfer = Recorder{Queue::Type::transfer};
         auto global = shader::Argument{"trace.global"};
-        // auto argi = shader::Argument{"trace.integrate.in"};
-        // auto argp = shader::Argument{"trace.postprocess.in"};
-        // auto ppli = shader::Pipeline{"trace.integrate", {&global, &argi}};
-        // auto pplp = shader::Pipeline{"trace.postprocess", {&global, &argp}};
+        auto argi = shader::Argument{"trace.integrate.in"};
+        auto argp = shader::Argument{"trace.postprocess.in"};
+        auto ppli = shader::Pipeline{"trace.integrate", {&global, &argi}};
+        auto pplp = shader::Pipeline{"trace.postprocess", {&global, &argp}};
+
+        auto env = muldim::Image::from_path("texture/env.exr", false);
+        auto image = opaque::Image{std::move(env)};
     }
 }
