@@ -1,9 +1,9 @@
-#include <metatron/device/command/recorder.hpp>
+#include <metatron/device/command/buffer.hpp>
 #include <metatron/core/math/bit.hpp>
 #include <metatron/core/stl/ranges.hpp>
 
 namespace mtt::command {
-    auto Recorder::bind(mut<opaque::Buffer> buffer) noexcept -> void {
+    auto Buffer::bind(mut<opaque::Buffer> buffer) noexcept -> void {
         auto& retention = Retentions::instance().retentions[u32(type)];
         auto idx = timestamp % Retention::num_recorder;
         auto& update_buffers = retention.update_buffers[idx];
@@ -32,7 +32,7 @@ namespace mtt::command {
         }
     }
 
-    auto Recorder::bind(mut<opaque::Image> image) noexcept -> void {
+    auto Buffer::bind(mut<opaque::Image> image) noexcept -> void {
         auto& retention = Retentions::instance().retentions[u32(type)];
         auto idx = timestamp % Retention::num_recorder;
         auto& image_buffers = retention.image_buffers[idx];
@@ -52,7 +52,7 @@ namespace mtt::command {
         }
     }
 
-    auto Recorder::bind(mut<opaque::Grid> grid) noexcept -> void {
+    auto Buffer::bind(mut<opaque::Grid> grid) noexcept -> void {
         auto& retention = Retentions::instance().retentions[u32(type)];
         auto idx = timestamp % Retention::num_recorder;
         auto& grid_buffers = retention.grid_buffers[idx];
@@ -72,7 +72,7 @@ namespace mtt::command {
         }
     }
 
-    auto Recorder::allocate(usize size) noexcept -> uzv2 {
+    auto Buffer::allocate(usize size) noexcept -> uzv2 {
         auto& retention = Retentions::instance().retentions[u32(type)];
         auto idx = timestamp % Retention::num_recorder;
         auto& blocks = retention.blocks[idx];

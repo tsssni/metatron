@@ -21,10 +21,8 @@ namespace mtt::opaque {
         command::Queue::Type type;
         u64 timestamp = 0;
 
-        obj<Buffer> instance_buffer;
-        std::vector<obj<Buffer>> primtive_buffers;
-        obj<Buffer> instance_scratch;
-        std::vector<obj<Buffer>> primitive_scratches;
+        std::vector<obj<Buffer>> buffers;
+        std::vector<obj<Buffer>> scratches;
 
         struct Descriptor final {
             command::Queue::Type type;

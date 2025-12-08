@@ -17,7 +17,6 @@ namespace mtt::stl {
             buf.bytelen = storage.size() * sizeof(T);
             stl::stack::instance().push(&buf, [this] {
                 storage.clear();
-                buf.reset();
             });
         }
 
@@ -60,7 +59,6 @@ namespace mtt::stl {
                 buf[i].bytelen = storage[i].size();
                 stl::stack::instance().push(&buf[i], [this, i] {
                     storage[i].clear();
-                    buf[i].reset();
                 });
             }
         }

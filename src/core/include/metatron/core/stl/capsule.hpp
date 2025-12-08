@@ -24,9 +24,10 @@ namespace mtt::stl {
                 *this = std::move(rhs);
             }
 
-            auto operator=(rref<Impl> rhs) noexcept {
+            auto operator=(rref<Impl> rhs) noexcept -> Impl& {
                 if (impl) deleter(impl);
                 impl = rhs.impl;
+                deleter = std::move(rhs.deleter);
                 rhs.impl = nullptr;
                 return *this;
             }

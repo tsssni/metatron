@@ -30,14 +30,14 @@ namespace mtt::command {
         ~Retentions() noexcept;
     };
 
-    struct Recorder final: stl::capsule<Recorder> {
+    struct Buffer final: stl::capsule<Buffer> {
         Queue::Type type;
         u64 timestamp;
         uptr next = 0;
 
         struct Impl;
-        Recorder(Queue::Type type) noexcept;
-        ~Recorder() noexcept;
+        Buffer(Queue::Type type) noexcept;
+        ~Buffer() noexcept;
 
         auto bind(mut<opaque::Buffer> buffer) noexcept -> void;
         auto bind(mut<opaque::Image> image) noexcept -> void;

@@ -10,13 +10,9 @@
 namespace mtt::stl {
     struct buf {
         mut<byte> ptr = nullptr;
-        union {
-            struct {
-                u32 bytelen = 0u;
-                u32 idx = math::maxv<u32>;
-            };
-            u64 handle; // store device object pointer
-        };
+        uptr handle = 0; // store device object pointer
+        u32 bytelen = 0;
+        u32 idx = math::maxv<u32>;
 
         auto reset() noexcept -> void {
             ptr = nullptr;
@@ -46,10 +42,9 @@ namespace mtt::stl {
             bufs[buf->idx] = buf;
         }
 
-        auto pop(mut<buf> buf) noexcept -> void {
+        auto release(mut<buf> buf) noexcept -> void {
             if (buf->idx == math::maxv<u32>) return;
             auto idx = buf->idx;
-            auto lock = std::lock_guard{mutex};
             if (bufs[idx] == buf)
                 deleters[buf->idx]();
         }
@@ -60,8 +55,8 @@ namespace mtt {
     template<typename T>
     struct buf final: stl::buf {
         buf() noexcept: stl::buf() {}
-        ~buf() noexcept { release(); }
-        buf(cref<buf> rhs) noexcept { *this = rhs; };
+        ~buf() noexcept { release(); reset(); }
+        buf(cref<buf> rhs) noexcept { *this = rhs; }
         buf(rref<buf> rhs) noexcept { *this = std::move(rhs); }
 
         operator std::span<T>() noexcept { return {data(), size()}; }
@@ -102,7 +97,7 @@ namespace mtt {
         auto operator[](usize i) noexcept -> ref<T> { return data()[i]; }
         auto operator[](usize i) const noexcept -> cref<T> { return data()[i]; }
 
-        auto subbuf(usize i, usize size) noexcept -> buf<T> {
+        auto subbuf(usize i, usize size) const noexcept -> buf<T> {
             auto b = buf<T>{};
             b.ptr = ptr + i * sizeof(T);
             b.bytelen = size * sizeof(T);
@@ -114,7 +109,6 @@ namespace mtt {
             if constexpr (!std::is_trivially_constructible_v<T>)
                 std::destroy_n(data(), bytelen / sizeof(T));
             std::free(ptr);
-            reset();
         }
     };
 }

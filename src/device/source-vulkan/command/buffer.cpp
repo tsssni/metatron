@@ -1,4 +1,4 @@
-#include "recorder.hpp"
+#include "buffer.hpp"
 #include "queue.hpp"
 
 namespace mtt::command {
@@ -11,7 +11,7 @@ namespace mtt::command {
             guard(Queues::instance().queues[i].impl->queue.waitIdle());
     }
 
-    auto Recorder::Impl::init() noexcept -> void {
+    auto Buffer::Impl::init() noexcept -> void {
         auto& ctx = Context::instance().impl;
         auto device = ctx->device.get();
         auto init_queue = [&ctx, device](Queue::Type type) {
@@ -50,7 +50,7 @@ namespace mtt::command {
         init_queue(Queue::Type::transfer);
     }
 
-    Recorder::Recorder(Queue::Type type)noexcept: type(type) {
+    Buffer::Buffer(Queue::Type type)noexcept: type(type) {
         auto& queue = Queues::instance().queues[u32(type)];
         auto& retention = Retentions::instance().retentions[u32(type)];
         timestamp = queue.timestamp.fetch_add(1);
@@ -77,7 +77,7 @@ namespace mtt::command {
         guard(impl->buffer.begin(&begin));
     }
 
-    Recorder::~Recorder() noexcept {
+    Buffer::~Buffer() noexcept {
         auto idx = timestamp % Retention::num_recorder;
         auto& queue = Queues::instance().queues[u32(type)];
         auto& retention = Retentions::instance().retentions[u32(type)];

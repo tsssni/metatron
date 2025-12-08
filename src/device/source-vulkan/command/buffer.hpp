@@ -1,6 +1,6 @@
 #pragma once
 #include "context.hpp"
-#include <metatron/device/command/recorder.hpp>
+#include <metatron/device/command/buffer.hpp>
 
 namespace mtt::command {
     struct Retention::Impl final {
@@ -8,7 +8,7 @@ namespace mtt::command {
         std::array<vk::UniqueCommandBuffer, num_recorder> buffers;
     };
 
-    struct Recorder::Impl final {
+    struct Buffer::Impl final {
         vk::Queue queue;
         vk::Semaphore timeline;
         vk::CommandPool pool;

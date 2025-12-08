@@ -1,5 +1,5 @@
 #include "context.hpp"
-#include "recorder.hpp"
+#include "buffer.hpp"
 #include "../shader/argument.hpp"
 #include "../shader/pipeline.hpp"
 #include <metatron/device/command/context.hpp>
@@ -225,6 +225,6 @@ namespace mtt::command {
 
     auto Context::init() noexcept -> void {
         Context::instance();
-        Recorder::Impl::init();
+        Buffer::Impl::init();
     }
 }
