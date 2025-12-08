@@ -1,5 +1,6 @@
 #include <metatron/render/accel/lbvh.hpp>
 #include <metatron/render/scene/hierarchy.hpp>
+#include <metatron/render/scene/args.hpp>
 #include <metatron/core/math/encode.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <ranges>
@@ -16,6 +17,8 @@ namespace mtt::accel {
             u32 div_idx;
             u32 num_prims{0u};
         };
+        auto& args = scene::Args::instance();
+        if (args.device == "gpu") return;
 
         auto& divs = stl::vector<Divider>::instance();
         auto prims = std::vector<Primitive>{};

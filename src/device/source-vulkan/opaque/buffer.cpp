@@ -13,9 +13,10 @@ namespace mtt::opaque {
     size(desc.size),
     state(desc.state),
     type(desc.type) {
+        auto& ctx = command::Context::instance().impl;
+        auto& props = ctx->memory_props;
         if (desc.size == 0) stl::abort("empty buffer not supported");
 
-        auto& ctx = command::Context::instance().impl;
         auto device = ctx->device.get();
         auto& queue = command::Queues::instance().queues[u32(type)];
         auto flags = vk::MemoryAllocateFlagsInfo{.flags = Impl::flags,};
@@ -29,6 +30,13 @@ namespace mtt::opaque {
             .pQueueFamilyIndices = &queue.family,
         };
 
+        impl->device_buffer = command::guard(device.createBufferUnique(create));
+        if (desc.state != State::local)
+            impl->host_buffer = command::guard(device.createBufferUnique(create));
+        auto length = device.getBufferMemoryRequirements2({
+            .buffer = impl->device_buffer.get(),
+        }).memoryRequirements.size;
+
         auto infos = std::array<vk::BindBufferMemoryInfo, 2>{};
         auto& device_info = infos[0];
         auto& host_info = infos[1];
@@ -36,11 +44,10 @@ namespace mtt::opaque {
         if (desc.state != State::local) {
             auto alloc = vk::MemoryAllocateInfo{
                 .pNext = &flags,
-                .allocationSize = desc.size,
+                .allocationSize = length,
                 .memoryTypeIndex = ctx->host_memory,
             };
             impl->host_memory = command::guard(device.allocateMemoryUnique(alloc));
-            impl->host_buffer = command::guard(device.createBufferUnique(create));
             host_info = {
                 .buffer = impl->host_buffer.get(),
                 .memory = impl->host_memory.get(),
@@ -51,13 +58,11 @@ namespace mtt::opaque {
         if (desc.state != State::visible) {
             auto alloc = vk::MemoryAllocateInfo{
                 .pNext = flags,
-                .allocationSize = desc.size,
+                .allocationSize = length,
                 .memoryTypeIndex = ctx->device_memory,
             };
             impl->device_memory = command::guard(device.allocateMemoryUnique(alloc));
         }
-
-        impl->device_buffer = command::guard(device.createBufferUnique(create));
         device_info = {
             .buffer = impl->device_buffer.get(),
             .memory = desc.state == State::visible
@@ -85,10 +90,11 @@ namespace mtt::opaque {
         .ptr = buf->ptr,
         .size = buf->bytelen,
     }) {
+        idx = buf->idx;
         stl::stack::instance().release(buf);
         buf->ptr = mut<byte>(addr);
         buf->handle = uptr(this);
-        idx = buf->idx;
+        buf->idx = math::maxv<u32>;
     }
 
     Buffer::Buffer(rref<Buffer> rhs) noexcept {
@@ -108,7 +114,7 @@ namespace mtt::opaque {
     }
 
     Buffer::~Buffer() noexcept {
-        if (!ptr) return;
+        if (state != State::visible || !ptr) return;
         auto& ctx = command::Context::instance().impl;
         auto device = ctx->device.get();
         command::guard(device.unmapMemory2({.memory = impl->host_memory.get()}));

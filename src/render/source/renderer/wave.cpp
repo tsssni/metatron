@@ -6,6 +6,11 @@
 namespace mtt::renderer {
     auto Renderer::Impl::wave() noexcept -> void {
         command::Context::init();
+        auto& stack = stl::stack::instance();
+        auto shared_buffers = std::vector<obj<opaque::Buffer>>{};
+        for (auto i = 0; i < stack.bufs.size(); ++i)
+            if (stack.bufs[i]->idx == i)
+                shared_buffers.push_back(make_obj<opaque::Buffer>(stack.bufs[i]));
 
         auto& dividers = stl::vector<accel::Divider>::instance();
         auto& shapes = stl::vector<shape::Shape>::instance();
@@ -23,7 +28,7 @@ namespace mtt::renderer {
             primitives.push_back(blas);
         }
         auto accel = opaque::Acceleration{{
-            .type = command::Queue::Type::transfer,
+            .type = command::Queue::Type::render,
             .primitives = std::move(primitives),
             .instances = std::move(instances),
         }};

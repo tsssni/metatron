@@ -22,17 +22,18 @@ namespace mtt::stl {
     };
 
     struct stack final: singleton<stack> {
+        using deleter = std::function<auto (mut<buf>) -> void>;
         std::vector<mut<buf>> bufs;
-        std::vector<std::function<void()>> deleters;
+        std::vector<deleter> deleters;
         std::mutex mutex;
 
-        auto push(mut<buf> buf, std::function<void()> deleter) noexcept -> void {
+        auto push(mut<buf> buf, deleter f) noexcept -> void {
             auto lock = std::lock_guard{mutex};
             buf->idx = bufs.size();
             if (bufs.size() >= math::maxv<u32>)
                 stl::abort("stack overflow");
             bufs.push_back(buf);
-            deleters.push_back(deleter);
+            deleters.push_back(f);
         }
 
         auto swap(mut<buf> buf) noexcept -> void {
@@ -46,7 +47,7 @@ namespace mtt::stl {
             if (buf->idx == math::maxv<u32>) return;
             auto idx = buf->idx;
             if (bufs[idx] == buf)
-                deleters[buf->idx]();
+                deleters[buf->idx](buf);
         }
     };
 }
@@ -64,12 +65,14 @@ namespace mtt {
         auto operator=(cref<buf> rhs) noexcept -> ref<buf> {
             release();
             ptr = rhs.ptr;
+            handle = rhs.handle;
             bytelen = rhs.bytelen;
             idx = math::maxv<u32>;
             return *this;
         }
         auto operator=(rref<buf> rhs) noexcept -> ref<buf> {
             *this = rhs;
+            idx = rhs.idx;
             rhs.reset();
             stl::stack::instance().swap(this);
             return *this;
@@ -81,7 +84,9 @@ namespace mtt {
             if (!ptr) stl::abort("allocate {} bytes failed", bytelen);
             if constexpr (!std::is_trivially_constructible_v<T>)
                 std::uninitialized_default_construct_n(data(), size);
-            stl::stack::instance().push(this, [this]() { release(); });
+            stl::stack::instance().push(this, [this](auto* ptr) {
+                mut<buf>(ptr)->release();
+            });
         }
 
         template<typename U>

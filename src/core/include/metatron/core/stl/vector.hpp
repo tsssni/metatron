@@ -15,7 +15,7 @@ namespace mtt::stl {
         auto pack() noexcept -> void {
             buf.ptr = storage.data();
             buf.bytelen = storage.size() * sizeof(T);
-            stl::stack::instance().push(&buf, [this] {
+            stl::stack::instance().push(&buf, [this](auto) {
                 storage.clear();
             });
         }
@@ -57,7 +57,7 @@ namespace mtt::stl {
             for (auto i = 0; i < i32(buf.size()); ++i) {
                 buf[i].ptr = storage[i].data();
                 buf[i].bytelen = storage[i].size();
-                stl::stack::instance().push(&buf[i], [this, i] {
+                stl::stack::instance().push(&buf[i], [this, i](auto) {
                     storage[i].clear();
                 });
             }
