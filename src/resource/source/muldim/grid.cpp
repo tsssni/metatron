@@ -16,7 +16,7 @@ namespace mtt::muldim {
         auto base = math::clamp(math::floor(pixel - 0.5f), fv3{0.f}, fv3{size} - 2);
         auto frac = math::clamp(pixel - 0.5f - base, fv3{0.f}, fv3{1.f});
 
-        auto weights = std::array<std::function<auto(f32) -> f32>, 2>{
+        auto weights = std::array<std::function<f32(f32)>, 2>{
             [](f32 x) { return 1.f - x; },
             [](f32 x) { return x; },
         };

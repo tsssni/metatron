@@ -23,7 +23,6 @@ namespace mtt::texture {
         }
 
         auto& vec = stl::vector<muldim::Image>::instance();
-        auto lock = vec.lock();
         texture = vec.push_back(std::move(tex));
     }
 

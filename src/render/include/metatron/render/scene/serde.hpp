@@ -8,44 +8,28 @@
 
 namespace mtt::scene {
     template<typename F, typename T = F>
-    auto reserve(usize n) noexcept -> void {
-        if constexpr (pro::facade<F>) {
-            auto& vec = stl::vector<F>::instance();
-            vec.template reserve<T>(vec.template size<T>() + n);
-        } else {
-            auto& vec = stl::vector<T>::instance();
-            vec.reserve(vec.size() + n);
-        }
-    }
-
-    template<typename F, typename T = F>
     auto attach(cref<json> j, std::string_view type) noexcept -> bool {
         if (j.type != type) return false;
         auto d = T{};
         stl::json::load(j.serialized.str, d);
-        if constexpr (pro::facade<F>) {
-            auto lock = stl::vector<F>::instance().lock();
+        if constexpr (pro::facade<F>)
             attach<F, T>(j.entity, std::move(d));
-        } else {
-            auto lock = stl::vector<T>::instance().lock();
+        else
             attach<T>(j.entity, std::move(d));
-        }
         return true;
     }
 
     template<typename F, typename... Ts>
     auto constexpr deserialize(
         std::array<std::string, sizeof...(Ts) + 1>&& type,
-        std::function<auto () -> void> pre,
-        std::function<auto () -> void> post
+        std::function<void()> pre,
+        std::function<void()> post
     ) noexcept -> void {
         auto& vec = stl::vector<F>::instance();
         if constexpr (pro::facade<F>) (vec.template emplace_type<Ts>(), ...);
+        else (stl::vector<Ts>::instance(), ...);
         Hierarchy::instance().filter([type = std::move(type), pre, post](auto bins) {
             using ts = stl::array<F, Ts...>;
-            if constexpr (!pro::facade<F>)
-                reserve<F>(bins[type[ts::template index<F>]].size());
-            (reserve<F, Ts>(bins[type[ts::template index<Ts>]].size()), ...);
             pre();
 
             auto list = type
@@ -72,8 +56,8 @@ namespace mtt::scene {
     template<typename... Ts>
     auto constexpr deserialize(
         std::string_view text,
-        std::function<auto () -> void> pre = []{},
-        std::function<auto () -> void> post = []{}
+        std::function<void()> pre = []{},
+        std::function<void()> post = []{}
     ) noexcept -> void {
         auto i = 0;
         auto type = std::array<std::string, sizeof...(Ts)>{};

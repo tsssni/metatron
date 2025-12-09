@@ -50,7 +50,6 @@ namespace mtt::scene {
 
         auto size = lces.size() + laes.size();
         auto& tv = stl::vector<math::Transform>::instance();
-        tv.reserve(size);
 
         stl::scheduler::instance().sync_parallel(uzv1{size}, [&](auto idx) {
             auto [i] = idx;
@@ -58,8 +57,6 @@ namespace mtt::scene {
             auto t = i < lces.size()
             ? math::Transform{*fetch<Local_Transform>(e)}
             : math::Transform{*fetch<Look_At_Transform>(e)};
-
-            auto lock = tv.lock();
             attach<math::Transform>(e, std::move(t));
         });
     }

@@ -18,12 +18,7 @@ namespace mtt::scene {
         using namespace volume;
         using namespace media;
         MTT_DESERIALIZE(Volume, Uniform_Volume, Nanovdb_Volume);
-        MTT_DESERIALIZE_CALLBACK([]{
-            auto size = stl::vector<Volume>::instance().size<Uniform_Volume>();
-            auto cap = stl::vector<Medium>::instance().capacity<Heterogeneous_Medium>();
-            stl::vector<Volume>::instance().reserve<Uniform_Volume>(size + cap);
-        }, []{},
-        Medium, Homogeneous_Medium, Heterogeneous_Medium, Vaccum_Medium);
+        MTT_DESERIALIZE(Medium, Homogeneous_Medium, Heterogeneous_Medium, Vaccum_Medium);
         attach<Medium>("/medium/vaccum"_et, Vaccum_Medium{});
     }
 }

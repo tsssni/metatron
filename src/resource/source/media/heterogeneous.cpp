@@ -34,7 +34,6 @@ namespace mtt::media {
         );
 
         auto& vec = stl::vector<volume::Volume>::instance();
-        auto lock = vec.lock<volume::Uniform_Volume>();
         majorant = vec.push_back<volume::Uniform_Volume>(std::move(sigmaj));
     }
 

@@ -8,9 +8,7 @@ namespace mtt::volume {
         auto grid = muldim::Grid{};
         grid.size = dims;
         grid.cells.resize(math::prod(dims));
-
         auto& vec = stl::vector<muldim::Grid>::instance();
-        auto lock = vec.lock();
         storage = vec.push_back(std::move(grid));
     }
 

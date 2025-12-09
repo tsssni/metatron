@@ -19,16 +19,27 @@ namespace mtt::scene {
         auto children(Entity entity) const noexcept -> std::span<Entity const>;
 
         using binmap = std::unordered_map<std::string, std::vector<json>>;
-        using filter_function = std::function<auto (cref<binmap>) -> void>;
+        using filter_function = std::function<void(cref<binmap>)>;
         auto filter(filter_function f) noexcept -> void;
         auto populate(cref<stl::path> path) noexcept -> void;
     };
 
+    template<typename T>
+    auto lock() noexcept -> std::unique_lock<std::mutex> {
+        auto static mutex = std::mutex{};
+        return std::unique_lock{mutex};
+    }
+
     template<typename F, typename T = F>
-    auto attach(Entity entity, T&& component = {}) noexcept -> tag<F> {
+    auto attach(
+        Entity entity, T&& component = {},
+        std::function<void(tag<F>)> callback = [](auto){}
+    ) noexcept -> tag<F> {
         auto idx = stl::vector<F>::instance().push_back(std::forward<T>(component));
         auto handle = tag<F>{idx};
+        auto guard = lock<F>();
         Hierarchy::instance().registry.emplace<tag<F>>(entity, handle);
+        callback(handle);
         return handle;
     }
 

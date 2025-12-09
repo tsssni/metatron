@@ -2,6 +2,7 @@
 #include <metatron/core/stl/singleton.hpp>
 #include <metatron/core/stl/stack.hpp>
 #include <metatron/core/math/constant.hpp>
+#include <metatron/core/math/vector.hpp>
 #include <vector>
 #include <functional>
 #include <typeindex>
@@ -9,76 +10,135 @@
 
 namespace mtt::stl {
     template<typename T>
-    struct vector final: singleton<vector<T>> {
-        vector() noexcept: mutex(make_obj<std::mutex>()) {}
+    struct vector;
 
-        auto pack() noexcept -> void {
-            buf.ptr = storage.data();
-            buf.bytelen = storage.size() * sizeof(T);
-            stl::stack::instance().push(&buf, [this](auto) {
-                storage.clear();
-            });
+    template<>
+    struct vector<byte> final {
+        auto static constexpr block_size = 1 << 6;
+        auto static constexpr max_idx = 1 << 20;
+        u32 bytelen = 0;
+        std::function<void()> destroier;
+        ~vector() noexcept {
+            if (destroier) destroier();
+            for (auto* block: blocks) std::free(block);
+        }
+
+        template<typename T>
+        auto init() noexcept -> void {
+            bytelen = sizeof(T);
+            if constexpr (!std::is_trivially_destructible_v<T>) destroier = [this] {
+                for (auto i = 0; i < blocks.size(); ++i) {
+                    auto size = i == blocks.size() - 1
+                    ? length % block_size : block_size;
+                    std::destroy_n(mut<T>(blocks[i]), size);
+                }
+            };
+        }
+
+        template<typename T, typename... Args>
+        requires std::is_constructible_v<T, Args...>
+        auto emplace_back(Args&&... args) noexcept -> u32 {
+            auto idx = length.fetch_add(1);
+            auto block = idx / block_size;
+            auto start = block * block_size;
+            auto local_idx = idx % block_size;
+            if (idx >= max_idx) stl::abort("vector overflow");
+
+            while (fetched.load(std::memory_order::acquire) < start);
+            if (local_idx == 0) {
+                blocks.push_back(mut<byte>(std::malloc(bytelen * block_size)));
+                allocated.fetch_add(1, std::memory_order::release);
+            } else while (allocated.load(std::memory_order::acquire) <= block);
+
+            auto ptr = mut<T>(blocks[block] + local_idx * bytelen);
+            fetched.fetch_add(1, std::memory_order::release);
+            std::construct_at(ptr, std::forward<Args>(args)...);
+            return idx;
+        }
+        template<typename T>
+        requires std::is_constructible_v<std::decay_t<T>, T>
+        auto push_back(T&& x) noexcept -> u32 {
+            return emplace_back<std::decay_t<T>>(std::forward<T>(x));
+        }
+
+        auto size() const noexcept -> usize { return length; }
+        auto operator[](u32 i) noexcept -> mut<byte> {
+            return blocks[i / block_size] + bytelen * (i % block_size);
+        }
+        auto operator[](u32 i) const noexcept -> view<byte> {
+            return blocks[i / block_size] + bytelen * (i % block_size);
+        }
+
+    private:
+        std::vector<mut<byte>> blocks;
+        std::atomic<u32> length = 0;
+        std::atomic<u32> allocated = 0;
+        std::atomic<u32> fetched = 0;
+    };
+
+    template<>
+    struct vector<void> final: singleton<vector<void>> {
+        auto constexpr static max_idx = 256;
+        std::array<stl::vector<byte>, max_idx> storage;
+
+        template<typename T>
+        auto push() noexcept -> u32 {
+            auto idx = length;
+            if (idx >= max_idx) stl::abort("pointer vectors overflow");
+            ++length;
+            storage[idx].init<T>();
+            return idx;
+        }
+
+    private:
+        u32 length = 0;
+    };
+
+    template<typename T>
+    struct vector final: singleton<vector<T>> {
+        vector() noexcept {
+            tid = vector<void>::instance().push<T>();
+            get().template init<T>();
         }
 
         template<typename... Args>
         requires std::is_constructible_v<T, Args...>
         auto emplace_back(Args&&... args) noexcept -> u32 {
-            storage.emplace_back(std::forward<Args>(args)...);
-            return storage.size() - 1;
+            auto idx = get().template emplace_back<T>(std::forward<Args>(args)...);
+            return (tid << 24) | idx;
         }
         auto push_back(rref<T> x) noexcept -> u32 { return emplace_back(std::move(x)); }
         auto push_back(cref<T> x) noexcept -> u32 { return emplace_back(x); }
-        auto lock() const noexcept { return std::unique_lock{*mutex };}
 
-        auto operator[](u32 i) noexcept -> mut<T> { return &storage[i]; }
-        auto operator[](u32 i) const noexcept -> view<T> { return &storage[i]; }
-        auto addr() const noexcept -> uptr { return uptr(buf.ptr); }
-        auto data() const noexcept -> mut<T> { return storage.data(); }
-        auto size() const noexcept -> usize { return storage.size(); }
-        auto empty() const noexcept -> usize { return storage.empty(); }
-        auto capacity() const noexcept -> usize { return storage.capacity(); }
-        auto reserve(usize n) noexcept -> void { storage.reserve(n); }
+        auto operator[](u32 i) noexcept -> mut<T> { return mut<T>(get()[i & 0xfffff]); }
+        auto operator[](u32 i) const noexcept -> view<T> { return view<T>(get()[i & 0xfffff]); }
+        auto size() const noexcept -> usize { return get().size(); }
 
     private:
-        stl::buf buf;
-        std::vector<T> storage;
+        auto get() noexcept -> ref<vector<byte>> {
+            return vector<void>::instance().storage[tid];
+        }
+
+        auto get() const noexcept -> cref<vector<byte>> {
+            return vector<void>::instance().storage[tid];
+        }
+
+        u32 tid;
         obj<std::mutex> mutex;
     };
 
     template<pro::facade F>
     struct vector<F> final: singleton<vector<F>> {
-        vector() noexcept {gutex = make_obj<std::mutex>();}
-        ~vector() noexcept {
-            for (auto i = 0; i < destroier.size(); ++i)
-                destroier[i](storage[i]);
-        }
-
-        auto pack() noexcept -> void {
-            for (auto i = 0; i < i32(buf.size()); ++i) {
-                buf[i].ptr = storage[i].data();
-                buf[i].bytelen = storage[i].size();
-                stl::stack::instance().push(&buf[i], [this, i](auto) {
-                    storage[i].clear();
-                });
-            }
-        }
+        auto constexpr static max_idx = 1 << 4;
 
         template<typename T>
         requires poliable<F, T>
         auto emplace_type() noexcept -> void {
-            auto&& tid = typeid(T);
-            auto mid = map.size();
-            if (map.contains(tid)) return;
-
-            map[tid] = mid;
-            buf.push_back({});
-            storage.push_back({});
+            if (map.contains(typeid(T))) return;
+            if (sid.size() >= max_idx) stl::abort("facade vector overflow");
+            sid.push_back(vector<void>::instance().push<T>());
+            map[typeid(T)] = sid.size() - 1;
             length.push_back(sizeof(T));
-            mutex.push_back(make_obj<std::mutex>());
-
-            destroier.push_back([](ref<std::vector<byte>> vec) {
-                std::destroy_n((mut<T>)vec.data(), vec.size() / sizeof(T));
-            });
             reinterpreter.push_back([](view<byte> ptr) {
                 return make_mut<F>(*(mut<T>)ptr);
             });
@@ -91,12 +151,10 @@ namespace mtt::stl {
         template<typename T, typename... Args>
         requires std::is_constructible_v<T, Args...>
         auto emplace_back(Args&&... args) noexcept -> u32 {
-            auto idx = map[typeid(T)];
-            auto size = storage[idx].size();
-            storage[idx].resize(size + sizeof(T));
-            auto ptr = mut<T>(storage[idx].data() + size);
-            std::construct_at(ptr, std::forward<Args>(args)...);
-            return ((idx & 0xff) << 24) | ((size / sizeof(T)) & 0xffffff);
+            auto tid = map[typeid(T)];
+            auto& stroage = get(sid[tid]);
+            auto idx = stroage.template emplace_back<T>(std::forward<Args>(args)...);
+            return sid[tid] << 24 | tid << 20 | idx;
         }
 
         template<typename T>
@@ -105,70 +163,59 @@ namespace mtt::stl {
             return emplace_back<std::decay_t<T>>(std::forward<T>(x));
         }
 
-        template<typename T>
-        auto lock() const noexcept -> std::unique_lock<std::mutex> {
-            return std::unique_lock{*mutex[map.at(typeid(T))]};
-        }
-
-        auto lock() const noexcept -> std::unique_lock<std::mutex> {
-            return std::unique_lock{*gutex};
-        }
-
-        auto operator[](u32 i) noexcept -> mut<F> {
-            auto t = (i >> 24) & 0xff;
-            auto idx = (i & 0xffffff);
-            auto ptr = storage[t].data() + length[t] * idx;
+        auto operator[](u32 idx) noexcept -> mut<F> {
+            auto [s, t, i] = split(idx);
+            auto ptr = get(s)[i];
             return reinterpreter[t](ptr);
         }
 
-        auto operator[](u32 i) const noexcept -> view<F> {
-            auto t = (i >> 24) & 0xff;
-            auto idx = (i & 0xffffff);
-            auto ptr = storage[t].data() + length[t] * idx;
-            return reinterpreter.at(t)(ptr);
+        auto operator[](u32 idx) const noexcept -> view<F> {
+            auto [s, t, i] = split(idx);
+            auto ptr = get(s)[i];
+            return reinterpreter[t](ptr);
         }
 
-        auto operator()(u32 i) const noexcept -> obj<F>
+        auto operator()(u32 idx) const noexcept -> obj<F>
         requires(F::copyability != pro::constraint_level::none) {
-            auto t = (i >> 24) & 0xff;
-            auto idx = (i & 0xffffff);
-            auto ptr = storage[t].data() + length[t] * idx;
+            auto [s, t, i] = split(idx);
+            auto ptr = get(s)[i];
             return copier.at(t)(ptr);
         }
 
         template<typename T>
-        auto is(u32 i) const noexcept -> bool {
-            auto t = (i >> 24) & 0xff;
-            auto idx = (i & 0xffffff);
+        auto is(u32 idx) const noexcept -> bool {
+            auto [s, t, i] = split(idx);
             return true
             && map.contains(typeid(T))
             && t == map.at(typeid(T))
-            && idx < storage[t].size();
+            && i < get(s).size();
         }
 
         template<typename T>
-        auto addr() const noexcept -> uptr { return uptr(buf[map.at(typeid(T))].ptr); }
-        template<typename T>
-        auto data() const noexcept -> mut<T> { return (mut<T>)storage[map.at(typeid(T))].data(); }
-        template<typename T>
-        auto size() const noexcept -> usize { return storage[map.at(typeid(T))].size() / sizeof(T); }
-        template<typename T>
-        auto empty() const noexcept -> usize { return storage[map.at(typeid(T))].empty(); }
-        template<typename T>
-        auto capacity() const noexcept -> usize { return storage[map.at(typeid(T))].capacity() / sizeof(T); }
-        template<typename T>
-        auto reserve(usize n) noexcept -> void { storage[map.at(typeid(T))].reserve(n * sizeof(T)); }
+        auto size() const noexcept -> usize { return get(sid[map.at(typeid(T))]).size(); }
 
     private:
+        auto split(u32 idx) noexcept -> uv3 {
+            return {
+                idx >> 24,
+                idx >> 20 & 0xf,
+                idx & 0xfffff,
+            };
+        }
+
+        auto get(u32 tid) noexcept -> ref<vector<byte>> {
+            return vector<void>::instance().storage[tid];
+        }
+
+        auto get(u32 tid) const noexcept -> cref<vector<byte>> {
+            return vector<void>::instance().storage[tid];
+        }
+
         std::unordered_map<std::type_index, u32> map;
-        std::vector<stl::buf> buf;
-        std::vector<std::vector<byte>> storage;
+        std::vector<u32> sid;
         std::vector<u32> length;
-        std::vector<std::function<auto (ref<std::vector<byte>> vec) -> void>> destroier;
-        std::vector<std::function<auto (view<byte> ptr) -> mut<F>>> reinterpreter;
-        std::vector<std::function<auto (view<byte> ptr) -> obj<F>>> copier;
-        std::vector<obj<std::mutex>> mutex;
-        obj<std::mutex> gutex;
+        std::vector<std::function<mut<F>(view<byte> ptr)>> reinterpreter;
+        std::vector<std::function<obj<F>(view<byte> ptr)>> copier;
     };
 }
 
@@ -180,8 +227,9 @@ namespace mtt {
         tag(): idx(math::maxv<u32>) {};
         tag(u32 idx): idx(idx) {}
 
-        auto type() noexcept -> u32 { return (idx >> 24) & 0xff; };
-        auto index() noexcept -> u32 { return idx & 0xffffff; };
+        auto storage() noexcept -> u32 { return idx >> 24; }
+        auto type() noexcept -> u32 { return idx >> 20 & 0xf; };
+        auto index() noexcept -> u32 { return idx & 0xffff; };
         auto data() noexcept -> mut<T> { return vec::instance()[idx]; }
         auto data() const noexcept -> view<T> { return vec::instance()[idx]; }
 

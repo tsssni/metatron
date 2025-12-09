@@ -29,53 +29,51 @@ namespace mtt::scene {
         auto data = std::to_array<f32>({
             0.f, 1.f,
         });
-        svec.reserve<Constant_Spectrum>(spec_name.size());
         for (auto i = 0uz; i < spec_name.size(); ++i) {
-            Spectrum::spectra.emplace(
-                spec_name[i],
-                attach<Spectrum>(
-                    ("/spectrum/" + spec_name[i]) / et,
-                    Constant_Spectrum{data[i]}
-                )
+            Spectrum::spectra[spec_name[i]] =  attach<Spectrum>(
+                ("/spectrum/" + spec_name[i]) / et,
+                Constant_Spectrum{data[i]}
             );
         }
 
         auto path = "spectra";
         auto spectra_dir = stl::filesystem::find(path);
 
-        auto spectra = std::filesystem::directory_iterator(spectra_dir)
-        | std::views::filter([](auto& it) { return true
-        && it.is_regular_file()
-        && (it.path().extension() == ".dspd" || it.path().extension() == ".vspd");
-        })
-        | std::ranges::to<std::vector<std::filesystem::path>>();
-        svec.reserve<Discrete_Spectrum>(std::ranges::count_if(spectra,
-            [](auto const& p) { return p.extension() == ".dspd"; })
-        );
-        svec.reserve<Visible_Spectrum>(std::ranges::count_if(spectra,
-            [](auto const& p) { return p.extension() == ".vspd"; })
-        );
-
-        stl::scheduler::instance().sync_parallel(uzv1{spectra.size()}, [&](auto idx) {
-            auto [i] = idx;
-            auto path = spectra[i];
-            auto ext = path.extension();
-
+        auto format = [](std::filesystem::path path) {
             auto name = std::string{};
-            auto extra_ext = std::to_array<std::string>({"eta", "k"});
+            auto ext = path.extension();
             auto stem = std::filesystem::path(path).stem();
+            auto extra_ext = std::to_array<std::string>({"eta", "k"});
             for (auto const& ext: extra_ext)
                 if (stem.extension() == "." + ext) {
                     name = ext + "/";
                     stem = stem.stem();
                 }
             name += stem;
+            return name;
+        };
 
+        auto spectra = std::filesystem::directory_iterator(spectra_dir)
+        | std::views::filter([](auto& it) { 
+            auto ext = it.path().extension();
+            return it.is_regular_file() || ext == ".dspd" || ext == ".vspd";
+        })
+        | std::views::transform([format](auto&& it) {
+            auto entity = ("/spectrum/" + format(it)) / et; // pre init to avoid racing
+            return it;
+        })
+        | std::ranges::to<std::vector<std::filesystem::path>>();
+
+        stl::scheduler::instance().sync_parallel(uzv1{spectra.size()}, [&](auto idx) {
+            auto [i] = idx;
+            auto path = spectra[i];
+            auto ext = path.extension();
+            auto name = format(path);
             auto push = [&]<typename S>(S&& spec) {
-                auto lock = svec.lock();
                 auto entity = ("/spectrum/" + name) / et;
-                auto handle = attach<Spectrum>(entity, std::forward<S>(spec));
-                Spectrum::spectra.emplace(name, handle);
+                attach<Spectrum>(entity, std::forward<S>(spec), [&name](auto handle) {
+                    Spectrum::spectra[name] = handle;
+                });
             };
             if (ext == ".vspd") push(Visible_Spectrum{{path}});
             else if (ext == ".dspd") push(Discrete_Spectrum{{path}});
@@ -96,7 +94,6 @@ namespace mtt::scene {
                 else return std::pow((x + 0.055f) / 1.055f, 2.4f);
             }
         });
-
         for (auto i = 0uz; i < transfer.size(); ++i)
             tvec.emplace_back(transfer[i], linearize[i]);
 
@@ -119,9 +116,10 @@ namespace mtt::scene {
             0,
         });
 
+        for (auto& name: cs_name) ("/color-space/" + name) / et;
         stl::scheduler::instance().sync_parallel(uzv1{cs_name.size()}, [&](auto idx) {
             auto i = idx[0];
-            auto entity = ("/color-space/" + spec_name[i]) / et;
+            auto entity = ("/color-space/" + cs_name[i]) / et;
             auto white = ("/spectrum/" + white_point[i]) / et;
 
             auto cs = Color_Space{
@@ -132,13 +130,9 @@ namespace mtt::scene {
                 fetch<spectra::Spectrum>(white),
                 tag<Color_Space::Transfer_Function>{transfer_function[i]},
             };
-
-            {
-                auto lock = cvec.lock();
-                attach<Color_Space>(entity, std::move(cs));
-                auto cs = fetch<Color_Space>(entity);
-                Color_Space::color_spaces[cs_name[i]] = cs;
-            }
+            attach<Color_Space>(entity, std::move(cs), [&name = cs_name[i]](auto handle) {
+                Color_Space::color_spaces[name] = handle;
+            });
         });
     }
 }

@@ -22,7 +22,7 @@ namespace mtt::stl {
     };
 
     struct stack final: singleton<stack> {
-        using deleter = std::function<auto (mut<buf>) -> void>;
+        using deleter = std::function<void(mut<buf>)>;
         std::vector<mut<buf>> bufs;
         std::vector<deleter> deleters;
         std::mutex mutex;
