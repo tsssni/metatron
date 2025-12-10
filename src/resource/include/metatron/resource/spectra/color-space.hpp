@@ -40,8 +40,7 @@ namespace mtt::spectra {
 
     auto constexpr xyY_to_XYZ(cref<fv3> xyY) -> fv3 {
         auto [x, y, Y] = xyY;
-        if (y < math::epsilon<f32>) return {0.f};
-        else return {x * Y / y, Y, (1.f - x - y) * Y / y};
+        return {x * Y / y, Y, (1.f - x - y) * Y / y};
     };
 
     auto constexpr XYZ_to_xyY(cref<fv3> XYZ) -> fv3 {

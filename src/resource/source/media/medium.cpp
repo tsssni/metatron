@@ -8,7 +8,8 @@ namespace mtt::media {
             return make_obj<
                 phase::Phase_Function,
                 phase::Henyey_Greenstein_Phase_Function
-            >(g);
+            >(g); break;
+        default: return {};
         };
     }
 }

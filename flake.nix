@@ -50,7 +50,7 @@
           };
         in
         {
-          default = pkgs.mkShell {
+          default = pkgs.mkShell.override { stdenv = pkgs.clangStdenv; } {
             inputsFrom = [ packages.${system}.default ];
             shellHook = "
               export CMAKE_INSTALL_PREFIX=$HOME/metatron/out
