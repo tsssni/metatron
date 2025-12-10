@@ -257,9 +257,8 @@ namespace mtt::muldim {
             i32(width), i32(height), i32(channels), type
         };
 
-        auto cs_name = std::string{"sRGB"};
-        for (auto const& [name, space]: spectra::Color_Space::color_spaces)
-            if (cs == space) {cs_name = name; break;}
+        auto cs_path = mtt::path(cs);
+        auto cs_name = cs_path.substr(cs_path.find_last_of('/'));
         spec.attribute("oiio::ColorSpace", cs_name);
         spec.attribute("planarconfig", "contig");
 

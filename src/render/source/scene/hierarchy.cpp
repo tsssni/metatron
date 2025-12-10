@@ -7,72 +7,10 @@
 
 namespace mtt::scene {
     struct Hierarchy::Impl final {
-        mut<Hierarchy> hierarchy;
         std::vector<Hierarchy::filter_function> filters;
-
-        std::unordered_map<std::string, Entity> entities;
-        std::unordered_map<Entity, std::string> pathes;
-        std::unordered_map<Entity, Entity> fathers;
-        std::unordered_map<Entity, std::vector<Entity>> sons;
-
-        auto plant() noexcept -> void {
-            entities["/"] = hierarchy->registry.create();
-            fathers[entities["/"]] = entt::null;
-        }
-
-        auto create(std::string_view pv) noexcept -> Entity {
-            auto path = std::string{pv};
-            if (entities.find(path) != entities.end()) return entities[path];
-
-            auto slash = path.find_last_of('/');
-            if (slash == std::string::npos) stl::abort("ecs: invalid path {}", path);
-            
-            auto parent_path = slash == 0 ? "/" : path.substr(0, slash);
-            auto parent = create(parent_path);
-
-            auto entity = hierarchy->registry.create();
-            fathers[entity] = entities[parent_path];
-            sons[parent].push_back(entity);
-            sons[entity] = {};
-
-            pathes[entity] = path;
-            entities[path] = entity;
-            return entity;
-        }
-
-        template<typename T, typename U>
-        auto fetch(cref<std::unordered_map<T, U>> map, cref<T> key) const -> cref<U> {
-            auto it = map.find(key);
-            if (it == map.end())
-                stl::abort("ecs: invalid key");
-            return it->second;
-        }
     };
 
-    Hierarchy::Hierarchy() noexcept {
-        impl->hierarchy = this;
-        impl->plant();
-    }
-
-    auto Hierarchy::entity(std::string_view path) noexcept -> Entity {
-        return impl->create(path);
-    }
-
-    auto Hierarchy::path(Entity entity) const noexcept -> std::string_view {
-        return impl->fetch(impl->pathes, entity);
-    }
-
-    auto Hierarchy::root() const noexcept -> Entity {
-        return impl->entities.at("/");
-    }
-
-    auto Hierarchy::parent(Entity entity) const noexcept -> Entity {
-        return impl->fetch(impl->fathers, entity);
-    }
-
-    auto Hierarchy::children(Entity entity) const noexcept -> std::span<Entity const> {
-        return impl->fetch(impl->sons, entity);
-    }
+    Hierarchy::Hierarchy() noexcept {}
 
     auto Hierarchy::filter(filter_function f) noexcept -> void {
         impl->filters.push_back(f);

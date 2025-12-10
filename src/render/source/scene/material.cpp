@@ -18,6 +18,7 @@ namespace glz {
 
 namespace mtt::scene {
     auto material_init() noexcept -> void {
+        using namespace spectra;
         using namespace texture;
         using namespace material;
         using namespace accel;
@@ -35,12 +36,12 @@ namespace mtt::scene {
         MTT_DESERIALIZE(Divider);
 
         bsdf::Physical_Bsdf::init();
-        for (auto& [spec, _]: spectra::Spectrum::spectra)
-            attach<Spectrum_Texture>(
-                ("/texture/" + spec) / et,
-                Constant_Spectrum_Texture{
-                    fetch<spectra::Spectrum>(("/spectrum/" + spec) / et),
-                }
+        auto& svec = stl::vector<Spectrum>::instance();
+        auto& tvec = stl::vector<Spectrum_Texture>::instance();
+        for (auto const& spec: svec.keys())
+            tvec.push(
+                std::string{spec}.replace(1, 8, "texture"),
+                Constant_Spectrum_Texture{svec.entity(spec)}
             );
     }
 }

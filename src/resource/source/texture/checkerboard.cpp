@@ -3,7 +3,7 @@
 namespace mtt::texture {
     Checkerboard_Texture::Checkerboard_Texture(cref<Descriptor> desc) noexcept:
     x(desc.x), y(desc.y), uv_scale(desc.uv_scale) {
-        auto CIE_Y = spectra::Spectrum::spectra["CIE-Y"];
+        auto CIE_Y = entity<spectra::Spectrum>("/spectrum/CIE-Y");
         auto Y_x = CIE_Y | x;
         auto Y_y = CIE_Y | y;
         w_x = Y_x / (Y_x + Y_y);

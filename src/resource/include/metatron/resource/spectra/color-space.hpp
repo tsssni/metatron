@@ -18,11 +18,9 @@ namespace mtt::spectra {
             std::function<f32(f32)> linearize;
         };
 
-        std::unordered_map<std::string, tag<Color_Space>> static color_spaces;
-
         fm33 from_XYZ;
         fm33 to_XYZ;
-        tag<spectra::Spectrum> illuminant;
+        tag<Spectrum> illuminant;
         tag<Transfer_Function> transfer_function;
 
         i32 table_res;
@@ -33,7 +31,7 @@ namespace mtt::spectra {
         Color_Space(
             std::string_view name,
             cref<fv2> r, cref<fv2> g, cref<fv2> b,
-            tag<spectra::Spectrum> illuminant,
+            tag<Spectrum> illuminant,
             tag<Transfer_Function> transfer_function
         ) noexcept;
     };

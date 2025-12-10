@@ -6,7 +6,6 @@
   clangStdenv,
   cmake,
   cmake-language-server,
-  entt,
   glaze,
   lib,
   ninja,
@@ -48,7 +47,6 @@ stdenv.mkDerivation {
   buildInputs = [
     argparse
     assimp
-    entt
     glaze
     openimageio
     openvdb

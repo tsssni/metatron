@@ -16,23 +16,13 @@ namespace glz {
         auto constexpr static value = glz::enumerate(albedo, unbounded, illuminant);
     };
 
-    template<>
-    struct from<JSON, mtt::scene::Entity> {
-        template<auto Opts>
-        auto static op(mtt::scene::Entity& v, auto&&... args) noexcept -> void {
-            auto path = std::string{};
-            parse<JSON>::op<Opts>(path, args...);
-            v = path / mtt::et;
-        }
-    };
-
     template<typename F>
     struct from<JSON, mtt::tag<F>> {
         template<auto Opts>
         auto static op(mtt::tag<F>& v, auto&&... args) noexcept -> void {
-            auto entity = mtt::scene::Entity{};
-            parse<JSON>::op<Opts>(entity, args...);
-            v = mtt::scene::fetch<F>(entity);
+            auto path = std::string{};
+            parse<JSON>::op<Opts>(path, args...);
+            v = mtt::entity<F>(path);
         }
     };
 

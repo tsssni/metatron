@@ -7,11 +7,12 @@
 
 namespace mtt::emitter {
     Uniform_Emitter::Uniform_Emitter() {
+        auto& lvec = stl::vector<light::Light>::instance();
         auto prims = std::vector<Primitive>{};
         auto inf_prims = std::vector<Primitive>{};
-        for (auto et: scene::entities<light::Light>()) {
-            auto light = scene::fetch<light::Light>(et);
-            auto t = scene::fetch<math::Transform>(et);
+        for (auto const& et: lvec.keys()) {
+            auto light = entity<light::Light>(et);
+            auto t = entity<math::Transform>(et);
             prims.emplace_back(light, t);
             if (light->flags() & light::Flags::inf)
                 inf_prims.emplace_back(light, t);

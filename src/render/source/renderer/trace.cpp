@@ -15,7 +15,7 @@ namespace mtt::renderer {
         auto& args = scene::Args::instance();
         auto addr = wired::Address{args.address};
 
-        auto ct = *scene::fetch<math::Transform>("/hierarchy/camera/render"_et);
+        auto ct = *entity<math::Transform>("/hierarchy/camera/render");
         auto spp = desc.film.spp;
         auto depth = desc.film.depth;
         auto size = uzv2{desc.film.image.size};

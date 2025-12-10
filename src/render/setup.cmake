@@ -1,1 +1,1 @@
-list(APPEND deps resource device network entt argparse)
+list(APPEND deps resource device network argparse)

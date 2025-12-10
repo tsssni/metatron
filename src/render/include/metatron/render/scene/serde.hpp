@@ -13,9 +13,9 @@ namespace mtt::scene {
         auto d = T{};
         stl::json::load(j.serialized.str, d);
         if constexpr (pro::facade<F>)
-            attach<F, T>(j.entity, std::move(d));
+            stl::vector<F>::instance().template push<T>(j.entity, std::move(d));
         else
-            attach<T>(j.entity, std::move(d));
+            stl::vector<T>::instance().push(j.entity, std::move(d));
         return true;
     }
 

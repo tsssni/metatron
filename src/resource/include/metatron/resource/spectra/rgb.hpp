@@ -11,7 +11,7 @@ namespace mtt::spectra {
         struct Descriptor final {
             fv3 c;
             Color_Space::Spectrum_Type type;
-            tag<Color_Space> color_space = Color_Space::color_spaces["sRGB"];
+            tag<Color_Space> color_space = entity<Color_Space>("/color-space/sRGB");
         };
         Rgb_Spectrum() noexcept = default;
         Rgb_Spectrum(cref<Descriptor> desc) noexcept;

@@ -13,7 +13,6 @@ namespace mtt::spectra {
     ::build {
         // IOR data: https://github.com/mitsuba-renderer/mitsuba-data/tree/master/ior
         // CIE data: https://github.com/mmp/pbrt-v4/tree/master/src/pbrt/util/spectrum.cpp
-        std::unordered_map<std::string, tag<Spectrum>> static spectra;
     };
 
     auto inline operator|(tag<Spectrum> x, tag<Spectrum> y) noexcept -> f32 {
@@ -27,9 +26,9 @@ namespace mtt::spectra {
 
     auto inline operator~(tag<Spectrum> s) noexcept -> fv3 {
         return fv3{
-            Spectrum::spectra["CIE-X"] | s,
-            Spectrum::spectra["CIE-Y"] | s,
-            Spectrum::spectra["CIE-Z"] | s,
+            entity<Spectrum>("/spectrum/CIE-X") | s,
+            entity<Spectrum>("/spectrum/CIE-Y") | s,
+            entity<Spectrum>("/spectrum/CIE-Z") | s,
         };
     }
 

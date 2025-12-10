@@ -37,7 +37,7 @@ namespace mtt::texture {
             std::string path;
             spectra::Color_Space::Spectrum_Type type;
             Image_Distribution distr = Image_Distribution::none;
-            tag<spectra::Color_Space> color_space = spectra::Color_Space::color_spaces["sRGB"];
+            tag<spectra::Color_Space> color_space = entity<spectra::Color_Space>("/color-space/sRGB");
         };
         Image_Spectrum_Texture() noexcept = default;
         Image_Spectrum_Texture(cref<Descriptor> desc) noexcept;

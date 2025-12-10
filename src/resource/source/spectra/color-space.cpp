@@ -7,16 +7,14 @@
 #include <cstring>
 
 namespace mtt::spectra {
-    std::unordered_map<std::string, tag<Color_Space>> Color_Space::color_spaces;
-
     Color_Space::Color_Space(
         std::string_view name,
         cref<fv2> r, cref<fv2> g, cref<fv2> b,
-        tag<spectra::Spectrum> illuminant,
+        tag<Spectrum> illuminant,
         tag<Transfer_Function> transfer_function
     ) noexcept:
     illuminant(illuminant),
-    illuminant_Y_integral(spectra::Spectrum::spectra["CIE-Y"] | illuminant),
+    illuminant_Y_integral(entity<Spectrum>("/spectrum/CIE-Y") | illuminant),
     transfer_function(transfer_function) {
         // project color primaries and white point to Y=1
         auto w = ~illuminant;

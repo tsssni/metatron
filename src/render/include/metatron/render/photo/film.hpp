@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/render/filter/filter.hpp>
-#include <metatron/render/scene/entity.hpp>
 #include <metatron/resource/spectra/stochastic.hpp>
 #include <metatron/resource/spectra/color-space.hpp>
 #include <metatron/resource/muldim/image.hpp>
@@ -45,10 +44,10 @@ namespace mtt::photo {
             usize depth = 64uz;
             fv2 film_size = {0.036f, 0.024f};
             fv2 image_size = {1280uz, 720uz};
-            tag<spectra::Spectrum> r = spectra::Spectrum::spectra["CIE-X"];
-            tag<spectra::Spectrum> g = spectra::Spectrum::spectra["CIE-Y"];
-            tag<spectra::Spectrum> b = spectra::Spectrum::spectra["CIE-Z"];
-            tag<spectra::Color_Space> color_space = spectra::Color_Space::color_spaces["sRGB"];
+            tag<spectra::Spectrum> r = entity<spectra::Spectrum>("/spectrum/CIE-X");
+            tag<spectra::Spectrum> g = entity<spectra::Spectrum>("/spectrum/CIE-Y");
+            tag<spectra::Spectrum> b = entity<spectra::Spectrum>("/spectrum/CIE-Z");
+            tag<spectra::Color_Space> color_space = entity<spectra::Color_Space>("/color-space/sRGB");
         };
         Film(cref<Descriptor> desc) noexcept;
 

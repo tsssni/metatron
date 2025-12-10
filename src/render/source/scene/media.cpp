@@ -19,6 +19,6 @@ namespace mtt::scene {
         using namespace media;
         MTT_DESERIALIZE(Volume, Uniform_Volume, Nanovdb_Volume);
         MTT_DESERIALIZE(Medium, Homogeneous_Medium, Heterogeneous_Medium, Vaccum_Medium);
-        attach<Medium>("/medium/vaccum"_et, Vaccum_Medium{});
+        stl::vector<Medium>::instance().emplace<Vaccum_Medium>("/medium/vaccum");
     }
 }
