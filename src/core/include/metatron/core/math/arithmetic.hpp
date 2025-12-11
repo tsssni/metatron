@@ -5,13 +5,13 @@
 namespace mtt::math {
     template<typename... Ts>
     requires (std::totally_ordered<Ts> && ...)
-    auto constexpr min(Ts... xs) noexcept requires(sizeof...(xs) > 1) {
+    auto constexpr min(Ts... xs) noexcept requires(sizeof...(xs) >= 1) {
         return std::min({xs...});
     }
 
     template<typename... Ts>
     requires (std::totally_ordered<Ts> && ...)
-    auto constexpr max(Ts... xs) noexcept requires(sizeof...(xs) > 1) {
+    auto constexpr max(Ts... xs) noexcept requires(sizeof...(xs) >= 1) {
         return std::max({xs...});
     }
 

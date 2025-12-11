@@ -13,7 +13,7 @@ namespace mtt::texture {
         Checkerboard_Texture(cref<Descriptor> desc) noexcept;
 
         auto operator()(
-            cref<opaque::Coordinate> coord, cref<fv4> lambda
+            cref<muldim::Coordinate> coord, cref<fv4> lambda
         ) const noexcept -> fv4;
         auto sample(
             cref<math::Context> ctx, cref<fv2> u

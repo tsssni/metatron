@@ -1,2 +1,2 @@
 extend(slang)
-list(APPEND metatron-deps slang::slang)
+list(APPEND deps slang::slang)

@@ -41,8 +41,28 @@
         }
       );
 
+      devShells = mapSystems (
+        system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = tsssni.pkgs;
+          };
+        in
+        {
+          default = pkgs.mkShell.override { stdenv = pkgs.clangStdenv; } {
+            inputsFrom = [ packages.${system}.default ];
+            shellHook = "
+              export CMAKE_INSTALL_PREFIX=$HOME/metatron/out
+              export SHELL=nu
+            " + lib.optionalString pkgs.stdenv.isLinux ''
+              export VK_LAYER_PATH=${pkgs.vulkan-validation-layers}/share/vulkan/explicit_layer.d
+            '';
+          };
+        }
+      );
     in
     {
-      inherit packages;
+      inherit packages devShells;
     };
 }

@@ -8,8 +8,8 @@ namespace mtt::math {
         std::array<f32, n> cdf{0.f};
 
         Discrete_Distribution() noexcept = default;
-        Discrete_Distribution(std::array<f32, n>&& ws) noexcept
-        : pdf(ws) {
+        Discrete_Distribution(std::array<f32, n>&& ws) noexcept:
+        pdf(ws) {
             cdf[0] = 0.f;
             for (auto i = 1; i <= n; ++i)
                 cdf[i] = cdf[i - 1] + pdf[i - 1];

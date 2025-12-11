@@ -75,11 +75,16 @@ namespace mtt::stl {
         }
 
         auto data(usize idx) const noexcept -> view<byte> {
-            auto offset = ((ts::template index<Ts> < idx ? sizeof(Ts) : 0) + ...);
+            auto offset = ((ts::template index<Ts> == idx ? ts::template offset<Ts> : 0) + ...);
             return &storage[offset];
         }
 
+        template<typename T, typename U>
+        auto test() {
+            auto x = std::is_same<T, U>::type;
+        }
+
+        std::array<byte, ts::size> storage;
         u32 idx = math::maxv<u32>;
-        std::array<byte, (sizeof(Ts) + ...)> storage;
     };
 }

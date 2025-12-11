@@ -6,7 +6,6 @@
   clangStdenv,
   cmake,
   cmake-language-server,
-  entt,
   glaze,
   lib,
   ninja,
@@ -18,6 +17,7 @@
   vulkan-loader,
   vulkan-headers,
   vulkan-tools,
+  vulkan-validation-layers,
   zlib,
 }:
 let
@@ -47,7 +47,6 @@ stdenv.mkDerivation {
   buildInputs = [
     argparse
     assimp
-    entt
     glaze
     openimageio
     openvdb
@@ -58,6 +57,7 @@ stdenv.mkDerivation {
     vulkan-loader
     vulkan-headers
     vulkan-tools
+    vulkan-validation-layers
   ])
   ++ (lib.optionals stdenv.isDarwin [
     apple-sdk_15

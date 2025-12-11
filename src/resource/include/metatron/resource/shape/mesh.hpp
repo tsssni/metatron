@@ -4,6 +4,17 @@
 
 namespace mtt::shape {
     struct Mesh final {
+        buf<uv3> indices;
+
+        buf<fv3> vertices;
+        buf<fv3> normals;
+        buf<fv2> uvs;
+
+        buf<fv3> dpdu;
+        buf<fv3> dpdv;
+        buf<fv3> dndu;
+        buf<fv3> dndv;
+
         struct Descriptor final {
             std::string path;
         };
@@ -50,16 +61,5 @@ namespace mtt::shape {
         auto pdf(
             cref<math::Ray> r, cref<fv3> np, usize idx
         ) const noexcept -> f32;
-
-        buf<uv3> indices;
-
-        buf<fv3> vertices;
-        buf<fv3> normals;
-        buf<fv2> uvs;
-
-        buf<fv3> dpdu;
-        buf<fv3> dpdv;
-        buf<fv3> dndu;
-        buf<fv3> dndv;
     };
 }
