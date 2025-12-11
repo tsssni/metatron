@@ -1,5 +1,6 @@
 #include <metatron/resource/muldim/image.hpp>
 #include <metatron/resource/spectra/color-space.hpp>
+#include <metatron/core/math/bit.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/print.hpp>
@@ -207,13 +208,16 @@ namespace mtt::muldim {
         img.size = {
             usize(spec.width),
             usize(spec.height),
-            usize(spec.nchannels),
+            math::align(usize(spec.nchannels), 2),
             spec.format.size(),
         };
         img.pixels.resize(std::bit_width(math::max(img.width, img.height)));
         img.pixels.front().resize(math::prod(img.size));
 
-        auto success = in->read_image(0, 0, 0, spec.nchannels, spec.format, img.pixels.front().data());
+        auto success = in->read_image(
+            0, 0, 0, img.channels, spec.format,
+            img.pixels.front().data(), img.channels * img.stride
+        );
         if (!success) stl::abort("can not read image {}", path);
         in->close();
 

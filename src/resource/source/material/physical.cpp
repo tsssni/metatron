@@ -12,7 +12,7 @@ namespace mtt::material {
                 return (*tex.data())(coord, ctx.lambda);
             else return (*tex.data())(coord);
         };
-        auto reflectance = guarded_sample(this->reflectance, fv4{0.f});
+        auto reflectance = guarded_sample(this->reflectance, fv4{2.f});
         auto eta = guarded_sample(this->eta, fv4{0.f});
         auto k = guarded_sample(this->k, fv4{0.f});
         auto emission = guarded_sample(this->emission, fv4{0.f});

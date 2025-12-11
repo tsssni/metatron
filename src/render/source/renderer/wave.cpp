@@ -1,5 +1,9 @@
 #include "renderer.hpp"
 #include <metatron/device/command/context.hpp>
+#include <metatron/device/opaque/buffer.hpp>
+#include <metatron/device/opaque/image.hpp>
+#include <metatron/device/opaque/grid.hpp>
+#include <metatron/device/opaque/buffer.hpp>
 #include <metatron/device/opaque/accel.hpp>
 #include <metatron/resource/shape/mesh.hpp>
 #include <metatron/core/stl/thread.hpp>
@@ -51,6 +55,33 @@ namespace mtt::renderer {
             auto buffer = make_obj<opaque::Buffer>(desc);
             resources[i] = buffer->addr;
             buffers[bsize + i] = std::move(buffer);
+        });
+
+        auto& images = stl::vector<muldim::Image>::instance();
+        auto textures = std::vector<obj<opaque::Image>>(images.size());
+        auto& grids = stl::vector<muldim::Grid>::instance();
+        auto cells = std::vector<obj<opaque::Grid>>(grids.size());
+        scheduler.sync_parallel(uzv1{images.size() + grids.size()}, [&](auto idx) {
+            auto [i] = idx;
+            if (i < textures.size()) textures[i] = make_obj<opaque::Image>(
+            opaque::Image::Descriptor{
+                .type = command::Queue::Type::transfer,
+                .state = opaque::Image::State::samplable,
+                .image = images[i],
+            });
+            else cells[i - textures.size()] = make_obj<opaque::Grid>(
+            opaque::Grid::Descriptor{
+                .type = command::Queue::Type::transfer,
+                .state = opaque::Grid::State::readonly,
+                .grid = grids[i - textures.size()],
+            });
+        });
+
+        auto film = make_obj<opaque::Image>(
+        opaque::Image::Descriptor{
+            .type = command::Queue::Type::render,
+            .state = opaque::Image::State::storable,
+            .image = &desc.film.image,
         });
 
         auto& dividers = stl::vector<accel::Divider>::instance();

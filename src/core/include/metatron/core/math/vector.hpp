@@ -307,6 +307,12 @@ namespace mtt::math {
     }
 
     template<typename T, usize size>
+    requires std::totally_ordered<T>
+    auto constexpr saturate(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
+        return clamp(x, Vector<T, size>{0}, Vector<T, size>{1});
+    }
+
+    template<typename T, usize size>
     requires std::floating_point<T>
     auto constexpr lerp(cref<Vector<T, size>> x, cref<Vector<T, size>> y, cref<T> alpha) noexcept -> Vector<T, size> {
         return (T{1.0} - alpha) * x + alpha * y;

@@ -27,7 +27,7 @@ namespace mtt::bsdf {
     k(k),
     alpha_u(alpha_u),
     alpha_v(alpha_v) {
-        auto has_base = reflectance != fv4{0.f};
+        auto has_base = reflectance == math::saturate(reflectance);
         auto has_surface = eta != fv4{0.f};
         auto has_conductor = k != fv4{0.f};
 
