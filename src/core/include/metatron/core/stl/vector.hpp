@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <functional>
 #include <typeindex>
-#include <mutex>
+#include <cstring>
 
 namespace mtt::stl {
     template<typename T>
@@ -21,10 +21,7 @@ namespace mtt::stl {
         auto static constexpr max_idx = 1 << 20;
         u32 bytelen = 0;
         std::function<void()> destroier;
-        ~vector() noexcept {
-            if (destroier) destroier();
-            for (auto* block: blocks) std::free(block);
-        }
+        ~vector() noexcept { release(); }
 
         template<typename T>
         auto init() noexcept -> void {
@@ -36,6 +33,24 @@ namespace mtt::stl {
                     std::destroy_n(mut<T>(blocks[i]), size);
                 }
             };
+        }
+
+        auto pack() noexcept -> std::vector<byte> {
+            auto buffer = std::vector<byte>{};
+            buffer.resize(length * bytelen);
+            for (auto i = 0; i < blocks.size(); ++i) {
+                auto size = (i < blocks.size() - 1 ? block_size : length % block_size);
+                auto offset = buffer.data() + i * block_size * bytelen;
+                std::memcpy(offset, blocks[i], size * bytelen);
+            }
+            return buffer;
+        }
+
+        auto release() noexcept -> void {
+            if (destroier) destroier();
+            for (auto* block: blocks) std::free(block);
+            destroier = nullptr;
+            blocks.clear();
         }
 
         template<typename T, typename... Args>
@@ -134,6 +149,7 @@ namespace mtt::stl {
             storage[idx].init<T>();
             return idx;
         }
+        auto size() noexcept -> u32 { return length; }
 
     private:
         u32 length = 0;
@@ -143,20 +159,20 @@ namespace mtt::stl {
     struct vector final: singleton<vector<T>> {
         vector() noexcept {
             tid = vector<void>::instance().push<T>();
-            get().template init<T>();
+            raw().template init<T>();
         }
 
         template<typename... Args>
         requires std::is_constructible_v<T, Args...>
         auto emplace_back(Args&&... args) noexcept -> u32 {
-            auto idx = get().template emplace_back<T>(std::forward<Args>(args)...);
+            auto idx = raw().template emplace_back<T>(std::forward<Args>(args)...);
             return (tid << 24) | idx;
         }
 
         template<typename... Args>
         requires std::is_constructible_v<T, Args...>
         auto emplace(std::string_view path, Args&&... args) noexcept -> u32 {
-            auto idx = get().template emplace<T>(path, std::forward<Args>(args)...);
+            auto idx = raw().template emplace<T>(path, std::forward<Args>(args)...);
             return (tid << 24) | idx;
         }
 
@@ -169,25 +185,24 @@ namespace mtt::stl {
             return emplace(path, x);
         }
 
-        auto operator[](u32 i) noexcept -> mut<T> { return mut<T>(get()[i & 0xfffff]); }
-        auto operator[](u32 i) const noexcept -> view<T> { return view<T>(get()[i & 0xfffff]); }
-        auto path(u32 i) const noexcept -> std::string_view { return get().path(i & 0xfffff); }
-        auto entity(std::string_view path) const noexcept -> u32 { return (tid << 24) | get().entity(path); }
-        auto contains(std::string_view path) const noexcept -> bool { return get().contains(path); }
-        auto size() const noexcept -> usize { return get().size(); }
-        auto keys() const noexcept { return get().keys(); }
+        auto operator[](u32 i) noexcept -> mut<T> { return mut<T>(raw()[i & 0xfffff]); }
+        auto operator[](u32 i) const noexcept -> view<T> { return view<T>(raw()[i & 0xfffff]); }
+        auto path(u32 i) const noexcept -> std::string_view { return raw().path(i & 0xfffff); }
+        auto entity(std::string_view path) const noexcept -> u32 { return (tid << 24) | raw().entity(path); }
+        auto contains(std::string_view path) const noexcept -> bool { return raw().contains(path); }
+        auto size() const noexcept -> usize { return raw().size(); }
+        auto keys() const noexcept { return raw().keys(); }
 
     private:
-        auto get() noexcept -> ref<vector<byte>> {
+        auto raw() noexcept -> ref<vector<byte>> {
             return vector<void>::instance().storage[tid];
         }
 
-        auto get() const noexcept -> cref<vector<byte>> {
+        auto raw() const noexcept -> cref<vector<byte>> {
             return vector<void>::instance().storage[tid];
         }
 
         u32 tid;
-        obj<std::mutex> mutex;
     };
 
     template<pro::facade F>
@@ -215,7 +230,7 @@ namespace mtt::stl {
         requires std::is_constructible_v<T, Args...>
         auto emplace_back(Args&&... args) noexcept -> u32 {
             auto tid = map[typeid(T)];
-            auto& stroage = get(sid[tid]);
+            auto& stroage = raw(sid[tid]);
             auto idx = stroage.template emplace_back<T>(std::forward<Args>(args)...);
             return sid[tid] << 24 | tid << 20 | idx;
         }
@@ -225,7 +240,7 @@ namespace mtt::stl {
         auto emplace(std::string_view path, Args&&... args) noexcept -> u32 {
             auto t = map[typeid(T)];
             auto s = sid[t];
-            auto& stroage = get(s);
+            auto& stroage = raw(s);
             auto i = stroage.template emplace<T>(path, std::forward<Args>(args)...);
             while (flag.test_and_set(std::memory_order::acquire));
             slot[std::string{path}] = t;
@@ -249,26 +264,34 @@ namespace mtt::stl {
 
         auto operator[](u32 idx) noexcept -> mut<F> {
             auto [s, t, i] = split(idx);
-            auto ptr = get(s)[i];
+            auto ptr = raw(s)[i];
             return reinterpreter[t](ptr);
         }
 
         auto operator[](u32 idx) const noexcept -> view<F> {
             auto [s, t, i] = split(idx);
-            auto ptr = get(s)[i];
+            auto ptr = raw(s)[i];
             return reinterpreter[t](ptr);
         }
 
         auto operator()(u32 idx) const noexcept -> obj<F>
         requires(F::copyability != pro::constraint_level::none) {
             auto [s, t, i] = split(idx);
-            auto ptr = get(s)[i];
+            auto ptr = raw(s)[i];
             return copier.at(t)(ptr);
+        }
+
+        template<typename T>
+        auto get(u32 idx) const noexcept -> view<T> {
+            auto t = map.at(typeid(T));
+            auto s = sid[t];
+            auto ptr = raw(s)[idx];
+            return view<T>(ptr);
         }
 
         auto path(u32 idx) const noexcept -> std::string_view {
             auto [s, t, i] = split(idx);
-            return get(s).path(i);
+            return raw(s).path(i);
         }
 
         auto entity(std::string_view path) const noexcept -> u32 {
@@ -276,7 +299,7 @@ namespace mtt::stl {
             if (iter == slot.end()) stl::abort("empty facade entity");
             auto t = iter->second;
             auto s = sid[t];
-            auto i = get(s).entity(path);
+            auto i = raw(s).entity(path);
             return s << 24 | t << 20 | i;
         }
 
@@ -286,7 +309,7 @@ namespace mtt::stl {
             return true
             && map.contains(typeid(T))
             && t == map.at(typeid(T))
-            && i < get(s).size();
+            && i < raw(s).size();
         }
 
         auto contains(std::string_view path) const noexcept -> bool {
@@ -294,11 +317,11 @@ namespace mtt::stl {
         }
 
         template<typename T>
-        auto size() const noexcept -> usize { return get(sid[map.at(typeid(T))]).size(); }
+        auto size() const noexcept -> usize { return raw(sid[map.at(typeid(T))]).size(); }
         auto keys() const noexcept { return slot | std::views::keys; }
 
     private:
-        auto split(u32 idx) noexcept -> uv3 {
+        auto split(u32 idx) const noexcept -> uv3 {
             return {
                 idx >> 24,
                 idx >> 20 & 0xf,
@@ -306,11 +329,11 @@ namespace mtt::stl {
             };
         }
 
-        auto get(u32 tid) noexcept -> ref<vector<byte>> {
+        auto raw(u32 tid) noexcept -> ref<vector<byte>> {
             return vector<void>::instance().storage[tid];
         }
 
-        auto get(u32 tid) const noexcept -> cref<vector<byte>> {
+        auto raw(u32 tid) const noexcept -> cref<vector<byte>> {
             return vector<void>::instance().storage[tid];
         }
 

@@ -25,22 +25,24 @@ namespace mtt::stl {
         using deleter = std::function<void(mut<buf>)>;
         std::vector<mut<buf>> bufs;
         std::vector<deleter> deleters;
-        std::mutex mutex;
+        std::atomic_flag flag;
 
         auto push(mut<buf> buf, deleter f) noexcept -> void {
-            auto lock = std::lock_guard{mutex};
+            while (flag.test_and_set(std::memory_order::acquire));
             buf->idx = bufs.size();
             if (bufs.size() >= math::maxv<u32>)
                 stl::abort("stack overflow");
             bufs.push_back(buf);
             deleters.push_back(f);
+            flag.clear(std::memory_order::release);
         }
 
         auto swap(mut<buf> buf) noexcept -> void {
             if (buf->idx == math::maxv<u32>) return;
-            auto lock = std::lock_guard{mutex};
+            while (flag.test_and_set(std::memory_order::acquire));
             if (bufs[buf->idx] == buf) return;
             bufs[buf->idx] = buf;
+            flag.clear(std::memory_order::release);
         }
 
         auto release(mut<buf> buf) noexcept -> void {

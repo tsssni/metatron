@@ -19,7 +19,6 @@ namespace mtt::opaque {
         mut<byte> ptr;
         uptr addr;
         usize size;
-        u32 idx = math::maxv<u32>;
         uv2 dirty = {math::maxv<u32>, math::minv<u32>};
 
         struct Descriptor final {
@@ -33,8 +32,6 @@ namespace mtt::opaque {
         struct Impl;
         Buffer() noexcept = default;
         Buffer(cref<Descriptor> desc) noexcept;
-        Buffer(mut<stl::buf> desc) noexcept;
-        Buffer(rref<Buffer> rhs) noexcept;
         ~Buffer() noexcept;
         auto upload() noexcept -> obj<Buffer>;
         auto flush(view<Buffer> dst, usize offset) noexcept -> obj<Buffer>;

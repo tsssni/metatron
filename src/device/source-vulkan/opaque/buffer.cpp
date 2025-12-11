@@ -83,36 +83,6 @@ namespace mtt::opaque {
         }
     }
 
-    Buffer::Buffer(mut<stl::buf> buf) noexcept:
-    Buffer(Descriptor{
-        .type = command::Queue::Type::transfer,
-        .state = State::local,
-        .ptr = buf->ptr,
-        .size = buf->bytelen,
-    }) {
-        idx = buf->idx;
-        stl::stack::instance().release(buf);
-        buf->ptr = mut<byte>(addr);
-        buf->handle = uptr(this);
-        buf->idx = math::maxv<u32>;
-    }
-
-    Buffer::Buffer(rref<Buffer> rhs) noexcept {
-        impl = std::move(rhs.impl);
-        type = rhs.type;
-        state = rhs.state;
-        timestamp = rhs.timestamp; rhs.timestamp = 0;
-
-        ptr = rhs.ptr; rhs.ptr = nullptr;
-        addr = rhs.addr; rhs.addr = 0;
-        idx = rhs.idx; rhs.idx = 0;
-        dirty = rhs.dirty; rhs.dirty = {math::maxv<u32>, math::minv<u32>};
-
-        idx = rhs.idx; rhs.idx = 0;
-        if (idx != math::maxv<u32>)
-            stl::stack::instance().bufs[idx]->handle = uptr(this);
-    }
-
     Buffer::~Buffer() noexcept {
         if (state != State::visible || !ptr) return;
         auto& ctx = command::Context::instance().impl;
