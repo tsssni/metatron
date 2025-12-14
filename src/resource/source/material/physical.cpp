@@ -26,8 +26,10 @@ namespace mtt::material {
 
         auto lambda = ctx.lambda;
         auto degraded = true
-        && eta != fv4{0.f} && reflectance == fv4{0.f} && k == fv4{0.f}
-        && !math::constant(eta);
+        && reflectance != math::saturate(reflectance)
+        && eta != fv4{0.f} && !math::constant(eta)
+        && k == fv4{0.f};
+        
         if (degraded) {
             lambda = fv4{lambda[0]};
             reflectance = fv4{reflectance[0]};

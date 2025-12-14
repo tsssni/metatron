@@ -224,6 +224,13 @@ namespace mtt::muldim {
         auto size = uzv2(img.size);
         auto channels = img.size[2];
         auto stride = img.size[3];
+        if (spec.nchannels == 3) // fill alpha channel with 1
+            stl::scheduler::instance().sync_parallel(size, [&img](auto px) mutable {
+                auto [i, j] = px;
+                auto v = fv4{img[i, j, 0]};
+                v[3] = 1.0;
+                img[i, j, 0] = v;
+            });
 
         for (auto mip = 1uz; mip < img.pixels.size(); ++mip) {
             auto fetch = [mip, size, &img](cref<uzv2> src) {

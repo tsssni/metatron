@@ -36,7 +36,13 @@ namespace mtt::math {
     auto constexpr isinf(T x) noexcept -> bool {
         return std::isinf(x);
     }
-
+    
+    template<typename T>
+    requires std::floating_point<T>
+    auto constexpr saturate(T x) noexcept -> T {
+        if (isnan(x) || isinf(x)) return T(0);
+        return clamp(x, T(0), T(1));
+    }
 
     template<typename T>
     requires std::floating_point<T> || std::integral<T>

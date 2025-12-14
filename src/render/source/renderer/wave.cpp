@@ -19,7 +19,7 @@ namespace mtt::renderer {
         auto transfer_timeline = make_obj<command::Timeline>();
         auto network_timline = make_obj<command::Timeline>();
         auto render_count = u64{0};
-        auto tranfer_count = u64{0};
+        auto transfer_count = u64{0};
         auto network_count = u64{0};
 
         auto buffers = std::vector<obj<opaque::Buffer>>{};
@@ -47,6 +47,9 @@ namespace mtt::renderer {
             images = std::vector<obj<opaque::Image>>(isize);
             grids = std::vector<obj<opaque::Grid>>(gsize);
 
+            auto mutex = std::mutex{};
+            auto set = std::unordered_map<mut<stl::buf>, usize>{};
+
             scheduler.sync_parallel(uzv1{scheduler.size()}, [
                 &,
                 bc = std::make_shared<std::atomic<u32>>(0),
@@ -58,7 +61,7 @@ namespace mtt::renderer {
                 auto transfer = encoder::Transfer_Encoder{cmd.get()};
 
                 auto i = 0;
-                while ((i = bc->fetch_add(1, std::memory_order::acq_rel)) < bsize) {
+                while ((i = bc->fetch_add(1, std::memory_order::relaxed)) < bsize) {
                     auto& buf = stack.bufs[i];
                     if (buf->idx != i) continue;
 
@@ -71,6 +74,7 @@ namespace mtt::renderer {
                     auto buffer = make_obj<opaque::Buffer>(desc);
                     transfer.upload(*buffer);
                     stl::stack::instance().release(buf);
+
                     buf->ptr = mut<byte>(buffer->addr);
                     buf->handle = uptr(buffer.get());
                     buf->idx = math::maxv<u32>;
@@ -78,7 +82,7 @@ namespace mtt::renderer {
                 }
 
                 i = 0;
-                while ((i = vc->fetch_add(1, std::memory_order::acq_rel)) < vsize) {
+                while ((i = vc->fetch_add(1, std::memory_order::relaxed)) < vsize) {
                     auto& vec = vector.storage[i];
                     sequence[i] = vec.pack();
                     if (sequence[i].empty()) continue;
@@ -107,7 +111,7 @@ namespace mtt::renderer {
                 }
                 
                 i = 0;
-                while ((i = ic->fetch_add(1, std::memory_order::acq_rel)) < isize) {
+                while ((i = ic->fetch_add(1, std::memory_order::relaxed)) < isize) {
                     images[i] = make_obj<opaque::Image>(
                     opaque::Image::Descriptor{
                         .cmd = cmd.get(),
@@ -118,7 +122,7 @@ namespace mtt::renderer {
                 }
 
                 i = 0;
-                while ((i = gc->fetch_add(1, std::memory_order::acq_rel)) < gsize) {
+                while ((i = gc->fetch_add(1, std::memory_order::relaxed)) < gsize) {
                     grids[i] = make_obj<opaque::Grid>(
                     opaque::Grid::Descriptor{
                         .cmd = cmd.get(),
@@ -160,6 +164,44 @@ namespace mtt::renderer {
             cmd->signals = {{render_timeline.get(), ++render_count}};
             render_queue->submit(std::move(cmd));
             return std::move(accel);
+        }();
+
+        [&] {
+            auto image = muldim::Image{};
+            image.width = images[0]->width;
+            image.height = images[0]->height;
+            image.channels = 4;
+            image.stride = 4;
+
+            auto size = math::prod(image.size);
+            image.pixels.resize(1);
+            image.pixels.front().resize(math::prod(image.size));
+
+            auto transfer = transfer_queue->allocate();
+            auto render = render_queue->allocate();
+            auto desc = opaque::Buffer::Descriptor{
+                .cmd = transfer.get(),
+                .state = opaque::Buffer::State::visible,
+                .size = size,
+            };
+            auto buffer = make_obj<opaque::Buffer>(desc);
+
+            auto transfer_encoder = encoder::Transfer_Encoder{transfer.get()};
+            auto render_encoder = encoder::Transfer_Encoder{render.get()};
+            render_encoder.release(transfer.get(), *images[0]);
+            transfer_encoder.acquire(*images[0]);
+            transfer_encoder.copy(*buffer, *images[0]);
+
+            render->waits = {{render_timeline.get(), render_count}};
+            render->signals = {{render_timeline.get(), ++render_count}};
+            transfer->waits = {{render_timeline.get(), render_count}};
+            transfer->signals = {{transfer_timeline.get(), ++transfer_count}};
+            render_queue->submit(std::move(render));
+            transfer_queue->submit(std::move(transfer));
+
+            transfer_timeline->wait(transfer_count);
+            std::memcpy(image.pixels.front().data(), buffer->ptr, size);
+            image.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
         }();
     }
 }

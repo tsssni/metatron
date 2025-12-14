@@ -10,21 +10,21 @@ namespace mtt::encoder {
     using Grid = opaque::Grid;
     using Barrier = opaque::Barrier;
 
-    Barrier Transfer_Encoder::Impl::src_barrier = {
-        .stage = vk::PipelineStageFlagBits2::eCopy,
-        .access = vk::AccessFlagBits2::eTransferRead,
-        .layout = vk::ImageLayout::eTransferSrcOptimal,
-    };
-
-    Barrier Transfer_Encoder::Impl::dst_barrier = {
-        .stage = vk::PipelineStageFlagBits2::eCopy,
-        .access = vk::AccessFlagBits2::eTransferWrite,
-        .layout = vk::ImageLayout::eTransferDstOptimal,
-    };
-
     Transfer_Encoder::Transfer_Encoder(mut<command::Buffer> cmd) noexcept {
         this->cmd = cmd;
         impl->cmd = cmd;
+        impl->src_barrier = {
+            .stage = vk::PipelineStageFlagBits2::eCopy,
+            .access = vk::AccessFlagBits2::eTransferRead,
+            .layout = vk::ImageLayout::eTransferSrcOptimal,
+            .family = cmd->impl->family,
+        };
+        impl->dst_barrier = {
+            .stage = vk::PipelineStageFlagBits2::eCopy,
+            .access = vk::AccessFlagBits2::eTransferWrite,
+            .layout = vk::ImageLayout::eTransferDstOptimal,
+            .family = cmd->impl->family,
+        };
     }
 
     auto Transfer_Encoder::upload(Buffer::View view) noexcept -> void {
@@ -82,11 +82,11 @@ namespace mtt::encoder {
     };
 
     auto Transfer_Encoder::acquire(opaque::Buffer::View buffer) noexcept -> void { encoder::transfer<Buffer>(cmd, cmd->impl->family, buffer); }
-    auto Transfer_Encoder::acquire(opaque::Image::View buffer) noexcept -> void { encoder::transfer<Image>(cmd, cmd->impl->family, buffer); }
-    auto Transfer_Encoder::acquire(opaque::Grid::View buffer) noexcept -> void { encoder::transfer<Grid>(cmd, cmd->impl->family, buffer); }
+    auto Transfer_Encoder::acquire(opaque::Image::View image) noexcept -> void { encoder::transfer<Image>(cmd, cmd->impl->family, image); }
+    auto Transfer_Encoder::acquire(opaque::Grid::View grid) noexcept -> void { encoder::transfer<Grid>(cmd, cmd->impl->family, grid); }
     auto Transfer_Encoder::release(mut<command::Buffer> dst, opaque::Buffer::View buffer) noexcept -> void { encoder::transfer<Buffer>(cmd, dst->impl->family, buffer); }
-    auto Transfer_Encoder::release(mut<command::Buffer> dst, opaque::Image::View buffer) noexcept -> void { encoder::transfer<Image>(cmd, dst->impl->family, buffer); }
-    auto Transfer_Encoder::release(mut<command::Buffer> dst, opaque::Grid::View buffer) noexcept -> void { encoder::transfer<Grid>(cmd, dst->impl->family, buffer); }
+    auto Transfer_Encoder::release(mut<command::Buffer> dst, opaque::Image::View image) noexcept -> void { encoder::transfer<Image>(cmd, dst->impl->family, image); }
+    auto Transfer_Encoder::release(mut<command::Buffer> dst, opaque::Grid::View grid) noexcept -> void { encoder::transfer<Grid>(cmd, dst->impl->family, grid); }
 
     auto Transfer_Encoder::copy(Buffer::View dst, Buffer::View src) noexcept -> void {
         auto cmd = this->cmd->impl->cmd.get();
@@ -114,13 +114,13 @@ namespace mtt::encoder {
 
     template<typename T, typename U>
     auto copy(
-        mut<command::Buffer> buffer, typename T::View to, typename U::View from
+        mut<Transfer_Encoder> encoder, typename T::View to, typename U::View from
     ) noexcept -> void {
-        auto cmd = buffer->impl->cmd.get();
+        auto cmd = encoder->cmd->impl->cmd.get();
         auto& src = from.ptr->impl;
         auto& dst = to.ptr->impl;
-        auto src_barrier = src->update(Transfer_Encoder::Impl::src_barrier);
-        auto dst_barrier = dst->update(Transfer_Encoder::Impl::dst_barrier);
+        auto src_barrier = src->update(encoder->impl->src_barrier);
+        auto dst_barrier = dst->update(encoder->impl->dst_barrier);
         auto barrier_info = vk::DependencyInfo{.bufferMemoryBarrierCount = 1, .imageMemoryBarrierCount = 1};
         auto region_info = vk::BufferImageCopy2{.bufferRowLength = 0, .bufferImageHeight = 0};
         if constexpr (std::is_same_v<U, Buffer>) {
@@ -158,21 +158,21 @@ namespace mtt::encoder {
         }
     }
 
-    auto Transfer_Encoder::copy(Image::View dst, Buffer::View src) noexcept -> void { encoder::copy<Image, Buffer>(cmd, dst, src); }
-    auto Transfer_Encoder::copy(Grid::View dst, Buffer::View src) noexcept -> void { encoder::copy<Grid, Buffer>(cmd, dst, src); }
-    auto Transfer_Encoder::copy(Buffer::View dst, Image::View src) noexcept -> void { encoder::copy<Buffer, Image>(cmd, dst, src); }
-    auto Transfer_Encoder::copy(Buffer::View dst, Grid::View src) noexcept -> void { encoder::copy<Buffer, Grid>(cmd, dst, src); }
+    auto Transfer_Encoder::copy(Image::View dst, Buffer::View src) noexcept -> void { encoder::copy<Image, Buffer>(this, dst, src); }
+    auto Transfer_Encoder::copy(Grid::View dst, Buffer::View src) noexcept -> void { encoder::copy<Grid, Buffer>(this, dst, src); }
+    auto Transfer_Encoder::copy(Buffer::View dst, Image::View src) noexcept -> void { encoder::copy<Buffer, Image>(this, dst, src); }
+    auto Transfer_Encoder::copy(Buffer::View dst, Grid::View src) noexcept -> void { encoder::copy<Buffer, Grid>(this, dst, src); }
 
     template<typename T>
     auto copy(
-        mut<command::Buffer> buffer, typename T::View to, typename T::View from
+        mut<Transfer_Encoder> encoder, typename T::View to, typename T::View from
     ) noexcept -> void {
-        auto cmd = buffer->impl->cmd.get();
+        auto cmd = encoder->cmd->impl->cmd.get();
         auto& src = from.ptr->impl;
         auto& dst = to.ptr->impl;
         auto barriers = std::to_array<vk::ImageMemoryBarrier2>({
-            src->update(Transfer_Encoder::Impl::src_barrier),
-            dst->update(Transfer_Encoder::Impl::dst_barrier),
+            src->update(encoder->impl->src_barrier),
+            dst->update(encoder->impl->dst_barrier),
         });
         auto barrier_info = vk::DependencyInfo{
             .imageMemoryBarrierCount = 2,
@@ -197,8 +197,8 @@ namespace mtt::encoder {
         });
     }
 
-    auto Transfer_Encoder::copy(Image::View dst, Image::View src) noexcept -> void { encoder::copy<Image>(cmd, src, dst); }
-    auto Transfer_Encoder::copy(Grid::View dst, Grid::View src) noexcept -> void { encoder::copy<Grid>(cmd, src, dst); }
+    auto Transfer_Encoder::copy(Image::View dst, Image::View src) noexcept -> void { encoder::copy<Image>(this, src, dst); }
+    auto Transfer_Encoder::copy(Grid::View dst, Grid::View src) noexcept -> void { encoder::copy<Grid>(this, src, dst); }
 
     auto Transfer_Encoder::Impl::stage(Buffer::View view) noexcept
     -> Buffer::View {

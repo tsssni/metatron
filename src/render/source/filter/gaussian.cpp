@@ -12,7 +12,7 @@ namespace mtt::filter {
                 matrix[j][i] = math::abs((*this)({x, y}));
             }
         }
-        piecewise = math::Piecewise_Distribution<2>{
+        piecewise = math::Planar_Distribution{
             std::span{matrix.data(), matrix.size()},
             {64, 64},
             {-radius[1], -radius[0]},

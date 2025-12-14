@@ -222,8 +222,8 @@ namespace mtt::bsdf {
 
     auto Physical_Bsdf::flags() const noexcept -> Flags {
         auto flags = 0;
-        if (reflectance != fv4{0.f} || math::max(k) > 0.f) flags |= Flags::reflective;
-        else if (eta == fv4{1.f}) flags |= Flags::transmissive;
+        if (lambertian || plastic || conductive) flags |= Flags::reflective;
+        else if (dieletric && eta == fv4{1.f}) flags |= Flags::transmissive;
         else flags |= Flags::transmissive | Flags::reflective;
         if (!lambertian && (alpha_u == 0.f || alpha_v == 0.f)) flags |= Flags::specular;
         return Flags(flags);

@@ -309,7 +309,9 @@ namespace mtt::math {
     template<typename T, usize size>
     requires std::totally_ordered<T>
     auto constexpr saturate(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
-        return clamp(x, Vector<T, size>{0}, Vector<T, size>{1});
+        return foreach([&](cref<T> v, usize i) noexcept -> T {
+            return saturate(v);
+        }, x);
     }
 
     template<typename T, usize size>

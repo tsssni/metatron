@@ -4,8 +4,8 @@
 
 namespace mtt::encoder {
     struct Transfer_Encoder::Impl final {
-        opaque::Barrier static src_barrier;
-        opaque::Barrier static dst_barrier;
+        opaque::Barrier src_barrier;
+        opaque::Barrier dst_barrier;
         mut<command::Buffer> cmd;
 
         auto stage(opaque::Buffer::View buffer) noexcept -> opaque::Buffer::View;
