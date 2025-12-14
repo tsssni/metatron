@@ -1,6 +1,7 @@
 #pragma once
 #include <metatron/device/shader/layout.hpp>
 #include <metatron/device/opaque/buffer.hpp>
+#include <metatron/device/command/buffer.hpp>
 #include <metatron/core/stl/capsule.hpp>
 
 namespace mtt::shader {
@@ -9,7 +10,12 @@ namespace mtt::shader {
         obj<opaque::Buffer> uniform;
         obj<opaque::Buffer> set;
 
+        struct Descriptor final {
+            mut<command::Buffer> cmd;
+            std::string_view name;
+        };
+
         struct Impl;
-        Argument(std::string_view name) noexcept;
+        Argument(cref<Descriptor> desc) noexcept;
     };
 }

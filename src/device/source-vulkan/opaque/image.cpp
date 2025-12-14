@@ -1,6 +1,42 @@
 #include "image.hpp"
+#include "../command/buffer.hpp"
 
 namespace mtt::opaque {
+    auto Image::Impl::subresource(Image::View view) noexcept -> vk::ImageSubresource2 {
+        return {.imageSubresource = {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .mipLevel = u32(view.mip[0]),
+            .arrayLayer = 0,
+        }};
+    }
+
+    auto Image::Impl::layers(Image::View view) noexcept -> vk::ImageSubresourceLayers {
+        return {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .mipLevel = u32(view.mip[0]),
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        };
+    }
+
+    auto Image::Impl::range(Image::View view) noexcept -> vk::ImageSubresourceRange {
+        return {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = u32(view.mip[0]),
+            .levelCount = u32(view.mip[1]),
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        };
+    }
+
+    auto Image::Impl::offset(Image::View view) noexcept -> vk::Offset3D {
+        return {i32(view.offset[0]), i32(view.offset[1]), 0};
+    }
+
+    auto Image::Impl::extent(Image::View view) noexcept -> vk::Extent3D {
+        return {u32(view.size[0]), u32(view.size[1]), 1};
+    }
+
     auto Image::Impl::format(cref<muldim::Image> image) noexcept -> vk::Format {
         auto channels = image.channels;
         auto stride = image.stride;
@@ -30,18 +66,32 @@ namespace mtt::opaque {
         return vk::Format::eB8G8R8A8Unorm;
     }
 
+    auto Image::Impl::update(cref<Barrier> desc) noexcept -> vk::ImageMemoryBarrier2 {
+        auto barrier = this->barrier.update<vk::ImageMemoryBarrier2>(desc);
+        barrier.image = image.get();
+        barrier.subresourceRange = vk::ImageSubresourceRange{
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = vk::RemainingMipLevels,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        };
+        return barrier;
+    }
+
     Image::Image(cref<Descriptor> desc) noexcept:
-    type(desc.type),
-    state(desc.state) {
+    state(desc.state),
+    type(desc.cmd->type) {
+        impl->barrier.family = desc.cmd->impl->family;
         width = desc.image->width;
         height = desc.image->height;
         mips = math::max(1uz, desc.image->pixels.size());
         if (desc.state == State::samplable && !desc.image->pixels.empty()) {
             for (auto i = 0; i < mips; ++i)
                 host.push_back(make_obj<Buffer>(Buffer::Descriptor{
-                    .type = type,
-                    .state = Buffer::State::visible,
+                    .cmd = desc.cmd,
                     .ptr = desc.image->pixels[i].data(),
+                    .state = Buffer::State::visible,
                     .size = desc.image->pixels[i].size(),
                 }));
             desc.image->pixels.clear();
@@ -58,9 +108,8 @@ namespace mtt::opaque {
         }
 
         auto& ctx = command::Context::instance().impl;
-        auto& queue = command::Queues::instance().queues[u32(type)];
         auto device = ctx->device.get();
-        command::guard(device.createImageUnique({
+        impl->image = command::guard(device.createImageUnique({
             .imageType = vk::ImageType::e2D,
             .format = format,
             .extent = vk::Extent3D{width, height, 1},
@@ -68,7 +117,27 @@ namespace mtt::opaque {
             .arrayLayers = 1,
             .usage = usages,
             .queueFamilyIndexCount = 1,
-            .pQueueFamilyIndices = &queue.family,
+            .pQueueFamilyIndices = &impl->barrier.family,
         }));
+
+        auto size = device.getImageMemoryRequirements2({
+            .image = impl->image.get(),
+        }).memoryRequirements.size;
+        auto alloc = vk::MemoryAllocateInfo{
+            .allocationSize = size,
+            .memoryTypeIndex = ctx->device_memory,
+        };
+        impl->memory = command::guard(device.allocateMemoryUnique(alloc));
+
+        auto info = vk::BindImageMemoryInfo{
+            .image = impl->image.get(),
+            .memory = impl->memory.get(),
+            .memoryOffset = 0,
+        };
+        command::guard(device.bindImageMemory2(1, &info));
+    }
+
+    Image::operator View() noexcept {
+        return {this, {0, mips}, {0, 0}, {width, height}};
     }
 }

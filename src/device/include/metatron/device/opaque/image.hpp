@@ -10,9 +10,15 @@ namespace mtt::opaque {
             storable,
         };
 
+        struct View final {
+            mut<Image> ptr;
+            uzv2 mip;
+            uzv2 offset;
+            uzv2 size;
+        };
+
         command::Queue::Type type;
         State state;
-        u64 timestamp = 0;
 
         u32 width;
         u32 height;
@@ -20,12 +26,13 @@ namespace mtt::opaque {
         std::vector<obj<Buffer>> host;
 
         struct Descriptor final {
-            command::Queue::Type type;
-            State state;
+            mut<command::Buffer> cmd;
             mut<muldim::Image> image;
+            State state = State::samplable;
         };
 
         struct Impl;
         Image(cref<Descriptor> desc) noexcept;
+        operator View() noexcept;
     };
 }

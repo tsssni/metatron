@@ -4,6 +4,10 @@
 #include <metatron/core/stl/capsule.hpp>
 #include <metatron/core/stl/stack.hpp>
 
+namespace mtt::command {
+    struct Buffer;
+}
+
 namespace mtt::opaque {
     struct Buffer final: stl::capsule<Buffer> {
         enum struct State {
@@ -12,19 +16,24 @@ namespace mtt::opaque {
             twin,
         };
 
-        command::Queue::Type type;
-        State state;
-        u64 timestamp = 0;
+        struct View final {
+            mut<Buffer> ptr;
+            uptr offset;
+            usize size;
+        };
 
-        mut<byte> ptr;
-        uptr addr;
-        usize size;
+        State state;
+        command::Queue::Type type;
+
+        mut<byte> ptr = nullptr;
+        uptr addr = 0;
+        usize size = 0;
         uv2 dirty = {math::maxv<u32>, math::minv<u32>};
 
         struct Descriptor final {
-            command::Queue::Type type;
-            State state = State::local;
+            mut<command::Buffer> cmd;
             mut<byte> ptr = nullptr;
+            State state = State::local;
             usize size = 0;
             u64 flags = 0;
         };
@@ -32,8 +41,9 @@ namespace mtt::opaque {
         struct Impl;
         Buffer() noexcept = default;
         Buffer(cref<Descriptor> desc) noexcept;
+        Buffer(rref<Buffer> rhs) noexcept;
+        auto operator=(rref<Buffer> rhs) noexcept -> ref<Buffer>;
         ~Buffer() noexcept;
-        auto upload() noexcept -> obj<Buffer>;
-        auto flush(view<Buffer> dst, usize offset) noexcept -> obj<Buffer>;
+        operator View() noexcept;
     };
 }

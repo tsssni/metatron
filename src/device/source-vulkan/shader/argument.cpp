@@ -3,14 +3,14 @@
 #include <metatron/core/math/bit.hpp>
 
 namespace mtt::shader {
-    Argument::Argument(std::string_view name) noexcept {
-        auto path = (stl::path{"shader"} / name).concat(".json");
+    Argument::Argument(cref<Descriptor> desc) noexcept {
+        auto path = (stl::path{"shader"} / desc.name).concat(".json");
         stl::json::load(stl::filesystem::find(path), reflection);
 
         auto bindings = std::vector<vk::DescriptorSetLayoutBinding>{};
         for (auto i = 0u; i < reflection.size(); ++i) {
-            using Type = Descriptor::Type;
-            using Access = Descriptor::Access;
+            using Type = shader::Descriptor::Type;
+            using Access = shader::Descriptor::Access;
             using Binding = vk::DescriptorType;
             auto constexpr types = std::to_array<Binding>({
                 Binding::eUniformBuffer,
@@ -20,20 +20,20 @@ namespace mtt::shader {
                 Binding::eAccelerationStructureKHR,
             });
 
-            auto& desc = reflection[i];
-            auto type = types[i32(desc.type)];
+            auto& refl = reflection[i];
+            auto type = types[i32(refl.type)];
             // compiler ensures only one uniform buffer
-            if (desc.type == Type::parameter)
+            if (refl.type == Type::parameter)
                 uniform = make_obj<opaque::Buffer>(opaque::Buffer::Descriptor{
-                    .type = command::Queue::Type::transfer,
+                    .cmd = desc.cmd,
                     .state = opaque::Buffer::State::twin,
-                    .size = math::align(desc.size, 256),
+                    .size = math::align(refl.size, 256),
                     .flags = u64(vk::BufferUsageFlagBits2::eUniformBuffer),
                 });
-            if (type == Binding::eSampledImage && desc.access != Access::readonly)
+            if (type == Binding::eSampledImage && refl.access != Access::readonly)
                 type = Binding::eStorageImage;
 
-            auto count = desc.size < 0 ? 65536u : math::max(1, desc.size);
+            auto count = refl.size < 0 ? 65536u : math::max(1, refl.size);
             bindings.push_back(vk::DescriptorSetLayoutBinding{
                 .binding = i,
                 .descriptorType = type,
@@ -54,7 +54,7 @@ namespace mtt::shader {
         auto size = usize{};
         device.getDescriptorSetLayoutSizeEXT(impl->layout.get(), &size);
         set = make_obj<opaque::Buffer>(opaque::Buffer::Descriptor{
-            .type = command::Queue::Type::transfer,
+            .cmd = desc.cmd,
             .state = opaque::Buffer::State::twin,
             .size = size,
             .flags = 0

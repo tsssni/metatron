@@ -1,5 +1,5 @@
 #include "context.hpp"
-#include "buffer.hpp"
+#include "queue.hpp"
 #include "../shader/argument.hpp"
 #include "../shader/pipeline.hpp"
 #include <metatron/device/command/context.hpp>
@@ -113,32 +113,38 @@ namespace mtt::command {
         for (auto&& physical_device: guard(instance->enumeratePhysicalDevices())) {
             auto families = physical_device.getQueueFamilyProperties2();
             auto render_family = math::maxv<u32>;
+            auto render_limit = 0u;
             auto transfer_family = math::maxv<u32>;
+            auto transfer_limit = 0u;
             for (auto i = 0; i < families.size(); ++i) {
                 auto const& family = families[i];
                 auto& props = family.queueFamilyProperties;
                 auto flags = props.queueFlags;
                 auto graphics = vk::QueueFlags::BitsType::eGraphics;
                 auto transfer = vk::QueueFlags::BitsType::eTransfer;
-                if (render_family == math::maxv<u32> && flags & graphics)
+                if (render_family == math::maxv<u32> && flags & graphics) {
                     render_family = i;
-                else if (transfer_family == math::maxv<u32> && flags & transfer)
+                    render_limit = props.queueCount;
+                } else if (transfer_family == math::maxv<u32> && flags & transfer) {
                     transfer_family = i;
+                    transfer_limit = props.queueCount;
+                }
             }
             if (render_family == math::maxv<u32> || transfer_family == math::maxv<u32>)
                 stl::abort("no vulkan async transfer queue");
 
-            auto priorities = std::vector<f32>{1.f};
+            auto render_priorities = std::vector<f32>(render_limit, 1.f);
+            auto transfer_priorities = std::vector<f32>(transfer_limit, 1.f);
             auto queues = std::array<vk::DeviceQueueCreateInfo, 2>{
                 vk::DeviceQueueCreateInfo{
                     .queueFamilyIndex = render_family,
-                    .queueCount = 1,
-                    .pQueuePriorities = priorities.data(),
+                    .queueCount = render_limit,
+                    .pQueuePriorities = render_priorities.data(),
                 },
                 vk::DeviceQueueCreateInfo{
                     .queueFamilyIndex = transfer_family,
-                    .queueCount = 1,
-                    .pQueuePriorities = priorities.data(),
+                    .queueCount = transfer_limit,
+                    .pQueuePriorities = render_priorities.data(),
                 },
             };
 
@@ -162,7 +168,9 @@ namespace mtt::command {
             ) {
                 device = std::move(candidate.value);
                 render_queue = render_family;
+                render_count = render_limit;
                 transfer_queue = transfer_family;
+                transfer_count = transfer_limit;
 
                 auto props = vk::StructureChain<
                     vk::PhysicalDeviceProperties2,
@@ -225,6 +233,5 @@ namespace mtt::command {
 
     auto Context::init() noexcept -> void {
         Context::instance();
-        Buffer::Impl::init();
     }
 }

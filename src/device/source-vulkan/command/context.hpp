@@ -24,7 +24,9 @@ namespace mtt::command {
         vk::PhysicalDeviceDescriptorBufferPropertiesEXT descriptor_buffer_props;
 
         u32 render_queue;
+        u32 render_count;
         u32 transfer_queue;
+        u32 transfer_count;
         u32 device_memory;
         u32 host_memory;
 

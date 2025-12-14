@@ -10,9 +10,14 @@ namespace mtt::opaque {
             writable,
         };
 
-        command::Queue::Type type;
+        struct View final {
+            mut<Grid> ptr;
+            uzv3 offset;
+            uzv3 size;
+        };
+
         State state;
-        u64 timestamp = 0;
+        command::Queue::Type type;
 
         u32 width;
         u32 height;
@@ -20,12 +25,13 @@ namespace mtt::opaque {
         obj<Buffer> host;
 
         struct Descriptor final {
-            command::Queue::Type type;
-            State state;
+            mut<command::Buffer> cmd;
             mut<muldim::Grid> grid;
+            State state = State::readonly;
         };
 
         struct Impl;
         Grid(cref<Descriptor> desc) noexcept;
+        operator View() noexcept;
     };
 }

@@ -18,14 +18,12 @@ namespace mtt::opaque {
         };
         struct Instance final { fm4 transform; };
 
-        command::Queue::Type type;
         u64 timestamp = 0;
 
         std::vector<obj<Buffer>> buffers;
         std::vector<obj<Buffer>> scratches;
 
         struct Descriptor final {
-            command::Queue::Type type;
             std::vector<Primitive> primitives;
             std::vector<Instance> instances;
         };

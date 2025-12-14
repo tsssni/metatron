@@ -88,9 +88,21 @@ namespace mtt::stl {
             return future;
         }
 
+        auto static index() noexcept -> usize {
+            auto static thread_local tid = math::maxv<u32>;
+            auto static aid = std::atomic<u32>{0};
+            if (tid == math::maxv<u32>) tid = aid.fetch_add(1);
+            return tid;
+        }
+
+        auto size() noexcept -> usize { return threads.size() + 1; }
+
     private:
         template<typename F, usize size>
-        requires (std::is_invocable_v<F, math::Vector<usize, size>> && size >= 1 && size <= 3)
+        requires (true
+        && std::is_invocable_v<F, math::Vector<usize, size>>
+        && std::same_as<std::invoke_result_t<F, math::Vector<usize, size>>, void>
+        && size >= 1 && size <= 3)
         auto parallel(
             cref<uzv<size>> grid, F&& f, bool sync
         ) noexcept -> std::shared_future<void> {
