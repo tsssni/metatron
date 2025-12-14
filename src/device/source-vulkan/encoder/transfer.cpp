@@ -30,12 +30,79 @@ namespace mtt::encoder {
     auto Transfer_Encoder::upload(Buffer::View view) noexcept -> void {
         using State = Buffer::State;
         auto buffer = view.ptr;
-        if (buffer->state == State::local && buffer->ptr)
-            copy(view, impl->stage(view));
-        else if (buffer->state == State::twin && buffer->dirty[1] > buffer->dirty[0]) {
-            auto offset = view.ptr->dirty[0];
-            auto size = view.ptr->dirty[1] - view.ptr->dirty[0];
-            copy({view.ptr, offset, size}, impl->flush(view));
+        if (buffer->state == State::local && buffer->ptr) {
+            auto uploaded = make_obj<Buffer>();
+            auto buffer = view.ptr;
+            uploaded->impl->host_memory = std::move(buffer->impl->host_memory);
+            uploaded->impl->host_buffer = std::move(buffer->impl->host_buffer);
+            uploaded->type = buffer->type;
+            uploaded->state = Buffer::State::visible;
+            uploaded->ptr = buffer->ptr;
+            uploaded->size = buffer->size;
+
+            auto& ctx = command::Context::instance().impl;
+            auto device = ctx->device.get();
+            auto usages = vk::BufferUsageFlags2CreateInfo{.usage = buffer->impl->usages};
+
+            auto create = vk::BufferCreateInfo{
+                .pNext = &usages,
+                .size = uploaded->size,
+                .sharingMode = vk::SharingMode::eExclusive,
+                .queueFamilyIndexCount = 1,
+                .pQueueFamilyIndices = &cmd->impl->family,
+            };
+            uploaded->impl->device_buffer = command::guard(device.createBufferUnique(create));
+
+            auto info = vk::BindBufferMemoryInfo{
+                .buffer = uploaded->impl->device_buffer.get(),
+                .memory = uploaded->impl->host_memory.get(),
+                .memoryOffset = 0,
+            };
+            command::guard(device.bindBufferMemory2(1, &info));
+            uploaded->addr = device.getBufferAddress({
+                .buffer = uploaded->impl->device_buffer.get(),
+            });
+            buffer->ptr = nullptr;
+
+            auto staged = Buffer::View(*uploaded);
+            cmd->stages.push_back(std::move(uploaded));
+            copy(view, staged);
+        } else if (buffer->state == State::twin && buffer->dirty[1] > buffer->dirty[0]) {
+            auto buffer = view.ptr;
+            auto dirty = std::move(buffer->dirty);
+            auto size = dirty | std::views::transform([](auto&& x) {
+                return x[1] > x[0] ? x[1] - x[0] : 0;
+            });
+            auto sum = std::ranges::fold_left(size, 0, std::plus{});
+            auto block = cmd->blocks.allocate(sum);
+            auto regions = std::vector<vk::BufferCopy2>{};
+            for (auto&& [dirty, size]: std::views::zip(dirty, size)) {
+                auto dst = block.ptr->ptr + block.offset;
+                auto src = buffer->ptr + dirty[0];
+                std::memcpy(dst, src, size);
+                regions.push_back({
+                    .srcOffset = block.offset,
+                    .dstOffset = dirty[0],
+                    .size = size,
+                });
+                block.offset += size;
+            }
+
+            auto cmd = this->cmd->impl->cmd.get();
+            auto barriers = std::to_array<vk::BufferMemoryBarrier2>({
+                block.ptr->impl->update(impl->src_barrier),
+                buffer->impl->update(impl->dst_barrier),
+            });
+            cmd.pipelineBarrier2({
+                .bufferMemoryBarrierCount = barriers.size(),
+                .pBufferMemoryBarriers = barriers.data(),
+            });
+            cmd.copyBuffer2({
+                .srcBuffer = block.ptr->impl->device_buffer.get(),
+                .dstBuffer = buffer->impl->device_buffer.get(),
+                .regionCount = u32(regions.size()),
+                .pRegions = regions.data(),
+            });
         }
     }
 
@@ -199,56 +266,4 @@ namespace mtt::encoder {
 
     auto Transfer_Encoder::copy(Image::View dst, Image::View src) noexcept -> void { encoder::copy<Image>(this, src, dst); }
     auto Transfer_Encoder::copy(Grid::View dst, Grid::View src) noexcept -> void { encoder::copy<Grid>(this, src, dst); }
-
-    auto Transfer_Encoder::Impl::stage(Buffer::View view) noexcept
-    -> Buffer::View {
-        auto uploaded = make_obj<Buffer>();
-        auto buffer = view.ptr;
-        uploaded->impl->host_memory = std::move(buffer->impl->host_memory);
-        uploaded->impl->host_buffer = std::move(buffer->impl->host_buffer);
-        uploaded->type = buffer->type;
-        uploaded->state = Buffer::State::visible;
-        uploaded->ptr = buffer->ptr;
-        uploaded->size = buffer->size;
-
-        auto& ctx = command::Context::instance().impl;
-        auto device = ctx->device.get();
-        auto usages = vk::BufferUsageFlags2CreateInfo{.usage = buffer->impl->usages};
-
-        auto create = vk::BufferCreateInfo{
-            .pNext = &usages,
-            .size = uploaded->size,
-            .sharingMode = vk::SharingMode::eExclusive,
-            .queueFamilyIndexCount = 1,
-            .pQueueFamilyIndices = &cmd->impl->family,
-        };
-        uploaded->impl->device_buffer = command::guard(device.createBufferUnique(create));
-
-        auto info = vk::BindBufferMemoryInfo{
-            .buffer = uploaded->impl->device_buffer.get(),
-            .memory = uploaded->impl->host_memory.get(),
-            .memoryOffset = 0,
-        };
-        command::guard(device.bindBufferMemory2(1, &info));
-        uploaded->addr = device.getBufferAddress({
-            .buffer = uploaded->impl->device_buffer.get(),
-        });
-        buffer->ptr = nullptr;
-
-        auto staged = Buffer::View(*uploaded);
-        cmd->stages.push_back(std::move(uploaded));
-        return staged;
-    }
-
-    auto Transfer_Encoder::Impl::flush(Buffer::View view) noexcept
-    -> Buffer::View {
-        auto buffer = view.ptr;
-        auto size = buffer->dirty[1] - buffer->dirty[0];
-        auto block = cmd->blocks.allocate(size);
-        auto dst = block.ptr->ptr + block.offset;
-        auto src = buffer->ptr + buffer->dirty[0];
-        std::memcpy(dst, src, size);
-        view.ptr->dirty = uv2{math::maxv<u32>, math::minv<u32>};
-        return block;
-    }
 }

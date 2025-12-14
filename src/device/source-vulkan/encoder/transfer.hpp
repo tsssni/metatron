@@ -7,8 +7,5 @@ namespace mtt::encoder {
         opaque::Barrier src_barrier;
         opaque::Barrier dst_barrier;
         mut<command::Buffer> cmd;
-
-        auto stage(opaque::Buffer::View buffer) noexcept -> opaque::Buffer::View;
-        auto flush(opaque::Buffer::View buffer) noexcept -> opaque::Buffer::View;
     };
 }

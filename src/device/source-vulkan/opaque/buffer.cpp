@@ -99,11 +99,10 @@ namespace mtt::opaque {
         if (impl->host_memory && ptr)
             command::guard(device.unmapMemory2({.memory = impl->host_memory.get()}));
         state = rhs.state; type = rhs.type; ptr = rhs.ptr;
-        addr = rhs.addr; size = rhs.size; dirty = rhs.dirty;
+        addr = rhs.addr; size = rhs.size; dirty = std::move(rhs.dirty);
         impl = std::move(rhs.impl);
         rhs.ptr = nullptr;
         rhs.addr = 0;
-        rhs.dirty = {math::maxv<u32>, math::minv<u32>};
         return *this;
     }
 

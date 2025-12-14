@@ -28,7 +28,7 @@ namespace mtt::opaque {
         mut<byte> ptr = nullptr;
         uptr addr = 0;
         usize size = 0;
-        uv2 dirty = {math::maxv<u32>, math::minv<u32>};
+        std::vector<uv2> dirty = {};
 
         struct Descriptor final {
             mut<command::Buffer> cmd;

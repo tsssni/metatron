@@ -33,7 +33,7 @@ namespace mtt::shader {
             if (type == Binding::eSampledImage && refl.access != Access::readonly)
                 type = Binding::eStorageImage;
 
-            auto count = refl.size < 0 ? 65536u : math::max(1, refl.size);
+            auto count = refl.size < 0 ? 8192u : math::max(1, refl.size);
             bindings.push_back(vk::DescriptorSetLayoutBinding{
                 .binding = i,
                 .descriptorType = type,
