@@ -3,9 +3,10 @@
 #include <metatron/device/command/buffer.hpp>
 #include <metatron/device/encoder/transfer.hpp>
 #include <metatron/device/opaque/buffer.hpp>
+#include <metatron/device/opaque/buffer.hpp>
 #include <metatron/device/opaque/image.hpp>
 #include <metatron/device/opaque/grid.hpp>
-#include <metatron/device/opaque/buffer.hpp>
+#include <metatron/device/opaque/sampler.hpp>
 #include <metatron/device/opaque/accel.hpp>
 #include <metatron/resource/shape/mesh.hpp>
 #include <metatron/core/stl/thread.hpp>
@@ -167,24 +168,36 @@ namespace mtt::renderer {
         }();
 
         [&] {
-            auto image = muldim::Image{};
-            image.width = images[0]->width;
-            image.height = images[0]->height;
-            image.channels = 4;
-            image.stride = 4;
-
-            auto size = math::prod(image.size);
-            image.pixels.resize(1);
-            image.pixels.front().resize(math::prod(image.size));
-
             auto transfer = transfer_queue->allocate();
             auto render = render_queue->allocate();
-            auto desc = opaque::Buffer::Descriptor{
+
+            auto film = muldim::Image{};
+            film.width = images[0]->width;
+            film.height = images[0]->height;
+            film.channels = 4;
+            film.stride = 4;
+
+            auto size = math::prod(film.size);
+            film.pixels.resize(1);
+            film.pixels.front().resize(math::prod(film.size));
+
+            auto sampler = make_obj<opaque::Sampler>(
+            opaque::Sampler::Descriptor{
+                .cmd = render.get(),
+                .mode = opaque::Sampler::Mode::repeat,
+            });
+            auto image = make_obj<opaque::Image>(
+            opaque::Image::Descriptor{
+                .cmd = render.get(),
+                .image = &film,
+                .state = opaque::Image::State::storable,
+            });
+            auto buffer = make_obj<opaque::Buffer>(
+            opaque::Buffer::Descriptor{
                 .cmd = transfer.get(),
                 .state = opaque::Buffer::State::visible,
                 .size = size,
-            };
-            auto buffer = make_obj<opaque::Buffer>(desc);
+            });
 
             auto transfer_encoder = encoder::Transfer_Encoder{transfer.get()};
             auto render_encoder = encoder::Transfer_Encoder{render.get()};
@@ -200,8 +213,8 @@ namespace mtt::renderer {
             transfer_queue->submit(std::move(transfer));
 
             transfer_timeline->wait(transfer_count);
-            std::memcpy(image.pixels.front().data(), buffer->ptr, size);
-            image.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
+            std::memcpy(film.pixels.front().data(), buffer->ptr, size);
+            film.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
         }();
     }
 }

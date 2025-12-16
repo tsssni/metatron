@@ -7,6 +7,7 @@ namespace mtt::opaque {
         Barrier barrier;
         vk::UniqueDeviceMemory memory;
         vk::UniqueImage image;
+        vk::UniqueImageView view;
 
         auto static subresource(Grid::View view) noexcept -> vk::ImageSubresource2;
         auto static layers(Grid::View view) noexcept -> vk::ImageSubresourceLayers;

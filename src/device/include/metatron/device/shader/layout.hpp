@@ -14,11 +14,10 @@ namespace mtt::shader {
         enum struct Access {
             readonly,
             readwrite,
-            writeonly,
         } access = Access::readonly;
         // parameter: struct size
-        // array: size > 0 or -1 for bindless
-        i32 size = 0;
+        // array: element count
+        u32 size = 0;
     };
     using Set = std::vector<Descriptor>;
 }
@@ -36,7 +35,7 @@ namespace glz {
     struct meta<mtt::shader::Descriptor::Access> {
         using enum mtt::shader::Descriptor::Access;
         auto constexpr static value = glz::enumerate(
-            readonly, readwrite, writeonly
+            readonly, readwrite
         );
     };
 }

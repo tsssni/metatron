@@ -1,13 +1,14 @@
 #pragma once
 #include <metatron/device/shader/layout.hpp>
 #include <metatron/device/opaque/buffer.hpp>
+#include <metatron/device/opaque/image.hpp>
+#include <metatron/device/opaque/grid.hpp>
 #include <metatron/device/command/buffer.hpp>
 #include <metatron/core/stl/capsule.hpp>
 
 namespace mtt::shader {
     struct Argument final: stl::capsule<Argument> {
-        Set reflection;
-        obj<opaque::Buffer> uniform;
+        mut<command::Buffer> cmd;
         obj<opaque::Buffer> set;
 
         struct Descriptor final {
@@ -15,7 +16,38 @@ namespace mtt::shader {
             std::string_view name;
         };
 
+        template<typename T>
+        struct Bindless final {
+            usize offset;
+            std::span<typename T::View> list;
+        };
+
         struct Impl;
         Argument(cref<Descriptor> desc) noexcept;
+
+        auto bind(std::string_view field, std::span<byte const> uniform) noexcept -> void;
+        auto bind(std::string_view field, opaque::Image::View image) noexcept -> void;
+        auto bind(std::string_view field, opaque::Grid::View grid) noexcept -> void;
+        auto bind(std::string_view field, Bindless<opaque::Image> images) noexcept -> void;
+        auto bind(std::string_view field, Bindless<opaque::Grid> grids) noexcept -> void;
+
+        template<typename T>
+        auto acquire(std::string_view field, T&& uniform) noexcept -> void {
+            acquire(field, {view<byte>(&uniform), sizeof(uniform)});
+        }
+        auto acquire(std::string_view field, std::span<byte const> uniform) noexcept -> void;
+        auto acquire(std::string_view field, opaque::Image::View image) noexcept -> void;
+        auto acquire(std::string_view field, opaque::Grid::View grid) noexcept -> void;
+        auto acquire(std::string_view field, Bindless<opaque::Image> images) noexcept -> void;
+        auto acquire(std::string_view field, Bindless<opaque::Grid> grids) noexcept -> void;
+
+
+    private:
+        auto index(std::string_view field) noexcept -> u32;
+
+        Set reflection;
+        obj<opaque::Buffer> parameters;
+        stl::table<u32> table;
+
     };
 }

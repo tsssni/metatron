@@ -65,6 +65,7 @@ namespace mtt::opaque {
             desc.grid->cells.clear();
         }
 
+        auto format = vk::Format::eR32Sfloat;
         auto usages = vk::ImageUsageFlags{}
         | vk::ImageUsageFlagBits::eTransferSrc
         | vk::ImageUsageFlagBits::eTransferDst;
@@ -78,13 +79,19 @@ namespace mtt::opaque {
         auto device = ctx->device.get();
         impl->image = command::guard(device.createImageUnique({
             .imageType = vk::ImageType::e3D,
-            .format = vk::Format::eR32Sfloat,
-            .extent = vk::Extent3D{width, height, depth},
+            .format = format,
+            .extent = Impl::extent(*this),
             .mipLevels = 1,
             .arrayLayers = 1,
             .usage = usages,
             .queueFamilyIndexCount = 1,
             .pQueueFamilyIndices = &impl->barrier.family,
+        }));
+        impl->view = command::guard(device.createImageViewUnique({
+            .image = impl->image.get(),
+            .viewType = vk::ImageViewType::e3D,
+            .format = format,
+            .subresourceRange = Impl::range(*this),
         }));
 
         auto size = device.getImageMemoryRequirements2({

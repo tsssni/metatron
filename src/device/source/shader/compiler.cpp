@@ -133,8 +133,7 @@ namespace mtt::shader {
                 switch (t->getResourceAccess()) {
                 case SLANG_RESOURCE_ACCESS_NONE:
                 case SLANG_RESOURCE_ACCESS_READ: desc.access = Access::readonly; break;
-                case SLANG_RESOURCE_ACCESS_READ_WRITE: desc.access = Access::writeonly; break;
-                case SLANG_RESOURCE_ACCESS_WRITE: desc.access = Access::writeonly; break;
+                case SLANG_RESOURCE_ACCESS_READ_WRITE: desc.access = Access::readwrite; break;
                 default:
                     stl::abort("descriptor access {} not supported", i32(t->getResourceAccess()));
                 }

@@ -119,6 +119,12 @@ namespace mtt::opaque {
             .queueFamilyIndexCount = 1,
             .pQueueFamilyIndices = &impl->barrier.family,
         }));
+        impl->view = command::guard(device.createImageViewUnique({
+            .image = impl->image.get(),
+            .viewType = vk::ImageViewType::e2D,
+            .format = format,
+            .subresourceRange = Impl::range(*this),
+        }));
 
         auto size = device.getImageMemoryRequirements2({
             .image = impl->image.get(),

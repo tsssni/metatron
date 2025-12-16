@@ -29,7 +29,6 @@ namespace mtt::opaque {
             family = desc.family;
             return barrier;
         }
-
     };
 
     struct Buffer::Impl final {

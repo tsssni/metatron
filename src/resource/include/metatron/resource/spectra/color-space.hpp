@@ -7,7 +7,7 @@
 
 namespace mtt::spectra {
     struct Color_Space final {
-        enum struct Spectrum_Type: usize {
+        enum struct Spectrum_Type {
             albedo,
             unbounded,
             illuminant,

@@ -127,8 +127,7 @@ namespace mtt::stl {
 
         std::vector<mut<byte>> blocks;
         std::vector<std::string> pathes;
-        std::unordered_map<std::string, u32,
-        stl::hash<std::string>, std::equal_to<>> entities;
+        table<u32> entities;
 
         std::atomic<u32> length = 0;
         std::atomic<u32> allocated = 0;
@@ -190,6 +189,7 @@ namespace mtt::stl {
         auto path(u32 i) const noexcept -> std::string_view { return raw().path(i & 0xfffff); }
         auto entity(std::string_view path) const noexcept -> u32 { return (tid << 24) | raw().entity(path); }
         auto contains(std::string_view path) const noexcept -> bool { return raw().contains(path); }
+        auto index() const noexcept -> u32 { return tid; }
         auto size() const noexcept -> usize { return raw().size(); }
         auto keys() const noexcept { return raw().keys(); }
 
@@ -316,6 +316,8 @@ namespace mtt::stl {
             return slot.contains(path);
         }
 
+        template<typename T>
+        auto index() const noexcept -> u32 { return sid[map.at(typeid(T))]; }
         template<typename T>
         auto size() const noexcept -> usize { return raw(sid[map.at(typeid(T))]).size(); }
         auto keys() const noexcept { return slot | std::views::keys; }
