@@ -13,6 +13,5 @@ namespace mtt::command {
 
         struct Impl;
         Buffer() noexcept;
-        ~Buffer() noexcept;
     };
 }

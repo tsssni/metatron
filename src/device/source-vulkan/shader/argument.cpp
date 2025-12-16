@@ -9,7 +9,7 @@
 #include <metatron/core/math/bit.hpp>
 
 namespace mtt::shader {
-    Argument::Argument(cref<Descriptor> desc) noexcept {
+    Argument::Argument(cref<Descriptor> desc) noexcept: cmd(desc.cmd) {
         using Type = shader::Descriptor::Type;
         using Access = shader::Descriptor::Access;
         using Binding = vk::DescriptorType;
@@ -33,7 +33,7 @@ namespace mtt::shader {
                 parameters = make_obj<opaque::Buffer>(opaque::Buffer::Descriptor{
                     .cmd = desc.cmd,
                     .state = opaque::Buffer::State::twin,
-                    .size = math::align(refl.size, 256),
+                    .size = refl.size,
                     .flags = u64(vk::BufferUsageFlagBits2::eUniformBuffer),
                 });
             if (type == Binding::eSampledImage && refl.access != Access::readonly)
@@ -62,7 +62,7 @@ namespace mtt::shader {
         set = make_obj<opaque::Buffer>(opaque::Buffer::Descriptor{
             .cmd = desc.cmd,
             .state = opaque::Buffer::State::twin,
-            .size = size,
+            .size = math::align(size, 256),
             .flags = 0
             | u64(vk::BufferUsageFlagBits2::eSamplerDescriptorBufferEXT)
             | u64(vk::BufferUsageFlagBits2::eResourceDescriptorBufferEXT),
@@ -83,7 +83,7 @@ namespace mtt::shader {
                 .type = Binding::eUniformBuffer,
                 .data = vk::DescriptorDataEXT{.pUniformBuffer = &address},
             };
-            device.getDescriptorEXT(&info, size, set->ptr + *offset);
+            device.getDescriptorEXT(&info, props.uniformBufferDescriptorSize, set->ptr + *offset);
         }
     }
 
@@ -180,6 +180,21 @@ namespace mtt::shader {
     auto Argument::bind(std::string_view field, opaque::Grid::View grid) noexcept -> void { impl->bind(this, field, grid); }
     auto Argument::bind(std::string_view field, Bindless<opaque::Image> images) noexcept -> void { impl->bind(this, field, images); }
     auto Argument::bind(std::string_view field, Bindless<opaque::Grid> grids) noexcept -> void { impl->bind(this, field, grids); }
+
+    auto Argument::bind(std::string_view field, view<opaque::Sampler> sampler) noexcept -> void {
+        auto binding = index(field);
+        auto& desc = reflection[binding];
+        auto& ctx = command::Context::instance().impl;
+        auto device = ctx->device.get();
+        auto readonly = desc.access == shader::Descriptor::Access::readonly;
+        auto size = ctx->descriptor_buffer_props.samplerDescriptorSize;
+        auto info = vk::DescriptorGetInfoEXT{
+            .type = vk::DescriptorType::eSampler,
+            .data = vk::DescriptorDataEXT{.pSampler = &sampler->impl->sampler.get()}
+        };
+        set->dirty.push_back({impl->offsets[binding], size});
+        device.getDescriptorEXT(&info, size, set->ptr + impl->offsets[binding]);
+    }
 
     template<typename T>
     auto Argument::Impl::acquire(mut<Argument> args, std::string_view field, T view) noexcept -> void {

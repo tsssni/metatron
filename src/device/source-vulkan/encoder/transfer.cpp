@@ -67,12 +67,10 @@ namespace mtt::encoder {
             auto staged = Buffer::View(*uploaded);
             cmd->stages.push_back(std::move(uploaded));
             copy(view, staged);
-        } else if (buffer->state == State::twin && buffer->dirty[1] > buffer->dirty[0]) {
+        } else if (buffer->state == State::twin && !buffer->dirty.empty()) {
             auto buffer = view.ptr;
             auto dirty = std::move(buffer->dirty);
-            auto size = dirty | std::views::transform([](auto&& x) {
-                return x[1] > x[0] ? x[1] - x[0] : 0;
-            });
+            auto size = dirty | std::views::transform([](auto&& x) { return x[1]; });
             auto sum = std::ranges::fold_left(size, 0, std::plus{});
             auto block = cmd->blocks.allocate(sum);
             auto regions = std::vector<vk::BufferCopy2>{};

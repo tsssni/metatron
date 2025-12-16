@@ -54,6 +54,8 @@ namespace mtt::command {
     auto Context::Impl::init_device() noexcept -> void {
         auto chain = vk::StructureChain<
             vk::PhysicalDeviceFeatures2,
+            vk::PhysicalDeviceShaderFloat16Int8Features,
+            vk::PhysicalDevice8BitStorageFeatures,
             vk::PhysicalDeviceTimelineSemaphoreFeatures,
             vk::PhysicalDeviceSynchronization2Features,
             vk::PhysicalDeviceBufferDeviceAddressFeatures,
@@ -65,6 +67,13 @@ namespace mtt::command {
         auto& features = chain.get<vk::PhysicalDeviceFeatures2>();
         features.features.shaderInt16 = true;
         features.features.shaderInt64 = true;
+        features.features.shaderFloat64 = true;
+        features.features.samplerAnisotropy = true;
+        auto& precision = chain.get<vk::PhysicalDeviceShaderFloat16Int8Features>();
+        precision.shaderInt8 = true;
+        precision.shaderFloat16 = true;
+        auto& bytestore = chain.get<vk::PhysicalDevice8BitStorageFeatures>();
+        bytestore.uniformAndStorageBuffer8BitAccess = true;
         auto& timeline = chain.get<vk::PhysicalDeviceTimelineSemaphoreFeatures>();
         timeline.timelineSemaphore = true;
         auto& sync = chain.get<vk::PhysicalDeviceSynchronization2Features>();

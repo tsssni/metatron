@@ -9,10 +9,5 @@ namespace mtt::shader {
         vk::UniquePipelineLayout layout;
         vk::UniquePipeline pipeline;
         std::vector<vk::DeviceAddress> sets;
-
-        Impl(
-            std::string_view name,
-            std::vector<view<Argument>> args
-        ) noexcept;
     };
 }

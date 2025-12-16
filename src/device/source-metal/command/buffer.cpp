@@ -2,5 +2,4 @@
 
 namespace mtt::command {
     Buffer::Buffer() noexcept {}
-    Buffer::~Buffer() noexcept {}
 }

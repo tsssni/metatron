@@ -8,6 +8,8 @@
 #include <metatron/device/opaque/grid.hpp>
 #include <metatron/device/opaque/sampler.hpp>
 #include <metatron/device/opaque/accel.hpp>
+#include <metatron/device/shader/argument.hpp>
+#include <metatron/device/shader/pipeline.hpp>
 #include <metatron/resource/shape/mesh.hpp>
 #include <metatron/core/stl/thread.hpp>
 
@@ -15,6 +17,9 @@ namespace mtt::renderer {
     auto Renderer::Impl::wave() noexcept -> void {
         command::Context::init();
         auto& scheduler = stl::scheduler::instance();
+        auto render_queue = make_obj<command::Queue>(command::Queue::Type::render);
+        auto transfer_queue = make_obj<command::Queue>(command::Queue::Type::transfer);
+
         auto upload_timelines = std::vector<obj<command::Timeline>>(scheduler.size());
         auto render_timeline = make_obj<command::Timeline>();
         auto transfer_timeline = make_obj<command::Timeline>();
@@ -28,9 +33,6 @@ namespace mtt::renderer {
         auto resources = obj<opaque::Buffer>{};
         auto images = std::vector<obj<opaque::Image>>{};
         auto grids = std::vector<obj<opaque::Grid>>{};
-
-        auto render_queue = make_obj<command::Queue>(command::Queue::Type::render);
-        auto transfer_queue = make_obj<command::Queue>(command::Queue::Type::transfer);
 
         [&] {
             auto& stack = stl::stack::instance();
@@ -167,54 +169,69 @@ namespace mtt::renderer {
             return std::move(accel);
         }();
 
-        [&] {
-            auto transfer = transfer_queue->allocate();
-            auto render = render_queue->allocate();
+        auto transfer = transfer_queue->allocate();
+        auto render = render_queue->allocate();
 
-            auto film = muldim::Image{};
-            film.width = images[0]->width;
-            film.height = images[0]->height;
-            film.channels = 4;
-            film.stride = 4;
+        auto film = muldim::Image{};
+        film.width = images[0]->width;
+        film.height = images[0]->height;
+        film.channels = 4;
+        film.stride = 4;
 
-            auto size = math::prod(film.size);
-            film.pixels.resize(1);
-            film.pixels.front().resize(math::prod(film.size));
+        auto size = math::prod(film.size);
+        film.pixels.resize(1);
+        film.pixels.front().resize(math::prod(film.size));
 
-            auto sampler = make_obj<opaque::Sampler>(
-            opaque::Sampler::Descriptor{
-                .cmd = render.get(),
-                .mode = opaque::Sampler::Mode::repeat,
-            });
-            auto image = make_obj<opaque::Image>(
-            opaque::Image::Descriptor{
-                .cmd = render.get(),
-                .image = &film,
-                .state = opaque::Image::State::storable,
-            });
-            auto buffer = make_obj<opaque::Buffer>(
-            opaque::Buffer::Descriptor{
-                .cmd = transfer.get(),
-                .state = opaque::Buffer::State::visible,
-                .size = size,
-            });
+        auto sampler = make_obj<opaque::Sampler>(
+        opaque::Sampler::Descriptor{
+            .cmd = render.get(),
+            .mode = opaque::Sampler::Mode::repeat,
+        });
+        auto image = make_obj<opaque::Image>(
+        opaque::Image::Descriptor{
+            .cmd = render.get(),
+            .image = &film,
+            .state = opaque::Image::State::storable,
+        });
+        auto buffer = make_obj<opaque::Buffer>(
+        opaque::Buffer::Descriptor{
+            .cmd = transfer.get(),
+            .state = opaque::Buffer::State::visible,
+            .size = size,
+        });
 
-            auto transfer_encoder = encoder::Transfer_Encoder{transfer.get()};
-            auto render_encoder = encoder::Transfer_Encoder{render.get()};
-            render_encoder.release(transfer.get(), *images[0]);
-            transfer_encoder.acquire(*images[0]);
-            transfer_encoder.copy(*buffer, *images[0]);
+        auto global_args = make_obj<shader::Argument>(
+        shader::Argument::Descriptor{render.get(), "trace.global"});
+        auto integrate_args = make_obj<shader::Argument>(
+        shader::Argument::Descriptor{render.get(), "trace.integrate.in"});
+        auto integrate = make_obj<shader::Pipeline>(
+        shader::Pipeline::Descriptor{render.get(), "trace.integrate", {global_args.get(), integrate_args.get()}});
 
-            render->waits = {{render_timeline.get(), render_count}};
-            render->signals = {{render_timeline.get(), ++render_count}};
-            transfer->waits = {{render_timeline.get(), render_count}};
-            transfer->signals = {{transfer_timeline.get(), ++transfer_count}};
-            render_queue->submit(std::move(render));
-            transfer_queue->submit(std::move(transfer));
+        auto images_view = std::vector<opaque::Image::View>(images.size());
+        for (auto i = 0; i < images.size(); ++i)
+            images_view[i] = *images[i];
+        global_args->bind("global.sampler", sampler.get());
+        global_args->bind("global.textures", {0, images_view});
+        global_args->acquire("global", resources->addr);
+        global_args->acquire("global.textures", {0, images_view});
+        encoder::Transfer_Encoder{render.get()}.upload(*global_args->set);
 
-            transfer_timeline->wait(transfer_count);
-            std::memcpy(film.pixels.front().data(), buffer->ptr, size);
-            film.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
-        }();
+        // auto transfer_encoder = encoder::Transfer_Encoder{transfer.get()};
+        // auto render_encoder = encoder::Transfer_Encoder{render.get()};
+        // render_encoder.release(transfer.get(), *images[0]);
+        // transfer_encoder.acquire(*images[0]);
+        // transfer_encoder.copy(*buffer, *images[0]);
+
+        render->waits = {{render_timeline.get(), render_count}};
+        render->signals = {{render_timeline.get(), ++render_count}};
+        // transfer->waits = {{render_timeline.get(), render_count}};
+        // transfer->signals = {{transfer_timeline.get(), ++transfer_count}};
+        render_queue->submit(std::move(render));
+        // transfer_queue->submit(std::move(transfer));
+
+        render_timeline->wait(render_count);
+        // transfer_timeline->wait(transfer_count);
+        // std::memcpy(film.pixels.front().data(), buffer->ptr, size);
+        // film.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
     }
 }

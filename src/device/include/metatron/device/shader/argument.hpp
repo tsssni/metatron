@@ -3,6 +3,7 @@
 #include <metatron/device/opaque/buffer.hpp>
 #include <metatron/device/opaque/image.hpp>
 #include <metatron/device/opaque/grid.hpp>
+#include <metatron/device/opaque/sampler.hpp>
 #include <metatron/device/command/buffer.hpp>
 #include <metatron/core/stl/capsule.hpp>
 
@@ -30,6 +31,7 @@ namespace mtt::shader {
         auto bind(std::string_view field, opaque::Grid::View grid) noexcept -> void;
         auto bind(std::string_view field, Bindless<opaque::Image> images) noexcept -> void;
         auto bind(std::string_view field, Bindless<opaque::Grid> grids) noexcept -> void;
+        auto bind(std::string_view field, view<opaque::Sampler> sampler) noexcept -> void;
 
         template<typename T>
         auto acquire(std::string_view field, T&& uniform) noexcept -> void {
