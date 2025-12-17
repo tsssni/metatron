@@ -17,7 +17,7 @@ namespace mtt::opaque {
         };
 
         State state;
-        command::Queue::Type type;
+        command::Type type;
 
         u32 width;
         u32 height;
@@ -25,9 +25,9 @@ namespace mtt::opaque {
         obj<Buffer> host;
 
         struct Descriptor final {
-            mut<command::Buffer> cmd;
             mut<muldim::Grid> grid;
             State state = State::readonly;
+            command::Type type = command::Type::render;
         };
 
         struct Impl;

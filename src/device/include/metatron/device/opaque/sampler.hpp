@@ -21,7 +21,6 @@ namespace mtt::opaque {
         } border;
 
         struct Descriptor final {
-            mut<command::Buffer> cmd;
             Mode mode = Mode::repeat;
             Border border = Border::transparent;
         };

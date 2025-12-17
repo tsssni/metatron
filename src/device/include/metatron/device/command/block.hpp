@@ -5,7 +5,6 @@ namespace mtt::command {
     auto constexpr block_size = 1 << 26;
 
     struct Buffer;
-
     struct Blocks final {
         mut<Buffer> cmd;
         auto allocate(usize size) noexcept -> opaque::Buffer::View;

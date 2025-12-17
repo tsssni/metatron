@@ -17,7 +17,7 @@ namespace mtt::opaque {
             uzv2 size;
         };
 
-        command::Queue::Type type;
+        command::Type type;
         State state;
 
         u32 width;
@@ -26,9 +26,9 @@ namespace mtt::opaque {
         std::vector<obj<Buffer>> host;
 
         struct Descriptor final {
-            mut<command::Buffer> cmd;
             mut<muldim::Image> image;
             State state = State::samplable;
+            command::Type type = command::Type::render;
         };
 
         struct Impl;

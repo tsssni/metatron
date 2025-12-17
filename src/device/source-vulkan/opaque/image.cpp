@@ -1,5 +1,5 @@
 #include "image.hpp"
-#include "../command/buffer.hpp"
+#include "../command/queue.hpp"
 
 namespace mtt::opaque {
     auto Image::Impl::subresource(Image::View view) noexcept -> vk::ImageSubresource2 {
@@ -81,17 +81,17 @@ namespace mtt::opaque {
 
     Image::Image(cref<Descriptor> desc) noexcept:
     state(desc.state),
-    type(desc.cmd->type) {
-        impl->barrier.family = desc.cmd->impl->family;
+    type(desc.type) {
+        impl->barrier.family = command::Queue::Impl::family[u32(type)];
         width = desc.image->width;
         height = desc.image->height;
         mips = math::max(1uz, desc.image->pixels.size());
         if (desc.state == State::samplable && !desc.image->pixels.empty()) {
             for (auto i = 0; i < mips; ++i)
                 host.push_back(make_obj<Buffer>(Buffer::Descriptor{
-                    .cmd = desc.cmd,
                     .ptr = desc.image->pixels[i].data(),
                     .state = Buffer::State::visible,
+                    .type = type,
                     .size = desc.image->pixels[i].size(),
                 }));
             desc.image->pixels.clear();

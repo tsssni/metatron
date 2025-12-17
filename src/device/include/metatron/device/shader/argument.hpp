@@ -8,48 +8,25 @@
 #include <metatron/core/stl/capsule.hpp>
 
 namespace mtt::shader {
+    template<typename T>
+    struct Bindless final {
+        usize offset;
+        std::span<typename T::View> list;
+    };
+
     struct Argument final: stl::capsule<Argument> {
-        mut<command::Buffer> cmd;
+        Set reflection;
+        stl::table<u32> table;
         obj<opaque::Buffer> set;
+        obj<opaque::Buffer> parameters;
 
         struct Descriptor final {
-            mut<command::Buffer> cmd;
             std::string_view name;
-        };
-
-        template<typename T>
-        struct Bindless final {
-            usize offset;
-            std::span<typename T::View> list;
+            command::Type type = command::Type::render;
         };
 
         struct Impl;
         Argument(cref<Descriptor> desc) noexcept;
-
-        auto bind(std::string_view field, std::span<byte const> uniform) noexcept -> void;
-        auto bind(std::string_view field, opaque::Image::View image) noexcept -> void;
-        auto bind(std::string_view field, opaque::Grid::View grid) noexcept -> void;
-        auto bind(std::string_view field, Bindless<opaque::Image> images) noexcept -> void;
-        auto bind(std::string_view field, Bindless<opaque::Grid> grids) noexcept -> void;
-        auto bind(std::string_view field, view<opaque::Sampler> sampler) noexcept -> void;
-
-        template<typename T>
-        auto acquire(std::string_view field, T&& uniform) noexcept -> void {
-            acquire(field, {view<byte>(&uniform), sizeof(uniform)});
-        }
-        auto acquire(std::string_view field, std::span<byte const> uniform) noexcept -> void;
-        auto acquire(std::string_view field, opaque::Image::View image) noexcept -> void;
-        auto acquire(std::string_view field, opaque::Grid::View grid) noexcept -> void;
-        auto acquire(std::string_view field, Bindless<opaque::Image> images) noexcept -> void;
-        auto acquire(std::string_view field, Bindless<opaque::Grid> grids) noexcept -> void;
-
-
-    private:
         auto index(std::string_view field) noexcept -> u32;
-
-        Set reflection;
-        obj<opaque::Buffer> parameters;
-        stl::table<u32> table;
-
     };
 }

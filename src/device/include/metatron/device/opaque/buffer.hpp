@@ -4,10 +4,6 @@
 #include <metatron/core/stl/capsule.hpp>
 #include <metatron/core/stl/stack.hpp>
 
-namespace mtt::command {
-    struct Buffer;
-}
-
 namespace mtt::opaque {
     struct Buffer final: stl::capsule<Buffer> {
         enum struct State {
@@ -23,7 +19,7 @@ namespace mtt::opaque {
         };
 
         State state;
-        command::Queue::Type type;
+        command::Type type;
 
         mut<byte> ptr = nullptr;
         uptr addr = 0;
@@ -31,9 +27,9 @@ namespace mtt::opaque {
         std::vector<uv2> dirty = {};
 
         struct Descriptor final {
-            mut<command::Buffer> cmd;
             mut<byte> ptr = nullptr;
             State state = State::local;
+            command::Type type = command::Type::render;
             usize size = 0;
             u64 flags = 0;
         };

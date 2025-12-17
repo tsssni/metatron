@@ -176,10 +176,10 @@ namespace mtt::command {
                 candidate.result == vk::Result::eSuccess
             ) {
                 device = std::move(candidate.value);
-                render_queue = render_family;
-                render_count = render_limit;
-                transfer_queue = transfer_family;
-                transfer_count = transfer_limit;
+                Queue::Impl::family[u32(Type::render)] = render_family;
+                Queue::Impl::count[u32(Type::render)] = render_limit;
+                Queue::Impl::family[u32(Type::transfer)] = transfer_family;
+                Queue::Impl::count[u32(Type::transfer)] = transfer_limit;
 
                 auto props = vk::StructureChain<
                     vk::PhysicalDeviceProperties2,

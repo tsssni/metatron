@@ -1,5 +1,5 @@
 #include "buffer.hpp"
-#include "../command/buffer.hpp"
+#include "../command/queue.hpp"
 
 namespace mtt::opaque {
     vk::MemoryAllocateFlags Buffer::Impl::flags = vk::MemoryAllocateFlags{}
@@ -21,8 +21,8 @@ namespace mtt::opaque {
     Buffer::Buffer(cref<Descriptor> desc) noexcept:
     size(desc.size),
     state(desc.state),
-    type(desc.cmd->type) {
-        impl->barrier.family = desc.cmd->impl->family;
+    type(desc.type) {
+        impl->barrier.family = command::Queue::Impl::family[u32(type)];
         auto& ctx = command::Context::instance().impl;
         auto& props = ctx->memory_props;
         if (desc.size == 0) stl::abort("empty buffer not supported");

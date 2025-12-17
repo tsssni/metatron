@@ -1,5 +1,5 @@
 #include "grid.hpp"
-#include "../command/buffer.hpp"
+#include "../command/queue.hpp"
 
 namespace mtt::opaque {
     auto Grid::Impl::subresource(Grid::View view) noexcept -> vk::ImageSubresource2 {
@@ -50,16 +50,16 @@ namespace mtt::opaque {
 
     Grid::Grid(cref<Descriptor> desc) noexcept:
     state(desc.state),
-    type(desc.cmd->type) {
-        impl->barrier.family = desc.cmd->impl->family;
+    type(desc.type) {
+        impl->barrier.family = command::Queue::Impl::family[u32(type)];
         width = desc.grid->width;
         height = desc.grid->height;
         depth = desc.grid->depth;
         if (desc.state == State::readonly && !desc.grid->cells.empty()) {
             host = make_obj<Buffer>(Buffer::Descriptor{
-                .cmd = desc.cmd,
                 .ptr = mut<byte>(desc.grid->cells.data()),
                 .state = Buffer::State::visible,
+                .type = type,
                 .size = desc.grid->cells.size() * sizeof(f32),
             });
             desc.grid->cells.clear();

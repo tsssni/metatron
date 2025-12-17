@@ -3,7 +3,6 @@
 #include <metatron/device/opaque/buffer.hpp>
 #include <metatron/device/opaque/image.hpp>
 #include <metatron/device/opaque/grid.hpp>
-#include <metatron/device/shader/argument.hpp>
 
 namespace mtt::encoder {
     struct Transfer_Encoder final: stl::capsule<Transfer_Encoder> {

@@ -2,6 +2,7 @@
 #include <metatron/device/command/context.hpp>
 #include <metatron/device/command/buffer.hpp>
 #include <metatron/device/encoder/transfer.hpp>
+#include <metatron/device/encoder/argument.hpp>
 #include <metatron/device/opaque/buffer.hpp>
 #include <metatron/device/opaque/buffer.hpp>
 #include <metatron/device/opaque/image.hpp>
@@ -17,8 +18,8 @@ namespace mtt::renderer {
     auto Renderer::Impl::wave() noexcept -> void {
         command::Context::init();
         auto& scheduler = stl::scheduler::instance();
-        auto render_queue = make_obj<command::Queue>(command::Queue::Type::render);
-        auto transfer_queue = make_obj<command::Queue>(command::Queue::Type::transfer);
+        auto render_queue = make_obj<command::Queue>(command::Type::render);
+        auto transfer_queue = make_obj<command::Queue>(command::Type::transfer);
 
         auto upload_timelines = std::vector<obj<command::Timeline>>(scheduler.size());
         auto render_timeline = make_obj<command::Timeline>();
@@ -69,9 +70,9 @@ namespace mtt::renderer {
                     if (buf->idx != i) continue;
 
                     auto desc = opaque::Buffer::Descriptor{
-                        .cmd = cmd.get(),
                         .ptr = buf->ptr,
                         .state = opaque::Buffer::State::local,
+                        .type = command::Type::render,
                         .size = buf->bytelen,
                     };
                     auto buffer = make_obj<opaque::Buffer>(desc);
@@ -91,9 +92,9 @@ namespace mtt::renderer {
                     if (sequence[i].empty()) continue;
 
                     auto desc = opaque::Buffer::Descriptor{
-                        .cmd = cmd.get(),
                         .ptr = sequence[i].data(),
                         .state = opaque::Buffer::State::local,
+                        .type = command::Type::render,
                         .size = sequence[i].size(),
                     };
                     auto buffer = make_obj<opaque::Buffer>(desc);
@@ -104,9 +105,9 @@ namespace mtt::renderer {
 
                 if (scheduler.index() == 0) {
                     auto desc = opaque::Buffer::Descriptor{
-                        .cmd = cmd.get(),
                         .ptr = mut<byte>(addresses.data()),
                         .state = opaque::Buffer::State::local,
+                        .type = command::Type::render,
                         .size = addresses.size() * sizeof(uptr),
                     };
                     resources = make_obj<opaque::Buffer>(desc);
@@ -117,9 +118,9 @@ namespace mtt::renderer {
                 while ((i = ic->fetch_add(1, std::memory_order::relaxed)) < isize) {
                     images[i] = make_obj<opaque::Image>(
                     opaque::Image::Descriptor{
-                        .cmd = cmd.get(),
                         .image = textures[i],
                         .state = opaque::Image::State::samplable,
+                        .type = command::Type::render,
                     });
                     transfer.upload(*images[i]);
                 }
@@ -128,9 +129,9 @@ namespace mtt::renderer {
                 while ((i = gc->fetch_add(1, std::memory_order::relaxed)) < gsize) {
                     grids[i] = make_obj<opaque::Grid>(
                     opaque::Grid::Descriptor{
-                        .cmd = cmd.get(),
                         .grid = volumes[i],
                         .state = opaque::Grid::State::readonly,
+                        .type = command::Type::render,
                     });
                     transfer.upload(*grids[i]);
                 }
@@ -184,36 +185,36 @@ namespace mtt::renderer {
 
         auto sampler = make_obj<opaque::Sampler>(
         opaque::Sampler::Descriptor{
-            .cmd = render.get(),
             .mode = opaque::Sampler::Mode::repeat,
         });
         auto image = make_obj<opaque::Image>(
         opaque::Image::Descriptor{
-            .cmd = render.get(),
             .image = &film,
             .state = opaque::Image::State::storable,
+            .type = command::Type::render,
         });
         auto buffer = make_obj<opaque::Buffer>(
         opaque::Buffer::Descriptor{
-            .cmd = transfer.get(),
             .state = opaque::Buffer::State::visible,
+            .type = command::Type::render,
             .size = size,
         });
 
         auto global_args = make_obj<shader::Argument>(
-        shader::Argument::Descriptor{render.get(), "trace.global"});
+        shader::Argument::Descriptor{"trace.global", command::Type::render});
         auto integrate_args = make_obj<shader::Argument>(
-        shader::Argument::Descriptor{render.get(), "trace.integrate.in"});
+        shader::Argument::Descriptor{"trace.integrate.in", command::Type::render});
         auto integrate = make_obj<shader::Pipeline>(
-        shader::Pipeline::Descriptor{render.get(), "trace.integrate", {global_args.get(), integrate_args.get()}});
+        shader::Pipeline::Descriptor{"trace.integrate", {global_args.get(), integrate_args.get()}});
 
+        auto args_encoder = encoder::Argument_Encoder{render.get(), global_args.get()};
         auto images_view = std::vector<opaque::Image::View>(images.size());
         for (auto i = 0; i < images.size(); ++i)
             images_view[i] = *images[i];
-        global_args->bind("global.sampler", sampler.get());
-        global_args->bind("global.textures", {0, images_view});
-        global_args->acquire("global", resources->addr);
-        global_args->acquire("global.textures", {0, images_view});
+        args_encoder.bind("global.sampler", sampler.get());
+        args_encoder.bind("global.textures", {0, images_view});
+        args_encoder.acquire("global", resources->addr);
+        args_encoder.acquire("global.textures", {0, images_view});
         encoder::Transfer_Encoder{render.get()}.upload(*global_args->set);
 
         // auto transfer_encoder = encoder::Transfer_Encoder{transfer.get()};

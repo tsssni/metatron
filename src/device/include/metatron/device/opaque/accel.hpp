@@ -26,6 +26,7 @@ namespace mtt::opaque {
         struct Descriptor final {
             std::vector<Primitive> primitives;
             std::vector<Instance> instances;
+            command::Type type = command::Type::render;
         };
 
         struct Impl;

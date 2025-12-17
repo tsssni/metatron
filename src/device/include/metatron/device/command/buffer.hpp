@@ -4,7 +4,7 @@
 
 namespace mtt::command {
     struct Buffer final: stl::capsule<Buffer> {
-        Queue::Type type;
+        Type type;
         Blocks blocks;
         std::vector<obj<opaque::Buffer>> stages;
         using Timeline_Count = std::tuple<mut<Timeline>, u64>;
