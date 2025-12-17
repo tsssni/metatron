@@ -7,7 +7,7 @@
 #include <metatron/core/stl/print.hpp>
 
 namespace mtt::shader {
-    Pipeline::Pipeline(cref<Descriptor> desc) noexcept {
+    Pipeline::Pipeline(cref<Descriptor> desc) noexcept: args(std::move(desc.args)) {
         auto base_path = stl::path{"shader"} / desc.name;
         auto ir_path = stl::path{base_path}.concat(".spirv");
         auto table_path = stl::path{base_path}.concat(".json");
@@ -21,7 +21,7 @@ namespace mtt::shader {
         auto layouts = desc.args
         | std::views::transform([](auto&& x){ return x->impl->layout.get(); })
         | std::ranges::to<std::vector<vk::DescriptorSetLayout>>();
-        impl->sets = desc.args
+        impl->sets = args
         | std::views::transform([device](auto&& x){ return x->set->addr; })
         | std::ranges::to<std::vector<vk::DeviceAddress>>();
 

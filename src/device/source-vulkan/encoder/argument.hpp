@@ -4,7 +4,7 @@
 
 namespace mtt::encoder {
     struct Argument_Encoder::Impl final {
-        auto barrier(cref<shader::Descriptor> desc, opaque::Barrier barrier) noexcept -> opaque::Barrier;
+        auto update(cref<shader::Descriptor> desc, opaque::Barrier barrier) noexcept -> opaque::Barrier;
         template<typename T>
         auto bind(mut<Argument_Encoder> encoder, std::string_view field, T view) noexcept -> void;
         template<typename T>

@@ -3,6 +3,7 @@
 #include <metatron/device/command/buffer.hpp>
 #include <metatron/device/encoder/transfer.hpp>
 #include <metatron/device/encoder/argument.hpp>
+#include <metatron/device/encoder/pipeline.hpp>
 #include <metatron/device/opaque/buffer.hpp>
 #include <metatron/device/opaque/buffer.hpp>
 #include <metatron/device/opaque/image.hpp>
@@ -12,6 +13,7 @@
 #include <metatron/device/shader/argument.hpp>
 #include <metatron/device/shader/pipeline.hpp>
 #include <metatron/resource/shape/mesh.hpp>
+#include <metatron/resource/texture/image.hpp>
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::renderer {
@@ -207,16 +209,29 @@ namespace mtt::renderer {
         auto integrate = make_obj<shader::Pipeline>(
         shader::Pipeline::Descriptor{"trace.integrate", {global_args.get(), integrate_args.get()}});
 
-        auto args_encoder = encoder::Argument_Encoder{render.get(), global_args.get()};
+        auto global_args_encoder = encoder::Argument_Encoder{render.get(), global_args.get()};
+        auto integrate_args_encoder = encoder::Argument_Encoder{render.get(), integrate_args.get()};
+        auto pipeline_encoder = encoder::Pipeline_Encoder{render.get(), integrate.get()};
         auto images_view = std::vector<opaque::Image::View>(images.size());
         for (auto i = 0; i < images.size(); ++i)
             images_view[i] = *images[i];
-        args_encoder.bind("global.sampler", sampler.get());
-        args_encoder.bind("global.textures", {0, images_view});
-        args_encoder.acquire("global", resources->addr);
-        args_encoder.acquire("global.textures", {0, images_view});
-        encoder::Transfer_Encoder{render.get()}.upload(*global_args->set);
+        global_args_encoder.bind("global.sampler", sampler.get());
+        global_args_encoder.bind("global.textures", {0, images_view});
+        global_args_encoder.upload();
+        integrate_args_encoder.bind("in.film", *image);
+        integrate_args_encoder.upload();
+        pipeline_encoder.bind();
 
+        struct Integrate final {
+            u32 idx;
+            u32 offset;
+        } in;
+        in.idx = stl::vector<texture::Spectrum_Texture>::instance().index<texture::Image_Spectrum_Texture>();
+        in.offset = 8;
+        global_args_encoder.acquire("global", resources->addr);
+        global_args_encoder.acquire("global.textures", {0, images_view});
+        integrate_args_encoder.acquire("in", in);
+        integrate_args_encoder.acquire("in.film", *image);
         // auto transfer_encoder = encoder::Transfer_Encoder{transfer.get()};
         // auto render_encoder = encoder::Transfer_Encoder{render.get()};
         // render_encoder.release(transfer.get(), *images[0]);

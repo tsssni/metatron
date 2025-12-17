@@ -69,17 +69,18 @@ namespace mtt::encoder {
         } else if (buffer->state == State::twin && !buffer->dirty.empty()) {
             auto buffer = view.ptr;
             auto dirty = std::move(buffer->dirty);
-            auto size = dirty | std::views::transform([](auto&& x) { return x[1]; });
-            auto sum = std::ranges::fold_left(size, 0, std::plus{});
+            auto sum = std::ranges::fold_left(dirty, 0, [](auto&& x, auto&& y) {
+                return x + y[1];
+            });
             auto block = cmd->blocks.allocate(sum);
             auto regions = std::vector<vk::BufferCopy2>{};
-            for (auto&& [dirty, size]: std::views::zip(dirty, size)) {
+            for (auto [offset, size]: dirty) {
                 auto dst = block.ptr->ptr + block.offset;
-                auto src = buffer->ptr + dirty[0];
+                auto src = buffer->ptr + offset;
                 std::memcpy(dst, src, size);
                 regions.push_back({
                     .srcOffset = block.offset,
-                    .dstOffset = dirty[0],
+                    .dstOffset = offset,
                     .size = size,
                 });
                 block.offset += size;

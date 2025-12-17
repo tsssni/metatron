@@ -16,7 +16,7 @@ namespace mtt::encoder {
         encoder::Transfer_Encoder{cmd}.upload(*args->set);
     }
 
-    auto Argument_Encoder::Impl::barrier(
+    auto Argument_Encoder::Impl::update(
         cref<shader::Descriptor> desc, opaque::Barrier barrier
     ) noexcept -> opaque::Barrier {
         using Type = shader::Descriptor::Type;
@@ -145,7 +145,7 @@ namespace mtt::encoder {
         auto& ctx = command::Context::instance().impl;
         auto cmd = encoder->cmd->impl->cmd.get();
 
-        auto state = barrier(desc, view.ptr->impl->barrier);
+        auto state = update(desc, view.ptr->impl->barrier);
         auto barrier = view.ptr->impl->update(state);
         cmd.pipelineBarrier2({
             .imageMemoryBarrierCount = 1,
@@ -166,7 +166,7 @@ namespace mtt::encoder {
         auto barriers = std::vector<vk::ImageMemoryBarrier2>{};
         barriers.reserve(bindless.list.size());
         for (auto view: bindless.list) {
-            auto state = barrier(desc, view.ptr->impl->barrier);
+            auto state = update(desc, view.ptr->impl->barrier);
             barriers.push_back(view.ptr->impl->update(state));
         }
         cmd.pipelineBarrier2({
@@ -187,7 +187,7 @@ namespace mtt::encoder {
         std::memcpy(args->parameters->ptr, uniform.data(), uniform.size());
         encoder::Transfer_Encoder{this->cmd}.upload(*args->parameters);
 
-        auto state = impl->barrier(desc, args->parameters->impl->barrier);
+        auto state = impl->update(desc, args->parameters->impl->barrier);
         auto barrier = args->parameters->impl->update(state);
         cmd.pipelineBarrier2({
             .bufferMemoryBarrierCount = 1,

@@ -116,6 +116,7 @@ namespace mtt::command {
                 "VK_KHR_deferred_host_operations",
                 "VK_KHR_acceleration_structure",
                 "VK_KHR_ray_query",
+                "VK_KHR_maintenance6",
             },
         });
 

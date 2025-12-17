@@ -62,7 +62,7 @@ namespace mtt::shader {
         set = make_obj<opaque::Buffer>(opaque::Buffer::Descriptor{
             .state = opaque::Buffer::State::twin,
             .type = desc.type,
-            .size = math::align(size, 256),
+            .size = size,
             .flags = 0
             | u64(vk::BufferUsageFlagBits2::eSamplerDescriptorBufferEXT)
             | u64(vk::BufferUsageFlagBits2::eResourceDescriptorBufferEXT),

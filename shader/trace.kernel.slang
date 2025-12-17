@@ -25,7 +25,7 @@ namespace mtt {
         if (any(global_idx.xy != clamp(global_idx.xy, 0, size.xy))) return;
 
         let uv = (float2(global_idx.xy) + 0.5) / size.xy;
-        let tid = *Ptr<uint>(global.vectors[in.idx] + in.offset);
+        let tid = *Ptr<uint>(global.vectors[in.idx] + in.offset) & 0xfffffu;
         let color = global.textures[tid].SampleGrad(global.sampler, uv, 0.0, 0.0);
         in.film.Store(global_idx.xy, color);
     }
