@@ -153,28 +153,6 @@ namespace mtt::encoder {
         });
     }
 
-    template<typename T>
-    auto Argument_Encoder::Impl::acquire(
-        mut<Argument_Encoder> encoder, std::string_view field, shader::Bindless<T> bindless
-    ) noexcept -> void {
-        auto args = encoder->args;
-        auto binding = args->index(field);
-        auto& desc = args->reflection[binding];
-        auto& ctx = command::Context::instance().impl;
-        auto cmd = encoder->cmd->impl->cmd.get();
-
-        auto barriers = std::vector<vk::ImageMemoryBarrier2>{};
-        barriers.reserve(bindless.list.size());
-        for (auto view: bindless.list) {
-            auto state = update(desc, view.ptr->impl->barrier);
-            barriers.push_back(view.ptr->impl->update(state));
-        }
-        cmd.pipelineBarrier2({
-            .imageMemoryBarrierCount = u32(barriers.size()),
-            .pImageMemoryBarriers = barriers.data(),
-        });
-    }
-
     auto Argument_Encoder::acquire(std::string_view field, std::span<byte const> uniform) noexcept -> void {
         auto binding = args->index(field);
         auto& desc = args->reflection[binding];
@@ -197,6 +175,4 @@ namespace mtt::encoder {
 
     auto Argument_Encoder::acquire(std::string_view field, opaque::Image::View image) noexcept -> void { impl->acquire(this, field, image); }
     auto Argument_Encoder::acquire(std::string_view field, opaque::Grid::View image) noexcept -> void { impl->acquire(this, field, image); }
-    auto Argument_Encoder::acquire(std::string_view field, shader::Bindless<opaque::Image> images) noexcept -> void { impl->acquire(this, field, images); }
-    auto Argument_Encoder::acquire(std::string_view field, shader::Bindless<opaque::Grid> grids) noexcept -> void { impl->acquire(this, field, grids); }
 }

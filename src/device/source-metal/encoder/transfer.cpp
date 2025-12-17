@@ -7,6 +7,10 @@ namespace mtt::encoder {
     auto Transfer_Encoder::upload(opaque::Image::View image) noexcept -> void {}
     auto Transfer_Encoder::upload(opaque::Grid::View grid) noexcept -> void {}
 
+    auto Transfer_Encoder::persist(opaque::Buffer::View buffer) noexcept -> void {}
+    auto Transfer_Encoder::persist(opaque::Image::View image) noexcept -> void {}
+    auto Transfer_Encoder::persist(opaque::Grid::View grid) noexcept -> void {}
+
     auto Transfer_Encoder::acquire(opaque::Buffer::View buffer) noexcept -> void {}
     auto Transfer_Encoder::acquire(opaque::Image::View image) noexcept -> void {}
     auto Transfer_Encoder::acquire(opaque::Grid::View grid) noexcept -> void {}

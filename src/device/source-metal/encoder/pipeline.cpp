@@ -6,4 +6,5 @@ namespace mtt::encoder {
     ) noexcept: cmd(cmd), ppl(ppl) {}
 
     auto Pipeline_Encoder::bind() noexcept -> void {}
+    auto Pipeline_Encoder::dispatch(uzv3 grid) noexcept -> void {}
 }

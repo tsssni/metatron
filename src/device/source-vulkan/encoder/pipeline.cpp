@@ -46,4 +46,10 @@ namespace mtt::encoder {
         });
         cmd.bindPipeline(vk::PipelineBindPoint::eCompute, ppl->impl->pipeline.get());
     }
+
+    auto Pipeline_Encoder::dispatch(uzv3 grid) noexcept -> void {
+        auto [x, y, z] = grid;
+        auto cmd = this->cmd->impl->cmd.get();
+        cmd.dispatch(x, y, z);
+    }
 }

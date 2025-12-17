@@ -32,6 +32,7 @@ namespace mtt::encoder {
         if (buffer->state == State::local && buffer->ptr) {
             auto uploaded = make_obj<Buffer>();
             auto buffer = view.ptr;
+            uploaded->impl->barrier = buffer->impl->barrier;
             uploaded->impl->host_memory = std::move(buffer->impl->host_memory);
             uploaded->impl->host_buffer = std::move(buffer->impl->host_buffer);
             uploaded->type = buffer->type;
@@ -127,6 +128,37 @@ namespace mtt::encoder {
         copy(view, *grid->host);
         cmd->stages.push_back(std::move(grid->host));
     }
+
+    template<typename T>
+    auto Transfer_Encoder::Impl::persist(mut<Transfer_Encoder> encoder, T view) noexcept -> void {
+        auto cmd = encoder->cmd->impl->cmd.get();
+        auto buffer = view.ptr;
+        auto barrier = buffer->impl->update({
+            .stage = vk::PipelineStageFlagBits2::eComputeShader,
+            .access = vk::AccessFlagBits2::eShaderSampledRead,
+            .layout = vk::ImageLayout::eShaderReadOnlyOptimal,
+        });
+        cmd.pipelineBarrier2({
+            .imageMemoryBarrierCount = 1,
+            .pImageMemoryBarriers = &barrier,
+        });
+    }
+
+    auto Transfer_Encoder::persist(Buffer::View view) noexcept -> void {
+        auto cmd = this->cmd->impl->cmd.get();
+        auto buffer = view.ptr;
+        auto barrier = buffer->impl->update({
+            .stage = vk::PipelineStageFlagBits2::eComputeShader,
+            .access = vk::AccessFlagBits2::eShaderRead,
+        });
+        cmd.pipelineBarrier2({
+            .bufferMemoryBarrierCount = 1,
+            .pBufferMemoryBarriers = &barrier,
+        });
+    }
+
+    auto Transfer_Encoder::persist(opaque::Image::View view) noexcept -> void { impl->persist(this, view); }
+    auto Transfer_Encoder::persist(opaque::Grid::View view) noexcept -> void { impl->persist(this, view); }
 
     template<typename T>
     auto Transfer_Encoder::Impl::transfer(mut<Transfer_Encoder> encoder, u32 family, T view) noexcept -> void {

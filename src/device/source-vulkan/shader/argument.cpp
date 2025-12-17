@@ -43,7 +43,8 @@ namespace mtt::shader {
             bindings.push_back(vk::DescriptorSetLayoutBinding{
                 .binding = i,
                 .descriptorType = type,
-                .descriptorCount = math::max(1u, refl.size),
+                .descriptorCount = math::max(1u,
+                refl.type == Type::parameter ? 1 : refl.size),
                 .stageFlags = vk::ShaderStageFlagBits::eCompute,
             });
         }

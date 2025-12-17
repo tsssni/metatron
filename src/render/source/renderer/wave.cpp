@@ -20,6 +20,8 @@ namespace mtt::renderer {
     auto Renderer::Impl::wave() noexcept -> void {
         command::Context::init();
         auto& scheduler = stl::scheduler::instance();
+        auto& stack = stl::stack::instance();
+        auto& vector = stl::vector<void>::instance();
         auto render_queue = make_obj<command::Queue>(command::Type::render);
         auto transfer_queue = make_obj<command::Queue>(command::Type::transfer);
 
@@ -37,112 +39,98 @@ namespace mtt::renderer {
         auto images = std::vector<obj<opaque::Image>>{};
         auto grids = std::vector<obj<opaque::Grid>>{};
 
-        [&] {
-            auto& stack = stl::stack::instance();
-            auto& vector = stl::vector<void>::instance();
-            auto& textures = stl::vector<muldim::Image>::instance();
-            auto& volumes = stl::vector<muldim::Grid>::instance();
-            auto vsize = vector.size();
-            auto bsize = stack.bufs.size();
-            auto isize = textures.size();
-            auto gsize = volumes.size();
-            auto sequence = std::vector<std::vector<byte>>(vsize);
-            auto addresses = std::vector<uptr>(vsize, 0);
-            buffers = std::vector<obj<opaque::Buffer>>(bsize);
-            vectors = std::vector<obj<opaque::Buffer>>(vsize);
-            images = std::vector<obj<opaque::Image>>(isize);
-            grids = std::vector<obj<opaque::Grid>>(gsize);
+        auto& textures = stl::vector<muldim::Image>::instance();
+        auto& volumes = stl::vector<muldim::Grid>::instance();
+        auto vsize = vector.size();
+        auto bsize = stack.bufs.size();
+        auto isize = textures.size();
+        auto gsize = volumes.size();
+        auto sequence = std::vector<std::vector<byte>>(vsize);
+        auto addresses = std::vector<uptr>(vsize, 0);
+        buffers = std::vector<obj<opaque::Buffer>>(bsize);
+        vectors = std::vector<obj<opaque::Buffer>>(vsize);
+        images = std::vector<obj<opaque::Image>>(isize);
+        grids = std::vector<obj<opaque::Grid>>(gsize);
 
-            auto mutex = std::mutex{};
-            auto set = std::unordered_map<mut<stl::buf>, usize>{};
+        scheduler.sync_parallel(uzv1{scheduler.size()}, [
+            &,
+            bc = std::make_shared<std::atomic<u32>>(0),
+            vc = std::make_shared<std::atomic<u32>>(0),
+            ic = std::make_shared<std::atomic<u32>>(0),
+            gc = std::make_shared<std::atomic<u32>>(0)
+        ](auto) {
+            auto cmd = render_queue->allocate();
+            auto transfer = encoder::Transfer_Encoder{cmd.get()};
 
-            scheduler.sync_parallel(uzv1{scheduler.size()}, [
-                &,
-                bc = std::make_shared<std::atomic<u32>>(0),
-                vc = std::make_shared<std::atomic<u32>>(0),
-                ic = std::make_shared<std::atomic<u32>>(0),
-                gc = std::make_shared<std::atomic<u32>>(0)
-            ](auto) {
-                auto cmd = render_queue->allocate();
-                auto transfer = encoder::Transfer_Encoder{cmd.get()};
+            auto i = 0;
+            while ((i = bc->fetch_add(1, std::memory_order::relaxed)) < bsize) {
+                auto& buf = stack.bufs[i];
+                if (buf->idx != i) continue;
 
-                auto i = 0;
-                while ((i = bc->fetch_add(1, std::memory_order::relaxed)) < bsize) {
-                    auto& buf = stack.bufs[i];
-                    if (buf->idx != i) continue;
+                auto desc = opaque::Buffer::Descriptor{
+                    .ptr = buf->ptr,
+                    .state = opaque::Buffer::State::local,
+                    .type = command::Type::render,
+                    .size = buf->bytelen,
+                };
+                auto buffer = make_obj<opaque::Buffer>(desc);
+                transfer.upload(*buffer);
+                transfer.persist(*buffer);
+                stl::stack::instance().release(buf);
 
-                    auto desc = opaque::Buffer::Descriptor{
-                        .ptr = buf->ptr,
-                        .state = opaque::Buffer::State::local,
-                        .type = command::Type::render,
-                        .size = buf->bytelen,
-                    };
-                    auto buffer = make_obj<opaque::Buffer>(desc);
-                    transfer.upload(*buffer);
-                    stl::stack::instance().release(buf);
+                buf->ptr = mut<byte>(buffer->addr);
+                buf->handle = uptr(buffer.get());
+                buf->idx = math::maxv<u32>;
+                buffers[i] = std::move(buffer);
+            }
 
-                    buf->ptr = mut<byte>(buffer->addr);
-                    buf->handle = uptr(buffer.get());
-                    buf->idx = math::maxv<u32>;
-                    buffers[i] = std::move(buffer);
-                }
+            i = 0;
+            while ((i = vc->fetch_add(1, std::memory_order::relaxed)) < vsize) {
+                auto& vec = vector.storage[i];
+                sequence[i] = vec.pack();
+                if (sequence[i].empty()) continue;
 
-                i = 0;
-                while ((i = vc->fetch_add(1, std::memory_order::relaxed)) < vsize) {
-                    auto& vec = vector.storage[i];
-                    sequence[i] = vec.pack();
-                    if (sequence[i].empty()) continue;
+                auto desc = opaque::Buffer::Descriptor{
+                    .ptr = sequence[i].data(),
+                    .state = opaque::Buffer::State::local,
+                    .type = command::Type::render,
+                    .size = sequence[i].size(),
+                };
+                auto buffer = make_obj<opaque::Buffer>(desc);
+                transfer.upload(*buffer);
+                transfer.persist(*buffer);
+                addresses[i] = buffer->addr;
+                vectors[i] = std::move(buffer);
+            }
 
-                    auto desc = opaque::Buffer::Descriptor{
-                        .ptr = sequence[i].data(),
-                        .state = opaque::Buffer::State::local,
-                        .type = command::Type::render,
-                        .size = sequence[i].size(),
-                    };
-                    auto buffer = make_obj<opaque::Buffer>(desc);
-                    transfer.upload(*buffer);
-                    addresses[i] = buffer->addr;
-                    vectors[i] = std::move(buffer);
-                }
+            i = 0;
+            while ((i = ic->fetch_add(1, std::memory_order::relaxed)) < isize) {
+                images[i] = make_obj<opaque::Image>(
+                opaque::Image::Descriptor{
+                    .image = textures[i],
+                    .state = opaque::Image::State::samplable,
+                    .type = command::Type::render,
+                });
+                transfer.upload(*images[i]);
+                transfer.persist(*images[i]);
+            }
 
-                if (scheduler.index() == 0) {
-                    auto desc = opaque::Buffer::Descriptor{
-                        .ptr = mut<byte>(addresses.data()),
-                        .state = opaque::Buffer::State::local,
-                        .type = command::Type::render,
-                        .size = addresses.size() * sizeof(uptr),
-                    };
-                    resources = make_obj<opaque::Buffer>(desc);
-                    transfer.upload(*resources);
-                }
-                
-                i = 0;
-                while ((i = ic->fetch_add(1, std::memory_order::relaxed)) < isize) {
-                    images[i] = make_obj<opaque::Image>(
-                    opaque::Image::Descriptor{
-                        .image = textures[i],
-                        .state = opaque::Image::State::samplable,
-                        .type = command::Type::render,
-                    });
-                    transfer.upload(*images[i]);
-                }
+            i = 0;
+            while ((i = gc->fetch_add(1, std::memory_order::relaxed)) < gsize) {
+                grids[i] = make_obj<opaque::Grid>(
+                opaque::Grid::Descriptor{
+                    .grid = volumes[i],
+                    .state = opaque::Grid::State::readonly,
+                    .type = command::Type::render,
+                });
+                transfer.upload(*grids[i]);
+                transfer.persist(*grids[i]);
+            }
 
-                i = 0;
-                while ((i = gc->fetch_add(1, std::memory_order::relaxed)) < gsize) {
-                    grids[i] = make_obj<opaque::Grid>(
-                    opaque::Grid::Descriptor{
-                        .grid = volumes[i],
-                        .state = opaque::Grid::State::readonly,
-                        .type = command::Type::render,
-                    });
-                    transfer.upload(*grids[i]);
-                }
-
-                upload_timelines[scheduler.index()] = make_obj<command::Timeline>();
-                cmd->signals = {{upload_timelines[scheduler.index()].get(), 1}};
-                render_queue->submit(std::move(cmd));
-            });
-        }();
+            upload_timelines[scheduler.index()] = make_obj<command::Timeline>();
+            cmd->signals = {{upload_timelines[scheduler.index()].get(), 1}};
+            render_queue->submit(std::move(cmd));
+        });
 
         auto accel = [&] {
             auto cmd = render_queue->allocate();
@@ -165,6 +153,16 @@ namespace mtt::renderer {
                 .primitives = std::move(primitives),
                 .instances = std::move(instances),
             });
+
+            auto desc = opaque::Buffer::Descriptor{
+                .ptr = mut<byte>(addresses.data()),
+                .state = opaque::Buffer::State::local,
+                .type = command::Type::render,
+                .size = addresses.size() * sizeof(uptr),
+            };
+            resources = make_obj<opaque::Buffer>(desc);
+            encoder::Transfer_Encoder{cmd.get()}.upload(*resources);
+
             for (auto i = 0; i < scheduler.size(); ++i)
                 cmd->waits.push_back({upload_timelines[i].get(), 1});
             cmd->signals = {{render_timeline.get(), ++render_count}};
@@ -229,25 +227,20 @@ namespace mtt::renderer {
         in.idx = stl::vector<texture::Spectrum_Texture>::instance().index<texture::Image_Spectrum_Texture>();
         in.offset = 8;
         global_args_encoder.acquire("global", resources->addr);
-        global_args_encoder.acquire("global.textures", {0, images_view});
         integrate_args_encoder.acquire("in", in);
         integrate_args_encoder.acquire("in.film", *image);
-        // auto transfer_encoder = encoder::Transfer_Encoder{transfer.get()};
-        // auto render_encoder = encoder::Transfer_Encoder{render.get()};
-        // render_encoder.release(transfer.get(), *images[0]);
-        // transfer_encoder.acquire(*images[0]);
-        // transfer_encoder.copy(*buffer, *images[0]);
+        pipeline_encoder.dispatch({
+            math::align(film.width, 8) / 8,
+            math::align(film.height, 8) / 8,
+        1});
 
+        auto transfer_encoder = encoder::Transfer_Encoder{render.get()};
+        transfer_encoder.copy(*buffer, *image);
         render->waits = {{render_timeline.get(), render_count}};
         render->signals = {{render_timeline.get(), ++render_count}};
-        // transfer->waits = {{render_timeline.get(), render_count}};
-        // transfer->signals = {{transfer_timeline.get(), ++transfer_count}};
         render_queue->submit(std::move(render));
-        // transfer_queue->submit(std::move(transfer));
-
         render_timeline->wait(render_count);
-        // transfer_timeline->wait(transfer_count);
-        // std::memcpy(film.pixels.front().data(), buffer->ptr, size);
-        // film.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
+        std::memcpy(film.pixels.front().data(), buffer->ptr, size);
+        film.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
     }
 }

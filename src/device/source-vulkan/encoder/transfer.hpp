@@ -8,6 +8,8 @@ namespace mtt::encoder {
         opaque::Barrier dst_barrier;
 
         template<typename T>
+        auto persist(mut<Transfer_Encoder> encoder, T view) noexcept -> void;
+        template<typename T>
         auto transfer(mut<Transfer_Encoder> encoder, u32 family, T view) noexcept -> void;
         template<typename T, typename U>
         auto copy(mut<Transfer_Encoder> encoder, T to, U from) noexcept -> void;

@@ -40,8 +40,6 @@ namespace mtt::opaque {
         };
 
         impl->device_buffer = command::guard(device.createBufferUnique(create));
-        if (desc.state != State::local)
-            impl->host_buffer = command::guard(device.createBufferUnique(create));
         auto size = device.getBufferMemoryRequirements2({
             .buffer = impl->device_buffer.get(),
         }).memoryRequirements.size;
@@ -51,6 +49,7 @@ namespace mtt::opaque {
         auto& host_info = infos[1];
 
         if (desc.state != State::local || desc.ptr) {
+            impl->host_buffer = command::guard(device.createBufferUnique(create));
             auto alloc = vk::MemoryAllocateInfo{
                 .pNext = &flags,
                 .allocationSize = size,

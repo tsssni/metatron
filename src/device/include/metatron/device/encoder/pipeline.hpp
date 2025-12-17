@@ -10,5 +10,6 @@ namespace mtt::encoder {
         Pipeline_Encoder(mut<command::Buffer> cmd, mut<shader::Pipeline> ppl) noexcept;
 
         auto bind() noexcept -> void;
+        auto dispatch(uzv3 grid) noexcept -> void;
     };
 }

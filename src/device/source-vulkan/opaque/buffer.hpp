@@ -11,13 +11,14 @@ namespace mtt::opaque {
 
         template<typename T>
         auto update(cref<Barrier> desc) noexcept -> T {
+            auto transfer = desc.family != math::maxv<u32>;
             auto barrier = T{
                 .srcStageMask = stage,
                 .srcAccessMask = access,
                 .dstStageMask = desc.stage,
                 .dstAccessMask = desc.access,
                 .srcQueueFamilyIndex = family,
-                .dstQueueFamilyIndex = desc.family < math::maxv<u32> ? desc.family : family,
+                .dstQueueFamilyIndex = transfer ? desc.family : family,
             };
             if constexpr (std::is_same_v<T, vk::ImageMemoryBarrier2>) {
                 barrier.oldLayout = layout;
@@ -26,7 +27,7 @@ namespace mtt::opaque {
             stage = desc.stage;
             access = desc.access;
             layout = desc.layout;
-            family = desc.family;
+            family = transfer ? desc.family : family;
             return barrier;
         }
     };

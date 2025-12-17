@@ -20,6 +20,7 @@ namespace mtt::command {
         vk::UniqueDevice device;
         vk::UniquePipelineCache pipeline_cache;
 
+        vk::PhysicalDeviceProperties2 device_props;
         vk::PhysicalDeviceMemoryProperties2 memory_props;
         vk::PhysicalDeviceDescriptorBufferPropertiesEXT descriptor_buffer_props;
 

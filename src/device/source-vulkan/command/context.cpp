@@ -187,6 +187,7 @@ namespace mtt::command {
                     vk::PhysicalDeviceDescriptorBufferPropertiesEXT
                 >{};
                 physical_device.getProperties2(&props.get());
+                device_props = props.get<vk::PhysicalDeviceProperties2>();
                 memory_props = physical_device.getMemoryProperties2();
                 descriptor_buffer_props = props.get<vk::PhysicalDeviceDescriptorBufferPropertiesEXT>();
                 break;

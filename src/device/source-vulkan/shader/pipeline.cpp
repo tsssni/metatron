@@ -34,6 +34,7 @@ namespace mtt::shader {
             .pSetLayouts = layouts.data(),
         }));
         impl->pipeline = command::guard(device.createComputePipelineUnique(cache, {
+            .flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
             .stage = {
                 .stage = vk::ShaderStageFlagBits::eCompute,
                 .module = impl->module.get(),

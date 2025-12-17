@@ -11,7 +11,5 @@ namespace mtt::encoder {
         auto bind(mut<Argument_Encoder> encoder, std::string_view field, shader::Bindless<T> view) noexcept -> void;
         template<typename T>
         auto acquire(mut<Argument_Encoder> encoder, std::string_view field, T view) noexcept -> void;
-        template<typename T>
-        auto acquire(mut<Argument_Encoder> encoder, std::string_view field, shader::Bindless<T> view) noexcept -> void;
     };
 }

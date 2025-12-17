@@ -92,19 +92,23 @@ namespace mtt::command {
 
     auto Queue::submit(rref<obj<Buffer>> cmd) noexcept -> void {
         guard(cmd->impl->cmd->end());
-        auto collect = [](cref<std::vector<Buffer::Timeline_Count>> semaphores) {
+        auto collect = [](
+            cref<std::vector<Buffer::Timeline_Count>> semaphores,
+            vk::PipelineStageFlags2 flags
+        ) {
             auto collected = std::vector<vk::SemaphoreSubmitInfo>(semaphores.size());
             for (auto i = 0; i < collected.size(); ++i) {
                 auto [timeline, count] = semaphores[i];
                 collected[i] = vk::SemaphoreSubmitInfo{
                     .semaphore = timeline->impl->semaphore.get(),
                     .value = count,
+                    .stageMask = flags,
                 };
             };
             return collected;
         };
-        auto waits = collect(cmd->waits);
-        auto signals = collect(cmd->signals);
+        auto waits = collect(cmd->waits, vk::PipelineStageFlagBits2::eTopOfPipe);
+        auto signals = collect(cmd->signals, vk::PipelineStageFlagBits2::eBottomOfPipe);
         auto submit = vk::CommandBufferSubmitInfo{
             .commandBuffer = cmd->impl->cmd.get(),
         };

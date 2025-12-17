@@ -30,7 +30,5 @@ namespace mtt::encoder {
         auto acquire(std::string_view field, std::span<byte const> uniform) noexcept -> void;
         auto acquire(std::string_view field, opaque::Image::View image) noexcept -> void;
         auto acquire(std::string_view field, opaque::Grid::View grid) noexcept -> void;
-        auto acquire(std::string_view field, shader::Bindless<opaque::Image> images) noexcept -> void;
-        auto acquire(std::string_view field, shader::Bindless<opaque::Grid> grids) noexcept -> void;
     };
 }
