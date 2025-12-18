@@ -19,8 +19,6 @@ namespace mtt::opaque {
         };
 
         State state;
-        command::Type type;
-
         mut<byte> ptr = nullptr;
         uptr addr = 0;
         usize size = 0;

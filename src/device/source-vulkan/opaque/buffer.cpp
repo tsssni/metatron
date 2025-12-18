@@ -20,9 +20,8 @@ namespace mtt::opaque {
 
     Buffer::Buffer(cref<Descriptor> desc) noexcept:
     size(desc.size),
-    state(desc.state),
-    type(desc.type) {
-        impl->barrier.family = command::Queue::Impl::family[u32(type)];
+    state(desc.state) {
+        impl->barrier.family = command::Queue::Impl::family[u32(desc.type)];
         auto& ctx = command::Context::instance().impl;
         auto& props = ctx->memory_props;
         if (desc.size == 0) stl::abort("empty buffer not supported");
@@ -97,7 +96,7 @@ namespace mtt::opaque {
         auto device = ctx->device.get();
         if (impl->host_memory && ptr)
             command::guard(device.unmapMemory2({.memory = impl->host_memory.get()}));
-        state = rhs.state; type = rhs.type; ptr = rhs.ptr;
+        state = rhs.state; ptr = rhs.ptr;
         addr = rhs.addr; size = rhs.size; dirty = std::move(rhs.dirty);
         impl = std::move(rhs.impl);
         rhs.ptr = nullptr;

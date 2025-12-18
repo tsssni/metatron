@@ -80,9 +80,8 @@ namespace mtt::opaque {
     }
 
     Image::Image(cref<Descriptor> desc) noexcept:
-    state(desc.state),
-    type(desc.type) {
-        impl->barrier.family = command::Queue::Impl::family[u32(type)];
+    state(desc.state) {
+        impl->barrier.family = command::Queue::Impl::family[u32(desc.type)];
         width = desc.image->width;
         height = desc.image->height;
         mips = math::max(1uz, desc.image->pixels.size());
@@ -91,7 +90,7 @@ namespace mtt::opaque {
                 host.push_back(make_obj<Buffer>(Buffer::Descriptor{
                     .ptr = desc.image->pixels[i].data(),
                     .state = Buffer::State::visible,
-                    .type = type,
+                    .type = desc.type,
                     .size = desc.image->pixels[i].size(),
                 }));
             desc.image->pixels.clear();

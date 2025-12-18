@@ -5,23 +5,24 @@
 #include <metatron/core/math/bounding-box.hpp>
 
 namespace mtt::opaque {
-    struct Acceleration final {
+    struct Acceleration final: stl::capsule<Acceleration> {
         struct Primitive final {
             enum struct Type {
                 mesh,
                 aabb,
             } type;
-            union {
-                view<shape::Mesh> mesh;
-                math::Bounding_Box aabb;
-            };
+            view<shape::Mesh> mesh;
+            std::vector<math::Bounding_Box> aabbs;
         };
-        struct Instance final { fm4 transform; };
-
-        u64 timestamp = 0;
+        struct Instance final {
+            u32 idx;
+            fm4 transform;
+        };
 
         std::vector<obj<Buffer>> buffers;
         std::vector<obj<Buffer>> scratches;
+        obj<Buffer> bboxes;
+        obj<Buffer> instances;
 
         struct Descriptor final {
             std::vector<Primitive> primitives;

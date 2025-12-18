@@ -17,9 +17,7 @@ namespace mtt::opaque {
             uzv2 size;
         };
 
-        command::Type type;
         State state;
-
         u32 width;
         u32 height;
         u32 mips;

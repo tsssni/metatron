@@ -17,8 +17,6 @@ namespace mtt::opaque {
         };
 
         State state;
-        command::Type type;
-
         u32 width;
         u32 height;
         u32 depth;

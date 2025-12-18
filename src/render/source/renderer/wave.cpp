@@ -17,21 +17,21 @@
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::renderer {
-    auto Renderer::Impl::wave() noexcept -> void {
-        command::Context::init();
+    struct Resources final {
+        std::vector<obj<opaque::Buffer>> buffers;
+        std::vector<obj<opaque::Buffer>> vectors{};
+        obj<opaque::Buffer> resources;
+        std::vector<obj<opaque::Image>> images;
+        std::vector<obj<opaque::Grid>> grids;
+    };
+
+    auto upload(
+        mut<command::Queue> queue,
+        ref<std::vector<obj<command::Timeline>>> timelines
+    ) noexcept -> Resources {
         auto& scheduler = stl::scheduler::instance();
         auto& stack = stl::stack::instance();
         auto& vector = stl::vector<void>::instance();
-        auto render_queue = make_obj<command::Queue>(command::Type::render);
-        auto transfer_queue = make_obj<command::Queue>(command::Type::transfer);
-
-        auto upload_timelines = std::vector<obj<command::Timeline>>(scheduler.size());
-        auto render_timeline = make_obj<command::Timeline>();
-        auto transfer_timeline = make_obj<command::Timeline>();
-        auto network_timline = make_obj<command::Timeline>();
-        auto render_count = u64{0};
-        auto transfer_count = u64{0};
-        auto network_count = u64{0};
 
         auto buffers = std::vector<obj<opaque::Buffer>>{};
         auto vectors = std::vector<obj<opaque::Buffer>>{};
@@ -59,7 +59,7 @@ namespace mtt::renderer {
             ic = std::make_shared<std::atomic<u32>>(0),
             gc = std::make_shared<std::atomic<u32>>(0)
         ](auto) {
-            auto cmd = render_queue->allocate();
+            auto cmd = queue->allocate();
             auto transfer = encoder::Transfer_Encoder{cmd.get()};
 
             auto i = 0;
@@ -85,7 +85,7 @@ namespace mtt::renderer {
             }
 
             i = 0;
-            while ((i = vc->fetch_add(1, std::memory_order::relaxed)) < vsize) {
+            while ((i = vc->fetch_add(1, std::memory_order::acq_rel)) < vsize) {
                 auto& vec = vector.storage[i];
                 sequence[i] = vec.pack();
                 if (sequence[i].empty()) continue;
@@ -101,6 +101,17 @@ namespace mtt::renderer {
                 transfer.persist(*buffer);
                 addresses[i] = buffer->addr;
                 vectors[i] = std::move(buffer);
+            }
+
+            if (scheduler.index() == 0) {
+                auto desc = opaque::Buffer::Descriptor{
+                    .ptr = mut<byte>(addresses.data()),
+                    .state = opaque::Buffer::State::local,
+                    .type = command::Type::render,
+                    .size = addresses.size() * sizeof(uptr),
+                };
+                resources = make_obj<opaque::Buffer>(desc);
+                encoder::Transfer_Encoder{cmd.get()}.upload(*resources);
             }
 
             i = 0;
@@ -127,120 +138,169 @@ namespace mtt::renderer {
                 transfer.persist(*grids[i]);
             }
 
-            upload_timelines[scheduler.index()] = make_obj<command::Timeline>();
-            cmd->signals = {{upload_timelines[scheduler.index()].get(), 1}};
-            render_queue->submit(std::move(cmd));
+            timelines[scheduler.index()] = make_obj<command::Timeline>();
+            cmd->signals = {{timelines[scheduler.index()].get(), 1}};
+            queue->submit(std::move(cmd));
         });
 
-        auto accel = [&] {
-            auto cmd = render_queue->allocate();
-            auto& dividers = stl::vector<accel::Divider>::instance();
-            auto& shapes = stl::vector<shape::Shape>::instance();
-            auto primitives = std::vector<opaque::Acceleration::Primitive>{};
-            auto instances = std::vector<opaque::Acceleration::Instance>{};
-            for (auto i = 0; i < dividers.size(); ++i) {
-                auto div = dividers[i];
-                auto tlas = opaque::Acceleration::Instance{div->local_to_render->transform};
-                auto blas = opaque::Acceleration::Primitive{};
-                if (shapes.is<shape::Mesh>(div->shape))
-                    blas.mesh = shapes.get<shape::Mesh>(div->shape.index());
-                else blas.aabb = div->shape->bounding_box(fm4{1.f}, 0);
-                instances.push_back(tlas);
-                primitives.push_back(blas);
+        return Resources{
+            std::move(buffers),
+            std::move(vectors),
+            std::move(resources),
+            std::move(images),
+            std::move(grids),
+        };
+    }
+
+    template<typename T>
+    auto collect(
+        ref<std::vector<opaque::Acceleration::Primitive>> primitives,
+        ref<std::vector<u32>> counts
+    ) noexcept -> void {
+        auto& shapes = stl::vector<shape::Shape>::instance();
+        for (auto i = 0; i < shapes.size<T>(); ++i)
+            if constexpr (std::is_same_v<T, shape::Mesh>)
+                primitives.push_back({
+                    .type = opaque::Acceleration::Primitive::Type::mesh,
+                    .mesh = shapes.get<T>(i),
+                });
+            else {
+                auto prim = opaque::Acceleration::Primitive{
+                    .type = opaque::Acceleration::Primitive::Type::aabb,
+                };
+                for (auto j = 0; j < shapes.get<T>(i)->size(); ++j)
+                    prim.aabbs.push_back(shapes.get<T>(i)->bounding_box(fm4{1.f}, j));
+                primitives.push_back(prim);
             }
-            auto accel = make_obj<opaque::Acceleration>(
-            opaque::Acceleration::Descriptor{
-                .primitives = std::move(primitives),
-                .instances = std::move(instances),
-            });
+        counts.push_back(counts.back() + shapes.size<T>());
+    }
 
-            auto desc = opaque::Buffer::Descriptor{
-                .ptr = mut<byte>(addresses.data()),
-                .state = opaque::Buffer::State::local,
-                .type = command::Type::render,
-                .size = addresses.size() * sizeof(uptr),
+    auto build(
+        mut<command::Queue> queue,
+        cref<std::vector<obj<command::Timeline>>> uploads,
+        mut<command::Timeline> timeline,
+        ref<u64> count
+    ) noexcept -> obj<opaque::Acceleration> {
+        auto& scheduler = stl::scheduler::instance();
+        auto& dividers = stl::vector<accel::Divider>::instance();
+        auto& shapes = stl::vector<shape::Shape>::instance();
+        auto counts = std::vector<u32>{0};
+        auto primitives = std::vector<opaque::Acceleration::Primitive>{};
+        auto instances = std::vector<opaque::Acceleration::Instance>{};
+
+        collect<shape::Mesh>(primitives, counts);
+        collect<shape::Sphere>(primitives, counts);
+
+        for (auto i = 0; i < dividers.size(); ++i) {
+            auto div = dividers[i];
+            auto type = div->shape.type();
+            auto idx = div->shape.index();
+            auto tlas = opaque::Acceleration::Instance{
+                .idx = counts[type] + idx,
+                .transform = div->local_to_render->transform,
             };
-            resources = make_obj<opaque::Buffer>(desc);
-            encoder::Transfer_Encoder{cmd.get()}.upload(*resources);
-
-            for (auto i = 0; i < scheduler.size(); ++i)
-                cmd->waits.push_back({upload_timelines[i].get(), 1});
-            cmd->signals = {{render_timeline.get(), ++render_count}};
-            render_queue->submit(std::move(cmd));
-            return std::move(accel);
-        }();
-
-        auto transfer = transfer_queue->allocate();
-        auto render = render_queue->allocate();
-
-        auto film = muldim::Image{};
-        film.width = images[0]->width;
-        film.height = images[0]->height;
-        film.channels = 4;
-        film.stride = 4;
-
-        auto size = math::prod(film.size);
-        film.pixels.resize(1);
-        film.pixels.front().resize(math::prod(film.size));
-
-        auto sampler = make_obj<opaque::Sampler>(
-        opaque::Sampler::Descriptor{
-            .mode = opaque::Sampler::Mode::repeat,
-        });
-        auto image = make_obj<opaque::Image>(
-        opaque::Image::Descriptor{
-            .image = &film,
-            .state = opaque::Image::State::storable,
-            .type = command::Type::render,
-        });
-        auto buffer = make_obj<opaque::Buffer>(
-        opaque::Buffer::Descriptor{
-            .state = opaque::Buffer::State::visible,
-            .type = command::Type::render,
-            .size = size,
+            instances.push_back(tlas);
+        }
+        auto accel = make_obj<opaque::Acceleration>(
+        opaque::Acceleration::Descriptor{
+            .primitives = std::move(primitives),
+            .instances = std::move(instances),
         });
 
-        auto global_args = make_obj<shader::Argument>(
-        shader::Argument::Descriptor{"trace.global", command::Type::render});
-        auto integrate_args = make_obj<shader::Argument>(
-        shader::Argument::Descriptor{"trace.integrate.in", command::Type::render});
-        auto integrate = make_obj<shader::Pipeline>(
-        shader::Pipeline::Descriptor{"trace.integrate", {global_args.get(), integrate_args.get()}});
+        auto builder = queue->allocate();
+        for (auto i = 0; i < scheduler.size(); ++i)
+            builder->waits.push_back({uploads[i].get(), 1});
+        builder->signals = {{timeline, ++count}};
+        queue->submit(std::move(builder));
+        return {};
+    }
 
-        auto global_args_encoder = encoder::Argument_Encoder{render.get(), global_args.get()};
-        auto integrate_args_encoder = encoder::Argument_Encoder{render.get(), integrate_args.get()};
-        auto pipeline_encoder = encoder::Pipeline_Encoder{render.get(), integrate.get()};
-        auto images_view = std::vector<opaque::Image::View>(images.size());
-        for (auto i = 0; i < images.size(); ++i)
-            images_view[i] = *images[i];
-        global_args_encoder.bind("global.sampler", sampler.get());
-        global_args_encoder.bind("global.textures", {0, images_view});
-        global_args_encoder.upload();
-        integrate_args_encoder.bind("in.film", *image);
-        integrate_args_encoder.upload();
-        pipeline_encoder.bind();
+    auto Renderer::Impl::wave() noexcept -> void {
+        command::Context::init();
+        auto& scheduler = stl::scheduler::instance();
+        auto& stack = stl::stack::instance();
+        auto& vector = stl::vector<void>::instance();
+        auto render_queue = make_obj<command::Queue>(command::Type::render);
+        auto transfer_queue = make_obj<command::Queue>(command::Type::transfer);
 
-        struct Integrate final {
-            u32 idx;
-            u32 offset;
-        } in;
-        in.idx = stl::vector<texture::Spectrum_Texture>::instance().index<texture::Image_Spectrum_Texture>();
-        in.offset = 8;
-        global_args_encoder.acquire("global", resources->addr);
-        integrate_args_encoder.acquire("in", in);
-        integrate_args_encoder.acquire("in.film", *image);
-        pipeline_encoder.dispatch({
-            math::align(film.width, 8) / 8,
-            math::align(film.height, 8) / 8,
-        1});
+        auto upload_timelines = std::vector<obj<command::Timeline>>(scheduler.size());
+        auto render_timeline = make_obj<command::Timeline>();
+        auto transfer_timeline = make_obj<command::Timeline>();
+        auto network_timline = make_obj<command::Timeline>();
+        auto render_count = u64{0};
+        auto transfer_count = u64{0};
+        auto network_count = u64{0};
 
-        auto transfer_encoder = encoder::Transfer_Encoder{render.get()};
-        transfer_encoder.copy(*buffer, *image);
-        render->waits = {{render_timeline.get(), render_count}};
-        render->signals = {{render_timeline.get(), ++render_count}};
-        render_queue->submit(std::move(render));
+        auto resources = upload(render_queue.get(), upload_timelines);
+        auto accel = build(
+            render_queue.get(),
+            upload_timelines,
+            render_timeline.get(),
+            render_count
+        );
         render_timeline->wait(render_count);
-        std::memcpy(film.pixels.front().data(), buffer->ptr, size);
-        film.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
+
+        // auto transfer = transfer_queue->allocate();
+        // auto render = render_queue->allocate();
+
+        // auto sampler = make_obj<opaque::Sampler>(
+        // opaque::Sampler::Descriptor{
+        //     .mode = opaque::Sampler::Mode::repeat,
+        // });
+        // auto image = make_obj<opaque::Image>(
+        // opaque::Image::Descriptor{
+        //     .image = &desc.film.image,
+        //     .state = opaque::Image::State::storable,
+        //     .type = command::Type::render,
+        // });
+        // auto buffer = make_obj<opaque::Buffer>(
+        // opaque::Buffer::Descriptor{
+        //     .state = opaque::Buffer::State::visible,
+        //     .type = command::Type::render,
+        //     .size = math::prod(desc.film.image.size),
+        // });
+
+        // auto global_args = make_obj<shader::Argument>(
+        // shader::Argument::Descriptor{"trace.global", command::Type::render});
+        // auto integrate_args = make_obj<shader::Argument>(
+        // shader::Argument::Descriptor{"trace.integrate.in", command::Type::render});
+        // auto integrate = make_obj<shader::Pipeline>(
+        // shader::Pipeline::Descriptor{"trace.integrate", {global_args.get(), integrate_args.get()}});
+
+        // auto global_args_encoder = encoder::Argument_Encoder{render.get(), global_args.get()};
+        // auto integrate_args_encoder = encoder::Argument_Encoder{render.get(), integrate_args.get()};
+        // auto pipeline_encoder = encoder::Pipeline_Encoder{render.get(), integrate.get()};
+        // auto images_view = std::vector<opaque::Image::View>(resources.images.size());
+        // for (auto i = 0; i < resources.images.size(); ++i)
+        //     images_view[i] = *resources.images[i];
+        // global_args_encoder.bind("global.sampler", sampler.get());
+        // global_args_encoder.bind("global.textures", {0, images_view});
+        // global_args_encoder.upload();
+        // integrate_args_encoder.bind("in.film", *image);
+        // integrate_args_encoder.upload();
+        // pipeline_encoder.bind();
+
+        // struct Integrate final {
+        //     u32 idx;
+        //     u32 offset;
+        // } in;
+        // in.idx = stl::vector<texture::Spectrum_Texture>::instance().index<texture::Image_Spectrum_Texture>();
+        // in.offset = 8;
+        // global_args_encoder.acquire("global", resources.resources->addr);
+        // integrate_args_encoder.acquire("in", in);
+        // integrate_args_encoder.acquire("in.film", *image);
+        // pipeline_encoder.dispatch({
+        //     math::align(desc.film.image.width, 8) / 8,
+        //     math::align(desc.film.image.height, 8) / 8,
+        // 1});
+
+        // auto transfer_encoder = encoder::Transfer_Encoder{render.get()};
+        // transfer_encoder.copy(*buffer, *image);
+        // render->waits = {{render_timeline.get(), render_count}};
+        // render->signals = {{render_timeline.get(), ++render_count}};
+        // render_queue->submit(std::move(render));
+        // render_timeline->wait(render_count);
+        // std::memcpy(desc.film.image.pixels.front().data(), buffer->ptr, buffer->size);
+        // desc.film.image.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
     }
 }

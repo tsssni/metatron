@@ -49,9 +49,8 @@ namespace mtt::opaque {
     }
 
     Grid::Grid(cref<Descriptor> desc) noexcept:
-    state(desc.state),
-    type(desc.type) {
-        impl->barrier.family = command::Queue::Impl::family[u32(type)];
+    state(desc.state) {
+        impl->barrier.family = command::Queue::Impl::family[u32(desc.type)];
         width = desc.grid->width;
         height = desc.grid->height;
         depth = desc.grid->depth;
@@ -59,7 +58,7 @@ namespace mtt::opaque {
             host = make_obj<Buffer>(Buffer::Descriptor{
                 .ptr = mut<byte>(desc.grid->cells.data()),
                 .state = Buffer::State::visible,
-                .type = type,
+                .type = desc.type,
                 .size = desc.grid->cells.size() * sizeof(f32),
             });
             desc.grid->cells.clear();

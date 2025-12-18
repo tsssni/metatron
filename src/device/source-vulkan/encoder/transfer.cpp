@@ -35,7 +35,6 @@ namespace mtt::encoder {
             uploaded->impl->barrier = buffer->impl->barrier;
             uploaded->impl->host_memory = std::move(buffer->impl->host_memory);
             uploaded->impl->host_buffer = std::move(buffer->impl->host_buffer);
-            uploaded->type = buffer->type;
             uploaded->state = Buffer::State::visible;
             uploaded->ptr = buffer->ptr;
             uploaded->size = buffer->size;
