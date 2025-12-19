@@ -2,22 +2,22 @@ implementing math;
 
 namespace mtt::math {
     public struct Transform {
-        float4x4 transform;
-        float4x4 inv_transform;
+        fm4 transform;
+        fm4 inv_transform;
     }
 
-    float4 operator*(Transform t, float4 x) {
+    fv4 operator*(Transform t, fv4 x) {
         return mul(t.transform, x);
     }
 
-    float3 operator*(Transform t, float3 x) {
-        return normalize(mul(float4(x, 0), t.transform).xyz);
+    fv3 operator*(Transform t, fv3 x) {
+        return normalize(mul(fv4(x, 0), t.transform).xyz);
     }
 
     Ray operator*(Transform t, Ray r) {
         var tr = r;
-        tr.Origin = (t * float4(r.Origin, 1)).xyz;
-        tr.Direction = (t * float4(r.Direction, 0)).xyz;
+        tr.Origin = (t * fv4(r.Origin, 1)).xyz;
+        tr.Direction = (t * fv4(r.Direction, 0)).xyz;
         return tr;
     }
 
@@ -29,18 +29,18 @@ namespace mtt::math {
         return tr;
     }
 
-    float4 operator/(Transform t, float4 x) {
+    fv4 operator/(Transform t, fv4 x) {
         return mul(t.inv_transform, x);
     }
 
-    float3 operator/(Transform t, float3 x) {
-        return normalize(mul(float4(x, 0), t.inv_transform).xyz);
+    fv3 operator/(Transform t, fv3 x) {
+        return normalize(mul(fv4(x, 0), t.inv_transform).xyz);
     }
 
     Ray operator/(Transform t, Ray r) {
         var tr = r;
-        tr.Origin = (t / float4(r.Origin, 1)).xyz;
-        tr.Direction = (t / float4(r.Direction, 0)).xyz;
+        tr.Origin = (t / fv4(r.Origin, 1)).xyz;
+        tr.Direction = (t / fv4(r.Direction, 0)).xyz;
         return tr;
     }
 
