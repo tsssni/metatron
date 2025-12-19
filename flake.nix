@@ -7,12 +7,17 @@
       url = "github:tsssni/tsssni.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nixgl = {
+      url = "github:nix-community/nixGL";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
     {
       nixpkgs,
       tsssni,
+      nixgl,
       ...
     }:
     let
@@ -47,18 +52,45 @@
           pkgs = import nixpkgs {
             inherit system;
             overlays = tsssni.pkgs;
+            config.allowUnfree = true;
           };
+          glpkgs =
+            let
+              isx86 = system == "x86_64-linux";
+            in
+            import nixgl {
+              inherit pkgs nvidiaVersion;
+              enable32bits = isx86;
+              enableIntelX86Extensions = isx86;
+            };
+          externalNvidiaVersion = builtins.getEnv "MTT_IMPURE_NVIDIA_VERSION";
+          nvidiaVersion = if externalNvidiaVersion == "" then null else externalNvidiaVersion;
         in
-        {
+        rec {
           default = pkgs.mkShell.override { stdenv = pkgs.clangStdenv; } {
             inputsFrom = [ packages.${system}.default ];
-            shellHook = "
+            packages = with pkgs; [
+              clang-tools
+              cmake-language-server
+              vulkan-validation-layers
+            ];
+            shellHook = ''
               export CMAKE_INSTALL_PREFIX=$HOME/metatron/out
               export SHELL=nu
-            " + lib.optionalString pkgs.stdenv.isLinux ''
+            ''
+            + lib.optionalString pkgs.stdenv.isLinux ''
               export VK_LAYER_PATH=${pkgs.vulkan-validation-layers}/share/vulkan/explicit_layer.d
             '';
           };
+
+          impure = default.overrideAttrs (oldAttrs: {
+            nativeBuildInputs =
+              oldAttrs.nativeBuildInputs
+              ++ (with glpkgs; [
+                nixVulkanIntel
+                nixVulkanNvidia
+              ]);
+          });
         }
       );
     in

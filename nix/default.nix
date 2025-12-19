@@ -2,10 +2,8 @@
   apple-sdk_15,
   argparse,
   assimp,
-  clang-tools,
   clangStdenv,
   cmake,
-  cmake-language-server,
   glaze,
   lib,
   ninja,
@@ -17,7 +15,6 @@
   vulkan-loader,
   vulkan-headers,
   vulkan-tools,
-  vulkan-validation-layers,
   zlib,
 }:
 let
@@ -36,9 +33,7 @@ stdenv.mkDerivation {
   # };
 
   nativeBuildInputs = [
-    clang-tools
     cmake
-    cmake-language-server
     ninja
     shader-slang
     spirv-cross
@@ -57,7 +52,6 @@ stdenv.mkDerivation {
     vulkan-loader
     vulkan-headers
     vulkan-tools
-    vulkan-validation-layers
   ])
   ++ (lib.optionals stdenv.isDarwin [
     apple-sdk_15

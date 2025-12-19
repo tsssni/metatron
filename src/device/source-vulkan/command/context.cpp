@@ -207,7 +207,7 @@ namespace mtt::command {
             auto local = vk::MemoryHeapFlagBits::eDeviceLocal;
             if (device_heap == math::maxv<u32> && heap.flags & local)
                 device_heap = i;
-            else if (host_heap < 0 && !(heap.flags & local))
+            else if (host_heap == math::maxv<u32> && !(heap.flags & local))
                 host_heap = i;
         }
         if (host_heap == math::maxv<u32>) host_heap = device_heap;
