@@ -11,6 +11,7 @@ namespace mtt::opaque {
         impl->primitives_geometries.resize(desc.primitives.size());
         impl->primitives_infos.resize(desc.primitives.size());
         impl->primitvies_ranges.resize(desc.primitives.size());
+        impl->primitvies_ptrs.resize(desc.primitives.size());
         buffers.resize(desc.primitives.size() + 1);
         scratches.resize(desc.primitives.size() + 1);
 
@@ -50,8 +51,9 @@ namespace mtt::opaque {
                     .stride = bbox_size,
                 }}
                 : vk::AccelerationStructureGeometryDataKHR{.triangles = {
-                    .vertexFormat = vk::Format::eR32G32B32Sint,
+                    .vertexFormat = vk::Format::eR32G32B32Sfloat,
                     .vertexData = {.deviceAddress = uptr(prim.mesh->vertices.ptr)},
+                    .vertexStride = sizeof(fv3),
                     .maxVertex = u32(prim.mesh->vertices.size()) - 1,
                     .indexType = vk::IndexType::eUint32,
                     .indexData = {.deviceAddress = uptr(prim.mesh->indices.ptr)}
@@ -71,6 +73,7 @@ namespace mtt::opaque {
                 .firstVertex = 0,
                 .transformOffset = 0,
             };
+            impl->primitvies_ptrs[i] = &impl->primitvies_ranges[i];
 
             auto size = device.getAccelerationStructureBuildSizesKHR(
                 vk::AccelerationStructureBuildTypeKHR::eDevice,
@@ -89,7 +92,7 @@ namespace mtt::opaque {
                 .state = opaque::Buffer::State::local,
                 .type = desc.type,
                 .size = size.buildScratchSize,
-                .flags = u64(vk::BufferUsageFlagBits2::eAccelerationStructureStorageKHR),
+                .flags = u64(vk::BufferUsageFlagBits2::eStorageBuffer),
             });
 
             impl->primitives[i] = command::guard(device.createAccelerationStructureKHRUnique({
@@ -98,6 +101,8 @@ namespace mtt::opaque {
                 .size = size.accelerationStructureSize,
                 .type = vk::AccelerationStructureTypeKHR::eBottomLevel,
             }));
+            impl->primitives_infos[i].dstAccelerationStructure = impl->primitives[i].get();
+            impl->primitives_infos[i].scratchData = {.deviceAddress = scratches[i]->addr};
         });
 
         instances = make_obj<opaque::Buffer>(
@@ -122,7 +127,7 @@ namespace mtt::opaque {
         impl->instances_geometry = {
             .geometryType = vk::GeometryTypeKHR::eInstances,
             .geometry = {.instances{
-                .arrayOfPointers = true,
+                .arrayOfPointers = false,
                 .data = {.deviceAddress = instances->addr},
             }},
             .flags = vk::GeometryFlagBitsKHR::eOpaque,
@@ -134,6 +139,13 @@ namespace mtt::opaque {
             .geometryCount = 1,
             .pGeometries = &impl->instances_geometry,
         };
+        impl->instances_range = {
+            .primitiveCount = u32(desc.instances.size()),
+            .primitiveOffset = 0,
+            .firstVertex = 0,
+            .transformOffset = 0,
+        };
+        impl->instances_ptr = &impl->instances_range;
 
         auto size = device.getAccelerationStructureBuildSizesKHR(
             vk::AccelerationStructureBuildTypeKHR::eDevice,
@@ -152,7 +164,16 @@ namespace mtt::opaque {
             .state = opaque::Buffer::State::local,
             .type = desc.type,
             .size = size.buildScratchSize,
-            .flags = u64(vk::BufferUsageFlagBits2::eAccelerationStructureStorageKHR),
+            .flags = u64(vk::BufferUsageFlagBits2::eStorageBuffer),
         });
+
+        impl->instances = command::guard(device.createAccelerationStructureKHRUnique({
+            .buffer = buffers.back()->impl->device_buffer.get(),
+            .offset = 0,
+            .size = size.accelerationStructureSize,
+            .type = vk::AccelerationStructureTypeKHR::eTopLevel,
+        }));
+        impl->instances_info.dstAccelerationStructure = impl->instances.get();
+        impl->instances_info.scratchData = {.deviceAddress = scratches.back()->addr};
     }
 }

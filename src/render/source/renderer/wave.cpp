@@ -2,6 +2,7 @@
 #include <metatron/device/command/context.hpp>
 #include <metatron/device/command/buffer.hpp>
 #include <metatron/device/encoder/transfer.hpp>
+#include <metatron/device/encoder/accel.hpp>
 #include <metatron/device/encoder/argument.hpp>
 #include <metatron/device/encoder/pipeline.hpp>
 #include <metatron/device/opaque/buffer.hpp>
@@ -76,7 +77,7 @@ namespace mtt::renderer {
                 auto buffer = make_obj<opaque::Buffer>(desc);
                 transfer.upload(*buffer);
                 transfer.persist(*buffer);
-                stl::stack::instance().release(buf);
+                stack.release(buf);
 
                 buf->ptr = mut<byte>(buffer->addr);
                 buf->handle = uptr(buffer.get());
@@ -208,11 +209,14 @@ namespace mtt::renderer {
         });
 
         auto builder = queue->allocate();
+        auto encoder = encoder::Acceleration_Encoder{builder.get(), accel.get()};
+        encoder.build();
+        encoder.persist();
         for (auto i = 0; i < scheduler.size(); ++i)
             builder->waits.push_back({uploads[i].get(), 1});
         builder->signals = {{timeline, ++count}};
         queue->submit(std::move(builder));
-        return {};
+        return accel;
     }
 
     auto Renderer::Impl::wave() noexcept -> void {

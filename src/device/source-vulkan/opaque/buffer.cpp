@@ -7,6 +7,7 @@ namespace mtt::opaque {
     vk::BufferUsageFlags2 Buffer::Impl::usages = vk::BufferUsageFlags2{}
     | vk::BufferUsageFlagBits2::eTransferSrc
     | vk::BufferUsageFlagBits2::eTransferDst
+    | vk::BufferUsageFlagBits2::eAccelerationStructureBuildInputReadOnlyKHR
     | vk::BufferUsageFlagBits2::eShaderDeviceAddress;
 
 
