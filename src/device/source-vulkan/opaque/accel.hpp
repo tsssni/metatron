@@ -5,6 +5,7 @@
 namespace mtt::opaque {
     struct Acceleration::Impl final {
         vk::UniqueAccelerationStructureKHR instances;
+        vk::DeviceAddress instances_addr;
         vk::AccelerationStructureGeometryKHR instances_geometry;
         vk::AccelerationStructureBuildGeometryInfoKHR instances_info;
         vk::AccelerationStructureBuildRangeInfoKHR instances_range;

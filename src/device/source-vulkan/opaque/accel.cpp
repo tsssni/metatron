@@ -173,6 +173,9 @@ namespace mtt::opaque {
             .size = size.accelerationStructureSize,
             .type = vk::AccelerationStructureTypeKHR::eTopLevel,
         }));
+        impl->instances_addr = device.getAccelerationStructureAddressKHR({
+            .accelerationStructure = impl->instances.get(),
+        });
         impl->instances_info.dstAccelerationStructure = impl->instances.get();
         impl->instances_info.scratchData = {.deviceAddress = scratches.back()->addr};
     }

@@ -9,14 +9,14 @@ namespace mtt::photo {
     struct Film;
 
     struct Fixel final {
-        uzv2 pixel;
+        uv2 pixel;
         fv2 position;
         fv2 dxdy;
         f32 weight;
 
         Fixel(
             mut<Film> film,
-            cref<uzv2> pixel,
+            cref<uv2> pixel,
             cref<fv2> position,
             f32 weight
         ) noexcept;
@@ -33,17 +33,17 @@ namespace mtt::photo {
         // so use static to make it external to film struct.
         muldim::Image static image;
 
-        usize spp;
-        usize depth;
+        u32 spp;
+        u32 depth;
         fv2 film_size;
         fv2 dxdy;
         tag<spectra::Color_Space> color_space;
 
         struct Descriptor final {
-            usize spp = 16uz;
-            usize depth = 64uz;
+            u32 spp = 16;
+            u32 depth = 64;
             fv2 film_size = {0.036f, 0.024f};
-            fv2 image_size = {1280uz, 720uz};
+            uv2 image_size = {1280, 720};
             tag<spectra::Spectrum> r = entity<spectra::Spectrum>("/spectrum/CIE-X");
             tag<spectra::Spectrum> g = entity<spectra::Spectrum>("/spectrum/CIE-Y");
             tag<spectra::Spectrum> b = entity<spectra::Spectrum>("/spectrum/CIE-Z");
@@ -53,7 +53,7 @@ namespace mtt::photo {
 
         auto operator()(
             view<filter::Filter> filter,
-            cref<uzv2> pixel,
+            cref<uv2> pixel,
             cref<fv2> u
         ) noexcept -> Fixel;
 

@@ -1,6 +1,8 @@
 #pragma once
 #include <metatron/device/command/buffer.hpp>
 #include <metatron/device/opaque/buffer.hpp>
+#include <metatron/device/opaque/accel.hpp>
+#include <metatron/device/opaque/sampler.hpp>
 #include <metatron/device/opaque/image.hpp>
 #include <metatron/device/opaque/grid.hpp>
 #include <metatron/device/shader/argument.hpp>
@@ -15,12 +17,12 @@ namespace mtt::encoder {
         auto upload() noexcept -> void;
         auto bind() noexcept -> void;
 
-        auto bind(std::string_view field, std::span<byte const> uniform) noexcept -> void;
+        auto bind(std::string_view field, view<opaque::Acceleration> accel) noexcept -> void;
+        auto bind(std::string_view field, view<opaque::Sampler> sampler) noexcept -> void;
         auto bind(std::string_view field, opaque::Image::View image) noexcept -> void;
         auto bind(std::string_view field, opaque::Grid::View grid) noexcept -> void;
         auto bind(std::string_view field, shader::Bindless<opaque::Image> images) noexcept -> void;
         auto bind(std::string_view field, shader::Bindless<opaque::Grid> grids) noexcept -> void;
-        auto bind(std::string_view field, view<opaque::Sampler> sampler) noexcept -> void;
 
         template<typename T>
         requires std::is_aggregate_v<std::decay_t<T>> || std::is_scalar_v<std::decay_t<T>>

@@ -8,7 +8,7 @@ namespace mtt::photo {
 
     Fixel::Fixel(
         mut<Film> film,
-        cref<uzv2> pixel,
+        cref<uv2> pixel,
         cref<fv2> position,
         f32 weight
     ) noexcept:
@@ -51,7 +51,7 @@ namespace mtt::photo {
 
     auto Film::operator()(
         view<filter::Filter> filter,
-        cref<uzv2> pixel,
+        cref<uv2> pixel,
         cref<fv2> u
     ) noexcept -> Fixel {
         auto f_intr = *filter->sample(u);

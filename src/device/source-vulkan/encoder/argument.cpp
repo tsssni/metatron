@@ -1,10 +1,11 @@
 #include "argument.hpp"
 #include "../shader/argument.hpp"
 #include "../command/buffer.hpp"
+#include "../opaque/accel.hpp"
+#include "../opaque/sampler.hpp"
 #include "../opaque/buffer.hpp"
 #include "../opaque/image.hpp"
 #include "../opaque/grid.hpp"
-#include "../opaque/sampler.hpp"
 #include <metatron/device/encoder/transfer.hpp>
 
 namespace mtt::encoder {
@@ -114,17 +115,26 @@ namespace mtt::encoder {
         }
     }
 
-    auto Argument_Encoder::bind(std::string_view field, opaque::Image::View image) noexcept -> void { impl->bind(this, field, image); }
-    auto Argument_Encoder::bind(std::string_view field, opaque::Grid::View grid) noexcept -> void { impl->bind(this, field, grid); }
-    auto Argument_Encoder::bind(std::string_view field, shader::Bindless<opaque::Image> images) noexcept -> void { impl->bind(this, field, images); }
-    auto Argument_Encoder::bind(std::string_view field, shader::Bindless<opaque::Grid> grids) noexcept -> void { impl->bind(this, field, grids); }
+    auto Argument_Encoder::bind(std::string_view field, view<opaque::Acceleration> accel) noexcept -> void {
+        auto binding = args->index(field);
+        auto& desc = args->reflection[binding];
+        auto& ctx = command::Context::instance().impl;
+        auto device = ctx->device.get();
+        auto size = ctx->descriptor_buffer_props.accelerationStructureDescriptorSize;
+        auto info = vk::DescriptorGetInfoEXT{
+            .type = vk::DescriptorType::eAccelerationStructureKHR,
+            .data = vk::DescriptorDataEXT{.accelerationStructure = accel->impl->instances_addr},
+        };
+        auto offset = args->impl->offsets[binding];
+        args->set->dirty.push_back({offset, size});
+        device.getDescriptorEXT(&info, size, args->set->ptr + offset);
+    }
 
     auto Argument_Encoder::bind(std::string_view field, view<opaque::Sampler> sampler) noexcept -> void {
         auto binding = args->index(field);
         auto& desc = args->reflection[binding];
         auto& ctx = command::Context::instance().impl;
         auto device = ctx->device.get();
-        auto readonly = desc.access == shader::Descriptor::Access::readonly;
         auto size = ctx->descriptor_buffer_props.samplerDescriptorSize;
         auto info = vk::DescriptorGetInfoEXT{
             .type = vk::DescriptorType::eSampler,
@@ -134,6 +144,11 @@ namespace mtt::encoder {
         args->set->dirty.push_back({offset, size});
         device.getDescriptorEXT(&info, size, args->set->ptr + offset);
     }
+
+    auto Argument_Encoder::bind(std::string_view field, opaque::Image::View image) noexcept -> void { impl->bind(this, field, image); }
+    auto Argument_Encoder::bind(std::string_view field, opaque::Grid::View grid) noexcept -> void { impl->bind(this, field, grid); }
+    auto Argument_Encoder::bind(std::string_view field, shader::Bindless<opaque::Image> images) noexcept -> void { impl->bind(this, field, images); }
+    auto Argument_Encoder::bind(std::string_view field, shader::Bindless<opaque::Grid> grids) noexcept -> void { impl->bind(this, field, grids); }
 
     template<typename T>
     auto Argument_Encoder::Impl::acquire(

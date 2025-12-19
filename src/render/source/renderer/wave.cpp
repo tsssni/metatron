@@ -222,8 +222,6 @@ namespace mtt::renderer {
     auto Renderer::Impl::wave() noexcept -> void {
         command::Context::init();
         auto& scheduler = stl::scheduler::instance();
-        auto& stack = stl::stack::instance();
-        auto& vector = stl::vector<void>::instance();
         auto render_queue = make_obj<command::Queue>(command::Type::render);
         auto transfer_queue = make_obj<command::Queue>(command::Type::transfer);
 
@@ -244,67 +242,69 @@ namespace mtt::renderer {
         );
         render_timeline->wait(render_count);
 
-        // auto transfer = transfer_queue->allocate();
-        // auto render = render_queue->allocate();
+        auto transfer = transfer_queue->allocate();
+        auto render = render_queue->allocate();
 
-        // auto sampler = make_obj<opaque::Sampler>(
-        // opaque::Sampler::Descriptor{
-        //     .mode = opaque::Sampler::Mode::repeat,
-        // });
-        // auto image = make_obj<opaque::Image>(
-        // opaque::Image::Descriptor{
-        //     .image = &desc.film.image,
-        //     .state = opaque::Image::State::storable,
-        //     .type = command::Type::render,
-        // });
-        // auto buffer = make_obj<opaque::Buffer>(
-        // opaque::Buffer::Descriptor{
-        //     .state = opaque::Buffer::State::visible,
-        //     .type = command::Type::render,
-        //     .size = math::prod(desc.film.image.size),
-        // });
+        auto sampler = make_obj<opaque::Sampler>(
+        opaque::Sampler::Descriptor{
+            .mode = opaque::Sampler::Mode::repeat,
+        });
+        auto image = make_obj<opaque::Image>(
+        opaque::Image::Descriptor{
+            .image = &desc.film.image,
+            .state = opaque::Image::State::storable,
+            .type = command::Type::render,
+        });
+        auto buffer = make_obj<opaque::Buffer>(
+        opaque::Buffer::Descriptor{
+            .state = opaque::Buffer::State::visible,
+            .type = command::Type::render,
+            .size = math::prod(desc.film.image.size),
+        });
 
-        // auto global_args = make_obj<shader::Argument>(
-        // shader::Argument::Descriptor{"trace.global", command::Type::render});
-        // auto integrate_args = make_obj<shader::Argument>(
-        // shader::Argument::Descriptor{"trace.integrate.in", command::Type::render});
-        // auto integrate = make_obj<shader::Pipeline>(
-        // shader::Pipeline::Descriptor{"trace.integrate", {global_args.get(), integrate_args.get()}});
+        auto global_args = make_obj<shader::Argument>(
+        shader::Argument::Descriptor{"trace.global", command::Type::render});
+        auto integrate_args = make_obj<shader::Argument>(
+        shader::Argument::Descriptor{"trace.integrate.in", command::Type::render});
+        auto integrate = make_obj<shader::Pipeline>(
+        shader::Pipeline::Descriptor{"trace.integrate", {global_args.get(), integrate_args.get()}});
 
-        // auto global_args_encoder = encoder::Argument_Encoder{render.get(), global_args.get()};
-        // auto integrate_args_encoder = encoder::Argument_Encoder{render.get(), integrate_args.get()};
-        // auto pipeline_encoder = encoder::Pipeline_Encoder{render.get(), integrate.get()};
-        // auto images_view = std::vector<opaque::Image::View>(resources.images.size());
-        // for (auto i = 0; i < resources.images.size(); ++i)
-        //     images_view[i] = *resources.images[i];
-        // global_args_encoder.bind("global.sampler", sampler.get());
-        // global_args_encoder.bind("global.textures", {0, images_view});
-        // global_args_encoder.upload();
-        // integrate_args_encoder.bind("in.film", *image);
-        // integrate_args_encoder.upload();
-        // pipeline_encoder.bind();
+        auto global_args_encoder = encoder::Argument_Encoder{render.get(), global_args.get()};
+        auto integrate_args_encoder = encoder::Argument_Encoder{render.get(), integrate_args.get()};
+        auto pipeline_encoder = encoder::Pipeline_Encoder{render.get(), integrate.get()};
+        auto images_view = std::vector<opaque::Image::View>(resources.images.size());
+        for (auto i = 0; i < resources.images.size(); ++i)
+            images_view[i] = *resources.images[i];
+        global_args_encoder.bind("global.accel", accel.get());
+        global_args_encoder.bind("global.sampler", sampler.get());
+        global_args_encoder.bind("global.textures", {0, images_view});
+        global_args_encoder.upload();
+        integrate_args_encoder.bind("in.image", *image);
+        integrate_args_encoder.upload();
+        pipeline_encoder.bind();
 
-        // struct Integrate final {
-        //     u32 idx;
-        //     u32 offset;
-        // } in;
-        // in.idx = stl::vector<texture::Spectrum_Texture>::instance().index<texture::Image_Spectrum_Texture>();
-        // in.offset = 8;
-        // global_args_encoder.acquire("global", resources.resources->addr);
-        // integrate_args_encoder.acquire("in", in);
-        // integrate_args_encoder.acquire("in.film", *image);
-        // pipeline_encoder.dispatch({
-        //     math::align(desc.film.image.width, 8) / 8,
-        //     math::align(desc.film.image.height, 8) / 8,
-        // 1});
+        struct Integrate final {
+            math::Transform ct;
+            photo::Film film;
+        } in{
+            *entity<math::Transform>("/hierarchy/camera/render"),
+            std::move(desc.film),
+        };
+        global_args_encoder.acquire("global", resources.resources->addr);
+        integrate_args_encoder.acquire("in", in);
+        integrate_args_encoder.acquire("in.image", *image);
+        pipeline_encoder.dispatch({
+            math::align(image->width, 8) / 8,
+            math::align(image->height, 8) / 8,
+        1});
 
-        // auto transfer_encoder = encoder::Transfer_Encoder{render.get()};
-        // transfer_encoder.copy(*buffer, *image);
-        // render->waits = {{render_timeline.get(), render_count}};
-        // render->signals = {{render_timeline.get(), ++render_count}};
-        // render_queue->submit(std::move(render));
-        // render_timeline->wait(render_count);
-        // std::memcpy(desc.film.image.pixels.front().data(), buffer->ptr, buffer->size);
-        // desc.film.image.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
+        auto transfer_encoder = encoder::Transfer_Encoder{render.get()};
+        transfer_encoder.copy(*buffer, *image);
+        render->waits = {{render_timeline.get(), render_count}};
+        render->signals = {{render_timeline.get(), ++render_count}};
+        render_queue->submit(std::move(render));
+        render_timeline->wait(render_count);
+        std::memcpy(desc.film.image.pixels.front().data(), buffer->ptr, buffer->size);
+        desc.film.image.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
     }
 }
