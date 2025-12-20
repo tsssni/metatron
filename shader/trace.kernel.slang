@@ -6,7 +6,9 @@ namespace mtt {
         Ptr<Ptr<byte>> vectors;
         RaytracingAccelerationStructure accel;
         SamplerState sampler;
+        SamplerState accessor;
         Texture2D[bindless_size] textures;
+        Texture3D[bindless_size] grids;
     }
     ParameterBlock<Global> global;
 
@@ -29,10 +31,22 @@ namespace mtt {
 
         let camera: photo::Camera;
         let s_opt = camera.sample(in.lens.get(), fixel.position, fixel.dxdy, fv2(0));
-        if (s_opt == none) return;
+        if (s_opt == none) {
+            in.image.Store(pixel, fv4(math::inf));
+            return;
+        }
+
         var s = s_opt.value;
         s.ray_differential = in.transform / s.ray_differential;
         s.default_differential = in.transform / s.default_differential;
-        in.image.Store(pixel, fv4(s.ray_differential.r.d, 1.0));
+
+        let r = s.ray_differential.r.get();
+        var rq: RayQuery;
+        rq.TraceRayInline(global.accel, 0, 0xff, r);
+        while (rq.Proceed());
+        if (rq.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
+            in.image.Store(pixel, fv4(fv3(rq.CommittedRayT()), 1.0));
+        else
+            in.image.Store(pixel, 0);
     }
 }

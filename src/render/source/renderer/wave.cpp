@@ -178,7 +178,7 @@ namespace mtt::renderer {
 
     auto build(
         mut<command::Queue> queue,
-        cref<std::vector<obj<command::Timeline>>> uploads,
+        std::span<obj<command::Timeline>> uploads,
         mut<command::Timeline> timeline,
         ref<u64> count
     ) noexcept -> obj<opaque::Acceleration> {
@@ -240,7 +240,6 @@ namespace mtt::renderer {
             render_timeline.get(),
             render_count
         );
-        render_timeline->wait(render_count);
 
         auto transfer = transfer_queue->allocate();
         auto render = render_queue->allocate();
@@ -248,6 +247,11 @@ namespace mtt::renderer {
         auto sampler = make_obj<opaque::Sampler>(
         opaque::Sampler::Descriptor{
             .mode = opaque::Sampler::Mode::repeat,
+        });
+        auto accessor = make_obj<opaque::Sampler>(
+        opaque::Sampler::Descriptor{
+            .mode = opaque::Sampler::Mode::border,
+            .border = opaque::Sampler::Border::transparent,
         });
         auto image = make_obj<opaque::Image>(
         opaque::Image::Descriptor{
@@ -272,12 +276,19 @@ namespace mtt::renderer {
         auto global_args_encoder = encoder::Argument_Encoder{render.get(), global_args.get()};
         auto integrate_args_encoder = encoder::Argument_Encoder{render.get(), integrate_args.get()};
         auto pipeline_encoder = encoder::Pipeline_Encoder{render.get(), integrate.get()};
-        auto images_view = std::vector<opaque::Image::View>(resources.images.size());
-        for (auto i = 0; i < resources.images.size(); ++i)
-            images_view[i] = *resources.images[i];
-        global_args_encoder.bind("global.accel", accel.get());
+
+        auto images_view = resources.images
+        | std::views::transform([](auto&& x) -> opaque::Image::View { return *x; })
+        | std::ranges::to<std::vector<opaque::Image::View>>();
+        auto grids_view = resources.grids
+        | std::views::transform([](auto&& x) -> opaque::Grid::View { return *x; })
+        | std::ranges::to<std::vector<opaque::Grid::View>>();
+        if (!images_view.empty()) global_args_encoder.bind("global.textures", {0, images_view});
+        if (!grids_view.empty()) global_args_encoder.bind("global.grids", {0, grids_view});
+
+        // global_args_encoder.bind("global.accel", accel.get());
         global_args_encoder.bind("global.sampler", sampler.get());
-        global_args_encoder.bind("global.textures", {0, images_view});
+        global_args_encoder.bind("global.accessor", accessor.get());
         global_args_encoder.upload();
         integrate_args_encoder.bind("in.image", *image);
         integrate_args_encoder.upload();
@@ -292,7 +303,7 @@ namespace mtt::renderer {
             std::move(desc.film),
             std::move(desc.lens),
         };
-        global_args_encoder.acquire("global", resources.resources->addr);
+        // global_args_encoder.acquire("global", resources.resources->addr);
         integrate_args_encoder.acquire("in", in);
         integrate_args_encoder.acquire("in.image", *image);
         pipeline_encoder.dispatch({
@@ -306,7 +317,7 @@ namespace mtt::renderer {
         render->signals = {{render_timeline.get(), ++render_count}};
         render_queue->submit(std::move(render));
         render_timeline->wait(render_count);
-        std::memcpy(desc.film.image.pixels.front().data(), buffer->ptr, buffer->size);
-        desc.film.image.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
+        // std::memcpy(desc.film.image.pixels.front().data(), buffer->ptr, buffer->size);
+        // desc.film.image.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
     }
 }

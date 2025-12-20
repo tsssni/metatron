@@ -2,7 +2,7 @@ implementing math;
 
 namespace mtt::math {
     public struct Transform {
-        fm4 transform;
-        fm4 inv_transform;
+        public fm4 transform;
+        public fm4 inv_transform;
     }
 }

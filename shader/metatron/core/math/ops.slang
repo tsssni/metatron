@@ -1,15 +1,6 @@
 implementing math;
 
 namespace mtt {
-    RayDesc operator*(math::Ray r) {
-        RayDesc rd;
-        rd.Origin = r.o;
-        rd.Direction = r.d;
-        rd.TMin = 0.0;
-        rd.TMax = 65504;
-        return rd;
-    }
-
     public fv4 operator*(math::Transform t, fv4 x) {
         return mul(t.transform, x);
     }

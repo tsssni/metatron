@@ -59,6 +59,7 @@ namespace mtt::command {
             vk::PhysicalDeviceTimelineSemaphoreFeatures,
             vk::PhysicalDeviceSynchronization2Features,
             vk::PhysicalDeviceBufferDeviceAddressFeatures,
+            vk::PhysicalDeviceScalarBlockLayoutFeatures,
             vk::PhysicalDeviceUniformBufferStandardLayoutFeatures,
             vk::PhysicalDeviceDescriptorBufferFeaturesEXT,
             vk::PhysicalDeviceDescriptorIndexingFeatures,
@@ -81,8 +82,10 @@ namespace mtt::command {
         sync.synchronization2 = true;
         auto& address = chain.get<vk::PhysicalDeviceBufferDeviceAddressFeatures>();
         address.bufferDeviceAddress = true;
-        auto& layout = chain.get<vk::PhysicalDeviceUniformBufferStandardLayoutFeatures>();
-        layout.uniformBufferStandardLayout = true;
+        auto& layout = chain.get<vk::PhysicalDeviceScalarBlockLayoutFeatures>();
+        layout.scalarBlockLayout = true;
+        auto& uniform = chain.get<vk::PhysicalDeviceUniformBufferStandardLayoutFeatures>();
+        uniform.uniformBufferStandardLayout = true;
         auto& buffer = chain.get<vk::PhysicalDeviceDescriptorBufferFeaturesEXT>();
         buffer.descriptorBuffer = true;
         auto& bindless = chain.get<vk::PhysicalDeviceDescriptorIndexingFeatures>();

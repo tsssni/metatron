@@ -40,8 +40,7 @@ namespace mtt::stl {
         auto swap(mut<buf> buf) noexcept -> void {
             if (buf->idx == math::maxv<u32>) return;
             while (flag.test_and_set(std::memory_order::acquire));
-            if (bufs[buf->idx] == buf) return;
-            bufs[buf->idx] = buf;
+            if (bufs[buf->idx] != buf) bufs[buf->idx] = buf;
             flag.clear(std::memory_order::release);
         }
 
@@ -75,8 +74,8 @@ namespace mtt {
         auto operator=(rref<buf> rhs) noexcept -> ref<buf> {
             *this = rhs;
             idx = rhs.idx;
-            rhs.reset();
             stl::stack::instance().swap(this);
+            rhs.reset();
             return *this;
         }
 

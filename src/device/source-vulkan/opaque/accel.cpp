@@ -116,6 +116,8 @@ namespace mtt::opaque {
             auto& instance = desc.instances[i];
             auto size = sizeof(vk::AccelerationStructureInstanceKHR);
             auto info = vk::AccelerationStructureInstanceKHR{
+                .mask = 0xff,
+                .flags = 0,
                 .accelerationStructureReference = device.getAccelerationStructureAddressKHR({
                     .accelerationStructure = impl->primitives[instance.idx].get(),
                 })

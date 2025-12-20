@@ -9,9 +9,14 @@ namespace mtt::stl {
         using ts = stl::array<Ts...>;
         variant(cref<variant>) noexcept = delete;
         variant(rref<variant> rhs) noexcept {
+            destroy();
             idx = rhs.idx;
-            storage = std::move(rhs.storage);
+            if (idx != math::maxv<u32>) auto v = ((
+            idx == ts::template index<Ts> ? (
+                std::construct_at(mut<Ts>(data(idx)), std::move(*mut<Ts>(rhs.data(idx))))
+            , true) : false) || ...);
             rhs.idx = math::maxv<u32>; // skip destroy
+
         };
         ~variant() noexcept { destroy(); }
 
@@ -69,9 +74,9 @@ namespace mtt::stl {
     private:
         auto destroy() noexcept -> void {
             if (idx != math::maxv<u32>) auto v = ((
-              idx == ts::template index<Ts>
-              ? (std::destroy_at(data(idx)), true) : false
-            ) || ...);
+            idx == ts::template index<Ts> ? (
+                std::destroy_at(mut<Ts>(data(idx)))
+            , true) : false) || ...);
         }
 
         auto data(usize idx) const noexcept -> view<byte> {

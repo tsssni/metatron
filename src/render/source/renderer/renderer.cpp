@@ -3,7 +3,6 @@
 #include <metatron/render/scene/args.hpp>
 
 namespace mtt::renderer {
-    Renderer::Impl::Impl(rref<Descriptor> desc) noexcept: desc(std::move(desc)) {}
     Renderer::Renderer(rref<Descriptor> desc) noexcept:
     stl::capsule<Renderer>(std::move(desc)) {}
 
