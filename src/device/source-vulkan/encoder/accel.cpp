@@ -12,14 +12,26 @@ namespace mtt::encoder {
             .access = vk::AccessFlagBits2::eShaderRead,
             .family = cmd->impl->family,
         };
-        impl->store_barrier = {
+        impl->dst_barrier = {
             .stage = vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR,
             .access = vk::AccessFlagBits2::eAccelerationStructureWriteKHR,
             .family = cmd->impl->family,
         };
+        impl->src_barrier = {
+            .stage = vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR,
+            .access = vk::AccessFlagBits2::eAccelerationStructureReadKHR,
+            .family = cmd->impl->family,
+        };
+        impl->scratch_barrier = {
+            .stage = vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR,
+            .access = vk::AccessFlags2{}
+            | vk::AccessFlagBits2::eAccelerationStructureReadKHR
+            | vk::AccessFlagBits2::eAccelerationStructureWriteKHR,
+            .family = cmd->impl->family,
+        };
         impl->use_barrier = {
             .stage = vk::PipelineStageFlagBits2::eComputeShader,
-            .access = vk::AccessFlagBits2::eShaderRead,
+            .access = vk::AccessFlagBits2::eAccelerationStructureReadKHR,
             .family = cmd->impl->family,
         };
     }
@@ -30,23 +42,32 @@ namespace mtt::encoder {
         transfer.upload(*accel->instances);
         if (accel->bboxes) transfer.upload(*accel->bboxes);
 
-        auto barriers = std::vector<vk::BufferMemoryBarrier2>{};
-        barriers.push_back(accel->instances->impl->update(impl->load_barrier));
+        auto primitive_barriers = std::vector<vk::BufferMemoryBarrier2>{};
         if (accel->bboxes)
-            barriers.push_back(accel->bboxes->impl->update(impl->load_barrier));
-        for (auto i = 0; i < accel->buffers.size(); ++i) {
-            barriers.push_back(accel->buffers[i]->impl->update(impl->store_barrier));
-            barriers.push_back(accel->scratches[i]->impl->update(impl->store_barrier));
+            primitive_barriers.push_back(accel->bboxes->impl->update(impl->load_barrier));
+        for (auto i = 0; i < accel->buffers.size() - 1; ++i) {
+            primitive_barriers.push_back(accel->buffers[i]->impl->update(impl->dst_barrier));
+            primitive_barriers.push_back(accel->scratches[i]->impl->update(impl->scratch_barrier));
         }
         cmd.pipelineBarrier2({
-            .bufferMemoryBarrierCount = u32(barriers.size()),
-            .pBufferMemoryBarriers = barriers.data(),
+            .bufferMemoryBarrierCount = u32(primitive_barriers.size()),
+            .pBufferMemoryBarriers = primitive_barriers.data(),
         });
-
         cmd.buildAccelerationStructuresKHR(
             accel->impl->primitives_infos,
             accel->impl->primitvies_ptrs
         );
+
+        auto instance_barriers = std::vector<vk::BufferMemoryBarrier2>{};
+        instance_barriers.push_back(accel->instances->impl->update(impl->load_barrier));
+        for (auto i = 0; i < accel->buffers.size() - 1; ++i)
+            instance_barriers.push_back(accel->buffers[i]->impl->update(impl->src_barrier));
+        instance_barriers.push_back(accel->buffers.back()->impl->update(impl->dst_barrier));
+        instance_barriers.push_back(accel->scratches.back()->impl->update(impl->scratch_barrier));
+        cmd.pipelineBarrier2({
+            .bufferMemoryBarrierCount = u32(instance_barriers.size()),
+            .pBufferMemoryBarriers = instance_barriers.data(),
+        });
         cmd.buildAccelerationStructuresKHR(
             accel->impl->instances_info,
             accel->impl->instances_ptr

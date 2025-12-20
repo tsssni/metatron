@@ -191,12 +191,14 @@ namespace mtt::command {
 
                 auto props = vk::StructureChain<
                     vk::PhysicalDeviceProperties2,
-                    vk::PhysicalDeviceDescriptorBufferPropertiesEXT
+                    vk::PhysicalDeviceDescriptorBufferPropertiesEXT,
+                    vk::PhysicalDeviceAccelerationStructurePropertiesKHR
                 >{};
                 physical_device.getProperties2(&props.get());
                 device_props = props.get<vk::PhysicalDeviceProperties2>();
                 memory_props = physical_device.getMemoryProperties2();
                 descriptor_buffer_props = props.get<vk::PhysicalDeviceDescriptorBufferPropertiesEXT>();
+                accel_props = props.get<vk::PhysicalDeviceAccelerationStructurePropertiesKHR>();
                 break;
             }
         }

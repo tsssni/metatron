@@ -147,7 +147,9 @@ namespace mtt::encoder {
         auto cmd = this->cmd->impl->cmd.get();
         auto buffer = view.ptr;
         auto barrier = buffer->impl->update({
-            .stage = vk::PipelineStageFlagBits2::eComputeShader,
+            .stage = vk::PipelineStageFlags2{}
+            | vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR
+            | vk::PipelineStageFlagBits2::eComputeShader,
             .access = vk::AccessFlagBits2::eShaderRead,
         });
         cmd.pipelineBarrier2({

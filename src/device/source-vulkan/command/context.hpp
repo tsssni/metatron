@@ -23,6 +23,7 @@ namespace mtt::command {
         vk::PhysicalDeviceProperties2 device_props;
         vk::PhysicalDeviceMemoryProperties2 memory_props;
         vk::PhysicalDeviceDescriptorBufferPropertiesEXT descriptor_buffer_props;
+        vk::PhysicalDeviceAccelerationStructurePropertiesKHR accel_props;
 
         u32 device_memory;
         u32 host_memory;
