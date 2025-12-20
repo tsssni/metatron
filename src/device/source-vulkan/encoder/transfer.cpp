@@ -112,7 +112,7 @@ namespace mtt::encoder {
             auto mip = view;
             mip.mip = {i, 1};
             mip.size = math::foreach([i](auto x, auto) {
-                return math::max(x >> i, 1uz);
+                return math::max(x >> i, 1u);
             }, view.size);
             copy(mip, *image->host[i]);
             cmd->stages.push_back(std::move(image->host[i]));

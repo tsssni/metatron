@@ -5,7 +5,7 @@ namespace mtt::opaque {
     auto Image::Impl::subresource(Image::View view) noexcept -> vk::ImageSubresource2 {
         return {.imageSubresource = {
             .aspectMask = vk::ImageAspectFlagBits::eColor,
-            .mipLevel = u32(view.mip[0]),
+            .mipLevel = view.mip[0],
             .arrayLayer = 0,
         }};
     }
@@ -13,7 +13,7 @@ namespace mtt::opaque {
     auto Image::Impl::layers(Image::View view) noexcept -> vk::ImageSubresourceLayers {
         return {
             .aspectMask = vk::ImageAspectFlagBits::eColor,
-            .mipLevel = u32(view.mip[0]),
+            .mipLevel = view.mip[0],
             .baseArrayLayer = 0,
             .layerCount = 1,
         };
@@ -22,8 +22,8 @@ namespace mtt::opaque {
     auto Image::Impl::range(Image::View view) noexcept -> vk::ImageSubresourceRange {
         return {
             .aspectMask = vk::ImageAspectFlagBits::eColor,
-            .baseMipLevel = u32(view.mip[0]),
-            .levelCount = u32(view.mip[1]),
+            .baseMipLevel = view.mip[0],
+            .levelCount = view.mip[1],
             .baseArrayLayer = 0,
             .layerCount = 1,
         };
@@ -34,7 +34,7 @@ namespace mtt::opaque {
     }
 
     auto Image::Impl::extent(Image::View view) noexcept -> vk::Extent3D {
-        return {u32(view.size[0]), u32(view.size[1]), 1};
+        return {view.size[0], view.size[1], 1};
     }
 
     auto Image::Impl::format(cref<muldim::Image> image) noexcept -> vk::Format {

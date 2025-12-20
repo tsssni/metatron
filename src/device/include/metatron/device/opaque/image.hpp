@@ -12,9 +12,9 @@ namespace mtt::opaque {
 
         struct View final {
             mut<Image> ptr;
-            uzv2 mip;
-            uzv2 offset;
-            uzv2 size;
+            uv2 mip;
+            uv2 offset;
+            uv2 size;
         };
 
         State state;

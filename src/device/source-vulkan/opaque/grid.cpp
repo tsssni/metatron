@@ -34,7 +34,7 @@ namespace mtt::opaque {
     }
 
     auto Grid::Impl::extent(Grid::View view) noexcept -> vk::Extent3D {
-        return {u32(view.size[0]), u32(view.size[1]), u32(view.size[2])};
+        return {view.size[0], view.size[1], view.size[2]};
     }
 
     auto Grid::Impl::update(cref<Barrier> desc) noexcept -> vk::ImageMemoryBarrier2 {

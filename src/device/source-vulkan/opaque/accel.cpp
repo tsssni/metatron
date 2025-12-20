@@ -23,23 +23,18 @@ namespace mtt::opaque {
                 bbox_offsets[i + 1] = bbox_offsets[i] + desc.primitives[i].aabbs.size();
                 num_bboxes += desc.primitives[i].aabbs.size();
             } else bbox_offsets[i + 1] = bbox_offsets[i];
-        bboxes = num_bboxes > 0 ? make_obj<opaque::Buffer>(
-        opaque::Buffer::Descriptor{
-            .state = opaque::Buffer::State::twin,
-            .size = bbox_size * num_bboxes,
-            .flags = u64(vk::BufferUsageFlagBits2::eAccelerationStructureBuildInputReadOnlyKHR),
-        }) : nullptr;
+        auto bboxes_data = std::vector<math::Bounding_Box>(bbox_size * num_bboxes);
 
         stl::scheduler::instance().sync_parallel(uzv1{desc.primitives.size()}, [&](auto idx) {
             auto [i] = idx;
             auto& prim = desc.primitives[i];
             auto procedural = prim.type == Primitive::Type::aabb;
-            if (procedural) {
-                auto offset = bbox_size * bbox_offsets[i];
-                auto size = prim.aabbs.size() * bbox_size;
-                std::memcpy(bboxes->ptr + offset, prim.aabbs.data(), size);
-                bboxes->dirty.push_back({offset, size});
-            }
+            if (procedural)
+                std::memcpy(
+                    &bboxes_data[bbox_offsets[i]],
+                    prim.aabbs.data(),
+                    prim.aabbs.size() * bbox_size
+                );
 
             impl->primitives_geometries[i] = {
                 .geometryType = procedural
@@ -105,17 +100,20 @@ namespace mtt::opaque {
             impl->primitives_infos[i].scratchData = {.deviceAddress = scratches[i]->addr};
         });
 
-        instances = make_obj<opaque::Buffer>(
+        bboxes = num_bboxes > 0 ? make_obj<opaque::Buffer>(
         opaque::Buffer::Descriptor{
-            .state = opaque::Buffer::State::twin,
-            .size = sizeof(vk::AccelerationStructureInstanceKHR) * desc.instances.size(),
+            .ptr = mut<byte>(bboxes_data.data()),
+            .state = opaque::Buffer::State::local,
+            .size = bbox_size * num_bboxes,
             .flags = u64(vk::BufferUsageFlagBits2::eAccelerationStructureBuildInputReadOnlyKHR),
-        });
+        }) : nullptr;
+
+        auto instances_data = std::vector<vk::AccelerationStructureInstanceKHR>(desc.instances.size());
         stl::scheduler::instance().sync_parallel(uzv1{desc.instances.size()}, [&](auto idx) {
             auto [i] = idx;
             auto& instance = desc.instances[i];
-            auto size = sizeof(vk::AccelerationStructureInstanceKHR);
-            auto info = vk::AccelerationStructureInstanceKHR{
+            auto& info = instances_data[i];
+            info = vk::AccelerationStructureInstanceKHR{
                 .mask = 0xff,
                 .flags = 0,
                 .accelerationStructureReference = device.getAccelerationStructureAddressKHR({
@@ -123,7 +121,13 @@ namespace mtt::opaque {
                 })
             };
             std::memcpy(info.transform.matrix.data(), instance.transform.data(), sizeof(f32) * 12);
-            std::memcpy(instances->ptr + i * size, &info, size);
+        });
+        instances = make_obj<opaque::Buffer>(
+        opaque::Buffer::Descriptor{
+            .ptr = mut<byte>(instances_data.data()),
+            .state = opaque::Buffer::State::local,
+            .size = sizeof(vk::AccelerationStructureInstanceKHR) * desc.instances.size(),
+            .flags = u64(vk::BufferUsageFlagBits2::eAccelerationStructureBuildInputReadOnlyKHR),
         });
 
         impl->instances_geometry = {

@@ -21,7 +21,7 @@ namespace mtt::opaque {
         State state;
         mut<byte> ptr = nullptr;
         uptr addr = 0;
-        usize size = 0;
+        u32 size = 0;
         std::vector<uv2> dirty = {};
 
         struct Descriptor final {

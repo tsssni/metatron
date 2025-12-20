@@ -12,8 +12,8 @@ namespace mtt::opaque {
 
         struct View final {
             mut<Grid> ptr;
-            uzv3 offset;
-            uzv3 size;
+            uv3 offset;
+            uv3 size;
         };
 
         State state;
