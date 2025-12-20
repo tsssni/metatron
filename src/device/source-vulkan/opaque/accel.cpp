@@ -120,7 +120,7 @@ namespace mtt::opaque {
                     .accelerationStructure = impl->primitives[instance.idx].get(),
                 })
             };
-            std::memcpy(info.transform.matrix.data(), instance.transform.data(), sizeof(f32) * 12);
+            std::memcpy(info.transform.matrix.data(), instance.transform.data(), sizeof(vk::TransformMatrixKHR));
         });
         instances = make_obj<opaque::Buffer>(
         opaque::Buffer::Descriptor{

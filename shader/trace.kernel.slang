@@ -24,15 +24,15 @@ namespace mtt {
         iv3 global_idx: SV_DispatchThreadID,
         ParameterBlock<Integrate> in,
     ) -> void {
-        uv2 pixel = global_idx.xy;
-        uv2 size;
+        let pixel = global_idx.xy;
+        var size: uv2;
         in.image.GetDimensions(size.x, size.y);
         let fixel = in.film(0, pixel, size, 0);
 
         let camera: photo::Camera;
         let s_opt = camera.sample(in.lens.get(), fixel.position, fixel.dxdy, fv2(0));
         if (s_opt == none) {
-            in.image.Store(pixel, fv4(math::inf));
+            in.image.Store(pixel, math::inf);
             return;
         }
 
@@ -47,6 +47,6 @@ namespace mtt {
         if (rq.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
             in.image.Store(pixel, fv4(fv3(rq.CommittedRayT()), 1.0));
         else
-            in.image.Store(pixel, 0);
+            in.image.Store(pixel, fv4(0));
     }
 }

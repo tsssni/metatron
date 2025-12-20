@@ -42,31 +42,30 @@ namespace mtt::encoder {
         transfer.upload(*accel->instances);
         if (accel->bboxes) transfer.upload(*accel->bboxes);
 
-        auto primitive_barriers = std::vector<vk::BufferMemoryBarrier2>{};
-        if (accel->bboxes)
-            primitive_barriers.push_back(accel->bboxes->impl->update(impl->load_barrier));
+        auto barriers = std::vector<vk::BufferMemoryBarrier2>{};
+        if (accel->bboxes) barriers.push_back(accel->bboxes->impl->update(impl->load_barrier));
         for (auto i = 0; i < accel->buffers.size() - 1; ++i) {
-            primitive_barriers.push_back(accel->buffers[i]->impl->update(impl->dst_barrier));
-            primitive_barriers.push_back(accel->scratches[i]->impl->update(impl->scratch_barrier));
+            barriers.push_back(accel->buffers[i]->impl->update(impl->dst_barrier));
+            barriers.push_back(accel->scratches[i]->impl->update(impl->scratch_barrier));
         }
         cmd.pipelineBarrier2({
-            .bufferMemoryBarrierCount = u32(primitive_barriers.size()),
-            .pBufferMemoryBarriers = primitive_barriers.data(),
+            .bufferMemoryBarrierCount = u32(barriers.size()),
+            .pBufferMemoryBarriers = barriers.data(),
         });
         cmd.buildAccelerationStructuresKHR(
             accel->impl->primitives_infos,
             accel->impl->primitvies_ptrs
         );
 
-        auto instance_barriers = std::vector<vk::BufferMemoryBarrier2>{};
-        instance_barriers.push_back(accel->instances->impl->update(impl->load_barrier));
+        barriers.clear();
+        barriers.push_back(accel->instances->impl->update(impl->load_barrier));
         for (auto i = 0; i < accel->buffers.size() - 1; ++i)
-            instance_barriers.push_back(accel->buffers[i]->impl->update(impl->src_barrier));
-        instance_barriers.push_back(accel->buffers.back()->impl->update(impl->dst_barrier));
-        instance_barriers.push_back(accel->scratches.back()->impl->update(impl->scratch_barrier));
+            barriers.push_back(accel->buffers[i]->impl->update(impl->src_barrier));
+        barriers.push_back(accel->buffers.back()->impl->update(impl->dst_barrier));
+        barriers.push_back(accel->scratches.back()->impl->update(impl->scratch_barrier));
         cmd.pipelineBarrier2({
-            .bufferMemoryBarrierCount = u32(instance_barriers.size()),
-            .pBufferMemoryBarriers = instance_barriers.data(),
+            .bufferMemoryBarrierCount = u32(barriers.size()),
+            .pBufferMemoryBarriers = barriers.data(),
         });
         cmd.buildAccelerationStructuresKHR(
             accel->impl->instances_info,

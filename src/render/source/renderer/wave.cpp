@@ -107,7 +107,7 @@ namespace mtt::renderer {
             std::move(desc.film),
             std::move(desc.lens),
         };
-        // global_args_encoder.acquire("global", resources.resources->addr);
+        global_args_encoder.acquire("global", resources.resources->addr);
         integrate_args_encoder.acquire("in", in);
         integrate_args_encoder.acquire("in.image", *image);
         pipeline_encoder.dispatch({
@@ -121,7 +121,7 @@ namespace mtt::renderer {
         render->signals = {{render_timeline.get(), ++render_count}};
         render_queue->submit(std::move(render));
         render_timeline->wait(render_count);
-        // std::memcpy(desc.film.image.pixels.front().data(), buffer->ptr, buffer->size);
-        // desc.film.image.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
+        std::memcpy(desc.film.image.pixels.front().data(), buffer->ptr, buffer->size);
+        desc.film.image.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
     }
 }
