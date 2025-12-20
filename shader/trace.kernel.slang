@@ -11,8 +11,9 @@ namespace mtt {
     ParameterBlock<Global> global;
 
     struct Integrate {
-        math::Transform ct;
+        math::Transform transform;
         photo::Film film;
+        photo::Lens_Union lens;
         RWTexture2D image;
     }
 
@@ -25,6 +26,13 @@ namespace mtt {
         uv2 size;
         in.image.GetDimensions(size.x, size.y);
         let fixel = in.film(0, pixel, size, 0);
-        in.image.Store(pixel, fv4(fixel.position, 0.0, 1.0));
+
+        let camera: photo::Camera;
+        let s_opt = camera.sample(in.lens.get(), fixel.position, fixel.dxdy, fv2(0));
+        if (s_opt == none) return;
+        var s = s_opt.value;
+        s.ray_differential = in.transform / s.ray_differential;
+        s.default_differential = in.transform / s.default_differential;
+        in.image.Store(pixel, fv4(s.ray_differential.r.d, 1.0));
     }
 }

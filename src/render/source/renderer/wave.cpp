@@ -284,11 +284,13 @@ namespace mtt::renderer {
         pipeline_encoder.bind();
 
         struct Integrate final {
-            math::Transform ct;
+            math::Transform transform;
             photo::Film film;
+            Lens lens;
         } in{
             *entity<math::Transform>("/hierarchy/camera/render"),
             std::move(desc.film),
+            std::move(desc.lens),
         };
         global_args_encoder.acquire("global", resources.resources->addr);
         integrate_args_encoder.acquire("in", in);

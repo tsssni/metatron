@@ -13,8 +13,8 @@ namespace mtt::photo {
         {
             auto& ray = intr.ray_differential;
             auto r_pos = pos;
-            auto rx_pos = pos + fv3{dxdy[0], 0.f};
-            auto ry_pos = pos + fv3{0.f, dxdy[1]};
+            auto rx_pos = r_pos + fv2{dxdy[0], 0.f};
+            auto ry_pos = r_pos + fv2{0.f, dxdy[1]};
 
             MTT_OPT_OR_RETURN(r_intr, lens->sample(r_pos, u), {});
             MTT_OPT_OR_RETURN(rx_intr, lens->sample(rx_pos, u), {});

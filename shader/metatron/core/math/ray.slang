@@ -1,11 +1,15 @@
 implementing math;
 
 namespace mtt::math {
-    public typedef RayDesc Ray;
+    public struct Ray {
+        public fv3 o;
+        public fv3 d;
+    }
+
     public struct Ray_Differential {
-        Ray r;
-        Ray rx;
-        Ray ry;
-        bool differentiable;
+        public Ray r;
+        public Ray rx;
+        public Ray ry;
+        public bool differentiable;
     }
 }

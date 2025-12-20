@@ -59,6 +59,7 @@ namespace mtt::command {
             vk::PhysicalDeviceTimelineSemaphoreFeatures,
             vk::PhysicalDeviceSynchronization2Features,
             vk::PhysicalDeviceBufferDeviceAddressFeatures,
+            vk::PhysicalDeviceUniformBufferStandardLayoutFeatures,
             vk::PhysicalDeviceDescriptorBufferFeaturesEXT,
             vk::PhysicalDeviceDescriptorIndexingFeatures,
             vk::PhysicalDeviceAccelerationStructureFeaturesKHR,
@@ -80,6 +81,8 @@ namespace mtt::command {
         sync.synchronization2 = true;
         auto& address = chain.get<vk::PhysicalDeviceBufferDeviceAddressFeatures>();
         address.bufferDeviceAddress = true;
+        auto& layout = chain.get<vk::PhysicalDeviceUniformBufferStandardLayoutFeatures>();
+        layout.uniformBufferStandardLayout = true;
         auto& buffer = chain.get<vk::PhysicalDeviceDescriptorBufferFeaturesEXT>();
         buffer.descriptorBuffer = true;
         auto& bindless = chain.get<vk::PhysicalDeviceDescriptorIndexingFeatures>();
@@ -105,6 +108,7 @@ namespace mtt::command {
             },
             std::vector<view<char>>{
                 "VK_KHR_buffer_device_address",
+                "VK_KHR_uniform_buffer_standard_layout",
                 "VK_KHR_synchronization2",
             },
             std::vector<view<char>>{
