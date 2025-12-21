@@ -27,10 +27,10 @@ namespace mtt::shape {
             return {p_min.xyz, p_max.xyz};
         }
 
-        public func intersect(
+        public Optional<Interaction> operator()(
             math::Ray r, fv3 np,
             fv4 pos, u32 idx
-        ) -> Optional<Interaction> {
+        ) {
             let bary = pos.xyz;
             let t = pos.w;
             let pdf = this.pdf(r, np, idx);

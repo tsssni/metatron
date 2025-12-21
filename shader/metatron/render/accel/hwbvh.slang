@@ -32,7 +32,7 @@ namespace mtt::accel {
             let ht = rq.CommittedRayT();
             let hb = rq.CommittedTriangleBarycentrics();
             let pos = fv4(1 - hb[0] - hb[1], hb[0], hb[1], ht);
-            let intr = div.shape.get().intersect(or, on, pos, prim);
+            let intr = (div.shape.get())(or, on, pos, prim);
             return Interaction(div, prim, intr);
         }
     }

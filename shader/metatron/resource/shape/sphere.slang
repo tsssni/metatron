@@ -9,10 +9,10 @@ namespace mtt::shape {
             return t * bbox;
         }
 
-        public func intersect(
+        public Optional<Interaction> operator()(
             math::Ray r, fv3 np,
             fv4 pos, u32 idx = 0
-        ) -> Optional<Interaction> {
+        ) {
             let t = pos.w;
             let p = r.o + t * r.d;
             let n = p;
@@ -62,7 +62,7 @@ namespace mtt::shape {
             }
             let pos = query(r);
             if (pos == none) return none;
-            return intersect(r, ctx.n, pos.value);
+            return (this)(r, ctx.n, pos.value);
         }
 
         public func query(math::Ray r, u32 idx = 0) -> Optional<fv4> {

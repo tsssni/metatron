@@ -27,11 +27,14 @@ namespace mtt::spectra {
             }
         }
 
+        if (lambda.empty())
+            stl::abort("empty discrete spectrum not allowed");
         this->lambda = std::span{lambda};
         this->storage = std::span{storage};
     }
 
     auto Discrete_Spectrum::operator()(f32 wavelength) const noexcept -> f32 {
+        if (lambda.size() == 1) return storage[0];
         auto size = i32(lambda.size());
         wavelength = math::clamp(wavelength, lambda[0], lambda[size - 1]);
 

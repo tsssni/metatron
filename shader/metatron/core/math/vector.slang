@@ -1,6 +1,12 @@
 implementing math;
 
 namespace mtt::math {
+    public func constant<T: __BuiltinType, let size: u32>(
+        vector<T, size> x
+    ) -> bool {
+        return all(x == vector<T, size>(x[0]));
+    }
+
     public func min<T: IComparable, let size: u32>(vector<T, size>  v) -> T {
         var result = v[0];
         for (int i = 1; i < size; ++i)

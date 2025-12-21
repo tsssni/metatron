@@ -4,6 +4,7 @@ __include math.bounding_box;
 __include math.constant;
 __include math.eval;
 __include math.ops;
+__include math.polynomial;
 __include math.quaternion;
 __include math.ray;
 __include math.sphere;
