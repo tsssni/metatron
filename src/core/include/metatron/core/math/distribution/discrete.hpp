@@ -5,7 +5,7 @@ namespace mtt::math {
     template<usize n>
     struct Discrete_Distribution final {
         std::array<f32, n> pdf{0.f};
-        std::array<f32, n> cdf{0.f};
+        std::array<f32, n + 1> cdf{0.f};
 
         Discrete_Distribution() noexcept = default;
         Discrete_Distribution(std::array<f32, n>&& ws) noexcept:

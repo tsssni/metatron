@@ -62,7 +62,7 @@ namespace mtt::shape {
             }
             let pos = query(r);
             if (pos == none) return none;
-            return (this)(r, ctx.n, pos.value);
+            return this(r, ctx.n, pos.value);
         }
 
         public func query(math::Ray r, u32 idx = 0) -> Optional<fv4> {

@@ -83,6 +83,7 @@ namespace mtt::light {
         fm<sunsky_num_lambda, sky_num_params> sky_params;
         fv<sunsky_num_lambda> sky_radiance;
         fm<sun_num_segments, sunsky_num_lambda, sun_num_ctls> sun_radiance;
+        fm<sunsky_num_lambda, sun_num_limb_params> sun_limb;
         std::array<math::Truncated_Gaussian_Distribution, tgmm_num_gaussian> tgmm_phi_distr;
         std::array<math::Truncated_Gaussian_Distribution, tgmm_num_gaussian> tgmm_theta_distr;
         math::Discrete_Distribution<tgmm_num_gaussian> tgmm_distr;

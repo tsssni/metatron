@@ -77,6 +77,7 @@ namespace mtt::light {
             auto t0 = sun_table[t_low];
             auto t1 = sun_table[t_high];
             sun_radiance = t0 * (1.f - t_alpha) + t1 * t_alpha;
+            sun_limb = *(fm<sunsky_num_lambda, sun_num_limb_params>*)(sun_limb_table.data());
 
             auto bspec = spectra::Blackbody_Spectrum{desc.temperature};
             auto sun_scale = fv<sunsky_num_lambda>{};
@@ -216,8 +217,7 @@ namespace mtt::light {
         );
         wi = math::unit_spherical_to_cartesian({theta, phi});
 
-        auto L = lambda & entity<spectra::Spectrum>("/spectrum/zero");
-        L = spectra::visit([&](f32 lambda, usize i) {
+        auto L = spectra::visit([&](f32 lambda, usize i) {
             return hosek(lambda, math::unit_to_cos_theta(wi), math::dot(d, wi));
         }, lambda);
 
@@ -227,7 +227,7 @@ namespace mtt::light {
         for (auto i = 0; cos_theta >= 0.f && i < tgmm_num_gaussian; ++i)
             sky_pdf += tgmm_phi_distr[i].pdf(tgmm_phi) * tgmm_theta_distr[i].pdf(theta) * tgmm_distr.pdf[i];
         sky_pdf = math::guarded_div(sky_pdf, std::sin(theta));
-        sun_pdf = cos_gamma >= cos_sun ? math::Cone_Distribution{cos_sun}.pdf() : 0.f;
+        sun_pdf = cos_gamma >= cos_sun ? sun_distr.pdf() : 0.f;
         auto pdf = math::lerp(sun_pdf, sky_pdf, w_sky);
 
         return Interaction{
@@ -258,9 +258,8 @@ namespace mtt::light {
             auto theta = math::clamp(tgmm_theta, 1e-2f, math::pi * 0.5f - 1e-2f);
             wi = math::unit_spherical_to_cartesian({theta, phi});
         } else {
-            auto distr = math::Cone_Distribution{cos_sun};
             auto u_sun = fv2{(u[0] - w_sky) / (1.f - w_sky), u[1]};
-            wi = math::normalize(fv3{t | math::expand(distr.sample(u_sun), 0.f)});
+            wi = math::normalize(fv3{t | math::expand(sun_distr.sample(u_sun), 0.f)});
         }
         return (*this)({ctx.r.o, wi}, ctx.lambda);
     }
@@ -271,13 +270,14 @@ namespace mtt::light {
 
     auto Sunsky_Light::hosek(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
         if (lambda > sunsky_lambda.back()) return 0.f;
-
         auto [low, high, alpha] = split(lambda);
+
         auto L = math::lerp(
             hosek_sky(low, cos_theta, cos_gamma),
             hosek_sky(high, cos_theta, cos_gamma),
             alpha
         );
+
         if (cos_gamma >= cos_sun) {
             L += area
             * math::lerp(
@@ -291,6 +291,7 @@ namespace mtt::light {
                 alpha
             );
         }
+
         return L;
     }
 

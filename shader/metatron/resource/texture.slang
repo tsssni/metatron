@@ -23,7 +23,9 @@ namespace mtt::texture {
         tag<byte> idx;
 
         public func get() -> Spectrum_Texture {
-            if (idx.type() == 0) return {};
+            if (idx.type() == 0) return tag<Constant_Spectrum_Texture>(idx).get();
+            else if (idx.type() == 1) return tag<Image_Spectrum_Texture>(idx).get();
+            else if (idx.type() == 2) return tag<Checkerboard_Texture>(idx).get();
             else return {};
         }
     }
@@ -32,7 +34,8 @@ namespace mtt::texture {
         tag<byte> idx;
 
         public func get() -> Vector_Texture {
-            if (idx.type() == 0) return {};
+            if (idx.type() == 0) return tag<Constant_Vector_Texture>(idx).get();
+            else if (idx.type() == 1) return tag<Image_Vector_Texture>(idx).get();
             else return {};
         }
     }

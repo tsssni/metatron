@@ -58,7 +58,7 @@ namespace mtt::spectra {
             let dz = (z - cs.scale[zi]) / (cs.scale[zi + 1] - cs.scale[zi]);
 
             for (var i = 0; i < 3; ++i) {
-                struct Visitor {
+                struct {
                     f32 operator()(i32 dx, i32 dy, i32 dz) {
                         return cs.table[0uz
                         + maxc      * math::pow(cs.table_res, 3) * 3
@@ -67,8 +67,7 @@ namespace mtt::spectra {
                         + (xi + dx) * 3 + i
                         ];
                     }
-                }
-                Visitor co;
+                } co;
 
                 c[2 - i] = lerp(
                     lerp(
