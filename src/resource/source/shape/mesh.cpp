@@ -133,11 +133,11 @@ namespace mtt::shape {
     }
 
     auto Mesh::operator()(
-        cref<math::Ray> r, cref<fv3> np, usize idx
+        cref<math::Ray> r, cref<fv3> np,
+        cref<fv4> pos, usize idx
     ) const noexcept -> opt<Interaction> {
-        MTT_OPT_OR_RETURN(isec, intersect(r, idx), {});
-        auto bary = math::shrink(isec);
-        auto t = isec[3];
+        auto bary = math::shrink(pos);
+        auto t = pos[3];
         auto pdf = this->pdf(r, np, idx);
         auto p = blerp(vertices, bary, idx);
         auto n = blerp(normals, bary, idx);
@@ -237,13 +237,6 @@ namespace mtt::shape {
 
     auto Mesh::query(
         cref<math::Ray> r, usize idx
-    ) const noexcept -> opt<f32> {
-        MTT_OPT_OR_RETURN(isec, intersect(r, idx), {});
-        return isec[3];
-    }
-
-    auto Mesh::intersect(
-        cref<math::Ray> r, usize idx
     ) const noexcept -> opt<fv4> {
         auto rs = r.d;
         auto ri = math::maxi(math::abs(rs));
@@ -261,7 +254,7 @@ namespace mtt::shape {
         };
 
         auto prim = indices[idx];
-        auto v = math::Vector<fv4, 3>{
+        auto v = math::Vector<fv3, 3>{
             local_to_shear(vertices[prim[0]]),
             local_to_shear(vertices[prim[1]]),
             local_to_shear(vertices[prim[2]]),

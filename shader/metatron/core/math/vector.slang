@@ -36,6 +36,14 @@ namespace mtt::math {
         return {y, z};
     }
 
+    public func mini<T: IComparable, let size: u32>(vector<T, size> x) -> u32 {
+        return minvi(x)._1;
+    }
+
+    public func maxi<T: IComparable, let size: u32>(vector<T, size> x) -> u32 {
+        return maxvi(x)._1;
+    }
+
     public func angle<T: __BuiltinFloatingPointType, let size: u32>(
         vector<T, size> x, vector<T, size> y
     ) -> T {

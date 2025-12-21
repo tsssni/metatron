@@ -206,7 +206,7 @@ namespace mtt::accel {
     ) const noexcept -> opt<Interaction> {
         using Storage = std::vector<u32>;
         auto prim = view<Primitive>{};
-        auto q_opt = opt<f32>{};
+        auto q_opt = opt<fv4>{};
         auto storage = std::vector<u32>{};
         auto stack = std::stack<u32, decltype(storage)>{};
         storage.reserve(128);
@@ -218,7 +218,7 @@ namespace mtt::accel {
             stack.pop();
             auto node = &bvh[idx];
             auto b_opt = math::hit(r, node->bbox);
-            if (!b_opt || (q_opt && *q_opt < b_opt.value()[0])) continue;
+            if (!b_opt || (q_opt && (*q_opt)[3] < b_opt.value()[0])) continue;
 
             if (node->num_prims < 0) {
                 for (auto i = 0u; i < -node->num_prims; ++i) {
@@ -228,7 +228,7 @@ namespace mtt::accel {
                     auto lr = (*p.instance->local_to_render) ^ r;
 
                     MTT_OPT_OR_CONTINUE(t, div->shape->query(lr, p.primitive));
-                    if (!q_opt || t < *q_opt) {
+                    if (!q_opt || t[3] < (*q_opt)[3]) {
                         q_opt = t_opt;
                         prim = &p;
                     }
@@ -250,6 +250,7 @@ namespace mtt::accel {
             .intr_opt = (*prim->instance->shape.data())(
                 (*prim->instance->local_to_render) ^ r,
                 (*prim->instance->local_to_render) ^ n,
+                *q_opt,
                 prim->primitive
             ),
         };

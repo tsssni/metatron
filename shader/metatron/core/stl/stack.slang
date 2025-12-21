@@ -10,5 +10,9 @@ namespace mtt {
         public __subscript(u32 i) -> T {
             get { return ptr[i]; }
         }
+
+        public func size() -> u32 {
+            return bytelen / sizeof(T);
+        }
     }
 }

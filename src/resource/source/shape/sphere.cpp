@@ -21,9 +21,10 @@ namespace mtt::shape {
     }
 
     auto Sphere::operator()(
-        cref<math::Ray> r, cref<fv3> np, usize idx
+        cref<math::Ray> r, cref<fv3> np,
+        cref<fv4> pos, usize idx
     ) const noexcept -> opt<Interaction> {
-        MTT_OPT_OR_RETURN(t, query(r, idx), {});
+        auto t = pos[3];
         auto p = r.o + t * r.d;
         auto n = p;
         auto [theta, phi] = math::cartesian_to_unit_spherical(p);
@@ -55,28 +56,28 @@ namespace mtt::shape {
         cref<math::Context> ctx, cref<fv2> u, usize idx
     ) const noexcept -> opt<Interaction> {
         auto d = math::length(ctx.r.o);
+        auto r = math::Ray{};
         if (d < 1.f) {
             auto distr = math::Sphere_Distribution{};
             auto p = distr.sample(u);
             auto dir = math::normalize(p - ctx.r.o);
-
-            return (*this)({ctx.r.o, dir}, ctx.n);
+            r = math::Ray{ctx.r.o, dir};
         } else {
             auto cos_theta_max = math::sqrt(1.f - 1.f / (d * d));
             auto distr = math::Cone_Distribution{cos_theta_max};
             auto dir = math::normalize(-ctx.r.o);
-
             auto sdir = distr.sample(u);
             auto rot = fq::from_rotation_between({0.f, 0.f, 1.f}, dir);
             sdir = math::rotate(math::expand(sdir, 0.f), rot);
-
-            return (*this)({ctx.r.o, sdir}, ctx.n);
+            r = math::Ray{ctx.r.o, sdir};
         }
+        MTT_OPT_OR_RETURN(pos, query(r), {});
+        return (*this)(r, ctx.n, pos);
     }
 
     auto Sphere::query(
         cref<math::Ray> r, usize idx
-    ) const noexcept -> opt<f32> {
+    ) const noexcept -> opt<fv4> {
         auto a = math::dot(r.d, r.d);
         auto b = math::dot(r.o, r.d) * 2.f;
         auto c = math::dot(r.o, r.o) - 1.f;
@@ -87,6 +88,6 @@ namespace mtt::shape {
         auto x0 = (-b - math::sqrt(delta)) / (2.f * a);
         auto x1 = (-b + math::sqrt(delta)) / (2.f * a);
         if (x1 < 0.f) return {};
-        return x0 < 0.f ? x1 : x0;
+        return fv4{0, 0, 0, x0 < 0.f ? x1 : x0};
     }
 }

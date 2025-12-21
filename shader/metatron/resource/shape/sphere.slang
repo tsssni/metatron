@@ -9,10 +9,11 @@ namespace mtt::shape {
             return t * bbox;
         }
 
-        public func intersect(math::Ray r, fv3 np, u32 idx = 0) -> Optional<Interaction> {
-            let t_opt = query(r, idx);
-            if (t_opt == none) return none;
-            let t = t_opt.value;
+        public func intersect(
+            math::Ray r, fv3 np,
+            fv4 pos, u32 idx = 0
+        ) -> Optional<Interaction> {
+            let t = pos.w;
             let p = r.o + t * r.d;
             let n = p;
             let s = math::cartesian_to_unit_spherical(p);
@@ -44,26 +45,27 @@ namespace mtt::shape {
 
         public func sample(math::Context ctx, fv2 u, u32 idx) -> Optional<Interaction> {
             let d = length(ctx.r.o);
+            var r: math::Ray;
             if (d < 1.f) {
                 let distr = math::Sphere_Distribution();
                 let p = distr.sample(u);
                 let dir = normalize(p - ctx.r.o);
-
-                return intersect({ctx.r.o, dir}, ctx.n);
+                r = math::Ray(ctx.r.o, dir);
             } else {
                 let cos_theta_max = math::sqrt(1.f - 1.f / (d * d));
                 let distr = math::Cone_Distribution(cos_theta_max);
                 let dir = normalize(-ctx.r.o);
-
                 var sdir = distr.sample(u);
                 let rot = fq::from_rotation_between({0.f, 0.f, 1.f}, dir);
                 sdir = math::rotate(fv4(sdir, 0.f), rot).xyz;
-
-                return intersect({ctx.r.o, sdir}, ctx.n);
+                r = math::Ray(ctx.r.o, sdir);
             }
+            let pos = query(r);
+            if (pos == none) return none;
+            return intersect(r, ctx.n, pos.value);
         }
 
-        public func query(math::Ray r, u32 idx) -> Optional<f32> {
+        public func query(math::Ray r, u32 idx = 0) -> Optional<fv4> {
             let a = dot(r.d, r.d);
             let b = dot(r.o, r.d) * 2.f;
             let c = dot(r.o, r.o) - 1.f;
@@ -74,7 +76,7 @@ namespace mtt::shape {
             let x0 = (-b - math::sqrt(delta)) / (2.f * a);
             let x1 = (-b + math::sqrt(delta)) / (2.f * a);
             if (x1 < 0) return none;
-            return x0 < 0.f ? x1 : x0;
+            return fv4(0, 0, 0, x0 < 0.f ? x1 : x0);
         }
     }
 }

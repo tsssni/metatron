@@ -26,7 +26,8 @@ namespace mtt::shape {
             cref<math::Transform> t, usize idx
         ) const noexcept -> math::Bounding_Box;
         auto operator()(
-            cref<math::Ray> r, cref<fv3> np, usize idx
+            cref<math::Ray> r, cref<fv3> np,
+            cref<fv4> pos, usize idx
         ) const noexcept -> opt<Interaction>;
         // sphere triangle sampling: https://pbr-book.org/4ed/Shapes/Triangle_Meshes
         auto sample(
@@ -34,7 +35,7 @@ namespace mtt::shape {
         ) const noexcept -> opt<Interaction>;
         auto query(
             cref<math::Ray> r, usize idx
-        ) const noexcept -> opt<f32>;
+        ) const noexcept -> opt<fv4>;
 
     private:
         template<typename T>

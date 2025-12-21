@@ -17,7 +17,7 @@ namespace mtt::accel {
                         rq.CandidateObjectRayDirection()
                     );
                     let intr_opt = div.shape.get().query(or, rq.CandidatePrimitiveIndex());
-                    if (intr_opt != none) rq.CommitProceduralPrimitiveHit(intr_opt.value);
+                    if (intr_opt != none) rq.CommitProceduralPrimitiveHit(intr_opt.value[3]);
                 }
             }
 
@@ -28,10 +28,11 @@ namespace mtt::accel {
                 rq.CommittedObjectRayDirection()
             );
             let on = div.local_to_render.get() / n;
-            return Interaction(
-                div, prim,
-                div.shape.get().intersect(or, on, prim),
-            );
+            let ht = rq.CommittedRayT();
+            let hb = rq.CommittedTriangleBarycentrics();
+            let pos = fv4(1 - hb[0] - hb[1], hb[0], hb[1], ht);
+            let intr = div.shape.get().intersect(or, on, pos, prim);
+            return Interaction(div, prim, intr);
         }
     }
 }

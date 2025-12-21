@@ -12,13 +12,14 @@ namespace mtt::shape {
             cref<math::Transform> t, usize idx
         ) const noexcept -> math::Bounding_Box;
         auto operator()(
-            cref<math::Ray> r, cref<fv3> np, usize idx = 0uz
+            cref<math::Ray> r, cref<fv3> np,
+            cref<fv4> pos, usize idx = 0uz
         ) const noexcept -> opt<Interaction>;
         auto sample(
             cref<math::Context> ctx, cref<fv2> u, usize idx = 0uz
         ) const noexcept -> opt<Interaction>;
         auto query(
             cref<math::Ray> r, usize idx = 0uz
-        ) const noexcept -> opt<f32>;
+        ) const noexcept -> opt<fv4>;
     };
 }

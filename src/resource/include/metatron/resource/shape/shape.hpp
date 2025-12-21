@@ -30,14 +30,15 @@ namespace mtt::shape {
         cref<math::Transform> t, usize idx
     ) const noexcept -> math::Bounding_Box>
     ::add_convention<pro::operator_dispatch<"()">, auto (
-        cref<math::Ray> r, cref<fv3> np, usize idx
+        cref<math::Ray> r, cref<fv3> np,
+        cref<fv4> pos, usize idx
     ) const noexcept -> opt<Interaction>>
     ::add_convention<shape_sample, auto (
         cref<math::Context> ctx, cref<fv2> u, usize idx
     ) const noexcept -> opt<Interaction>>
     ::add_convention<shape_query, auto (
         cref<math::Ray> r, usize idx
-    ) const noexcept -> opt<f32>>
+    ) const noexcept -> opt<fv4>>
     ::add_skill<pro::skills::as_view>
     ::build {};
 }
