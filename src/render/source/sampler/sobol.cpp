@@ -10,6 +10,9 @@
 namespace mtt::sampler {
     inline buf<u32> Sobol_Sampler::sobol_matrices;
 
+    // avoid extra parameters uploaded to gpu
+    Sobol_Sampler::Sobol_Sampler() noexcept: matrices(sobol_matrices) {}
+
     auto Sobol_Sampler::init() noexcept -> void {
         auto path = "sampler/sobol.bin";
         auto data = stl::filesystem::find(path);
@@ -109,7 +112,7 @@ namespace mtt::sampler {
     auto Sobol_Sampler::sobol(usize idx, i32 dim, u32 hash) noexcept -> f32 {
         auto x = 0u;
         for (auto i = dim * sobol_matrix_size; idx != 0; idx >>= 1, ++i)
-            if (idx & 1) x ^= sobol_matrices[i];
+            if (idx & 1) x ^= matrices[i];
 
         x = math::fast_binary_owen_scramble(x, hash);
         return math::min(x * 0x1p-32f, 1.f - math::epsilon<f32>);

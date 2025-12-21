@@ -7,7 +7,7 @@ namespace mtt::sampler {
     auto constexpr sobol_matrix_size = 52;
 
     struct Sobol_Sampler final {
-        Sobol_Sampler() noexcept = default;
+        Sobol_Sampler() noexcept;
         Sobol_Sampler(cref<Sobol_Sampler>) noexcept = default;
         auto static init() noexcept -> void;
         auto start(Context ctx) noexcept -> void;
@@ -26,5 +26,6 @@ namespace mtt::sampler {
         i32 dim;
         usize seed;
         usize morton_idx;
+        buf<u32> matrices;
     };
 }
