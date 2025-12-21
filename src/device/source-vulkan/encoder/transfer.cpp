@@ -24,6 +24,14 @@ namespace mtt::encoder {
             .layout = vk::ImageLayout::eTransferDstOptimal,
             .family = cmd->impl->family,
         };
+        impl->pst_barrier = {
+            .stage = vk::PipelineStageFlags2{}
+            | vk::PipelineStageFlagBits2::eComputeShader
+            | vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR,
+            .access = vk::AccessFlagBits2::eShaderRead,
+            .layout = vk::ImageLayout::eShaderReadOnlyOptimal,
+            .family = cmd->impl->family,
+        };
     }
 
     auto Transfer_Encoder::upload(Buffer::View view) noexcept -> void {
@@ -131,12 +139,8 @@ namespace mtt::encoder {
     template<typename T>
     auto Transfer_Encoder::Impl::persist(mut<Transfer_Encoder> encoder, T view) noexcept -> void {
         auto cmd = encoder->cmd->impl->cmd.get();
-        auto buffer = view.ptr;
-        auto barrier = buffer->impl->update({
-            .stage = vk::PipelineStageFlagBits2::eComputeShader,
-            .access = vk::AccessFlagBits2::eShaderSampledRead,
-            .layout = vk::ImageLayout::eShaderReadOnlyOptimal,
-        });
+        auto image = view.ptr;
+        auto barrier = image->impl->update(pst_barrier);
         cmd.pipelineBarrier2({
             .imageMemoryBarrierCount = 1,
             .pImageMemoryBarriers = &barrier,
@@ -146,12 +150,7 @@ namespace mtt::encoder {
     auto Transfer_Encoder::persist(Buffer::View view) noexcept -> void {
         auto cmd = this->cmd->impl->cmd.get();
         auto buffer = view.ptr;
-        auto barrier = buffer->impl->update({
-            .stage = vk::PipelineStageFlags2{}
-            | vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR
-            | vk::PipelineStageFlagBits2::eComputeShader,
-            .access = vk::AccessFlagBits2::eShaderRead,
-        });
+        auto barrier = buffer->impl->update(impl->pst_barrier);
         cmd.pipelineBarrier2({
             .bufferMemoryBarrierCount = 1,
             .pBufferMemoryBarriers = &barrier,

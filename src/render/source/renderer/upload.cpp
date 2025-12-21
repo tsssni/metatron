@@ -2,6 +2,7 @@
 #include <metatron/device/command/timeline.hpp>
 #include <metatron/device/encoder/transfer.hpp>
 #include <metatron/core/stl/thread.hpp>
+#include <barrier>
 
 namespace mtt::renderer {
     auto upload(
@@ -33,6 +34,7 @@ namespace mtt::renderer {
 
         scheduler.sync_parallel(uzv1{scheduler.size()}, [
             &,
+            barrier = std::make_shared<std::barrier<>>(scheduler.size()),
             bc = std::make_shared<std::atomic<u32>>(0),
             vc = std::make_shared<std::atomic<u32>>(0),
             ic = std::make_shared<std::atomic<u32>>(0),
@@ -62,9 +64,10 @@ namespace mtt::renderer {
                 buf->idx = math::maxv<u32>;
                 buffers[i] = std::move(buffer);
             }
+            barrier->arrive_and_wait();
 
             i = 0;
-            while ((i = vc->fetch_add(1, std::memory_order::acq_rel)) < vsize) {
+            while ((i = vc->fetch_add(1, std::memory_order::relaxed)) < vsize) {
                 auto& vec = vector.storage[i];
                 sequence[i] = vec.pack();
                 if (sequence[i].empty()) continue;
@@ -81,6 +84,7 @@ namespace mtt::renderer {
                 addresses[i] = buffer->addr;
                 vectors[i] = std::move(buffer);
             }
+            barrier->arrive_and_wait();
 
             if (scheduler.index() == 0) {
                 auto desc = opaque::Buffer::Descriptor{
@@ -104,6 +108,7 @@ namespace mtt::renderer {
                 transfer.upload(*images[i]);
                 transfer.persist(*images[i]);
             }
+            barrier->arrive_and_wait();
 
             i = 0;
             while ((i = gc->fetch_add(1, std::memory_order::relaxed)) < gsize) {
@@ -116,6 +121,7 @@ namespace mtt::renderer {
                 transfer.upload(*grids[i]);
                 transfer.persist(*grids[i]);
             }
+            barrier->arrive_and_wait();
 
             timelines[scheduler.index()] = make_obj<command::Timeline>();
             cmd->signals = {{timelines[scheduler.index()].get(), 1}};

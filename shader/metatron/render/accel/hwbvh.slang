@@ -20,6 +20,7 @@ namespace mtt::accel {
                     if (intr_opt != none) rq.CommitProceduralPrimitiveHit(intr_opt.value[3]);
                 }
             }
+            if (rq.CommittedStatus() == COMMITTED_NOTHING) return none;
 
             let div = vector[rq.CommittedInstanceIndex()];
             let prim = rq.CommittedPrimitiveIndex();

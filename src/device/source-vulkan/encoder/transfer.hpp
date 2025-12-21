@@ -6,6 +6,7 @@ namespace mtt::encoder {
     struct Transfer_Encoder::Impl final {
         opaque::Barrier src_barrier;
         opaque::Barrier dst_barrier;
+        opaque::Barrier pst_barrier;
 
         template<typename T>
         auto persist(mut<Transfer_Encoder> encoder, T view) noexcept -> void;

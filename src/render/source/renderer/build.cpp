@@ -14,12 +14,13 @@ namespace mtt::renderer {
     ) noexcept -> void {
         auto& shapes = stl::vector<shape::Shape>::instance();
         for (auto i = 0; i < shapes.size<T>(); ++i)
-            if constexpr (std::is_same_v<T, shape::Mesh>)
+            if constexpr (std::is_same_v<T, shape::Mesh>) {
+                auto mesh = shapes.get<T>(i);
                 primitives.push_back({
                     .type = opaque::Acceleration::Primitive::Type::mesh,
                     .mesh = shapes.get<T>(i),
                 });
-            else {
+            } else {
                 auto prim = opaque::Acceleration::Primitive{
                     .type = opaque::Acceleration::Primitive::Type::aabb,
                 };

@@ -12,5 +12,6 @@ __include math.type;
 __include math.vector;
 __include math.distribution.cone;
 __include math.distribution.disk;
+__include math.distribution.linear;
 __include math.distribution.sphere;
 import prelude;

@@ -145,7 +145,7 @@ namespace mtt::shape {
         auto bn = math::cross(tn, n);
         auto uv = blerp(uvs, bary, idx);
 
-        return shape::Interaction{
+        return Interaction{
             p, n, tn, bn, uv, t, pdf,
             dpdu[idx], dpdv[idx],
             dndu[idx], dndv[idx],
@@ -228,7 +228,7 @@ namespace mtt::shape {
         auto bn = math::cross(tn, n);
         auto uv = blerp(uvs, bary, idx);
 
-        return shape::Interaction{
+        return Interaction{
             p, n, tn, bn, uv, t, pdf,
             dpdu[idx], dpdv[idx],
             dndu[idx], dndv[idx],
@@ -289,7 +289,7 @@ namespace mtt::shape {
     auto Mesh::pdf(
         cref<math::Ray> r, cref<fv3> np, usize idx
     ) const noexcept -> f32 {
-        auto prim = vertices[idx];
+        auto prim = indices[idx];
         auto a = math::normalize(vertices[prim[0]] - r.o);
         auto b = math::normalize(vertices[prim[1]] - r.o);
         auto c = math::normalize(vertices[prim[2]] - r.o);

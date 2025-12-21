@@ -55,10 +55,6 @@ namespace mtt::shape {
             );
         }
 
-        auto intersect(
-            cref<math::Ray> r, usize idx
-        ) const noexcept -> opt<fv4>;
-
         auto pdf(
             cref<math::Ray> r, cref<fv3> np, usize idx
         ) const noexcept -> f32;

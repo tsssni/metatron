@@ -44,6 +44,13 @@ namespace mtt::math {
         return maxvi(x)._1;
     }
 
+    public func sum<T: IArithmetic, let size: u32>(vector<T, size> x) -> T {
+        var y = x[0];
+        for (var i = 1; i < size; ++i)
+            y = y + x[i];
+        return y;
+    }
+
     public func angle<T: __BuiltinFloatingPointType, let size: u32>(
         vector<T, size> x, vector<T, size> y
     ) -> T {

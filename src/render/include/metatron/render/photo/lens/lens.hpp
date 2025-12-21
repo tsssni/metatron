@@ -14,7 +14,7 @@ namespace mtt::photo {
 
     struct Lens final: pro::facade_builder
     ::add_convention<lens_sample, auto (
-        fv2 o, fv2 u
+        cref<fv2> o, cref<fv2> u
     ) const noexcept -> opt<lens::Interaction>>
     ::add_skill<pro::skills::as_view>
     ::build {};

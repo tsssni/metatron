@@ -9,7 +9,7 @@ namespace mtt::photo {
     focus_distance(desc.focus_distance),
     focal_distance(1.f / (1.f / focal_length - 1.f / focus_distance)) {}
 
-    auto Thin_Lens::sample(fv2 o, fv2 u) const noexcept -> opt<lens::Interaction> {
+    auto Thin_Lens::sample(cref<fv2> o, cref<fv2> u) const noexcept -> opt<lens::Interaction> {
         auto center = fv3{0.f};
         auto focused = math::expand(-o, focal_distance) * focus_distance / focal_distance;
         
