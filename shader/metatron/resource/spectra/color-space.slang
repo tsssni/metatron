@@ -1,21 +1,21 @@
 implementing spectra;
 
 namespace mtt::spectra {
-    struct Color_Space {
-        enum Spectrum_Type {
+    public struct Color_Space {
+        public enum Spectrum_Type {
             albedo,
             unbounded,
             illuminant,
         };
 
-        fm33 from_XYZ;
-        fm33 to_XYZ;
-        Spectrum_Tag illuminant;
-        Transfer_Function_Tag transfer_function;
+        public fm33 from_XYZ;
+        public fm33 to_XYZ;
+        public Spectrum_Tag illuminant;
+        public Transfer_Function_Tag transfer_function;
 
-        i32 table_res;
-        f32 illuminant_Y_integral;
-        buf<f32> scale;
-        buf<f32> table;
+        public i32 table_res;
+        public f32 illuminant_Y_integral;
+        public buf<f32> scale;
+        public buf<f32> table;
     }
 }

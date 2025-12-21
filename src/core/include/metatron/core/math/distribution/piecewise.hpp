@@ -57,13 +57,10 @@ namespace mtt::math {
         buf<f32> cdf;
 
         i32 dim;
-        f32 low{};
-        f32 high{};
-        f32 delta{};
-        f32 integral{};
-
-        template<usize m>
-        friend struct Piecewise_Distribution;
+        f32 low = {};
+        f32 high = {};
+        f32 delta = {};
+        f32 integral = {};
     };
 
     struct Planar_Distribution final {
@@ -71,9 +68,9 @@ namespace mtt::math {
 
         Planar_Distribution(
             std::span<f32> data,
-            cref<Vector<i32, 2>> dimensions,
-            cref<Vector<f32, 2>> low,
-            cref<Vector<f32, 2>> high
+            cref<iv2> dimensions,
+            cref<fv2> low,
+            cref<fv2> high
         ) noexcept: low(low), high(high), dim(dimensions) {
             integral = 0;
             delta = (high - low) / fv2(dim);
@@ -106,7 +103,7 @@ namespace mtt::math {
                 col_cdf[i] = integral == 0.f ? f32(i) / f32(dim[0]) : col_cdf[i] / integral;
         }
 
-        auto sample(cref<Vector<f32, 2>> u) const noexcept -> Vector<f32, 2> {
+        auto sample(cref<fv2> u) const noexcept -> fv2 {
             auto ci = 1;
             for (; ci < dim[0] && col_cdf[ci] <= u[0]; ++ci);
             ci--;
@@ -123,7 +120,7 @@ namespace mtt::math {
             return {cp, rp};
         }
 
-        auto pdf(cref<Vector<f32, 2>> p) const noexcept -> f32 {
+        auto pdf(cref<fv2> p) const noexcept -> f32 {
             auto ci = math::clamp(
                 i32((p[0] - low[0]) / delta[0]),
                 0, dim[0] - 1
@@ -148,9 +145,9 @@ namespace mtt::math {
         buf<f32> col_cdf;
         f32 integral;
 
-        Vector<i32, 2> dim;
-        Vector<f32, 2> low{};
-        Vector<f32, 2> high{};
-        Vector<f32, 2> delta{};
+        iv2 dim;
+        fv2 low = {};
+        fv2 high = {};
+        fv2 delta = {};
     };
 }

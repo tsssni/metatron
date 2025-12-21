@@ -11,6 +11,17 @@ namespace mtt::math {
         return abs(y) < T(epsilon) ? T(0) : x / y;
     }
 
+    public func pow<T: __BuiltinIntegerType>(T x, T n) -> T {
+        var y = T(1);
+        while (n != T(0)) {
+            if ((n & T(1)) != T(0))
+                y = y * x;
+            x = x * x;
+            n >>= 1;
+        }
+        return y;
+    }
+
     public func sqrt<T: __BuiltinFloatingPointType>(T x) -> T {
         return sqrt(max(T(0), x));
     }

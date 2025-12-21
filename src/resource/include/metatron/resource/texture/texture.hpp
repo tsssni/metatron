@@ -1,8 +1,8 @@
 #pragma once
 #include <metatron/resource/shape/sphere.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
-#include <metatron/core/math/eval.hpp>
 #include <metatron/resource/muldim/image.hpp>
+#include <metatron/core/math/eval.hpp>
 
 namespace mtt::texture {
     MTT_POLY_METHOD(texture_sample, sample);

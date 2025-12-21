@@ -21,7 +21,7 @@ namespace mtt::spectra {
             s = 2.f;
             break;
         case Spectrum_Type::illuminant:
-            s = 2.f * math::max(rgb[0], math::max(rgb[1], rgb[2]));
+            s = 2.f * math::max(rgb);
             break;
         }
         rgb = rgb / s;
@@ -29,7 +29,7 @@ namespace mtt::spectra {
         ? desc.color_space->illuminant_Y_integral : 1.f;
 
         if (rgb[0] == rgb[1] && rgb[1] == rgb[2]) {
-            this->c = fv3{
+            c = fv3{
                 (rgb[0] - 0.5f) / math::sqrt(rgb[0] * (1.f - rgb[0])),
                 0.f, 0.f,
             };
@@ -43,12 +43,10 @@ namespace mtt::spectra {
 
         // compute integer indices and offsets for coefficient interpolation
         auto scale = std::span<f32>{cs->scale};
+        auto bound = i32(std::ranges::lower_bound(scale, z) - std::begin(scale));
         auto xi = math::min((i32)x, cs->table_res - 2);
         auto yi = math::min((i32)y, cs->table_res - 2);
-        auto zi = math::clamp(
-            i32(std::ranges::lower_bound(scale, z) - std::begin(scale)) - 1,
-            0, cs->table_res - 2
-        );
+        auto zi = math::clamp(bound - 1, 0, cs->table_res - 2);
 
         auto dx = x - xi;
         auto dy = y - yi;
@@ -57,7 +55,7 @@ namespace mtt::spectra {
         // trilinearly interpolate sigmoid polynomial coefficients
         for (auto i = 0; i < 3; ++i) {
             // define co lambda for looking up sigmoid polynomial coefficients
-            auto co = [&](int dx, int dy, int dz) {
+            auto co = [&](i32 dx, i32 dy, i32 dz) {
                 return cs->table[0uz
                 + maxc      * math::pow(cs->table_res, 3) * 3
                 + (zi + dz) * math::pow(cs->table_res, 2) * 3

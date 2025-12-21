@@ -32,7 +32,6 @@ namespace mtt::texture {
         }
 
         uv *= uv_scale;
-        auto x = math::mod(1.f, 1.f);
         if (usize(math::sum(math::floor(uv))) % 2 != i)
             uv[0] = math::mod(uv[0] + 1.f, f32(uv_scale[0]));
         return uv;

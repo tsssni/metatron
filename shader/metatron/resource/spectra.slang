@@ -3,6 +3,7 @@ __include spectra.blackbody;
 __include spectra.constant;
 __include spectra.color_space;
 __include spectra.discrete;
+__include spectra.ops;
 __include spectra.rgb;
 __include spectra.transfer_function;
 __include spectra.visible;
@@ -17,7 +18,7 @@ namespace mtt::spectra {
     }
 
     public struct Spectrum_Tag {
-        tag<byte> idx;
+        tag<byte> idx = {};
 
         public func get() -> Spectrum {
             if (idx.type() == 0) return tag<Constant_Spectrum>(idx).get();
@@ -29,21 +30,5 @@ namespace mtt::spectra {
         }
 
         public func empty() -> bool { return idx.empty(); }
-    }
-
-    public f32 operator*(tag<Spectrum> x, tag<Spectrum> y) {
-        var integral = 0.f;
-        let z = x.get();
-        let w = y.get();
-        for (var lambda = visible_lambda[0]; lambda <= visible_lambda[1]; ++lambda)
-            integral += z(lambda) * w(lambda);
-        return integral;
-    }
-
-    public fv4 operator&(fv4 lambda, Spectrum s) {
-        if (math::constant(lambda)) return s(lambda[0]);
-        var value: fv4;
-        for (var i = 0; i < 4; ++i) value[i] = s(lambda[i]);
-        return value;
     }
 }
