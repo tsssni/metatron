@@ -1,6 +1,6 @@
 module shape;
 __include shape.sphere;
-import metatron.resource;
+import metatron.core;
 
 namespace mtt::shape {
     public struct Interaction {
@@ -24,5 +24,15 @@ namespace mtt::shape {
         public func intersect(math::Ray r, fv3 np, u32 idx) -> Optional<Interaction>;
         public func sample(math::Context ctx, fv2 u, u32 idx) -> Optional<Interaction>;
         public func query(math::Ray r, u32 idx) -> Optional<f32>;
+    }
+
+    public struct Shape_Tag {
+        tag<byte> idx;
+
+        public func get() -> Shape {
+            if (idx.type() == 0) return {};
+            else if (idx.type() == 1) return tag<Sphere>(idx).get();
+            else return {};
+        }
     }
 }

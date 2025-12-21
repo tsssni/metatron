@@ -31,12 +31,14 @@ namespace mtt::stl {
             return offset;
         }();
 
+        auto constexpr static alignment = [] -> usize {
+            return math::max(math::max(alignof(Ts)...), 4uz);
+        }();
+
         // assure aggregate layout
         auto constexpr static size = [] -> usize {
             using U = type<sizeof...(Ts) - 1>;
-            auto alignment = math::max(alignof(Ts)...);
-            auto size = offset<U> + sizeof(U);
-            return math::align(size, alignment);
+            return offset<U> + sizeof(U);
         }();
     };
 }

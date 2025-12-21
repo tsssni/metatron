@@ -5,7 +5,6 @@
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>
 #include <metatron/core/math/distribution/cone.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::shape {
     Sphere::Sphere(cref<Descriptor> desc) noexcept {}
@@ -17,9 +16,8 @@ namespace mtt::shape {
     auto Sphere::bounding_box(
         cref<math::Transform> t, usize idx
     ) const noexcept -> math::Bounding_Box {
-        auto bbox = math::Bounding_Box{{-1, -1, -1}, {1, 1, 1}};
-        auto tbox = t | bbox;
-        return tbox;
+        auto bbox = math::Bounding_Box{{-1.f}, {1.f}};
+        return t | bbox;
     }
 
     auto Sphere::operator()(

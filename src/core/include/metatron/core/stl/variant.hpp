@@ -5,7 +5,7 @@
 namespace mtt::stl {
     template<pro::facade F, typename... Ts>
     requires (sizeof...(Ts) > 0) && (poliable<F, Ts> && ...)
-    struct variant final {
+    struct alignas(stl::array<Ts...>::alignment) variant final {
         using ts = stl::array<Ts...>;
         variant(cref<variant>) noexcept = delete;
         variant(rref<variant> rhs) noexcept {

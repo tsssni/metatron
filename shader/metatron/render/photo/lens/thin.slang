@@ -18,7 +18,7 @@ namespace mtt::photo {
 
             var intr: lens::Interaction;
             intr.r = math::Ray(lens_p, direction);
-            intr.pdf = 1;
+            intr.pdf = 1.f;
             return intr;
         }
     }

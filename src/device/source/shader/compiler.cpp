@@ -139,79 +139,85 @@ namespace mtt::shader {
                 }
             };
 
-            auto parse_type = [&parse_resource](
+            auto parse_var = [&parse_resource](
                 this auto&& self,
-                mut<slang::TypeLayoutReflection> reflection,
+                mut<slang::VariableLayoutReflection> reflection,
                 ref<Layout> layout,
                 std::string path = "",
                 u32 block = 0,
                 bool parameter = false
             ) -> void {
-                for (auto i = 0; i < reflection->getFieldCount(); ++i) {
-                    using Kind = slang::TypeReflection::Kind;
-                    using Unit = slang::ParameterCategory;
-                    auto Index = Unit::DescriptorTableSlot;
-                    auto Set = Unit::SubElementRegisterSpace;
-                    auto Size = Unit::Uniform;
-
-                    auto member = reflection->getFieldByIndex(i);
-                    auto type = member->getTypeLayout();
-                    auto element = type->getElementTypeLayout();
-                    auto kind = member->getType()->getKind();
-                    auto name = member->getName();
-
-                    auto table = kind == Kind::ParameterBlock;
-                    auto var = table ? type->getContainerVarLayout() : member;
-                    auto desc = Descriptor{};
-
-                    auto field = path + (path.size() == 0 ? "" : ".") + name;
-                    auto set = table ? member->getOffset(Set) : block;
-                    auto index = math::maxv<u32>;
-                    for (auto j = 0; j < var->getCategoryCount(); ++j)
-                        if (var->getCategoryByIndex(j) == Index)
-                            index = var->getOffset(Index);
-
-                    if (layout.sets.size() <= set) {
-                        layout.sets.resize(set + 1);
-                        layout.names.resize(set + 1);
+                auto parse_type = [&] (mut<slang::TypeLayoutReflection> reflection) {
+                    for (auto i = 0; i < reflection->getFieldCount(); ++i) {
+                        auto field = reflection->getFieldByIndex(i);
+                        self(field, layout, path, block, parameter);
                     }
-                    if (table) layout.names[set] = name;
-                    if (index != math::maxv<u32> && layout.sets[set].size() <= index)
-                        layout.sets[set].resize(index + 1);
-                    if (index == math::maxv<u32>) {
-                        self(table ? element : type, layout, field, set, parameter);
-                        continue;
-                    }
+                };
 
-                    switch (kind) {
-                    case Kind::ParameterBlock:
-                        desc.type = Descriptor::Type::parameter;
-                        desc.size = element->getSize();
-                        if (!parameter) parameter = true;
-                        else stl::abort("embedded parameter block not allowed");
-                        break;
-                    case Kind::SamplerState:
-                        desc.type = Descriptor::Type::sampler;
-                        break;
-                    case Kind::Resource:
-                        parse_resource(type, desc);
-                        break;
-                    case Kind::Array:
-                        desc.size = type->getElementCount();
-                        if (desc.size == 0) desc.size = -1; // bindless
-                        parse_resource(type->getElementTypeLayout(), desc);
-                        break;
-                    default: break;
-                    }
+                using Kind = slang::TypeReflection::Kind;
+                using Unit = slang::ParameterCategory;
+                auto Index = Unit::DescriptorTableSlot;
+                auto Set = Unit::SubElementRegisterSpace;
+                auto Size = Unit::Uniform;
 
-                    desc.path = field;
-                    layout.sets[set][index] = desc;
-                    self(table ? element : type, layout, field, set, parameter);
+                auto type = reflection->getTypeLayout();
+                auto element = type->getElementTypeLayout();
+                auto kind = reflection->getType()->getKind();
+                auto name = reflection->getName();
+
+                auto table = kind == Kind::ParameterBlock;
+                auto var = table ? type->getContainerVarLayout() : reflection;
+                auto desc = Descriptor{};
+
+                auto field = path + (path.size() == 0 ? "" : ".") + (name ? name : "");
+                auto set = table ? reflection->getOffset(Set) : block;
+                auto index = math::maxv<u32>;
+                for (auto j = 0; j < var->getCategoryCount(); ++j)
+                    if (var->getCategoryByIndex(j) == Index)
+                        index = var->getOffset(Index);
+
+                if (layout.sets.size() <= set) {
+                    layout.sets.resize(set + 1);
+                    layout.names.resize(set + 1);
                 }
+                if (table) layout.names[set] = name;
+                if (index != math::maxv<u32> && layout.sets[set].size() <= index)
+                    layout.sets[set].resize(index + 1);
+                if (index == math::maxv<u32>) {
+                    path = field; block = set;
+                    parse_type(table ? element : type);
+                    return;
+                }
+
+                switch (kind) {
+                case Kind::ParameterBlock:
+                    desc.type = Descriptor::Type::parameter;
+                    desc.size = element->getSize();
+                    if (!parameter) parameter = true;
+                    else stl::abort("embedded parameter block not allowed");
+                    break;
+                case Kind::SamplerState:
+                    desc.type = Descriptor::Type::sampler;
+                    break;
+                case Kind::Resource:
+                    parse_resource(type, desc);
+                    break;
+                case Kind::Array:
+                    desc.size = type->getElementCount();
+                    if (desc.size == 0) desc.size = -1; // bindless
+                    parse_resource(type->getElementTypeLayout(), desc);
+                    break;
+                default: break;
+                }
+
+                desc.path = field;
+                layout.sets[set][index] = desc;
+                path = field; block = set;
+                parse_type(table ? element : type);
             };
 
             auto global = Layout{};
-            parse_type(reflection->getGlobalParamsTypeLayout(), global);
+            parse_var(reflection->getGlobalParamsVarLayout(), global);
             for (auto i = 0; i < global.sets.size(); ++i) {
                 auto index = global.sets.size() > 1 ? "-" + std::to_string(i) : "";
                 auto postfix = ".global" + index + ".json";
@@ -219,7 +225,7 @@ namespace mtt::shader {
             }
 
             auto layout = Layout{};
-            parse_type(reflection->getEntryPointByIndex(0)->getTypeLayout(), layout);
+            parse_var(reflection->getEntryPointByIndex(0)->getVarLayout(), layout);
             for (auto i = 0; i < layout.sets.size(); ++i) {
                 auto postfix = "." + layout.names[i] + ".json";
                 stl::json::store((out / path).concat(postfix), layout.sets[i]);

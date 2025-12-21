@@ -10,7 +10,7 @@ namespace mtt::math {
             r.Origin = o;
             r.Direction = d;
             r.TMin = epsilon;
-            r.TMax = 65504;
+            r.TMax = 65504.f;
             return r;
         }
     }

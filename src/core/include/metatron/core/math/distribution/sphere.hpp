@@ -26,7 +26,7 @@ namespace mtt::math {
             auto z = u[0];
             auto r = math::sqrt(1 - z * z);
             auto phi = 2.f * pi * u[1];
-            return {r * std::cosf(phi), r * std::sin(phi), z};
+            return {r * std::cos(phi), r * std::sin(phi), z};
         }
 
         auto pdf() const noexcept -> f32 {

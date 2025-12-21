@@ -101,10 +101,12 @@ namespace mtt::renderer {
         struct Integrate final {
             math::Transform transform;
             photo::Film film;
+            Acceleration accel;
             Lens lens;
         } in{
             *entity<math::Transform>("/hierarchy/camera/render"),
             std::move(desc.film),
+            std::move(desc.accel),
             std::move(desc.lens),
         };
         global_args_encoder.acquire("global", resources.resources->addr);

@@ -7,7 +7,15 @@ namespace mtt::math {
         y = z;
     }
 
-    public func guarded_div(f32 x, f32 y) -> f32 {
-        return abs(y) < epsilon ? 0 : x / y;
+    public func guarded_div<T: __BuiltinFloatingPointType>(T x, T y) -> T {
+        return abs(y) < T(epsilon) ? T(0) : x / y;
+    }
+
+    public func sqrt<T: __BuiltinFloatingPointType>(T x) -> T {
+        return sqrt(max(T(0), x));
+    }
+
+    public func sqr<T: IArithmetic>(T x) -> T {
+        return x * x;
     }
 }

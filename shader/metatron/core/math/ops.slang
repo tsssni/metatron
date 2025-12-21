@@ -6,13 +6,13 @@ namespace mtt {
     }
 
     public fv3 operator*(math::Transform t, fv3 x) {
-        return normalize(mul(fv4(x, 0), t.transform).xyz);
+        return normalize(mul(fv4(x, 0.f), t.transform).xyz);
     }
 
     public math::Ray operator*(math::Transform t, math::Ray r) {
         var tr = r;
-        tr.o = (t * fv4(r.o, 1)).xyz;
-        tr.d = (t * fv4(r.d, 0)).xyz;
+        tr.o = (t * fv4(r.o, 1.f)).xyz;
+        tr.d = (t * fv4(r.d, 0.f)).xyz;
         return tr;
     }
 
@@ -29,13 +29,13 @@ namespace mtt {
     }
 
     public fv3 operator/(math::Transform t, fv3 x) {
-        return normalize(mul(fv4(x, 0), t.inv_transform).xyz);
+        return normalize(mul(fv4(x, 0.f), t.inv_transform).xyz);
     }
 
     public math::Ray operator/(math::Transform t, math::Ray r) {
         var tr = r;
-        tr.o = (t / fv4(r.o, 1)).xyz;
-        tr.d = (t / fv4(r.d, 0)).xyz;
+        tr.o = (t / fv4(r.o, 1.f)).xyz;
+        tr.d = (t / fv4(r.d, 0.f)).xyz;
         return tr;
     }
 
@@ -47,7 +47,7 @@ namespace mtt {
         return tr;
     }
 
-    public math::Bounding_Box operator|(math::Transform t, math::Bounding_Box bbox) {
+    public math::Bounding_Box operator*(math::Transform t, math::Bounding_Box bbox) {
         var tbox: math::Bounding_Box;
         for (var i = 0; i < 8; ++i) {
             var p: fv3;
