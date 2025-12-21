@@ -22,9 +22,9 @@ namespace mtt::accel {
     };
 
     struct Interaction final {
-        tag<Divider> divider{};
-        usize primitive{0uz};
-        opt<shape::Interaction> intr_opt{};
+        tag<Divider> divider = {};
+        u32 primitive = 0;
+        opt<shape::Interaction> intr_opt = {};
     };
 
     struct Acceleration final: pro::facade_builder

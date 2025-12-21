@@ -119,7 +119,7 @@ namespace mtt::shape {
     }
 
     auto Mesh::bounding_box(
-        cref<fm44> t, usize idx
+        cref<math::Transform> t, usize idx
     ) const noexcept -> math::Bounding_Box {
         auto prim = indices[idx];
         auto v = math::Vector<fv4, 3>{

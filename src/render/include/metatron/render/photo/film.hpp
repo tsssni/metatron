@@ -9,14 +9,14 @@ namespace mtt::photo {
     struct Film;
 
     struct Fixel final {
-        uv2 pixel;
+        uzv2 pixel;
         fv2 position;
         fv2 dxdy;
         f32 weight;
 
         Fixel(
             mut<Film> film,
-            cref<uv2> pixel,
+            cref<uzv2> pixel,
             cref<fv2> position,
             f32 weight
         ) noexcept;
@@ -53,7 +53,7 @@ namespace mtt::photo {
 
         auto operator()(
             view<filter::Filter> filter,
-            cref<uv2> pixel,
+            cref<uzv2> pixel,
             cref<fv2> u
         ) noexcept -> Fixel;
 

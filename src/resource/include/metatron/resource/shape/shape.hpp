@@ -27,7 +27,7 @@ namespace mtt::shape {
     struct Shape final: pro::facade_builder
     ::add_convention<shape_size, auto () const noexcept -> usize>
     ::add_convention<shape_bounding_box, auto (
-        cref<fm44> t, usize idx
+        cref<math::Transform> t, usize idx
     ) const noexcept -> math::Bounding_Box>
     ::add_convention<pro::operator_dispatch<"()">, auto (
         cref<math::Ray> r, cref<fv3> np, usize idx

@@ -18,9 +18,9 @@ namespace mtt::renderer {
         auto ct = *entity<math::Transform>("/hierarchy/camera/render");
         auto spp = desc.film.spp;
         auto depth = desc.film.depth;
-        auto size = uv2{desc.film.image.size};
+        auto size = uzv2{desc.film.image.size};
 
-        auto range = uv2{0u, addr.host.empty() ? spp : 1u};
+        auto range = uzv2{0uz, addr.host.empty() ? spp : 1uz};
         auto progress = stl::progress{math::prod(size) * spp};
         auto trace = [&](cref<uzv2> px) {
             auto sp = *desc.sampler;
@@ -60,7 +60,7 @@ namespace mtt::renderer {
         while (range[0] < spp) {
             stl::scheduler::instance().sync_parallel(uzv2{size}, trace);
             range[0] = range[1];
-            range[1] = math::min(spp, range[1] + next);
+            range[1] = math::min<usize>(spp, range[1] + next);
             next = math::min(next * 2uz, 64uz);
 
             auto finished = range[0] == spp;

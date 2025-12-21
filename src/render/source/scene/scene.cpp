@@ -27,7 +27,8 @@ namespace mtt::scene {
         light_init();
 
         auto renderer = obj<Renderer>();
-        hierarchy.filter([&renderer](auto bins){
+        auto gpu = args.device == "gpu";
+        hierarchy.filter([&renderer, &gpu](auto bins){
             auto key = std::string{"renderer"};
             if (!bins.contains(key))
                 stl::abort("renderer must be defined");
@@ -36,6 +37,14 @@ namespace mtt::scene {
             using Descriptor = Renderer::Descriptor;
             auto desc = Descriptor{};
             stl::json::load(j.serialized.str, desc);
+
+            if (gpu && !desc.accel.is<accel::HWBVH>()) {
+                stl::print("fallback to HWBVH on gpu");
+                desc.accel.emplace<accel::HWBVH>(accel::HWBVH::Descriptor{});
+            } else if (!gpu && desc.accel.is<accel::HWBVH>()) {
+                stl::print("fallback to LBVH on cpu");
+                desc.accel.emplace<accel::LBVH>(accel::LBVH::Descriptor{});
+            }
             renderer = make_obj<Renderer>(std::move(desc));
         });
         hierarchy.populate(args.scene);

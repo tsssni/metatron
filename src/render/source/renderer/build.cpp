@@ -23,8 +23,9 @@ namespace mtt::renderer {
                 auto prim = opaque::Acceleration::Primitive{
                     .type = opaque::Acceleration::Primitive::Type::aabb,
                 };
+                auto t = math::Transform{fm4{1.f}};
                 for (auto j = 0; j < shapes.get<T>(i)->size(); ++j)
-                    prim.aabbs.push_back(shapes.get<T>(i)->bounding_box(fm4{1.f}, j));
+                    prim.aabbs.push_back(shapes.get<T>(i)->bounding_box(t, j));
                 primitives.push_back(prim);
             }
         counts.push_back(counts.back() + shapes.size<T>());

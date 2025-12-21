@@ -14,7 +14,7 @@ namespace mtt::renderer {
         struct Descriptor final {
             photo::Film film = photo::Film::Descriptor{};
             Integrator integrator = monte_carlo::Volume_Path_Integrator{};
-            Acceleration accel = accel::LBVH{{}};
+            Acceleration accel = accel::HWBVH{{}};
             Emitter emitter = emitter::Uniform_Emitter{};
             Sampler sampler = sampler::Sobol_Sampler{};
             Filter filter = filter::Lanczos_Filter{{}};

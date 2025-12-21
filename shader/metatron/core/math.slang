@@ -1,8 +1,11 @@
 module math;
 __include math.arithmetic;
+__include math.bounding_box;
 __include math.constant;
+__include math.eval;
 __include math.ops;
 __include math.ray;
 __include math.transform;
+__include math.vector;
 __include math.distribution.disk;
 import prelude;

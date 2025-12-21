@@ -1,17 +1,6 @@
 import metatron;
 
 namespace mtt {
-    static const uint bindless_size = 8192;
-    struct Global {
-        Ptr<Ptr<byte>> vectors;
-        RaytracingAccelerationStructure accel;
-        SamplerState sampler;
-        SamplerState accessor;
-        Texture2D[bindless_size] textures;
-        Texture3D[bindless_size] grids;
-    }
-    ParameterBlock<Global> global;
-
     struct Integrate {
         math::Transform transform;
         photo::Film film;

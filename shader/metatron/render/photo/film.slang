@@ -1,5 +1,4 @@
 implementing photo;
-import metatron.core;
 
 namespace mtt::photo {
     public struct Fixel {

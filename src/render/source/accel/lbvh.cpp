@@ -17,8 +17,6 @@ namespace mtt::accel {
             u32 div_idx;
             u32 num_prims{0u};
         };
-        auto& args = scene::Args::instance();
-        if (args.device == "gpu") return;
 
         auto& divs = stl::vector<Divider>::instance();
         auto prims = std::vector<Primitive>{};
@@ -29,7 +27,7 @@ namespace mtt::accel {
             for (auto j = 0u; j < s->size(); ++j) {
                 auto lt = div->local_to_render;
                 prims.push_back(Primitive{
-                    .bbox = s->bounding_box(lt->transform, j),
+                    .bbox = s->bounding_box(*lt, j),
                     .instance = i,
                     .primitive = j,
                 });
@@ -143,7 +141,7 @@ namespace mtt::accel {
                     b[1] = math::merge(b[1], bbox);
                     c[1] += count;
                 }
-                auto s = math::foreach([](auto& bbox, usize i) {
+                auto s = math::foreach([](auto& bbox, auto) {
                     return math::area(bbox);
                 }, b);
                 sah[i] = 0.125f + math::sum(math::mul(s, c)) / math::area(root->bbox);

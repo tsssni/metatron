@@ -23,7 +23,7 @@ namespace mtt::shape {
 
         auto size() const noexcept -> usize;
         auto bounding_box(
-            cref<fm44> t, usize idx
+            cref<math::Transform> t, usize idx
         ) const noexcept -> math::Bounding_Box;
         auto operator()(
             cref<math::Ray> r, cref<fv3> np, usize idx

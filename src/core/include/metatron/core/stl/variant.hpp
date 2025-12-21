@@ -68,6 +68,9 @@ namespace mtt::stl {
         auto operator->() noexcept -> mut<F> {return data();}
         auto operator->() const noexcept -> mut<F> {return data();}
         auto operator*() const noexcept -> obj<F> {return clone();}
+
+        template<typename T>
+        auto is() const noexcept -> bool { return ts::template index<T> == idx; }
         auto index() const noexcept -> u32 {return idx;}
         auto size() const noexcept -> usize {return storage.size();}
 
