@@ -6,6 +6,15 @@ namespace mtt::photo {
         public fv2 position;
         public fv2 dxdy;
         public f32 weight;
+
+        public fv3 operator()(Film film, spectra::Stochastic_Spectrum spectrum) {
+            let xyz = fv3(
+                spectrum(film.r.get()),
+                spectrum(film.g.get()),
+                spectrum(film.b.get()),
+            );
+            return mul(film.color_space.get().from_XYZ, xyz);
+        }
     }
 
     public struct Film {
@@ -13,10 +22,10 @@ namespace mtt::photo {
         public u32 depth;
         public fv2 film_size;
         public fv2 dxdy;
-        public u32 color_space;
-        public u32 r;
-        public u32 g;
-        public u32 b;
+        public tag<spectra::Color_Space> color_space;
+        public spectra::Spectrum_Tag r;
+        public spectra::Spectrum_Tag g;
+        public spectra::Spectrum_Tag b;
 
         public Fixel operator()(
             u32 filter,

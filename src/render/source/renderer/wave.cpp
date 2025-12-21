@@ -102,11 +102,13 @@ namespace mtt::renderer {
             math::Transform transform;
             photo::Film film;
             Acceleration accel;
+            Emitter emitter;
             Lens lens;
         } in{
             *entity<math::Transform>("/hierarchy/camera/render"),
             std::move(desc.film),
             std::move(desc.accel),
+            std::move(desc.emitter),
             std::move(desc.lens),
         };
         global_args_encoder.acquire("global", resources.resources->addr);

@@ -87,8 +87,9 @@ namespace mtt::spectra {
 
         public f32 operator()(f32 lambda) {
             return s
-            * sigmoid(math::polynomial(lambda, c))
-            * (!illuminant.empty() ? (illuminant.get())(lambda) : 1.f);
+            * sigmoid(math::polynomial(lambda, c));
+            // TODO: solve recursion
+            // * (!illuminant.empty() ? (illuminant.get())(lambda) : 1.f);
         }
 
         func sigmoid(f32 x) -> f32 {

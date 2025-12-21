@@ -37,10 +37,10 @@ namespace mtt::light {
         f32 area;
         f32 w_sky;
 
-        matrix<f32, 11, 9> sky_params;
-        vector<f32, 11> sky_radiance;
-        matrix<fv4, 45, 11> sun_radiance;
-        matrix<f32, 11, 6> sun_limb;
+        Array<Array<f32, 9>, 11> sky_params;
+        Array<f32, 11> sky_radiance;
+        Array<Array<fv4, 11>, 45> sun_radiance;
+        Array<Array<f32, 6>, 11> sun_limb;
         Array<math::Truncated_Gaussian_Distribution, 20> tgmm_phi_distr;
         Array<math::Truncated_Gaussian_Distribution, 20> tgmm_theta_distr;
         math::Discrete_Distribution<20> tgmm_distr;

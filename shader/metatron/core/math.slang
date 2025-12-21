@@ -20,5 +20,6 @@ __include math.distribution.disk;
 __include math.distribution.gaussian;
 __include math.distribution.linear;
 __include math.distribution.piecewise;
+__include math.distribution.spectrum;
 __include math.distribution.sphere;
 import prelude;

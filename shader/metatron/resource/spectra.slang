@@ -5,6 +5,7 @@ __include spectra.color_space;
 __include spectra.discrete;
 __include spectra.ops;
 __include spectra.rgb;
+__include spectra.stochastic;
 __include spectra.transfer_function;
 __include spectra.visible;
 import metatron.core;
