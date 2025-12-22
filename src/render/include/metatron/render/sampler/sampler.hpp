@@ -3,12 +3,12 @@
 
 namespace mtt::sampler {
     struct Context final {
-        uzv2 pixel;
-        uzv2 size;
-        usize idx;
-        usize spp;
-        usize dim;
-        usize seed;
+        uv2 pixel;
+        uv2 size;
+        u32 idx;
+        u32 spp;
+        u32 dim;
+        u32 seed;
     };
 
     MTT_POLY_METHOD(sampler_start, start);

@@ -7,9 +7,9 @@
 namespace mtt::sampler {
     Halton_Sampler::Halton_Sampler(cref<Descriptor> desc) noexcept:
     exponential(desc.scale_exponential),
-    scale({1 << desc.scale_exponential[0], math::pow(3, desc.scale_exponential[1])}) {
+    scale({1u << desc.scale_exponential[0], math::pow(3u, desc.scale_exponential[1])}) {
         stride = scale[0] * scale[1];
-        scale_mulinv = scale * uzv2{
+        scale_mulinv = scale * uv2{
             math::multiplicative_inverse(scale[0], scale[1]),
             math::multiplicative_inverse(scale[1], scale[0])
         };
@@ -18,26 +18,26 @@ namespace mtt::sampler {
     auto Halton_Sampler::start(Context ctx) noexcept -> void {
         pixel = ctx.pixel;
         idx = ctx.idx;
-        dim = math::clamp(ctx.dim, 2uz, math::primes.size() - 1uz);
+        dim = math::clamp(ctx.dim, 2u, u32(math::primes.size()) - 1);
         seed = ctx.seed;
 
         // high num_exponetial bits of radical_inverse(halton_index) equals pixel % (base ^ num_exoinential),
         // so low num_exponetial bits of halton_index equals radical_inverse(pixel % (base ^ num_exoinetial))
         auto halton_low_digits = foreach([&](usize x, usize i) -> usize {
             return math::inverse_radical(x, math::primes[i], exponential[i]);
-        }, math::mod(iv2{pixel}, scale));
+        }, math::mod(pixel, scale));
 
         // halton_index≡halton_low_digits[i](mod base^num_exponential[i])
         // use precomputed multiplicative inverse of scale to evaluate CRT
         // halton_index = chinese_remainder_theorem(halton_low_digits, scale);
-        halton_idx = sum(halton_low_digits * scale_mulinv) % stride;
+        halton_idx = math::sum(halton_low_digits * scale_mulinv) % stride;
 
         // each sample has a LCM stride as we use math::primes as bases
         halton_idx += idx * stride;
     }
 
     auto Halton_Sampler::generate_1d() noexcept -> f32 {
-        if (dim >= math::primes.size()) dim = 2uz;
+        if (dim >= math::primes.size()) dim = 2;
         auto scrambled = math::owen_scrambled_radical_inverse(
             halton_idx, math::primes[dim], math::mix_bits(seed ^ dim)
         );

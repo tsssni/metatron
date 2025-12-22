@@ -213,7 +213,7 @@ namespace mtt::accel {
         stack = decltype(stack){std::move(storage)};
         stack.push(0u);
 
-        while(!stack.empty()) {
+        while (!stack.empty()) {
             auto idx = stack.top();
             stack.pop();
             auto node = &bvh[idx];

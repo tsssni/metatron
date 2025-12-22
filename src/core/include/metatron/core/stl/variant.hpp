@@ -9,31 +9,36 @@ namespace mtt::stl {
         using ts = stl::array<Ts...>;
         variant(cref<variant>) noexcept = delete;
         variant(rref<variant> rhs) noexcept {
-            destroy();
             idx = rhs.idx;
             if (idx != math::maxv<u32>) auto v = ((
             idx == ts::template index<Ts> ? (
                 std::construct_at(mut<Ts>(data(idx)), std::move(*mut<Ts>(rhs.data(idx))))
             , true) : false) || ...);
             rhs.idx = math::maxv<u32>; // skip destroy
-
         };
         ~variant() noexcept { destroy(); }
 
         template<typename T, typename... Args>
         requires std::is_constructible_v<T, Args...> && ts::template contains<T>
-        variant(Args&&... args) noexcept {emplace<T>(std::forward<Args>(args)...);};
+        variant(Args&&... args) noexcept {emplace<T>(std::forward<Args>(args)...);}
 
         template<typename T>
         requires ts::template contains<std::decay_t<T>>
-        variant(T&& x) noexcept {push<std::decay_t<T>>(std::forward<T>(x));};
+        variant(T&& x) noexcept {push(std::forward<T>(x));}
+
+        auto operator=(cref<variant>) noexcept -> variant& = delete;
+        auto operator=(rref<variant> rhs) noexcept -> variant& {
+            destroy();
+            std::construct_at(this, std::move(rhs));
+            return *this;
+        }
 
         template<typename T, typename... Args>
         requires std::is_constructible_v<T, Args...> && ts::template contains<T>
         auto emplace(Args&&... args) noexcept -> void {
             destroy();
             idx = ts::template index<T>;
-            std::construct_at((mut<T>)data(idx), std::forward<Args>(args)...);
+            std::construct_at(mut<T>(data(idx)), std::forward<Args>(args)...);
         }
 
         template<typename T>
@@ -71,6 +76,10 @@ namespace mtt::stl {
 
         template<typename T>
         auto is() const noexcept -> bool { return ts::template index<T> == idx; }
+        template<typename T>
+        auto get() noexcept -> mut<T> { return mut<T>(&storage[ts::template offset<T>]); }
+        template<typename T>
+        auto get() const noexcept -> view<T> { return view<T>(&storage[ts::template offset<T>]); }
         auto index() const noexcept -> u32 {return idx;}
         auto size() const noexcept -> usize {return storage.size();}
 

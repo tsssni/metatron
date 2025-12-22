@@ -208,7 +208,7 @@ namespace mtt::muldim {
         img.size = {
             usize(spec.width),
             usize(spec.height),
-            math::align(usize(spec.nchannels), 2),
+            math::align(usize(spec.nchannels), 2uz),
             spec.format.size(),
         };
         img.pixels.resize(std::bit_width(math::max(img.width, img.height)));

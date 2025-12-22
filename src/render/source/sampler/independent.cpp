@@ -7,7 +7,7 @@ namespace mtt::sampler {
         pixel = ctx.pixel;
         idx = ctx.idx;
         dim = ctx.dim;
-        rng = std::mt19937{u32(ctx.seed)};
+        rng = std::minstd_rand{u32(ctx.seed)};
     }
 
     auto Independent_Sampler::generate_1d() noexcept -> f32 {

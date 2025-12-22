@@ -103,20 +103,22 @@ namespace mtt::renderer {
             photo::Film film;
             Acceleration accel;
             Emitter emitter;
+            Sampler sampler;
             Lens lens;
         } in{
             *entity<math::Transform>("/hierarchy/camera/render"),
             std::move(desc.film),
             std::move(desc.accel),
             std::move(desc.emitter),
+            std::move(desc.sampler),
             std::move(desc.lens),
         };
         global_args_encoder.acquire("global", resources.resources->addr);
         integrate_args_encoder.acquire("in", in);
         integrate_args_encoder.acquire("in.image", *image);
         pipeline_encoder.dispatch({
-            math::align(image->width, 8) / 8,
-            math::align(image->height, 8) / 8,
+            math::align(image->width, 8u) / 8,
+            math::align(image->height, 8u) / 8,
         1});
 
         auto transfer_encoder = encoder::Transfer_Encoder{render.get()};

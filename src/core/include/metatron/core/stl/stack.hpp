@@ -58,24 +58,29 @@ namespace mtt {
     struct buf final: stl::buf {
         buf() noexcept: stl::buf() {}
         ~buf() noexcept { release(); reset(); }
-        buf(cref<buf> rhs) noexcept { *this = rhs; }
-        buf(rref<buf> rhs) noexcept { *this = std::move(rhs); }
+        buf(cref<buf> rhs) noexcept {
+            ptr = rhs.ptr;
+            handle = rhs.handle;
+            bytelen = rhs.bytelen;
+            idx = math::maxv<u32>;
+        }
+        buf(rref<buf> rhs) noexcept {
+            std::construct_at(this, rhs);
+            idx = rhs.idx;
+            stl::stack::instance().swap(this);
+            rhs.reset();
+        }
 
         operator std::span<T>() noexcept { return {data(), size()}; }
         operator std::span<T const>() const noexcept { return {data(), size()}; }
         auto operator=(cref<buf> rhs) noexcept -> ref<buf> {
             release();
-            ptr = rhs.ptr;
-            handle = rhs.handle;
-            bytelen = rhs.bytelen;
-            idx = math::maxv<u32>;
+            std::construct_at(this, rhs);
             return *this;
         }
         auto operator=(rref<buf> rhs) noexcept -> ref<buf> {
-            *this = rhs;
-            idx = rhs.idx;
-            stl::stack::instance().swap(this);
-            rhs.reset();
+            release();
+            std::construct_at(this, std::move(rhs));
             return *this;
         }
 

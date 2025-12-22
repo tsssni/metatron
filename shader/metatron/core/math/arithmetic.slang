@@ -29,4 +29,15 @@ namespace mtt::math {
     public func sqr<T: IArithmetic>(T x) -> T {
         return x * x;
     }
+
+    public func log2i(u32 x) -> u32 {
+        return firstbithigh(x);
+    }
+
+    public func bit_ceil(u32 x) -> u32 {
+        if (x == 0) return 1;
+        if (x == 1) return 1;
+        if ((x & (x - 1)) == 0) return x;
+        return 1u << (firstbithigh(x - 1) + 1);
+    }
 }

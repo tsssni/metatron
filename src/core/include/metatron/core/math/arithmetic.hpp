@@ -104,8 +104,7 @@ namespace mtt::math {
 
     template<typename T>
     auto constexpr log2i(T x) noexcept -> usize {
-        auto y = usize(x);
-        return std::bit_width(y) - 1uz;
+        return std::bit_width(usize(x)) - 1uz;
     }
 
     template<typename T>

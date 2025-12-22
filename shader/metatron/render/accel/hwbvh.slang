@@ -5,6 +5,7 @@ namespace mtt::accel {
         u32 idx;
 
         public func trace(math::Ray r, fv3 n) -> Optional<Interaction> {
+            return none;
             let vector = Ptr<Divider>(global.vectors[idx]);
             var rq: RayQuery;
             rq.TraceRayInline(global.accel, 0, 0xff, r.get());

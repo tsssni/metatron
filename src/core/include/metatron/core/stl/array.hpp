@@ -21,9 +21,9 @@ namespace mtt::stl {
         // assure aggregate layout
         template<typename T>
         auto constexpr static offset = [] -> usize {
-            auto size = 0;
-            auto offset = 0;
-            auto idx = 0;
+            auto size = 0uz;
+            auto offset = 0uz;
+            auto idx = 0uz;
             auto aligned = ((index<Ts> > index<T> ? false : ((
                 offset = math::align(size, alignof(Ts)),
                 size = offset + sizeof(Ts),

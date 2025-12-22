@@ -319,6 +319,31 @@ namespace mtt {
     public typedef i32m3 im3;
     public typedef i32m4 im4;
 
+    public typedef u8v1 bv1;
+    public typedef u8v2 bv2;
+    public typedef u8v3 bv3;
+    public typedef u8v4 bv4;
+    public typedef u8m11 bm11;
+    public typedef u8m12 bm12;
+    public typedef u8m13 bm13;
+    public typedef u8m14 bm14;
+    public typedef u8m21 bm21;
+    public typedef u8m22 bm22;
+    public typedef u8m23 bm23;
+    public typedef u8m24 bm24;
+    public typedef u8m31 bm31;
+    public typedef u8m32 bm32;
+    public typedef u8m33 bm33;
+    public typedef u8m34 bm34;
+    public typedef u8m41 bm41;
+    public typedef u8m42 bm42;
+    public typedef u8m43 bm43;
+    public typedef u8m44 bm44;
+    public typedef u8m1 bm1;
+    public typedef u8m2 bm2;
+    public typedef u8m3 bm3;
+    public typedef u8m4 bm4;
+
     public typedef u32v1 uv1;
     public typedef u32v2 uv2;
     public typedef u32v3 uv3;
@@ -343,6 +368,31 @@ namespace mtt {
     public typedef u32m2 um2;
     public typedef u32m3 um3;
     public typedef u32m4 um4;
+
+    public typedef u64v1 uzv1;
+    public typedef u64v2 uzv2;
+    public typedef u64v3 uzv3;
+    public typedef u64v4 uzv4;
+    public typedef u64m11 uzm11;
+    public typedef u64m12 uzm12;
+    public typedef u64m13 uzm13;
+    public typedef u64m14 uzm14;
+    public typedef u64m21 uzm21;
+    public typedef u64m22 uzm22;
+    public typedef u64m23 uzm23;
+    public typedef u64m24 uzm24;
+    public typedef u64m31 uzm31;
+    public typedef u64m32 uzm32;
+    public typedef u64m33 uzm33;
+    public typedef u64m34 uzm34;
+    public typedef u64m41 uzm41;
+    public typedef u64m42 uzm42;
+    public typedef u64m43 uzm43;
+    public typedef u64m44 uzm44;
+    public typedef u64m1 uzm1;
+    public typedef u64m2 uzm2;
+    public typedef u64m3 uzm3;
+    public typedef u64m4 uzm4;
 
     public typedef f32v1 fv1;
     public typedef f32v2 fv2;

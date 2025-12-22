@@ -11,7 +11,7 @@ namespace mtt::sampler {
     inline buf<u32> Sobol_Sampler::sobol_matrices;
 
     // avoid extra parameters uploaded to gpu
-    Sobol_Sampler::Sobol_Sampler() noexcept: matrices(sobol_matrices) {}
+    Sobol_Sampler::Sobol_Sampler() noexcept: matrices(std::span<u32>(sobol_matrices)) {}
 
     auto Sobol_Sampler::init() noexcept -> void {
         auto path = "sampler/sobol.bin";
@@ -20,7 +20,7 @@ namespace mtt::sampler {
         auto f = std::ifstream{data, std::ios::binary};
         if (!f.is_open()) stl::abort("{} not open", path);
 
-        auto size = 0uz;
+        auto size = 0ull;
         f.read(mut<char>(&size), sizeof(size));
         sobol_matrices = size;
         f.read(mut<char>(sobol_matrices.ptr), sobol_matrices.bytelen);
@@ -35,19 +35,19 @@ namespace mtt::sampler {
 
         dim = ctx.dim;
         seed = ctx.seed;
-        morton_idx = (morton_encode(uv2{ctx.pixel}) << log2_spp) | ctx.idx;
+        morton_idx = (math::morton_encode(ctx.pixel) << log2_spp) | ctx.idx;
     }
 
     auto Sobol_Sampler::generate_1d() noexcept -> f32 {
         auto idx = permute_idx();
         ++dim;
-        return sobol(idx, 0, math::hash(dim, seed));
+        return sobol(idx, 0, u32(math::murmur_hash(dim, seed)));
     }
 
     auto Sobol_Sampler::generate_2d() noexcept -> fv2 {
         auto idx = permute_idx();
         this->dim += 2;
-        auto bits = math::hash(dim, seed);
+        auto bits = math::murmur_hash(dim, seed);
         return {
             sobol(idx, 0, bits),
             sobol(idx, 1, bits >> 32),
@@ -58,7 +58,7 @@ namespace mtt::sampler {
         return generate_2d();
     }
 
-    auto Sobol_Sampler::permute_idx() noexcept -> usize {
+    auto Sobol_Sampler::permute_idx() noexcept -> u64 {
         auto constexpr permutations = bm<24, 4>{
             {0, 1, 2, 3},
             {0, 1, 3, 2},
@@ -86,7 +86,7 @@ namespace mtt::sampler {
             {3, 0, 1, 2}
         };
 
-        auto idx = 0uz;
+        auto idx = 0ull;
         // apply random permutations to full base-4 digits
         auto last_digit = log2_spp & 1;
         for (auto i = base4_digits - 1; i >= last_digit; --i) {
@@ -95,10 +95,8 @@ namespace mtt::sampler {
             auto digit = (morton_idx >> shift) & 3;
             // choose permutation p to use for digit
             auto higher_digits = morton_idx >> (shift + 2);
-            int p = (math::mix_bits(higher_digits ^ (0x55555555u * dim)) >> 24) % 24;
-
-            digit = permutations[p][digit];
-            idx |= u64(digit) << shift;
+            auto p = (math::mix_bits(higher_digits ^ (0x55555555u * dim)) >> 24) % 24;
+            idx |= u64(permutations[p][digit]) << shift;
         }
 
         // handle power-of-2 (but not 4) spp
@@ -109,7 +107,7 @@ namespace mtt::sampler {
         return idx;
     }
 
-    auto Sobol_Sampler::sobol(usize idx, i32 dim, u32 hash) noexcept -> f32 {
+    auto Sobol_Sampler::sobol(u64 idx, i32 dim, u32 hash) noexcept -> f32 {
         auto x = 0u;
         for (auto i = dim * sobol_matrix_size; idx != 0; idx >>= 1, ++i)
             if (idx & 1) x ^= matrices[i];

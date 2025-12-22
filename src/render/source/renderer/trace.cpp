@@ -20,12 +20,12 @@ namespace mtt::renderer {
         auto depth = desc.film.depth;
         auto size = uzv2{desc.film.image.size};
 
-        auto range = uzv2{0uz, addr.host.empty() ? spp : 1uz};
+        auto range = uv2{0u, addr.host.empty() ? spp : 1u};
         auto progress = stl::progress{math::prod(size) * spp};
         auto trace = [&](cref<uzv2> px) {
             auto sp = *desc.sampler;
             for (auto n = range[0]; n < range[1]; ++n) {
-                sp->start({px, size, n, spp, 0uz, seed});
+                sp->start({px, size, n, spp, 0, seed});
                 auto fixel = desc.film(desc.filter.data(), px, sp->generate_pixel_2d());
                 auto spec = spectra::Stochastic_Spectrum{sp->generate_1d()};
                 MTT_OPT_OR_CALLBACK(s, photo::Camera{}.sample(
@@ -60,7 +60,7 @@ namespace mtt::renderer {
         while (range[0] < spp) {
             stl::scheduler::instance().sync_parallel(uzv2{size}, trace);
             range[0] = range[1];
-            range[1] = math::min<usize>(spp, range[1] + next);
+            range[1] = math::min(spp, range[1] + next);
             next = math::min(next * 2uz, 64uz);
 
             auto finished = range[0] == spp;

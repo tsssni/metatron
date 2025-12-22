@@ -116,15 +116,15 @@ namespace mtt::stl {
 
             auto task = std::make_shared<std::function<void()>>([
                 f = std::forward<F>(f),
-                index_counter = std::make_shared<std::atomic<u32>>(0u),
-                dispatch_counter = std::make_shared<std::atomic<u32>>(0u),
+                index = std::make_shared<std::atomic<u32>>(0u),
+                dispatched = std::make_shared<std::atomic<u32>>(0u),
                 promise = std::move(promise),
                 grid,
                 n
             ]() mutable {
                 auto i = 0u;
-                auto dispatched = 0u;
-                while((i = index_counter->fetch_add(1)) < n) {
+                auto finished = 0u;
+                while ((i = index->fetch_add(1, std::memory_order::relaxed)) < n) {
                     if constexpr (size == 1) {
                         f(uzv<size>{i});
                     } else if constexpr (size == 2) {
@@ -139,10 +139,11 @@ namespace mtt::stl {
                             i % grid[2],
                         });
                     }
-                    ++dispatched;
+                    ++finished;
                 }
 
-                if (dispatched > 0u && dispatch_counter->fetch_add(dispatched) + dispatched == n)
+                if (finished == 0
+                && dispatched->fetch_add(finished, std::memory_order::acq_rel) + finished == n)
                     promise->set_value();
             });
 

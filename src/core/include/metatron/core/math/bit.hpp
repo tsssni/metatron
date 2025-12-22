@@ -19,7 +19,9 @@ namespace mtt::math {
         }
     }
 
-    auto constexpr align(usize size, usize alignment) noexcept -> usize {
+    template<typename T>
+    requires std::unsigned_integral<T>
+    auto constexpr align(T size, T alignment) noexcept -> T {
         if (!std::has_single_bit(alignment)) return 0;
         return (size + alignment - 1) & ~(alignment - 1);
     }

@@ -36,6 +36,7 @@ namespace mtt::scene {
 
             using Descriptor = Renderer::Descriptor;
             auto desc = Descriptor{};
+            auto sobol = desc.sampler.get<sampler::Sobol_Sampler>();
             stl::json::load(j.serialized.str, desc);
 
             if (gpu && !desc.accel.is<accel::HWBVH>()) {
