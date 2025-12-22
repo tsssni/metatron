@@ -1,7 +1,7 @@
 implementing math;
 
 namespace mtt::math {
-    func erf(f32 x) -> f32 {
+    public func erf(f32 x) -> f32 {
         let c0 = estrin<f32, 6>(sqr(x), {
             0x1.20dd74p+0, -0x1.812672p-2,
             0x1.ce0934p-4, -0x1.b5a334p-6,
@@ -19,7 +19,7 @@ namespace mtt::math {
         return select(abs(x) < 1, x * c0, copysign(select(isinf(xb), xb, 1.0), x));
     }
 
-    func erf(f64 x) -> f64 {
+    public func erf(f64 x) -> f64 {
         let c0 = estrin<f64, 12>(sqr(x), {
             0x1.20dd750429b6dp+0,  -0x1.812746b0379bcp-2,
             0x1.ce2f21a040d12p-4,  -0x1.b82ce311fa924p-6,
@@ -46,7 +46,7 @@ namespace mtt::math {
         return select(abs(x) < 1, x * c0, copysign(select(isinf(xb), xb, 1.0), x));
     }
 
-    func erfinv<T: __BuiltinFloatingPointType>(T x) -> T {
+    public func erfinv<T: __BuiltinFloatingPointType>(T x) -> T {
         let w = -log((T(1) - x) * (T(1) + x));
 
         let w1 = T(w) - T(2.5);
@@ -71,15 +71,15 @@ namespace mtt::math {
         return (w < T(5) ? p1 : p2) * x;
     }
 
-    func gaussian<T: __BuiltinFloatingPointType>(T x, T mu, T sigma) -> T {
+    public func gaussian<T: __BuiltinFloatingPointType>(T x, T mu, T sigma) -> T {
         return exp(-sqr(x - mu) / (T(2) * sqr(sigma))) / (sqrt(T(2 * pi)) * sigma);
     }
 
-    func gaussian_cdf(f32 x, f32 mu, f32 sigma) -> f32 {
+    public func gaussian_cdf(f32 x, f32 mu, f32 sigma) -> f32 {
         return f32(0.5) * (f32(1) + erf((x - mu) / sigma / sqrt(2)));
     }
 
-    func gaussian_cdf(f64 x, f64 mu, f64 sigma) -> f64 {
+    public func gaussian_cdf(f64 x, f64 mu, f64 sigma) -> f64 {
         return f64(0.5) * (f64(1) + erf((x - mu) / sigma / sqrt(f64(2))));
     }
 }

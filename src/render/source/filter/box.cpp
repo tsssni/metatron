@@ -10,6 +10,6 @@ namespace mtt::filter {
     auto Box_Filter::sample(cref<fv2> u) const noexcept -> opt<filter::Interaction> {
         auto p = math::lerp(-radius, radius, u);
         auto w = (*this)(p);
-        return filter::Interaction{p, w, 1.f / (4.f * radius[0] * radius[1])};
+        return Interaction{p, w, 1.f / (4.f * radius[0] * radius[1])};
     }
 }

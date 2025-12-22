@@ -5,4 +5,5 @@ __include photo.lens.intr;
 __include photo.lens;
 __include photo.lens.pinhole;
 __include photo.lens.thin;
+import filter;
 import metatron.resource;

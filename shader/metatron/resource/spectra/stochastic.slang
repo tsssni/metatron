@@ -9,7 +9,7 @@ namespace mtt::spectra {
             this.value = value;
         }
 
-        public __init(f32 u, f32 v) {
+        public __init(f32 u, f32 v = 0) {
             for (var i = 0; i < 4; ++i) {
                 let ui = fmod(u + f32(i) / 4.f, 1.f);
                 lambda[i] = math::Spectrum_Distribution().sample(ui);

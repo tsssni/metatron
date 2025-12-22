@@ -99,20 +99,16 @@ namespace mtt::renderer {
         pipeline_encoder.bind();
 
         struct Integrate final {
-            math::Transform transform;
-            photo::Film film;
-            Acceleration accel;
-            Emitter emitter;
-            Sampler sampler;
-            Lens lens;
+            Descriptor desc;
+            u32 seed;
+            math::Transform ct;
         } in{
+            std::move(desc),
+            std::random_device{}(),
             *entity<math::Transform>("/hierarchy/camera/render"),
-            std::move(desc.film),
-            std::move(desc.accel),
-            std::move(desc.emitter),
-            std::move(desc.sampler),
-            std::move(desc.lens),
         };
+        stl::print("seed: {}", in.seed);
+
         global_args_encoder.acquire("global", resources.resources->addr);
         integrate_args_encoder.acquire("in", in);
         integrate_args_encoder.acquire("in.image", *image);

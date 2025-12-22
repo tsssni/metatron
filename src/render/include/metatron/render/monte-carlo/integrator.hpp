@@ -15,9 +15,9 @@ namespace mtt::monte_carlo {
         math::Ray_Differential ray_differential;
         math::Ray_Differential default_differential;
         math::Transform render_to_camera;
-        uzv2 pixel;
-        usize sample_index;
-        usize max_depth;
+        uv2 pixel;
+        u32 sample_index;
+        u32 max_depth;
     };
 
     MTT_POLY_METHOD(integrator_sample, sample);

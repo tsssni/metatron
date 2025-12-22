@@ -17,6 +17,7 @@ __include math.quaternion;
 __include math.ray;
 __include math.sphere;
 __include math.transform;
+__include math.trigonometric;
 __include math.type;
 __include math.vector;
 __include math.distribution.cone;

@@ -46,11 +46,11 @@ namespace mtt::texture {
 
         func sample(math::Context ctx, fv2 u) -> fv2 {
             let vu = distr.sample(u);
-            return {vu.y, vu.x};
+            return vu.yx;
         }
 
         func pdf(fv2 uv) -> f32 {
-            return distr.pdf({uv.y, uv.x});
+            return distr.pdf(uv.yx);
         }
     }
 }
