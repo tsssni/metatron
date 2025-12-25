@@ -108,6 +108,7 @@ namespace mtt::command {
             std::vector<view<char>>{},
             std::vector<view<char>>{
                 "VK_KHR_timeline_semaphore",
+                "VK_EXT_descriptor_indexing",
             },
             std::vector<view<char>>{
                 "VK_KHR_buffer_device_address",
@@ -118,7 +119,6 @@ namespace mtt::command {
                 "VK_KHR_maintenance5",
             },
             std::vector<view<char>>{
-                "VK_EXT_descriptor_indexing",
                 "VK_EXT_descriptor_buffer",
                 "VK_KHR_deferred_host_operations",
                 "VK_KHR_acceleration_structure",

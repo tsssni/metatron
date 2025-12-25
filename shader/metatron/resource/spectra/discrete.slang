@@ -19,5 +19,5 @@ namespace mtt::spectra {
             / (lambda[idx + 1] - lambda[idx]);
             return lerp(storage[idx], storage[idx + 1], alpha);
         }
-    };
+    }
 }

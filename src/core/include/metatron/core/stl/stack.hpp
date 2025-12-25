@@ -10,7 +10,6 @@
 namespace mtt::stl {
     struct buf {
         mut<byte> ptr = nullptr;
-        uptr handle = 0; // store device object pointer
         u32 bytelen = 0;
         u32 idx = math::maxv<u32>;
 
@@ -60,7 +59,6 @@ namespace mtt {
         ~buf() noexcept { release(); reset(); }
         buf(cref<buf> rhs) noexcept {
             ptr = rhs.ptr;
-            handle = rhs.handle;
             bytelen = rhs.bytelen;
             idx = math::maxv<u32>;
         }

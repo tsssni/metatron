@@ -53,7 +53,7 @@ namespace mtt::light {
         auto a_high = a_low + 1;
         auto a_alpha = albedo - a_low;
 
-        auto load_sky = [&](mut<f32> storage, buf<f32> data) -> void {
+        auto load_sky = [&](ref<buf<f32>> storage, buf<f32> data, usize length) -> void {
             auto size = data.size();
             auto turbidity_size = size / sunsky_num_turbility;
             auto albedo_size = turbidity_size / sunsky_num_albedo;
@@ -67,17 +67,23 @@ namespace mtt::light {
             auto b0 = lerp(b00, b10, t_alpha);
             auto b1 = lerp(b01, b11, t_alpha);
             auto b = lerp(b0, b1, a_alpha);
-            std::memcpy(storage, b.data(), b.size() * sizeof(f32));
+            storage = length;
+            std::memcpy(storage.data(), b.data(), b.size() * sizeof(f32));
         };
 
         auto load_sun = [&]() {
-            auto& sun_table = *(fm<
+            using Radiance_Table = fm<
                 sunsky_num_turbility, sun_num_segments, sunsky_num_lambda, sun_num_ctls
-            >*)(sun_radiance_table.data());
+            >;
+            using Radiance = fm<sun_num_segments, sunsky_num_lambda, sun_num_ctls>;
+            using Limb = fm<sunsky_num_lambda, sun_num_limb_params>;
+            auto& sun_table = *mut<Radiance_Table>(sun_radiance_table.data());
             auto t0 = sun_table[t_low];
             auto t1 = sun_table[t_high];
-            sun_radiance = t0 * (1.f - t_alpha) + t1 * t_alpha;
-            sun_limb = *(fm<sunsky_num_lambda, sun_num_limb_params>*)(sun_limb_table.data());
+            sun_radiance = sun_num_segments * sunsky_num_lambda * sun_num_ctls;
+            sun_limb = sunsky_num_lambda * sun_num_limb_params;
+            *mut<Radiance>(sun_radiance.data()) = t0 * (1.f - t_alpha) + t1 * t_alpha;
+            *mut<Limb>(sun_limb.data()) = *mut<Limb>(sun_limb_table.data());
 
             auto bspec = spectra::Blackbody_Spectrum{desc.temperature};
             auto sun_scale = fv<sunsky_num_lambda>{};
@@ -94,10 +100,11 @@ namespace mtt::light {
             phi_sun = desc.direction[1];
             area = (1.f - std::cos(sun_aperture * 0.5f)) / (1.f - cos_sun);
             sun_distr = math::Cone_Distribution{cos_sun};
-            sky_radiance *= desc.intensity / ratio * sun_scale;
+            for (auto i = 0; i < sunsky_num_lambda; ++i)
+                sky_radiance[i] *= desc.intensity / ratio * sun_scale[i];
             for (auto i = 0; i < sun_num_segments; ++i)
                 for (auto j = 0; j < sunsky_num_lambda; ++j)
-                    sun_radiance[i][j] *= desc.intensity / ratio * sun_scale[j];
+                    (*mut<Radiance>(sun_radiance.data()))[i][j] *= desc.intensity / ratio * sun_scale[j];
         };
 
         // https://github.com/mitsuba-renderer/mitsuba3/blob/master/include/mitsuba/render/sunsky.h
@@ -128,7 +135,9 @@ namespace mtt::light {
                 tgmm_num_turbility, tgmm_num_segments, tgmm_num_mixture, tgmm_num_gaussian_params + 1
             >*)(tgmm_table.data());
 
-            auto w = std::array<f32, tgmm_num_gaussian>{};
+            auto w = std::vector<f32>(tgmm_num_gaussian);
+            tgmm_phi_distr = tgmm_num_gaussian;
+            tgmm_theta_distr = tgmm_num_gaussian;
             for (auto i = 0; i < tgmm_num_bilinear; ++i) {
                 auto [t, eta] = t_eta[i];
                 auto b = b_w[i];
@@ -140,11 +149,11 @@ namespace mtt::light {
                     w[idx] = w_g * b;
                 }
             }
-            tgmm_distr = std::move(w);
+            tgmm_distr = std::span<f32>{w};
         };
 
-        load_sky(sky_params.data(), sky_params_table);
-        load_sky(sky_radiance.data(), sky_radiance_table);
+        load_sky(sky_params, sky_params_table, sunsky_num_lambda * sky_num_params);
+        load_sky(sky_radiance, sky_radiance_table, sunsky_num_lambda);
         load_sun();
         load_tgmm();
 
@@ -297,7 +306,7 @@ namespace mtt::light {
 
     auto Sunsky_Light::hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
         auto gamma = math::acos(cos_gamma);
-        auto [A, B, C, D, E, F, G, I, H] = sky_params[idx];
+        auto [A, B, C, D, E, F, G, I, H] = *view<fv<9>>(&sky_params[idx * sky_num_params]);
         auto chi = [](f32 g, f32 cos_alpha) -> f32 {
             return math::guarded_div(
                 1.f + math::sqr(cos_alpha),
@@ -323,18 +332,19 @@ namespace mtt::light {
         auto x = eta - math::pi * 0.5f * math::pow(f32(segment) / f32(sun_num_segments), 3);
         auto L = 0.f;
         for (auto i = 0; i < sun_num_ctls; ++i)
-            L += sun_radiance[segment][idx][i] * math::pow(x, i);
+            L += sun_radiance[
+                segment * sunsky_num_lambda * sun_num_ctls + idx * sun_num_ctls
+            ] * math::pow(x, i);
         return L / spectra::CIE_Y_integral;
     }
 
     auto Sunsky_Light::hosek_limb(i32 idx, f32 cos_gamma) const noexcept -> f32 {
-        auto& sun_limb = *(fm<sunsky_num_lambda, sun_num_limb_params>*)(sun_limb_table.data());
         auto sin_gamma_sqr = 1.f - math::sqr(cos_gamma);
         auto cos_psi_sqr = 1.f - sin_gamma_sqr / (1.f - math::sqr(cos_sun));
         auto cos_psi = math::sqrt(cos_psi_sqr);
         auto l = 0.f;
         for (auto i = 0; i < sun_num_limb_params; ++i)
-            l += sun_limb[idx][i] * math::pow(cos_psi, i);
+            l += sun_limb[idx * sun_num_limb_params + i] * math::pow(cos_psi, i);
         return l;
     }
 

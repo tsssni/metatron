@@ -2,27 +2,17 @@ implementing light;
 
 namespace mtt::light {
     static i32 sunsky_num_lambda = 11;
-    static i32 sunsky_num_turbility = 10;
-    static i32 sunsky_num_albedo = 2;
     static Array<f32, 11> sunsky_lambda = {
         320.f, 360.f, 400.f, 440.f, 480.f, 520.f, 560.f, 600.f, 640.f, 680.f, 720.f
     };
     static f32 sunsky_step = 40.f;
     static i32 sky_num_params = 9;
-    static i32 sky_num_ctls = 6;
     static i32 sun_num_ctls = 4;
     static i32 sun_num_segments = 45;
     static i32 sun_num_limb_params = 6;
-    static f32 sun_aperture = 0.009351474132185619f;
-    static f32 sun_blackbody_scale = math::pi * 3.19992e-10f;
-    static Array<f32, 11> sun_perp_radiance = {
-        7500.0f, 12500.0f, 21127.5f, 26760.5f, 30663.7f, 27825.0f,
-        25503.8f, 25134.2f, 23212.1f, 21526.7f, 19870.8f,
-    };
-    static i32 tgmm_num_turbility = sunsky_num_turbility - 1;
+    
     static i32 tgmm_num_segments = 30;
     static i32 tgmm_num_mixture = 5;
-    static i32 tgmm_num_gaussian_params = 4;
     static i32 tgmm_num_bilinear = 4;
     static i32 tgmm_num_gaussian = tgmm_num_bilinear * tgmm_num_mixture;
 
@@ -37,13 +27,13 @@ namespace mtt::light {
         f32 area;
         f32 w_sky;
 
-        Array<Array<f32, 9>, 11> sky_params;
-        Array<f32, 11> sky_radiance;
-        Array<Array<fv4, 11>, 45> sun_radiance;
-        Array<Array<f32, 6>, 11> sun_limb;
-        Array<math::Truncated_Gaussian_Distribution, 20> tgmm_phi_distr;
-        Array<math::Truncated_Gaussian_Distribution, 20> tgmm_theta_distr;
-        math::Discrete_Distribution<20> tgmm_distr;
+        buf<f32> sky_params;
+        buf<f32> sky_radiance;
+        buf<f32> sun_radiance;
+        buf<f32> sun_limb;
+        buf<math::Truncated_Gaussian_Distribution> tgmm_phi_distr;
+        buf<math::Truncated_Gaussian_Distribution> tgmm_theta_distr;
+        math::Array_Distribution tgmm_distr;
         math::Cone_Distribution sun_distr;
 
         public Optional<Interaction> operator()(
@@ -145,15 +135,15 @@ namespace mtt::light {
 
         func hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) -> f32 {
             let gamma = acos(cos_gamma);
-            let A = sky_params[idx][0];
-            let B = sky_params[idx][1];
-            let C = sky_params[idx][2];
-            let D = sky_params[idx][3];
-            let E = sky_params[idx][4];
-            let F = sky_params[idx][5];
-            let G = sky_params[idx][6];
-            let I = sky_params[idx][7];
-            let H = sky_params[idx][8];
+            let A = sky_params[idx * sky_num_params + 0];
+            let B = sky_params[idx * sky_num_params + 1];
+            let C = sky_params[idx * sky_num_params + 2];
+            let D = sky_params[idx * sky_num_params + 3];
+            let E = sky_params[idx * sky_num_params + 4];
+            let F = sky_params[idx * sky_num_params + 5];
+            let G = sky_params[idx * sky_num_params + 6];
+            let I = sky_params[idx * sky_num_params + 7];
+            let H = sky_params[idx * sky_num_params + 8];
 
             struct {
                 f32 operator()(f32 g, f32 cos_alpha) {
@@ -183,7 +173,9 @@ namespace mtt::light {
             let x = eta - math::pi * 0.5f * pow(f32(segment) / f32(sun_num_segments), 3);
             var L = 0.f;
             for (var i = 0; i < sun_num_ctls; ++i)
-                L += sun_radiance[segment][idx][i] * pow(x, i);
+                L += sun_radiance[
+                    segment * sunsky_num_lambda * sun_num_ctls + idx * sun_num_ctls
+                ] * pow(x, i);
             return L / spectra::CIE_Y_integral;
         }
 
@@ -193,7 +185,7 @@ namespace mtt::light {
             let cos_psi = math::sqrt(cos_psi_sqr);
             var l = 0.f;
             for (var i = 0; i < sun_num_limb_params; ++i)
-                l += sun_limb[idx][i] * pow(cos_psi, i);
+                l += sun_limb[idx * sun_num_limb_params + i] * pow(cos_psi, i);
             return l;
         }
 

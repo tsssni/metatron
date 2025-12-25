@@ -10,6 +10,7 @@ namespace mtt {
         filter::Filter_Union filter;
         photo::Lens_Union lens;
         u32 seed;
+        uv2 range;
         math::Transform ct;
         RWTexture2D image;
     }
@@ -26,7 +27,7 @@ namespace mtt {
         var size: uv2;
         in.image.GetDimensions(size.x, size.y);
 
-        for (var i = 0; i < in.film.spp; ++i) {
+        for (var i = in.range.x; i < in.range.y; ++i) {
             sp.start({pixel, size, i, in.film.spp, 0, in.seed});
             let fixel = in.film(f, pixel, size, sp.generate_2d());
             let camera: photo::Camera;
@@ -39,10 +40,17 @@ namespace mtt {
             let a_opt = in.accel.get().trace(s.ray_differential.r, 0);
 
             if (a_opt == none || a_opt.value.intr_opt == none) {
-                let e = in.emitter.get().sample_infinite({}, sp.generate_1d()).value;
+                let e_opt = in.emitter.get().sample_infinite({}, sp.generate_1d());
+                if (e_opt == none) continue;
+                let e = e_opt.value;
+
                 let r = e.local_to_render.get() / s.ray_differential.r;
                 var st = spectra::Stochastic_Spectrum(sp.generate_1d());
-                st.value = e.light.get()(r, st.lambda).value.L;
+                let l_opt = e.light.get()(r, st.lambda);
+                if (l_opt == none) continue;
+
+                let l = l_opt.value;
+                st.value = l.L;
                 let rgb = fixel(in.film, st);
                 value += fv4(rgb / s.pdf * fixel.weight, fixel.weight);
                 continue;

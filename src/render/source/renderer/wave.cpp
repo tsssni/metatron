@@ -101,10 +101,12 @@ namespace mtt::renderer {
         struct Integrate final {
             Descriptor desc;
             u32 seed;
+            uv2 range;
             math::Transform ct;
         } in{
             std::move(desc),
             std::random_device{}(),
+            {0, 64},
             *entity<math::Transform>("/hierarchy/camera/render"),
         };
         stl::print("seed: {}", in.seed);

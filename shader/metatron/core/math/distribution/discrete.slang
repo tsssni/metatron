@@ -21,4 +21,15 @@ namespace mtt::math {
             return i;
         }
     }
+
+    public struct Array_Distribution {
+        public buf<f32> pdf;
+        public buf<f32> cdf;
+
+        public func sample(f32 u) -> u32 {
+            var i = 0u;
+            for (; i < pdf.size() && u > cdf[i + 1]; ++i);
+            return i;
+        }
+    }
 }
