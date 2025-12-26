@@ -10,6 +10,21 @@ namespace mtt::opaque {
     | vk::BufferUsageFlagBits2::eAccelerationStructureBuildInputReadOnlyKHR
     | vk::BufferUsageFlagBits2::eShaderDeviceAddress;
 
+    auto Buffer::Impl::search(vk::MemoryPropertyFlags flags, u32 heap, u32 type) -> u32 {
+        auto& ctx = command::Context::instance().impl;
+        auto i = 0u;
+        while (type > 0) {
+            if (!(type & 1)) {
+                ++i; type >>= 1;
+                continue;
+            }
+            auto mem = ctx->memory_props.memoryProperties.memoryTypes[i];
+            if (mem.heapIndex == heap && mem.propertyFlags & flags) return i;
+            ++i; type >>= 1;
+        }
+        stl::abort("no valid memory on heap {} with flags {:x}", heap, u32(flags));
+        return math::maxv<u32>;
+    }
 
     auto Buffer::Impl::update(cref<Barrier> desc) noexcept -> vk::BufferMemoryBarrier2 {
         auto barrier = this->barrier.update<vk::BufferMemoryBarrier2>(desc);
@@ -40,9 +55,9 @@ namespace mtt::opaque {
         };
 
         impl->device_buffer = command::guard(device.createBufferUnique(create));
-        auto size = device.getBufferMemoryRequirements2({
+        auto reqs = device.getBufferMemoryRequirements2({
             .buffer = impl->device_buffer.get(),
-        }).memoryRequirements.size;
+        }).memoryRequirements;
 
         auto infos = std::array<vk::BindBufferMemoryInfo, 2>{};
         auto& device_info = infos[0];
@@ -50,10 +65,14 @@ namespace mtt::opaque {
 
         if (desc.state != State::local || desc.ptr) {
             impl->host_buffer = command::guard(device.createBufferUnique(create));
+            auto type = impl->search(
+                vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible,
+                ctx->host_heap, reqs.memoryTypeBits
+            );
             auto alloc = vk::MemoryAllocateInfo{
                 .pNext = &flags,
-                .allocationSize = size,
-                .memoryTypeIndex = ctx->host_memory,
+                .allocationSize = reqs.size,
+                .memoryTypeIndex = type,
             };
             impl->host_memory = command::guard(device.allocateMemoryUnique(alloc));
             host_info = {
@@ -64,10 +83,14 @@ namespace mtt::opaque {
         }
 
         if (desc.state != State::visible) {
+            auto type = Impl::search(
+                vk::MemoryPropertyFlagBits::eDeviceLocal,
+                ctx->device_heap, reqs.memoryTypeBits
+            );
             auto alloc = vk::MemoryAllocateInfo{
                 .pNext = flags,
-                .allocationSize = size,
-                .memoryTypeIndex = ctx->device_memory,
+                .allocationSize = reqs.size,
+                .memoryTypeIndex = type,
             };
             impl->device_memory = command::guard(device.allocateMemoryUnique(alloc));
         }

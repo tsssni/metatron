@@ -25,8 +25,8 @@ namespace mtt::command {
         vk::PhysicalDeviceDescriptorBufferPropertiesEXT descriptor_buffer_props;
         vk::PhysicalDeviceAccelerationStructurePropertiesKHR accel_props;
 
-        u32 device_memory;
-        u32 host_memory;
+        u32 device_heap = math::maxv<u32>;
+        u32 host_heap = math::maxv<u32>;
 
         Impl() noexcept;
         ~Impl() noexcept;

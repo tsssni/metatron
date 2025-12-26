@@ -119,12 +119,15 @@ namespace mtt::opaque {
             .pQueueFamilyIndices = &impl->barrier.family,
         }));
 
-        auto size = device.getImageMemoryRequirements2({
+        auto reqs = device.getImageMemoryRequirements2({
             .image = impl->image.get(),
-        }).memoryRequirements.size;
+        }).memoryRequirements;
         auto alloc = vk::MemoryAllocateInfo{
-            .allocationSize = size,
-            .memoryTypeIndex = ctx->device_memory,
+            .allocationSize = reqs.size,
+            .memoryTypeIndex = Buffer::Impl::search(
+                vk::MemoryPropertyFlagBits::eDeviceLocal,
+                ctx->device_heap, reqs.memoryTypeBits
+            ),
         };
         impl->memory = command::guard(device.allocateMemoryUnique(alloc));
 

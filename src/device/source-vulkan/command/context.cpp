@@ -209,8 +209,6 @@ namespace mtt::command {
 
     auto Context::Impl::init_memory() noexcept -> void {
         auto props = memory_props.memoryProperties;
-        auto device_heap = math::maxv<u32>;
-        auto host_heap = math::maxv<u32>;
         for (auto i = 0; i < props.memoryHeapCount; ++i) {
             auto& heap = props.memoryHeaps[i];
             auto local = vk::MemoryHeapFlagBits::eDeviceLocal;
@@ -221,24 +219,6 @@ namespace mtt::command {
         }
         if (host_heap == math::maxv<u32>) host_heap = device_heap;
         if (device_heap == math::maxv<u32>) stl::abort("no vulkan device local heap");
-
-        auto device_type = math::maxv<u32>;
-        auto host_type = math::maxv<u32>;
-        for (auto i = 0; i < props.memoryTypeCount; ++i) {
-            auto& type = props.memoryTypes[i];
-            auto init_type = [&type, i](ref<u32> t, u32 heap, vk::MemoryPropertyFlags flags) {
-                if (true
-                && t == math::maxv<u32>
-                && type.heapIndex == heap
-                && type.propertyFlags & flags) t = i;
-            };
-            init_type(device_type, device_heap, vk::MemoryPropertyFlagBits::eDeviceLocal);
-            init_type(host_type, host_heap, vk::MemoryPropertyFlagBits::eHostCoherent);
-        }
-        if (device_type == math::maxv<u32> || host_type == math::maxv<u32>)
-            stl::abort("no vulkan local or visible memory type");
-        device_memory = device_type;
-        host_memory = host_type;
     }
 
     auto Context::Impl::init_pipeline_cache() noexcept -> void {

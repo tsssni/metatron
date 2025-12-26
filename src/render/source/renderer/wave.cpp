@@ -107,7 +107,7 @@ namespace mtt::renderer {
         } in{
             std::move(desc),
             std::random_device{}(),
-            {0, 64},
+            {0, 1},
             *entity<math::Transform>("/hierarchy/camera/render"),
         };
         stl::print("seed: {}", in.seed);
