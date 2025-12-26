@@ -4,8 +4,8 @@
 
 namespace mtt::math {
     struct Linear_Distribution final {
-        Linear_Distribution(f32 a, f32 b) noexcept
-        : a(a), b(b) {}
+        Linear_Distribution(f32 a, f32 b) noexcept:
+        a(a), b(b) {}
 
         auto sample(f32 u) const noexcept -> f32 {
             auto a2 = a * a;
@@ -24,8 +24,8 @@ namespace mtt::math {
     };
 
     struct Bilinear_Distribution final {
-        Bilinear_Distribution(f32 a, f32 b, f32 c, f32 d) noexcept
-        : a(a), b(b), c(c), d(d) {}
+        Bilinear_Distribution(f32 a, f32 b, f32 c, f32 d) noexcept:
+        a(a), b(b), c(c), d(d) {}
 
         auto sample(cref<fv2> u) const noexcept -> fv2 {
             auto x = Linear_Distribution{a + b, c + d}.sample(u[0]);

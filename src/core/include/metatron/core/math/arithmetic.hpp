@@ -5,13 +5,13 @@
 namespace mtt::math {
     template<typename... Ts>
     requires (std::totally_ordered<Ts> && ...)
-    auto constexpr min(Ts... xs) noexcept requires(sizeof...(xs) > 1) {
+    auto constexpr min(Ts... xs) noexcept requires(sizeof...(xs) >= 1) {
         return std::min({xs...});
     }
 
     template<typename... Ts>
     requires (std::totally_ordered<Ts> && ...)
-    auto constexpr max(Ts... xs) noexcept requires(sizeof...(xs) > 1) {
+    auto constexpr max(Ts... xs) noexcept requires(sizeof...(xs) >= 1) {
         return std::max({xs...});
     }
 
@@ -36,7 +36,13 @@ namespace mtt::math {
     auto constexpr isinf(T x) noexcept -> bool {
         return std::isinf(x);
     }
-
+    
+    template<typename T>
+    requires std::floating_point<T>
+    auto constexpr saturate(T x) noexcept -> T {
+        if (isnan(x) || isinf(x)) return T(0);
+        return clamp(x, T(0), T(1));
+    }
 
     template<typename T>
     requires std::floating_point<T> || std::integral<T>
@@ -98,8 +104,7 @@ namespace mtt::math {
 
     template<typename T>
     auto constexpr log2i(T x) noexcept -> usize {
-        auto y = usize(x);
-        return std::bit_width(y) - 1uz;
+        return std::bit_width(usize(x)) - 1uz;
     }
 
     template<typename T>

@@ -1,2 +1,2 @@
 extend(argparse)
-list(APPEND metatron-deps argparse::argparse)
+list(APPEND deps argparse::argparse)

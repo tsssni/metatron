@@ -7,10 +7,10 @@ namespace mtt::math {
     template<typename T>
     requires std::floating_point<T>
     auto erfinv(T x) noexcept -> T {
-        auto w = -std::log((T{1} - x) * (T{1} + x));
+        auto w = -std::log((T(1) - x) * (T(1) + x));
 
-        auto w1 = w - T{2.5};
-        auto w2 = math::sqrt(w) - T{3};
+        auto w1 = w - T(2.5);
+        auto w2 = math::sqrt(w) - T(3);
 
         auto p1 = T(polynomial(w1, Vector<T, 9>{
             1.50140941,     0.246640727,
@@ -28,18 +28,18 @@ namespace mtt::math {
             -0.000200214257
         }));
 
-        return (w < T{5} ? p1 : p2) * x;
+        return (w < T(5) ? p1 : p2) * x;
     }
 
     template<typename T>
     requires std::floating_point<T>
     auto gaussian(T x, T mu, T sigma) noexcept -> T {
-        return std::exp(-math::sqr(x - mu) / (T{2} * math::sqr(sigma))) / (math::sqrt(T{2} * pi) * sigma);
+        return std::exp(-sqr(x - mu) / (T(2) * sqr(sigma))) / (sqrt(T(2) * pi) * sigma);
     }
 
     template<typename T>
     requires std::floating_point<T>
     auto gaussian_cdf(T x, T mu, T sigma) noexcept -> T {
-        return T{0.5} * (T{1} + std::erf((x - mu) / sigma / math::sqrt(T{2})));
+        return T(0.5) * (T(1) + std::erf((x - mu) / sigma / sqrt(T(2))));
     }
 }

@@ -12,7 +12,7 @@ namespace mtt::filter {
 
     struct Filter final: pro::facade_builder
     ::add_convention<pro::operator_dispatch<"()">, auto (cref<fv2> p) const noexcept -> f32>
-    ::add_convention<filter_sample, auto (cref<fv2> u) const -> opt<filter::Interaction>>
+    ::add_convention<filter_sample, auto (cref<fv2> u) const -> opt<Interaction>>
     ::add_skill<pro::skills::as_view>
     ::build {};
 }

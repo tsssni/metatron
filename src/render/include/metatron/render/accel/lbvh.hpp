@@ -17,7 +17,7 @@ namespace mtt::accel {
             union { i32 num_prims; u32 axis; };
         };
 
-        struct Descriptor final {usize num_guide_leaf_prims = 4;};
+        struct Descriptor final {u32 num_guide_leaf_prims = 4;};
         LBVH(cref<Descriptor> desc) noexcept;
 
         auto operator()(

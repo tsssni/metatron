@@ -14,7 +14,7 @@ namespace mtt::filter {
         auto sample(cref<fv2> u) const noexcept -> opt<Interaction>;
 
     private:
-        math::Piecewise_Distribution<2> piecewise;
+        math::Planar_Distribution piecewise;
         fv2 radius;
         f32 sigma;
     };

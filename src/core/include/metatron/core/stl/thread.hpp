@@ -88,9 +88,21 @@ namespace mtt::stl {
             return future;
         }
 
+        auto static index() noexcept -> usize {
+            auto static thread_local tid = math::maxv<u32>;
+            auto static aid = std::atomic<u32>{0};
+            if (tid == math::maxv<u32>) tid = aid.fetch_add(1);
+            return tid;
+        }
+
+        auto size() noexcept -> usize { return threads.size() + 1; }
+
     private:
         template<typename F, usize size>
-        requires (std::is_invocable_v<F, math::Vector<usize, size>> && size >= 1 && size <= 3)
+        requires (true
+        && std::is_invocable_v<F, math::Vector<usize, size>>
+        && std::same_as<std::invoke_result_t<F, math::Vector<usize, size>>, void>
+        && size >= 1 && size <= 3)
         auto parallel(
             cref<uzv<size>> grid, F&& f, bool sync
         ) noexcept -> std::shared_future<void> {
@@ -104,15 +116,15 @@ namespace mtt::stl {
 
             auto task = std::make_shared<std::function<void()>>([
                 f = std::forward<F>(f),
-                index_counter = std::make_shared<std::atomic<u32>>(0u),
-                dispatch_counter = std::make_shared<std::atomic<u32>>(0u),
+                index = std::make_shared<std::atomic<u32>>(0u),
+                dispatched = std::make_shared<std::atomic<u32>>(0u),
                 promise = std::move(promise),
                 grid,
                 n
             ]() mutable {
                 auto i = 0u;
-                auto dispatched = 0u;
-                while((i = index_counter->fetch_add(1)) < n) {
+                auto finished = 0u;
+                while ((i = index->fetch_add(1, std::memory_order::relaxed)) < n) {
                     if constexpr (size == 1) {
                         f(uzv<size>{i});
                     } else if constexpr (size == 2) {
@@ -127,10 +139,11 @@ namespace mtt::stl {
                             i % grid[2],
                         });
                     }
-                    ++dispatched;
+                    ++finished;
                 }
 
-                if (dispatched > 0u && dispatch_counter->fetch_add(dispatched) + dispatched == n)
+                if (finished == 0
+                && dispatched->fetch_add(finished, std::memory_order::acq_rel) + finished == n)
                     promise->set_value();
             });
 

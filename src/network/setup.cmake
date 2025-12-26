@@ -1,1 +1,1 @@
-list(APPEND metatron-deps resource tevipc)
+list(APPEND deps resource tevipc)

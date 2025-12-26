@@ -7,7 +7,7 @@ namespace mtt::math {
         auto constexpr n_rec = (n - 1) / 2, n_fma = n / 2;
 
         auto c_rec = Vector<T, n_rec + 1>{};
-        for (size_t i = 0; i < n_fma; ++i)
+        for (auto i = 0; i < n_fma; ++i)
             c_rec[i] = std::fma(x, c[2 * i + 1], c[2 * i]);
 
         if constexpr (n_rec == n_fma) c_rec[n_rec] = c[n - 1];

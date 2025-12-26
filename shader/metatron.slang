@@ -1,2 +1,2 @@
 module metatron;
-__exported import metatron.core;
+__exported import metatron.render;

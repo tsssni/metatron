@@ -8,8 +8,8 @@ namespace mtt::math {
     using Vector = Matrix<T, size>;
 
     template<typename Func, typename... Ts, usize size>
-    auto constexpr foreach(Func f, cref<Vector<Ts, size>>... vectors)
-    noexcept -> Vector<decltype(f(vectors[0]..., 0uz)), size> {
+    auto constexpr foreach(Func f, cref<Vector<Ts, size>>... vectors) noexcept
+    -> Vector<decltype(f(vectors[0]..., 0uz)), size> {
         using Return_Type = decltype(f(vectors[0]..., 0uz));
         auto r = Vector<Return_Type, size>{};
         for (auto i = 0uz; i < size; ++i)
@@ -303,6 +303,14 @@ namespace mtt::math {
     auto constexpr clamp(cref<Vector<T, size>> x, cref<Vector<T, size>> l, cref<Vector<T, size>> r) noexcept -> Vector<T, size> {
         return foreach([&](cref<T> v, usize i) noexcept -> T {
             return clamp(v, l[i], r[i]);
+        }, x);
+    }
+
+    template<typename T, usize size>
+    requires std::totally_ordered<T>
+    auto constexpr saturate(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
+        return foreach([&](cref<T> v, usize i) noexcept -> T {
+            return saturate(v);
         }, x);
     }
 

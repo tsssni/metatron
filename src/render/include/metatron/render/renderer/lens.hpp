@@ -4,7 +4,7 @@
 #include <metatron/render/photo/lens/pinhole.hpp>
 #include <metatron/render/photo/lens/thin.hpp>
 #include <metatron/core/stl/variant.hpp>
-#include <glaze/glaze.hpp>
+#include <metatron/core/stl/json.hpp>
 
 namespace mtt::renderer {
     using Lens = stl::variant<
@@ -17,8 +17,8 @@ namespace mtt::renderer {
 namespace glz {
     template<>
     struct meta<mtt::renderer::underlying_variant_t<mtt::renderer::Lens>> {
-        auto static constexpr tag = std::string_view{"variant"};
-        auto static constexpr ids = std::array{
+        auto constexpr static tag = std::string_view{"variant"};
+        auto constexpr static ids = std::array{
             "pinhole",
             "thin",
         };

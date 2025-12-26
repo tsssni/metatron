@@ -86,8 +86,8 @@ namespace mtt::math {
                 inv_transform = inv_transform | t.inv_transform;
         }
 
-        explicit Transform(cref<fm44> m)
-        : transform(m), inv_transform(math::inverse(m)) {}
+        explicit Transform(cref<fm44> m):
+        transform(m), inv_transform(math::inverse(m)) {}
 
         explicit operator fm44() const {
             return transform;

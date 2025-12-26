@@ -3,7 +3,7 @@
 #include <metatron/render/emitter/emitter.hpp>
 #include <metatron/render/emitter/uniform.hpp>
 #include <metatron/core/stl/variant.hpp>
-#include <glaze/glaze.hpp>
+#include <metatron/core/stl/json.hpp>
 
 namespace mtt::renderer {
     using Emitter = stl::variant<
@@ -15,8 +15,8 @@ namespace mtt::renderer {
 namespace glz {
     template<>
     struct meta<mtt::renderer::underlying_variant_t<mtt::renderer::Emitter>> {
-        auto static constexpr tag = std::string_view{"variant"};
-        auto static constexpr ids = std::array{
+        auto constexpr static tag = std::string_view{"variant"};
+        auto constexpr static ids = std::array{
             "uniform",
         };
     };

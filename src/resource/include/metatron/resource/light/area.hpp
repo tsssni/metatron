@@ -6,7 +6,7 @@
 namespace mtt::light {
     struct Area_Light final {
         tag<shape::Shape> shape;
-        usize primitive;
+        u32 primitive;
 
         auto operator()(
             cref<math::Ray> r, cref<fv4> lambda
