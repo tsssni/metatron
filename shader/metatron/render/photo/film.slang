@@ -9,9 +9,9 @@ namespace mtt::photo {
 
         public fv3 operator()(Film film, spectra::Stochastic_Spectrum spectrum) {
             let xyz = fv3(
-                spectrum(film.r.get()),
-                spectrum(film.g.get()),
-                spectrum(film.b.get()),
+                spectrum(film.r),
+                spectrum(film.g),
+                spectrum(film.b),
             );
             return mul(film.color_space.get().from_XYZ, xyz);
         }

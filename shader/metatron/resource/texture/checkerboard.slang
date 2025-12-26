@@ -13,7 +13,7 @@ namespace mtt::texture {
             let uv = uv2(coord.uv * uv_scale);
             let u = uv.x; let v = uv.y;
             let z = ((u + v) % 2 == 0) ? x : y;
-            return spec & z.get();
+            return spec & z;
         }
 
         func sample(math::Context ctx, fv2 u) -> fv2 {

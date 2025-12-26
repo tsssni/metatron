@@ -4,7 +4,7 @@ namespace mtt::texture {
     struct Constant_Spectrum_Texture: Spectrum_Texture {
         spectra::Spectrum_Tag x;
         fv4 operator()(Coordinate coord, fv4 spec) {
-            return spec & x.get();
+            return spec & x;
         }
         func sample(math::Context ctx, fv2 u) -> fv2 { return u; }
         func pdf(fv2 uv) -> f32 { return 1.f; }

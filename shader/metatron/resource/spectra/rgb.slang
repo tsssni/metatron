@@ -66,7 +66,7 @@ namespace mtt::spectra {
 
             struct Coefficient {
                 i32 xi; i32 yi; i32 zi;
-                i32 maxc; Color_Space cs;
+                i32 maxc; Ptr<Color_Space> cs;
 
                 f32 operator()(i32 dx, i32 dy, i32 dz) {
                     return cs.table[0

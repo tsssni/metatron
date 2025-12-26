@@ -12,7 +12,7 @@ namespace mtt::light {
         }
 
         public func sample(math::Context ctx, fv2 u) -> Optional<Interaction> {
-            let s_opt = shape.get().sample(ctx, u, primitive);
+            let s_opt = shape.sample(ctx, u, primitive);
             if (s_opt == none) return none;
             let s_intr = s_opt.value;
             return Interaction(

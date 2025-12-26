@@ -24,7 +24,7 @@ namespace mtt::light {
             );
 
             return Interaction(
-                (ctx.lambda & L.get()) * intensity / (r * r),
+                (ctx.lambda & L) * intensity / (r * r),
                 wi,
                 {0.f},
                 r,

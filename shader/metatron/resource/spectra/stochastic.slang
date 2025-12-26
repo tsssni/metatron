@@ -17,7 +17,7 @@ namespace mtt::spectra {
             value = {v};
         }
 
-        public f32 operator()(Spectrum s) {
+        public f32 operator()<T: Spectrum>(T s) {
             var pdf: fv4;
             for (var i = 0; i < 4; ++i)
                 pdf[i] = math::Spectrum_Distribution().pdf(lambda[i]);

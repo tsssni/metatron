@@ -18,15 +18,15 @@ namespace mtt::spectra {
         public f32 operator()(f32 lambda);
     }
 
-    public struct Spectrum_Tag {
+    public struct Spectrum_Tag: Spectrum {
         tag<byte> idx = {};
 
-        public func get() -> Spectrum {
-            if (idx.type() == 0) return tag<Constant_Spectrum>(idx).get();
-            else if (idx.type() == 1) return tag<Rgb_Spectrum>(idx).get();
-            else if (idx.type() == 2) return tag<Blackbody_Spectrum>(idx).get();
-            else if (idx.type() == 3) return tag<Visible_Spectrum>(idx).get();
-            else if (idx.type() == 4) return tag<Discrete_Spectrum>(idx).get();
+        public f32 operator()(f32 lambda) {
+            if (idx.type() == 0) return tag<Constant_Spectrum>(idx).get()(lambda);
+            else if (idx.type() == 1) return tag<Rgb_Spectrum>(idx).get()(lambda);
+            else if (idx.type() == 2) return tag<Blackbody_Spectrum>(idx).get()(lambda);
+            else if (idx.type() == 3) return tag<Visible_Spectrum>(idx).get()(lambda);
+            else if (idx.type() == 4) return tag<Discrete_Spectrum>(idx).get()(lambda);
             else return {};
         }
 

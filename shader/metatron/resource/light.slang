@@ -33,16 +33,37 @@ namespace mtt::light {
         public func flags() -> Flags;
     }
 
-    public struct Light_Tag {
+    public struct Light_Tag: Light {
         tag<byte> idx;
+        public Optional<Interaction> operator()(
+            math::Ray r, fv4 lambda
+        ) {
+            if (idx.type() == 0) return tag<Parallel_Light>(idx).get()(r, lambda);
+            else if (idx.type() == 1) return tag<Point_Light>(idx).get()(r, lambda);
+            else if (idx.type() == 2) return tag<Spot_Light>(idx).get()(r, lambda);
+            else if (idx.type() == 3) return tag<Area_Light>(idx).get()(r, lambda);
+            else if (idx.type() == 4) return tag<Environment_Light>(idx).get()(r, lambda);
+            else if (idx.type() == 5) return tag<Sunsky_Light>(idx).get()(r, lambda);
+            else return {};
+        }
 
-        public func get() -> Light {
-            if (idx.type() == 0) return tag<Parallel_Light>(idx).get();
-            else if (idx.type() == 1) return tag<Point_Light>(idx).get();
-            else if (idx.type() == 2) return tag<Spot_Light>(idx).get();
-            else if (idx.type() == 3) return tag<Area_Light>(idx).get();
-            else if (idx.type() == 4) return tag<Environment_Light>(idx).get();
-            else if (idx.type() == 5) return tag<Sunsky_Light>(idx).get();
+        public func sample(math::Context ctx, fv2 u) -> Optional<Interaction> {
+            if (idx.type() == 0) return tag<Parallel_Light>(idx).get().sample(ctx, u);
+            else if (idx.type() == 1) return tag<Point_Light>(idx).get().sample(ctx, u);
+            else if (idx.type() == 2) return tag<Spot_Light>(idx).get().sample(ctx, u);
+            else if (idx.type() == 3) return tag<Area_Light>(idx).get().sample(ctx, u);
+            else if (idx.type() == 4) return tag<Environment_Light>(idx).get().sample(ctx, u);
+            else if (idx.type() == 5) return tag<Sunsky_Light>(idx).get().sample(ctx, u);
+            else return {};
+        }
+
+        public func flags() -> Flags {
+            if (idx.type() == 0) return tag<Parallel_Light>(idx).get().flags();
+            else if (idx.type() == 1) return tag<Point_Light>(idx).get().flags();
+            else if (idx.type() == 2) return tag<Spot_Light>(idx).get().flags();
+            else if (idx.type() == 3) return tag<Area_Light>(idx).get().flags();
+            else if (idx.type() == 4) return tag<Environment_Light>(idx).get().flags();
+            else if (idx.type() == 5) return tag<Sunsky_Light>(idx).get().flags();
             else return {};
         }
     }

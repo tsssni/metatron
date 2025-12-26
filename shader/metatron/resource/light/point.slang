@@ -12,7 +12,7 @@ namespace mtt::light {
             let wi = normalize(-ctx.r.o);
             let r = length(ctx.r.o);
             return Interaction(
-                (ctx.lambda & L.get()) / (r * r),
+                (ctx.lambda & L) / (r * r),
                 wi,
                 {0.f},
                 r,

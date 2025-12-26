@@ -31,14 +31,14 @@ namespace mtt::accel {
         public func trace(math::Ray r, fv3 n) -> Optional<Interaction>;
     }
 
-    public struct Acceleration_Union {
+    public struct Acceleration_Union: Acceleration {
         LBVH lbvh;
         HWBVH hwbvh;
         u32 idx;
 
-        public func get() -> Acceleration {
-            if (idx == 0) return lbvh;
-            else if (idx == 1) return hwbvh;
+        public func trace(math::Ray r, fv3 n) -> Optional<Interaction> {
+            if (idx == 0) return lbvh.trace(r, n);
+            else if (idx == 1) return hwbvh.trace(r, n);
             else return {};
         }
     }

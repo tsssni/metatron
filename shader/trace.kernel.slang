@@ -21,8 +21,8 @@ namespace mtt {
         ParameterBlock<Integrate> in,
     ) -> void {
         var value = fv4(0);
-        var sp = in.sampler.get();
-        let f = in.filter.get();
+        var sp = in.sampler;
+        let f = in.filter;
         let pixel = global_idx.xy;
         var size: uv2;
         in.image.GetDimensions(size.x, size.y);
@@ -31,22 +31,22 @@ namespace mtt {
             sp.start({pixel, size, i, in.film.spp, 0, in.seed});
             let fixel = in.film(f, pixel, size, sp.generate_2d());
             let camera: photo::Camera;
-            let s_opt = camera.sample(in.lens.get(), fixel.position, fixel.dxdy, sp.generate_2d());
+            let s_opt = camera.sample(in.lens, fixel.position, fixel.dxdy, sp.generate_2d());
             if (s_opt == none) continue;
 
             var s = s_opt.value;
             s.ray_differential = in.ct / s.ray_differential;
             s.default_differential = in.ct / s.default_differential;
-            let a_opt = in.accel.get().trace(s.ray_differential.r, 0);
+            let a_opt = in.accel.trace(s.ray_differential.r, 0);
 
             if (a_opt == none || a_opt.value.intr_opt == none) {
-                let e_opt = in.emitter.get().sample_infinite({}, sp.generate_1d());
+                let e_opt = in.emitter.sample_infinite({}, sp.generate_1d());
                 if (e_opt == none) continue;
                 let e = e_opt.value;
 
-                let r = e.local_to_render.get() / s.ray_differential.r;
+                let r = *e.local_to_render.get() / s.ray_differential.r;
                 var st = spectra::Stochastic_Spectrum(sp.generate_1d());
-                let l_opt = e.light.get()(r, st.lambda);
+                let l_opt = e.light(r, st.lambda);
                 if (l_opt == none) continue;
 
                 let l = l_opt.value;

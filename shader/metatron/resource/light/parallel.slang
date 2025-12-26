@@ -11,7 +11,7 @@ namespace mtt::light {
         public func sample(math::Context ctx, fv2 u) -> Optional<Interaction> {
             let wi = fv3(0.f, 0.f, -1.f);
             return Interaction(
-                ctx.lambda & L.get(),
+                ctx.lambda & L,
                 wi,
                 ctx.r.o + 65504.f * wi,
                 65504.f,

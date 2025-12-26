@@ -23,12 +23,12 @@ namespace mtt::monte_carlo {
         public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum>;
     }
 
-    public struct Integrator_Union {
+    public struct Integrator_Union: Integrator {
         Volume_Path_Integrator volume_path;
         u32 idx;
 
-        public func get() -> Integrator {
-            if (idx == 0) return volume_path;
+        public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum> {
+            if (idx == 0) return volume_path.sample(ctx);
             else return {};
         }
     }
