@@ -98,6 +98,7 @@ namespace mtt::renderer {
         integrate_args_encoder.upload();
         pipeline_encoder.bind();
 
+        auto spp = desc.film.spp;
         struct Integrate final {
             Descriptor desc;
             u32 seed;

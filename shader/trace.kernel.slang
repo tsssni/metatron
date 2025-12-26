@@ -58,7 +58,7 @@ namespace mtt {
 
             let a_intr = a_opt.value;
             let s_intr = a_intr.intr_opt.value;
-            value += fv4(s_intr.p, fixel.weight);
+            value += fv4(s_intr.p * fixel.weight, fixel.weight);
         }
 
         in.image.Store(pixel, value / value.w);

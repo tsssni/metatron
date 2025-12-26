@@ -333,7 +333,7 @@ namespace mtt::light {
         auto L = 0.f;
         for (auto i = 0; i < sun_num_ctls; ++i)
             L += sun_radiance[
-                segment * sunsky_num_lambda * sun_num_ctls + idx * sun_num_ctls
+                segment * sunsky_num_lambda * sun_num_ctls + idx * sun_num_ctls + i
             ] * math::pow(x, i);
         return L / spectra::CIE_Y_integral;
     }

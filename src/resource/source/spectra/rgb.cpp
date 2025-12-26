@@ -28,7 +28,7 @@ namespace mtt::spectra {
         s /= desc.type == Spectrum_Type::illuminant
         ? desc.color_space->illuminant_Y_integral : 1.f;
 
-        if (rgb[0] == rgb[1] && rgb[1] == rgb[2]) {
+        if (math::constant(rgb)) {
             c = fv3{
                 (rgb[0] - 0.5f) / math::sqrt(rgb[0] * (1.f - rgb[0])),
                 0.f, 0.f,

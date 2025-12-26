@@ -10,9 +10,14 @@ namespace mtt::spectra {
             let size = i32(lambda.size());
             wavelength = clamp(wavelength, lambda[0], lambda[size - 1]);
 
-            var idx = 0;
-            for (; idx < size && lambda[idx] < wavelength; ++idx);
-            idx = clamp(idx - 1, 0, size - 2);
+            var left = 0;
+            var right = size;
+            while (left < right) {
+                let mid = (left + right) / 2;
+                if (lambda[mid] < wavelength) left = mid + 1;
+                else right = mid;
+            }
+            let idx = clamp(left - 1, 0, size - 2);
 
             let alpha = 1.f
             * (wavelength - lambda[idx])

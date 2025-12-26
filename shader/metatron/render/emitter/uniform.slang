@@ -22,7 +22,7 @@ namespace mtt::emitter {
 
         public func sample_infinite(math::Context ctx, f32 u) -> Optional<Interaction> {
             if (inf_prims.empty()) return {};
-            let idx = clamp(u32(u * prims.size()), 0u, inf_prims.size() - 1);
+            let idx = clamp(u32(u * inf_prims.size()), 0u, inf_prims.size() - 1);
             let prim = inf_prims[idx];
             return Interaction(
                 prim.light,

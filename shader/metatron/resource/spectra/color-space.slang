@@ -10,7 +10,7 @@ namespace mtt::spectra {
 
         public fm33 from_XYZ;
         public fm33 to_XYZ;
-        public Spectrum_Tag illuminant;
+        public tag<Discrete_Spectrum> illuminant;
         public Transfer_Function_Tag transfer_function;
 
         public i32 table_res;

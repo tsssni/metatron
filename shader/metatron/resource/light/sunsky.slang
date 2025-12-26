@@ -131,7 +131,7 @@ namespace mtt::light {
             }
 
             return L;
-    }
+        }
 
         func hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) -> f32 {
             let gamma = acos(cos_gamma);
@@ -174,7 +174,7 @@ namespace mtt::light {
             var L = 0.f;
             for (var i = 0; i < sun_num_ctls; ++i)
                 L += sun_radiance[
-                    segment * sunsky_num_lambda * sun_num_ctls + idx * sun_num_ctls
+                    segment * sunsky_num_lambda * sun_num_ctls + idx * sun_num_ctls + i
                 ] * pow(x, i);
             return L / spectra::CIE_Y_integral;
         }
