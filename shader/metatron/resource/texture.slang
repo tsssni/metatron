@@ -42,6 +42,8 @@ namespace mtt::texture {
             else if (idx.type() == 2) return tag<Checkerboard_Texture>(idx).get().pdf(uv);
             else return {};
         }
+
+        public func empty() -> bool { return idx.empty(); }
     }
 
     public struct Vector_Texture_Tag: Vector_Texture {
@@ -64,6 +66,8 @@ namespace mtt::texture {
             else if (idx.type() == 1) return tag<Image_Vector_Texture>(idx).get().pdf(uv);
             else return {};
         }
+
+        public func empty() -> bool { return idx.empty(); }
     }
 
     public struct Coordinate {

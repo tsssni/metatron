@@ -35,6 +35,7 @@ namespace mtt::light {
 
     public struct Light_Tag: Light {
         tag<byte> idx;
+
         public Optional<Interaction> operator()(
             math::Ray r, fv4 lambda
         ) {

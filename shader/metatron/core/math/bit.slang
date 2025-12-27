@@ -16,6 +16,13 @@ namespace mtt::math {
         return (n0 << 32) | n1;
     }
 
+    public func bit_ceil(u32 x) -> u32 {
+        if (x == 0) return 1;
+        if (x == 1) return 1;
+        if ((x & (x - 1)) == 0) return x;
+        return 1u << (firstbithigh(x - 1) + 1);
+    }
+
     func align(u32 size, u32 alignment) -> u32 {
         if (countbits(alignment) != 1) return 0;
         return (size + alignment - 1) & ~(alignment - 1);

@@ -16,7 +16,7 @@ namespace mtt::bsdf {
         cos_theta_i = math::clamp(cos_theta_i, -1.f, 1.f);
         auto F = [cos_theta_i](auto eta) {
             using T = decltype(eta);
-            auto constexpr is_complex = std::is_same_v<T, math::Complex<f32>>;
+            auto constexpr is_complex = std::is_same_v<T, fc>;
 
             auto sin2_theta_i = math::max(0.f, 1.f - cos_theta_i * cos_theta_i);
             auto sin2_theta_t = math::guarded_div(sin2_theta_i, eta * eta);
@@ -40,7 +40,7 @@ namespace mtt::bsdf {
         };
         
         if (k > math::epsilon<f32>) {
-            auto eta_k = math::Complex<f32>{eta, k};
+            auto eta_k = fc{eta, k};
             return F(eta_k);
         } else {
             return F(eta);
@@ -48,9 +48,9 @@ namespace mtt::bsdf {
     }
 
     auto fresnel(f32 cos_theta_i, cref<fv4> eta, cref<fv4> k) noexcept -> fv4 {
-        return spectra::visit([&](auto, usize i) {
-            return fresnel(cos_theta_i, eta[i], k[i]);
-        }, eta);
+        return spectra::visit([&](f32 eta, f32 k, auto) {
+            return fresnel(cos_theta_i, eta, k);
+        }, eta, k);
     }
 
     auto lambda(cref<fv3> wo, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
@@ -117,7 +117,8 @@ namespace mtt::bsdf {
             f = (1.f - F) * D * G * math::abs(cos_theta_om * cos_theta_im / (denom * cos_theta_i * cos_theta_o)) / math::sqr(eta[0]);
             pdf = visible_trowbridge_reitz(wo, wm, alpha_u, alpha_v) * math::abs(cos_theta_im) / denom * pt / (pr + pt);
         }
-
+        
+        if (pdf < math::epsilon<f32>) return {};
         return Interaction{f, wi, pdf};
     }
 

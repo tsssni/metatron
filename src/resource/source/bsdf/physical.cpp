@@ -44,7 +44,7 @@ namespace mtt::bsdf {
             stl::abort();
         }
 
-        fresnel_reflectance = !plastic && !specular ? fv4{0.f} :
+        fresnel_reflectance = !plastic ? fv4{0.f} :
         math::foreach([](auto eta, auto) {
             auto idx = eta / 3.f * fresnel_length;
             auto low = i32(idx);
@@ -79,9 +79,7 @@ namespace mtt::bsdf {
         || flags & Flags::specular
         || math::abs(wo[1]) < math::epsilon<f32>
         || math::abs(wi[1]) < math::epsilon<f32>
-        ) {
-            return {};
-        }
+        ) return {};
 
         auto reflective = -wo[1] * wi[1] > 0.f;
         auto forward = wi[1] > 0.f;
@@ -93,12 +91,11 @@ namespace mtt::bsdf {
         || math::dot(-wo, wm) < 0.f
         || math::dot((reflective ? 1.f : -1.f) * wi, wm) < 0.f) return {};
 
-        if (lambertian)
-            return Interaction{
-                .f = lambert(reflectance),
-                .wi = wi,
-                .pdf = math::Cosine_Hemisphere_Distribution{}.pdf(math::unit_to_cos_theta(wi)),
-            };
+        if (lambertian) return Interaction{
+            .f = lambert(reflectance),
+            .wi = wi,
+            .pdf = math::Cosine_Hemisphere_Distribution{}.pdf(math::unit_to_cos_theta(wi)),
+        };
 
         auto F = fresnel(math::dot(-wo, wm), eta, k);
         auto D = trowbridge_reitz(wm, alpha_u, alpha_v);

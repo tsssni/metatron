@@ -92,4 +92,109 @@ namespace mtt {
         result.n = t / result.n;
         return result;
     }
+
+    public Quaternion<T> operator*<T: __BuiltinFloatingPointType>(
+        Quaternion<T> lhs, Quaternion<T> rhs
+    ) {
+        // Hamilton
+        let x = lhs[0]; let y = lhs[1]; let z = lhs[2]; let w = lhs[3];
+        let rx = rhs[0]; let ry = rhs[1]; let rz = rhs[2]; let rw = rhs[3];
+        return {
+            w * rx + x * rw + y * rz - z * ry,
+            w * ry + y * rw + z * rx - x * rz,
+            w * rz + z * rw + x * ry - y * rx,
+            w * rw - x * rx - y * ry - z * rz,
+        };
+    }
+
+    public Quaternion<T> operator*<T: __BuiltinFloatingPointType>(
+        Quaternion<T> lhs, T rhs
+    ) { return {lhs.data * rhs}; }
+
+    public Quaternion<T> operator+<T: __BuiltinFloatingPointType>(
+        Quaternion<T> lhs, Quaternion<T> rhs
+    ) { return {lhs.data + rhs.data}; }
+
+    public Quaternion<T> operator-<T: __BuiltinFloatingPointType>(
+        Quaternion<T> x
+    ) { return {-x.data}; }
+
+    public Complex<T> operator+<T: __BuiltinFloatingPointType>(
+        Complex<T> x, Complex<T> y
+    ) {
+        return {x.r + y.r, x.i + y.i};
+    }
+
+    public Complex<T> operator+=<T: __BuiltinFloatingPointType>(
+        Complex<T> x, Complex<T> y
+    ) { x = x + y; return x; }
+
+    public Complex<T> operator+<T: __BuiltinFloatingPointType>(
+        Complex<T> x, T y
+    ) { return x + Complex<T>(y); }
+
+    public Complex<T> operator+<T: __BuiltinFloatingPointType>(
+        T x, Complex<T> y
+    ) { return Complex<T>(x) + y; }
+
+    public Complex<T> operator-<T: __BuiltinFloatingPointType>(
+        Complex<T> x, Complex<T> y
+    ) { return {x.r - y.r, x.i - y.i}; }
+
+    public Complex<T> operator-=<T: __BuiltinFloatingPointType>(
+        Complex<T> x, Complex<T> y
+    ) { x = x - y; return x; }
+
+    public Complex<T> operator-<T: __BuiltinFloatingPointType>(
+        Complex<T> x, T y
+    ) { return x - Complex<T>(y); }
+
+    public Complex<T> operator-<T: __BuiltinFloatingPointType>(
+        T x, Complex<T> y
+    ) { return Complex<T>(x) - y; }
+
+    public Complex<T> operator-<T: __BuiltinFloatingPointType>(
+        Complex<T> x
+    ) { return {-x.r, -x.i}; }
+
+    public Complex<T> operator*<T: __BuiltinFloatingPointType>(
+        Complex<T> x, Complex<T> y
+    ) { return {
+        x.r * y.r - x.i * y.i,
+        x.r * y.i + x.i * y.r,
+    }; }
+
+    public Complex<T> operator*=<T: __BuiltinFloatingPointType>(
+        Complex<T> x, Complex<T> y
+    ) { x = x * y; return x; }
+
+    public Complex<T> operator*<T: __BuiltinFloatingPointType>(
+        Complex<T> x, T y
+    ) { return x * Complex<T>(y); }
+
+    public Complex<T> operator*<T: __BuiltinFloatingPointType>(
+        T x, Complex<T> y
+    ) { return Complex<T>(x) * y; }
+
+    public Complex<T> operator/<T: __BuiltinFloatingPointType>(
+        Complex<T> x, Complex<T> y
+    ) {
+        let denom = y.r * y.r + y.i * y.i;
+        return {
+            math::guarded_div(x.r * y.r + x.i * y.i, denom),
+            math::guarded_div(x.i * y.r - x.r * y.i, denom),
+        };
+    }
+
+    public Complex<T> operator/=<T: __BuiltinFloatingPointType>(
+        Complex<T> x, Complex<T> y
+    ) { x = x / y; return x; }
+
+    public Complex<T> operator/<T: __BuiltinFloatingPointType>(
+        Complex<T> x, T y
+    ) { return x / Complex<T>(y); }
+
+    public Complex<T> operator/<T: __BuiltinFloatingPointType>(
+        T x, Complex<T> y
+    ) { return Complex<T>(x) / y; }
 }

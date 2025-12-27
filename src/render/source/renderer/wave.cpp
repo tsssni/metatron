@@ -8,6 +8,7 @@
 #include <metatron/device/opaque/accel.hpp>
 #include <metatron/device/shader/argument.hpp>
 #include <metatron/device/shader/pipeline.hpp>
+#include <metatron/resource/bsdf/physical.hpp>
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::renderer {
@@ -104,11 +105,13 @@ namespace mtt::renderer {
             u32 seed;
             uv2 range;
             math::Transform ct;
+            buf<f32> fresnel;
         } in{
             std::move(desc),
-            std::random_device{}(),
+            0, // std::random_device{}(),
             {0, 64},
             *entity<math::Transform>("/hierarchy/camera/render"),
+            bsdf::Physical_Bsdf::fresnel_reflectance_table,
         };
         stl::print("seed: {}", in.seed);
 

@@ -12,6 +12,8 @@ namespace mtt::bsdf {
             f32 alpha_v,
             bool inside
         ) noexcept;
+
+        buf<f32> static fresnel_reflectance_table;
         auto static init() noexcept -> void;
 
         // microfacet:
@@ -34,9 +36,6 @@ namespace mtt::bsdf {
         auto degrade() noexcept -> bool;
 
     private:
-        buf<f32> static fresnel_reflectance_table;
-
-        fv4 spectrum;
         fv4 reflectance;
         fv4 fresnel_reflectance;
         fv4 eta;

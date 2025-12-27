@@ -3,6 +3,8 @@
 
 namespace mtt::material {
     struct Interface_Material final {
+        f32 padding = 0.f;
+
         auto sample(
             cref<math::Context> ctx,
             cref<muldim::Coordinate> coord

@@ -2,6 +2,8 @@ implementing shape;
 
 namespace mtt::shape {
     public struct Sphere: Shape {
+        f32 padding = 0.f;
+
         public func size() -> u32 { return 1; }
 
         public func bounding_box(math::Transform t, u32 idx = 0) -> math::Bounding_Box {

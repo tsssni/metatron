@@ -50,32 +50,6 @@ namespace mtt::math {
         }
     }
 
-    public Quaternion<T> operator*<T: __BuiltinFloatingPointType>(
-        Quaternion<T> lhs, Quaternion<T> rhs
-    ) {
-        // Hamilton
-        let x = lhs[0]; let y = lhs[1]; let z = lhs[2]; let w = lhs[3];
-        let rx = rhs[0]; let ry = rhs[1]; let rz = rhs[2]; let rw = rhs[3];
-        return {
-            w * rx + x * rw + y * rz - z * ry,
-            w * ry + y * rw + z * rx - x * rz,
-            w * rz + z * rw + x * ry - y * rx,
-            w * rw - x * rx - y * ry - z * rz,
-        };
-    }
-
-    public Quaternion<T> operator*<T: __BuiltinFloatingPointType>(
-        Quaternion<T> lhs, T rhs
-    ) { return {lhs.data * rhs}; }
-
-    public Quaternion<T> operator+<T: __BuiltinFloatingPointType>(
-        Quaternion<T> lhs, Quaternion<T> rhs
-    ) { return {lhs.data + rhs.data}; }
-
-    public Quaternion<T> operator-<T: __BuiltinFloatingPointType>(
-        Quaternion<T> x
-    ) { return {-x.data}; }
-
     public func slerp<T: __BuiltinFloatingPointType>(
         Quaternion<T> q0, Quaternion<T> q1, T t
     ) -> Quaternion<T> {

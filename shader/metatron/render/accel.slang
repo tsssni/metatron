@@ -5,20 +5,13 @@ import metatron.resource;
 
 namespace mtt::accel {
     public struct Divider {
-        // tag<shape::Shape> shape;
-        // tag<media::Medium> int_medium;
-        // tag<media::Medium> ext_medium;
-        // tag<material::Material> material;
-        // tag<math::Transform> local_to_render;
-        // tag<math::Transform> int_to_render;
-        // tag<math::Transform> ext_to_render;
-        shape::Shape_Tag shape = {};
-        u32 int_medium = 0;
-        u32 ext_medium = 0;
-        u32 material = 0;
-        tag<math::Transform> local_to_render = {};
-        tag<math::Transform> int_to_render = {};
-        tag<math::Transform> ext_to_render = {};
+        public shape::Shape_Tag shape = {};
+        public u32 int_medium = 0;
+        public u32 ext_medium = 0;
+        public material::Material_Tag material = {};
+        public tag<math::Transform> local_to_render = {};
+        public tag<math::Transform> int_to_render = {};
+        public tag<math::Transform> ext_to_render = {};
     }
 
     public struct Interaction {

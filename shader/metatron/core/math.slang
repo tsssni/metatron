@@ -2,6 +2,7 @@ module math;
 __include math.arithmetic;
 __include math.bit;
 __include math.bounding_box;
+__include math.complex;
 __include math.constant;
 __include math.encode;
 __include math.eval;
