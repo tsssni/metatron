@@ -108,7 +108,7 @@ namespace mtt::renderer {
             buf<f32> fresnel;
         } in{
             std::move(desc),
-            0, // std::random_device{}(),
+            std::random_device{}(),
             {0, 64},
             *entity<math::Transform>("/hierarchy/camera/render"),
             bsdf::Physical_Bsdf::fresnel_reflectance_table,

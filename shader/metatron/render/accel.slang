@@ -6,8 +6,8 @@ import metatron.resource;
 namespace mtt::accel {
     public struct Divider {
         public shape::Shape_Tag shape = {};
-        public u32 int_medium = 0;
-        public u32 ext_medium = 0;
+        public media::Medium_Tag int_medium = {};
+        public media::Medium_Tag ext_medium = {};
         public material::Material_Tag material = {};
         public tag<math::Transform> local_to_render = {};
         public tag<math::Transform> int_to_render = {};

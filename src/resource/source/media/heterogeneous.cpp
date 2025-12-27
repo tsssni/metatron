@@ -94,9 +94,7 @@ namespace mtt::media {
             t_transmitted += t;
             t_boundary -= t;
             r.o += t * r.d;
-            transmittance *= math::foreach([&](f32 value, usize i) {
-                return std::exp(-value * t);
-            }, sigma_maj);
+            transmittance *= math::exp(-sigma_maj * t);
         };
 
         while (true) {

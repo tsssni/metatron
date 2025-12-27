@@ -17,15 +17,12 @@ namespace mtt::media {
         auto t_u = distr.sample(u);
         auto t = math::min(t_u, t_max);
         auto pdf = t < t_max ? distr.pdf(t) : distr.pdf(t) / sigma_t[0];
-
         auto sigma_e = (ctx.lambda & this->sigma_e);
-        auto transmittance = math::foreach([&](f32 value, usize i) {
-            return std::exp(-value * t);
-        }, sigma_maj);
+        auto transmittance = math::exp(-sigma_maj * t);
 
         return Interaction{
             ctx.r.o + ctx.r.d * t,
-            this->phase.to_phase(),
+            phase.to_phase(),
             t,
             transmittance,
             sigma_a,

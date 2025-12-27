@@ -283,6 +283,13 @@ namespace mtt::math {
     }
 
     template<typename T, usize size>
+    auto constexpr exp(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
+        return math::foreach([](cref<T> v, auto) {
+            return std::exp(v);
+        }, x);
+    }
+
+    template<typename T, usize size>
     requires std::floating_point<T> || std::integral<T>
     auto constexpr mod(cref<Vector<T, size>> x, cref<T> m) noexcept -> Vector<T, size> {
         return foreach([&](cref<T> v, usize i) noexcept -> T {

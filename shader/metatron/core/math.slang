@@ -24,6 +24,7 @@ __include math.vector;
 __include math.distribution.cone;
 __include math.distribution.discrete;
 __include math.distribution.disk;
+__include math.distribution.exponential;
 __include math.distribution.gaussian;
 __include math.distribution.linear;
 __include math.distribution.piecewise;

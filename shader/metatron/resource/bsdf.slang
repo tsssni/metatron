@@ -28,6 +28,7 @@ namespace mtt::bsdf {
         Physical_Bsdf physical = {};
         Interface_Bsdf interface = {};
         u32 idx = 0xffffffffu;
+        public __init() {}
         public __init(Physical_Bsdf p) { physical = p; idx = 0; }
         public __init(Interface_Bsdf i) { interface = i; idx = 1; }
 
