@@ -8,6 +8,7 @@
   lib,
   ninja,
   openimageio,
+  openssl,
   openvdb,
   proxy,
   shader-slang,
@@ -44,6 +45,7 @@ stdenv.mkDerivation {
     assimp
     glaze
     openimageio
+    openssl
     openvdb
     proxy
     zlib
