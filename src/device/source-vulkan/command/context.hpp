@@ -11,10 +11,6 @@
 #include <mutex>
 
 namespace mtt::command {
-    struct Memory final {
-        u32 type;
-    };
-
     struct Context::Impl final {
         vk::UniqueInstance instance;
         vk::UniqueDevice device;

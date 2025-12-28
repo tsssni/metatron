@@ -52,7 +52,7 @@ namespace mtt::opaque {
 
     Grid::Grid(cref<Descriptor> desc) noexcept:
     state(desc.state) {
-        impl->barrier.family = command::Queue::Impl::family[u32(desc.type)];
+        impl->barrier.family = command::Queue::Impl::families[u32(desc.type)].idx;
         width = desc.grid->width;
         height = desc.grid->height;
         depth = desc.grid->depth;

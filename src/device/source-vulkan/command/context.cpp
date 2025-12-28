@@ -129,39 +129,50 @@ namespace mtt::command {
 
         for (auto&& physical_device: guard(instance->enumeratePhysicalDevices())) {
             auto families = physical_device.getQueueFamilyProperties2();
-            auto render_family = math::maxv<u32>;
-            auto render_limit = 0u;
-            auto transfer_family = math::maxv<u32>;
-            auto transfer_limit = 0u;
+            auto render = Family{};
+            auto transfer = Family{};
+
             for (auto i = 0; i < families.size(); ++i) {
+                using Flags = vk::QueueFlags;
+                using Bits = vk::QueueFlagBits;
                 auto const& family = families[i];
                 auto& props = family.queueFamilyProperties;
                 auto flags = props.queueFlags;
-                auto graphics = vk::QueueFlags::BitsType::eGraphics;
-                auto transfer = vk::QueueFlags::BitsType::eTransfer;
-                if (render_family == math::maxv<u32> && flags & graphics) {
-                    render_family = i;
-                    render_limit = props.queueCount;
-                } else if (transfer_family == math::maxv<u32> && flags & transfer) {
-                    transfer_family = i;
-                    transfer_limit = props.queueCount;
+
+                auto check = [&](ref<Family> f, Flags acc, Flags exc) {
+                    if (f.idx == math::maxv<u32> && (flags & acc) && !(flags & exc))
+                        f = {u32(i), u32(flags), 0, props.queueCount};
+                };
+                check(render, Bits::eGraphics, {});
+                check(transfer, Bits::eTransfer, Bits::eGraphics);
+            }
+
+            if (transfer.idx == math::maxv<u32>) {
+                transfer = render;
+                transfer.start = render.count / 2;
+                transfer.count = render.count - transfer.start;
+                render.count = transfer.start;
+            }
+
+            auto priorities = std::vector<f32>(render.count + transfer.count, 1.f);
+            auto queues = render.idx == transfer.idx
+            ? std::vector<vk::DeviceQueueCreateInfo> {
+                vk::DeviceQueueCreateInfo{
+                    .queueFamilyIndex = render.idx,
+                    .queueCount = render.count + transfer.count,
+                    .pQueuePriorities = priorities.data(),
                 }
             }
-            if (render_family == math::maxv<u32> || transfer_family == math::maxv<u32>)
-                stl::abort("no vulkan async transfer queue");
-
-            auto render_priorities = std::vector<f32>(render_limit, 1.f);
-            auto transfer_priorities = std::vector<f32>(transfer_limit, 1.f);
-            auto queues = std::array<vk::DeviceQueueCreateInfo, 2>{
+            : std::vector<vk::DeviceQueueCreateInfo>{
                 vk::DeviceQueueCreateInfo{
-                    .queueFamilyIndex = render_family,
-                    .queueCount = render_limit,
-                    .pQueuePriorities = render_priorities.data(),
+                    .queueFamilyIndex = render.idx,
+                    .queueCount = render.count,
+                    .pQueuePriorities = priorities.data(),
                 },
                 vk::DeviceQueueCreateInfo{
-                    .queueFamilyIndex = transfer_family,
-                    .queueCount = transfer_limit,
-                    .pQueuePriorities = render_priorities.data(),
+                    .queueFamilyIndex = transfer.idx,
+                    .queueCount = transfer.count,
+                    .pQueuePriorities = priorities.data(),
                 },
             };
 
@@ -184,10 +195,8 @@ namespace mtt::command {
                 candidate.result == vk::Result::eSuccess
             ) {
                 device = std::move(candidate.value);
-                Queue::Impl::family[u32(Type::render)] = render_family;
-                Queue::Impl::count[u32(Type::render)] = render_limit;
-                Queue::Impl::family[u32(Type::transfer)] = transfer_family;
-                Queue::Impl::count[u32(Type::transfer)] = transfer_limit;
+                Queue::Impl::families[u32(Type::render)] = render;
+                Queue::Impl::families[u32(Type::transfer)] = transfer;
 
                 auto props = vk::StructureChain<
                     vk::PhysicalDeviceProperties2,

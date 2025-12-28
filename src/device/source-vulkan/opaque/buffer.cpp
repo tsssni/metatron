@@ -37,7 +37,7 @@ namespace mtt::opaque {
     Buffer::Buffer(cref<Descriptor> desc) noexcept:
     size(desc.size),
     state(desc.state) {
-        impl->barrier.family = command::Queue::Impl::family[u32(desc.type)];
+        impl->barrier.family = command::Queue::Impl::families[u32(desc.type)].idx;
         auto& ctx = command::Context::instance().impl;
         auto& props = ctx->memory_props;
         if (desc.size == 0) stl::abort("empty buffer not supported");

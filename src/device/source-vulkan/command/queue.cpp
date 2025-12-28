@@ -5,23 +5,18 @@
 #include <atomic>
 
 namespace mtt::command {
-    std::array<u32, num_types> Queue::Impl::family;
-    std::array<u32, num_types> Queue::Impl::count;
-    std::array<u32, num_types> Queue::Impl::idx;
+    std::array<Family, num_types> Queue::Impl::families;
 
     Queue::Queue(Type type) noexcept: type(type) {
         auto& ctx = Context::instance().impl;
+        auto& family = impl->families[u32(type)];
         auto device = ctx->device.get();
-        auto render = type == Type::render;
-        auto family = impl->family[u32(type)];
-        auto count = impl->count[u32(type)];
-
-        auto idx = impl->idx[u32(type)];
-        if (idx >= count) stl::abort("queue family {} overflow", u32(type));
-        ++impl->idx[u32(type)];
+        auto idx = family.allocated;
+        if (idx >= family.count) stl::abort("queue family {} overflow", u32(type));
+        ++family.allocated;
 
         impl->queue = device.getQueue2({
-            .queueFamilyIndex = family,
+            .queueFamilyIndex = family.idx,
             .queueIndex = idx,
         });
         auto size = stl::scheduler::instance().size();
@@ -30,7 +25,7 @@ namespace mtt::command {
         for (auto i = 0; i < size; ++i)
             impl->pools[i] = guard(device.createCommandPoolUnique({
                 .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-                .queueFamilyIndex = family,
+                .queueFamilyIndex = family.idx,
             }));
     }
 
@@ -79,7 +74,7 @@ namespace mtt::command {
             auto cmd = make_obj<Buffer>();
             cmd->type = type;
             cmd->blocks.cmd = cmd.get();
-            cmd->impl->family = impl->family[u32(type)];
+            cmd->impl->family = impl->families[u32(type)].idx;
             cmd->impl->cmd = std::move(guard(device.allocateCommandBuffersUnique({
                 .commandPool = pool,
                 .level = vk::CommandBufferLevel::ePrimary,

@@ -81,7 +81,7 @@ namespace mtt::opaque {
 
     Image::Image(cref<Descriptor> desc) noexcept:
     state(desc.state) {
-        impl->barrier.family = command::Queue::Impl::family[u32(desc.type)];
+        impl->barrier.family = command::Queue::Impl::families[u32(desc.type)].idx;
         width = desc.image->width;
         height = desc.image->height;
         mips = math::max(1uz, desc.image->pixels.size());
