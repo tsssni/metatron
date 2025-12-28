@@ -3,6 +3,7 @@
 #include <metatron/render/accel/accel.hpp>
 #include <metatron/render/emitter/emitter.hpp>
 #include <metatron/render/sampler/sampler.hpp>
+#include <metatron/render/sampler/proxy.hpp>
 #include <metatron/render/filter/filter.hpp>
 #include <metatron/render/photo/lens/lens.hpp>
 #include <metatron/render/photo/film.hpp>

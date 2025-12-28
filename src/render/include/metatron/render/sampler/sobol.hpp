@@ -10,28 +10,18 @@ namespace mtt::sampler {
         struct Descriptor final {};
         Sobol_Sampler(cref<Descriptor>) noexcept;
         Sobol_Sampler() noexcept = default;
-        Sobol_Sampler(rref<Sobol_Sampler>) noexcept = default;
-        Sobol_Sampler(cref<Sobol_Sampler>) noexcept = default;
-        auto operator=(rref<Sobol_Sampler>) noexcept -> Sobol_Sampler& = default;
-        auto operator=(cref<Sobol_Sampler>) noexcept -> Sobol_Sampler& = default;
 
         auto static init() noexcept -> void;
-        auto start(Context ctx) noexcept -> void;
-        auto generate_1d() noexcept -> f32;
-        auto generate_2d() noexcept -> fv2;
-        auto generate_pixel_2d() noexcept -> fv2;
+        auto start(ref<Context> ctx) const noexcept -> void;
+        auto generate_1d(ref<Context> ctx) const noexcept -> f32;
+        auto generate_2d(ref<Context> ctx) const noexcept -> fv2;
+        auto generate_pixel_2d(ref<Context> ctx) const noexcept -> fv2;
 
-    // private:
-        auto permute_idx() noexcept -> u64;
-        auto sobol(u64 idx, i32 dim, u32 hash) noexcept -> f32;
+    private:
+        auto permute_idx(cref<Context> ctx) const noexcept -> u64;
+        auto sobol(u64 idx, i32 dim, u32 hash) const noexcept -> f32;
 
         buf<u32> static sobol_matrices;
-
-        i32 log2_spp;
-        i32 base4_digits;
-        i32 dim;
-        u32 seed;
-        u32 morton_idx;
         buf<u32> matrices = {};
     };
 }

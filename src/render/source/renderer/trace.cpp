@@ -24,20 +24,23 @@ namespace mtt::renderer {
         auto range = uv2{0u, addr.host.empty() ? spp : 1u};
         auto progress = stl::progress{math::prod(size) * spp};
         auto trace = [&](cref<uzv2> px) {
-            auto sp = *desc.sampler;
             for (auto n = range[0]; n < range[1]; ++n) {
-                sp->start({px, size, n, spp, 0, seed});
-                auto fixel = (*desc.film)(desc.filter.data(), px, sp->generate_pixel_2d());
-                auto spec = spectra::Stochastic_Spectrum{sp->generate_1d()};
+                auto sp = sampler::Proxy_Sampler{desc.sampler, {{}, px, size, n, spp, 0, seed}};
+                sp.start();
+                auto fixel = (*desc.film)(desc.filter.data(), px, sp.generate_pixel_2d());
+                auto spec = spectra::Stochastic_Spectrum{sp.generate_1d()};
                 MTT_OPT_OR_CALLBACK(s, photo::Camera{}.sample(
-                    desc.lens.data(), fixel.position, fixel.dxdy, sp->generate_2d()
+                    desc.lens.data(), fixel.position, fixel.dxdy, sp.generate_2d()
                 ), stl::abort("ray generation failed"););
                 s.ray_differential = ct ^ s.ray_differential;
                 s.default_differential = ct ^ s.default_differential;
 
                 auto ctx = monte_carlo::Context{
-                    desc.accel.data(), desc.emitter.data(), sp, spec.lambda,
-                    s.ray_differential, s.default_differential,
+                    desc.accel.data(),
+                    desc.emitter.data(),
+                    &sp, spec.lambda,
+                    s.ray_differential,
+                    s.default_differential,
                     ct, px, n, depth,
                 };
                 MTT_OPT_OR_CALLBACK(Li, desc.integrator->sample(ctx),
