@@ -7,7 +7,7 @@ namespace mtt::photo {
         public fv2 dxdy;
         public f32 weight;
 
-        public fv3 operator()(Film film, spectra::Stochastic_Spectrum spectrum) {
+        public fv3 operator()(Ptr<Film> film, spectra::Stochastic_Spectrum spectrum) {
             let xyz = fv3(
                 spectrum(film.r),
                 spectrum(film.g),

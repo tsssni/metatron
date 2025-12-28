@@ -14,17 +14,16 @@ namespace mtt::emitter {
         public func sample_infinite(math::Context ctx, f32 u) -> Optional<Interaction>;
     }
 
-    public struct Emitter_Union: Emitter {
-        Uniform_Emitter uniform = {};
-        u32 idx = 0xffffffffu;
+    public struct Emitter_Tag: Emitter {
+        tag<byte> idx;
 
         public func sample(math::Context ctx, f32 u) -> Optional<Interaction> {
-            if (idx == 0) return uniform.sample(ctx, u);
+            if (idx.type() == 0) return tag<Uniform_Emitter>(idx).get().sample(ctx, u);
             else return {};
         }
 
         public func sample_infinite(math::Context ctx, f32 u) -> Optional<Interaction> {
-            if (idx == 0) return uniform.sample_infinite(ctx, u);
+            if (idx.type() == 0) return tag<Uniform_Emitter>(idx).get().sample_infinite(ctx, u);
             else return {};
         }
     }

@@ -4,7 +4,7 @@ namespace mtt::monte_carlo {
     public struct Volume_Path_Integrator: Integrator {
         u32 padding = 0u;
 
-        public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum> {
+        public func sample(inout Context ctx) -> Optional<spectra::Stochastic_Spectrum> {
             var emission = fv4(0.f);
             var beta = fv4(1.f);
             var mis_s = fv4(1.f);

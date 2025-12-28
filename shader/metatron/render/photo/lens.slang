@@ -5,14 +5,12 @@ namespace mtt::photo {
         public func sample(fv2 o, fv2 u) -> Optional<lens::Interaction>;
     }
 
-    public struct Lens_Union: Lens {
-        Pinhole_Lens pinhole;
-        Thin_Lens thin;
-        u32 idx;
+    public struct Lens_Tag: Lens {
+        tag<byte> idx;
 
         public func sample(fv2 o, fv2 u) -> Optional<lens::Interaction> {
-            if (idx == 0) return pinhole.sample(o, u);
-            else if (idx == 1) return thin.sample(o, u);
+            if (idx.type() == 0) return tag<Pinhole_Lens>(idx).get().sample(o, u);
+            else if (idx.type() == 1) return tag<Thin_Lens>(idx).get().sample(o, u);
             else return {};
         }
     }

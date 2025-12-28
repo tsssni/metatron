@@ -24,14 +24,12 @@ namespace mtt::accel {
         public Optional<Interaction> operator()(math::Ray r, fv3 n);
     }
 
-    public struct Acceleration_Union: Acceleration {
-        LBVH lbvh = {};
-        HWBVH hwbvh = {};
-        u32 idx = 0xffffffffu;
+    public struct Acceleration_Tag: Acceleration {
+        tag<byte> idx;
 
         public Optional<Interaction> operator()(math::Ray r, fv3 n) {
-            if (idx == 0) return lbvh(r, n);
-            else if (idx == 1) return hwbvh(r, n);
+            if (idx.type() == 0) return tag<LBVH>(idx).get()(r, n);
+            else if (idx.type() == 1) return tag<HWBVH>(idx).get()(r, n);
             else return {};
         }
     }

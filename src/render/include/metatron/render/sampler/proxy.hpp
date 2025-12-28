@@ -4,8 +4,8 @@
 
 namespace mtt::sampler {
     struct Proxy_Sampler final {
-        tag<sampler::Sampler> sampler;
-        sampler::Context ctx;
+        tag<Sampler> sampler;
+        Context ctx;
 
         auto start() noexcept -> void;
         auto generate_1d() noexcept -> f32;

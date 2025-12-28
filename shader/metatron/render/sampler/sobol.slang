@@ -5,35 +5,31 @@ namespace mtt::sampler {
     static u32 sobol_matrix_size = 52;
 
     public struct Sobol_Sampler: Sampler {
-        i32 log2_spp = 0;
-        i32 base4_digits = 0;
-        i32 dim = 0;
-        u32 seed = 0;
-        u32 morton_idx = 0;
         buf<u32> matrices = {};
 
-        [mutating] public func start(Context ctx) -> void {
-            log2_spp = math::log2i(ctx.spp);
+        public func start(inout Context ctx) -> void {
+            let log2_spp = u32(math::log2i(ctx.spp));
             let res = math::bit_ceil(u32(math::max(ctx.size)));
             let log4_spp = (log2_spp + 1) / 2;
-            base4_digits = math::log2i(res) + log4_spp;
+            let base4_digits = math::log2i(res) + log4_spp;
+            let morton_idx = (math::morton_encode(ctx.pixel) << log2_spp) | ctx.idx;
 
-            dim = ctx.dim;
-            seed = ctx.seed;
-            morton_idx = (math::morton_encode(ctx.pixel) << log2_spp) | ctx.idx;
+            ctx.data[0] = log2_spp;
+            ctx.data[1] = base4_digits;
+            ctx.data[2] = morton_idx;
         }
 
-        [mutating] public func generate_1d() -> f32 {
-            let idx = permute_idx();
-            ++dim;
-            let key = Array<uv2, 1>({dim, seed});
+        public func generate_1d(inout Context ctx) -> f32 {
+            let idx = permute_idx(ctx);
+            ++ctx.dim;
+            let key = Array<uv2, 1>({ctx.dim, ctx.seed});
             return sobol(idx, 0, u32(math::murmur_hash(key)));
         }
 
-        [mutating] public func generate_2d() -> fv2 {
-            let idx = permute_idx();
-            dim += 2;
-            let key = Array<uv2, 1>({dim, seed});
+        public func generate_2d(inout Context ctx) -> fv2 {
+            let idx = permute_idx(ctx);
+            ctx.dim += 2;
+            let key = Array<uv2, 1>({ctx.dim, ctx.seed});
             let bits = math::murmur_hash(key);
             return {
                 sobol(idx, 0, u32(bits)),
@@ -41,11 +37,11 @@ namespace mtt::sampler {
             };
         }
 
-        [mutating] public func generate_pixel_2d() -> fv2 {
-            return generate_2d();
+        public func generate_pixel_2d(inout Context ctx) -> fv2 {
+            return generate_2d(ctx);
         }
 
-        func permute_idx() -> u64 {
+        func permute_idx(in Context ctx) -> u64 {
             static Array<bv4, 24> permutations = {
                 {0, 1, 2, 3},
                 {0, 1, 3, 2},
@@ -73,19 +69,23 @@ namespace mtt::sampler {
                 {3, 0, 1, 2}
             };
 
+            let log2_spp = ctx.data[0];
+            let base4_digits = ctx.data[1];
+            let morton_idx = ctx.data[2];
+
             var idx = 0ull;
             let last_digit = log2_spp & 1;
-            for (var i = base4_digits - 1; i >= last_digit; --i) {
+            for (var i = i32(base4_digits) - 1; i >= i32(last_digit); --i) {
                 let shift = 2 * i - last_digit;
                 let digit = (morton_idx >> shift) & 3;
                 let higher_digits = morton_idx >> (shift + 2);
-                let p = (math::mix_bits(higher_digits ^ (0x55555555u * dim)) >> 24) % 24;
+                let p = (math::mix_bits(higher_digits ^ (0x55555555u * ctx.dim)) >> 24) % 24;
                 idx |= u64(permutations[p][digit]) << shift;
             }
 
             if (last_digit == 1) {
                 int digit = morton_idx & 1;
-                idx |= digit ^ (math::mix_bits((morton_idx >> 1) ^ (0x55555555u * dim)) & 1);
+                idx |= digit ^ (math::mix_bits((morton_idx >> 1) ^ (0x55555555u * ctx.dim)) & 1);
             }
             return idx;
         }
