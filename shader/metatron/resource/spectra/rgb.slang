@@ -4,7 +4,7 @@ namespace mtt::spectra {
     typedef Color_Space::Spectrum_Type Spectrum_Type;
 
     public struct Rgb_Spectrum: Spectrum {
-        fv3 c = {};
+        Array<f32, 3> c = {};
         f32 s = {};
         tag<Discrete_Spectrum> illuminant = {};
 
@@ -35,10 +35,10 @@ namespace mtt::spectra {
             ? cs.illuminant_Y_integral : 1.f;
 
             if (math::constant(rgb)) {
-                c = fv3(
+                c = {
                     (rgb[0] - 0.5f) / math::sqrt(rgb[0] * (1.f - rgb[0])),
                     0.f, 0.f,
-                );
+                };
                 return;
             }
 
