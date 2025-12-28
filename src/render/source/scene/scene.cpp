@@ -66,7 +66,6 @@ namespace mtt::scene {
             stl::vector<Sampler>::instance().push<Sobol_Sampler>("/renderer/default/sampler", {{}});
             stl::vector<Filter>::instance().push<Lanczos_Filter>("/renderer/default/filter", {{}});
             stl::vector<Lens>::instance().push<Thin_Lens>("/renderer/default/lens", {{}});
-            stl::vector<Film>::instance().push("/renderer/default/film", {{}});
 
             using Descriptor = Renderer::Descriptor;
             auto desc = Descriptor{};

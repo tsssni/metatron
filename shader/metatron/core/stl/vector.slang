@@ -2,7 +2,7 @@ implementing stl;
 
 namespace mtt {
     public struct tag<T> {
-        u32 idx;
+        public u32 idx;
         public __init() { idx = 0xffffffffu; }
         public __init<U>(tag<U> t) { idx = t.idx; }
 

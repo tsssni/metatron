@@ -2,6 +2,8 @@ implementing media;
 
 namespace mtt::media {
     public struct Vaccum_Medium: Medium {
+        u32 padding;
+
         public func sample(math::Context ctx, f32 t_max, f32 u) -> Optional<Interaction> {
             return Interaction(
                 ctx.r.o + t_max * ctx.r.d,

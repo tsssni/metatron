@@ -28,7 +28,7 @@ namespace mtt::photo {
         public spectra::Spectrum_Tag b;
 
         public Fixel operator()(
-            filter::Filter filter,
+            filter::Filter_Tag filter,
             uv2 pixel,
             uv2 size,
             fv2 u

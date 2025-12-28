@@ -1,6 +1,8 @@
 #include <metatron/resource/media/vaccum.hpp>
 
 namespace mtt::media {
+    Vaccum_Medium::Vaccum_Medium(cref<Descriptor>) noexcept {}
+
     auto Vaccum_Medium::sample(
         cref<math::Context> ctx, f32 t_max, f32 u
     ) const noexcept -> opt<Interaction> {

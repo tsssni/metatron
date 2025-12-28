@@ -73,6 +73,7 @@
               clang-tools
               cmake-language-server
               vulkan-validation-layers
+              rocmPackages.rocm-smi
             ];
             shellHook = ''
               export CMAKE_INSTALL_PREFIX=$HOME/metatron/out

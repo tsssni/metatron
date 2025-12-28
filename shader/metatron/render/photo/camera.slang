@@ -8,8 +8,8 @@ namespace mtt::photo {
     }
 
     public struct Camera {
-        public func sample<T: Lens>(
-            T lens,
+        public func sample(
+            Lens_Tag lens,
             fv2 pos,
             fv2 dxdy,
             fv2 u

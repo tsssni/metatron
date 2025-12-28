@@ -2,6 +2,8 @@
 #include <metatron/core/math/constant.hpp>
 
 namespace mtt::bsdf {
+    Interface_Bsdf::Interface_Bsdf(cref<Descriptor>) noexcept {}
+
     auto Interface_Bsdf::operator()(
         cref<fv3> wo, cref<fv3> wi
     ) const noexcept -> opt<Interaction> {

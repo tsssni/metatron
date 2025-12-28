@@ -22,11 +22,11 @@ namespace mtt {
         ParameterBlock<Integrate> in,
     ) -> void {
         var value = fv4(0);
-        let f = in.filter;
         let pixel = global_idx.xy;
         let film = in.film.get();
         var size: uv2;
         in.image.GetDimensions(size.x, size.y);
+        if (any(pixel != clamp(pixel, 0, size))) return;
         bsdf::fresnel_reflectance_table = in.fresnel;
 
         for (var n = in.range.x; n < in.range.y; ++n) {
@@ -40,7 +40,7 @@ namespace mtt {
             sp.ctx.seed = in.seed;
             sp.start();
 
-            let fixel = film(f, pixel, size, sp.generate_2d());
+            let fixel = film(in.filter, pixel, size, sp.generate_2d());
             let camera: photo::Camera;
             let s_opt = camera.sample(in.lens, fixel.position, fixel.dxdy, sp.generate_2d());
             if (s_opt == none) continue;

@@ -19,7 +19,7 @@ namespace mtt::renderer {
             tag<sampler::Sampler> sampler = entity<sampler::Sampler>("/renderer/default/sampler");
             tag<filter::Filter> filter = entity<filter::Filter>("/renderer/default/filter");
             tag<photo::Lens> lens = entity<photo::Lens>("/renderer/default/lens");
-            tag<photo::Film> film = entity<photo::Film>("/renderer/default/film");
+            tag<photo::Film> film = {};
         };
         Renderer() noexcept = default;
         Renderer(rref<Descriptor> desc) noexcept;

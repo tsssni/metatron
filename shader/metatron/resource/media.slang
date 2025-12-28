@@ -38,7 +38,7 @@ namespace mtt::media {
     }
 
     public struct Medium_Tag: Medium {
-        tag<byte> idx;
+        public tag<byte> idx;
 
         public func sample(math::Context ctx, f32 t_max, f32 u) -> Optional<Interaction> {
             if (idx.type() == 0) return tag<Homogeneous_Medium>(idx).get().sample(ctx, t_max, u);

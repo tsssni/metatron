@@ -2,6 +2,8 @@
 #include <metatron/resource/bsdf/interface.hpp>
 
 namespace mtt::material {
+    Interface_Material::Interface_Material(cref<Descriptor>) noexcept {}
+
     auto Interface_Material::sample(
         cref<math::Context> ctx,
         cref<muldim::Coordinate> coord
