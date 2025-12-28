@@ -50,6 +50,7 @@ namespace mtt::photo {
             tag<spectra::Color_Space> color_space = entity<spectra::Color_Space>("/color-space/sRGB");
         };
         Film(cref<Descriptor> desc) noexcept;
+        Film() noexcept = default;
 
         auto operator()(
             view<filter::Filter> filter,

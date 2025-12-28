@@ -15,8 +15,8 @@ namespace mtt::media {
             tag<volume::Volume> density;
             f32 density_scale;
         };
-        Heterogeneous_Medium() noexcept = default;
         Heterogeneous_Medium(cref<Descriptor> desc) noexcept;
+        Heterogeneous_Medium() noexcept = default;
 
         auto sample(
             cref<math::Context> ctx, f32 t_max, f32 u

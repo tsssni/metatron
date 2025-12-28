@@ -8,8 +8,8 @@ namespace mtt::filter {
             fv2 radius = {1.5f};
             f32 sigma = 0.5f;
         };
-        Gaussian_Filter() noexcept = default;
         Gaussian_Filter(cref<Descriptor> desc) noexcept;
+        Gaussian_Filter() noexcept = default;
         auto operator()(cref<fv2> p) const noexcept -> f32;
         auto sample(cref<fv2> u) const noexcept -> opt<Interaction>;
 

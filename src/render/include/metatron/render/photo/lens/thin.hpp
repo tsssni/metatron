@@ -9,6 +9,7 @@ namespace mtt::photo {
             f32 focus_distance = 10.f;
         };
         Thin_Lens(cref<Descriptor> desc) noexcept;
+        Thin_Lens() noexcept = default;
         auto sample(cref<fv2> o, cref<fv2> u) const noexcept -> opt<lens::Interaction>;
 
     private:

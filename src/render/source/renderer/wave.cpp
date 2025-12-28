@@ -9,7 +9,9 @@
 #include <metatron/device/shader/argument.hpp>
 #include <metatron/device/shader/pipeline.hpp>
 #include <metatron/resource/bsdf/physical.hpp>
+#include <metatron/core/math/bit.hpp>
 #include <metatron/core/stl/thread.hpp>
+#include <random>
 
 namespace mtt::renderer {
     auto upload(
@@ -60,7 +62,7 @@ namespace mtt::renderer {
         });
         auto image = make_obj<opaque::Image>(
         opaque::Image::Descriptor{
-            .image = &desc.film.image,
+            .image = &desc.film->image,
             .state = opaque::Image::State::storable,
             .type = command::Type::render,
         });
@@ -68,7 +70,7 @@ namespace mtt::renderer {
         opaque::Buffer::Descriptor{
             .state = opaque::Buffer::State::visible,
             .type = command::Type::render,
-            .size = math::prod(desc.film.image.size),
+            .size = math::prod(desc.film->image.size),
         });
 
         auto global_args = make_obj<shader::Argument>(
@@ -99,7 +101,7 @@ namespace mtt::renderer {
         integrate_args_encoder.upload();
         pipeline_encoder.bind();
 
-        auto spp = desc.film.spp;
+        auto spp = desc.film->spp;
         struct Integrate final {
             Descriptor desc;
             u32 seed;
@@ -129,7 +131,7 @@ namespace mtt::renderer {
         render->signals = {{render_timeline.get(), ++render_count}};
         render_queue->submit(std::move(render));
         render_timeline->wait(render_count);
-        std::memcpy(desc.film.image.pixels.front().data(), buffer->ptr, buffer->size);
-        desc.film.image.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
+        std::memcpy(desc.film->image.pixels.front().data(), buffer->ptr, buffer->size);
+        desc.film->image.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
     }
 }

@@ -6,7 +6,7 @@
 #include <metatron/core/stl/print.hpp>
 
 namespace mtt::emitter {
-    Uniform_Emitter::Uniform_Emitter() {
+    Uniform_Emitter::Uniform_Emitter(cref<Descriptor>) noexcept {
         auto& lvec = stl::vector<light::Light>::instance();
         auto prims = std::vector<Primitive>{};
         auto inf_prims = std::vector<Primitive>{};

@@ -3,12 +3,10 @@
 
 namespace mtt::shape {
     struct Sphere final {
-        u32 padding = 0u;
-
         struct Descriptor final {};
+        Sphere(cref<Descriptor>) noexcept;
         Sphere() noexcept = default;
-        Sphere(cref<Descriptor> desc) noexcept;
-        
+
         auto size() const noexcept -> usize;
         auto bounding_box(
             cref<math::Transform> t, usize idx
@@ -23,5 +21,8 @@ namespace mtt::shape {
         auto query(
             cref<math::Ray> r, usize idx = 0uz
         ) const noexcept -> opt<fv4>;
+
+    private:
+        u32 padding = 0u;
     };
 }

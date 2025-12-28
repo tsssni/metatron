@@ -13,8 +13,8 @@ namespace mtt::spectra {
             Color_Space::Spectrum_Type type;
             tag<Color_Space> color_space = entity<Color_Space>("/color-space/sRGB");
         };
-        Rgb_Spectrum() noexcept = default;
         Rgb_Spectrum(cref<Descriptor> desc) noexcept;
+        Rgb_Spectrum() noexcept = default;
         auto operator()(f32 lambda) const noexcept -> f32;
 
     private:

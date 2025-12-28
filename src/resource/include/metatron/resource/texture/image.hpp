@@ -16,8 +16,8 @@ namespace mtt::texture {
             Image_Distribution distr = Image_Distribution::none;
             bool linear = true;
         };
-        Image_Vector_Texture() noexcept = default;
         Image_Vector_Texture(cref<Descriptor> desc) noexcept;
+        Image_Vector_Texture() noexcept = default;
 
         auto operator()(
             cref<muldim::Coordinate> coord
@@ -39,8 +39,8 @@ namespace mtt::texture {
             Image_Distribution distr = Image_Distribution::none;
             tag<spectra::Color_Space> color_space = entity<spectra::Color_Space>("/color-space/sRGB");
         };
-        Image_Spectrum_Texture() noexcept = default;
         Image_Spectrum_Texture(cref<Descriptor> desc) noexcept;
+        Image_Spectrum_Texture() noexcept = default;
 
         auto operator()(
             cref<muldim::Coordinate> coord, cref<fv4> spec

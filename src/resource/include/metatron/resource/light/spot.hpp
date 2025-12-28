@@ -9,8 +9,8 @@ namespace mtt::light {
             f32 falloff_start_theta;
             f32 falloff_end_theta;
         };
-        Spot_Light() noexcept = default;
         Spot_Light(cref<Descriptor> desc) noexcept;
+        Spot_Light() noexcept = default;
 
         auto operator()(
             cref<math::Ray> r, cref<fv4> lambda

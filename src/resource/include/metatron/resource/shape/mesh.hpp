@@ -18,8 +18,8 @@ namespace mtt::shape {
         struct Descriptor final {
             std::string path;
         };
-        Mesh() noexcept = default;
         Mesh(cref<Descriptor> desc) noexcept;
+        Mesh() noexcept = default;
 
         auto size() const noexcept -> usize;
         auto bounding_box(

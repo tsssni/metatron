@@ -40,8 +40,8 @@ namespace mtt::light {
             f32 temperature = 6504.f;
             f32 intensity = 1.f;
         };
-        Sunsky_Light() noexcept = default;
         Sunsky_Light(cref<Descriptor> desc) noexcept;
+        Sunsky_Light() noexcept = default;
 
         auto static init() noexcept -> void;
 

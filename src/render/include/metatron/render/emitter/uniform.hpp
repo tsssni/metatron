@@ -9,7 +9,10 @@ namespace mtt::emitter {
             tag<light::Light> light;
             tag<math::Transform> local_to_render;
         };
-        Uniform_Emitter();
+
+        struct Descriptor final {};
+        Uniform_Emitter(cref<Descriptor>) noexcept;
+        Uniform_Emitter() noexcept = default;
 
         auto sample(
             cref<math::Context> ctx, f32 u

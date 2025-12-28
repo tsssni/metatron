@@ -7,7 +7,9 @@ namespace mtt::sampler {
     auto constexpr sobol_matrix_size = 52;
 
     struct Sobol_Sampler final {
-        Sobol_Sampler() noexcept;
+        struct Descriptor final {};
+        Sobol_Sampler(cref<Descriptor>) noexcept;
+        Sobol_Sampler() noexcept = default;
         Sobol_Sampler(rref<Sobol_Sampler>) noexcept = default;
         Sobol_Sampler(cref<Sobol_Sampler>) noexcept = default;
         auto operator=(rref<Sobol_Sampler>) noexcept -> Sobol_Sampler& = default;

@@ -4,7 +4,9 @@
 
 namespace mtt::sampler {
     struct Independent_Sampler final {
-        Independent_Sampler() noexcept;
+        struct Descriptor final {};
+        Independent_Sampler(cref<Descriptor>) noexcept;
+        Independent_Sampler() noexcept = default;
         Independent_Sampler(rref<Independent_Sampler>) noexcept = default;
         Independent_Sampler(cref<Independent_Sampler>) noexcept = default;
         auto operator=(rref<Independent_Sampler>) noexcept -> Independent_Sampler& = default;

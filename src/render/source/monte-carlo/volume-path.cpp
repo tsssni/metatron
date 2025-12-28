@@ -5,6 +5,8 @@
 #include <metatron/core/math/plane.hpp>
 
 namespace mtt::monte_carlo {
+    Volume_Path_Integrator::Volume_Path_Integrator(cref<Descriptor>) noexcept {}
+
     auto Volume_Path_Integrator::sample(
         Context ctx
     ) const noexcept -> opt<spectra::Stochastic_Spectrum> {

@@ -364,6 +364,8 @@ namespace mtt {
         auto index() noexcept -> u32 { return idx & 0xffff; };
         auto data() noexcept -> mut<T> { return vec::instance()[idx]; }
         auto data() const noexcept -> view<T> { return vec::instance()[idx]; }
+        template<typename U>
+        auto is() const noexcept -> bool { return vec::instance().template is<U>(idx); }
 
         auto operator->() noexcept -> mut<T> { return data(); }
         auto operator->() const noexcept -> view<T> { return data(); }
@@ -372,7 +374,7 @@ namespace mtt {
         auto operator*() const noexcept -> obj<T>
         requires(pro::facade<T> && T::copyability != pro::constraint_level::none) {
             return vec::instance()(idx);
-         }
+        }
 
         operator u32() const noexcept { return idx; }
         operator bool() const noexcept { return idx != math::maxv<u32>; }

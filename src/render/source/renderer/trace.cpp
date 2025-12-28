@@ -5,6 +5,7 @@
 #include <metatron/core/stl/progress.hpp>
 #include <metatron/core/stl/memory.hpp>
 #include <metatron/core/stl/print.hpp>
+#include <random>
 
 namespace mtt::renderer {
     auto Renderer::Impl::trace() noexcept -> void {
@@ -16,9 +17,9 @@ namespace mtt::renderer {
         auto addr = wired::Address{args.address};
 
         auto ct = *entity<math::Transform>("/hierarchy/camera/render");
-        auto spp = desc.film.spp;
-        auto depth = desc.film.depth;
-        auto size = uzv2{desc.film.image.size};
+        auto spp = desc.film->spp;
+        auto depth = desc.film->depth;
+        auto size = uzv2{desc.film->image.size};
 
         auto range = uv2{0u, addr.host.empty() ? spp : 1u};
         auto progress = stl::progress{math::prod(size) * spp};
@@ -26,7 +27,7 @@ namespace mtt::renderer {
             auto sp = *desc.sampler;
             for (auto n = range[0]; n < range[1]; ++n) {
                 sp->start({px, size, n, spp, 0, seed});
-                auto fixel = desc.film(desc.filter.data(), px, sp->generate_pixel_2d());
+                auto fixel = (*desc.film)(desc.filter.data(), px, sp->generate_pixel_2d());
                 auto spec = spectra::Stochastic_Spectrum{sp->generate_1d()};
                 MTT_OPT_OR_CALLBACK(s, photo::Camera{}.sample(
                     desc.lens.data(), fixel.position, fixel.dxdy, sp->generate_2d()
@@ -48,7 +49,7 @@ namespace mtt::renderer {
             }
         };
 
-        auto& film = desc.film.image;
+        auto& film = desc.film->image;
         auto image = muldim::Image{.size = film.size, .linear = film.linear};
         image.pixels.emplace_back(film.pixels.front().size());
 
@@ -74,7 +75,7 @@ namespace mtt::renderer {
                     image[i, j] = pixel;
                 }
             );
-            if (finished) image.to_path(args.output, desc.film.color_space);
+            if (finished) image.to_path(args.output, desc.film->color_space);
             if (!addr.host.empty()) future = scheduler.async_dispatch(
                 [&image, &previewer] { previewer.update(image); }
             );

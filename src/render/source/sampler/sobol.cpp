@@ -11,7 +11,7 @@ namespace mtt::sampler {
     inline buf<u32> Sobol_Sampler::sobol_matrices;
 
     // avoid extra parameters uploaded to gpu
-    Sobol_Sampler::Sobol_Sampler() noexcept: matrices(std::span<u32>(sobol_matrices)) {}
+    Sobol_Sampler::Sobol_Sampler(cref<Descriptor>) noexcept: matrices(std::span<u32>(sobol_matrices)) {}
 
     auto Sobol_Sampler::init() noexcept -> void {
         auto path = "sampler/sobol.bin";

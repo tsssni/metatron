@@ -39,25 +39,25 @@ namespace mtt {
             s.ray_differential = in.ct / s.ray_differential;
             s.default_differential = in.ct / s.default_differential;
 
-            let spec = spectra::Stochastic_Spectrum(sp.generate_1d());
-            var ctx: monte_carlo::Context;
-            ctx.accel = in.accel;
-            ctx.emitter = in.emitter;
-            ctx.sampler = sp;
-            ctx.lambda = spec.lambda;
-            ctx.ray_differential = s.ray_differential;
-            ctx.default_differential = s.default_differential;
-            ctx.render_to_camera = in.ct;
-            ctx.pixel = pixel;
-            ctx.sample_index = n;
-            ctx.max_depth = in.film.depth;
+            // let spec = spectra::Stochastic_Spectrum(sp.generate_1d());
+            // var ctx: monte_carlo::Context;
+            // ctx.accel = in.accel;
+            // ctx.emitter = in.emitter;
+            // ctx.sampler = sp;
+            // ctx.lambda = spec.lambda;
+            // ctx.ray_differential = s.ray_differential;
+            // ctx.default_differential = s.default_differential;
+            // ctx.render_to_camera = in.ct;
+            // ctx.pixel = pixel;
+            // ctx.sample_index = n;
+            // ctx.max_depth = in.film.depth;
 
-            let Li_opt = in.integrator.sample(ctx);
-            if (Li_opt == none) continue;
-            var Li = Li_opt.value;
-            Li.value /= s.pdf;
-            let rgb = fixel(in.film, Li);
-            in.image.Store(pixel, fv4(rgb * fixel.weight, fixel.weight));
+            // let Li_opt = in.integrator.sample(ctx);
+            // if (Li_opt == none) continue;
+            // var Li = Li_opt.value;
+            // Li.value /= s.pdf;
+            // let rgb = fixel(in.film, Li);
+            // in.image.Store(pixel, fv4(rgb * fixel.weight, fixel.weight));
         }
 
         in.image.Store(pixel, value / max(value.w, math::epsilon));

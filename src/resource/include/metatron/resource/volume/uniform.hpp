@@ -9,8 +9,8 @@ namespace mtt::volume {
             math::Bounding_Box bbox;
             uzv3 dimensions;
         };
-        Uniform_Volume() noexcept = default;
         Uniform_Volume(cref<Descriptor> desc) noexcept;
+        Uniform_Volume() noexcept = default;
 
         auto to_local(cref<iv3> ijk) const noexcept -> fv3;
         auto to_index(cref<fv3> pos) const noexcept -> iv3;

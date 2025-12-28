@@ -1,7 +1,7 @@
 #include <metatron/render/sampler/independent.hpp>
 
 namespace mtt::sampler {
-    Independent_Sampler::Independent_Sampler() noexcept: distr(1e-4, 1.f - 1e-4) {}
+    Independent_Sampler::Independent_Sampler(cref<Descriptor>) noexcept: distr(1e-4, 1.f - 1e-4) {}
 
     auto Independent_Sampler::start(Context ctx) noexcept -> void {
         pixel = ctx.pixel;

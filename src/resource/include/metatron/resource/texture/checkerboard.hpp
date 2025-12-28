@@ -9,8 +9,8 @@ namespace mtt::texture {
             tag<spectra::Spectrum> y;
             uv2 uv_scale = uv2{1};
         };
-        Checkerboard_Texture() noexcept = default;
         Checkerboard_Texture(cref<Descriptor> desc) noexcept;
+        Checkerboard_Texture() noexcept = default;
 
         auto operator()(
             cref<muldim::Coordinate> coord, cref<fv4> lambda

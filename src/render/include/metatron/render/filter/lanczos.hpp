@@ -8,8 +8,8 @@ namespace mtt::filter {
             fv2 radius = {0.5f};
             f32 tau = 3.f;
         };
-        Lanczos_Filter() noexcept = default;
         Lanczos_Filter(cref<Descriptor> desc) noexcept;
+        Lanczos_Filter() noexcept = default;
         auto operator()(cref<fv2> p) const noexcept -> f32;
         auto sample(cref<fv2> u) const noexcept -> opt<Interaction>;
 

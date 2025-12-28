@@ -7,7 +7,7 @@
 #include <metatron/core/math/distribution/cone.hpp>
 
 namespace mtt::shape {
-    Sphere::Sphere(cref<Descriptor> desc) noexcept {}
+    Sphere::Sphere(cref<Descriptor>) noexcept {}
 
     auto Sphere::size() const noexcept -> usize {
         return 1uz;

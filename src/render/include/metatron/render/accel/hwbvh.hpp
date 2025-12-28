@@ -4,7 +4,8 @@
 namespace mtt::accel {
     struct HWBVH final {
         struct Descriptor final {};
-        HWBVH(cref<Descriptor> desc);
+        HWBVH(cref<Descriptor>) noexcept;
+        HWBVH() noexcept = default;
 
         auto operator()(
             cref<math::Ray> r, cref<fv3> n
