@@ -64,6 +64,10 @@ namespace mtt::math {
         return y;
     }
 
+    public func avg<T: IArithmetic, let size: u32>(vector<T, size> x) -> T {
+        return sum(x) / T(size);
+    }
+
     public func angle<T: __BuiltinFloatingPointType, let size: u32>(
         vector<T, size> x, vector<T, size> y
     ) -> T {

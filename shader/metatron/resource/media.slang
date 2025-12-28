@@ -9,7 +9,7 @@ import metatron.core;
 namespace mtt::media {
     public struct Interaction {
         public fv3 p;
-        public phase::Phase_Function phase;
+        public phase::Phase_Function_Union phase;
         public f32 t;
         public fv4 transmittance;
         public fv4 sigma_a;
@@ -25,7 +25,7 @@ namespace mtt::media {
         } function;
         f32 g;
 
-        public func to_phase() -> phase::Phase_Function_Tag {
+        public func to_phase() -> phase::Phase_Function_Union {
             switch (function) {
             case Function::henyey_greenstein: return {phase::Henyey_Greenstein_Phase_Function(g)};
             default: return {};

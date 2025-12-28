@@ -22,10 +22,10 @@ namespace mtt::sampler {
     }
 
     public struct Sampler_Union: Sampler {
-        Independent_Sampler independent;
-        Halton_Sampler halton;
-        Sobol_Sampler sobol;
-        u32 idx;
+        Independent_Sampler independent = {};
+        Halton_Sampler halton = {};
+        Sobol_Sampler sobol = {};
+        u32 idx = 0xffffffffu;
 
         [mutating] public func start(Context ctx) -> void {
             if (idx == 0) return independent.start(ctx);

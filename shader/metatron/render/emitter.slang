@@ -15,8 +15,8 @@ namespace mtt::emitter {
     }
 
     public struct Emitter_Union: Emitter {
-        Uniform_Emitter uniform;
-        u32 idx;
+        Uniform_Emitter uniform = {};
+        u32 idx = 0xffffffffu;
 
         public func sample(math::Context ctx, f32 u) -> Optional<Interaction> {
             if (idx == 0) return uniform.sample(ctx, u);

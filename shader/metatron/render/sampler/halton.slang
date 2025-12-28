@@ -2,15 +2,15 @@ implementing sampler;
 
 namespace mtt::sampler {
     public struct Halton_Sampler: Sampler {
-        iv2 pixel;
-        iv2 exponential;
-        iv2 scale;
-        iv2 scale_mulinv;
-        i32 idx;
-        i32 stride;
-        u32 seed;
-        u32 dim;
-        u32 halton_idx;
+        iv2 pixel = 0;
+        iv2 exponential = 0;
+        iv2 scale = 0;
+        iv2 scale_mulinv = 0;
+        i32 idx = 0;
+        i32 stride = 0;
+        u32 seed = 0;
+        u32 dim = 0;
+        u32 halton_idx = 0;
 
         [mutating] public func start(Context ctx) -> void {
             pixel = iv2(ctx.pixel);

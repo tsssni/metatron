@@ -6,8 +6,8 @@ namespace mtt::emitter {
             light::Light_Tag light;
             tag<math::Transform> local_to_render;
         }
-        buf<Primitive> prims;
-        buf<Primitive> inf_prims;
+        buf<Primitive> prims = {};
+        buf<Primitive> inf_prims = {};
 
         public func sample(math::Context ctx, f32 u) -> Optional<Interaction> {
             if (prims.empty() && inf_prims.empty()) return {};

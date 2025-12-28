@@ -20,9 +20,9 @@ namespace mtt::accel {
             u32 num_prims;
         };
 
-        public func trace(math::Ray r, fv3 n) -> Optional<Interaction> { return none; }
+        public Optional<Interaction> operator()(math::Ray r, fv3 n) { return none; }
 
-        buf<Primitive> prims;
-        buf<Index> bvh;
+        buf<Primitive> prims = {};
+        buf<Index> bvh = {};
     }
 }

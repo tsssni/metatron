@@ -21,17 +21,17 @@ namespace mtt::accel {
     };
 
     public interface Acceleration {
-        public func trace(math::Ray r, fv3 n) -> Optional<Interaction>;
+        public Optional<Interaction> operator()(math::Ray r, fv3 n);
     }
 
     public struct Acceleration_Union: Acceleration {
-        LBVH lbvh;
-        HWBVH hwbvh;
-        u32 idx;
+        LBVH lbvh = {};
+        HWBVH hwbvh = {};
+        u32 idx = 0xffffffffu;
 
-        public func trace(math::Ray r, fv3 n) -> Optional<Interaction> {
-            if (idx == 0) return lbvh.trace(r, n);
-            else if (idx == 1) return hwbvh.trace(r, n);
+        public Optional<Interaction> operator()(math::Ray r, fv3 n) {
+            if (idx == 0) return lbvh(r, n);
+            else if (idx == 1) return hwbvh(r, n);
             else return {};
         }
     }

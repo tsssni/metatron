@@ -2,7 +2,7 @@ implementing bsdf;
 
 namespace mtt::bsdf {
     public struct Interface_Bsdf: Bsdf {
-        f32 padding = 0.f;
+        u32 padding = 0u;
 
         public Optional<Interaction> operator()(fv3 wo, fv3 wi) {
             return Interaction(fv4(1.f), wo, 1.f);

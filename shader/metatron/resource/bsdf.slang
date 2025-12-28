@@ -49,6 +49,9 @@ namespace mtt::bsdf {
             else if (idx == 1) return interface.flags();
             else return {};
         }
+
+        public func empty() -> bool { return idx == 0xffffffffu; }
+        [mutating] public func clear() -> void { idx = 0xffffffffu; }
     }
 
     public func lambert(f32 reflectance) -> f32 {

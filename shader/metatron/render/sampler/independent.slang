@@ -3,11 +3,11 @@ implementing sampler;
 namespace mtt::sampler {
     // TODO: support indpendent sampler
     public struct Independent_Sampler: Sampler {
-        u64 rng;
-        u64 distr;
-        iv2 pixel;
-        i32 idx;
-        i32 dim;
+        u64 rng = 0;
+        u64 distr = 0;
+        iv2 pixel = 0;
+        i32 idx = 0;
+        i32 dim = 0;
 
         [mutating] public func start(Context ctx) -> void {}
         [mutating] public func generate_1d() -> f32 { return 0; }

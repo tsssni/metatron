@@ -5,12 +5,12 @@ namespace mtt::sampler {
     static u32 sobol_matrix_size = 52;
 
     public struct Sobol_Sampler: Sampler {
-        i32 log2_spp;
-        i32 base4_digits;
-        i32 dim;
-        u32 seed;
-        u32 morton_idx;
-        buf<u32> matrices;
+        i32 log2_spp = 0;
+        i32 base4_digits = 0;
+        i32 dim = 0;
+        u32 seed = 0;
+        u32 morton_idx = 0;
+        buf<u32> matrices = {};
 
         [mutating] public func start(Context ctx) -> void {
             log2_spp = math::log2i(ctx.spp);

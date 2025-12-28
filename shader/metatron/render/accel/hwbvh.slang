@@ -2,9 +2,9 @@ implementing accel;
 
 namespace mtt::accel {
     public struct HWBVH: Acceleration {
-        u32 idx;
+        u32 idx = 0xffffffffu;
 
-        public func trace(math::Ray r, fv3 n) -> Optional<Interaction> {
+        public Optional<Interaction> operator()(math::Ray r, fv3 n) {
             let vector = Ptr<Divider>(global.vectors[idx]);
             var rq: RayQuery;
             rq.TraceRayInline(global.accel, 0, 0xff, r.get());

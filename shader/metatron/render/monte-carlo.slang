@@ -7,16 +7,16 @@ import metatron.resource;
 
 namespace mtt::monte_carlo {
     public struct Context {
-        accel::Acceleration accel;
-        emitter::Emitter emitter;
-        sampler::Sampler sampler;
-        fv4 lambda;
-        math::Ray_Differential ray_differential;
-        math::Ray_Differential default_differential;
-        math::Transform render_to_camera;
-        uzv2 pixel;
-        usize sample_index;
-        usize max_depth;
+        public accel::Acceleration_Union accel = {};
+        public emitter::Emitter_Union emitter = {};
+        public sampler::Sampler_Union sampler = {};
+        public fv4 lambda = 0;
+        public math::Ray_Differential ray_differential = {};
+        public math::Ray_Differential default_differential = {};
+        public math::Transform render_to_camera = {};
+        public uzv2 pixel = 0;
+        public usize sample_index = 0;
+        public usize max_depth = 0;
     }
 
     public interface Integrator {

@@ -3,7 +3,7 @@
 
 namespace mtt::material {
     struct Interface_Material final {
-        f32 padding = 0.f;
+        u32 padding = 0u;
 
         auto sample(
             cref<math::Context> ctx,

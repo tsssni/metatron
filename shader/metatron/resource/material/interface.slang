@@ -2,7 +2,7 @@ implementing material;
 
 namespace mtt::material {
     public struct Interface_Material: Material {
-        f32 padding = 0.f;
+        u32 padding = 0u;
 
         public func sample(
             math::Context ctx,

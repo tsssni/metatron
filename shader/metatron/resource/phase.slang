@@ -14,7 +14,7 @@ namespace mtt::phase {
         public func sample(math::Context ctx, fv2 u) -> Optional<Interaction>;
     }
 
-    public struct Phase_Function_Tag: Phase_Function {
+    public struct Phase_Function_Union: Phase_Function {
         Henyey_Greenstein_Phase_Function henyey_greenstein = {};
         u32 idx = 0xffffffffu;
         public __init() {}
@@ -31,5 +31,8 @@ namespace mtt::phase {
             if (idx == 0) return henyey_greenstein.sample(ctx, u);
             else return {};
         }
+
+        public func empty() -> bool { return idx == 0xffffffffu; }
+        [mutating] public func clear() -> void { idx = 0xffffffffu; }
     }
 }

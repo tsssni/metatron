@@ -3,7 +3,7 @@
 
 namespace mtt::shape {
     struct Sphere final {
-        f32 padding = 0.f;
+        u32 padding = 0u;
 
         struct Descriptor final {};
         Sphere() noexcept = default;
