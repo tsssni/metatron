@@ -348,7 +348,7 @@ namespace mtt::math {
     template<typename T, usize size>
     requires std::floating_point<T>
     auto constexpr orthogonalize(cref<Vector<T, size>> n) noexcept -> Matrix<T, 2, size> {
-        auto t = abs(n[0]) > 1.f - epsilon<f32>
+        auto t = abs(n[1]) > 1.f - epsilon<f32>
         ? Vector<f32, 3>{1.f, 0.f, 0.f}
         : Vector<f32, 3>{0.f, 1.f, 0.f};
         auto tn = normalize(gram_schmidt(t, n));

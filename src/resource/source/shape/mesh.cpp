@@ -87,12 +87,12 @@ namespace mtt::shape {
             if (dpduv_opt) {
                 auto dpduv = dpduv_opt.value();
                 auto perp = math::cross(dpduv[0], dpduv[1]);
-                if (math::length(perp) == 0.f) dpduv_opt.reset();
+                if (math::length(perp) < math::epsilon<f32>) dpduv_opt.reset();
             }
             // fallback to make sure normal is correct
             if (!dpduv_opt) {
-                auto n = math::normalize(math::cross(v[2] - v[0], v[1] - v[0]));
-                dpduv_opt = math::orthogonalize(n);
+                dpduv_opt = math::orthogonalize(normals[prim[0]]);
+                if ((*dpduv_opt)[0] == fv3{0}) stl::print("idx: {} {}", i, n);
             }
 
             auto dnduv_opt = math::cramer(A,
@@ -101,8 +101,7 @@ namespace mtt::shape {
             if (!dnduv_opt) {
                 auto dn = math::normalize(math::cross(n[2] - n[0], n[1] - n[0]));
                 dnduv_opt = math::length(dn) == 0
-                ? fm23{0.f}
-                : math::orthogonalize(dn);
+                ? fm23{0.f} : math::orthogonalize(dn);
             }
 
             auto dpduv = dpduv_opt.value();
