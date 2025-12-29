@@ -1,5 +1,6 @@
 #include "renderer.hpp"
 #include "resource.hpp"
+#include <metatron/render/scene/args.hpp>
 #include <metatron/device/command/context.hpp>
 #include <metatron/device/encoder/transfer.hpp>
 #include <metatron/device/encoder/argument.hpp>
@@ -9,6 +10,7 @@
 #include <metatron/device/shader/argument.hpp>
 #include <metatron/device/shader/pipeline.hpp>
 #include <metatron/resource/bsdf/physical.hpp>
+#include <metatron/network/remote/preview.hpp>
 #include <metatron/core/math/bit.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <random>
@@ -132,6 +134,11 @@ namespace mtt::renderer {
         render_queue->submit(std::move(render));
         render_timeline->wait(render_count);
         std::memcpy(desc.film->image.pixels.front().data(), buffer->ptr, buffer->size);
+
+        auto& args = scene::Args::instance();
+        auto addr = wired::Address{args.address};
+        auto previewer = remote::Previewer{addr, "metatron"};
+        previewer.update(desc.film->image);
         desc.film->image.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
     }
 }

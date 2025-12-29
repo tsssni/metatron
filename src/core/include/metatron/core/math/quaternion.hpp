@@ -10,7 +10,7 @@ namespace mtt::math {
         explicit Quaternion(cref<Vector<T, 4>> v): data{v} {}
 
         auto constexpr static from_axis_angle(cref<Vector<T, 3>> axis, cref<T> angle) noexcept -> Quaternion<T> {
-            auto half_angle = angle * T{0.5};
+            auto half_angle = angle * T(0.5);
             auto sin_half = std::sin(half_angle);
             auto cos_half = std::cos(half_angle);
             return Quaternion{

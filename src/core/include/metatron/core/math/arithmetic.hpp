@@ -65,7 +65,7 @@ namespace mtt::math {
     template<typename T>
     requires std::integral<T>
     auto constexpr pow(T x, T n) noexcept -> T {
-        auto y = T{1};
+        auto y = T(1);
         while (n) {
             if (n & 1)
                 y = y * x;
@@ -78,7 +78,7 @@ namespace mtt::math {
     template<typename T>
     requires std::floating_point<T>
     auto constexpr pow(T x, usize n) noexcept -> T {
-        auto y = T{1};
+        auto y = T(1);
         for (auto i = 0; i < n; ++i)
             y *= x;
         return y;
@@ -87,7 +87,7 @@ namespace mtt::math {
     template<typename T>
     requires std::floating_point<T>
     auto constexpr sqrt(T x) noexcept -> T {
-        return std::sqrt(math::max(T{0}, x));
+        return std::sqrt(math::max(T(0), x));
     }
 
     template<typename T>
@@ -99,7 +99,7 @@ namespace mtt::math {
     template<typename T>
     requires std::floating_point<T>
     auto constexpr lerp(T x, T y, T alpha) noexcept -> T {
-        return (T{1} - alpha) * x + alpha * y;
+        return (T(1) - alpha) * x + alpha * y;
     }
 
     template<typename T>
@@ -110,27 +110,27 @@ namespace mtt::math {
     template<typename T>
     requires std::floating_point<T> || std::integral<T>
     auto constexpr sign(T x) noexcept -> i32 {
-        return (x > T{0}) - (x < T{0});
+        return (x > T(0)) - (x < T(0));
     }
 
     template<typename T>
     requires std::floating_point<T>
     auto constexpr acos(T x) noexcept -> T {
-        return std::acos(math::clamp(x, T{-1}, T{1}));
+        return std::acos(math::clamp(x, T(-1), T(1)));
     }
 
     template<typename T>
     requires std::floating_point<T>
     auto constexpr asin(T x) noexcept -> T {
-        return std::asin(math::clamp(x, T{-1}, T{1}));
+        return std::asin(math::clamp(x, T(-1), T(1)));
     }
 
     template<typename T>
     requires std::floating_point<T>
     auto constexpr atan2(T y, T x) noexcept -> T {
         auto z = std::atan2(y, x);
-        if (z < T{0})
-            z += T{2} * T{math::pi};
+        if (z < T(0))
+            z += T(2) * T(math::pi);
         return z;
     }
 }

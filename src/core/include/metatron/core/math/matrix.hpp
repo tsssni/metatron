@@ -195,7 +195,7 @@ namespace mtt::math {
                 using U = Matrix<T, pds.front()>;
                 auto constexpr reduce = [](cref<U> x, cref<U> y) -> T {
                     auto z = x * y;
-                    T sum = T{0};
+                    T sum = T(0);
                     for (auto i = 0uz; i < U::dimensions.front(); ++i)
                         sum += z[i];
                     return sum;
@@ -418,14 +418,14 @@ namespace mtt::math {
         } else if constexpr (n == 2) {
             return m[0][0] * m[1][1] - m[0][1] * m[1][0];
         } else if constexpr (n == 3) {
-            return T{0}
+            return T(0)
             + m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
             - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
             + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
         } else {
             // upper triangular matrix
             auto u = m;
-            auto det = T{1};
+            auto det = T(1);
             
             for (auto i = 0uz; i < n; ++i) {
                 auto pivot_row = i;
@@ -437,7 +437,7 @@ namespace mtt::math {
                         pivot_row = j;
                     }
                 
-                if (max_val < epsilon<T>) return T{0};
+                if (max_val < epsilon<T>) return T(0);
                 if (pivot_row != i) {
                     std::swap(u[i], u[pivot_row]);
                     det = -det;

@@ -123,7 +123,7 @@ namespace mtt::bsdf {
                 if (pr == 0.f && pt == 0.f) return {};
 
                 let reflective = u[0] < pr / (pr + pt);
-                let wi = reflective ? reflect(wo, wm) : refract(wo, wm, eta[0]);
+                let wi = reflective ? reflect(wo, wm) : refract(wo, wm, 1.f / eta[0]);
                 let cos_theta_i = math::unit_to_cos_theta(wi);
                 if (abs(wi[1]) < math::epsilon) return {};
 
@@ -161,7 +161,7 @@ namespace mtt::bsdf {
                 if (pr == 0.f && pt == 0.f) return {};
 
                 let reflective = (plastic || conductive) ? true : u[0] < pr / (pr + pt);
-                let wi = reflective ? reflect(wo, wm) : refract(wo, wm, eta[0]);
+                let wi = reflective ? reflect(wo, wm) : refract(wo, wm, 1.f / eta[0]);
                 let G = smith_shadow(wo, wi, alpha_u, alpha_v);
                 if (abs(wi[1]) < math::epsilon) return {};
 

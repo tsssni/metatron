@@ -205,7 +205,7 @@ namespace mtt::monte_carlo {
                     let l_intr = l_opt.value;
 
                     mis_e *= specular ? 0.f : math::guarded_div(e_intr.pdf * l_intr.pdf, p);
-                    let mis_w = 1.f; // math::guarded_div(1.f, math::avg(mis_s + mis_e));
+                    let mis_w = math::guarded_div(1.f, math::avg(mis_s + mis_e));
                     emission += beta * mis_w * l_intr.L;
                     break;
                 }
@@ -314,7 +314,7 @@ namespace mtt::monte_carlo {
 
                 if (math::max(mat_intr.emission) > math::epsilon) {
                     mis_e *= specular ? 0.f : math::guarded_div(intr.pdf * 1.f, p);
-                    let mis_w = math::guarded_div(1.f, math::avg(mis_s + mis_e));
+                    let mis_w = 1.0; // math::guarded_div(1.f, math::avg(mis_s + mis_e));
                     emission += mis_w * beta * mat_intr.emission;
                 }
 

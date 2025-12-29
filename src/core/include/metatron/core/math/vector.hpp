@@ -110,15 +110,15 @@ namespace mtt::math {
     template<typename T>
     requires std::floating_point<T>
     auto constexpr reflect(cref<Vector<T, 3>> in, cref<Vector<T, 3>> n) noexcept -> Vector<T, 3> {
-        return T{2.0} * n * dot(-in, n) + in; 
+        return T(2.0) * n * dot(-in, n) + in; 
     }
 
     template<typename T>
     requires std::floating_point<T>
     auto constexpr refract(cref<Vector<T, 3>> in, cref<Vector<T, 3>> n, cref<T> eta) noexcept -> Vector<T, 3> {
         auto cos_theta_i = dot(-in, n);
-        auto cos_2_theta_t = T{1.0} - (T{1.0} - sqr(cos_theta_i)) / sqr(eta);
-        if (cos_2_theta_t < 0.0) return Vector<T, 3>{T{0.0}};
+        auto cos_2_theta_t = T(1.0) - (T(1.0) - sqr(cos_theta_i)) / sqr(eta);
+        if (cos_2_theta_t < 0.0) return Vector<T, 3>{T(0.0)};
         return in / eta + (cos_theta_i / eta - sqrt(cos_2_theta_t)) * n;
     }
 
@@ -265,7 +265,7 @@ namespace mtt::math {
     template<typename T, usize size>
     requires requires(T a, T b) { a * b; }
     auto constexpr prod(cref<Vector<T, size>> x) noexcept -> T {
-        auto y = T{1};
+        auto y = T(1);
         foreach([&y](cref<T> v, usize) noexcept -> T {
             y *= v;
             return y;
