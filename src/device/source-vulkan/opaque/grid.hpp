@@ -5,7 +5,6 @@
 namespace mtt::opaque {
     struct Grid::Impl final {
         Barrier barrier;
-        vk::UniqueDeviceMemory memory;
         vk::UniqueImage image;
         vk::UniqueImageView view;
 

@@ -5,6 +5,7 @@
 namespace mtt::opaque {
     Acceleration::Acceleration(cref<Descriptor> desc) noexcept {
         auto& ctx = command::Context::instance().impl;
+        auto props = ctx->accel_props;
         auto device = ctx->device.get();
 
         impl->primitives.resize(desc.primitives.size());
@@ -98,6 +99,7 @@ namespace mtt::opaque {
             opaque::Buffer::Descriptor{
                 .state = opaque::Buffer::State::local,
                 .type = desc.type,
+                .alignment = props.minAccelerationStructureScratchOffsetAlignment,
                 .size = size.buildScratchSize,
                 .flags = u64(vk::BufferUsageFlagBits2::eStorageBuffer),
             });
@@ -173,6 +175,7 @@ namespace mtt::opaque {
         opaque::Buffer::Descriptor{
             .state = opaque::Buffer::State::local,
             .type = desc.type,
+            .alignment = props.minAccelerationStructureScratchOffsetAlignment,
             .size = size.buildScratchSize,
             .flags = u64(vk::BufferUsageFlagBits2::eStorageBuffer),
         });

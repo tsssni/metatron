@@ -28,6 +28,7 @@ namespace mtt::opaque {
             mut<byte> ptr = nullptr;
             State state = State::local;
             command::Type type = command::Type::render;
+            usize alignment = 0;
             usize size = 0;
             u64 flags = 0;
         };
@@ -37,7 +38,6 @@ namespace mtt::opaque {
         Buffer(cref<Descriptor> desc) noexcept;
         Buffer(rref<Buffer> rhs) noexcept;
         auto operator=(rref<Buffer> rhs) noexcept -> ref<Buffer>;
-        ~Buffer() noexcept;
         operator View() noexcept;
     };
 }

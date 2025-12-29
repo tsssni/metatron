@@ -1,5 +1,6 @@
 #include "buffer.hpp"
 #include "../command/queue.hpp"
+#include "../command/allocator.hpp"
 
 namespace mtt::opaque {
     vk::MemoryAllocateFlags Buffer::Impl::flags = vk::MemoryAllocateFlags{}
@@ -40,10 +41,10 @@ namespace mtt::opaque {
         impl->barrier.family = command::Queue::Impl::families[u32(desc.type)].idx;
         auto& ctx = command::Context::instance().impl;
         auto& props = ctx->memory_props;
+        auto& allocator = command::Allocator::instance();
         if (desc.size == 0) stl::abort("empty buffer not supported");
 
         auto device = ctx->device.get();
-        auto flags = vk::MemoryAllocateFlagsInfo{.flags = Impl::flags};
         auto usages = vk::BufferUsageFlags2CreateInfo{.usage = {
             vk::BufferUsageFlags2{desc.flags} | impl->usages
         }};
@@ -62,6 +63,8 @@ namespace mtt::opaque {
         auto infos = std::array<vk::BindBufferMemoryInfo, 2>{};
         auto& device_info = infos[0];
         auto& host_info = infos[1];
+        auto device_alloc = command::Allocation{};
+        auto host_alloc = command::Allocation{};
 
         if (desc.state != State::local || desc.ptr) {
             impl->host_buffer = command::guard(device.createBufferUnique(create));
@@ -69,16 +72,15 @@ namespace mtt::opaque {
                 vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible,
                 ctx->host_heap, reqs.memoryTypeBits
             );
-            auto alloc = vk::MemoryAllocateInfo{
-                .pNext = &flags,
-                .allocationSize = reqs.size,
-                .memoryTypeIndex = type,
-            };
-            impl->host_memory = command::guard(device.allocateMemoryUnique(alloc));
+            host_alloc = allocator.allocate(
+                type, u32(Impl::flags),
+                math::max(desc.alignment, reqs.alignment),
+                reqs.size
+            );
             host_info = {
                 .buffer = impl->host_buffer.get(),
-                .memory = impl->host_memory.get(),
-                .memoryOffset = 0,
+                .memory = host_alloc.memory->impl->memory.get(),
+                .memoryOffset = host_alloc.offset,
             };
         }
 
@@ -87,18 +89,19 @@ namespace mtt::opaque {
                 vk::MemoryPropertyFlagBits::eDeviceLocal,
                 ctx->device_heap, reqs.memoryTypeBits
             );
-            auto alloc = vk::MemoryAllocateInfo{
-                .pNext = flags,
-                .allocationSize = reqs.size,
-                .memoryTypeIndex = type,
-            };
-            impl->device_memory = command::guard(device.allocateMemoryUnique(alloc));
+            device_alloc = allocator.allocate(
+                type, u32(Impl::flags),
+                math::max(desc.alignment, reqs.alignment),
+                reqs.size
+            );
         }
         device_info = {
             .buffer = impl->device_buffer.get(),
             .memory = desc.state == State::visible
-            ? impl->host_memory.get() : impl->device_memory.get(),
-            .memoryOffset = 0,
+            ? host_alloc.memory->impl->memory.get()
+            : device_alloc.memory->impl->memory.get(),
+            .memoryOffset = desc.state == State::visible
+            ? host_alloc.offset : device_alloc.offset,
         };
 
         command::guard(device.bindBufferMemory2(host_info.buffer ? 2 : 1, infos.data()));
@@ -106,10 +109,7 @@ namespace mtt::opaque {
             .buffer = impl->device_buffer.get()
         });
         if (impl->host_buffer) {
-            ptr = mut<byte>(command::guard(ctx->device->mapMemory2({
-                .memory = impl->host_memory.get(),
-                .offset = 0, .size = desc.size,
-            })));
+            ptr = host_alloc.memory->mapped + host_alloc.offset;
             if (desc.ptr) std::memcpy(ptr, desc.ptr, desc.size);
         }
     }
@@ -118,21 +118,12 @@ namespace mtt::opaque {
     auto Buffer::operator=(rref<Buffer> rhs) noexcept -> ref<Buffer> {
         auto& ctx = command::Context::instance().impl;
         auto device = ctx->device.get();
-        if (impl->host_memory && ptr)
-            command::guard(device.unmapMemory2({.memory = impl->host_memory.get()}));
         state = rhs.state; ptr = rhs.ptr;
         addr = rhs.addr; size = rhs.size; dirty = std::move(rhs.dirty);
         impl = std::move(rhs.impl);
         rhs.ptr = nullptr;
         rhs.addr = 0;
         return *this;
-    }
-
-    Buffer::~Buffer() noexcept {
-        if (!impl->host_memory || !ptr) return;
-        auto& ctx = command::Context::instance().impl;
-        auto device = ctx->device.get();
-        command::guard(device.unmapMemory2({.memory = impl->host_memory.get()}));
     }
 
     Buffer::operator View() noexcept {

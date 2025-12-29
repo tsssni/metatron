@@ -1,5 +1,6 @@
 #include "grid.hpp"
 #include "../command/queue.hpp"
+#include "../command/allocator.hpp"
 
 namespace mtt::opaque {
     auto Grid::Impl::subresource(Grid::View view) noexcept -> vk::ImageSubresource2 {
@@ -77,6 +78,7 @@ namespace mtt::opaque {
         }
 
         auto& ctx = command::Context::instance().impl;
+        auto& allocator = command::Allocator::instance();
         auto device = ctx->device.get();
         impl->image = command::guard(device.createImageUnique({
             .imageType = vk::ImageType::e3D,
@@ -92,19 +94,16 @@ namespace mtt::opaque {
         auto reqs = device.getImageMemoryRequirements2({
             .image = impl->image.get(),
         }).memoryRequirements;
-        auto alloc = vk::MemoryAllocateInfo{
-            .allocationSize = reqs.size,
-            .memoryTypeIndex = Buffer::Impl::search(
-                vk::MemoryPropertyFlagBits::eDeviceLocal,
-                ctx->device_heap, reqs.memoryTypeBits
-            ),
-        };
-        impl->memory = command::guard(device.allocateMemoryUnique(alloc));
+        auto type = Buffer::Impl::search(
+            vk::MemoryPropertyFlagBits::eDeviceLocal,
+            ctx->device_heap, reqs.memoryTypeBits
+        );
+        auto alloc = allocator.allocate(type, 0, reqs.alignment, reqs.size);
 
         auto info = vk::BindImageMemoryInfo{
             .image = impl->image.get(),
-            .memory = impl->memory.get(),
-            .memoryOffset = 0,
+            .memory = alloc.memory->impl->memory.get(),
+            .memoryOffset = alloc.offset,
         };
         command::guard(device.bindImageMemory2(1, &info));
 

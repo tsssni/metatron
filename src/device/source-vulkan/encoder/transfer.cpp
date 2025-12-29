@@ -41,34 +41,10 @@ namespace mtt::encoder {
             auto uploaded = make_obj<Buffer>();
             auto buffer = view.ptr;
             uploaded->impl->barrier = buffer->impl->barrier;
-            uploaded->impl->host_memory = std::move(buffer->impl->host_memory);
-            uploaded->impl->host_buffer = std::move(buffer->impl->host_buffer);
+            uploaded->impl->device_buffer = std::move(buffer->impl->host_buffer);
             uploaded->state = Buffer::State::visible;
             uploaded->ptr = buffer->ptr;
             uploaded->size = buffer->size;
-
-            auto& ctx = command::Context::instance().impl;
-            auto device = ctx->device.get();
-            auto usages = vk::BufferUsageFlags2CreateInfo{.usage = buffer->impl->usages};
-
-            auto create = vk::BufferCreateInfo{
-                .pNext = &usages,
-                .size = uploaded->size,
-                .sharingMode = vk::SharingMode::eExclusive,
-                .queueFamilyIndexCount = 1,
-                .pQueueFamilyIndices = &cmd->impl->family,
-            };
-            uploaded->impl->device_buffer = command::guard(device.createBufferUnique(create));
-
-            auto info = vk::BindBufferMemoryInfo{
-                .buffer = uploaded->impl->device_buffer.get(),
-                .memory = uploaded->impl->host_memory.get(),
-                .memoryOffset = 0,
-            };
-            command::guard(device.bindBufferMemory2(1, &info));
-            uploaded->addr = device.getBufferAddress({
-                .buffer = uploaded->impl->device_buffer.get(),
-            });
             buffer->ptr = nullptr;
 
             auto staged = Buffer::View(*uploaded);

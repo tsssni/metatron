@@ -39,8 +39,6 @@ namespace mtt::opaque {
         Barrier barrier;
         vk::UniqueBuffer device_buffer;
         vk::UniqueBuffer host_buffer;
-        vk::UniqueDeviceMemory device_memory;
-        vk::UniqueDeviceMemory host_memory;
 
         auto static search(vk::MemoryPropertyFlags flags, u32 heap, u32 type) -> u32;
         auto update(cref<Barrier> desc) noexcept -> vk::BufferMemoryBarrier2;

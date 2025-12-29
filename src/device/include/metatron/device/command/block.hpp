@@ -2,7 +2,7 @@
 #include <metatron/device/opaque/buffer.hpp>
 
 namespace mtt::command {
-    auto constexpr block_size = 1 << 26;
+    auto constexpr block_size = 1 << 12;
 
     struct Buffer;
     struct Blocks final {
