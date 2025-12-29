@@ -110,4 +110,22 @@ namespace mtt::math {
         let a_t = transpose(a);
         return mul(inverse(mul(a_t, a)), mul(a_t, b));
     }
+
+    public func cramer<T: __BuiltinFloatingPointType, let n: u32>(
+        matrix<T, n, n> a, 
+        vector<T, n> b
+    ) -> Optional<vector<T, n>> {
+        T det_a = determinant(a);
+        if (abs(det_a) < T(epsilon)) return {};
+
+        var result: vector<T, n>;
+        for (var i = 0; i < n; ++i) {
+            var a_i = a;
+            for (var j = 0; j < n; ++j)
+                a_i[j][i] = b[j];
+            result[i] = determinant(a_i) / det_a;
+        }
+
+        return result;
+    }
 }

@@ -134,7 +134,7 @@ namespace mtt::bsdf {
         auto flags = this->flags();
         auto specular = bool(flags & Flags::specular);
         auto Fo = (!specular && !plastic) ? fv4{0.f} :
-        fresnel(math::unit_to_cos_theta(-ctx.r.d), eta, k);
+        fresnel(math::unit_to_cos_theta(-wo), eta, k);
 
         if (specular && (!plastic || u[0] < Fo[0])) {
             auto wm = fv3{0.f, 1.f, 0.f};

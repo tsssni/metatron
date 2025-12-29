@@ -48,7 +48,88 @@ namespace mtt::shape {
         }
 
         public func sample(math::Context ctx, fv2 u, u32 idx) -> Optional<Interaction> {
-            return {};
+            let prim = indices[idx];
+            struct Validator {
+                bool operator()(fv3 v) { return dot(v, v) >= math::epsilon; }
+            }
+            let validate_vector: Validator;
+
+            let a = normalize(vertices[prim[0]] - ctx.r.o);
+            let b = normalize(vertices[prim[1]] - ctx.r.o);
+            let c = normalize(vertices[prim[2]] - ctx.r.o);
+            if (false
+            || validate_vector(a)
+            || validate_vector(b)
+            || validate_vector(c)) return {};
+
+            let n_ab = normalize(cross(b, a));
+            let n_bc = normalize(cross(c, b));
+            let n_ca = normalize(cross(a, c));
+            if (false
+            || validate_vector(n_ab)
+            || validate_vector(n_bc)
+            || validate_vector(n_ca)) return {};
+
+            let alpha = math::angle(n_ab, -n_ca);
+            let beta = math::angle(n_bc, -n_ab);
+            let gamma = math::angle(n_ca, -n_bc);
+
+            let A_pi = alpha + beta + gamma;
+            let A_1_pi = lerp(math::pi, A_pi, u[0]);
+
+            let phi = A_1_pi - alpha;
+            let cos_a = cos(alpha);
+            let sin_a = sin(alpha);
+            let cos_p = cos(phi);
+            let sin_p = sin(phi);
+
+            let k_1 = cos_p + cos_a;
+            let k_2 = sin_p - sin_a * dot(a, b);
+            let cos_ac1 = math::guarded_div(
+                k_2 + (k_2 * cos_p - k_1 * sin_p) * cos_a,
+                (k_2 * sin_p + k_1 * cos_p) * sin_a
+            );
+            let sin_ac1 = math::sqrt(1.f - cos_ac1 * cos_ac1);
+            let c_1 = cos_ac1 * a + sin_ac1 * normalize(math::gram_schmidt(c, a));
+
+            let cos_bc1 = dot(b, c_1);
+            let cos_bc2 = 1.f - u[1] * (1.f - cos_bc1);
+            let sin_bc2 = math::sqrt(1.f - cos_bc2 * cos_bc2);
+            let d = cos_bc2 * b + sin_bc2 * normalize(math::gram_schmidt(c_1, b));
+
+            let v = Array<fv3, 3>(
+                vertices[prim[0]],
+                vertices[prim[1]],
+                vertices[prim[2]],
+            );
+            let cramer_opt = math::cramer(
+                transpose(fm33(-d, v[1] - v[0], v[2] - v[0])),
+                ctx.r.o - v[0]
+            );
+            if (cramer_opt == none) return {};
+            let cramer = cramer_opt.value;
+
+            let t = cramer.x;
+            var b_1 = cramer.y;
+            var b_2 = cramer.z;
+            if (b_1 + b_2 > 1.f) {
+                b_1 /= (b_1 + b_2);
+                b_2 /= (b_1 + b_2);
+            }
+            let bary = fv3(1.f - b_1 - b_2, b_1, b_2);
+
+            let pdf = this.pdf({ctx.r.o, d}, ctx.n, idx);
+            let p = ctx.r.o + t * d;
+            let n = blerp(normals, bary, idx);
+            let tn = math::gram_schmidt(dpdu[idx], n);
+            let bn = cross(tn, n);
+            let uv = blerp(uvs, bary, idx);
+
+            return Interaction(
+                p, n, tn, bn, uv, t, pdf,
+                dpdu[idx], dpdv[idx],
+                dndu[idx], dndv[idx],
+            );
         }
 
         public func query(math::Ray r, u32 idx) -> Optional<fv4> {
