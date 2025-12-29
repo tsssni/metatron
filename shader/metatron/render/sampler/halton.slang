@@ -7,7 +7,7 @@ namespace mtt::sampler {
         iv2 scale_mulinv = 0;
         i32 stride = 0;
 
-        public func start(Context ctx) -> void {
+        public func start(inout Context ctx) -> void {
             ctx.dim = clamp(ctx.dim, 2u, u32(math::primes.getCount()) - 1);
 
             var halton_low_digits: uv2;

@@ -21,8 +21,8 @@ namespace mtt::media {
         auto transmittance = math::exp(-sigma_maj * t);
 
         return Interaction{
-            ctx.r.o + ctx.r.d * t,
             phase.to_phase(),
+            ctx.r.o + ctx.r.d * t,
             t,
             transmittance,
             sigma_a,

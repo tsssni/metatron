@@ -31,13 +31,13 @@ namespace mtt {
 
         for (var n = in.range.x; n < in.range.y; ++n) {
             var sp: sampler::Proxy_Sampler;
-            sp.sampler = in.sampler;
             sp.ctx.pixel = pixel;
             sp.ctx.size = size;
             sp.ctx.idx = n;
             sp.ctx.spp = film.spp;
             sp.ctx.dim = 0;
             sp.ctx.seed = in.seed;
+            sp.sampler = in.sampler;
             sp.start();
 
             let fixel = film(in.filter, pixel, size, sp.generate_2d());

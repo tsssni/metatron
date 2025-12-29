@@ -29,7 +29,7 @@ namespace mtt::texture {
 
     private:
         tag<muldim::Image> texture;
-        math::Planar_Distribution distr;
+        tag<math::Planar_Distribution> distr;
     };
 
     struct Image_Spectrum_Texture final {

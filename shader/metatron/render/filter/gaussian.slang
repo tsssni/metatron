@@ -2,7 +2,7 @@ implementing filter;
 
 namespace mtt::filter {
     public struct Gaussian_Filter: Filter {
-        math::Planar_Distribution piecewise;
+        tag<math::Planar_Distribution> piecewise;
         fv2 radius;
         f32 sigma;
 
@@ -13,9 +13,9 @@ namespace mtt::filter {
         }
 
         public func sample(fv2 u) -> Optional<Interaction> {
-            let p = piecewise.sample(u);
+            let p = piecewise.get().sample(u);
             let w = this(p.yx);
-            let pdf = piecewise.pdf(p);
+            let pdf = piecewise.get().pdf(p);
             return Interaction(p, w, pdf);
         }
     }

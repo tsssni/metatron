@@ -41,7 +41,7 @@ namespace mtt::sampler {
             return generate_2d(ctx);
         }
 
-        func permute_idx(in Context ctx) -> u64 {
+        func permute_idx(Context ctx) -> u64 {
             static Array<bv4, 24> permutations = {
                 {0, 1, 2, 3},
                 {0, 1, 3, 2},

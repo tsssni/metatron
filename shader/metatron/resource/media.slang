@@ -8,8 +8,8 @@ import metatron.core;
 
 namespace mtt::media {
     public struct Interaction {
-        public fv3 p;
         public phase::Phase_Function_Union phase;
+        public fv3 p;
         public f32 t;
         public fv4 transmittance;
         public fv4 sigma_a;

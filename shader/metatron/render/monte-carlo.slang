@@ -20,13 +20,13 @@ namespace mtt::monte_carlo {
     }
 
     public interface Integrator {
-        public func sample(inout Context ctx) -> Optional<spectra::Stochastic_Spectrum>;
+        public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum>;
     }
 
     public struct Integrator_Tag: Integrator {
         tag<byte> idx;
 
-        public func sample(inout Context ctx) -> Optional<spectra::Stochastic_Spectrum> {
+        public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum> {
             if (idx.type() == 0) return tag<Volume_Path_Integrator>(idx).get().sample(ctx);
             else return {};
         }

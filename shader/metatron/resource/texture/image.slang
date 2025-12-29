@@ -33,7 +33,7 @@ namespace mtt::texture {
 
     struct Image_Vector_Texture: Vector_Texture {
         tag<u32> idx;
-        math::Planar_Distribution distr;
+        tag<math::Planar_Distribution> distr;
 
         fv4 operator()(Coordinate coord) {
             let texture = global.textures[idx.index()];
@@ -45,12 +45,12 @@ namespace mtt::texture {
         }
 
         func sample(math::Context ctx, fv2 u) -> fv2 {
-            let vu = distr.sample(u);
+            let vu = distr.get().sample(u);
             return vu.yx;
         }
 
         func pdf(fv2 uv) -> f32 {
-            return distr.pdf(uv.yx);
+            return distr.get().pdf(uv.yx);
         }
     }
 }

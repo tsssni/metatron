@@ -19,7 +19,9 @@ namespace mtt::texture {
                 }
                 pdf[px[0] + px[1] * size[0]] = math::avg(math::shrink(c)) * w;
             });
-            distr = {std::span{pdf}, math::reverse(size), {0.f}, {1.f}};
+
+            auto& vec = stl::vector<math::Planar_Distribution>::instance();
+            distr = vec.emplace_back(std::span{pdf}, math::reverse(size), fv2{0.f}, fv2{1.f});
         }
 
         auto& vec = stl::vector<muldim::Image>::instance();
@@ -35,11 +37,11 @@ namespace mtt::texture {
     auto Image_Vector_Texture::sample(
         cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> fv2 {
-        return math::reverse(distr.sample(u));
+        return math::reverse(distr->sample(u));
     }
 
     auto Image_Vector_Texture::pdf(cref<fv2> uv) const noexcept -> f32 {
-        return distr.pdf(math::reverse(uv));
+        return distr->pdf(math::reverse(uv));
     }
 
     Image_Spectrum_Texture::Image_Spectrum_Texture(

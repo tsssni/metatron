@@ -12,12 +12,14 @@ namespace mtt::filter {
                 matrix[j][i] = (*this)({x, y});
             }
         }
-        distribution = math::Planar_Distribution{
+
+        auto& vec = stl::vector<math::Planar_Distribution>::instance();
+        distr = vec.emplace_back(
             std::span{matrix.data(), matrix.size()},
-            {64, 64},
-            {-radius[1], -radius[0]},
-            {radius[1], radius[0]}
-        };
+            iv2{64, 64},
+            fv2{-radius[1], -radius[0]},
+            fv2{radius[1], radius[0]}
+        );
     }
 
     auto Lanczos_Filter::operator()(cref<fv2> p) const noexcept -> f32 {
@@ -28,9 +30,9 @@ namespace mtt::filter {
     }
 
     auto Lanczos_Filter::sample(cref<fv2> u) const noexcept -> opt<Interaction> {
-        auto p = distribution.sample(u);
+        auto p = distr->sample(u);
         auto w = (*this)(math::reverse(p));
-        auto pdf = distribution.pdf(p);
+        auto pdf = distr->pdf(p);
         return Interaction{p, w, pdf};
     }
 }

@@ -2,7 +2,7 @@ implementing filter;
 
 namespace mtt::filter {
     public struct Lanczos_Filter: Filter {
-        math::Planar_Distribution distribution;
+        tag<math::Planar_Distribution> distribution;
         fv2 radius;
         f32 tau;
 
@@ -14,9 +14,9 @@ namespace mtt::filter {
         }
 
         public func sample(fv2 u) -> Optional<Interaction> {
-            let p = distribution.sample(u);
+            let p = distribution.get().sample(u);
             let w = this(p.yx);
-            let pdf = distribution.pdf(p);
+            let pdf = distribution.get().pdf(p);
             return Interaction(p, w, pdf);
         }
     }

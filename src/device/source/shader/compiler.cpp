@@ -86,7 +86,7 @@ namespace mtt::shader {
             cref<Layout> layout,
             cref<std::filesystem::path> path
         ) noexcept -> void {
-        #if 0
+        #if MTT_SYSTEM_DARWIN
             auto compiler = spirv_cross::CompilerMSL{view<u32>(kernel.data()), kernel.size() / sizeof(u32)};
 
             using Options = spirv_cross::CompilerMSL::Options;
@@ -260,7 +260,11 @@ namespace mtt::shader {
                 };
             };
 
-            auto target = slang::TargetDesc{.format = SLANG_SPIRV};
+            slang::createGlobalSession(global_session.writeRef());
+            auto target = slang::TargetDesc{
+                .format = SLANG_SPIRV,
+                .profile = global_session->findProfile("spir-v_1_6"),
+            };
             auto targets = std::to_array({target});
             auto paths = std::to_array({dir.c_str()});
             auto options = std::to_array<slang::CompilerOptionEntry>({
@@ -269,7 +273,6 @@ namespace mtt::shader {
                 int_opt(Option::Optimization, SlangOptimizationLevel::SLANG_OPTIMIZATION_LEVEL_MAXIMAL),
             });
 
-            slang::createGlobalSession(global_session.writeRef());
             global_session->createSession({
                 .targets = targets.data(),
                 .targetCount = targets.size(),

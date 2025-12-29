@@ -7,8 +7,8 @@ namespace mtt::media {
         cref<math::Context> ctx, f32 t_max, f32 u
     ) const noexcept -> opt<Interaction> {
         return Interaction{
-            ctx.r.o + t_max * ctx.r.d,
-            {}, t_max, fv4{1.f},
+            {}, ctx.r.o + t_max * ctx.r.d,
+            t_max, fv4{1.f},
             {}, {}, {}, {}, {},
         };
     }

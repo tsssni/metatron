@@ -104,8 +104,8 @@ namespace mtt::media {
             && (density_maj < math::epsilon<f32> || t_u >= t_boundary)) {
                 update_transmittance(t_boundary);
                 return Interaction{
-                    r.o,
                     phase.to_phase(),
+                    r.o,
                     t_max,
                     transmittance,
                     {}, {}, {}, {}, {},
@@ -121,8 +121,8 @@ namespace mtt::media {
                 auto density = (*std::as_const(this->density).data())(r.o);
 
                 return Interaction{
-                    r.o,
                     phase.to_phase(),
+                    r.o,
                     t_transmitted,
                     transmittance,
                     density * sigma_a,

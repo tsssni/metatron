@@ -31,8 +31,5 @@ namespace mtt::phase {
             if (idx == 0) return henyey_greenstein.sample(ctx, u);
             else return {};
         }
-
-        public func empty() -> bool { return idx == 0xffffffffu; }
-        [mutating] public func clear() -> void { idx = 0xffffffffu; }
     }
 }

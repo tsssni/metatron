@@ -6,8 +6,8 @@
 
 namespace mtt::media {
     struct Interaction final {
-        fv3 p;
         obj<phase::Phase_Function> phase;
+        fv3 p;
         f32 t;
         fv4 transmittance;
         fv4 sigma_a;

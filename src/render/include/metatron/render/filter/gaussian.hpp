@@ -1,6 +1,7 @@
 #pragma once
 #include <metatron/render/filter/filter.hpp>
 #include <metatron/core/math/distribution/piecewise.hpp>
+#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::filter {
     struct Gaussian_Filter final {
@@ -14,7 +15,7 @@ namespace mtt::filter {
         auto sample(cref<fv2> u) const noexcept -> opt<Interaction>;
 
     private:
-        math::Planar_Distribution piecewise;
+        tag<math::Planar_Distribution> distr;
         fv2 radius;
         f32 sigma;
     };
