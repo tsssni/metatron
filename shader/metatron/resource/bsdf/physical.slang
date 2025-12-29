@@ -22,18 +22,17 @@ namespace mtt::bsdf {
         public __init(
             fv4 r,
             fv4 e, fv4 ek,
-            f32 au, f32 av,
-            bool inside
+            f32 au, f32 av
         ) {
             reflectance = r;
-            eta = inside ? 1.f / e : e;
+            eta = e;
             k = ek;
             alpha_u = au;
             alpha_v = av;
 
-            let has_base = all(reflectance == saturate(reflectance));
-            let has_surface = any(eta != fv4(0.f));
-            let has_conductor = any(k != fv4(0.f));
+            let has_base = i32(all(reflectance == saturate(reflectance)));
+            let has_surface = i32(any(eta != fv4(0.f)));
+            let has_conductor = i32(any(k != fv4(0.f)));
 
             let bitmask = has_base | (has_surface << 1) | (has_conductor << 2);
             lambertian = bitmask == 0b001;

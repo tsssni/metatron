@@ -8,7 +8,7 @@ namespace mtt {
     }
 
     public fv3 operator*(Transform t, fv3 x) {
-        return normalize(mul(fv4(x, 0.f), t.transform).xyz);
+        return normalize(mul(fv4(x, 0.f), t.inv_transform).xyz);
     }
 
     public Ray operator*(Transform t, Ray r) {
@@ -31,7 +31,7 @@ namespace mtt {
     }
 
     public fv3 operator/(Transform t, fv3 x) {
-        return normalize(mul(fv4(x, 0.f), t.inv_transform).xyz);
+        return normalize(mul(fv4(x, 0.f), t.transform).xyz);
     }
 
     public Ray operator/(Transform t, Ray r) {

@@ -36,13 +36,13 @@ namespace mtt::material {
             eta = fv4{eta[0]}; k = fv4{k[0]};
             emission = fv4{emission[0]};
         }
-        auto bsdf = make_obj<bsdf::Bsdf, bsdf::Physical_Bsdf>(
-            reflectance, eta, k,
-            alpha_u, alpha_v, ctx.inside
-        );
 
         return Interaction{
-            .bsdf = std::move(bsdf),
+            .bsdf = make_obj<bsdf::Bsdf, bsdf::Physical_Bsdf>(
+                reflectance,
+                ctx.inside ? 1.f / eta : eta,
+                k, alpha_u, alpha_v
+            ),
             .emission = emission,
             .normal = math::shrink(normal) * 2.f - 1.f,
             .degraded = degraded,

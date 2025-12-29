@@ -43,8 +43,9 @@ namespace mtt::material {
 
             return Interaction(
                 bsdf::Bsdf_Union(bsdf::Physical_Bsdf(
-                    reflectance, eta, k,
-                    alpha_u, alpha_v, ctx.inside
+                    reflectance, ctx.inside
+                    ? (math::max(eta) < math::epsilon ? 0.f : 1.f / eta)
+                    : eta, k, alpha_u, alpha_v,
                 )),
                 emission,
                 normal.xyz * 2.f - 1.f,

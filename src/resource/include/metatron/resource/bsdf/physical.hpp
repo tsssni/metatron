@@ -9,8 +9,7 @@ namespace mtt::bsdf {
             cref<fv4> eta,
             cref<fv4> k,
             f32 alpha_u,
-            f32 alpha_v,
-            bool inside
+            f32 alpha_v
         ) noexcept;
 
         buf<f32> static fresnel_reflectance_table;

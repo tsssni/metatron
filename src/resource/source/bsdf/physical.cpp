@@ -19,11 +19,10 @@ namespace mtt::bsdf {
         cref<fv4> eta,
         cref<fv4> k,
         f32 alpha_u,
-        f32 alpha_v,
-        bool inside
+        f32 alpha_v
     ) noexcept:
     reflectance(reflectance),
-    eta(inside ? 1.f / eta : eta),
+    eta(eta),
     k(k),
     alpha_u(alpha_u),
     alpha_v(alpha_v) {
