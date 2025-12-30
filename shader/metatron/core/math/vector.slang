@@ -72,8 +72,8 @@ namespace mtt::math {
         vector<T, size> x, vector<T, size> y
     ) -> T {
         // compute theta / 2 to avoid round-off error
-        if (dot(x, y) < T(0)) return T(pi) - T(2) * asin(length(-y - x) / T(2));
-        else return T(2) * asin(length(y - x) / T(2));
+        if (dot(x, y) < T(0)) return T(pi) - T(2) * math::asin(length(-y - x) / T(2));
+        else return T(2) * math::asin(length(y - x) / T(2));
     }
 
     public func gram_schmidt<T: __BuiltinFloatingPointType, let size: u32>(

@@ -134,7 +134,7 @@ namespace mtt::light {
         }
 
         func hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) -> f32 {
-            let gamma = acos(cos_gamma);
+            let gamma = math::acos(cos_gamma);
             let A = sky_params[idx * sky_num_params + 0];
             let B = sky_params[idx * sky_num_params + 1];
             let C = sky_params[idx * sky_num_params + 2];
@@ -165,7 +165,7 @@ namespace mtt::light {
         }
 
         func hosek_sun(i32 idx, f32 cos_theta) -> f32 {
-            let eta = math::pi * 0.5f - acos(cos_theta);
+            let eta = math::pi * 0.5f - math::acos(cos_theta);
             let segment = min(
                 sun_num_segments - 1,
                 i32(pow(eta / (math::pi * 0.5f), 1.f / 3.f) * sun_num_segments)
@@ -191,7 +191,7 @@ namespace mtt::light {
 
         func split(f32 lambda) -> Tuple<i32, i32, f32> {
             let norm = (lambda - sunsky_lambda[0]) / sunsky_step;
-            let low = min(sunsky_num_lambda - 2, norm);
+            let low = min(sunsky_num_lambda - 2, u32(norm));
             let high = low + 1;
             let alpha = norm - low;
             return {low, high, alpha};

@@ -33,4 +33,19 @@ namespace mtt::math {
     public func log2i(u32 x) -> u32 {
         return firstbithigh(x);
     }
+
+    public func acos<T: __BuiltinFloatingPointType>(T x) -> T {
+        return acos(clamp(x, T(-1), T(1)));
+    }
+
+    public func asin<T: __BuiltinFloatingPointType>(T x) -> T {
+        return asin(clamp(x, T(-1), T(1)));
+    }
+
+    public func atan2<T: __BuiltinFloatingPointType>(T y, T x) -> T {
+        var z = atan2(y, x);
+        if (z < T(0))
+            z += T(2) * T(math::pi);
+        return z;
+    }
 }

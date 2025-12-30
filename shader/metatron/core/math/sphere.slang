@@ -2,8 +2,8 @@ implementing math;
 
 namespace mtt::math {
     public func cartesian_to_unit_spherical(fv3 d) -> fv2 {
-        let theta = acos(d[1]);
-        let phi = atan2(d[2], d[0]);
+        let theta = math::acos(d[1]);
+        let phi = math::atan2(d[2], d[0]);
         return {theta, phi};
     }
 
