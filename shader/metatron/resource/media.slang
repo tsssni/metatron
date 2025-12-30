@@ -4,6 +4,7 @@ __include media.homogeneous;
 __include media.vaccum;
 import phase;
 import spectra;
+import volume;
 import metatron.core;
 
 namespace mtt::media {

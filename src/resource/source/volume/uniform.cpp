@@ -44,14 +44,10 @@ namespace mtt::volume {
     }
 
     auto Uniform_Volume::bounding_box(cref<iv3> ijk) const noexcept -> math::Bounding_Box {
-        if (ijk == clamp(ijk, iv3{0}, dims - 1)) {
-            return math::Bounding_Box{
-                bbox.p_min + fv3(ijk + 0) * voxel_size,
-                bbox.p_min + fv3(ijk + 1) * voxel_size,
-            };
-        } else {
-            return bbox;
-        }
+        if (ijk == clamp(ijk, iv3{0}, dims - 1)) return {
+            bbox.p_min + fv3(ijk + 0) * voxel_size,
+            bbox.p_min + fv3(ijk + 1) * voxel_size,
+        }; else return bbox;
     }
 
     auto Uniform_Volume::operator()(cref<fv3> pos) const noexcept -> f32 {
