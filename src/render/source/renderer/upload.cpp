@@ -2,6 +2,7 @@
 #include <metatron/device/command/timeline.hpp>
 #include <metatron/device/encoder/transfer.hpp>
 #include <metatron/core/stl/thread.hpp>
+#include <nanovdb/GridHandle.h>
 #include <barrier>
 
 namespace mtt::renderer {
@@ -13,30 +14,33 @@ namespace mtt::renderer {
         auto& stack = stl::stack::instance();
         auto& vector = stl::vector<void>::instance();
 
-        auto buffers = std::vector<obj<opaque::Buffer>>{};
-        auto vectors = std::vector<obj<opaque::Buffer>>{};
-        auto resources = obj<opaque::Buffer>{};
-        auto images = std::vector<obj<opaque::Image>>{};
-        auto grids = std::vector<obj<opaque::Grid>>{};
+        auto& bidims = stl::vector<muldim::Image>::instance();
+        auto& tridims = stl::vector<muldim::Grid>::instance();
+        auto& nanodims = stl::vector<nanovdb::GridHandle<>>::instance();
 
-        auto& textures = stl::vector<muldim::Image>::instance();
-        auto& volumes = stl::vector<muldim::Grid>::instance();
-        auto vsize = vector.size();
         auto bsize = stack.bufs.size();
-        auto isize = textures.size();
-        auto gsize = volumes.size();
-        auto sequence = std::vector<std::vector<byte>>(vsize);
-        auto addresses = std::vector<uptr>(vsize, 0);
-        buffers = std::vector<obj<opaque::Buffer>>(bsize);
-        vectors = std::vector<obj<opaque::Buffer>>(vsize);
-        images = std::vector<obj<opaque::Image>>(isize);
-        grids = std::vector<obj<opaque::Grid>>(gsize);
+        auto vsize = vector.size();
+        auto nsize = nanodims.size();
+        auto isize = bidims.size();
+        auto gsize = tridims.size();
+
+        auto vecaddr = std::vector<uptr>(vsize, 0);
+        auto voladdr = std::vector<uptr>(nsize, 0);
+        auto vecarr = obj<opaque::Buffer>{};
+        auto volarr = obj<opaque::Buffer>{};
+
+        auto buffers = std::vector<obj<opaque::Buffer>>(bsize);
+        auto vectors = std::vector<obj<opaque::Buffer>>(vsize);
+        auto volumes = std::vector<obj<opaque::Buffer>>(nsize);
+        auto images = std::vector<obj<opaque::Image>>(isize);
+        auto grids = std::vector<obj<opaque::Grid>>(gsize);
 
         scheduler.sync_parallel(uzv1{scheduler.size()}, [
             &,
             barrier = std::make_shared<std::barrier<>>(scheduler.size()),
             bc = std::make_shared<std::atomic<u32>>(0),
             vc = std::make_shared<std::atomic<u32>>(0),
+            nc = std::make_shared<std::atomic<u32>>(0),
             ic = std::make_shared<std::atomic<u32>>(0),
             gc = std::make_shared<std::atomic<u32>>(0)
         ](auto) {
@@ -67,40 +71,73 @@ namespace mtt::renderer {
 
             i = 0;
             while ((i = vc->fetch_add(1, std::memory_order::relaxed)) < vsize) {
+                if (false
+                || i == bidims.index()
+                || i == tridims.index()
+                || i == nanodims.index()
+                ) continue;
                 auto& vec = vector.storage[i];
-                sequence[i] = vec.pack();
-                if (sequence[i].empty()) continue;
+                auto sequence = vec.pack();
+                if (sequence.empty()) continue;
 
                 auto desc = opaque::Buffer::Descriptor{
-                    .ptr = sequence[i].data(),
+                    .ptr = sequence.data(),
                     .state = opaque::Buffer::State::local,
                     .type = command::Type::render,
-                    .size = sequence[i].size(),
+                    .size = sequence.size(),
                 };
                 auto buffer = make_obj<opaque::Buffer>(desc);
                 transfer.upload(*buffer);
                 transfer.persist(*buffer);
-                addresses[i] = buffer->addr;
+                vecaddr[i] = buffer->addr;
                 vectors[i] = std::move(buffer);
             }
             barrier->arrive_and_wait();
 
             if (scheduler.index() == 0) {
                 auto desc = opaque::Buffer::Descriptor{
-                    .ptr = mut<byte>(addresses.data()),
+                    .ptr = mut<byte>(vecaddr.data()),
                     .state = opaque::Buffer::State::local,
                     .type = command::Type::render,
-                    .size = addresses.size() * sizeof(uptr),
+                    .size = vecaddr.size() * sizeof(uptr),
                 };
-                resources = make_obj<opaque::Buffer>(desc);
-                encoder::Transfer_Encoder{cmd.get()}.upload(*resources);
+                vecarr = make_obj<opaque::Buffer>(desc);
+                encoder::Transfer_Encoder{cmd.get()}.upload(*vecarr);
+            }
+
+            i = 0;
+            while ((i = nc->fetch_add(1, std::memory_order::relaxed)) < nsize) {
+                auto vol = nanodims[i];
+                auto desc = opaque::Buffer::Descriptor{
+                    .ptr = mut<byte>(vol->buffer().data()),
+                    .state = opaque::Buffer::State::local,
+                    .type = command::Type::render,
+                    .size = vol->buffer().size(),
+                };
+                auto buffer = make_obj<opaque::Buffer>(desc);
+                transfer.upload(*buffer);
+                transfer.persist(*buffer);
+                voladdr[i] = buffer->addr;
+                volumes[i] = std::move(buffer);
+            }
+            barrier->arrive_and_wait();
+
+            if (scheduler.index() == 0 && voladdr.size() > 0) {
+                auto desc = opaque::Buffer::Descriptor{
+                    .ptr = mut<byte>(voladdr.data()),
+                    .state = opaque::Buffer::State::local,
+                    .type = command::Type::render,
+                    .size = voladdr.size() * sizeof(uptr),
+                };
+                volarr = make_obj<opaque::Buffer>(desc);
+                encoder::Transfer_Encoder{cmd.get()}.upload(*volarr);
             }
 
             i = 0;
             while ((i = ic->fetch_add(1, std::memory_order::relaxed)) < isize) {
                 images[i] = make_obj<opaque::Image>(
                 opaque::Image::Descriptor{
-                    .image = textures[i],
+                    .image = bidims[i],
                     .state = opaque::Image::State::samplable,
                     .type = command::Type::render,
                 });
@@ -113,7 +150,7 @@ namespace mtt::renderer {
             while ((i = gc->fetch_add(1, std::memory_order::relaxed)) < gsize) {
                 grids[i] = make_obj<opaque::Grid>(
                 opaque::Grid::Descriptor{
-                    .grid = volumes[i],
+                    .grid = tridims[i],
                     .state = opaque::Grid::State::readonly,
                     .type = command::Type::render,
                 });
@@ -130,7 +167,9 @@ namespace mtt::renderer {
         return Resources{
             std::move(buffers),
             std::move(vectors),
-            std::move(resources),
+            std::move(volumes),
+            std::move(vecarr),
+            std::move(volarr),
             std::move(images),
             std::move(grids),
         };

@@ -4,6 +4,7 @@ namespace mtt {
     public static const u32 bindless_size = 8192;
     public struct Global {
         public Ptr<Ptr<byte>> vectors;
+        public Ptr<Ptr<u32>> volumes;
         [vk_binding(1, 0)] public RaytracingAccelerationStructure accel;
         [vk_binding(2, 0)] public SamplerState sampler;
         [vk_binding(3, 0)] public SamplerState accessor;

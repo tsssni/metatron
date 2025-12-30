@@ -117,9 +117,16 @@ namespace mtt::renderer {
             *entity<math::Transform>("/hierarchy/camera/render"),
             bsdf::Physical_Bsdf::fresnel_reflectance_table,
         };
-        stl::print("seed: {}", in.seed);
+        stl::print("seed: 0x{:x}", in.seed);
 
-        global_args_encoder.acquire("global", resources.resources->addr);
+        struct Global final {
+            uptr vectors;
+            uptr volumes;
+        } global{
+            resources.vecarr->addr,
+            resources.volarr ? resources.volarr->addr : 0
+        };
+        global_args_encoder.acquire("global", global);
         integrate_args_encoder.acquire("in", in);
         integrate_args_encoder.acquire("in.image", *image);
         pipeline_encoder.dispatch({

@@ -129,6 +129,7 @@ namespace mtt::command {
 
         for (auto&& physical_device: guard(instance->enumeratePhysicalDevices())) {
             auto families = physical_device.getQueueFamilyProperties2();
+            auto full = Family{};
             auto render = Family{};
             auto transfer = Family{};
 
@@ -143,12 +144,14 @@ namespace mtt::command {
                     if (f.idx == math::maxv<u32> && (flags & acc) && !(flags & exc))
                         f = {u32(i), u32(flags), 0, props.queueCount};
                 };
-                check(render, Bits::eGraphics, {});
-                check(transfer, Bits::eTransfer, Bits::eGraphics);
+                check(full, Bits::eGraphics | Bits::eCompute | Bits::eTransfer, {});
+                check(render, Bits::eCompute, Bits::eGraphics);
+                check(transfer, Bits::eTransfer, Bits::eCompute);
             }
 
-            if (transfer.idx == math::maxv<u32>) {
-                transfer = render;
+            if (render.idx == math::maxv<u32>) render = full;
+            if (transfer.idx == math::maxv<u32>) transfer = full;
+            if (render.idx == transfer.idx) {
                 transfer.start = render.count / 2;
                 transfer.count = render.count - transfer.start;
                 render.count = transfer.start;

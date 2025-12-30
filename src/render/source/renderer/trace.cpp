@@ -11,7 +11,7 @@ namespace mtt::renderer {
     auto Renderer::Impl::trace() noexcept -> void {
         auto rd = std::random_device{};
         auto seed = rd();
-        stl::print("seed: {}", seed);
+        stl::print("seed: 0x{:x}", seed);
 
         auto& args = scene::Args::instance();
         auto addr = wired::Address{args.address};

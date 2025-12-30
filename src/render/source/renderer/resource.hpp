@@ -8,7 +8,9 @@ namespace mtt::renderer {
     struct Resources final {
         std::vector<obj<opaque::Buffer>> buffers;
         std::vector<obj<opaque::Buffer>> vectors{};
-        obj<opaque::Buffer> resources;
+        std::vector<obj<opaque::Buffer>> volumes{};
+        obj<opaque::Buffer> vecarr;
+        obj<opaque::Buffer> volarr;
         std::vector<obj<opaque::Image>> images;
         std::vector<obj<opaque::Grid>> grids;
     };
