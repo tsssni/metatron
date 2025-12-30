@@ -44,7 +44,6 @@ namespace mtt::light {
             let sin_theta = math::unit_to_sin_theta(wi);
             let cos_gamma = dot(d, wi);
 
-            // clamp theta to give invalid direction reasonable result
             let s = math::cartesian_to_unit_spherical(r.d);
             var theta = s.x; var phi = s.y;
             theta = clamp(
@@ -56,6 +55,7 @@ namespace mtt::light {
             var L = fv4(0);
             for (var i = 0; i < 4; ++i) {
                 L[i] = hosek(lambda[i], math::unit_to_cos_theta(wi), dot(d, wi));
+                if (i == 0 && math::constant(lambda)) { L = L[0]; break; }
             }
 
             let tgmm_phi = phi + math::pi * 0.5f - phi_sun;
@@ -79,7 +79,7 @@ namespace mtt::light {
         public func sample(math::Context ctx, fv2 u) -> Optional<Interaction> {
             var wi: fv3;
             if (u[0] < w_sky) {
-                let idx = tgmm_distr.sample(u[0]);
+                let idx = tgmm_distr.sample(u[0] / w_sky);
                 let u_phi = math::guarded_div(
                     u[0] / w_sky - tgmm_distr.cdf[idx],
                     tgmm_distr.cdf[idx + 1] - tgmm_distr.cdf[idx]

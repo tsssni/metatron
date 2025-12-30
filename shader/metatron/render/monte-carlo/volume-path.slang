@@ -70,7 +70,7 @@ namespace mtt::monte_carlo {
                     var q = 0.f;
                     var g = fv4(0.f);
 
-                    if (all(direct_ctx.n != fv3(0.f))) {
+                    if (any(direct_ctx.n != fv3(0.f))) {
                         let flip_n = dot(-history_ctx.r.d, direct_ctx.n) < 0.f ? -1.f : 1.f;
                         let t = math::Transform(
                             fq::from_rotation_between(flip_n * direct_ctx.n, {0.f, 1.f, 0.f}).transform()

@@ -253,7 +253,7 @@ namespace mtt::light {
     ) const noexcept -> opt<Interaction> {
         auto wi = fv3{};
         if (u[0] < w_sky) {
-            auto idx = tgmm_distr.sample(u[0]);
+            auto idx = tgmm_distr.sample(u[0] / w_sky);
             auto u_phi = math::guarded_div(
                 u[0] / w_sky - tgmm_distr.cdf[idx],
                 tgmm_distr.cdf[idx + 1] - tgmm_distr.cdf[idx]
