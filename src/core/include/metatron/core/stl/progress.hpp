@@ -10,8 +10,8 @@ namespace mtt::stl {
             start_time = std::chrono::system_clock::now();
         }
 
-        auto operator++() noexcept -> void {
-            auto count = atomic_count.fetch_add(1) + 1;
+        auto operator+(usize size) noexcept -> void {
+            auto count = atomic_count.fetch_add(size) + 1;
             auto percent = static_cast<usize>(100.f * count / total);
             
             auto last_percent = atomic_percent.load();
@@ -28,6 +28,7 @@ namespace mtt::stl {
             }
         }
 
+        auto operator++() noexcept -> void { *this + 1; }
         auto operator~() noexcept -> void {
             std::println();
         }

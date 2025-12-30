@@ -35,6 +35,7 @@ namespace mtt::photo {
 
         u32 spp;
         u32 depth;
+        u32 step;
         fv2 film_size;
         fv2 dxdy;
         tag<spectra::Color_Space> color_space;
@@ -42,6 +43,7 @@ namespace mtt::photo {
         struct Descriptor final {
             u32 spp = 16;
             u32 depth = 64;
+            u32 step = 64;
             fv2 film_size = {0.036f, 0.024f};
             uv2 image_size = {1280, 720};
             tag<spectra::Spectrum> r = entity<spectra::Spectrum>("/spectrum/CIE-X");

@@ -74,7 +74,7 @@ namespace mtt {
     }
 
     struct Postprocess {
-        Texture2D film;
+        RWTexture2D film;
         RWTexture2D image;
     }
 
@@ -87,7 +87,7 @@ namespace mtt {
         var size: uv2;
         in.image.GetDimensions(size.x, size.y);
         if (any(pixel != clamp(pixel, 0, size))) return;
-        let film = in.film.Load(global_idx.xyz);
+        let film = in.film.Load(pixel);
         in.image.Store(pixel, film / max(film.w, math::epsilon));
     }
 }

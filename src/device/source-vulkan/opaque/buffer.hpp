@@ -9,6 +9,14 @@ namespace mtt::opaque {
         vk::ImageLayout layout = vk::ImageLayout::eUndefined;
         u32 family = math::maxv<u32>;
 
+        auto operator==(cref<Barrier> barrier) const noexcept -> bool {
+            return true
+            && stage == barrier.stage
+            && access == barrier.access
+            && layout == barrier.layout
+            && family == barrier.family;
+        }
+
         template<typename T>
         auto update(cref<Barrier> desc) noexcept -> T {
             auto transfer = desc.family != math::maxv<u32>;

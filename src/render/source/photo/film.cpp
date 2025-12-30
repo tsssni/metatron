@@ -32,7 +32,7 @@ namespace mtt::photo {
     }
 
     Film::Film(cref<Descriptor> desc) noexcept:
-    spp(desc.spp), depth(desc.depth),
+    spp(desc.spp), depth(desc.depth), step(desc.step),
     film_size(desc.film_size),
     dxdy(desc.film_size / desc.image_size),
     r(desc.r), g(desc.g), b(desc.b),
