@@ -62,6 +62,12 @@ namespace mtt::renderer {
             .mode = opaque::Sampler::Mode::border,
             .border = opaque::Sampler::Border::transparent,
         });
+        auto film = make_obj<opaque::Image>(
+        opaque::Image::Descriptor{
+            .image = &desc.film->image,
+            .state = opaque::Image::State::storable,
+            .type = command::Type::render,
+        });
         auto image = make_obj<opaque::Image>(
         opaque::Image::Descriptor{
             .image = &desc.film->image,
@@ -79,12 +85,18 @@ namespace mtt::renderer {
         shader::Argument::Descriptor{"trace.global", command::Type::render});
         auto integrate_args = make_obj<shader::Argument>(
         shader::Argument::Descriptor{"trace.integrate.in", command::Type::render});
+        auto postprocess_args = make_obj<shader::Argument>(
+        shader::Argument::Descriptor{"trace.postprocess.in", command::Type::render});
         auto integrate = make_obj<shader::Pipeline>(
         shader::Pipeline::Descriptor{"trace.integrate", {global_args.get(), integrate_args.get()}});
+        auto postprocess = make_obj<shader::Pipeline>(
+        shader::Pipeline::Descriptor{"trace.postprocess", {global_args.get(), postprocess_args.get()}});
 
         auto global_args_encoder = encoder::Argument_Encoder{render.get(), global_args.get()};
         auto integrate_args_encoder = encoder::Argument_Encoder{render.get(), integrate_args.get()};
-        auto pipeline_encoder = encoder::Pipeline_Encoder{render.get(), integrate.get()};
+        auto postprocess_args_encoder = encoder::Argument_Encoder{render.get(), postprocess_args.get()};
+        auto integrate_encoder = encoder::Pipeline_Encoder{render.get(), integrate.get()};
+        auto postprocess_encoder = encoder::Pipeline_Encoder{render.get(), postprocess.get()};
 
         auto images_view = resources.images
         | std::views::transform([](auto&& x) -> opaque::Image::View { return *x; })
@@ -99,11 +111,16 @@ namespace mtt::renderer {
         global_args_encoder.bind("global.sampler", sampler.get());
         global_args_encoder.bind("global.accessor", accessor.get());
         global_args_encoder.upload();
-        integrate_args_encoder.bind("in.image", *image);
+        integrate_args_encoder.bind("in.image", *film);
         integrate_args_encoder.upload();
-        pipeline_encoder.bind();
+        postprocess_args_encoder.bind("in.film", *film);
+        postprocess_args_encoder.bind("in.image", *image);
+        postprocess_args_encoder.upload();
+        integrate_encoder.bind();
 
         auto spp = desc.film->spp;
+        auto seed = std::random_device{}();
+        stl::print("seed: 0x{:x}", seed);
         struct Integrate final {
             Descriptor desc;
             u32 seed;
@@ -112,12 +129,11 @@ namespace mtt::renderer {
             buf<f32> fresnel;
         } in{
             std::move(desc),
-            std::random_device{}(),
-            {0, spp},
+            seed,
+            {0, 1},
             *entity<math::Transform>("/hierarchy/camera/render"),
             bsdf::Physical_Bsdf::fresnel_reflectance_table,
         };
-        stl::print("seed: 0x{:x}", in.seed);
 
         struct Global final {
             uptr vectors;
@@ -128,24 +144,24 @@ namespace mtt::renderer {
         };
         global_args_encoder.acquire("global", global);
         integrate_args_encoder.acquire("in", in);
-        integrate_args_encoder.acquire("in.image", *image);
-        pipeline_encoder.dispatch({
-            math::align(image->width, 8u) / 8,
-            math::align(image->height, 8u) / 8,
+        integrate_args_encoder.acquire("in.image", *film);
+        integrate_encoder.dispatch({
+            math::align(film->width, 8u) / 8,
+            math::align(film->height, 8u) / 8,
         1});
 
         auto transfer_encoder = encoder::Transfer_Encoder{render.get()};
-        transfer_encoder.copy(*buffer, *image);
+        transfer_encoder.copy(*buffer, *film);
         render->waits = {{render_timeline.get(), render_count}};
         render->signals = {{render_timeline.get(), ++render_count}};
         render_queue->submit(std::move(render));
         render_timeline->wait(render_count);
-        std::memcpy(desc.film->image.pixels.front().data(), buffer->ptr, buffer->size);
 
         auto& args = scene::Args::instance();
         auto addr = wired::Address{args.address};
         auto previewer = remote::Previewer{addr, "metatron"};
-        previewer.update(desc.film->image);
-        desc.film->image.to_path("build/test.exr", entity<spectra::Color_Space>("/color-space/sRGB"));
+        auto data = std::span<byte const>{buffer->ptr, buffer->size};
+        previewer.update(desc.film->image, data);
+        desc.film->image.to_path(args.output, desc.film->color_space, data);
     }
 }

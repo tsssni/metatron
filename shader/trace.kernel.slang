@@ -69,6 +69,25 @@ namespace mtt {
             value += fv4(rgb * fixel.weight, fixel.weight);
         }
 
-        in.image.Store(pixel, value / max(value.w, math::epsilon));
+        let sampled = in.image.Load(pixel) + value;
+        in.image.Store(pixel, sampled);
+    }
+
+    struct Postprocess {
+        Texture2D film;
+        RWTexture2D image;
+    }
+
+    [shader("compute"), numthreads(8, 8, 1)]
+    func postprocess(
+        iv3 global_idx: SV_DispatchThreadID,
+        ParameterBlock<Postprocess> in,
+    ) -> void {
+        let pixel = global_idx.xy;
+        var size: uv2;
+        in.image.GetDimensions(size.x, size.y);
+        if (any(pixel != clamp(pixel, 0, size))) return;
+        let film = in.film.Load(global_idx.xyz);
+        in.image.Store(pixel, film / max(film.w, math::epsilon));
     }
 }

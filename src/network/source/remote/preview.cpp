@@ -25,7 +25,7 @@ namespace mtt::remote {
             created = socket.send({mut<byte>(packet.data()), packet.size()});
         }
 
-        auto update(cref<muldim::Image> image) noexcept -> void {
+        auto update(cref<muldim::Image> image, std::span<byte const> data) noexcept -> void {
             create(image);
             if (!created || local || image.stride != 4) return;
 
@@ -40,7 +40,7 @@ namespace mtt::remote {
             packet.setUpdateImage(
                 name, false, desc,
                 0, 0, image.width, image.height,
-                {mut<f32>(image.pixels.front().data()), image.pixels.front().size() / sizeof(f32)}
+                {mut<f32>(data.data()), data.size() / sizeof(f32)}
             );
 
             if (!socket.send({mut<byte>(packet.data()), packet.size()}))
@@ -51,7 +51,7 @@ namespace mtt::remote {
     Previewer::Previewer(cref<wired::Address> address, std::string_view name) noexcept:
     stl::capsule<Previewer>(address, name) {}
 
-    auto Previewer::update(cref<muldim::Image> image) noexcept -> void {
-        impl->update(image);
+    auto Previewer::update(cref<muldim::Image> image, std::span<byte const> data) noexcept -> void {
+        impl->update(image, data.size() == 0 ? image.pixels.front() : data);
     }
 }

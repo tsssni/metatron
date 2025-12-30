@@ -45,7 +45,14 @@ namespace mtt::muldim {
         auto operator[](usize x, usize y, usize lod = 0) const noexcept -> Pixel const;
         auto operator()(cref<Coordinate> coord) const -> fv4;
 
-        auto static from_path(std::string_view path, bool linear) noexcept -> Image;
-        auto to_path(std::string_view path, tag<spectra::Color_Space> cs) const noexcept -> void;
+        auto static from_path(
+            std::string_view path,
+            bool linear
+        ) noexcept -> Image;
+        auto to_path(
+            std::string_view path,
+            tag<spectra::Color_Space> cs,
+            std::span<byte const> data = {}
+        ) const noexcept -> void;
     };
 }

@@ -9,6 +9,6 @@ namespace mtt::remote {
         Previewer() noexcept = default;
         Previewer(cref<wired::Address> address, std::string_view name) noexcept;
 
-        auto update(cref<muldim::Image> image) noexcept -> void;
+        auto update(cref<muldim::Image> image, std::span<byte const> data = {}) noexcept -> void;
     };
 }

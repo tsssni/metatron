@@ -197,7 +197,10 @@ namespace mtt::muldim {
         : math::lerp(filter(lodi), filter(lodi + 1), lod - lodi);
     }
 
-    auto Image::from_path(std::string_view path, bool linear) noexcept -> Image {
+    auto Image::from_path(
+        std::string_view path,
+        bool linear
+    ) noexcept -> Image {
         auto absolute_path = stl::filesystem::find(path);
         auto in = OIIO::ImageInput::open(absolute_path.c_str());
         if (!in) stl::abort("cannot open image {}", path);
@@ -261,7 +264,12 @@ namespace mtt::muldim {
         return img;
     }
 
-    auto Image::to_path(std::string_view path, tag<spectra::Color_Space> cs) const noexcept -> void {
+    auto Image::to_path(
+        std::string_view path,
+        tag<spectra::Color_Space> cs,
+        std::span<byte const> data
+    ) const noexcept -> void {
+        data = data.size() == 0 ? pixels.front() : data;
         auto type = stride == 1
         ? OIIO::TypeDesc::UINT8 : OIIO::TypeDesc::FLOAT;
         auto spec = OIIO::ImageSpec{
@@ -277,7 +285,7 @@ namespace mtt::muldim {
         if (!out || !out->open(std::string{path}, spec))
             stl::abort("failed to create image {}", path);
 
-        auto success = out->write_image(type, pixels.front().data());
+        auto success = out->write_image(type, data.data());
         if (!success) stl::abort("failed to write image {}", path);
 
         out->close();
