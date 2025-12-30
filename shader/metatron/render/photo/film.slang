@@ -36,7 +36,7 @@ namespace mtt::photo {
             let f_opt = filter.sample(u);
             if (f_opt == none) return {};
             let f_intr = f_opt.value;
-            let pixel_position = fv2(pixel) + f_intr.p;
+            let pixel_position = fv2(pixel) + 0.5f + f_intr.p;
             let uv = pixel_position / size;
             let film_position = (uv - 0.5) * fv2(-1.0, 1.0) * film_size;
             let dxdy = fv2(select((film_position + dxdy - film_size / 2.f) < 0, 1, -1) * dxdy);
