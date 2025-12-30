@@ -16,7 +16,7 @@ namespace mtt::math {
     template<typename T, usize first_dim, usize... rest_dims>
     struct Matrix<T, first_dim, rest_dims...> final {
         using Element = std::conditional_t<sizeof...(rest_dims) == 0, T, Matrix<T, rest_dims...>>;
-        auto static constexpr dimensions = std::array<usize, 1 + sizeof...(rest_dims)>{first_dim, rest_dims...};
+        auto constexpr static dimensions = std::array<usize, 1 + sizeof...(rest_dims)>{first_dim, rest_dims...};
 
         constexpr Matrix() noexcept {
             if constexpr (std::is_floating_point_v<Element> || std::is_integral_v<Element>)
@@ -195,7 +195,7 @@ namespace mtt::math {
                 using U = Matrix<T, pds.front()>;
                 auto constexpr reduce = [](cref<U> x, cref<U> y) -> T {
                     auto z = x * y;
-                    T sum = T{0};
+                    T sum = T(0);
                     for (auto i = 0uz; i < U::dimensions.front(); ++i)
                         sum += z[i];
                     return sum;
@@ -390,14 +390,14 @@ namespace mtt::math {
     }
 
     template<usize idx, typename T, usize first_dim, usize... rest_dims>
-    auto constexpr get(cref<Matrix<T, first_dim, rest_dims...>> m) 
-    noexcept -> cref<typename Matrix<T, first_dim, rest_dims...>::Element> {
+    auto constexpr get(cref<Matrix<T, first_dim, rest_dims...>> m) noexcept
+    -> cref<typename Matrix<T, first_dim, rest_dims...>::Element> {
         return m.template get<idx>();
     }
 
     template<usize idx, typename T, usize first_dim, usize... rest_dims>
-    auto constexpr get(ref<Matrix<T, first_dim, rest_dims...>> m) 
-        noexcept -> ref<typename Matrix<T, first_dim, rest_dims...>::Element> {
+    auto constexpr get(ref<Matrix<T, first_dim, rest_dims...>> m) noexcept
+    -> ref<typename Matrix<T, first_dim, rest_dims...>::Element> {
         return m.template get<idx>();
     }
 
@@ -418,14 +418,14 @@ namespace mtt::math {
         } else if constexpr (n == 2) {
             return m[0][0] * m[1][1] - m[0][1] * m[1][0];
         } else if constexpr (n == 3) {
-            return T{0}
+            return T(0)
             + m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
             - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
             + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
         } else {
             // upper triangular matrix
             auto u = m;
-            auto det = T{1};
+            auto det = T(1);
             
             for (auto i = 0uz; i < n; ++i) {
                 auto pivot_row = i;
@@ -437,7 +437,7 @@ namespace mtt::math {
                         pivot_row = j;
                     }
                 
-                if (max_val < epsilon<T>) return T{0};
+                if (max_val < epsilon<T>) return T(0);
                 if (pivot_row != i) {
                     std::swap(u[i], u[pivot_row]);
                     det = -det;
@@ -458,40 +458,119 @@ namespace mtt::math {
     template<typename T, usize h>
     requires std::floating_point<T>
     auto constexpr inverse(cref<Matrix<T, h, h>> m) noexcept -> Matrix<T, h, h> {
-        auto augmented = Matrix<T, h, h * 2>{};
-        for (auto i = 0uz; i < h; ++i)
-            for (auto j = 0uz; j < h; ++j)
-                augmented[i][j] = m[i][j];
-        for (auto i = 0uz; i < h; ++i)
-            augmented[i][h + i] = T(1);
+        if constexpr (h == 2) {
+            auto det = m[0][0] * m[1][1] - m[0][1] * m[1][0];
+            auto inv_det = math::guarded_div(T(1), det);
 
-        // Gaussian-Jordan
-        for (auto i = 0uz; i < h; ++i) {
-            auto pivot_row = i;
-            auto max_val = math::abs(augmented[i][i]);
-            
-            for (auto j = i + 1; j < h; ++j)
-                if (auto curr_val = math::abs(augmented[j][i]); curr_val > max_val) {
-                    max_val = curr_val;
-                    pivot_row = j;
-                }
+            auto result = Matrix<T, 2, 2>{};
+            result[0][0] = m[1][1] * inv_det;
+            result[0][1] = -m[0][1] * inv_det;
+            result[1][0] = -m[1][0] * inv_det;
+            result[1][1] = m[0][0] * inv_det;
+            return result;
+        } else if constexpr (h == 3) {
+            auto c00 = m[1][1] * m[2][2] - m[1][2] * m[2][1];
+            auto c01 = -(m[1][0] * m[2][2] - m[1][2] * m[2][0]);
+            auto c02 = m[1][0] * m[2][1] - m[1][1] * m[2][0];
 
-            if (pivot_row != i) std::swap(augmented[i], augmented[pivot_row]);
-            auto pivot = augmented[i][i];
-            augmented[i] /= pivot;
+            auto c10 = -(m[0][1] * m[2][2] - m[0][2] * m[2][1]);
+            auto c11 = m[0][0] * m[2][2] - m[0][2] * m[2][0];
+            auto c12 = -(m[0][0] * m[2][1] - m[0][1] * m[2][0]);
 
-            for (auto j = 0uz; j < h; ++j)
-                if (j != i) {
-                    auto factor = augmented[j][i];
-                    augmented[j] -= factor * augmented[i];
-                }
+            auto c20 = m[0][1] * m[1][2] - m[0][2] * m[1][1];
+            auto c21 = -(m[0][0] * m[1][2] - m[0][2] * m[1][0]);
+            auto c22 = m[0][0] * m[1][1] - m[0][1] * m[1][0];
+
+            auto det = m[0][0] * c00 + m[0][1] * c01 + m[0][2] * c02;
+            auto inv_det = math::guarded_div(T(1), det);
+
+            auto result = Matrix<T, 3, 3>{};
+            result[0][0] = c00 * inv_det;
+            result[0][1] = c10 * inv_det;
+            result[0][2] = c20 * inv_det;
+            result[1][0] = c01 * inv_det;
+            result[1][1] = c11 * inv_det;
+            result[1][2] = c21 * inv_det;
+            result[2][0] = c02 * inv_det;
+            result[2][1] = c12 * inv_det;
+            result[2][2] = c22 * inv_det;
+            return result;
+        } else if constexpr (h == 4) {
+            auto s0 = m[0][0] * m[1][1] - m[1][0] * m[0][1];
+            auto s1 = m[0][0] * m[1][2] - m[1][0] * m[0][2];
+            auto s2 = m[0][0] * m[1][3] - m[1][0] * m[0][3];
+            auto s3 = m[0][1] * m[1][2] - m[1][1] * m[0][2];
+            auto s4 = m[0][1] * m[1][3] - m[1][1] * m[0][3];
+            auto s5 = m[0][2] * m[1][3] - m[1][2] * m[0][3];
+
+            auto c5 = m[2][2] * m[3][3] - m[3][2] * m[2][3];
+            auto c4 = m[2][1] * m[3][3] - m[3][1] * m[2][3];
+            auto c3 = m[2][1] * m[3][2] - m[3][1] * m[2][2];
+            auto c2 = m[2][0] * m[3][3] - m[3][0] * m[2][3];
+            auto c1 = m[2][0] * m[3][2] - m[3][0] * m[2][2];
+            auto c0 = m[2][0] * m[3][1] - m[3][0] * m[2][1];
+
+            auto det = s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0;
+            auto inv_det = math::guarded_div(T(1), det);
+
+            auto result = Matrix<T, 4, 4>{};
+            result[0][0] = (m[1][1] * c5 - m[1][2] * c4 + m[1][3] * c3) * inv_det;
+            result[0][1] = (-m[0][1] * c5 + m[0][2] * c4 - m[0][3] * c3) * inv_det;
+            result[0][2] = (m[3][1] * s5 - m[3][2] * s4 + m[3][3] * s3) * inv_det;
+            result[0][3] = (-m[2][1] * s5 + m[2][2] * s4 - m[2][3] * s3) * inv_det;
+
+            result[1][0] = (-m[1][0] * c5 + m[1][2] * c2 - m[1][3] * c1) * inv_det;
+            result[1][1] = (m[0][0] * c5 - m[0][2] * c2 + m[0][3] * c1) * inv_det;
+            result[1][2] = (-m[3][0] * s5 + m[3][2] * s2 - m[3][3] * s1) * inv_det;
+            result[1][3] = (m[2][0] * s5 - m[2][2] * s2 + m[2][3] * s1) * inv_det;
+
+            result[2][0] = (m[1][0] * c4 - m[1][1] * c2 + m[1][3] * c0) * inv_det;
+            result[2][1] = (-m[0][0] * c4 + m[0][1] * c2 - m[0][3] * c0) * inv_det;
+            result[2][2] = (m[3][0] * s4 - m[3][1] * s2 + m[3][3] * s0) * inv_det;
+            result[2][3] = (-m[2][0] * s4 + m[2][1] * s2 - m[2][3] * s0) * inv_det;
+
+            result[3][0] = (-m[1][0] * c3 + m[1][1] * c1 - m[1][2] * c0) * inv_det;
+            result[3][1] = (m[0][0] * c3 - m[0][1] * c1 + m[0][2] * c0) * inv_det;
+            result[3][2] = (-m[3][0] * s3 + m[3][1] * s1 - m[3][2] * s0) * inv_det;
+            result[3][3] = (m[2][0] * s3 - m[2][1] * s1 + m[2][2] * s0) * inv_det;
+
+            return result;
+        } else {
+            auto augmented = Matrix<T, h, h * 2>{};
+            for (auto i = 0uz; i < h; ++i)
+                for (auto j = 0uz; j < h; ++j)
+                    augmented[i][j] = m[i][j];
+            for (auto i = 0uz; i < h; ++i)
+                augmented[i][h + i] = T(1);
+
+            // Gaussian-Jordan
+            for (auto i = 0uz; i < h; ++i) {
+                auto pivot_row = i;
+                auto max_val = math::abs(augmented[i][i]);
+
+                for (auto j = i + 1; j < h; ++j)
+                    if (auto curr_val = math::abs(augmented[j][i]); curr_val > max_val) {
+                        max_val = curr_val;
+                        pivot_row = j;
+                    }
+
+                if (pivot_row != i) std::swap(augmented[i], augmented[pivot_row]);
+                auto pivot = augmented[i][i];
+                augmented[i] /= pivot;
+
+                for (auto j = 0uz; j < h; ++j)
+                    if (j != i) {
+                        auto factor = augmented[j][i];
+                        augmented[j] -= factor * augmented[i];
+                    }
+            }
+
+            auto result = Matrix<T, h, h>{};
+            for (auto i = 0uz; i < h; ++i)
+                for (auto j = 0uz; j < h; ++j)
+                    result[i][j] = augmented[i][h + j];
+            return result;
         }
-
-        auto result = Matrix<T, h, h>{};
-        for (auto i = 0uz; i < h; ++i)
-            for (auto j = 0uz; j < h; ++j)
-                result[i][j] = augmented[i][h + j];
-        return result;
     }
 
     template<typename T, usize h, usize w>
@@ -551,8 +630,8 @@ namespace mtt::math {
 
 namespace std {
     template<typename T, mtt::usize first_dim, mtt::usize... rest_dims>
-    struct tuple_size<mtt::math::Matrix<T, first_dim, rest_dims...>> 
-        : std::integral_constant<size_t, first_dim> {};
+    struct tuple_size<mtt::math::Matrix<T, first_dim, rest_dims...>>:
+    std::integral_constant<size_t, first_dim> {};
 
     template<mtt::usize I, typename T, mtt::usize first_dim, mtt::usize... rest_dims>
     struct tuple_element<I, mtt::math::Matrix<T, first_dim, rest_dims...>> {

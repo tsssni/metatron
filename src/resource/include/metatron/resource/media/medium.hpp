@@ -6,8 +6,8 @@
 
 namespace mtt::media {
     struct Interaction final {
-        fv3 p;
         obj<phase::Phase_Function> phase;
+        fv3 p;
         f32 t;
         fv4 transmittance;
         fv4 sigma_a;
@@ -27,7 +27,7 @@ namespace mtt::media {
     ::build {};
 
     struct Phase final {
-        enum struct Function: u32 {
+        enum struct Function {
             henyey_greenstein,
         } function = Function::henyey_greenstein;
         f32 g = 0.f;

@@ -7,13 +7,13 @@ namespace mtt::texture {
         struct Descriptor final {
             tag<spectra::Spectrum> x;
             tag<spectra::Spectrum> y;
-            uzv2 uv_scale = uzv2{1uz};
+            uv2 uv_scale = uv2{1};
         };
-        Checkerboard_Texture() noexcept = default;
         Checkerboard_Texture(cref<Descriptor> desc) noexcept;
+        Checkerboard_Texture() noexcept = default;
 
         auto operator()(
-            cref<opaque::Coordinate> coord, cref<fv4> lambda
+            cref<muldim::Coordinate> coord, cref<fv4> lambda
         ) const noexcept -> fv4;
         auto sample(
             cref<math::Context> ctx, cref<fv2> u
@@ -23,7 +23,7 @@ namespace mtt::texture {
     private:
         tag<spectra::Spectrum> x;
         tag<spectra::Spectrum> y;
-        uzv2 uv_scale;
+        uv2 uv_scale;
 
         f32 w_x;
         f32 w_y;

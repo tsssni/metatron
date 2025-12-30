@@ -13,18 +13,18 @@ namespace mtt::accel {
 
     struct Divider final {
         tag<shape::Shape> shape{};
-        tag<media::Medium> int_medium{scene::fetch<media::Medium>(default_medium / et)};
-        tag<media::Medium> ext_medium{scene::fetch<media::Medium>(default_medium / et)};
+        tag<media::Medium> int_medium{entity<media::Medium>(default_medium)};
+        tag<media::Medium> ext_medium{entity<media::Medium>(default_medium)};
         tag<material::Material> material{};
         tag<math::Transform> local_to_render{};
-        tag<math::Transform> int_to_render{scene::fetch<math::Transform>(default_transform / et)};
-        tag<math::Transform> ext_to_render{scene::fetch<math::Transform>(default_transform / et)};
+        tag<math::Transform> int_to_render{entity<math::Transform>(default_transform)};
+        tag<math::Transform> ext_to_render{entity<math::Transform>(default_transform)};
     };
 
     struct Interaction final {
-        tag<Divider> divider{};
-        usize primitive{0uz};
-        opt<shape::Interaction> intr_opt{};
+        tag<Divider> divider = {};
+        u32 primitive = 0;
+        opt<shape::Interaction> intr_opt = {};
     };
 
     struct Acceleration final: pro::facade_builder

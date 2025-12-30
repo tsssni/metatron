@@ -8,51 +8,28 @@
 
 namespace mtt::scene {
     template<typename F, typename T = F>
-    auto reserve(usize n) noexcept -> void {
-        if constexpr (pro::facade<F>) {
-            auto& vec = stl::vector<F>::instance();
-            vec.template reserve<T>(vec.template size<T>() + n);
-        } else {
-            auto& vec = stl::vector<T>::instance();
-            vec.reserve(vec.size() + n);
-        }
-    }
-
-    template<typename F, typename T = F>
     auto attach(cref<json> j, std::string_view type) noexcept -> bool {
         if (j.type != type) return false;
         auto d = T{};
-        if (auto er = glz::read_json<T>(d, j.serialized.str); er) {
-            std::println(
-                "deserialize {} with glaze error: {}",
-                j.serialized.str, glz::format_error(er)
-            );
-            std::abort();
-        } else {
-            if constexpr (pro::facade<F>) {
-                auto lock = stl::vector<F>::instance().lock();
-                attach<F, T>(j.entity, std::move(d));
-            } else {
-                auto lock = stl::vector<T>::instance().lock();
-                attach<T>(j.entity, std::move(d));
-            }
-        }
+        stl::json::load(j.serialized.str, d);
+        if constexpr (pro::facade<F>)
+            stl::vector<F>::instance().template push<T>(j.entity, std::move(d));
+        else
+            stl::vector<T>::instance().push(j.entity, std::move(d));
         return true;
     }
 
     template<typename F, typename... Ts>
     auto constexpr deserialize(
         std::array<std::string, sizeof...(Ts) + 1>&& type,
-        std::function<auto () -> void> pre,
-        std::function<auto () -> void> post
+        std::function<void()> pre,
+        std::function<void()> post
     ) noexcept -> void {
         auto& vec = stl::vector<F>::instance();
         if constexpr (pro::facade<F>) (vec.template emplace_type<Ts>(), ...);
+        else (stl::vector<Ts>::instance(), ...);
         Hierarchy::instance().filter([type = std::move(type), pre, post](auto bins) {
             using ts = stl::array<F, Ts...>;
-            if constexpr (!pro::facade<F>)
-                reserve<F>(bins[type[ts::template index<F>]].size());
-            (reserve<F, Ts>(bins[type[ts::template index<Ts>]].size()), ...);
             pre();
 
             auto list = type
@@ -67,7 +44,7 @@ namespace mtt::scene {
                 if constexpr (!pro::facade<F>)
                     v = attach<F>(j, type[ts::template index<F>]);
                 v = v || (attach<F, Ts>(j, type[ts::template index<Ts>]) || ...);
-                if (!v) std::println(
+                if (!v) stl::abort(
                     "deserialize {} with invalid type {}",
                     j.serialized.str, j.type
                 );
@@ -79,8 +56,8 @@ namespace mtt::scene {
     template<typename... Ts>
     auto constexpr deserialize(
         std::string_view text,
-        std::function<auto () -> void> pre = []{},
-        std::function<auto () -> void> post = []{}
+        std::function<void()> pre = []{},
+        std::function<void()> post = []{}
     ) noexcept -> void {
         auto i = 0;
         auto type = std::array<std::string, sizeof...(Ts)>{};
@@ -90,10 +67,9 @@ namespace mtt::scene {
             auto y = std::string{x.begin(), x.end()};
             auto l = y.find_first_not_of(" \t\r\n");
             auto r = y.find_last_not_of(" \t\r\n");
-            if (l == std::string::npos) {
-                std::println("serialized type invalid");
-                std::abort();
-            } else return y.substr(l, r - l + 1);
+            if (l == std::string::npos)
+                stl::abort("serialized type invalid");
+            return y.substr(l, r - l + 1);
         })) {
             std::ranges::transform(t, t.begin(), ::tolower);
             type[i++] = t;

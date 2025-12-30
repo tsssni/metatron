@@ -1,10 +1,11 @@
 #pragma once
-#include <metatron/render/renderer/integrator.hpp>
-#include <metatron/render/renderer/accel.hpp>
-#include <metatron/render/renderer/emitter.hpp>
-#include <metatron/render/renderer/sampler.hpp>
-#include <metatron/render/renderer/filter.hpp>
-#include <metatron/render/renderer/lens.hpp>
+#include <metatron/render/monte-carlo/integrator.hpp>
+#include <metatron/render/accel/accel.hpp>
+#include <metatron/render/emitter/emitter.hpp>
+#include <metatron/render/sampler/sampler.hpp>
+#include <metatron/render/sampler/proxy.hpp>
+#include <metatron/render/filter/filter.hpp>
+#include <metatron/render/photo/lens/lens.hpp>
 #include <metatron/render/photo/film.hpp>
 #include <metatron/core/stl/capsule.hpp>
 
@@ -12,13 +13,13 @@ namespace mtt::renderer {
     struct Renderer final: stl::capsule<Renderer> {
         struct Impl;
         struct Descriptor final {
-            photo::Film film = photo::Film::Descriptor{};
-            Integrator integrator = monte_carlo::Volume_Path_Integrator{};
-            Acceleration accel = accel::LBVH{{}};
-            Emitter emitter = emitter::Uniform_Emitter{};
-            Sampler sampler = sampler::Sobol_Sampler{};
-            Filter filter = filter::Lanczos_Filter{{}};
-            Lens lens = photo::Thin_Lens{{}};
+            tag<monte_carlo::Integrator> integrator = entity<monte_carlo::Integrator>("/renderer/default/integrator");
+            tag<accel::Acceleration> accel = entity<accel::Acceleration>("/renderer/default/accel");
+            tag<emitter::Emitter> emitter = entity<emitter::Emitter>("/renderer/default/emitter");
+            tag<sampler::Sampler> sampler = entity<sampler::Sampler>("/renderer/default/sampler");
+            tag<filter::Filter> filter = entity<filter::Filter>("/renderer/default/filter");
+            tag<photo::Lens> lens = entity<photo::Lens>("/renderer/default/lens");
+            tag<photo::Film> film = {};
         };
         Renderer() noexcept = default;
         Renderer(rref<Descriptor> desc) noexcept;

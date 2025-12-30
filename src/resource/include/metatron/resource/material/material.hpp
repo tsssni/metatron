@@ -7,8 +7,8 @@ namespace mtt::material {
     struct Interaction final {
         obj<bsdf::Bsdf> bsdf;
         fv4 emission;
-        fv3 normal{0.f};
-        bool degraded{false};
+        fv3 normal = {0.f};
+        bool degraded = false;
     };
 
     MTT_POLY_METHOD(material_sample, sample);
@@ -22,7 +22,7 @@ namespace mtt::material {
     struct Material final: pro::facade_builder
     ::add_convention<material_sample, auto (
         cref<math::Context> ctx,
-        cref<opaque::Coordinate> coord
+        cref<muldim::Coordinate> coord
     ) const noexcept -> opt<Interaction>>
     ::add_convention<material_flags, auto () const noexcept -> Flags>
     ::build {};

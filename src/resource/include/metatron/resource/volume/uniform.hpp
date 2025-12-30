@@ -1,6 +1,6 @@
 #pragma once
 #include <metatron/resource/volume/volume.hpp>
-#include <metatron/resource/opaque/grid.hpp>
+#include <metatron/resource/muldim/grid.hpp>
 #include <metatron/core/stl/vector.hpp>
 
 namespace mtt::volume {
@@ -9,8 +9,8 @@ namespace mtt::volume {
             math::Bounding_Box bbox;
             uzv3 dimensions;
         };
-        Uniform_Volume() noexcept = default;
         Uniform_Volume(cref<Descriptor> desc) noexcept;
+        Uniform_Volume() noexcept = default;
 
         auto to_local(cref<iv3> ijk) const noexcept -> fv3;
         auto to_index(cref<fv3> pos) const noexcept -> iv3;
@@ -31,6 +31,6 @@ namespace mtt::volume {
         math::Bounding_Box bbox;
         iv3 dims;
         fv3 voxel_size;
-        tag<opaque::Grid> storage;
+        tag<muldim::Grid> storage;
     };
 }

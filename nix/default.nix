@@ -2,15 +2,13 @@
   apple-sdk_15,
   argparse,
   assimp,
-  clang-tools,
   clangStdenv,
   cmake,
-  cmake-language-server,
-  entt,
   glaze,
   lib,
   ninja,
   openimageio,
+  openssl,
   openvdb,
   proxy,
   shader-slang,
@@ -36,9 +34,7 @@ stdenv.mkDerivation {
   # };
 
   nativeBuildInputs = [
-    clang-tools
     cmake
-    cmake-language-server
     ninja
     shader-slang
     spirv-cross
@@ -47,9 +43,9 @@ stdenv.mkDerivation {
   buildInputs = [
     argparse
     assimp
-    entt
     glaze
     openimageio
+    openssl
     openvdb
     proxy
     zlib

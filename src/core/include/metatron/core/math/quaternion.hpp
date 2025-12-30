@@ -5,13 +5,12 @@ namespace mtt::math {
     template<typename T>
     requires std::floating_point<T>
     struct Quaternion final {
-    public:
         Quaternion() = default;
         Quaternion(T x, T y, T z, T w): data{x, y, z, w} {}
         explicit Quaternion(cref<Vector<T, 4>> v): data{v} {}
 
         auto constexpr static from_axis_angle(cref<Vector<T, 3>> axis, cref<T> angle) noexcept -> Quaternion<T> {
-            auto half_angle = angle * T{0.5};
+            auto half_angle = angle * T(0.5);
             auto sin_half = std::sin(half_angle);
             auto cos_half = std::cos(half_angle);
             return Quaternion{
@@ -24,14 +23,14 @@ namespace mtt::math {
 
         auto constexpr static from_rotation_between(cref<Vector<T, 3>> from, cref<Vector<T, 3>> to) noexcept -> Quaternion<T> {
             auto axis = cross(from, to);
-            if (math::length(axis) < math::epsilon<f32>) {
-                auto perp = math::abs(math::dot(from, math::Vector<T, 3>{0, 1, 0})) >= 1 - 1e-6f
-                ? math::Vector<T, 3>{1, 0, 0}
-                : math::Vector<T, 3>{0, 1, 0};
+            if (length(axis) < epsilon<f32>) {
+                auto perp = abs(dot(from, Vector<T, 3>{0, 1, 0})) >= 1 - 1e-6f
+                ? Vector<T, 3>{1, 0, 0}
+                : Vector<T, 3>{0, 1, 0};
                 axis = cross(from, perp);
             }
             auto rad = angle(from, to);
-            return from_axis_angle(math::normalize(axis), rad);
+            return from_axis_angle(normalize(axis), rad);
         }
 
         auto constexpr operator[](usize idx) noexcept -> ref<T> {
@@ -75,10 +74,10 @@ namespace mtt::math {
         explicit constexpr operator Matrix<T, 4, 4>() const {
             auto [x, y, z, w] = data;
             return Matrix<T, 4, 4>{
-                {T{1.0}-T{2.0}*(y*y+z*z), T{2.0}*(x*y-z*w),        T{2.0}*(x*z+y*w),        T{0.0}},
-                {T{2.0}*(x*y+z*w),        T{1.0}-T{2.0}*(x*x+z*z), T{2.0}*(y*z-x*w),        T{0.0}},
-                {T{2.0}*(x*z-y*w),        T{2.0}*(y*z+x*w),        T{1.0}-T{2.0}*(x*x+y*y), T{0.0}},
-                {T(0.0),                  T{0.0},                  T{0.0},                  T{1.0}},
+                {T(1.0)-T(2.0)*(y*y+z*z), T(2.0)*(x*y-z*w),        T(2.0)*(x*z+y*w),        T(0.0)},
+                {T(2.0)*(x*y+z*w),        T(1.0)-T(2.0)*(x*x+z*z), T(2.0)*(y*z-x*w),        T(0.0)},
+                {T(2.0)*(x*z-y*w),        T(2.0)*(y*z+x*w),        T(1.0)-T(2.0)*(x*x+y*y), T(0.0)},
+                {T(0.0),                  T(0.0),                  T(0.0),                  T(1.0)},
             };
         }
 
@@ -96,12 +95,12 @@ namespace mtt::math {
         auto cos_theta = dot(q0v, q1v);
         
         // use lerp with small angle
-        if (cos_theta > T{0.9995})
+        if (cos_theta > T(0.9995))
             return Quaternion{normalize(lerp(q0v, q1v, t))};
 
         // ensure shortest path
         auto q1v_adj = q1v;
-        if (cos_theta < T{0}) {
+        if (cos_theta < T(0)) {
             q1v_adj = -q1v_adj;
             cos_theta = -cos_theta;
         }
@@ -109,7 +108,7 @@ namespace mtt::math {
         auto theta = angle(q0v, q1v_adj);
         auto sin_theta = std::sin(theta);
         
-        auto scale1 = std::sin((T{1} - t) * theta) / sin_theta;
+        auto scale1 = std::sin((T(1) - t) * theta) / sin_theta;
         auto scale2 = std::sin(t * theta) / sin_theta;
         
         return {normalize(scale1 * q0v + scale2 * q1v_adj)};
@@ -123,10 +122,10 @@ namespace mtt::math {
 
     template<typename T>
     requires std::floating_point<T>
-    auto constexpr rotate(cref<Vector<T, 4>> x, cref<Quaternion<T>> q) noexcept -> math::Vector<T, 4> {
-        auto p = Quaternion{x[0], x[1], x[2], T{0}};
+    auto constexpr rotate(cref<Vector<T, 4>> x, cref<Quaternion<T>> q) noexcept -> Vector<T, 4> {
+        auto p = Quaternion{x[0], x[1], x[2], T(0)};
         auto r = q * p * conj(q);
-        return {r[0], r[1], r[2], T{0}};
+        return {r[0], r[1], r[2], T(0)};
     }
 }
 

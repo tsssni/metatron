@@ -5,10 +5,20 @@ namespace mtt::math {
     // https://github.com/mmp/pbrt-v4/blob/master/src/pbrt/util/math.h
     // https://github.com/mmp/pbrt-v4/blob/master/src/pbrt/util/hash.h
 
-    template<usize n>
-    auto murmur_hash(std::array<byte, n> key, usize seed) -> u64 {
-        auto constexpr m = 0xc6a4a7935bd1e995uz;
-        auto constexpr r = 47;
+    template<typename... Args>
+    auto murmur_hash(Args... args) -> u64 {
+        auto constexpr n = (sizeof(Args) + ... + 0);
+        auto key = std::array<byte, n>{};
+        auto offset = 0ull;
+
+        auto copy_arg = [&key, &offset](auto const& arg) {
+            std::memcpy(key.data() + offset, &arg, sizeof(arg));
+            offset += sizeof(arg);
+        }; (copy_arg(args), ...);
+
+        auto constexpr m = 0xc6a4a7935bd1e995ull;
+        auto constexpr r = 47ull;
+        auto seed = 0ull;
         auto h = seed ^ (n * m);
         auto* head = key.data();
         auto* end = head + 8 * (n / 8);
@@ -52,26 +62,11 @@ namespace mtt::math {
         return h;
     }
 
-    template<typename... Args>
-    auto hash(Args... args) -> usize {
-        auto constexpr n = (sizeof(Args) + ... + 0uz);
-        auto buffer = std::array<byte, n>{};
-        auto offset = 0uz;
-
-        auto copy_arg = [&buffer, &offset](auto const& arg) {
-            std::memcpy(buffer.data() + offset, &arg, sizeof(arg));
-            offset += sizeof(arg);
-        };
-        (copy_arg(args), ...);
-
-        return murmur_hash(buffer, 0uz);
-    }
-
     auto inline constexpr mix_bits(u64 x) noexcept -> u64 {
         x ^= (x >> 31);
-        x *= 0x7fb5d329728ea185;
+        x *= 0x7fb5d329728ea185ull;
         x ^= (x >> 27);
-        x *= 0x81dadef4bc2dd44d;
+        x *= 0x81dadef4bc2dd44dull;
         x ^= (x >> 33);
         return x;
     }

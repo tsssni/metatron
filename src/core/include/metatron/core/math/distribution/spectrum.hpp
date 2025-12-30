@@ -11,8 +11,5 @@ namespace mtt::math {
             if (x < 360.f || x > 830.f) return 0.f;
             return 0.0039398042f / math::sqr(std::cosh(0.0072f * (x - 538.f)));
         }
-
-    private:
-        f32 r;
     };
 }

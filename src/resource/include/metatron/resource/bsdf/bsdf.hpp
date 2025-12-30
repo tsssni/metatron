@@ -8,7 +8,7 @@ namespace mtt::bsdf {
         fv4 f;
         fv3 wi;
         f32 pdf;
-        bool degraded{false};
+        bool degraded = false;
     };
 
     MTT_POLY_METHOD(bsdf_sample, sample);

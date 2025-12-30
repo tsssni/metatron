@@ -8,8 +8,8 @@ namespace mtt::volume {
         struct Descriptor final {
             std::string path;
         };
-        Nanovdb_Volume() noexcept = default;
         Nanovdb_Volume(cref<Descriptor> desc) noexcept;
+        Nanovdb_Volume() noexcept = default;
 
         auto to_local(cref<iv3> ijk) const noexcept -> fv3;
         auto to_index(cref<fv3> pos) const noexcept -> iv3;

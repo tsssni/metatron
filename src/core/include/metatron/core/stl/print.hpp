@@ -23,3 +23,18 @@ struct std::formatter<mtt::math::Matrix<T, dims...>> {
         return std::format_to(ctx.out(), "]");
     }
 };
+
+namespace mtt::stl {
+    template <typename... Args>
+    auto print(std::format_string<Args...> format, Args&&... args) noexcept -> void {
+        std::println(format, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    auto abort(std::format_string<Args...> format, Args&&... args) noexcept -> void {
+        std::println(format, std::forward<Args>(args)...);
+        std::abort();
+    }
+
+    auto inline abort() noexcept { std::abort(); }
+}

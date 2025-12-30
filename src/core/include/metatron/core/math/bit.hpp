@@ -4,7 +4,7 @@
 namespace mtt::math {
     template<typename T>
     requires std::unsigned_integral<T>
-    auto bit_reverse(T x) -> T {
+    auto constexpr bit_reverse(T x) -> T {
         if constexpr (std::is_same_v<T, u32>) {
             x = (x << 16) | (x >> 16);
             x = ((x & 0x00ff00ff) << 8) | ((x & 0xff00ff00) >> 8);
@@ -17,5 +17,12 @@ namespace mtt::math {
             auto n1 = u64(bit_reverse(u32(x >> 32)));
             return (n0 << 32) | n1;
         }
+    }
+
+    template<typename T>
+    requires std::unsigned_integral<T>
+    auto constexpr align(T size, T alignment) noexcept -> T {
+        if (!std::has_single_bit(alignment)) return 0;
+        return (size + alignment - 1) & ~(alignment - 1);
     }
 }

@@ -1,66 +1,93 @@
 import metatron;
 
 namespace mtt {
-    struct Trace {
-        Ptr<uint3> indices;
-
-        Ptr<float3> vertices;
-        Ptr<float3> normals;
-        Ptr<float2> uvs;
-
-        Ptr<float3> dpdu;
-        Ptr<float3> dpdv;
-        Ptr<float3> dndu;
-        Ptr<float3> dndv;
-
-        RWTexture2D film;
+    struct Integrate {
+        monte_carlo::Integrator_Tag integrator;
+        accel::Acceleration_Tag accel;
+        emitter::Emitter_Tag emitter;
+        sampler::Sampler_Tag sampler;
+        filter::Filter_Tag filter;
+        photo::Lens_Tag lens;
+        tag<photo::Film> film;
+        u32 seed;
+        uv2 range;
+        math::Transform ct;
+        buf<f32> fresnel;
+        RWTexture2D image;
     }
 
-    SamplerState sampler;
-    SamplerState accessor;
-    Texture2D textures[];
-    Texture3D grids[];
-    RaytracingAccelerationStructure accel;
-
     [shader("compute"), numthreads(8, 8, 1)]
-    func trace(
-        ParameterBlock<Trace> in,
+    func integrate(
+        iv3 global_idx: SV_DispatchThreadID,
+        ParameterBlock<Integrate> in,
     ) -> void {
-        in.indices[0] = uint3(0, 1, 2);
-        in.vertices[0] = float3(-1, -1, 0);
-        in.vertices[1] = float3(-1,  2, 0);
-        in.vertices[2] = float3( 2, -1, 0);
+        var value = fv4(0);
+        let pixel = global_idx.xy;
+        let film = in.film.get();
+        var size: uv2;
+        in.image.GetDimensions(size.x, size.y);
+        if (any(pixel != clamp(pixel, 0, size))) return;
+        bsdf::fresnel_reflectance_table = in.fresnel;
 
-        var q = RayQuery<RAY_FLAG_NONE>();
-        var r = RayDesc();
-        r.Origin = float3(0,0,-1);
-        r.Direction = float3(0,0,1);
-        r.TMin = 0.0; r.TMax = float.maxValue;
+        for (var n = in.range.x; n < in.range.y; ++n) {
+            var sp: sampler::Proxy_Sampler;
+            sp.ctx.pixel = pixel;
+            sp.ctx.size = size;
+            sp.ctx.idx = n;
+            sp.ctx.spp = film.spp;
+            sp.ctx.dim = 0;
+            sp.ctx.seed = in.seed;
+            sp.sampler = in.sampler;
+            sp.start();
 
-        q.TraceRayInline(accel, RAY_FLAG_NONE, 0xff, r);
-        while (q.Proceed()) {
-            switch (q.CandidateType()) {
-            case CANDIDATE_PROCEDURAL_PRIMITIVE:
-                q.CommitProceduralPrimitiveHit(0.0); break;
-            }
+            let fixel = film(in.filter, pixel, size, sp.generate_2d());
+            let camera: photo::Camera;
+            let s_opt = camera.sample(in.lens, fixel.position, fixel.dxdy, sp.generate_2d());
+            if (s_opt == none) continue;
+            var s = s_opt.value;
+            s.ray_differential = in.ct / s.ray_differential;
+            s.default_differential = in.ct / s.default_differential;
+
+            let spec = spectra::Stochastic_Spectrum(sp.generate_1d());
+            var ctx: monte_carlo::Context;
+            ctx.accel = in.accel;
+            ctx.emitter = in.emitter;
+            ctx.sampler = sp;
+            ctx.lambda = spec.lambda;
+            ctx.ray_differential = s.ray_differential;
+            ctx.default_differential = s.default_differential;
+            ctx.render_to_camera = in.ct;
+            ctx.pixel = pixel;
+            ctx.sample_index = n;
+            ctx.max_depth = film.depth;
+
+            let Li_opt = in.integrator.sample(ctx);
+            if (Li_opt == none) continue;
+            var Li = Li_opt.value;
+            Li.value /= s.pdf;
+            let rgb = fixel(film, Li);
+            value += fv4(rgb * fixel.weight, fixel.weight);
         }
 
-        let t = textures[0].Sample(sampler, float2(0.5));
-        let g = grids[0].Sample(accessor, float3(0.5));
-        in.film.Store(0, t + g);
+        let sampled = in.image.Load(pixel) + value;
+        in.image.Store(pixel, sampled);
     }
 
     struct Postprocess {
-        Texture2D film;
+        RWTexture2D film;
         RWTexture2D image;
     }
 
     [shader("compute"), numthreads(8, 8, 1)]
     func postprocess(
-        int3 global_idx: SV_DispatchThreadID,
+        iv3 global_idx: SV_DispatchThreadID,
         ParameterBlock<Postprocess> in,
     ) -> void {
-        var pixel = in.film.Load(global_idx);
-        in.image.Store(global_idx.xy, pixel / pixel.w);
+        let pixel = global_idx.xy;
+        var size: uv2;
+        in.image.GetDimensions(size.x, size.y);
+        if (any(pixel != clamp(pixel, 0, size))) return;
+        let film = in.film.Load(pixel);
+        in.image.Store(pixel, film / max(film.w, math::epsilon));
     }
 }

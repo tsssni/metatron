@@ -8,8 +8,8 @@ namespace mtt::math {
     using Vector = Matrix<T, size>;
 
     template<typename Func, typename... Ts, usize size>
-    auto constexpr foreach(Func f, cref<Vector<Ts, size>>... vectors)
-    noexcept -> Vector<decltype(f(vectors[0]..., 0uz)), size> {
+    auto constexpr foreach(Func f, cref<Vector<Ts, size>>... vectors) noexcept
+    -> Vector<decltype(f(vectors[0]..., 0uz)), size> {
         using Return_Type = decltype(f(vectors[0]..., 0uz));
         auto r = Vector<Return_Type, size>{};
         for (auto i = 0uz; i < size; ++i)
@@ -110,15 +110,15 @@ namespace mtt::math {
     template<typename T>
     requires std::floating_point<T>
     auto constexpr reflect(cref<Vector<T, 3>> in, cref<Vector<T, 3>> n) noexcept -> Vector<T, 3> {
-        return T{2.0} * n * dot(-in, n) + in; 
+        return T(2.0) * n * dot(-in, n) + in; 
     }
 
     template<typename T>
     requires std::floating_point<T>
     auto constexpr refract(cref<Vector<T, 3>> in, cref<Vector<T, 3>> n, cref<T> eta) noexcept -> Vector<T, 3> {
         auto cos_theta_i = dot(-in, n);
-        auto cos_2_theta_t = T{1.0} - (T{1.0} - sqr(cos_theta_i)) / sqr(eta);
-        if (cos_2_theta_t < 0.0) return Vector<T, 3>{T{0.0}};
+        auto cos_2_theta_t = T(1.0) - (T(1.0) - sqr(cos_theta_i)) / sqr(eta);
+        if (cos_2_theta_t < 0.0) return Vector<T, 3>{T(0.0)};
         return in / eta + (cos_theta_i / eta - sqrt(cos_2_theta_t)) * n;
     }
 
@@ -265,7 +265,7 @@ namespace mtt::math {
     template<typename T, usize size>
     requires requires(T a, T b) { a * b; }
     auto constexpr prod(cref<Vector<T, size>> x) noexcept -> T {
-        auto y = T{1};
+        auto y = T(1);
         foreach([&y](cref<T> v, usize) noexcept -> T {
             y *= v;
             return y;
@@ -280,6 +280,13 @@ namespace mtt::math {
     )
     auto constexpr avg(cref<Vector<T, size>> x) noexcept -> T {
         return sum(x) / size;
+    }
+
+    template<typename T, usize size>
+    auto constexpr exp(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
+        return math::foreach([](cref<T> v, auto) {
+            return std::exp(v);
+        }, x);
     }
 
     template<typename T, usize size>
@@ -303,6 +310,14 @@ namespace mtt::math {
     auto constexpr clamp(cref<Vector<T, size>> x, cref<Vector<T, size>> l, cref<Vector<T, size>> r) noexcept -> Vector<T, size> {
         return foreach([&](cref<T> v, usize i) noexcept -> T {
             return clamp(v, l[i], r[i]);
+        }, x);
+    }
+
+    template<typename T, usize size>
+    requires std::totally_ordered<T>
+    auto constexpr saturate(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
+        return foreach([&](cref<T> v, usize i) noexcept -> T {
+            return saturate(v);
         }, x);
     }
 
@@ -333,7 +348,7 @@ namespace mtt::math {
     template<typename T, usize size>
     requires std::floating_point<T>
     auto constexpr orthogonalize(cref<Vector<T, size>> n) noexcept -> Matrix<T, 2, size> {
-        auto t = abs(n[0]) > 1.f - epsilon<f32>
+        auto t = abs(n[1]) > 1.f - epsilon<f32>
         ? Vector<f32, 3>{1.f, 0.f, 0.f}
         : Vector<f32, 3>{0.f, 1.f, 0.f};
         auto tn = normalize(gram_schmidt(t, n));

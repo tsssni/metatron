@@ -16,11 +16,11 @@ namespace mtt::texture {
             Image_Distribution distr = Image_Distribution::none;
             bool linear = true;
         };
-        Image_Vector_Texture() noexcept = default;
         Image_Vector_Texture(cref<Descriptor> desc) noexcept;
+        Image_Vector_Texture() noexcept = default;
 
         auto operator()(
-            cref<opaque::Coordinate> coord
+            cref<muldim::Coordinate> coord
         ) const noexcept -> fv4;
         auto sample(
             cref<math::Context> ctx, cref<fv2> u
@@ -28,8 +28,8 @@ namespace mtt::texture {
         auto pdf(cref<fv2> uv) const noexcept -> f32;
 
     private:
-        tag<opaque::Image> texture;
-        math::Piecewise_Distribution<2> distr;
+        tag<muldim::Image> texture;
+        tag<math::Planar_Distribution> distr;
     };
 
     struct Image_Spectrum_Texture final {
@@ -37,13 +37,13 @@ namespace mtt::texture {
             std::string path;
             spectra::Color_Space::Spectrum_Type type;
             Image_Distribution distr = Image_Distribution::none;
-            tag<spectra::Color_Space> color_space = spectra::Color_Space::color_spaces["sRGB"];
+            tag<spectra::Color_Space> color_space = entity<spectra::Color_Space>("/color-space/sRGB");
         };
-        Image_Spectrum_Texture() noexcept = default;
         Image_Spectrum_Texture(cref<Descriptor> desc) noexcept;
+        Image_Spectrum_Texture() noexcept = default;
 
         auto operator()(
-            cref<opaque::Coordinate> coord, cref<fv4> spec
+            cref<muldim::Coordinate> coord, cref<fv4> spec
         ) const noexcept -> fv4;
         auto sample(
             cref<math::Context> ctx, cref<fv2> u

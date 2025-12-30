@@ -1,3 +1,5 @@
+vim.lsp.enable('clangd')
+vim.lsp.enable('cmake')
 vim.lsp.config('slangd', {
   settings = {
     slang = {
@@ -11,3 +13,4 @@ vim.lsp.config('slangd', {
   },
   root_dir = './shader/'
 })
+vim.lsp.enable('slangd')

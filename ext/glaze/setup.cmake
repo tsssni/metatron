@@ -1,2 +1,2 @@
 extend(glaze)
-list(APPEND metatron-deps glaze::glaze)
+list(APPEND deps glaze::glaze)

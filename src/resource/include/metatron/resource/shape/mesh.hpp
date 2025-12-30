@@ -4,18 +4,30 @@
 
 namespace mtt::shape {
     struct Mesh final {
+        buf<uv3> indices;
+
+        buf<fv3> vertices;
+        buf<fv3> normals;
+        buf<fv2> uvs;
+
+        buf<fv3> dpdu;
+        buf<fv3> dpdv;
+        buf<fv3> dndu;
+        buf<fv3> dndv;
+
         struct Descriptor final {
             std::string path;
         };
-        Mesh() noexcept = default;
         Mesh(cref<Descriptor> desc) noexcept;
+        Mesh() noexcept = default;
 
         auto size() const noexcept -> usize;
         auto bounding_box(
-            cref<fm44> t, usize idx
+            cref<math::Transform> t, usize idx
         ) const noexcept -> math::Bounding_Box;
         auto operator()(
-            cref<math::Ray> r, cref<fv3> np, usize idx
+            cref<math::Ray> r, cref<fv3> np,
+            cref<fv4> pos, usize idx
         ) const noexcept -> opt<Interaction>;
         // sphere triangle sampling: https://pbr-book.org/4ed/Shapes/Triangle_Meshes
         auto sample(
@@ -23,7 +35,7 @@ namespace mtt::shape {
         ) const noexcept -> opt<Interaction>;
         auto query(
             cref<math::Ray> r, usize idx
-        ) const noexcept -> opt<f32>;
+        ) const noexcept -> opt<fv4>;
 
     private:
         template<typename T>
@@ -43,23 +55,8 @@ namespace mtt::shape {
             );
         }
 
-        auto intersect(
-            cref<math::Ray> r, usize idx
-        ) const noexcept -> opt<fv4>;
-
         auto pdf(
             cref<math::Ray> r, cref<fv3> np, usize idx
         ) const noexcept -> f32;
-
-        buf<uv3> indices;
-
-        buf<fv3> vertices;
-        buf<fv3> normals;
-        buf<fv2> uvs;
-
-        buf<fv3> dpdu;
-        buf<fv3> dpdv;
-        buf<fv3> dndu;
-        buf<fv3> dndv;
     };
 }

@@ -4,8 +4,8 @@
 namespace mtt::math {
     template<typename T>
     struct Complex {
-        T r;
-        T i;
+        T r = T(0);
+        T i = T(0);
 
         auto constexpr operator+(cref<Complex> rhs) const noexcept -> Complex {
             return {r + rhs.r, i + rhs.i};
@@ -137,17 +137,17 @@ namespace mtt::math {
         // u^2 - v^2 = a, 2uv = b
         auto [a, b] = z;
 
-        if (b != T{0}) {
+        if (b != T(0)) {
             // v = b / 2u
             // u^4 - a u^2 - b^2 / 4 = 0
             // u^2 = (a + sqrt(a^2 + b^2)) / 2
-            auto u = math::sqrt((a + abs(z)) * T{0.5});
-            auto v = T{0.5} * b / u;
+            auto u = math::sqrt((a + abs(z)) * T(0.5));
+            auto v = T(0.5) * b / u;
             return {u, v};
-        } else if (a >= T{0}) {
-            return {math::sqrt(a), T{0}};
+        } else if (a >= T(0)) {
+            return {math::sqrt(a), T(0)};
         } else {
-            return {T{0}, math::sqrt(-a)};
+            return {T(0), math::sqrt(-a)};
         }
     }
 
@@ -171,4 +171,12 @@ namespace mtt::math {
     auto inline constexpr guarded_div(cref<Complex<T>> x, T y) noexcept -> Complex<T> {
         return x / y;
     }
+}
+
+namespace mtt {
+    #define MTT_COMPLEX_ALIAS(p, T)\
+    using p##c = math::Complex<T>;
+
+    MTT_COMPLEX_ALIAS(f, f32)
+    MTT_COMPLEX_ALIAS(d, f64)
 }
