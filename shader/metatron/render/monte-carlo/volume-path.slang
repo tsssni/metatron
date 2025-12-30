@@ -314,7 +314,7 @@ namespace mtt::monte_carlo {
 
                 if (math::max(mat_intr.emission) > math::epsilon) {
                     mis_e *= specular ? 0.f : math::guarded_div(intr.pdf * 1.f, p);
-                    let mis_w = 1.0; // math::guarded_div(1.f, math::avg(mis_s + mis_e));
+                    let mis_w = math::guarded_div(1.f, math::avg(mis_s + mis_e));
                     emission += mis_w * beta * mat_intr.emission;
                 }
 
@@ -370,17 +370,6 @@ namespace mtt::monte_carlo {
 
             if (any(isnan(emission) || isinf(emission))) return {};
             return spectra::Stochastic_Spectrum(trace_ctx.lambda, emission);
-        }
-
-        func direct_lighting(
-            inout Context ctx,
-            math::Context direct_ctx,
-            math::Context history_ctx,
-            bsdf::Bsdf_Union bsdf,
-            phase::Phase_Function_Union phase,
-            media::Medium_Tag medium,
-        ) -> void {
-
         }
     }
 }

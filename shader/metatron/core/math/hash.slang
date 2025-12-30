@@ -4,7 +4,7 @@ namespace mtt::math {
     public func murmur_hash<let n: u32>(Array<u64, n> key, u64 seed) -> u64 {
         let m = 0xc6a4a7935bd1e995ull;
         let r = 47ull;
-        var h = seed ^ (n * m);
+        var h = seed ^ (n * 8ull * m);
 
         for (var i = 0; i < n; ++i) {
             var k = key[i];
