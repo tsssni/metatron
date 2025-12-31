@@ -30,26 +30,22 @@ namespace mtt::renderer {
     ) noexcept -> obj<opaque::Acceleration>;
 
     auto Renderer::Impl::wave() noexcept -> void {
-        using Buffer = opaque::Buffer; using Command = command::Buffer;
-        using namespace command; using namespace encoder;
-        using namespace opaque; using namespace shader;
-
         auto& args = scene::Args::instance();
         auto addr = wired::Address{args.address};
         auto remote = !addr.host.empty();
         auto previewer = remote::Previewer{addr, "metatron"};
 
-        Context::init();
+        command::Context::init();
         auto& scheduler = stl::scheduler::instance();
-        auto render_queue = make_obj<Queue>(Type::render);
-        auto transfer_queue = make_obj<Queue>(Type::transfer);
+        auto render_queue = make_obj<command::Queue>(command::Type::render);
+        auto transfer_queue = make_obj<command::Queue>(command::Type::transfer);
 
-        auto upload_timelines = std::vector<obj<Timeline>>(scheduler.size());
-        auto render_timeline = make_obj<Timeline>();
-        auto transfer_timeline = make_obj<Timeline>();
-        auto release_timeline = make_obj<Timeline>();
-        auto copy_timeline = make_obj<Timeline>();
-        auto network_timeline = make_obj<Timeline>();
+        auto upload_timelines = std::vector<obj<command::Timeline>>(scheduler.size());
+        auto render_timeline = make_obj<command::Timeline>();
+        auto transfer_timeline = make_obj<command::Timeline>();
+        auto release_timeline = make_obj<command::Timeline>();
+        auto copy_timeline = make_obj<command::Timeline>();
+        auto network_timeline = make_obj<command::Timeline>();
         auto render_count = u64{0};
         auto scheduled_count = u64{0};
 
@@ -57,40 +53,32 @@ namespace mtt::renderer {
         auto accel = build(render_queue.get(), upload_timelines, render_timeline.get(), render_count);
         auto render = render_queue->allocate();
 
-        auto sampler = make_obj<Sampler>(Sampler::Descriptor{Sampler::Mode::repeat});
-        auto accessor = make_obj<Sampler>(Sampler::Descriptor{Sampler::Mode::border});
-        auto film = make_obj<Image>(opaque::Image::Descriptor{
-            &desc.film->image, Image::State::storable, Type::render,
-        });
-        auto image = make_obj<Image>(opaque::Image::Descriptor{
-            &desc.film->image, Image::State::storable, Type::render,
-        });
-        auto buffer = make_obj<Buffer>(Buffer::Descriptor{
-            .state = Buffer::State::visible,
-            .type = remote ? Type::transfer : Type::render,
+        auto sampler = make_desc<opaque::Sampler>({opaque::Sampler::Mode::repeat});
+        auto accessor = make_desc<opaque::Sampler>({opaque::Sampler::Mode::border});
+        auto film = make_desc<opaque::Image>({&desc.film->image, opaque::Image::State::storable, command::Type::render});
+        auto image = make_desc<opaque::Image>({&desc.film->image, opaque::Image::State::storable, command::Type::render});
+        auto buffer = make_desc<opaque::Buffer>({
+            .state = opaque::Buffer::State::visible,
+            .type = remote ? command::Type::transfer : command::Type::render,
             .size = math::prod(desc.film->image.size),
         });
 
-        auto global_args = make_obj<Argument>(Argument::Descriptor{"trace.global", Type::render});
-        auto integrate_args = make_obj<Argument>(Argument::Descriptor{"trace.integrate.in", Type::render});
-        auto postprocess_args = make_obj<Argument>(Argument::Descriptor{"trace.postprocess.in", Type::render});
-        auto integrate = make_obj<Pipeline>(Pipeline::Descriptor{
-            "trace.integrate", {global_args.get(), integrate_args.get()}
-        });
-        auto postprocess = make_obj<Pipeline>(Pipeline::Descriptor{
-            "trace.postprocess", {global_args.get(), postprocess_args.get()}
-        });
+        auto global_args = make_desc<shader::Argument>({"trace.global", command::Type::render});
+        auto integrate_args = make_desc<shader::Argument>({"trace.integrate.in", command::Type::render});
+        auto postprocess_args = make_desc<shader::Argument>({"trace.postprocess.in", command::Type::render});
+        auto integrate = make_desc<shader::Pipeline>({"trace.integrate", {global_args.get(), integrate_args.get()}});
+        auto postprocess = make_desc<shader::Pipeline>({"trace.postprocess", {global_args.get(), postprocess_args.get()}});
 
-        auto global_args_encoder = Argument_Encoder{render.get(), global_args.get()};
-        auto integrate_args_encoder = Argument_Encoder{render.get(), integrate_args.get()};
-        auto postprocess_args_encoder = Argument_Encoder{render.get(), postprocess_args.get()};
+        auto global_args_encoder = encoder::Argument_Encoder{render.get(), global_args.get()};
+        auto integrate_args_encoder = encoder::Argument_Encoder{render.get(), integrate_args.get()};
+        auto postprocess_args_encoder = encoder::Argument_Encoder{render.get(), postprocess_args.get()};
 
         auto images_view = resources.images
-        | std::views::transform([](auto&& x) -> Image::View { return *x; })
-        | std::ranges::to<std::vector<Image::View>>();
+        | std::views::transform([](auto&& x) -> opaque::Image::View { return *x; })
+        | std::ranges::to<std::vector<opaque::Image::View>>();
         auto grids_view = resources.grids
-        | std::views::transform([](auto&& x) -> Grid::View { return *x; })
-        | std::ranges::to<std::vector<Grid::View>>();
+        | std::views::transform([](auto&& x) -> opaque::Grid::View { return *x; })
+        | std::ranges::to<std::vector<opaque::Grid::View>>();
         if (!images_view.empty()) global_args_encoder.bind("global.textures", {0, images_view});
         if (!grids_view.empty()) global_args_encoder.bind("global.grids", {0, grids_view});
 

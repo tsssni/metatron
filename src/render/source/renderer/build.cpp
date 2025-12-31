@@ -58,8 +58,7 @@ namespace mtt::renderer {
             };
             instances.push_back(tlas);
         }
-        auto accel = make_obj<opaque::Acceleration>(
-        opaque::Acceleration::Descriptor{
+        auto accel = make_desc<opaque::Acceleration>({
             .primitives = std::move(primitives),
             .instances = std::move(instances),
         });

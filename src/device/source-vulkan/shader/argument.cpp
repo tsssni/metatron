@@ -30,7 +30,7 @@ namespace mtt::shader {
             auto type = types[i32(refl.type)];
             // compiler ensures only one uniform buffer
             if (refl.type == Type::parameter)
-                parameters = make_obj<opaque::Buffer>(opaque::Buffer::Descriptor{
+                parameters = make_desc<opaque::Buffer>({
                     .state = opaque::Buffer::State::twin,
                     .type = desc.type,
                     .size = refl.size,
@@ -60,7 +60,7 @@ namespace mtt::shader {
         auto& props = ctx->descriptor_buffer_props;
         auto size = usize{};
         device.getDescriptorSetLayoutSizeEXT(impl->layout.get(), &size);
-        set = make_obj<opaque::Buffer>(opaque::Buffer::Descriptor{
+        set = make_desc<opaque::Buffer>({
             .state = opaque::Buffer::State::twin,
             .type = desc.type,
             .size = size,

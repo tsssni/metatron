@@ -58,7 +58,7 @@ namespace mtt::opaque {
         height = desc.grid->height;
         depth = desc.grid->depth;
         if (desc.state == State::readonly && !desc.grid->cells.empty()) {
-            host = make_obj<Buffer>(Buffer::Descriptor{
+            host = make_desc<Buffer>({
                 .ptr = mut<byte>(desc.grid->cells.data()),
                 .state = Buffer::State::visible,
                 .type = desc.type,

@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/render/scene/hierarchy.hpp>
-#include <metatron/render/scene/descriptor.hpp>
 #include <metatron/resource/spectra/color-space.hpp>
 #include <metatron/core/math/matrix.hpp>
 #include <metatron/core/math/quaternion.hpp>
@@ -27,26 +26,25 @@ namespace glz {
     };
 
     template<typename T>
-    requires mtt::scene::has_descriptor<T>
+    requires mtt::has_descriptor<T>
     struct from<JSON, T> {
         template<auto Opts>
         auto static op(T& v, auto&&... args) noexcept -> void {
-            auto desc = (typename mtt::scene::descriptor<T>::type){};
+            auto desc = (typename mtt::descriptor<T>::type){};
             parse<JSON>::op<Opts>(desc, args...);
             v = std::move(desc);
         }
     };
 
-    template<pro::facade F, typename... Ts>
-    struct from<JSON, mtt::stl::variant<F, Ts...>> {
+    template<pro::facade F, typename... Ts> struct from<JSON, mtt::stl::variant<F, Ts...>> {
         template<auto Opts>
         auto static op(mtt::stl::variant<F, Ts...>& v, auto&&... args) noexcept -> void {
-            auto var = std::variant<typename mtt::scene::descriptor<Ts>::type...>{};
+            auto var = std::variant<typename mtt::descriptor<Ts>::type...>{};
             parse<JSON>::op<Opts>(var, args...);
             std::visit([&v](auto&& desc) {
                 ([&v]<typename T>(auto&& d) {
                     if constexpr (std::is_same_v<
-                        typename mtt::scene::descriptor<T>::type,
+                        typename mtt::descriptor<T>::type,
                         std::decay_t<decltype(desc)>
                     >) v.template emplace<T>(std::forward<decltype(d)>(d));
                 }.template operator()<Ts>(desc), ...);

@@ -52,13 +52,12 @@ namespace mtt::renderer {
                 auto& buf = stack.bufs[i];
                 if (buf->idx != i) continue;
 
-                auto desc = opaque::Buffer::Descriptor{
+                auto buffer = make_desc<opaque::Buffer>({
                     .ptr = buf->ptr,
                     .state = opaque::Buffer::State::local,
                     .type = command::Type::render,
                     .size = buf->bytelen,
-                };
-                auto buffer = make_obj<opaque::Buffer>(desc);
+                });
                 transfer.upload(*buffer);
                 transfer.persist(*buffer);
                 stack.release(buf);
@@ -80,13 +79,12 @@ namespace mtt::renderer {
                 auto sequence = vec.pack();
                 if (sequence.empty()) continue;
 
-                auto desc = opaque::Buffer::Descriptor{
+                auto buffer = make_desc<opaque::Buffer>({
                     .ptr = sequence.data(),
                     .state = opaque::Buffer::State::local,
                     .type = command::Type::render,
                     .size = sequence.size(),
-                };
-                auto buffer = make_obj<opaque::Buffer>(desc);
+                });
                 transfer.upload(*buffer);
                 transfer.persist(*buffer);
                 vecaddr[i] = buffer->addr;
@@ -95,26 +93,24 @@ namespace mtt::renderer {
             barrier->arrive_and_wait();
 
             if (scheduler.index() == 0) {
-                auto desc = opaque::Buffer::Descriptor{
+                vecarr = make_desc<opaque::Buffer>({
                     .ptr = mut<byte>(vecaddr.data()),
                     .state = opaque::Buffer::State::local,
                     .type = command::Type::render,
                     .size = vecaddr.size() * sizeof(uptr),
-                };
-                vecarr = make_obj<opaque::Buffer>(desc);
+                });
                 encoder::Transfer_Encoder{cmd.get()}.upload(*vecarr);
             }
 
             i = 0;
             while ((i = nc->fetch_add(1, std::memory_order::relaxed)) < nsize) {
                 auto vol = nanodims[i];
-                auto desc = opaque::Buffer::Descriptor{
+                auto buffer = make_desc<opaque::Buffer>({
                     .ptr = mut<byte>(vol->buffer().data()),
                     .state = opaque::Buffer::State::local,
                     .type = command::Type::render,
                     .size = vol->buffer().size(),
-                };
-                auto buffer = make_obj<opaque::Buffer>(desc);
+                });
                 transfer.upload(*buffer);
                 transfer.persist(*buffer);
                 voladdr[i] = buffer->addr;
@@ -123,20 +119,18 @@ namespace mtt::renderer {
             barrier->arrive_and_wait();
 
             if (scheduler.index() == 0 && voladdr.size() > 0) {
-                auto desc = opaque::Buffer::Descriptor{
+                volarr = make_desc<opaque::Buffer>({
                     .ptr = mut<byte>(voladdr.data()),
                     .state = opaque::Buffer::State::local,
                     .type = command::Type::render,
                     .size = voladdr.size() * sizeof(uptr),
-                };
-                volarr = make_obj<opaque::Buffer>(desc);
+                });
                 encoder::Transfer_Encoder{cmd.get()}.upload(*volarr);
             }
 
             i = 0;
             while ((i = ic->fetch_add(1, std::memory_order::relaxed)) < isize) {
-                images[i] = make_obj<opaque::Image>(
-                opaque::Image::Descriptor{
+                images[i] = make_desc<opaque::Image>({
                     .image = bidims[i],
                     .state = opaque::Image::State::samplable,
                     .type = command::Type::render,
@@ -148,8 +142,7 @@ namespace mtt::renderer {
 
             i = 0;
             while ((i = gc->fetch_add(1, std::memory_order::relaxed)) < gsize) {
-                grids[i] = make_obj<opaque::Grid>(
-                opaque::Grid::Descriptor{
+                grids[i] = make_desc<opaque::Grid>({
                     .grid = tridims[i],
                     .state = opaque::Grid::State::readonly,
                     .type = command::Type::render,
