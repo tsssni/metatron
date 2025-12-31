@@ -1,5 +1,5 @@
 {
-  apple-sdk_15,
+  apple-sdk_26,
   argparse,
   assimp,
   clangStdenv,
@@ -56,7 +56,7 @@ stdenv.mkDerivation {
     vulkan-tools
   ])
   ++ (lib.optionals stdenv.isDarwin [
-    apple-sdk_15
+    apple-sdk_26
   ]);
 
   cmakeFlags = [

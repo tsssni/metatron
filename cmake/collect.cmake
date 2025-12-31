@@ -112,7 +112,7 @@ function(solve path mode)
                 evaluate(${unit} ${path}/${unit} ${mode})
             endif()
         endforeach()
-        
+
         unite("${build-units}")
     endif()
 endfunction()

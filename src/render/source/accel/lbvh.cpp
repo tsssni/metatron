@@ -167,8 +167,8 @@ namespace mtt::accel {
 
             auto range_split = [](auto&& begin, auto&& end){
                 return std::ranges::subrange(begin, end)
-                    | std::views::transform([](auto& n) { return std::move(n); })
-                    | std::ranges::to<std::vector<obj<Node>>>();
+                | std::views::transform([](auto& n) { return std::move(n); })
+                | std::ranges::to<std::vector<obj<Node>>>();
             };
             auto left = range_split(std::ranges::begin(nodes), std::ranges::begin(splitted_iter));
             auto right = range_split(std::ranges::begin(splitted_iter), std::ranges::end(nodes));

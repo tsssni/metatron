@@ -13,7 +13,7 @@ namespace mtt::spectra {
 
         while (std::getline(file, line)) {
             if (line.empty() || line.front() == '#') continue;
-            
+
             auto iss = std::istringstream{line};
             auto value = 0.f;
 

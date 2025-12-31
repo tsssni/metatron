@@ -97,7 +97,7 @@ namespace mtt::bsdf {
 
     public func fresnel(f32 cos_theta_i, f32 eta, f32 k) -> f32 {
         cos_theta_i = clamp(cos_theta_i, -1.f, 1.f);
-        
+
         if (k > math::epsilon) {
             let eta_k = fc(eta, k);
             return fresnel(cos_theta_i, eta_k);

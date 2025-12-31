@@ -112,7 +112,7 @@ namespace mtt::math {
     }
 
     public func cramer<T: __BuiltinFloatingPointType, let n: u32>(
-        matrix<T, n, n> a, 
+        matrix<T, n, n> a,
         vector<T, n> b
     ) -> Optional<vector<T, n>> {
         T det_a = determinant(a);

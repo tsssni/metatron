@@ -29,7 +29,7 @@ namespace mtt::material {
         && reflectance != math::saturate(reflectance)
         && eta != fv4{0.f} && !math::constant(eta)
         && k == fv4{0.f};
-        
+
         if (degraded) {
             lambda = fv4{lambda[0]};
             reflectance = fv4{reflectance[0]};
