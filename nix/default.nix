@@ -1,11 +1,11 @@
 {
-  apple-sdk_26,
   argparse,
   assimp,
   clangStdenv,
   cmake,
   glaze,
   lib,
+  metal-cpp,
   ninja,
   openimageio,
   openssl,
@@ -56,7 +56,7 @@ stdenv.mkDerivation {
     vulkan-tools
   ])
   ++ (lib.optionals stdenv.isDarwin [
-    apple-sdk_26
+    metal-cpp
   ]);
 
   cmakeFlags = [
