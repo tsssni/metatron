@@ -3,6 +3,7 @@ implementing stl;
 namespace mtt {
     public struct buf<T> {
         public Ptr<T> ptr = nullptr;
+        public uptr handle = 0;
         public u32 bytelen = 0;
         public u32 idx = 0xffffffffu;
 

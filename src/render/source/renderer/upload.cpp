@@ -63,6 +63,7 @@ namespace mtt::renderer {
                 stack.release(buf);
 
                 buf->ptr = mut<byte>(buffer->addr);
+                buf->handle = uptr(buffer.get());
                 buf->idx = math::maxv<u32>;
                 buffers[i] = std::move(buffer);
             }
