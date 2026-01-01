@@ -19,6 +19,7 @@ namespace mtt {
         auto operator=(cref<mtl>) noexcept -> ref<mtl> = delete;
         auto operator->() noexcept -> mut<T> { return ptr; }
         auto operator->() const noexcept -> view<T> { return ptr; }
+        operator bool() const noexcept { return ptr != nullptr; }
         auto get() noexcept -> mut<T> { return ptr; };
         auto get() const noexcept -> view<T> { return ptr; };
     private:
