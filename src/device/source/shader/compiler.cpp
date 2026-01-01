@@ -91,7 +91,7 @@ namespace mtt::shader {
 
             using Options = spirv_cross::CompilerMSL::Options;
             auto options = Options{};
-            options.set_msl_version(4, 0);
+            options.set_msl_version(3, 2);
             options.argument_buffers = true;
             options.argument_buffers_tier = Options::ArgumentBuffersTier::Tier2;
             options.enable_decoration_binding = true;

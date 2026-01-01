@@ -103,6 +103,9 @@
             ''
             + lib.optionalString pkgs.stdenv.isLinux ''
               export VK_LAYER_PATH=${pkgs.vulkan-validation-layers}/share/vulkan/explicit_layer.d
+            ''
+            + lib.optionalString pkgs.stdenv.isDarwin ''
+              export MTL_DEBUG_LAYER=1
             '';
           };
 
