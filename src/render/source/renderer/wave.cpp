@@ -72,8 +72,8 @@ namespace mtt::renderer {
             auto args = std::vector{arg, resources_args.get(), textures_args.get(), grids_args.get()};
             return make_desc<shader::Pipeline>({path, args});
         };
-        auto integrate = assemble("trace.main", trace_args.get());
-        auto postprocess = assemble("postprocess.main", post_args.get());
+        auto integrate = assemble("trace.wave", trace_args.get());
+        auto postprocess = assemble("postprocess.wave", post_args.get());
 
         auto resources_args_encoder = encoder::Argument_Encoder{render.get(), resources_args.get()};
         auto textures_args_encoder = encoder::Argument_Encoder{render.get(), textures_args.get()};
@@ -90,8 +90,8 @@ namespace mtt::renderer {
         if (!images_view.empty()) textures_args_encoder.bind("textures.bindless", {0, images_view});
         if (!grids_view.empty()) grids_args_encoder.bind("grids.bindless", {0, grids_view});
         textures_args_encoder.bind("textures.sampler", sampler.get());
-        grids_args_encoder.bind("grids.sampler", accessor.get());
         textures_args_encoder.upload();
+        grids_args_encoder.bind("grids.sampler", accessor.get());
         grids_args_encoder.upload();
 
         resources_args_encoder.bind("resources.accel", accel.get());
@@ -151,8 +151,8 @@ namespace mtt::renderer {
             auto layout = uv3{math::align(film->width, 8u) / 8, math::align(film->height, 8u) / 8, 1};
 
             trace.range = {range[0], range[1]};
-            integrate_encoder.bind();
             integrate_args_encoder.acquire("constants", trace);
+            integrate_encoder.bind();
             integrate_encoder.dispatch(layout);
 
             integrate_cmd->waits = {{render_timeline.get(), render_count}};

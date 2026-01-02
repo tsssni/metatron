@@ -100,7 +100,7 @@ namespace mtt::renderer {
                     .type = command::Type::render,
                     .size = vecaddr.size() * sizeof(uptr),
                 });
-                encoder::Transfer_Encoder{cmd.get()}.upload(*vecarr);
+                transfer.upload(*vecarr);
             }
 
             i = 0;
@@ -126,7 +126,7 @@ namespace mtt::renderer {
                     .type = command::Type::render,
                     .size = voladdr.size() * sizeof(uptr),
                 });
-                encoder::Transfer_Encoder{cmd.get()}.upload(*volarr);
+                transfer.upload(*volarr);
             }
 
             i = 0;

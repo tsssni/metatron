@@ -23,7 +23,7 @@ namespace mtt::opaque {
         auto device = ctx->device.get();
         auto mode = impl->mode(desc.mode);
         auto border = impl->border(desc.border);
-        auto sesc = MTL::SamplerDescriptor::alloc();
+        auto sesc = MTL::SamplerDescriptor::alloc()->init();
         sesc->setMagFilter(MTL::SamplerMinMagFilterLinear);
         sesc->setMinFilter(MTL::SamplerMinMagFilterLinear);
         sesc->setMipFilter(MTL::SamplerMipFilterLinear);

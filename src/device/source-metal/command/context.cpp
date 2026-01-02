@@ -13,11 +13,15 @@ namespace mtt {
 namespace mtt::command {
     Context::Impl::Impl() noexcept {
         device = MTL::CreateSystemDefaultDevice();
+
         auto opt = stl::filesystem::hit("pipeline.bin");
-        auto desc = MTL::BinaryArchiveDescriptor::alloc()->init();
-        if (opt) desc->setUrl(NS::URL::fileURLWithPath(to_mtl(opt->string())));
-        MTT_MTL_GUARD(archive = device->newBinaryArchive(desc, &err));
-        desc->release();
+        auto besc = MTL::BinaryArchiveDescriptor::alloc()->init();
+        if (opt) besc->setUrl(NS::URL::fileURLWithPath(to_mtl(opt->string())));
+        MTT_MTL_GUARD(archive = device->newBinaryArchive(besc, &err));
+
+        auto resc = MTL::ResidencySetDescriptor::alloc()->init();
+        resc->setInitialCapacity(16);
+        MTT_MTL_GUARD(residency = device->newResidencySet(resc, &err));
     }
 
     Context::Impl::~Impl() noexcept {
@@ -30,16 +34,7 @@ namespace mtt::command {
     }
 
     auto guard(mut<NS::Error> err) noexcept -> void {
-        if (err->code() != NS::Integer{0}) {
-            auto desc = err->localizedDescription();
-            auto reason = err->localizedFailureReason();
-            auto suggestion = err->localizedRecoverySuggestion();
-
-            stl::abort("desc: {} reason: {} sugg: {}"
-                , desc ? desc->cString(NS::UTF8StringEncoding) : "(none)"
-                , reason ? reason->cString(NS::UTF8StringEncoding) : "(none)"
-                , suggestion ? suggestion->cString(NS::UTF8StringEncoding) : "(none)"
-            );
-        }
+        if (err->code() != NS::Integer{0}) stl::abort("metal error: {}"
+        , err->localizedDescription()->cString(NS::UTF8StringEncoding));
     }
 }

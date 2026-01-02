@@ -18,7 +18,7 @@ namespace mtt {
     [vk_binding(0, 0)] ParameterBlock<Constants> constants;
 
     [shader("compute"), numthreads(8, 8, 1)]
-    func main(
+    func wave(
         iv3 global_idx: SV_DispatchThreadID,
     ) -> void {
         var value = fv4(0);

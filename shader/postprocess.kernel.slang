@@ -8,7 +8,7 @@ namespace mtt {
     ParameterBlock<Constants> constants;
 
     [shader("compute"), numthreads(8, 8, 1)]
-    func main(
+    func wave(
         iv3 global_idx: SV_DispatchThreadID,
     ) -> void {
         let pixel = global_idx.xy;

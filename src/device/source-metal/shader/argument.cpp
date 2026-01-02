@@ -16,17 +16,16 @@ namespace mtt::shader {
             if (refl.type == Type::parameter) {
                 parameters = make_desc<opaque::Buffer>({
                     .state = opaque::Buffer::State::twin,
-                    .type = desc.type,
+                    .type = command::Type::render,
                     .size = refl.size,
                 });
-                size = sizeof(uptr);
-            } else size = math::max(1u, refl.size) * sizeof(MTL::ResourceID);
-            offset += size;
+            };
+            offset += sizeof(uptr);
         }
 
         set = make_desc<opaque::Buffer>({
             .state = opaque::Buffer::State::twin,
-            .type = desc.type,
+            .type = command::Type::render,
             .size = offset,
         });
     }

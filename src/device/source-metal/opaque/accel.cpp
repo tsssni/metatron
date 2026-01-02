@@ -1,11 +1,13 @@
 #include "accel.hpp"
 #include "buffer.hpp"
+#include "../command/allocator.hpp"
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::opaque {
     Acceleration::Acceleration(cref<Descriptor> desc) noexcept {
         auto& ctx = command::Context::instance().impl;
         auto device = ctx->device.get();
+        auto& allocator = command::Allocator::instance();
 
         impl->primitives.resize(desc.primitives.size());
         buffers.resize(desc.primitives.size() + 1);
@@ -45,7 +47,7 @@ namespace mtt::opaque {
             auto desc = mut<MTL::AccelerationStructureGeometryDescriptor>{};
 
             if (procedural) {
-                auto besc = MTL::AccelerationStructureBoundingBoxGeometryDescriptor::alloc();
+                auto besc = MTL::AccelerationStructureBoundingBoxGeometryDescriptor::alloc()->init();
                 besc->setBoundingBoxBuffer(bboxes->impl->device_buffer.get());
                 besc->setBoundingBoxBufferOffset(bbox_size * bbox_offsets[i]);
                 besc->setBoundingBoxStride(bbox_size);
@@ -54,7 +56,7 @@ namespace mtt::opaque {
                 besc->setIntersectionFunctionTableOffset(0);
                 desc = besc;
             } else {
-                auto tesc = MTL::AccelerationStructureTriangleGeometryDescriptor::alloc();
+                auto tesc = MTL::AccelerationStructureTriangleGeometryDescriptor::alloc()->init();
                 tesc->setTriangleCount(prim.mesh->indices.size());
                 tesc->setVertexBuffer(mut<Buffer>(prim.mesh->vertices.handle)->impl->device_buffer.get());
                 tesc->setVertexBufferOffset(0);
@@ -67,11 +69,15 @@ namespace mtt::opaque {
                 desc = tesc;
             }
 
-            auto pesc = MTL::PrimitiveAccelerationStructureDescriptor::alloc();
+            auto pesc = MTL::PrimitiveAccelerationStructureDescriptor::alloc()->init();
             pesc->setGeometryDescriptors(NS::Array::array(desc));
             pesc->setUsage(MTL::AccelerationStructureUsagePreferFastIntersection);
             pesc->setMotionKeyframeCount(1);
-            impl->primitives[i] = device->newAccelerationStructure(pesc);
+
+            auto sa = device->heapAccelerationStructureSizeAndAlign(pesc);
+            auto alloc = allocator.allocate(u32(command::Memory::Impl::Type::local), 0, sa.align, sa.size);
+            auto heap = alloc.memory->impl->heap.get();
+            impl->primitives[i] = heap->newAccelerationStructure(sa.size, alloc.offset);
             primitives[i] = impl->primitives[i].get();
         });
 
@@ -95,7 +101,7 @@ namespace mtt::opaque {
             .size = sizeof(MTL::AccelerationStructureInstanceDescriptor) * desc.instances.size(),
         });
 
-        auto iesc = MTL::InstanceAccelerationStructureDescriptor::alloc();
+        auto iesc = MTL::InstanceAccelerationStructureDescriptor::alloc()->init();
         iesc->setInstancedAccelerationStructures(NS::Array::array(primitives.data(), primitives.size()));
         iesc->setInstanceCount(desc.instances.size());
         iesc->setInstanceDescriptorBuffer(instances->impl->device_buffer.get());
@@ -103,6 +109,11 @@ namespace mtt::opaque {
         iesc->setInstanceDescriptorStride(sizeof(MTL::AccelerationStructureInstanceDescriptor));
         iesc->setInstanceTransformationMatrixLayout(MTL::MatrixLayoutRowMajor);
         iesc->setUsage(MTL::AccelerationStructureUsagePreferFastIntersection);
-        impl->instances = device->newAccelerationStructure(iesc);
+
+
+        auto sa = device->heapAccelerationStructureSizeAndAlign(iesc);
+        auto alloc = allocator.allocate(u32(command::Memory::Impl::Type::local), 0, sa.align, sa.size);
+        auto heap = alloc.memory->impl->heap.get();
+        impl->instances = heap->newAccelerationStructure(sa.size, alloc.offset);
     }
 }

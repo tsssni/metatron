@@ -1,4 +1,5 @@
 #include "grid.hpp"
+#include "../command/allocator.hpp"
 
 namespace mtt::opaque {
     Grid::Grid(cref<Descriptor> desc) noexcept {
@@ -17,7 +18,9 @@ namespace mtt::opaque {
 
         auto& ctx = command::Context::instance().impl;
         auto device = ctx->device.get();
-        auto tesc = MTL::TextureDescriptor::alloc();
+        auto& allocator = command::Allocator::instance();
+
+        auto tesc = MTL::TextureDescriptor::alloc()->init();
         tesc->setTextureType(MTL::TextureType3D);
         tesc->setPixelFormat(MTL::PixelFormatR32Float);
         tesc->setWidth(width);
@@ -26,8 +29,12 @@ namespace mtt::opaque {
         tesc->setMipmapLevelCount(1);
         tesc->setArrayLength(1);
         tesc->setSampleCount(1);
-        device->newTexture(tesc);
+        tesc->setResourceOptions(MTL::ResourceStorageModePrivate);
 
+        auto sa = device->heapTextureSizeAndAlign(tesc);
+        auto alloc = allocator.allocate(u32(command::Memory::Impl::Type::local), 0, sa.align, sa.size);
+        auto heap = alloc.memory->impl->heap.get();
+        impl->texture = heap->newTexture(tesc, alloc.offset);
     }
 
     Grid::operator View() noexcept {

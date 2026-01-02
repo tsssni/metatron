@@ -33,6 +33,7 @@ namespace mtt::command {
     struct Context::Impl final {
         mtl<MTL::Device> device;
         mtl<MTL::BinaryArchive> archive;
+        mtl<MTL::ResidencySet> residency;
         Impl() noexcept;
         ~Impl() noexcept;
     };
