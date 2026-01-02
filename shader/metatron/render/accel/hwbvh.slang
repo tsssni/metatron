@@ -5,9 +5,10 @@ namespace mtt::accel {
         u32 idx = 0xffffffffu;
 
         public Optional<Interaction> operator()(math::Ray r, fv3 n) {
-            let vector = Ptr<Divider>(global.vectors[idx]);
+            let array = Ptr<byte>(resources.vectors);
+            let vector = Ptr<Divider>(array[idx]);
             var rq: RayQuery;
-            rq.TraceRayInline(global.accel, 0, 0xff, r.get());
+            rq.TraceRayInline(resources.accel, 0, 0xff, r.get());
 
             while (rq.Proceed()) {
                 if (rq.CandidateType() == CANDIDATE_PROCEDURAL_PRIMITIVE) {

@@ -204,7 +204,7 @@ namespace mtt::shader {
                     break;
                 case Kind::Array:
                     desc.size = type->getElementCount();
-                    if (desc.size == 0) desc.size = -1; // bindless
+                    if (desc.size == 0) desc.size = 8192; // bindless
                     parse_resource(type->getElementTypeLayout(), desc);
                     break;
                 default: break;
@@ -216,25 +216,15 @@ namespace mtt::shader {
                 parse_type(table ? element : type);
             };
 
-            auto global = Layout{};
-            parse_var(reflection->getGlobalParamsVarLayout(), global);
-            for (auto i = 0; i < global.sets.size(); ++i) {
-                auto index = global.sets.size() > 1 ? "-" + std::to_string(i) : "";
-                auto postfix = ".global" + index + ".json";
-                stl::json::store((out / path.stem()).concat(postfix), global.sets[i]);
-            }
-
             auto layout = Layout{};
-            parse_var(reflection->getEntryPointByIndex(0)->getVarLayout(), layout);
+            parse_var(reflection->getGlobalParamsVarLayout(), layout);
             for (auto i = 0; i < layout.sets.size(); ++i) {
+                auto index = layout.sets.size() > 1 ? "-" + std::to_string(i) : "";
                 auto postfix = "." + layout.names[i] + ".json";
-                stl::json::store((out / path).concat(postfix), layout.sets[i]);
+                stl::json::store((out / path.stem()).concat(postfix), layout.sets[i]);
             }
 
-            auto merged = global;
-            std::ranges::copy(layout.names, std::back_inserter(merged.names));
-            std::ranges::copy(layout.sets, std::back_inserter(merged.sets));
-            return merged;
+            return layout;
         }
 
         auto build(
@@ -271,6 +261,9 @@ namespace mtt::shader {
                 int_opt(Option::ForceCLayout, 1),
                 int_opt(Option::VulkanUseEntryPointName, 1),
                 int_opt(Option::Optimization, SlangOptimizationLevel::SLANG_OPTIMIZATION_LEVEL_MAXIMAL),
+                #ifndef MTT_SYSTEM_DARWIN
+                str_opt(Option::MacroDefine, "MTT_NANOVDB"),
+                #endif
             });
 
             global_session->createSession({
