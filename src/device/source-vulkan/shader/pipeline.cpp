@@ -17,7 +17,7 @@ namespace mtt::shader {
         auto cache = ctx->pipeline_cache.get();
 
         auto entry = desc.name.substr(desc.name.find_last_of(".") + 1);
-        auto layouts = desc.args
+        auto layouts = args
         | std::views::transform([](auto&& x){ return x->impl->layout.get(); })
         | std::ranges::to<std::vector<vk::DescriptorSetLayout>>();
         impl->sets = args

@@ -32,7 +32,7 @@ namespace mtt::shader {
             if (refl.type == Type::parameter)
                 parameters = make_desc<opaque::Buffer>({
                     .state = opaque::Buffer::State::twin,
-                    .type = desc.type,
+                    .type = command::Type::render,
                     .size = refl.size,
                     .flags = u64(vk::BufferUsageFlagBits2::eUniformBuffer),
                 });
@@ -62,7 +62,7 @@ namespace mtt::shader {
         device.getDescriptorSetLayoutSizeEXT(impl->layout.get(), &size);
         set = make_desc<opaque::Buffer>({
             .state = opaque::Buffer::State::twin,
-            .type = desc.type,
+            .type = command::Type::render,
             .size = size,
             .flags = 0
             | u64(vk::BufferUsageFlagBits2::eSamplerDescriptorBufferEXT)

@@ -1,7 +1,7 @@
 import metatron;
 
 namespace mtt {
-    struct Integrate {
+    struct Constants {
         monte_carlo::Integrator_Tag integrator;
         accel::Acceleration_Tag accel;
         emitter::Emitter_Tag emitter;
@@ -15,10 +15,10 @@ namespace mtt {
         buf<f32> fresnel;
         [vk_binding(1, 0)] RWTexture2D image;
     }
-    [vk_binding(0, 0)] ParameterBlock<Integrate> constants;
+    [vk_binding(0, 0)] ParameterBlock<Constants> constants;
 
     [shader("compute"), numthreads(8, 8, 1)]
-    func integrate(
+    func main(
         iv3 global_idx: SV_DispatchThreadID,
     ) -> void {
         var value = fv4(0);
@@ -72,23 +72,5 @@ namespace mtt {
 
         let sampled = cb.image.Load(pixel) + value;
         cb.image.Store(pixel, sampled);
-    }
-
-    struct Postprocess {
-        [vk_binding(0, 0)] RWTexture2D film;
-        [vk_binding(1, 0)] RWTexture2D image;
-    }
-    ParameterBlock<Postprocess> post;
-
-    [shader("compute"), numthreads(8, 8, 1)]
-    func postprocess(
-        iv3 global_idx: SV_DispatchThreadID,
-    ) -> void {
-        let pixel = global_idx.xy;
-        var size: uv2;
-        post.image.GetDimensions(size.x, size.y);
-        if (any(pixel != clamp(pixel, 0, size))) return;
-        let film = post.film.Load(pixel);
-        post.image.Store(pixel, film / max(film.w, math::epsilon));
     }
 }

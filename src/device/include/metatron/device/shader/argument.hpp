@@ -21,7 +21,6 @@ namespace mtt::shader {
 
         struct Descriptor final {
             std::string_view name;
-            command::Type type = command::Type::render;
         };
 
         struct Impl;

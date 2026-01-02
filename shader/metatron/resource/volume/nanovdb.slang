@@ -24,7 +24,7 @@ namespace mtt::volume {
         tag<u32> handle;
 
         func buf() -> pnanovdb_buf_t {
-            let arr = Ptr<byte>(resources.volumes);
+            let arr = Ptr<uptr>(resources.volumes);
             return pnanovdb_buf_t(arr[handle.index()]);
         }
 
