@@ -25,11 +25,18 @@ namespace mtt {
     private:
         mut<T> ptr;
     };
+
+    auto to_mtl(std::string_view str) noexcept -> mut<NS::String>;
 }
 
 namespace mtt::command {
     struct Context::Impl final {
         mtl<MTL::Device> device;
+        mtl<MTL::BinaryArchive> archive;
         Impl() noexcept;
+        ~Impl() noexcept;
     };
+
+    auto guard(mut<NS::Error> err) noexcept -> void;
+    #define MTT_MTL_GUARD(x) {auto err = mut<NS::Error>{}; x; command::guard(err);}
 }
