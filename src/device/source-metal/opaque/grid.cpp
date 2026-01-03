@@ -30,6 +30,8 @@ namespace mtt::opaque {
         tesc->setArrayLength(1);
         tesc->setSampleCount(1);
         tesc->setResourceOptions(MTL::ResourceStorageModePrivate);
+        tesc->setUsage(desc.state == State::readonly ? MTL::TextureUsageShaderRead
+        : MTL::TextureUsageShaderRead | MTL::TextureUsageShaderWrite);
 
         auto sa = device->heapTextureSizeAndAlign(tesc);
         auto alloc = allocator.allocate(u32(command::Memory::Impl::Type::local), 0, sa.align, sa.size);

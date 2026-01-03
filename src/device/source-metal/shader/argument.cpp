@@ -8,16 +8,22 @@ namespace mtt::shader {
         auto path = (stl::path{"shader"} / desc.name).concat(".json");
         stl::json::load(stl::filesystem::find(path), reflection);
 
+        auto size = 0u;
+        auto id = sizeof(MTL::ResourceID);
+        for (auto i = 0uz; i < reflection.size(); ++i) {
+            auto& refl = reflection[i];
+            table[refl.path] = i;
+            if (refl.type == Type::parameter) size += id;
+            else size += math::clamp(refl.size, 1u, 8192u) * id;
+        }
         set = make_desc<opaque::Buffer>({
             .state = opaque::Buffer::State::twin,
             .type = command::Type::render,
-            .size = reflection.size() * sizeof(MTL::ResourceID),
+            .size = size,
         });
 
         for (auto i = 0uz; i < reflection.size(); ++i) {
-            auto size = 0uz;
             auto& refl = reflection[i];
-            table[refl.path] = i;
             if (refl.type == Type::parameter) {
                 parameters = make_desc<opaque::Buffer>({
                     .state = opaque::Buffer::State::twin,
@@ -25,13 +31,7 @@ namespace mtt::shader {
                     .size = refl.size,
                 });
                 mut<uptr>(set->ptr)[i] = parameters->impl->device_buffer->gpuAddress();
-            } else if (refl.size == math::maxv<u32>) {
-                bindless = make_desc<opaque::Buffer>({
-                    .state = opaque::Buffer::State::twin,
-                    .type = command::Type::render,
-                    .size = sizeof(MTL::ResourceID) * 8192,
-                });
-                mut<uptr>(set->ptr)[i] = bindless->impl->device_buffer->gpuAddress();
+                set->dirty.push_back({i * id, id});
             }
         }
     }

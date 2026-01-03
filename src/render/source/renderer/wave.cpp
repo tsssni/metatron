@@ -54,7 +54,6 @@ namespace mtt::renderer {
         auto render = render_queue->allocate();
 
         auto sampler = make_desc<opaque::Sampler>({opaque::Sampler::Mode::repeat});
-        auto accessor = make_desc<opaque::Sampler>({opaque::Sampler::Mode::border});
         auto film = make_desc<opaque::Image>({&desc.film->image, opaque::Image::State::storable, command::Type::render});
         auto image = make_desc<opaque::Image>({&desc.film->image, opaque::Image::State::storable, command::Type::render});
         auto buffer = make_desc<opaque::Buffer>({
@@ -89,7 +88,6 @@ namespace mtt::renderer {
         | std::views::transform([](auto&& x) -> opaque::Grid::View { return *x; })
         | std::ranges::to<std::vector<opaque::Grid::View>>();
         if (!grids_view.empty()) grids_args_encoder.bind("grids.bindless", {0, grids_view});
-        grids_args_encoder.bind("grids.sampler", accessor.get());
         grids_args_encoder.upload();
         grids_args_encoder.submit();
 
@@ -148,7 +146,7 @@ namespace mtt::renderer {
                 network_timeline->signal(count);
                 ++count; progress + (range[1] - range[0]);
                 range = {range[1], range[1] + next};
-                next = math::min(next * 2, desc.film->step);
+                next = math::min(next * 2, desc.film->stride);
             }
         });
 
@@ -221,7 +219,7 @@ namespace mtt::renderer {
 
             range[0] = range[1];
             range[1] = math::min(spp, range[1] + next);
-            next = math::min(next * 2, desc.film->step);
+            next = math::min(next * 2, desc.film->stride);
         }
 
         if (!remote) {

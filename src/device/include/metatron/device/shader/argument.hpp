@@ -17,7 +17,6 @@ namespace mtt::shader {
         Set reflection;
         stl::table<u32> table;
         obj<opaque::Buffer> set;
-        obj<opaque::Buffer> bindless;
         obj<opaque::Buffer> parameters;
 
         struct Descriptor final {

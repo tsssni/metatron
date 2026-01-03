@@ -47,8 +47,29 @@ namespace mtt::encoder {
         }
     }
 
-    auto Transfer_Encoder::upload(opaque::Image::View image) noexcept -> void {}
-    auto Transfer_Encoder::upload(opaque::Grid::View grid) noexcept -> void {}
+    auto Transfer_Encoder::upload(opaque::Image::View view) noexcept -> void {
+        using State = Image::State;
+        auto image = view.ptr;
+        if (image->state != State::samplable || image->host.empty()) return;
+        for (auto i = 0; i < image->host.size(); ++i) {
+            auto mip = view;
+            mip.mip = {i, 1};
+            mip.size = math::foreach([i](auto x, auto) {
+                return math::max(x >> i, 1u);
+            }, view.size);
+            copy(mip, *image->host[i]);
+            cmd->stages.push_back(std::move(image->host[i]));
+        }
+        image->host.clear();
+    }
+
+    auto Transfer_Encoder::upload(opaque::Grid::View view) noexcept -> void {
+        using State = Grid::State;
+        auto grid = view.ptr;
+        if (grid->state != State::readonly || !grid->host) return;
+        copy(view, *grid->host);
+        cmd->stages.push_back(std::move(grid->host));
+    }
 
     auto Transfer_Encoder::copy(opaque::Buffer::View dst, opaque::Buffer::View src) noexcept -> void {
         impl->encoder->copyFromBuffer(
@@ -66,7 +87,7 @@ namespace mtt::encoder {
             src.offset, src.size / height, 0,
             {dst.size[0], dst.size[1], 1},
             dst.ptr->impl->texture.get(), 0, dst.mip[0],
-            {dst.offset[0], dst.offset[1], 1}
+            {dst.offset[0], dst.offset[1], 0}
         );
     }
 
