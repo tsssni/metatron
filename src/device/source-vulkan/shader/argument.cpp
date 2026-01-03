@@ -44,7 +44,8 @@ namespace mtt::shader {
                 .binding = i,
                 .descriptorType = type,
                 .descriptorCount = math::max(1u,
-                refl.type == Type::parameter ? 1 : refl.size),
+                refl.type == Type::parameter ? 1 :
+                (refl.size == math::maxv<u32> ? 8192 : refl.size)),
                 .stageFlags = vk::ShaderStageFlagBits::eCompute,
             });
         }

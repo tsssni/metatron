@@ -204,7 +204,7 @@ namespace mtt::shader {
                     break;
                 case Kind::Array:
                     desc.size = type->getElementCount();
-                    if (desc.size == 0) desc.size = 8192; // bindless
+                    if (desc.size == 0) desc.size = math::maxv<u32>; // bindless
                     parse_resource(type->getElementTypeLayout(), desc);
                     break;
                 default: break;

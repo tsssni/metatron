@@ -4,6 +4,5 @@
 
 namespace mtt::shader {
     struct Argument::Impl final {
-        std::vector<usize> offsets;
     };
 }
