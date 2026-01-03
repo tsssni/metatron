@@ -10,6 +10,7 @@ namespace mtt::opaque {
         auto& allocator = command::Allocator::instance();
 
         impl->primitives.resize(desc.primitives.size());
+        impl->primitives_descs.resize(desc.primitives.size());
         buffers.resize(desc.primitives.size() + 1);
         scratches.resize(desc.primitives.size() + 1);
 
@@ -44,7 +45,7 @@ namespace mtt::opaque {
             auto [i] = idx;
             auto& prim = desc.primitives[i];
             auto procedural = prim.type == Primitive::Type::aabb;
-            auto desc = mut<MTL::AccelerationStructureGeometryDescriptor>{};
+            auto aesc = mut<MTL::AccelerationStructureGeometryDescriptor>{};
 
             if (procedural) {
                 auto besc = MTL::AccelerationStructureBoundingBoxGeometryDescriptor::alloc()->init();
@@ -54,7 +55,6 @@ namespace mtt::opaque {
                 besc->setBoundingBoxCount(1);
                 besc->setOpaque(true);
                 besc->setIntersectionFunctionTableOffset(0);
-                desc = besc;
             } else {
                 auto tesc = MTL::AccelerationStructureTriangleGeometryDescriptor::alloc()->init();
                 tesc->setTriangleCount(prim.mesh->indices.size());
@@ -66,18 +66,27 @@ namespace mtt::opaque {
                 tesc->setIndexType(MTL::IndexTypeUInt32);
                 tesc->setOpaque(true);
                 tesc->setIntersectionFunctionTableOffset(0);
-                desc = tesc;
+                aesc = tesc;
             }
 
             auto pesc = MTL::PrimitiveAccelerationStructureDescriptor::alloc()->init();
-            pesc->setGeometryDescriptors(NS::Array::array(desc));
+            pesc->setGeometryDescriptors(NS::Array::array(aesc));
             pesc->setUsage(MTL::AccelerationStructureUsagePreferFastIntersection);
             pesc->setMotionKeyframeCount(1);
+
+            auto sizes = device->accelerationStructureSizes(pesc);
+            scratches[i] = make_desc<opaque::Buffer>({
+                .state = opaque::Buffer::State::local,
+                .type = desc.type,
+                .alignment = 0,
+                .size = sizes.buildScratchBufferSize,
+            });
 
             auto sa = device->heapAccelerationStructureSizeAndAlign(pesc);
             auto alloc = allocator.allocate(u32(command::Memory::Impl::Type::local), 0, sa.align, sa.size);
             auto heap = alloc.memory->impl->heap.get();
             impl->primitives[i] = heap->newAccelerationStructure(sa.size, alloc.offset);
+            impl->primitives_descs[i] = pesc->retain();
             primitives[i] = impl->primitives[i].get();
         });
 
@@ -110,10 +119,18 @@ namespace mtt::opaque {
         iesc->setInstanceTransformationMatrixLayout(MTL::MatrixLayoutRowMajor);
         iesc->setUsage(MTL::AccelerationStructureUsagePreferFastIntersection);
 
+        auto sizes = device->accelerationStructureSizes(iesc);
+        scratches.back() = make_desc<opaque::Buffer>({
+            .state = opaque::Buffer::State::local,
+            .type = desc.type,
+            .alignment = 0,
+            .size = sizes.buildScratchBufferSize,
+        });
 
         auto sa = device->heapAccelerationStructureSizeAndAlign(iesc);
         auto alloc = allocator.allocate(u32(command::Memory::Impl::Type::local), 0, sa.align, sa.size);
         auto heap = alloc.memory->impl->heap.get();
         impl->instances = heap->newAccelerationStructure(sa.size, alloc.offset);
+        impl->instances_desc = iesc->retain();
     }
 }

@@ -3,7 +3,7 @@
 
 namespace mtt::encoder {
     Transfer_Encoder::Transfer_Encoder(mut<command::Buffer> cmd) noexcept: cmd(cmd) {
-        impl->encoder = cmd->impl->cmd->blitCommandEncoder();
+        // impl->encoder = cmd->impl->cmd->blitCommandEncoder();
     }
     auto Transfer_Encoder::submit() noexcept -> void { impl->encoder->endEncoding(); }
 
