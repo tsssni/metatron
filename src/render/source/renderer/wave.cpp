@@ -137,6 +137,7 @@ namespace mtt::renderer {
         render->signals = {{render_timeline.get(), ++render_count}};
         render_queue->submit(std::move(render));
 
+        auto layout = uv3{math::align(film->width, 8u) / 8, math::align(film->height, 8u) / 8, 1};
         if (remote) scheduler.async_dispatch([&]{
             auto range = uv2{0, 1};
             auto next = 1u;
@@ -159,7 +160,6 @@ namespace mtt::renderer {
             args_encoder.acquire("constants", entry);
             args_encoder.submit();
 
-            auto layout = uv3{math::align(film->width, 8u) / 8, math::align(film->height, 8u) / 8, 1};
             auto render_encoder = encoder::Pipeline_Encoder{cmd.get(), integrate.get()};
             render_encoder.bind();
             render_encoder.dispatch(layout);
