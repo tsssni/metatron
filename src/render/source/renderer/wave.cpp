@@ -135,7 +135,8 @@ namespace mtt::renderer {
         render->signals = {{render_timeline.get(), ++render_count}};
         render_queue->submit(std::move(render));
 
-        auto layout = uv3{math::align(film->width, 8u) / 8, math::align(film->height, 8u) / 8, 1};
+        auto threads = uv3{film->width, film->height, 1};
+        auto group = uv3{8, 8, 1};
         scheduler.async_dispatch([&, recorded = remote ? 1 : render_count + 2]{
             auto range = uv2{0, 1};
             auto stride = remote ? 1 : 2;
@@ -163,7 +164,7 @@ namespace mtt::renderer {
 
             auto render_encoder = encoder::Pipeline_Encoder{cmd.get(), integrate.get()};
             render_encoder.bind();
-            render_encoder.dispatch(layout);
+            render_encoder.dispatch(threads, group);
             render_encoder.submit();
 
             cmd->waits = {{render_timeline.get(), render_count}};
@@ -174,7 +175,7 @@ namespace mtt::renderer {
                 auto cmd = render_queue->allocate();
                 auto render_encoder = encoder::Pipeline_Encoder{cmd.get(), postprocess.get()};
                 render_encoder.bind();
-                render_encoder.dispatch(layout);
+                render_encoder.dispatch(threads, group);
                 render_encoder.submit();
                 cmd->waits = {{render_timeline.get(), render_count}};
                 cmd->signals = {{render_timeline.get(), ++render_count}};
@@ -189,7 +190,7 @@ namespace mtt::renderer {
 
                 auto render_encoder = encoder::Pipeline_Encoder{render_cmd.get(), postprocess.get()};
                 render_encoder.bind();
-                render_encoder.dispatch(layout);
+                render_encoder.dispatch(threads, group);
                 render_encoder.submit();
 
                 auto release_encoder = encoder::Transfer_Encoder{render_cmd.get()};

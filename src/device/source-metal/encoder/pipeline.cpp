@@ -18,8 +18,10 @@ namespace mtt::encoder {
         impl->encoder->setBuffers(buffers.data(), offsets.data(), {0, u32(buffers.size())});
     }
 
-    auto Pipeline_Encoder::dispatch(uzv3 grid) noexcept -> void {
-        auto [x, y, z] = grid;
-        impl->encoder->dispatchThreadgroups({x, y, z}, {8, 8, 1});
+    auto Pipeline_Encoder::dispatch(uv3 threads, uv3 group) noexcept -> void {
+        impl->encoder->dispatchThreads(
+            {threads[0], threads[1], threads[2]},
+            {group[0], group[1], group[2]}
+        );
     }
 }

@@ -11,6 +11,6 @@ namespace mtt::encoder {
 
         auto submit() noexcept -> void;
         auto bind() noexcept -> void;
-        auto dispatch(uzv3 grid) noexcept -> void;
+        auto dispatch(uv3 threads, uv3 group) noexcept -> void;
     };
 }

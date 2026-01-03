@@ -57,6 +57,11 @@ namespace mtt::math {
     }
 
     template<typename T>
+    auto constexpr guarded_div(T x, T y) noexcept -> T {
+        return x / y;
+    }
+
+    template<typename T>
     requires std::floating_point<T>
     auto constexpr guarded_div(T x, T y) noexcept -> T {
         return abs(y) < epsilon<T> ? 0.0 : x / y;
