@@ -10,16 +10,16 @@ namespace mtt::shader {
 
         auto size = 0u;
         auto id = sizeof(MTL::ResourceID);
-        for (auto i = 0uz; i < reflection.size(); ++i) {
+        for (auto i = 0u; i < reflection.size(); ++i) {
             auto& refl = reflection[i];
             table[refl.path] = i;
-            if (refl.type == Type::parameter) size += id;
-            else size += math::clamp(refl.size, 1u, 8192u) * id;
+            if (refl.type == Type::parameter) size += 1;
+            else size += math::clamp(refl.size, 1u, 8192u - size);
         }
         set = make_desc<opaque::Buffer>({
             .state = opaque::Buffer::State::twin,
             .type = command::Type::render,
-            .size = size,
+            .size = size * id,
         });
 
         for (auto i = 0uz; i < reflection.size(); ++i) {

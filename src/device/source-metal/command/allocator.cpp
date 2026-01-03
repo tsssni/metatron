@@ -13,6 +13,7 @@ namespace mtt::command {
         }
         impl->heap = device->newHeap(desc);
         ctx->residency->addAllocation(impl->heap.get());
+        ctx->residency->commit();
     }
     Memory::~Memory() noexcept {}
 

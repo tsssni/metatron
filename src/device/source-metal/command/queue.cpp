@@ -40,6 +40,7 @@ namespace mtt::command {
 
         if (picked) {
             picked->impl->cmd = impl->queue->commandBufferWithUnretainedReferences();
+            picked->impl->cmd->useResidencySet(ctx->residency.get());
             picked->blocks.clear();
             picked->stages.clear();
             picked->waits.clear();
@@ -50,6 +51,7 @@ namespace mtt::command {
             cmd->type = type;
             cmd->blocks.cmd = cmd.get();
             cmd->impl->cmd = impl->queue->commandBufferWithUnretainedReferences();
+            cmd->impl->cmd->useResidencySet(ctx->residency.get());
             return cmd;
         }
         return make_obj<Buffer>();

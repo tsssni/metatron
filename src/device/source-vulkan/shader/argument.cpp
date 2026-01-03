@@ -16,6 +16,7 @@ namespace mtt::shader {
         auto path = (stl::path{"shader"} / desc.name).concat(".json");
         stl::json::load(stl::filesystem::find(path), reflection);
 
+        auto total = 0u;
         auto bindings = std::vector<vk::DescriptorSetLayoutBinding>{};
         for (auto i = 0u; i < reflection.size(); ++i) {
             auto constexpr types = std::to_array<Binding>({
@@ -39,13 +40,15 @@ namespace mtt::shader {
             if (type == Binding::eSampledImage && refl.access != Access::readonly)
                 type = Binding::eStorageImage;
 
+            auto count = math::max(1u,
+            refl.type == Type::parameter ? 1 :
+            (refl.size == math::maxv<u32> ? 8192 - total : refl.size));
+            total += count;
             table[refl.path] = i;
             bindings.push_back(vk::DescriptorSetLayoutBinding{
                 .binding = i,
                 .descriptorType = type,
-                .descriptorCount = math::max(1u,
-                refl.type == Type::parameter ? 1 :
-                (refl.size == math::maxv<u32> ? 8192 : refl.size)),
+                .descriptorCount = count,
                 .stageFlags = vk::ShaderStageFlagBits::eCompute,
             });
         }
