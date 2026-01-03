@@ -7,6 +7,8 @@ namespace mtt::encoder {
         mut<opaque::Acceleration> accel;
         struct Impl;
         Acceleration_Encoder(mut<command::Buffer> cmd, mut<opaque::Acceleration> accel) noexcept;
+
+        auto submit() noexcept -> void;
         auto build() noexcept -> void;
         auto persist() noexcept -> void;
     };

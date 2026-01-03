@@ -1,5 +1,4 @@
 #include <metatron/render/scene/hierarchy.hpp>
-#include <metatron/render/scene/descriptor.hpp>
 #include <metatron/render/scene/reflection.hpp>
 #include <metatron/core/stl/vector.hpp>
 #include <metatron/core/stl/array.hpp>

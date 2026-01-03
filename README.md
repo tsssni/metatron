@@ -73,7 +73,7 @@ Metatron can be used as a library. Use `package` output in [flake.nix](https://g
       ];
     };
   in {
-    # use pkgs.metatron somewhere 
+    # use pkgs.metatron somewhere
   };
 }
 ```

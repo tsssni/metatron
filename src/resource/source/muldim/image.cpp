@@ -41,7 +41,7 @@ namespace mtt::muldim {
 
     auto Image::Pixel::operator=(cref<fv4> v) noexcept -> void {
         for (auto i = 0; i < image->size[2]; ++i) {
-            auto* pixel = start + image->size[3] * i; 
+            auto* pixel = start + image->size[3] * i;
             switch (image->size[3]) {
             case 1:
                 *pixel = image->linear

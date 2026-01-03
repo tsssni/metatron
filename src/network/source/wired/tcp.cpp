@@ -1,6 +1,7 @@
 #include <metatron/network/wired/tcp.hpp>
 #include <metatron/network/wired/socket.hpp>
 #include <sys/socket.h>
+#include <sys/uio.h>
 #include <cstring>
 #include <signal.h>
 #include <netdb.h>
@@ -66,6 +67,28 @@ namespace mtt::wired {
             socket = invalid_socket;
             return false;
         }
+
+        auto send(std::span<byte const> header, std::span<byte const> data) noexcept -> bool {
+            if (socket == invalid_socket) {
+                connect();
+                if (socket == invalid_socket) return false;
+            }
+
+            auto iov = std::array<iovec, 2>{};
+            iov[0].iov_base = mut<void>(header.data());
+            iov[0].iov_len = header.size();
+            iov[1].iov_base = mut<void>(data.data());
+            iov[1].iov_len = data.size();
+
+            auto total = header.size() + data.size();
+            auto sent_size = ::writev(socket, iov.data(), 2);
+            if (sent_size == total) return true;
+
+            stl::print("send failed: {}", ::strerror(errno));
+            disconnect();
+            socket = invalid_socket;
+            return false;
+        }
     };
 
     Tcp_Socket::Tcp_Socket(cref<Address> address) noexcept:
@@ -73,5 +96,9 @@ namespace mtt::wired {
 
     auto Tcp_Socket::send(std::span<byte const> data) noexcept -> bool {
         return impl->send(data);
+    }
+
+    auto Tcp_Socket::send(std::span<byte const> header, std::span<byte const> data) noexcept -> bool {
+        return impl->send(header, data);
     }
 }

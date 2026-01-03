@@ -1,6 +1,7 @@
 #pragma once
+#include <metatron/core/prelude/life.hpp>
 
-namespace mtt::scene {
+namespace mtt::inline prelude {
     template<typename T>
     concept has_descriptor = requires {
         typename T::Descriptor;
@@ -19,4 +20,10 @@ namespace mtt::scene {
 
     template<typename T>
     using descriptor_t = descriptor<T>::type;
+
+    template<typename T>
+    requires has_descriptor<T>
+    auto make_desc(cref<descriptor_t<T>> desc) noexcept -> obj<T> {
+        return make_obj<T>(desc);
+    }
 }

@@ -13,7 +13,6 @@ namespace mtt {
 
     public typedef float16_t f16;
     public typedef float32_t f32;
-    public typedef float64_t f64;
 
     public typedef u8 byte;
     public typedef u64 uptr;
@@ -268,31 +267,6 @@ namespace mtt {
     public typedef f32m22 f32m2;
     public typedef f32m33 f32m3;
     public typedef f32m44 f32m4;
-
-    public typedef float64_t1 f64v1;
-    public typedef float64_t2 f64v2;
-    public typedef float64_t3 f64v3;
-    public typedef float64_t4 f64v4;
-    public typedef float64_t1x1 f64m11;
-    public typedef float64_t1x2 f64m12;
-    public typedef float64_t1x3 f64m13;
-    public typedef float64_t1x4 f64m14;
-    public typedef float64_t2x1 f64m21;
-    public typedef float64_t2x2 f64m22;
-    public typedef float64_t2x3 f64m23;
-    public typedef float64_t2x4 f64m24;
-    public typedef float64_t3x1 f64m31;
-    public typedef float64_t3x2 f64m32;
-    public typedef float64_t3x3 f64m33;
-    public typedef float64_t3x4 f64m34;
-    public typedef float64_t4x1 f64m41;
-    public typedef float64_t4x2 f64m42;
-    public typedef float64_t4x3 f64m43;
-    public typedef float64_t4x4 f64m44;
-    public typedef f64m11 f64m1;
-    public typedef f64m22 f64m2;
-    public typedef f64m33 f64m3;
-    public typedef f64m44 f64m4;
 
     public typedef i32v1 iv1;
     public typedef i32v2 iv2;

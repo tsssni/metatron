@@ -10,7 +10,7 @@ namespace mtt::light {
     static i32 sun_num_ctls = 4;
     static i32 sun_num_segments = 45;
     static i32 sun_num_limb_params = 6;
-    
+
     static i32 tgmm_num_segments = 30;
     static i32 tgmm_num_mixture = 5;
     static i32 tgmm_num_bilinear = 4;

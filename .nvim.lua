@@ -14,3 +14,4 @@ vim.lsp.config('slangd', {
   root_dir = './shader/'
 })
 vim.lsp.enable('slangd')
+vim.lsp.enable('nushell')

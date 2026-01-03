@@ -65,7 +65,7 @@ namespace mtt::stl {
             using R = std::invoke_result_t<F>;
             auto promise = std::make_shared<std::promise<R>>();
             auto future = promise->get_future().share();
-            
+
             auto task = std::make_shared<std::function<void()>>([
                 promise = std::move(promise),
                 future,

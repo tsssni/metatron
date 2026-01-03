@@ -9,7 +9,8 @@ namespace mtt::encoder {
         struct Impl;
         Pipeline_Encoder(mut<command::Buffer> cmd, mut<shader::Pipeline> ppl) noexcept;
 
+        auto submit() noexcept -> void;
         auto bind() noexcept -> void;
-        auto dispatch(uzv3 grid) noexcept -> void;
+        auto dispatch(uv3 threads, uv3 group) noexcept -> void;
     };
 }

@@ -50,7 +50,7 @@ namespace mtt::scene {
         };
 
         auto spectra = std::filesystem::directory_iterator(spectra_dir)
-        | std::views::filter([](auto& it) { 
+        | std::views::filter([](auto& it) {
             auto ext = it.path().extension();
             return it.is_regular_file() || ext == ".dspd" || ext == ".vspd";
         })

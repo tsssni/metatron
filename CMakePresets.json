@@ -8,7 +8,7 @@
                 "CMAKE_CXX_EXTENSIONS": "OFF",
                 "CMAKE_CXX_SCAN_FOR_MODULES": "OFF",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "CMAKE_OSX_DEPLOYMENT_TARGET": "13.3"
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "26"
             }
         },
         {

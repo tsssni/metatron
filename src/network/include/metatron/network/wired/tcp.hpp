@@ -9,5 +9,6 @@ namespace mtt::wired {
         Tcp_Socket(cref<Address> address) noexcept;
 
         auto send(std::span<byte const> data) noexcept -> bool;
+        auto send(std::span<byte const> header, std::span<byte const> data) noexcept -> bool;
     };
 }

@@ -35,8 +35,7 @@ namespace mtt::opaque {
                 prim.aabbs.size() * bbox_size
             );
         });
-        bboxes = num_bboxes > 0 ? make_obj<opaque::Buffer>(
-        opaque::Buffer::Descriptor{
+        bboxes = num_bboxes > 0 ? make_desc<opaque::Buffer>({
             .ptr = mut<byte>(bboxes_data.data()),
             .state = opaque::Buffer::State::local,
             .size = bbox_size * num_bboxes,
@@ -88,15 +87,13 @@ namespace mtt::opaque {
                 impl->primitives_infos[i],
                 procedural ? prim.aabbs.size() : prim.mesh->indices.size()
             );
-            buffers[i] = make_obj<opaque::Buffer>(
-            opaque::Buffer::Descriptor{
+            buffers[i] = make_desc<opaque::Buffer>({
                 .state = opaque::Buffer::State::local,
                 .type = desc.type,
                 .size = size.accelerationStructureSize,
                 .flags = u64(vk::BufferUsageFlagBits2::eAccelerationStructureStorageKHR),
             });
-            scratches[i] = make_obj<opaque::Buffer>(
-            opaque::Buffer::Descriptor{
+            scratches[i] = make_desc<opaque::Buffer>({
                 .state = opaque::Buffer::State::local,
                 .type = desc.type,
                 .alignment = props.minAccelerationStructureScratchOffsetAlignment,
@@ -128,8 +125,7 @@ namespace mtt::opaque {
             };
             std::memcpy(info.transform.matrix.data(), instance.transform.data(), sizeof(vk::TransformMatrixKHR));
         });
-        instances = make_obj<opaque::Buffer>(
-        opaque::Buffer::Descriptor{
+        instances = make_desc<opaque::Buffer>({
             .ptr = mut<byte>(instances_data.data()),
             .state = opaque::Buffer::State::local,
             .size = sizeof(vk::AccelerationStructureInstanceKHR) * desc.instances.size(),
@@ -164,15 +160,13 @@ namespace mtt::opaque {
             impl->instances_info,
             desc.instances.size()
         );
-        buffers.back() = make_obj<opaque::Buffer>(
-        opaque::Buffer::Descriptor{
+        buffers.back() = make_desc<opaque::Buffer>({
             .state = opaque::Buffer::State::local,
             .type = desc.type,
             .size = size.accelerationStructureSize,
             .flags = u64(vk::BufferUsageFlagBits2::eAccelerationStructureStorageKHR),
         });
-        scratches.back() = make_obj<opaque::Buffer>(
-        opaque::Buffer::Descriptor{
+        scratches.back() = make_desc<opaque::Buffer>({
             .state = opaque::Buffer::State::local,
             .type = desc.type,
             .alignment = props.minAccelerationStructureScratchOffsetAlignment,

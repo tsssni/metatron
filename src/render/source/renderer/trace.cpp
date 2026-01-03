@@ -65,7 +65,7 @@ namespace mtt::renderer {
             stl::scheduler::instance().sync_parallel(uzv2{size}, trace);
             range[0] = range[1];
             range[1] = math::min(spp, range[1] + next);
-            next = math::min(next * 2, desc.film->step);
+            next = math::min(next * 2, desc.film->stride);
 
             auto finished = range[0] == spp;
             future.wait();

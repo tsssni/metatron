@@ -37,7 +37,7 @@ namespace mtt::math {
         // x ≡ sum(a_i * c_i) (mod b_i)
         //   ≡ a_i * c_i (mod b_i)
         //   ≡ a_i (mod b_i)
-        
+
         auto M = sum(b);
         auto x = 0uz;
         for (auto i = 0uz; i < n; ++i) {

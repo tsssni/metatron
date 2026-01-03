@@ -10,15 +10,14 @@ namespace mtt::shader {
     Pipeline::Pipeline(cref<Descriptor> desc) noexcept: args(std::move(desc.args)) {
         auto base_path = stl::path{"shader"} / desc.name;
         auto ir_path = stl::path{base_path}.concat(".spirv");
-        auto table_path = stl::path{base_path}.concat(".json");
-        auto spirv = stl::filesystem::load(stl::filesystem::find(ir_path));
+        auto spirv = stl::filesystem::load(stl::filesystem::find(ir_path), std::ios::binary);
 
         auto& ctx = command::Context::instance().impl;
         auto device = ctx->device.get();
         auto cache = ctx->pipeline_cache.get();
 
         auto entry = desc.name.substr(desc.name.find_last_of(".") + 1);
-        auto layouts = desc.args
+        auto layouts = args
         | std::views::transform([](auto&& x){ return x->impl->layout.get(); })
         | std::ranges::to<std::vector<vk::DescriptorSetLayout>>();
         impl->sets = args

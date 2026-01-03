@@ -20,7 +20,7 @@ namespace mtt::photo {
     public struct Film {
         public u32 spp;
         public u32 depth;
-        public u32 step;
+        public u32 stride;
         public fv2 film_size;
         public fv2 dxdy;
         public tag<spectra::Color_Space> color_space;

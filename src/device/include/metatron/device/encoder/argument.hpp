@@ -14,6 +14,7 @@ namespace mtt::encoder {
         struct Impl;
         Argument_Encoder(mut<command::Buffer> cmd, mut<shader::Argument> args) noexcept;
 
+        auto submit() noexcept -> void;
         auto upload() noexcept -> void;
         auto bind() noexcept -> void;
 

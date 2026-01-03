@@ -36,7 +36,7 @@ namespace mtt::math {
     auto constexpr isinf(T x) noexcept -> bool {
         return std::isinf(x);
     }
-    
+
     template<typename T>
     requires std::floating_point<T>
     auto constexpr saturate(T x) noexcept -> T {
@@ -54,6 +54,11 @@ namespace mtt::math {
     template<typename T>
     auto constexpr pmod(T x, T y) noexcept -> T {
         return (x % y + y) % y;
+    }
+
+    template<typename T>
+    auto constexpr guarded_div(T x, T y) noexcept -> T {
+        return x / y;
     }
 
     template<typename T>

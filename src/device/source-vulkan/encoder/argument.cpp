@@ -13,8 +13,12 @@ namespace mtt::encoder {
         mut<command::Buffer> cmd, mut<shader::Argument> args
     ) noexcept: cmd(cmd), args(args) {}
 
+    auto Argument_Encoder::submit() noexcept -> void {}
+
     auto Argument_Encoder::upload() noexcept -> void {
-        encoder::Transfer_Encoder{cmd}.upload(*args->set);
+        auto transfer = encoder::Transfer_Encoder{cmd};
+        transfer.upload(*args->set);
+        transfer.submit();
     }
 
     auto Argument_Encoder::Impl::update(
@@ -178,7 +182,9 @@ namespace mtt::encoder {
 
         args->parameters->dirty.push_back({0, u32(uniform.size())});
         std::memcpy(args->parameters->ptr, uniform.data(), uniform.size());
-        encoder::Transfer_Encoder{this->cmd}.upload(*args->parameters);
+        auto transfer = encoder::Transfer_Encoder{this->cmd};
+        transfer.upload(*args->parameters);
+        transfer.submit();
 
         auto state = impl->update(desc, args->parameters->impl->barrier);
         auto barrier = args->parameters->impl->update(state);

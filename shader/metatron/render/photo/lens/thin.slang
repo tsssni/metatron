@@ -10,7 +10,7 @@ namespace mtt::photo {
         public func sample(fv2 o, fv2 u) -> Optional<lens::Interaction> {
             let center = fv3(0.f);
             let focused = fv3(-o, focal_distance) * focus_distance / focal_distance;
-            
+
             let radius = focal_distance / aperture / 2.f;
             let distr: math::Unifrom_Disk_Distribution;
             let lens_p = fv3(distr.sample(u) * radius, 0);

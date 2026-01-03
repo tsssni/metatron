@@ -10,7 +10,7 @@ namespace mtt::texture {
         MTT_OPT_OR_RETURN(dt, math::hit(diff.r, tangent), {});
         MTT_OPT_OR_RETURN(dxt, math::hit(diff.rx, tangent), {});
         MTT_OPT_OR_RETURN(dyt, math::hit(diff.ry, tangent), {});
-        
+
         auto p = diff.r.o + dt * diff.r.d;
         auto dpdx = diff.rx.o + dxt * diff.rx.d - p;
         auto dpdy = diff.ry.o + dyt * diff.ry.d - p;

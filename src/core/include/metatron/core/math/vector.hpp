@@ -110,7 +110,7 @@ namespace mtt::math {
     template<typename T>
     requires std::floating_point<T>
     auto constexpr reflect(cref<Vector<T, 3>> in, cref<Vector<T, 3>> n) noexcept -> Vector<T, 3> {
-        return T(2.0) * n * dot(-in, n) + in; 
+        return T(2.0) * n * dot(-in, n) + in;
     }
 
     template<typename T>

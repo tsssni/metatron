@@ -11,7 +11,8 @@ namespace mtt {
         public func index() -> u32 { return idx & 0xffff; };
         public func empty() -> bool { return idx == 0xffffffffu; }
         public func get() -> Ptr<T> {
-            let arr = Ptr<T>(global.vectors[storage()]);
+            let base = Ptr<uptr>(resources.vectors);
+            let arr = Ptr<T>(base[storage()]);
             return arr + index();
         }
     }

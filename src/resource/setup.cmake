@@ -1,1 +1,1 @@
-list(APPEND deps openimageio assimp openvdb)
+list(APPEND deps openimageio assimp nanovdb)

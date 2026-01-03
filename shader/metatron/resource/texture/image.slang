@@ -36,9 +36,9 @@ namespace mtt::texture {
         tag<math::Planar_Distribution> distr;
 
         fv4 operator()(Coordinate coord) {
-            let texture = global.textures[idx.index()];
+            let texture = textures.bindless[idx.index()];
             return texture.SampleGrad(
-                global.sampler, coord.uv,
+                textures.sampler, coord.uv,
                 {coord.dudx, coord.dvdx},
                 {coord.dudy, coord.dvdy}
             );
