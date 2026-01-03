@@ -36,6 +36,8 @@ namespace mtt::encoder {
         };
     }
 
+    auto Acceleration_Encoder::submit() noexcept -> void {}
+
     auto Acceleration_Encoder::build() noexcept -> void {
         auto cmd = this->cmd->impl->cmd.get();
         auto transfer = Transfer_Encoder{this->cmd};

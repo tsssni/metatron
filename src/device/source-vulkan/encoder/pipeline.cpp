@@ -13,6 +13,8 @@ namespace mtt::encoder {
         };
     }
 
+    auto Pipeline_Encoder::submit() noexcept -> void {}
+
     auto Pipeline_Encoder::bind() noexcept -> void {
         auto cmd = this->cmd->impl->cmd.get();
         auto barriers = std::vector<vk::BufferMemoryBarrier2>(ppl->args.size());

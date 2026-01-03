@@ -3,6 +3,7 @@
 namespace mtt::encoder {
     Transfer_Encoder::Transfer_Encoder(mut<command::Buffer> cmd) noexcept {}
 
+    auto Transfer_Encoder::submit() noexcept -> void {}
     auto Transfer_Encoder::upload(opaque::Buffer::View buffer) noexcept -> void {}
     auto Transfer_Encoder::upload(opaque::Image::View image) noexcept -> void {}
     auto Transfer_Encoder::upload(opaque::Grid::View grid) noexcept -> void {}

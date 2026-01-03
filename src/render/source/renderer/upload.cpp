@@ -152,6 +152,7 @@ namespace mtt::renderer {
                 transfer.persist(*grids[i]);
             }
             barrier->arrive_and_wait();
+            transfer.submit();
 
             timelines[scheduler.index()] = make_obj<command::Timeline>();
             cmd->signals = {{timelines[scheduler.index()].get(), 1}};

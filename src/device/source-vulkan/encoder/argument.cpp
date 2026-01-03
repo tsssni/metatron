@@ -13,6 +13,8 @@ namespace mtt::encoder {
         mut<command::Buffer> cmd, mut<shader::Argument> args
     ) noexcept: cmd(cmd), args(args) {}
 
+    auto Argument_Encoder::submit() noexcept -> void {}
+
     auto Argument_Encoder::upload() noexcept -> void {
         encoder::Transfer_Encoder{cmd}.upload(*args->set);
     }

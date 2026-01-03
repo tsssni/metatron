@@ -75,34 +75,36 @@ namespace mtt::renderer {
         auto integrate = assemble("trace.wave", trace_args.get());
         auto postprocess = assemble("postprocess.wave", post_args.get());
 
-        auto resources_args_encoder = encoder::Argument_Encoder{render.get(), resources_args.get()};
         auto textures_args_encoder = encoder::Argument_Encoder{render.get(), textures_args.get()};
-        auto grids_args_encoder = encoder::Argument_Encoder{render.get(), grids_args.get()};
-        auto integrate_args_encoder = encoder::Argument_Encoder{render.get(), trace_args.get()};
-        auto postprocess_args_encoder = encoder::Argument_Encoder{render.get(), post_args.get()};
-
         auto images_view = resources.images
         | std::views::transform([](auto&& x) -> opaque::Image::View { return *x; })
         | std::ranges::to<std::vector<opaque::Image::View>>();
+        if (!images_view.empty()) textures_args_encoder.bind("textures.bindless", {0, images_view});
+        textures_args_encoder.bind("textures.sampler", sampler.get());
+        textures_args_encoder.upload();
+        textures_args_encoder.submit();
+
+        auto grids_args_encoder = encoder::Argument_Encoder{render.get(), grids_args.get()};
         auto grids_view = resources.grids
         | std::views::transform([](auto&& x) -> opaque::Grid::View { return *x; })
         | std::ranges::to<std::vector<opaque::Grid::View>>();
-        if (!images_view.empty()) textures_args_encoder.bind("textures.bindless", {0, images_view});
         if (!grids_view.empty()) grids_args_encoder.bind("grids.bindless", {0, grids_view});
-        textures_args_encoder.bind("textures.sampler", sampler.get());
-        textures_args_encoder.upload();
         grids_args_encoder.bind("grids.sampler", accessor.get());
         grids_args_encoder.upload();
+        grids_args_encoder.submit();
 
-        resources_args_encoder.bind("resources.accel", accel.get());
-        resources_args_encoder.upload();
+        auto integrate_args_encoder = encoder::Argument_Encoder{render.get(), trace_args.get()};
         integrate_args_encoder.bind("constants.image", *film);
         integrate_args_encoder.acquire("constants.image", *film);
         integrate_args_encoder.upload();
+        integrate_args_encoder.submit();
+
+        auto postprocess_args_encoder = encoder::Argument_Encoder{render.get(), post_args.get()};
         postprocess_args_encoder.bind("constants.film", *film);
         postprocess_args_encoder.bind("constants.image", *image);
         postprocess_args_encoder.acquire("constants.image", *image);
         postprocess_args_encoder.upload();
+        postprocess_args_encoder.submit();
 
         auto next = 1u;
         auto spp = desc.film->spp;
@@ -114,7 +116,7 @@ namespace mtt::renderer {
         struct {
             Descriptor desc; u32 seed; uv2 range;
             math::Transform ct; buf<f32> fresnel;
-        } trace{
+        } entry{
             std::move(desc), seed,
             {}, *entity<math::Transform>("/hierarchy/camera/render"),
             bsdf::Physical_Bsdf::fresnel_reflectance_table,
@@ -125,7 +127,12 @@ namespace mtt::renderer {
             resources.volarr ? resources.volarr->addr : 0
         };
 
+        auto resources_args_encoder = encoder::Argument_Encoder{render.get(), resources_args.get()};
+        resources_args_encoder.bind("resources.accel", accel.get());
         resources_args_encoder.acquire("resources", global);
+        resources_args_encoder.upload();
+        resources_args_encoder.submit();
+
         render->waits = {{render_timeline.get(), render_count}};
         render->signals = {{render_timeline.get(), ++render_count}};
         render_queue->submit(std::move(render));
@@ -145,57 +152,69 @@ namespace mtt::renderer {
         });
 
         while (range[0] < spp) {
-            auto integrate_cmd = render_queue->allocate();
-            auto integrate_args_encoder = encoder::Argument_Encoder{integrate_cmd.get(), trace_args.get()};
-            auto integrate_encoder = encoder::Pipeline_Encoder{integrate_cmd.get(), integrate.get()};
+            auto cmd = render_queue->allocate();
+
+            auto args_encoder = encoder::Argument_Encoder{cmd.get(), trace_args.get()};
+            entry.range = {range[0], range[1]};
+            args_encoder.acquire("constants", entry);
+            args_encoder.submit();
+
             auto layout = uv3{math::align(film->width, 8u) / 8, math::align(film->height, 8u) / 8, 1};
+            auto render_encoder = encoder::Pipeline_Encoder{cmd.get(), integrate.get()};
+            render_encoder.bind();
+            render_encoder.dispatch(layout);
+            render_encoder.submit();
 
-            trace.range = {range[0], range[1]};
-            integrate_args_encoder.acquire("constants", trace);
-            integrate_encoder.bind();
-            integrate_encoder.dispatch(layout);
+            cmd->waits = {{render_timeline.get(), render_count}};
+            cmd->signals = {{render_timeline.get(), ++render_count}};
+            render_queue->submit(std::move(cmd));
 
-            integrate_cmd->waits = {{render_timeline.get(), render_count}};
-            integrate_cmd->signals = {{render_timeline.get(), ++render_count}};
-            render_queue->submit(std::move(integrate_cmd));
-
-            auto postprocess_cmd = render_queue->allocate();
-            auto postprocess_encoder = encoder::Pipeline_Encoder{postprocess_cmd.get(), postprocess.get()};
             if (!remote) {
-                postprocess_encoder.bind();
-                postprocess_encoder.dispatch(layout);
-                postprocess_cmd->waits = {{render_timeline.get(), render_count}};
-                postprocess_cmd->signals = {{render_timeline.get(), ++render_count}};
-                render_queue->submit(std::move(postprocess_cmd));
+                auto cmd = render_queue->allocate();
+                auto render_encoder = encoder::Pipeline_Encoder{cmd.get(), postprocess.get()};
+                render_encoder.bind();
+                render_encoder.dispatch(layout);
+                render_encoder.submit();
+                cmd->waits = {{render_timeline.get(), render_count}};
+                cmd->signals = {{render_timeline.get(), ++render_count}};
+                render_queue->submit(std::move(cmd));
             } else {
+                auto render_cmd = render_queue->allocate();
                 auto transfer_cmd = transfer_queue->allocate();
-                auto postprocess_args_encoder = encoder::Argument_Encoder{postprocess_cmd.get(), post_args.get()};
-                auto postprocess_release_encoder = encoder::Transfer_Encoder{postprocess_cmd.get()};
-                auto transfer_encoder = encoder::Transfer_Encoder{transfer_cmd.get()};
 
-                postprocess_args_encoder.acquire("constants.image", *image);
-                postprocess_encoder.bind();
-                postprocess_encoder.dispatch(layout);
-                postprocess_release_encoder.release(transfer_cmd.get(), *image);
-                postprocess_cmd->waits = {
+                auto args_encoder = encoder::Argument_Encoder{render_cmd.get(), post_args.get()};
+                args_encoder.acquire("constants.image", *image);
+                args_encoder.submit();
+
+                auto render_encoder = encoder::Pipeline_Encoder{render_cmd.get(), postprocess.get()};
+                render_encoder.bind();
+                render_encoder.dispatch(layout);
+                render_encoder.submit();
+
+                auto release_encoder = encoder::Transfer_Encoder{render_cmd.get()};
+                release_encoder.release(transfer_cmd.get(), *image);
+                release_encoder.submit();
+                render_cmd->waits = {
                     {render_timeline.get(), render_count},
                     {copy_timeline.get(), scheduled_count},
                 };
-                postprocess_cmd->signals = {
+                render_cmd->signals = {
                     {render_timeline.get(), ++render_count},
                     {release_timeline.get(), scheduled_count + 1},
                 };
 
+                auto transfer_encoder = encoder::Transfer_Encoder{transfer_cmd.get()};
                 transfer_encoder.acquire(*image);
                 transfer_encoder.copy(*buffer, *image);
-                transfer_encoder.release(postprocess_cmd.get(), *image);
+                transfer_encoder.release(render_cmd.get(), *image);
+                transfer_encoder.submit();
                 transfer_cmd->waits = {
                     {release_timeline.get(), scheduled_count + 1},
                     {network_timeline.get(), scheduled_count},
                 };
                 transfer_cmd->signals = {{copy_timeline.get(), scheduled_count + 1}};
 
-                render_queue->submit(std::move(postprocess_cmd));
+                render_queue->submit(std::move(render_cmd));
                 transfer_queue->submit(std::move(transfer_cmd));
                 ++scheduled_count;
             }
@@ -209,6 +228,7 @@ namespace mtt::renderer {
             auto transfer_cmd = render_queue->allocate();
             auto transfer_encoder = encoder::Transfer_Encoder{transfer_cmd.get()};
             transfer_encoder.copy(*buffer, *image);
+            transfer_encoder.submit();
             transfer_cmd->waits = {{render_timeline.get(), render_count}};
             transfer_cmd->signals = {{render_timeline.get(), ++render_count}};
             render_queue->submit(std::move(transfer_cmd));

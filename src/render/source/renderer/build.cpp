@@ -67,6 +67,8 @@ namespace mtt::renderer {
         auto encoder = encoder::Acceleration_Encoder{builder.get(), accel.get()};
         encoder.build();
         encoder.persist();
+        encoder.submit();
+
         for (auto i = 0; i < scheduler.size(); ++i) {
             builder->waits.push_back({uploads[i].get(), 1});
         }

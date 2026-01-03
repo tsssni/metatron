@@ -3,6 +3,7 @@
 namespace mtt::encoder {
     Argument_Encoder::Argument_Encoder(mut<command::Buffer> cmd, mut<shader::Argument> args) noexcept {}
 
+    auto Argument_Encoder::submit() noexcept -> void {}
     auto Argument_Encoder::upload() noexcept -> void {}
 
     auto Argument_Encoder::bind(std::string_view field, view<opaque::Acceleration> accel) noexcept -> void {}
