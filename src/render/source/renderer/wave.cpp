@@ -136,15 +136,18 @@ namespace mtt::renderer {
         render_queue->submit(std::move(render));
 
         auto layout = uv3{math::align(film->width, 8u) / 8, math::align(film->height, 8u) / 8, 1};
-        if (remote) scheduler.async_dispatch([&]{
+        scheduler.async_dispatch([&, recorded = remote ? 1 : render_count + 2]{
             auto range = uv2{0, 1};
+            auto stride = remote ? 1 : 2;
+            auto count = recorded;
             auto next = 1u;
-            auto count = 1;
             while (range[0] < spp) {
-                copy_timeline->wait(count);
-                previewer.update(desc.film->image, {buffer->ptr, buffer->size});
-                network_timeline->signal(count);
-                ++count; progress + (range[1] - range[0]);
+                if (remote) {
+                    copy_timeline->wait(count);
+                    previewer.update(desc.film->image, {buffer->ptr, buffer->size});
+                    network_timeline->signal(count);
+                } else render_timeline->wait(count);
+                count += stride; progress + (range[1] - range[0]);
                 range = {range[1], range[1] + next};
                 next = math::min(next * 2, desc.film->stride);
             }

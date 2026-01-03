@@ -19,7 +19,6 @@ namespace mtt::shader {
         auto cesc = MTL::ComputePipelineDescriptor::alloc()->init();
         cesc->setComputeFunction(impl->function.get());
         cesc->setBinaryArchives(NS::Array::array(ctx->archive.get()));
-        cesc->setShaderValidation(MTL::ShaderValidationEnabled);
         MTT_MTL_GUARD(impl->pipeline = device->newComputePipelineState(cesc, MTL::PipelineOptionNone, nullptr, &err));
         MTT_MTL_GUARD(ctx->archive->addComputePipelineFunctions(cesc, &err));
     }
