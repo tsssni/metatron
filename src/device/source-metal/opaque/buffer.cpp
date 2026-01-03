@@ -20,6 +20,7 @@ namespace mtt::opaque {
             impl->host_buffer = alloc(MTL::ResourceStorageModeShared, command::Memory::Impl::Type::visible);
         if (desc.state != State::visible)
             impl->device_buffer = alloc(MTL::ResourceStorageModePrivate, command::Memory::Impl::Type::local);
+        else impl->device_buffer = impl->host_buffer->retain();
         if (impl->host_buffer) {
             ptr = mut<byte>(impl->host_buffer->contents());
             if (desc.ptr) std::memcpy(ptr, desc.ptr, desc.size);

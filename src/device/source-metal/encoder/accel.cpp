@@ -12,11 +12,6 @@ namespace mtt::encoder {
     auto Acceleration_Encoder::persist() noexcept -> void {}
 
     auto Acceleration_Encoder::build() noexcept -> void {
-        auto transfer = Transfer_Encoder{cmd};
-        transfer.upload(*accel->instances);
-        if (accel->bboxes) transfer.upload(*accel->bboxes);
-        transfer.submit();
-
         for (auto i = 0; i < accel->scratches.size() - 1; ++i)
             impl->encoder->buildAccelerationStructure(
                 accel->impl->primitives[i].get(),

@@ -40,11 +40,6 @@ namespace mtt::encoder {
 
     auto Acceleration_Encoder::build() noexcept -> void {
         auto cmd = this->cmd->impl->cmd.get();
-        auto transfer = Transfer_Encoder{this->cmd};
-        transfer.upload(*accel->instances);
-        if (accel->bboxes) transfer.upload(*accel->bboxes);
-        transfer.submit();
-
         auto barriers = std::vector<vk::BufferMemoryBarrier2>{};
         if (accel->bboxes) barriers.push_back(accel->bboxes->impl->update(impl->load_barrier));
         for (auto i = 0; i < accel->buffers.size() - 1; ++i) {
