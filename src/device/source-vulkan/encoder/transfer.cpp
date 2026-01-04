@@ -34,6 +34,9 @@ namespace mtt::encoder {
         };
     }
 
+
+    auto Transfer_Encoder::submit() noexcept -> void {}
+
     auto Transfer_Encoder::upload(Buffer::View view) noexcept -> void {
         using State = Buffer::State;
         auto buffer = view.ptr;

@@ -22,7 +22,7 @@ namespace mtt::light {
     Sunsky_Light::Sunsky_Light(cref<Descriptor> desc) noexcept:
     d(math::unit_spherical_to_cartesian(desc.direction)),
     t(fq::from_rotation_between({0.f, 1.f, 0.f}, d)),
-    turbidity(desc.turbidity), 
+    turbidity(desc.turbidity),
     albedo(desc.albedo) {
         auto bezier = [](buf<f32> data, usize block_size, usize offset, f32 x) -> std::vector<f32> {
             auto interpolated = std::vector<f32>(block_size, 0.f);

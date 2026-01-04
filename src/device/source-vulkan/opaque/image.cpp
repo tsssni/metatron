@@ -88,7 +88,7 @@ namespace mtt::opaque {
         mips = math::max(1uz, desc.image->pixels.size());
         if (desc.state == State::samplable && !desc.image->pixels.empty()) {
             for (auto i = 0; i < mips; ++i)
-                host.push_back(make_obj<Buffer>(Buffer::Descriptor{
+                host.push_back(make_desc<Buffer>({
                     .ptr = desc.image->pixels[i].data(),
                     .state = Buffer::State::visible,
                     .type = desc.type,

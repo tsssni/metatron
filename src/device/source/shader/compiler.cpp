@@ -25,6 +25,7 @@ namespace mtt::shader {
         com<slang::IGlobalSession> global_session;
         com<slang::ISession> session;
         com<slang::IBlob> diagnostic;
+        bool globalized = false;
 
         auto guard(SlangResult result) {
             if (SLANG_SUCCEEDED(result)) return;
@@ -91,7 +92,7 @@ namespace mtt::shader {
 
             using Options = spirv_cross::CompilerMSL::Options;
             auto options = Options{};
-            options.set_msl_version(4, 0);
+            options.set_msl_version(3, 2);
             options.argument_buffers = true;
             options.argument_buffers_tier = Options::ArgumentBuffersTier::Tier2;
             options.enable_decoration_binding = true;
@@ -204,7 +205,7 @@ namespace mtt::shader {
                     break;
                 case Kind::Array:
                     desc.size = type->getElementCount();
-                    if (desc.size == 0) desc.size = -1; // bindless
+                    if (desc.size == 0) desc.size = math::maxv<u32>; // bindless
                     parse_resource(type->getElementTypeLayout(), desc);
                     break;
                 default: break;
@@ -216,25 +217,15 @@ namespace mtt::shader {
                 parse_type(table ? element : type);
             };
 
-            auto global = Layout{};
-            parse_var(reflection->getGlobalParamsVarLayout(), global);
-            for (auto i = 0; i < global.sets.size(); ++i) {
-                auto index = global.sets.size() > 1 ? "-" + std::to_string(i) : "";
-                auto postfix = ".global" + index + ".json";
-                stl::json::store((out / path.stem()).concat(postfix), global.sets[i]);
-            }
-
             auto layout = Layout{};
-            parse_var(reflection->getEntryPointByIndex(0)->getVarLayout(), layout);
-            for (auto i = 0; i < layout.sets.size(); ++i) {
-                auto postfix = "." + layout.names[i] + ".json";
-                stl::json::store((out / path).concat(postfix), layout.sets[i]);
+            parse_var(reflection->getGlobalParamsVarLayout(), layout);
+            auto size = globalized ? 1 : layout.sets.size();
+            for (auto i = 0; i < size; ++i) {
+                auto postfix = (i == 0 ? path.stem().string() : layout.names[i]) + ".json";
+                stl::json::store(stl::path{out} / postfix, layout.sets[i]);
             }
-
-            auto merged = global;
-            std::ranges::copy(layout.names, std::back_inserter(merged.names));
-            std::ranges::copy(layout.sets, std::back_inserter(merged.sets));
-            return merged;
+            globalized = true;
+            return layout;
         }
 
         auto build(
@@ -271,6 +262,11 @@ namespace mtt::shader {
                 int_opt(Option::ForceCLayout, 1),
                 int_opt(Option::VulkanUseEntryPointName, 1),
                 int_opt(Option::Optimization, SlangOptimizationLevel::SLANG_OPTIMIZATION_LEVEL_MAXIMAL),
+                #ifndef MTT_SYSTEM_DARWIN
+                str_opt(Option::MacroDefine, "MTT_TARGET_SPIRV"),
+                #else
+                str_opt(Option::MacroDefine, "MTT_TARGET_METAL"),
+                #endif
             });
 
             global_session->createSession({

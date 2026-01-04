@@ -13,7 +13,7 @@ namespace mtt::stl {
         auto operator+(usize size) noexcept -> void {
             auto count = atomic_count.fetch_add(size) + 1;
             auto percent = static_cast<usize>(100.f * count / total);
-            
+
             auto last_percent = atomic_percent.load();
             if (percent > last_percent && atomic_percent.compare_exchange_weak(last_percent, percent)) {
                 auto time = std::chrono::system_clock::now();

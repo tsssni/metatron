@@ -110,7 +110,7 @@ namespace mtt::stl {
                 pathes.resize(start + block_size);
                 allocated.fetch_add(1, std::memory_order::release);
             } else while (allocated.load(std::memory_order::acquire) <= block);
-            
+
             auto ptr = blocks[block] + local_idx * bytelen;
             return {ptr, idx};
         }

@@ -426,17 +426,17 @@ namespace mtt::math {
             // upper triangular matrix
             auto u = m;
             auto det = T(1);
-            
+
             for (auto i = 0uz; i < n; ++i) {
                 auto pivot_row = i;
                 auto max_val = math::abs(u[i][i]);
-                
+
                 for (auto j = i + 1; j < n; ++j)
                     if (auto curr_val = math::abs(u[j][i]); curr_val > max_val) {
                         max_val = curr_val;
                         pivot_row = j;
                     }
-                
+
                 if (max_val < epsilon<T>) return T(0);
                 if (pivot_row != i) {
                     std::swap(u[i], u[pivot_row]);
@@ -450,7 +450,7 @@ namespace mtt::math {
                         u[j][k] -= factor * u[i][k];
                 }
             }
-            
+
             return det;
         }
     }
@@ -583,7 +583,7 @@ namespace mtt::math {
     template<typename T, usize n>
     requires std::floating_point<T>
     auto constexpr cramer(
-        cref<Matrix<T, n, n>> a, 
+        cref<Matrix<T, n, n>> a,
         cref<Matrix<T, n>> b
     ) noexcept -> opt<Matrix<T, n>> {
         T det_a = determinant(a);
@@ -596,14 +596,14 @@ namespace mtt::math {
                 a_i[j][i] = b[j];
             result[i] = determinant(a_i) / det_a;
         }
-        
+
         return result;
     }
 
     template<typename T, usize n, usize m>
     requires std::floating_point<T>
     auto constexpr cramer(
-        cref<Matrix<T, n, n>> a, 
+        cref<Matrix<T, n, n>> a,
         cref<Matrix<T, n, m>> b
     ) noexcept -> opt<Matrix<T, n, m>> {
         T det_a = determinant(a);
@@ -623,7 +623,7 @@ namespace mtt::math {
                 }
             }
         }
-        
+
         return result;
     }
 }

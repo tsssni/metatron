@@ -1,7 +1,7 @@
 import metatron;
 
 namespace mtt {
-    struct Integrate {
+    struct Constants {
         monte_carlo::Integrator_Tag integrator;
         accel::Acceleration_Tag accel;
         emitter::Emitter_Tag emitter;
@@ -13,55 +13,56 @@ namespace mtt {
         uv2 range;
         math::Transform ct;
         buf<f32> fresnel;
-        RWTexture2D image;
+        [vk_binding(1, 0)] RWTexture2D image;
     }
+    [vk_binding(0, 0)] ParameterBlock<Constants> constants;
 
     [shader("compute"), numthreads(8, 8, 1)]
-    func integrate(
+    func wave(
         iv3 global_idx: SV_DispatchThreadID,
-        ParameterBlock<Integrate> in,
     ) -> void {
         var value = fv4(0);
         let pixel = global_idx.xy;
-        let film = in.film.get();
+        let cb = constants;
+        let film = cb.film.get();
         var size: uv2;
-        in.image.GetDimensions(size.x, size.y);
-        if (any(pixel != clamp(pixel, 0, size))) return;
-        bsdf::fresnel_reflectance_table = in.fresnel;
+        cb.image.GetDimensions(size.x, size.y);
+        if (any(pixel != clamp(pixel, 0, size - 1))) return;
+        bsdf::fresnel_reflectance_table = cb.fresnel;
 
-        for (var n = in.range.x; n < in.range.y; ++n) {
+        for (var n = cb.range.x; n < cb.range.y; ++n) {
             var sp: sampler::Proxy_Sampler;
             sp.ctx.pixel = pixel;
             sp.ctx.size = size;
             sp.ctx.idx = n;
             sp.ctx.spp = film.spp;
             sp.ctx.dim = 0;
-            sp.ctx.seed = in.seed;
-            sp.sampler = in.sampler;
+            sp.ctx.seed = cb.seed;
+            sp.sampler = cb.sampler;
             sp.start();
 
-            let fixel = film(in.filter, pixel, size, sp.generate_2d());
+            let fixel = film(cb.filter, pixel, size, sp.generate_2d());
             let camera: photo::Camera;
-            let s_opt = camera.sample(in.lens, fixel.position, fixel.dxdy, sp.generate_2d());
+            let s_opt = camera.sample(cb.lens, fixel.position, fixel.dxdy, sp.generate_2d());
             if (s_opt == none) continue;
             var s = s_opt.value;
-            s.ray_differential = in.ct / s.ray_differential;
-            s.default_differential = in.ct / s.default_differential;
+            s.ray_differential = cb.ct / s.ray_differential;
+            s.default_differential = cb.ct / s.default_differential;
 
             let spec = spectra::Stochastic_Spectrum(sp.generate_1d());
             var ctx: monte_carlo::Context;
-            ctx.accel = in.accel;
-            ctx.emitter = in.emitter;
+            ctx.accel = cb.accel;
+            ctx.emitter = cb.emitter;
             ctx.sampler = sp;
             ctx.lambda = spec.lambda;
             ctx.ray_differential = s.ray_differential;
             ctx.default_differential = s.default_differential;
-            ctx.render_to_camera = in.ct;
+            ctx.render_to_camera = cb.ct;
             ctx.pixel = pixel;
             ctx.sample_index = n;
             ctx.max_depth = film.depth;
 
-            let Li_opt = in.integrator.sample(ctx);
+            let Li_opt = cb.integrator.sample(ctx);
             if (Li_opt == none) continue;
             var Li = Li_opt.value;
             Li.value /= s.pdf;
@@ -69,25 +70,7 @@ namespace mtt {
             value += fv4(rgb * fixel.weight, fixel.weight);
         }
 
-        let sampled = in.image.Load(pixel) + value;
-        in.image.Store(pixel, sampled);
-    }
-
-    struct Postprocess {
-        RWTexture2D film;
-        RWTexture2D image;
-    }
-
-    [shader("compute"), numthreads(8, 8, 1)]
-    func postprocess(
-        iv3 global_idx: SV_DispatchThreadID,
-        ParameterBlock<Postprocess> in,
-    ) -> void {
-        let pixel = global_idx.xy;
-        var size: uv2;
-        in.image.GetDimensions(size.x, size.y);
-        if (any(pixel != clamp(pixel, 0, size))) return;
-        let film = in.film.Load(pixel);
-        in.image.Store(pixel, film / max(film.w, math::epsilon));
+        let sampled = cb.image.Load(pixel) + value;
+        cb.image.Store(pixel, sampled);
     }
 }

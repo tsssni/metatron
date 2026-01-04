@@ -14,7 +14,7 @@ namespace mtt::command {
     };
 
     struct Allocation final {
-        view<Memory> memory;
+        mut<Memory> memory;
         usize offset;
     };
 

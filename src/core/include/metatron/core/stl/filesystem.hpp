@@ -56,12 +56,13 @@ namespace mtt::stl {
         }
 
         auto static load(
-            cref<path> path, std::ios::openmode mode = {}
+            cref<path> path, std::ios::openmode mode = {}, bool cstr = false
         ) noexcept -> std::vector<byte> {
             auto size = std::filesystem::file_size(path);
             auto stream = std::ifstream{path, mode};
-            auto buffer = std::vector<byte>(size);
+            auto buffer = std::vector<byte>(size + cstr);
             stream.read(mut<char>(buffer.data()), buffer.size());
+            if (cstr) buffer.back() = '\0';
             return buffer;
         }
 

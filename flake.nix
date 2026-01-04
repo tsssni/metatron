@@ -49,32 +49,9 @@
       devShells = mapSystems (
         system:
         let
-          clangdOverlay = (
-            final: prev:
-            let
-              patchClangTools =
-                llvmPkgSet:
-                llvmPkgSet.overrideScope (
-                  lfinal: lprev: {
-                    clang-tools = lprev.clang-tools.overrideAttrs (oldAttrs: {
-                      postInstall = (oldAttrs.postInstall or "") + ''
-                        echo "Applying PR 462747 patch to the generated clangd wrapper..."
-                        patch -i ${
-                          prev.fetchpatch {
-                            url = "https://github.com/NixOS/nixpkgs/pull/462747.diff";
-                            hash = "sha256-WDP/WJAflkYw8YQDgXK3q9G7/Z6BXTu7QpNGAKjO3co=";
-                          }
-                        } $out/bin/clangd
-                      '';
-                    });
-                  }
-                );
-            in
-            { llvmPackages = patchClangTools prev.llvmPackages; }
-          );
           pkgs = import nixpkgs {
             inherit system;
-            overlays = tsssni.pkgs ++ [ clangdOverlay ];
+            overlays = tsssni.pkgs;
             config.allowUnfree = true;
           };
           glpkgs =
@@ -103,6 +80,9 @@
             ''
             + lib.optionalString pkgs.stdenv.isLinux ''
               export VK_LAYER_PATH=${pkgs.vulkan-validation-layers}/share/vulkan/explicit_layer.d
+            ''
+            + lib.optionalString pkgs.stdenv.isDarwin ''
+              export MTL_DEBUG_LAYER=1
             '';
           };
 

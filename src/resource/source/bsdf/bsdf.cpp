@@ -38,7 +38,7 @@ namespace mtt::bsdf {
             if constexpr (is_complex) return (math::norm(r_parl) + math::norm(r_perp)) / 2.f;
             else return (math::sqr(r_parl) + math::sqr(r_perp)) / 2.f;
         };
-        
+
         if (k > math::epsilon<f32>) {
             auto eta_k = fc{eta, k};
             return F(eta_k);
@@ -117,7 +117,7 @@ namespace mtt::bsdf {
             f = (1.f - F) * D * G * math::abs(cos_theta_om * cos_theta_im / (denom * cos_theta_i * cos_theta_o)) / math::sqr(eta[0]);
             pdf = visible_trowbridge_reitz(wo, wm, alpha_u, alpha_v) * math::abs(cos_theta_im) / denom * pt / (pr + pt);
         }
-        
+
         if (pdf < math::epsilon<f32>) return {};
         return Interaction{f, wi, pdf};
     }

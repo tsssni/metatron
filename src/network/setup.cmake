@@ -1,1 +1,1 @@
-list(APPEND deps resource tevipc)
+list(APPEND deps resource)

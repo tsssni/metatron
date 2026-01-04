@@ -1,6 +1,6 @@
 implementing volume;
 #define PNANOVDB_HLSL
-#define PNANOVDB_MTT
+#define PNANOVDB_ADDRESS_64
 #include "PNanoVDB.slang"
 
 namespace mtt::volume {
@@ -24,7 +24,8 @@ namespace mtt::volume {
         tag<u32> handle;
 
         func buf() -> pnanovdb_buf_t {
-            return global.volumes[handle.index()];
+            let arr = Ptr<uptr>(resources.volumes);
+            return pnanovdb_buf_t(arr[handle.index()]);
         }
 
         func grid() -> pnanovdb_grid_handle_t {

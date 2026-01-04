@@ -4,12 +4,11 @@
 namespace mtt::command {
     auto Blocks::allocate(usize size) noexcept -> opaque::Buffer::View {
         if (next + size > blocks.size() * block_size) {
-            auto desc = opaque::Buffer::Descriptor{
+            blocks.push_back(make_desc<opaque::Buffer>({
                 .state = opaque::Buffer::State::visible,
                 .type = cmd->type,
                 .size = block_size,
-            };
-            blocks.push_back(make_obj<opaque::Buffer>(desc));
+            }));
             next = (blocks.size() - 1) * block_size;
         }
 

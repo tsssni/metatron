@@ -198,11 +198,7 @@ typedef uint32_t pnanovdb_grid_type_t;
 #define PNANOVDB_GRID_TYPE_GET(grid_typeIn, nameIn) pnanovdb_grid_type_constants[grid_typeIn].nameIn
 #elif defined(PNANOVDB_BUF_HLSL)
 #if defined(PNANOVDB_ADDRESS_32)
-#if defined(PNANOVDB_MTT)
 #define pnanovdb_buf_t Ptr<uint>
-#else
-#define pnanovdb_buf_t StructuredBuffer<uint>
-#endif
 uint pnanovdb_buf_read_uint32(pnanovdb_buf_t buf, uint byte_offset)
 {
     return buf[(byte_offset >> 2u)];
@@ -223,11 +219,7 @@ void pnanovdb_buf_write_uint64(pnanovdb_buf_t buf, uint byte_offset, uint2 value
     // NOP, by default no write in HLSL
 }
 #elif defined(PNANOVDB_ADDRESS_64)
-#if defined(PNANOVDB_MTT)
 #define pnanovdb_buf_t Ptr<uint>
-#else
-#define pnanovdb_buf_t StructuredBuffer<uint>
-#endif
 uint pnanovdb_buf_read_uint32(pnanovdb_buf_t buf, uint64_t byte_offset)
 {
     return buf[uint(byte_offset >> 2u)];

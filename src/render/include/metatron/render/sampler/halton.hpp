@@ -12,7 +12,7 @@ namespace mtt::sampler {
         auto generate_1d(ref<Context> ctx) const noexcept -> f32;
         auto generate_2d(ref<Context> ctx) const noexcept -> fv2;
         auto generate_pixel_2d(ref<Context> ctx) const noexcept -> fv2;
-    
+
     private:
         uv2 exponential;
         uv2 scale;

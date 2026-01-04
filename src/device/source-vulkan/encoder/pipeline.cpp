@@ -13,6 +13,8 @@ namespace mtt::encoder {
         };
     }
 
+    auto Pipeline_Encoder::submit() noexcept -> void {}
+
     auto Pipeline_Encoder::bind() noexcept -> void {
         auto cmd = this->cmd->impl->cmd.get();
         auto barriers = std::vector<vk::BufferMemoryBarrier2>(ppl->args.size());
@@ -47,8 +49,8 @@ namespace mtt::encoder {
         cmd.bindPipeline(vk::PipelineBindPoint::eCompute, ppl->impl->pipeline.get());
     }
 
-    auto Pipeline_Encoder::dispatch(uzv3 grid) noexcept -> void {
-        auto [x, y, z] = grid;
+    auto Pipeline_Encoder::dispatch(uv3 threads, uv3 group) noexcept -> void {
+        auto [x, y, z] = (threads + group - 1) / group;
         auto cmd = this->cmd->impl->cmd.get();
         cmd.dispatch(x, y, z);
     }

@@ -58,7 +58,7 @@ namespace mtt::math {
         let q0v = q0.data;
         let q1v = q1.data;
         var cos_theta = dot(q0v, q1v);
-        
+
         // use lerp with small angle
         if (cos_theta > T(0.9995))
             return {normalize(lerp(q0v, q1v, t))};
@@ -72,10 +72,10 @@ namespace mtt::math {
 
         let theta = angle(q0v, q1v_adj);
         let sin_theta = sin(theta);
-        
+
         let scale1 = sin((T(1) - t) * theta) / sin_theta;
         let scale2 = sin(t * theta) / sin_theta;
-        
+
         return {normalize(scale1 * q0v + scale2 * q1v_adj)};
     }
 

@@ -2,6 +2,7 @@
 #include <metatron/device/command/buffer.hpp>
 #include <metatron/device/command/timeline.hpp>
 #include <metatron/device/encoder/accel.hpp>
+#include <metatron/device/encoder/transfer.hpp>
 #include <metatron/device/opaque/accel.hpp>
 #include <metatron/core/stl/vector.hpp>
 #include <metatron/core/stl/thread.hpp>
@@ -58,21 +59,26 @@ namespace mtt::renderer {
             };
             instances.push_back(tlas);
         }
-        auto accel = make_obj<opaque::Acceleration>(
-        opaque::Acceleration::Descriptor{
+        auto accel = make_desc<opaque::Acceleration>({
             .primitives = std::move(primitives),
             .instances = std::move(instances),
         });
+        auto cmd = queue->allocate();
 
-        auto builder = queue->allocate();
-        auto encoder = encoder::Acceleration_Encoder{builder.get(), accel.get()};
-        encoder.build();
-        encoder.persist();
-        for (auto i = 0; i < scheduler.size(); ++i) {
-            builder->waits.push_back({uploads[i].get(), 1});
-        }
-        builder->signals = {{timeline, ++count}};
-        queue->submit(std::move(builder));
+        auto transfer = encoder::Transfer_Encoder{cmd.get()};
+        transfer.upload(*accel->instances);
+        if (accel->bboxes) transfer.upload(*accel->bboxes);
+        transfer.submit();
+
+        auto builder = encoder::Acceleration_Encoder{cmd.get(), accel.get()};
+        builder.build();
+        builder.persist();
+        builder.submit();
+
+        for (auto i = 0; i < scheduler.size(); ++i)
+            cmd->waits.push_back({uploads[i].get(), 1});
+        cmd->signals = {{timeline, ++count}};
+        queue->submit(std::move(cmd));
         return accel;
     }
 }

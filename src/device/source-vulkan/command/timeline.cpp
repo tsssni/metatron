@@ -1,7 +1,7 @@
 #include "timeline.hpp"
 
 namespace mtt::command {
-    Timeline::Timeline() noexcept {
+    Timeline::Timeline(bool shared) noexcept {
         auto& ctx = Context::instance();
         auto device = ctx.impl->device.get();
         auto info = vk::SemaphoreTypeCreateInfo{
