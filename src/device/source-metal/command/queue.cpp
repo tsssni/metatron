@@ -6,9 +6,7 @@
 namespace mtt::command {
     Queue::Queue(Type type) noexcept {
         auto& ctx = Context::instance().impl;
-        auto device = ctx->device.get();
-        impl->queue = device->newCommandQueue();
-        impl->queue->addResidencySet(ctx->residency.get());
+        impl->queue = ctx->queue->retain();
         auto size = stl::scheduler::instance().size();
         impl->cmds.resize(size);
     }
@@ -42,13 +40,13 @@ namespace mtt::command {
             picked->stages.clear();
             picked->waits.clear();
             picked->signals.clear();
-            picked->impl->cmd = impl->queue->commandBufferWithUnretainedReferences();
+            picked->impl->cmd = impl->queue->commandBuffer();
             return picked;
         } else {
             auto cmd = make_obj<Buffer>();
             cmd->type = type;
             cmd->blocks.cmd = cmd.get();
-            cmd->impl->cmd = impl->queue->commandBufferWithUnretainedReferences();
+            cmd->impl->cmd = impl->queue->commandBuffer();
             cmd->impl->fence = device->newFence();
             return cmd;
         }

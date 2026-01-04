@@ -217,7 +217,6 @@ namespace mtt::renderer {
                     {render_timeline.get(), ++render_count},
                     {release_timeline.get(), scheduled_count + 1},
                 };
-                render_queue->submit(std::move(render_cmd));
 
                 auto transfer_encoder = encoder::Transfer_Encoder{transfer_cmd.get()};
                 transfer_encoder.acquire(*image);
@@ -230,6 +229,8 @@ namespace mtt::renderer {
                     {network_timeline.get(), scheduled_count},
                 };
                 transfer_cmd->signals = {{shared_timeline.get(), scheduled_count + 1}};
+
+                render_queue->submit(std::move(render_cmd));
                 transfer_queue->submit(std::move(transfer_cmd));
                 ++scheduled_count;
             }

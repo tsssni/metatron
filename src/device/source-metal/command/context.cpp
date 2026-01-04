@@ -13,15 +13,17 @@ namespace mtt {
 namespace mtt::command {
     Context::Impl::Impl() noexcept {
         device = MTL::CreateSystemDefaultDevice();
+        queue = device->newCommandQueue();
+
+        auto resc = MTL::ResidencySetDescriptor::alloc()->init();
+        resc->setInitialCapacity(16);
+        MTT_MTL_GUARD(residency = device->newResidencySet(resc, &err));
+        queue->addResidencySet(residency.get());
 
         auto opt = stl::filesystem::hit("pipeline.bin");
         auto besc = MTL::BinaryArchiveDescriptor::alloc()->init();
         if (opt) besc->setUrl(NS::URL::fileURLWithPath(to_mtl(opt->string())));
         MTT_MTL_GUARD(archive = device->newBinaryArchive(besc, &err));
-
-        auto resc = MTL::ResidencySetDescriptor::alloc()->init();
-        resc->setInitialCapacity(16);
-        MTT_MTL_GUARD(residency = device->newResidencySet(resc, &err));
     }
 
     Context::Impl::~Impl() noexcept {
