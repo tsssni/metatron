@@ -5,7 +5,7 @@
 namespace mtt::command {
     struct Timeline final: stl::capsule<Timeline> {
         struct Impl;
-        Timeline() noexcept;
+        Timeline(bool shared = false) noexcept;
         auto wait(u64 count, u64 timeout = math::maxv<u64>) noexcept -> bool;
         auto signal(u64 count) noexcept -> void;
     };

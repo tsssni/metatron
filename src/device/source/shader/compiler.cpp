@@ -25,6 +25,7 @@ namespace mtt::shader {
         com<slang::IGlobalSession> global_session;
         com<slang::ISession> session;
         com<slang::IBlob> diagnostic;
+        bool globalized = false;
 
         auto guard(SlangResult result) {
             if (SLANG_SUCCEEDED(result)) return;
@@ -218,12 +219,12 @@ namespace mtt::shader {
 
             auto layout = Layout{};
             parse_var(reflection->getGlobalParamsVarLayout(), layout);
-            for (auto i = 0; i < layout.sets.size(); ++i) {
-                auto index = layout.sets.size() > 1 ? "-" + std::to_string(i) : "";
-                auto postfix = "." + layout.names[i] + ".json";
-                stl::json::store((out / path.stem()).concat(postfix), layout.sets[i]);
+            auto size = globalized ? 1 : layout.sets.size();
+            for (auto i = 0; i < size; ++i) {
+                auto postfix = (i == 0 ? path.stem().string() : layout.names[i]) + ".json";
+                stl::json::store(stl::path{out} / postfix, layout.sets[i]);
             }
-
+            globalized = true;
             return layout;
         }
 

@@ -7,8 +7,16 @@
 namespace mtt::encoder {
     Acceleration_Encoder::Acceleration_Encoder(
         mut<command::Buffer> cmd, mut<opaque::Acceleration> accel
-    ) noexcept: cmd(cmd), accel(accel) { impl->encoder = cmd->impl->cmd->accelerationStructureCommandEncoder(); }
-    auto Acceleration_Encoder::submit() noexcept -> void { impl->encoder->endEncoding(); }
+    ) noexcept: cmd(cmd), accel(accel) {
+        impl->encoder = cmd->impl->cmd->accelerationStructureCommandEncoder();
+        impl->encoder->waitForFence(cmd->impl->fence.get());
+    }
+
+    auto Acceleration_Encoder::submit() noexcept -> void {
+        impl->encoder->updateFence(cmd->impl->fence.get());
+        impl->encoder->endEncoding();
+    }
+
     auto Acceleration_Encoder::persist() noexcept -> void {}
 
     auto Acceleration_Encoder::build() noexcept -> void {

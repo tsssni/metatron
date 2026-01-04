@@ -1,8 +1,8 @@
 #include "transfer.hpp"
-#include "../command/buffer.hpp"
 #include "../opaque/buffer.hpp"
 #include "../opaque/image.hpp"
 #include "../opaque/grid.hpp"
+#include "../command/buffer.hpp"
 
 namespace mtt::encoder {
     using Buffer = opaque::Buffer;
@@ -11,8 +11,13 @@ namespace mtt::encoder {
 
     Transfer_Encoder::Transfer_Encoder(mut<command::Buffer> cmd) noexcept: cmd(cmd) {
         impl->encoder = cmd->impl->cmd->blitCommandEncoder();
+        impl->encoder->waitForFence(cmd->impl->fence.get());
     }
-    auto Transfer_Encoder::submit() noexcept -> void { impl->encoder->endEncoding(); }
+
+    auto Transfer_Encoder::submit() noexcept -> void {
+        impl->encoder->updateFence(cmd->impl->fence.get());
+        impl->encoder->endEncoding();
+    }
 
     auto Transfer_Encoder::upload(opaque::Buffer::View view) noexcept -> void {
         using State = Buffer::State;

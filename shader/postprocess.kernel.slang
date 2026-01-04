@@ -14,7 +14,7 @@ namespace mtt {
         let pixel = global_idx.xy;
         var size: uv2;
         constants.image.GetDimensions(size.x, size.y);
-        if (any(pixel != clamp(pixel, 0, size))) return;
+        if (any(pixel != clamp(pixel, 0, size - 1))) return;
         let film = constants.film.Load(pixel);
         constants.image.Store(pixel, film / max(film.w, math::epsilon));
     }

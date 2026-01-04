@@ -1,17 +1,21 @@
 #include "timeline.hpp"
+#include <metatron/core/stl/print.hpp>
 
 namespace mtt::command {
-    Timeline::Timeline() noexcept {
+    Timeline::Timeline(bool shared) noexcept {
         auto& ctx = Context::instance().impl;
         auto device = ctx->device.get();
-        impl->event = device->newSharedEvent();
+        if (shared) {
+            impl->shared = device->newSharedEvent();
+            impl->event = impl->shared->retain();
+        } else impl->event = device->newEvent();
     }
 
     auto Timeline::wait(u64 count, u64 timeout) noexcept -> bool {
-        return impl->event->waitUntilSignaledValue(count, timeout);
+        return impl->shared->waitUntilSignaledValue(count, timeout);
     }
 
     auto Timeline::signal(u64 count) noexcept -> void {
-        impl->event->setSignaledValue(count);
+        impl->shared->setSignaledValue(count);
     }
 }

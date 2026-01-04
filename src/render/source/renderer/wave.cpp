@@ -44,8 +44,8 @@ namespace mtt::renderer {
         auto render_timeline = make_obj<command::Timeline>();
         auto transfer_timeline = make_obj<command::Timeline>();
         auto release_timeline = make_obj<command::Timeline>();
-        auto copy_timeline = make_obj<command::Timeline>();
-        auto network_timeline = make_obj<command::Timeline>();
+        auto shared_timeline = make_obj<command::Timeline>(true);
+        auto network_timeline = make_obj<command::Timeline>(true);
         auto render_count = u64{0};
         auto scheduled_count = u64{0};
 
@@ -62,17 +62,15 @@ namespace mtt::renderer {
             .size = math::prod(desc.film->image.size),
         });
 
-        auto resources_args = make_desc<shader::Argument>({"trace.resources"});
-        auto textures_args = make_desc<shader::Argument>({"trace.textures"});
-        auto grids_args = make_desc<shader::Argument>({"trace.grids"});
-        auto trace_args = make_desc<shader::Argument>({"trace.constants"});
-        auto post_args = make_desc<shader::Argument>({"postprocess.constants"});
-        auto assemble = [&](std::string_view path, mut<shader::Argument> arg){
-            auto args = std::vector{arg, resources_args.get(), textures_args.get(), grids_args.get()};
-            return make_desc<shader::Pipeline>({path, args});
-        };
-        auto integrate = assemble("trace.wave", trace_args.get());
-        auto postprocess = assemble("postprocess.wave", post_args.get());
+        auto resources_args = make_desc<shader::Argument>({"resources"});
+        auto textures_args = make_desc<shader::Argument>({"textures"});
+        auto grids_args = make_desc<shader::Argument>({"grids"});
+        auto trace_args = make_desc<shader::Argument>({"trace"});
+        auto post_args = make_desc<shader::Argument>({"postprocess"});
+
+        auto integrate = make_desc<shader::Pipeline>({"trace.wave", {trace_args.get()
+        , resources_args.get(), textures_args.get(), grids_args.get()}});
+        auto postprocess = make_desc<shader::Pipeline>({"postprocess.wave", {post_args.get()}});
 
         auto textures_args_encoder = encoder::Argument_Encoder{render.get(), textures_args.get()};
         auto images_view = resources.images
@@ -137,20 +135,31 @@ namespace mtt::renderer {
 
         auto threads = uv3{film->width, film->height, 1};
         auto group = uv3{8, 8, 1};
-        scheduler.async_dispatch([&, recorded = remote ? 1 : render_count + 2]{
+        auto future = scheduler.async_dispatch([&]{
             auto range = uv2{0, 1};
-            auto stride = remote ? 1 : 2;
-            auto count = recorded;
+            auto count = 1;
             auto next = 1u;
+
             while (range[0] < spp) {
+                shared_timeline->wait(count);
                 if (remote) {
-                    copy_timeline->wait(count);
                     previewer.update(desc.film->image, {buffer->ptr, buffer->size});
                     network_timeline->signal(count);
-                } else render_timeline->wait(count);
-                count += stride; progress + (range[1] - range[0]);
+                }
+                ++count; progress + (range[1] - range[0]);
                 range = {range[1], range[1] + next};
                 next = math::min(next * 2, desc.film->stride);
+            }
+
+            if (!remote) {
+                auto cmd = render_queue->allocate();
+                auto transfer = encoder::Transfer_Encoder{cmd.get()};
+                transfer.copy(*buffer, *image);
+                transfer.submit();
+                cmd->waits = {{render_timeline.get(), render_count}};
+                cmd->signals = {{shared_timeline.get(), count}};
+                render_queue->submit(std::move(cmd));
+                shared_timeline->wait(count);
             }
         });
 
@@ -178,7 +187,10 @@ namespace mtt::renderer {
                 render_encoder.dispatch(threads, group);
                 render_encoder.submit();
                 cmd->waits = {{render_timeline.get(), render_count}};
-                cmd->signals = {{render_timeline.get(), ++render_count}};
+                cmd->signals = {
+                    {render_timeline.get(), ++render_count},
+                    {shared_timeline.get(), ++scheduled_count},
+                };
                 render_queue->submit(std::move(cmd));
             } else {
                 auto render_cmd = render_queue->allocate();
@@ -196,27 +208,28 @@ namespace mtt::renderer {
                 auto release_encoder = encoder::Transfer_Encoder{render_cmd.get()};
                 release_encoder.release(transfer_cmd.get(), *image);
                 release_encoder.submit();
+
                 render_cmd->waits = {
                     {render_timeline.get(), render_count},
-                    {copy_timeline.get(), scheduled_count},
+                    {shared_timeline.get(), scheduled_count},
                 };
                 render_cmd->signals = {
                     {render_timeline.get(), ++render_count},
                     {release_timeline.get(), scheduled_count + 1},
                 };
+                render_queue->submit(std::move(render_cmd));
 
                 auto transfer_encoder = encoder::Transfer_Encoder{transfer_cmd.get()};
                 transfer_encoder.acquire(*image);
                 transfer_encoder.copy(*buffer, *image);
                 transfer_encoder.release(render_cmd.get(), *image);
                 transfer_encoder.submit();
+
                 transfer_cmd->waits = {
                     {release_timeline.get(), scheduled_count + 1},
                     {network_timeline.get(), scheduled_count},
                 };
-                transfer_cmd->signals = {{copy_timeline.get(), scheduled_count + 1}};
-
-                render_queue->submit(std::move(render_cmd));
+                transfer_cmd->signals = {{shared_timeline.get(), scheduled_count + 1}};
                 transfer_queue->submit(std::move(transfer_cmd));
                 ++scheduled_count;
             }
@@ -226,17 +239,7 @@ namespace mtt::renderer {
             next = math::min(next * 2, desc.film->stride);
         }
 
-        if (!remote) {
-            auto transfer_cmd = render_queue->allocate();
-            auto transfer_encoder = encoder::Transfer_Encoder{transfer_cmd.get()};
-            transfer_encoder.copy(*buffer, *image);
-            transfer_encoder.submit();
-            transfer_cmd->waits = {{render_timeline.get(), render_count}};
-            transfer_cmd->signals = {{render_timeline.get(), ++render_count}};
-            render_queue->submit(std::move(transfer_cmd));
-        }
-        if (remote) network_timeline->wait(scheduled_count);
-        else render_timeline->wait(render_count);
+        future.wait();
         auto data = std::span<byte const>{buffer->ptr, buffer->size};
         desc.film->image.to_path(args.output, desc.film->color_space, data);
     }

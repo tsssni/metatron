@@ -75,9 +75,8 @@ namespace mtt::renderer {
         builder.persist();
         builder.submit();
 
-        for (auto i = 0; i < scheduler.size(); ++i) {
+        for (auto i = 0; i < scheduler.size(); ++i)
             cmd->waits.push_back({uploads[i].get(), 1});
-        }
         cmd->signals = {{timeline, ++count}};
         queue->submit(std::move(cmd));
         return accel;

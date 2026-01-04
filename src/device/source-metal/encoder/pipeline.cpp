@@ -6,8 +6,15 @@
 namespace mtt::encoder {
     Pipeline_Encoder::Pipeline_Encoder(
         mut<command::Buffer> cmd, mut<shader::Pipeline> ppl
-    ) noexcept: cmd(cmd), ppl(ppl) { impl->encoder = cmd->impl->cmd->computeCommandEncoder(); }
-    auto Pipeline_Encoder::submit() noexcept -> void { impl->encoder->endEncoding(); }
+    ) noexcept: cmd(cmd), ppl(ppl) {
+        impl->encoder = cmd->impl->cmd->computeCommandEncoder();
+        impl->encoder->waitForFence(cmd->impl->fence.get());
+    }
+
+    auto Pipeline_Encoder::submit() noexcept -> void {
+        impl->encoder->updateFence(cmd->impl->fence.get());
+        impl->encoder->endEncoding();
+    }
 
     auto Pipeline_Encoder::bind() noexcept -> void {
         impl->encoder->setComputePipelineState(ppl->impl->pipeline.get());

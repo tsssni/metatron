@@ -4,6 +4,7 @@
 
 namespace mtt::command {
     struct Timeline::Impl final {
-        mtl<MTL::SharedEvent> event;
+        mtl<MTL::Event> event;
+        mtl<MTL::SharedEvent> shared;
     };
 }

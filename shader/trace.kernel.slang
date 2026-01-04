@@ -27,7 +27,7 @@ namespace mtt {
         let film = cb.film.get();
         var size: uv2;
         cb.image.GetDimensions(size.x, size.y);
-        if (any(pixel != clamp(pixel, 0, size))) return;
+        if (any(pixel != clamp(pixel, 0, size - 1))) return;
         bsdf::fresnel_reflectance_table = cb.fresnel;
 
         for (var n = cb.range.x; n < cb.range.y; ++n) {

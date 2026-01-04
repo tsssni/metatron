@@ -8,6 +8,7 @@ namespace mtt::command {
         auto& ctx = Context::instance().impl;
         auto device = ctx->device.get();
         impl->queue = device->newCommandQueue();
+        impl->queue->addResidencySet(ctx->residency.get());
         auto size = stl::scheduler::instance().size();
         impl->cmds.resize(size);
     }
@@ -22,9 +23,7 @@ namespace mtt::command {
         auto temp = std::deque<obj<Buffer>>();
         auto picked = obj<Buffer>{};
         while (!cmds.empty()) {
-            auto finished = true;
-            for (auto [timeline, count]: cmds.front()->signals)
-                finished &= timeline->wait(count, 0);
+            auto finished = cmds.front()->impl->cmd->status() == MTL::CommandBufferStatusCompleted;
             auto front = std::move(cmds.front());
             cmds.pop_front();
             if (finished) {
@@ -39,22 +38,20 @@ namespace mtt::command {
         }
 
         if (picked) {
-            picked->impl->cmd = impl->queue->commandBufferWithUnretainedReferences();
-            picked->impl->cmd->useResidencySet(ctx->residency.get());
             picked->blocks.clear();
             picked->stages.clear();
             picked->waits.clear();
             picked->signals.clear();
+            picked->impl->cmd = impl->queue->commandBufferWithUnretainedReferences();
             return picked;
         } else {
             auto cmd = make_obj<Buffer>();
             cmd->type = type;
             cmd->blocks.cmd = cmd.get();
             cmd->impl->cmd = impl->queue->commandBufferWithUnretainedReferences();
-            cmd->impl->cmd->useResidencySet(ctx->residency.get());
+            cmd->impl->fence = device->newFence();
             return cmd;
         }
-        return make_obj<Buffer>();
     }
 
     auto Queue::submit(rref<obj<Buffer>> cmd) noexcept -> void {
