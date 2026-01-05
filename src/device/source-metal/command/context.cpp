@@ -13,12 +13,10 @@ namespace mtt {
 namespace mtt::command {
     Context::Impl::Impl() noexcept {
         device = MTL::CreateSystemDefaultDevice();
-        queue = device->newCommandQueue();
 
         auto resc = MTL::ResidencySetDescriptor::alloc()->init();
         resc->setInitialCapacity(16);
         MTT_MTL_GUARD(residency = device->newResidencySet(resc, &err));
-        queue->addResidencySet(residency.get());
 
         auto opt = stl::filesystem::hit("pipeline.bin");
         auto besc = MTL::BinaryArchiveDescriptor::alloc()->init();

@@ -63,7 +63,11 @@ namespace mtt::renderer {
             .primitives = std::move(primitives),
             .instances = std::move(instances),
         });
-        auto cmd = queue->allocate();
+
+        auto waits = command::Pairs(scheduler.size());
+        for (auto i = 0; i < scheduler.size(); ++i)
+            waits[i] = {uploads[i].get(), 1};
+        auto cmd = queue->allocate(waits);
 
         auto transfer = encoder::Transfer_Encoder{cmd.get()};
         transfer.upload(*accel->instances);
@@ -74,11 +78,7 @@ namespace mtt::renderer {
         builder.build();
         builder.persist();
         builder.submit();
-
-        for (auto i = 0; i < scheduler.size(); ++i)
-            cmd->waits.push_back({uploads[i].get(), 1});
-        cmd->signals = {{timeline, ++count}};
-        queue->submit(std::move(cmd));
+        queue->submit(std::move(cmd), {{timeline, ++count}});
         return accel;
     }
 }

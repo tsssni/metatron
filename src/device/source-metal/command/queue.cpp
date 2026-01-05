@@ -6,13 +6,14 @@
 namespace mtt::command {
     Queue::Queue(Type type) noexcept {
         auto& ctx = Context::instance().impl;
-        impl->queue = ctx->queue->retain();
+        impl->queue = ctx->device->newCommandQueue();
+        impl->queue->addResidencySet(ctx->residency.get());
         auto size = stl::scheduler::instance().size();
         impl->cmds.resize(size);
     }
     Queue::~Queue() noexcept {}
 
-    auto Queue::allocate() noexcept -> obj<Buffer> {
+    auto Queue::allocate(cref<Pairs> waits) noexcept -> obj<Buffer> {
         auto& ctx = Context::instance().impl;
         auto device = ctx->device.get();
         auto idx = stl::scheduler::index();
@@ -34,28 +35,29 @@ namespace mtt::command {
             cmds.push_back(std::move(temp.front()));
             temp.pop_front();
         }
+        auto allocated = impl->queue->commandBuffer();
+        for (auto [timeline, count]: waits)
+            allocated->encodeWait(timeline->impl->event.get(), count);
 
         if (picked) {
             picked->blocks.clear();
             picked->stages.clear();
             picked->waits.clear();
             picked->signals.clear();
-            picked->impl->cmd = impl->queue->commandBuffer();
+            picked->impl->cmd = allocated;
             return picked;
         } else {
             auto cmd = make_obj<Buffer>();
             cmd->type = type;
             cmd->blocks.cmd = cmd.get();
-            cmd->impl->cmd = impl->queue->commandBuffer();
+            cmd->impl->cmd = allocated;
             cmd->impl->fence = device->newFence();
             return cmd;
         }
     }
 
-    auto Queue::submit(rref<obj<Buffer>> cmd) noexcept -> void {
-        for (auto [timeline, count]: cmd->waits)
-            cmd->impl->cmd->encodeWait(timeline->impl->event.get(), count);
-        for (auto [timeline, count]: cmd->signals)
+    auto Queue::submit(rref<obj<Buffer>> cmd, cref<Pairs> signals) noexcept -> void {
+        for (auto [timeline, count]: signals)
             cmd->impl->cmd->encodeSignalEvent(timeline->impl->event.get(), count);
         cmd->impl->cmd->commit();
         auto& cmds = impl->cmds[stl::scheduler::index()];

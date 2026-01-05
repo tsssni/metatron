@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/device/command/timeline.hpp>
 #include <metatron/core/stl/capsule.hpp>
 #include <metatron/core/stl/singleton.hpp>
 #include <queue>
@@ -17,7 +18,7 @@ namespace mtt::command {
         struct Impl;
         Queue(Type type) noexcept;
         ~Queue() noexcept;
-        auto allocate() noexcept -> obj<Buffer>;
-        auto submit(rref<obj<Buffer>> cmd) noexcept -> void;
+        auto allocate(cref<Pairs> waits) noexcept -> obj<Buffer>;
+        auto submit(rref<obj<Buffer>> cmd, cref<Pairs> signals) noexcept -> void;
     };
 }

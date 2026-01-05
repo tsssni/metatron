@@ -35,7 +35,7 @@ namespace mtt::command {
         guard(impl->queue.waitIdle());
     }
 
-    auto Queue::allocate() noexcept -> obj<Buffer> {
+    auto Queue::allocate(cref<Pairs> pairs) noexcept -> obj<Buffer> {
         auto& ctx = Context::instance().impl;
         auto device = ctx->device.get();
         auto idx = stl::scheduler::index();
@@ -65,6 +65,7 @@ namespace mtt::command {
         if (picked) {
             guard(picked->impl->cmd->reset());
             guard(picked->impl->cmd->begin(&begin));
+            picked->waits = pairs;
             picked->blocks.clear();
             picked->stages.clear();
             picked->waits.clear();
@@ -73,6 +74,7 @@ namespace mtt::command {
         } else {
             auto cmd = make_obj<Buffer>();
             cmd->type = type;
+            cmd->waits = pairs;
             cmd->blocks.cmd = cmd.get();
             cmd->impl->family = impl->families[u32(type)].idx;
             cmd->impl->cmd = std::move(guard(device.allocateCommandBuffersUnique({
@@ -85,12 +87,10 @@ namespace mtt::command {
         }
     }
 
-    auto Queue::submit(rref<obj<Buffer>> cmd) noexcept -> void {
+    auto Queue::submit(rref<obj<Buffer>> cmd, cref<Pairs> pairs) noexcept -> void {
+        cmd->signals = pairs;
         guard(cmd->impl->cmd->end());
-        auto collect = [](
-            cref<std::vector<Buffer::Timeline_Count>> semaphores,
-            vk::PipelineStageFlags2 flags
-        ) {
+        auto collect = [](cref<Pairs> semaphores, vk::PipelineStageFlags2 flags) {
             auto collected = std::vector<vk::SemaphoreSubmitInfo>(semaphores.size());
             for (auto i = 0; i < collected.size(); ++i) {
                 auto [timeline, count] = semaphores[i];
@@ -102,11 +102,13 @@ namespace mtt::command {
             };
             return collected;
         };
+
         auto waits = collect(cmd->waits, vk::PipelineStageFlagBits2::eTopOfPipe);
         auto signals = collect(cmd->signals, vk::PipelineStageFlagBits2::eBottomOfPipe);
         auto submit = vk::CommandBufferSubmitInfo{
             .commandBuffer = cmd->impl->cmd.get(),
         };
+
         auto info = vk::SubmitInfo2{
             .waitSemaphoreInfoCount = u32(waits.size()),
             .pWaitSemaphoreInfos = waits.data(),
@@ -115,6 +117,7 @@ namespace mtt::command {
             .signalSemaphoreInfoCount = u32(signals.size()),
             .pSignalSemaphoreInfos = signals.data(),
         };
+
         while (impl->flag.test_and_set(std::memory_order::acquire));
         guard(impl->queue.submit2(info));
         impl->flag.clear(std::memory_order::release);

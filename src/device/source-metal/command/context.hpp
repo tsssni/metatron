@@ -32,7 +32,6 @@ namespace mtt {
 namespace mtt::command {
     struct Context::Impl final {
         mtl<MTL::Device> device;
-        mtl<MTL::CommandQueue> queue;
         mtl<MTL::ResidencySet> residency;
         mtl<MTL::BinaryArchive> archive;
         Impl() noexcept;

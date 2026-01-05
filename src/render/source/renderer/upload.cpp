@@ -44,7 +44,7 @@ namespace mtt::renderer {
             ic = std::make_shared<std::atomic<u32>>(0),
             gc = std::make_shared<std::atomic<u32>>(0)
         ](auto) {
-            auto cmd = queue->allocate();
+            auto cmd = queue->allocate({});
             auto transfer = encoder::Transfer_Encoder{cmd.get()};
 
             auto i = 0;
@@ -155,8 +155,7 @@ namespace mtt::renderer {
             transfer.submit();
 
             timelines[scheduler.index()] = make_obj<command::Timeline>();
-            cmd->signals = {{timelines[scheduler.index()].get(), 1}};
-            queue->submit(std::move(cmd));
+            queue->submit(std::move(cmd), {{timelines[scheduler.index()].get(), 1}});
         });
 
         return Resources{

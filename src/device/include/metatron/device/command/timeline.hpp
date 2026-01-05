@@ -9,4 +9,7 @@ namespace mtt::command {
         auto wait(u64 count, u64 timeout = math::maxv<u64>) noexcept -> bool;
         auto signal(u64 count) noexcept -> void;
     };
+
+    using Pair = std::tuple<mut<Timeline>, u64>;
+    using Pairs = std::vector<Pair>;
 }

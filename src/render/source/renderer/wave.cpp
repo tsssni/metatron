@@ -42,8 +42,6 @@ namespace mtt::renderer {
 
         auto upload_timelines = std::vector<obj<command::Timeline>>(scheduler.size());
         auto render_timeline = make_obj<command::Timeline>();
-        auto transfer_timeline = make_obj<command::Timeline>();
-        auto release_timeline = make_obj<command::Timeline>();
         auto shared_timeline = make_obj<command::Timeline>(true);
         auto network_timeline = make_obj<command::Timeline>(true);
         auto render_count = u64{0};
@@ -51,7 +49,7 @@ namespace mtt::renderer {
 
         auto resources = upload(render_queue.get(), upload_timelines);
         auto accel = build(render_queue.get(), upload_timelines, render_timeline.get(), render_count);
-        auto render = render_queue->allocate();
+        auto render = render_queue->allocate({{render_timeline.get(), render_count}});
 
         auto sampler = make_desc<opaque::Sampler>({opaque::Sampler::Mode::repeat});
         auto film = make_desc<opaque::Image>({&desc.film->image, opaque::Image::State::storable, command::Type::render});
@@ -128,10 +126,7 @@ namespace mtt::renderer {
         resources_args_encoder.acquire("resources", global);
         resources_args_encoder.upload();
         resources_args_encoder.submit();
-
-        render->waits = {{render_timeline.get(), render_count}};
-        render->signals = {{render_timeline.get(), ++render_count}};
-        render_queue->submit(std::move(render));
+        render_queue->submit(std::move(render), {{render_timeline.get(), ++render_count}});
 
         auto threads = uv3{film->width, film->height, 1};
         auto group = uv3{8, 8, 1};
@@ -152,20 +147,17 @@ namespace mtt::renderer {
             }
 
             if (!remote) {
-                auto cmd = render_queue->allocate();
+                auto cmd = render_queue->allocate({{render_timeline.get(), render_count}});
                 auto transfer = encoder::Transfer_Encoder{cmd.get()};
                 transfer.copy(*buffer, *image);
                 transfer.submit();
-                cmd->waits = {{render_timeline.get(), render_count}};
-                cmd->signals = {{shared_timeline.get(), count}};
-                render_queue->submit(std::move(cmd));
+                render_queue->submit(std::move(cmd), {{shared_timeline.get(), count}});
                 shared_timeline->wait(count);
             }
         });
 
         while (range[0] < spp) {
-            auto cmd = render_queue->allocate();
-
+            auto cmd = render_queue->allocate({{render_timeline.get(), render_count}});
             auto args_encoder = encoder::Argument_Encoder{cmd.get(), trace_args.get()};
             entry.range = {range[0], range[1]};
             args_encoder.acquire("constants", entry);
@@ -175,26 +167,27 @@ namespace mtt::renderer {
             render_encoder.bind();
             render_encoder.dispatch(threads, group);
             render_encoder.submit();
-
-            cmd->waits = {{render_timeline.get(), render_count}};
-            cmd->signals = {{render_timeline.get(), ++render_count}};
-            render_queue->submit(std::move(cmd));
+            render_queue->submit(std::move(cmd), {{render_timeline.get(), ++render_count}});
 
             if (!remote) {
-                auto cmd = render_queue->allocate();
+                auto cmd = render_queue->allocate({{render_timeline.get(), render_count}});
                 auto render_encoder = encoder::Pipeline_Encoder{cmd.get(), postprocess.get()};
                 render_encoder.bind();
                 render_encoder.dispatch(threads, group);
                 render_encoder.submit();
-                cmd->waits = {{render_timeline.get(), render_count}};
-                cmd->signals = {
+                render_queue->submit(std::move(cmd), {
                     {render_timeline.get(), ++render_count},
                     {shared_timeline.get(), ++scheduled_count},
-                };
-                render_queue->submit(std::move(cmd));
+                });
             } else {
-                auto render_cmd = render_queue->allocate();
-                auto transfer_cmd = transfer_queue->allocate();
+                auto render_cmd = render_queue->allocate({
+                    {render_timeline.get(), render_count},
+                    {shared_timeline.get(), scheduled_count},
+                });
+                auto transfer_cmd = transfer_queue->allocate({
+                    {render_timeline.get(), render_count + 1},
+                    {network_timeline.get(), scheduled_count},
+                });
 
                 auto args_encoder = encoder::Argument_Encoder{render_cmd.get(), post_args.get()};
                 args_encoder.acquire("constants.image", *image);
@@ -209,30 +202,14 @@ namespace mtt::renderer {
                 release_encoder.release(transfer_cmd.get(), *image);
                 release_encoder.submit();
 
-                render_cmd->waits = {
-                    {render_timeline.get(), render_count},
-                    {shared_timeline.get(), scheduled_count},
-                };
-                render_cmd->signals = {
-                    {render_timeline.get(), ++render_count},
-                    {release_timeline.get(), scheduled_count + 1},
-                };
-
                 auto transfer_encoder = encoder::Transfer_Encoder{transfer_cmd.get()};
                 transfer_encoder.acquire(*image);
                 transfer_encoder.copy(*buffer, *image);
                 transfer_encoder.release(render_cmd.get(), *image);
                 transfer_encoder.submit();
 
-                transfer_cmd->waits = {
-                    {release_timeline.get(), scheduled_count + 1},
-                    {network_timeline.get(), scheduled_count},
-                };
-                transfer_cmd->signals = {{shared_timeline.get(), scheduled_count + 1}};
-
-                render_queue->submit(std::move(render_cmd));
-                transfer_queue->submit(std::move(transfer_cmd));
-                ++scheduled_count;
+                render_queue->submit(std::move(render_cmd), {{render_timeline.get(), ++render_count}});
+                transfer_queue->submit(std::move(transfer_cmd), {{shared_timeline.get(), ++scheduled_count}});
             }
 
             range[0] = range[1];
