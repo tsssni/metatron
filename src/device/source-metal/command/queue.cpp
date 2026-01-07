@@ -13,7 +13,7 @@ namespace mtt::command {
     }
     Queue::~Queue() noexcept {}
 
-    auto Queue::allocate(cref<Pairs> waits) noexcept -> obj<Buffer> {
+    auto Queue::allocate(rref<Pairs> waits) noexcept -> obj<Buffer> {
         auto& ctx = Context::instance().impl;
         auto device = ctx->device.get();
         auto idx = stl::scheduler::index();
@@ -56,7 +56,7 @@ namespace mtt::command {
         }
     }
 
-    auto Queue::submit(rref<obj<Buffer>> cmd, cref<Pairs> signals) noexcept -> void {
+    auto Queue::submit(rref<obj<Buffer>> cmd, rref<Pairs> signals) noexcept -> void {
         for (auto [timeline, count]: signals)
             cmd->impl->cmd->encodeSignalEvent(timeline->impl->event.get(), count);
         cmd->impl->cmd->commit();

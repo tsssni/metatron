@@ -1,5 +1,6 @@
 #pragma once
 #include "../command/context.hpp"
+#include "../command/queue.hpp"
 #include <metatron/device/opaque/buffer.hpp>
 
 namespace mtt::opaque {
@@ -19,14 +20,13 @@ namespace mtt::opaque {
 
         template<typename T>
         auto update(cref<Barrier> desc) noexcept -> T {
-            auto transfer = desc.family != math::maxv<u32>;
             auto barrier = T{
                 .srcStageMask = stage,
                 .srcAccessMask = access,
                 .dstStageMask = desc.stage,
                 .dstAccessMask = desc.access,
                 .srcQueueFamilyIndex = family,
-                .dstQueueFamilyIndex = transfer ? desc.family : family,
+                .dstQueueFamilyIndex = family,
             };
             if constexpr (std::is_same_v<T, vk::ImageMemoryBarrier2>) {
                 barrier.oldLayout = layout;
@@ -35,7 +35,26 @@ namespace mtt::opaque {
             stage = desc.stage;
             access = desc.access;
             layout = desc.layout;
-            family = transfer ? desc.family : family;
+            return barrier;
+        }
+
+        template<typename T>
+        auto update(mut<command::Queue> dst, mut<command::Queue> src) noexcept -> T {
+            auto barrier = T{
+                .srcStageMask = stage,
+                .srcAccessMask = access,
+                .dstStageMask = vk::PipelineStageFlagBits2::eAllCommands,
+                .dstAccessMask = vk::AccessFlagBits2::eNone,
+                .srcQueueFamilyIndex = command::Queue::Impl::families[u32(src->type)].idx,
+                .dstQueueFamilyIndex = command::Queue::Impl::families[u32(dst->type)].idx,
+            };
+            if constexpr (std::is_same_v<T, vk::ImageMemoryBarrier2>) {
+                barrier.oldLayout = layout;
+                barrier.newLayout = layout;
+            }
+            stage = vk::PipelineStageFlagBits2::eAllCommands;
+            access = vk::AccessFlagBits2::eNone;
+            family = command::Queue::Impl::families[u32(dst->type)].idx;
             return barrier;
         }
     };
@@ -50,5 +69,6 @@ namespace mtt::opaque {
 
         auto static search(vk::MemoryPropertyFlags flags, u32 heap, u32 type) -> u32;
         auto update(cref<Barrier> desc) noexcept -> vk::BufferMemoryBarrier2;
+        auto update(mut<command::Queue> dst, mut<command::Queue> src) noexcept -> vk::BufferMemoryBarrier2;
     };
 }

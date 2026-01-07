@@ -88,15 +88,15 @@ namespace mtt::renderer {
         grids_args_encoder.submit();
 
         auto integrate_args_encoder = encoder::Argument_Encoder{render.get(), trace_args.get()};
-        integrate_args_encoder.bind("constants.image", *film);
         integrate_args_encoder.acquire("constants.image", *film);
+        integrate_args_encoder.bind("constants.image", *film);
         integrate_args_encoder.upload();
         integrate_args_encoder.submit();
 
         auto postprocess_args_encoder = encoder::Argument_Encoder{render.get(), post_args.get()};
+        postprocess_args_encoder.acquire("constants.image", *image);
         postprocess_args_encoder.bind("constants.film", *film);
         postprocess_args_encoder.bind("constants.image", *image);
-        postprocess_args_encoder.acquire("constants.image", *image);
         postprocess_args_encoder.upload();
         postprocess_args_encoder.submit();
 
@@ -151,8 +151,7 @@ namespace mtt::renderer {
                 auto transfer = encoder::Transfer_Encoder{cmd.get()};
                 transfer.copy(*buffer, *image);
                 transfer.submit();
-                render_queue->submit(std::move(cmd), {{shared_timeline.get(), count}});
-                shared_timeline->wait(count);
+                render_queue->submit(std::move(cmd), {{render_timeline.get(), ++render_count}});
             }
         });
 
@@ -189,6 +188,12 @@ namespace mtt::renderer {
                     {network_timeline.get(), scheduled_count},
                 });
 
+                if (scheduled_count > 0) {
+                    auto acquire_encoder = encoder::Transfer_Encoder{render_cmd.get()};
+                    acquire_encoder.transfer(*image, render_queue.get(), transfer_queue.get());
+                    acquire_encoder.submit();
+                }
+
                 auto args_encoder = encoder::Argument_Encoder{render_cmd.get(), post_args.get()};
                 args_encoder.acquire("constants.image", *image);
                 args_encoder.submit();
@@ -199,13 +204,13 @@ namespace mtt::renderer {
                 render_encoder.submit();
 
                 auto release_encoder = encoder::Transfer_Encoder{render_cmd.get()};
-                release_encoder.release(transfer_cmd.get(), *image);
+                release_encoder.transfer(*image, transfer_queue.get(), render_queue.get());
                 release_encoder.submit();
 
                 auto transfer_encoder = encoder::Transfer_Encoder{transfer_cmd.get()};
-                transfer_encoder.acquire(*image);
+                transfer_encoder.transfer(*image, transfer_queue.get(), render_queue.get());
                 transfer_encoder.copy(*buffer, *image);
-                transfer_encoder.release(render_cmd.get(), *image);
+                transfer_encoder.transfer(*image, render_queue.get(), transfer_queue.get());
                 transfer_encoder.submit();
 
                 render_queue->submit(std::move(render_cmd), {{render_timeline.get(), ++render_count}});

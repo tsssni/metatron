@@ -64,7 +64,8 @@ namespace mtt::command {
             vk::PhysicalDeviceDescriptorBufferFeaturesEXT,
             vk::PhysicalDeviceDescriptorIndexingFeatures,
             vk::PhysicalDeviceAccelerationStructureFeaturesKHR,
-            vk::PhysicalDeviceRayQueryFeaturesKHR
+            vk::PhysicalDeviceRayQueryFeaturesKHR,
+            vk::PhysicalDeviceUnifiedImageLayoutsFeaturesKHR
         >{};
         auto& features = chain.get<vk::PhysicalDeviceFeatures2>();
         features.features.shaderInt16 = true;
@@ -82,8 +83,8 @@ namespace mtt::command {
         sync.synchronization2 = true;
         auto& address = chain.get<vk::PhysicalDeviceBufferDeviceAddressFeatures>();
         address.bufferDeviceAddress = true;
-        auto& layout = chain.get<vk::PhysicalDeviceScalarBlockLayoutFeatures>();
-        layout.scalarBlockLayout = true;
+        auto& scalar = chain.get<vk::PhysicalDeviceScalarBlockLayoutFeatures>();
+        scalar.scalarBlockLayout = true;
         auto& uniform = chain.get<vk::PhysicalDeviceUniformBufferStandardLayoutFeatures>();
         uniform.uniformBufferStandardLayout = true;
         auto& buffer = chain.get<vk::PhysicalDeviceDescriptorBufferFeaturesEXT>();
@@ -124,10 +125,13 @@ namespace mtt::command {
                 "VK_KHR_acceleration_structure",
                 "VK_KHR_ray_query",
                 "VK_KHR_maintenance6",
+                "VK_KHR_maintenance8",
             },
         });
 
-        for (auto&& physical_device: guard(instance->enumeratePhysicalDevices())) {
+        auto physical_devices = guard(instance->enumeratePhysicalDevices());
+        for (auto i = 0; i < physical_devices.size(); ++i) {
+            auto& physical_device = physical_devices[i];
             auto families = physical_device.getQueueFamilyProperties2();
             auto full = Family{};
             auto render = Family{};
@@ -211,6 +215,7 @@ namespace mtt::command {
                 memory_props = physical_device.getMemoryProperties2();
                 descriptor_buffer_props = props.get<vk::PhysicalDeviceDescriptorBufferPropertiesEXT>();
                 accel_props = props.get<vk::PhysicalDeviceAccelerationStructurePropertiesKHR>();
+                device_idx = i;
                 break;
             }
         }

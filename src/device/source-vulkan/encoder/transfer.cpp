@@ -34,7 +34,6 @@ namespace mtt::encoder {
         };
     }
 
-
     auto Transfer_Encoder::submit() noexcept -> void {}
 
     auto Transfer_Encoder::upload(Buffer::View view) noexcept -> void {
@@ -140,11 +139,9 @@ namespace mtt::encoder {
     auto Transfer_Encoder::persist(opaque::Grid::View view) noexcept -> void { impl->persist(this, view); }
 
     template<typename T>
-    auto Transfer_Encoder::Impl::transfer(mut<Transfer_Encoder> encoder, u32 family, T view) noexcept -> void {
+    auto Transfer_Encoder::Impl::transfer(mut<Transfer_Encoder> encoder, T view, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void {
         auto cmd = encoder->cmd->impl->cmd.get();
-        auto transfer = view.ptr->impl->barrier;
-        transfer.family = family;
-        auto barrier = view.ptr->impl->update(transfer);
+        auto barrier = view.ptr->impl->update(dst, src);
         if constexpr (std::is_same_v<T, Buffer::View>)
             cmd.pipelineBarrier2({
                 .bufferMemoryBarrierCount = 1,
@@ -155,14 +152,11 @@ namespace mtt::encoder {
                 .imageMemoryBarrierCount = 1,
                 .pImageMemoryBarriers = &barrier,
             });
-    };
+    }
 
-    auto Transfer_Encoder::acquire(opaque::Buffer::View buffer) noexcept -> void { impl->transfer(this, cmd->impl->family, buffer); }
-    auto Transfer_Encoder::acquire(opaque::Image::View image) noexcept -> void { impl->transfer(this, cmd->impl->family, image); }
-    auto Transfer_Encoder::acquire(opaque::Grid::View grid) noexcept -> void { impl->transfer(this, cmd->impl->family, grid); }
-    auto Transfer_Encoder::release(mut<command::Buffer> dst, opaque::Buffer::View buffer) noexcept -> void { impl->transfer(this, dst->impl->family, buffer); }
-    auto Transfer_Encoder::release(mut<command::Buffer> dst, opaque::Image::View image) noexcept -> void { impl->transfer(this, dst->impl->family, image); }
-    auto Transfer_Encoder::release(mut<command::Buffer> dst, opaque::Grid::View grid) noexcept -> void { impl->transfer(this, dst->impl->family, grid); }
+    auto Transfer_Encoder::transfer(opaque::Buffer::View buffer, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void { impl->transfer(this, buffer, dst, src); }
+    auto Transfer_Encoder::transfer(opaque::Image::View image, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void { impl->transfer(this, image, dst, src); }
+    auto Transfer_Encoder::transfer(opaque::Grid::View grid, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void { impl->transfer(this, grid, dst, src); }
 
     auto Transfer_Encoder::copy(Buffer::View dst, Buffer::View src) noexcept -> void {
         auto cmd = this->cmd->impl->cmd.get();

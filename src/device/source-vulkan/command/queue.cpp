@@ -35,7 +35,7 @@ namespace mtt::command {
         guard(impl->queue.waitIdle());
     }
 
-    auto Queue::allocate(cref<Pairs> pairs) noexcept -> obj<Buffer> {
+    auto Queue::allocate(rref<Pairs> pairs) noexcept -> obj<Buffer> {
         auto& ctx = Context::instance().impl;
         auto device = ctx->device.get();
         auto idx = stl::scheduler::index();
@@ -44,10 +44,11 @@ namespace mtt::command {
 
         auto temp = std::deque<obj<Buffer>>();
         auto picked = obj<Buffer>{};
+        auto timeout = impl->cmds.size() < 8 ? 0 : math::maxv<u64>;
         while (!cmds.empty()) {
             auto finished = true;
             for (auto [timeline, count]: cmds.front()->signals)
-                finished &= timeline->wait(count, 0);
+                finished &= timeline->wait(count, timeout);
             auto front = std::move(cmds.front());
             cmds.pop_front();
             if (finished) {
@@ -60,21 +61,19 @@ namespace mtt::command {
             cmds.push_back(std::move(temp.front()));
             temp.pop_front();
         }
-
         auto begin = vk::CommandBufferBeginInfo{};
         if (picked) {
             guard(picked->impl->cmd->reset());
             guard(picked->impl->cmd->begin(&begin));
-            picked->waits = pairs;
+            picked->waits = std::move(pairs);
             picked->blocks.clear();
             picked->stages.clear();
-            picked->waits.clear();
             picked->signals.clear();
             return picked;
         } else {
             auto cmd = make_obj<Buffer>();
             cmd->type = type;
-            cmd->waits = pairs;
+            cmd->waits = std::move(pairs);
             cmd->blocks.cmd = cmd.get();
             cmd->impl->family = impl->families[u32(type)].idx;
             cmd->impl->cmd = std::move(guard(device.allocateCommandBuffersUnique({
@@ -87,10 +86,11 @@ namespace mtt::command {
         }
     }
 
-    auto Queue::submit(rref<obj<Buffer>> cmd, cref<Pairs> pairs) noexcept -> void {
+    auto Queue::submit(rref<obj<Buffer>> cmd, rref<Pairs> pairs) noexcept -> void {
         cmd->signals = pairs;
         guard(cmd->impl->cmd->end());
         auto collect = [](cref<Pairs> semaphores, vk::PipelineStageFlags2 flags) {
+            auto& ctx = Context::instance().impl;
             auto collected = std::vector<vk::SemaphoreSubmitInfo>(semaphores.size());
             for (auto i = 0; i < collected.size(); ++i) {
                 auto [timeline, count] = semaphores[i];
@@ -98,6 +98,7 @@ namespace mtt::command {
                     .semaphore = timeline->impl->semaphore.get(),
                     .value = count,
                     .stageMask = flags,
+                    .deviceIndex = ctx->device_idx,
                 };
             };
             return collected;

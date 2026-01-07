@@ -35,6 +35,14 @@ namespace mtt::opaque {
         return barrier;
     }
 
+    auto Buffer::Impl::update(mut<command::Queue> dst, mut<command::Queue> src) noexcept -> vk::BufferMemoryBarrier2 {
+        auto barrier = this->barrier.update<vk::BufferMemoryBarrier2>(dst, src);
+        barrier.buffer = device_buffer.get();
+        barrier.offset = 0;
+        barrier.size = vk::WholeSize;
+        return barrier;
+    }
+
     Buffer::Buffer(cref<Descriptor> desc) noexcept:
     size(desc.size),
     state(desc.state) {

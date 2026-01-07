@@ -16,5 +16,6 @@ namespace mtt::opaque {
 
         auto format(cref<muldim::Image> image) noexcept -> vk::Format;
         auto update(cref<Barrier> desc) noexcept -> vk::ImageMemoryBarrier2;
+        auto update(mut<command::Queue> dst, mut<command::Queue> src) noexcept -> vk::ImageMemoryBarrier2;
     };
 }

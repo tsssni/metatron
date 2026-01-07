@@ -51,6 +51,19 @@ namespace mtt::opaque {
         return barrier;
     }
 
+    auto Grid::Impl::update(mut<command::Queue> dst, mut<command::Queue> src) noexcept -> vk::ImageMemoryBarrier2 {
+        auto barrier = this->barrier.update<vk::ImageMemoryBarrier2>(dst, src);
+        barrier.image = image.get();
+        barrier.subresourceRange = vk::ImageSubresourceRange{
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        };
+        return barrier;
+    }
+
     Grid::Grid(cref<Descriptor> desc) noexcept:
     state(desc.state) {
         impl->barrier.family = command::Queue::Impl::families[u32(desc.type)].idx;

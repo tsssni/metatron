@@ -11,7 +11,7 @@ namespace mtt::encoder {
         template<typename T>
         auto persist(mut<Transfer_Encoder> encoder, T view) noexcept -> void;
         template<typename T>
-        auto transfer(mut<Transfer_Encoder> encoder, u32 family, T view) noexcept -> void;
+        auto transfer(mut<Transfer_Encoder> encoder, T view, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void;
         template<typename T, typename U>
         auto copy(mut<Transfer_Encoder> encoder, T to, U from) noexcept -> void;
         template<typename T>

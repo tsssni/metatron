@@ -18,7 +18,7 @@ namespace mtt::command {
         struct Impl;
         Queue(Type type) noexcept;
         ~Queue() noexcept;
-        auto allocate(cref<Pairs> waits) noexcept -> obj<Buffer>;
-        auto submit(rref<obj<Buffer>> cmd, cref<Pairs> signals) noexcept -> void;
+        auto allocate(rref<Pairs> waits) noexcept -> obj<Buffer>;
+        auto submit(rref<obj<Buffer>> cmd, rref<Pairs> signals) noexcept -> void;
     };
 }

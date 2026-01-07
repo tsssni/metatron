@@ -195,5 +195,5 @@ namespace mtt::encoder {
     }
 
     auto Argument_Encoder::acquire(std::string_view field, opaque::Image::View image) noexcept -> void { impl->acquire(this, field, image); }
-    auto Argument_Encoder::acquire(std::string_view field, opaque::Grid::View image) noexcept -> void { impl->acquire(this, field, image); }
+    auto Argument_Encoder::acquire(std::string_view field, opaque::Grid::View grid) noexcept -> void { impl->acquire(this, field, grid); }
 }
