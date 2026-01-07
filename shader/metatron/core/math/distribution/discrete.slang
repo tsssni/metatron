@@ -11,8 +11,6 @@ namespace mtt::math {
             cdf[0] = 0.f;
             for (var i = 1; i <= n; ++i)
                 cdf[i] = cdf[i - 1] + pdf[i - 1];
-            for (var i = 0; i < n; ++i)
-                pdf[i] /= cdf[n];
         }
 
         public func sample(f32 u) -> u32 {

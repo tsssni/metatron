@@ -65,14 +65,12 @@ namespace mtt::media {
             }
 
             auto bbox = majorant->bounding_box(cell + offset);
-            auto [t_enter, t_next, i_enter, i_next] = math::hitvi(r, bbox).value_or(
-                std::make_tuple(t_boundary, t_boundary, 0uz, 0uz)
-            );
+            auto [t_enter, t_next, i_enter, i_next] = math::hitvi(r, bbox)
+            .value_or({t_boundary, t_boundary, 0uz, 0uz});
+
             t_cell = t_next;
             cell += offset;
-            offset = direction * iv3{
-                i_next == 0, i_next == 1, i_next == 2
-            };
+            offset = direction * iv3{i_next == 0, i_next == 1, i_next == 2};
 
             density_maj = (*majorant.data())[cell];
             sigma_maj = density_maj * sigma_t;
@@ -80,13 +78,9 @@ namespace mtt::media {
         };
 
         if (!majorant->inside(cell)) {
-            auto [t_enter, t_exit] = math::hit(r, majorant->bounding_box()).value_or(
-                fv2{0.f}
-            );
+            auto [t_enter, t_exit] = math::hit(r, majorant->bounding_box()).value_or(fv2{0.f});
             r.o = r.o + t_enter * r.d;
-            cell = math::clamp<i32, 3>(
-                majorant->to_index(r.o), iv3{0}, majorant->dimensions() - 1
-            );
+            cell = math::clamp<i32, 3>(majorant->to_index(r.o), iv3{0}, majorant->dimensions() - 1);
         }
         update_majorant(t_max);
 

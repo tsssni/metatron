@@ -5,13 +5,13 @@ namespace mtt::volume {
         math::Bounding_Box bbox;
         iv3 dims;
         fv3 voxel_size;
-        tag<u32> idx;
+        tag<byte> idx;
 
         public func to_local(iv3 ijk) -> fv3 { return bbox.p_min + ijk * voxel_size; }
         public func to_index(fv3 pos) -> iv3 { return iv3(floor((pos - bbox.p_min) / voxel_size)); }
         public func dimensions() -> uv3 { return dims; }
 
-        public func inside(iv3 pos) -> bool { return all(pos >= 0 && pos <= dims); }
+        public func inside(iv3 pos) -> bool { return all(pos >= 0 && pos < dims); }
         public func inside(fv3 pos) -> bool { return inside(to_index(pos)); }
 
         public func bounding_box() -> math::Bounding_Box { return bbox; }

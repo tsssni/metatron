@@ -44,9 +44,7 @@ namespace mtt::media {
                 }
 
                 r.o = r.o + t_enter * r.d;
-                cell = clamp(
-                    majorant.to_index(r.o), iv3(0), majorant.dimensions() - 1
-                );
+                cell = clamp(majorant.to_index(r.o), iv3(0), majorant.dimensions() - 1);
             }
             update_maj(t_max);
 
@@ -84,7 +82,7 @@ namespace mtt::media {
                         sigma_maj,
                         density * (!sigma_e.empty() ? (ctx.lambda & sigma_e) : fv4(0.f)),
                     );
-            }
+                }
             }
             return {};
         }
@@ -112,11 +110,10 @@ namespace mtt::media {
                 t_enter = hitted._0; t_next = hitted._1;
                 i_enter = hitted._2; i_next = hitted._3;
             }
+
             t_cell = t_next;
             cell += offset;
-            offset = direction * iv3(
-                i_next == 0, i_next == 1, i_next == 2
-            );
+            offset = direction * iv3(i_next == 0, i_next == 1, i_next == 2);
 
             density_maj = majorant[cell];
             sigma_maj = density_maj * sigma_t;

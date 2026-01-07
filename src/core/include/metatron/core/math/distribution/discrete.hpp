@@ -14,8 +14,6 @@ namespace mtt::math {
             cdf[0] = 0.f;
             for (auto i = 1; i <= n; ++i)
                 cdf[i] = cdf[i - 1] + pdf[i - 1];
-            for (auto& w: this->pdf)
-                w /= cdf.back();
         }
 
         auto sample(f32 u) const noexcept -> usize {

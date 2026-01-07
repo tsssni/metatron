@@ -101,6 +101,7 @@ namespace mtt::renderer {
                     .size = vecaddr.size() * sizeof(uptr),
                 });
                 transfer.upload(*vecarr);
+                transfer.persist(*vecarr);
             }
 
             i = 0;
@@ -110,7 +111,7 @@ namespace mtt::renderer {
                     .ptr = mut<byte>(vol->buffer().data()),
                     .state = opaque::Buffer::State::local,
                     .type = command::Type::render,
-                    .size = vol->buffer().size(),
+                    .size = vol->bufferSize(),
                 });
                 transfer.upload(*buffer);
                 transfer.persist(*buffer);
@@ -127,6 +128,7 @@ namespace mtt::renderer {
                     .size = voladdr.size() * sizeof(uptr),
                 });
                 transfer.upload(*volarr);
+                transfer.persist(*volarr);
             }
 
             i = 0;

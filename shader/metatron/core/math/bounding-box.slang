@@ -46,8 +46,7 @@ namespace mtt::math {
 
         let enter = maxvi(hit_min);
         let exit = minvi(hit_max);
-
-        if (enter._0 < -epsilon || enter._0 > exit._0 + epsilon) return {};
+        if (exit._0 < -epsilon || enter._0 > exit._0 + epsilon) return {};
         return Tuple<f32, f32, u32, u32>(enter._0, exit._0, enter._1, exit._1);
     }
 

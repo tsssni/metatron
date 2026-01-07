@@ -90,7 +90,7 @@ namespace mtt::volume {
             #ifdef MTT_TARGET_SPIRV
             else if (idx.type() == 1) return tag<Nanovdb_Volume>(idx).get()(pos);
             #endif
-            else return {};
+            else return 0.f;
         }
 
         public __subscript(iv3 ijk) -> f32 {

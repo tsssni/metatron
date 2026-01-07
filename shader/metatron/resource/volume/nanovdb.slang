@@ -21,7 +21,7 @@ namespace mtt::volume {
     }
 
     public struct Nanovdb_Volume: Volume {
-        tag<u32> handle;
+        tag<byte> handle;
 
         func buf() -> pnanovdb_buf_t {
             let arr = Ptr<uptr>(resources.volumes);
