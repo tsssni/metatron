@@ -61,9 +61,7 @@ namespace mtt::monte_carlo {
 
             if (direct_ctx.n != fv3{0.f}) {
                 auto flip_n = math::dot(-history_ctx.r.d, direct_ctx.n) < 0.f ? -1.f : 1.f;
-                auto t = math::Transform{fm44{
-                    fq::from_rotation_between(flip_n * direct_ctx.n, {0.f, 1.f, 0.f})
-                }};
+                auto t = math::Transform{fm44{fq::from_rotation_between(flip_n * direct_ctx.n, {0.f, 1.f, 0.f})}};
                 auto wo = math::normalize(t | math::expand(history_ctx.r.d, 0.f));
                 auto wi = math::normalize(t | math::expand(l_intr.wi, 0.f));
                 MTT_OPT_OR_RETURN(b_intr, (*bsdf)(wo, wi));
@@ -115,9 +113,7 @@ namespace mtt::monte_carlo {
                     if (!is_interface && (!is_emissive || !close_to_light)) {
                         gamma = fv4{0.f}; break;
                     } else if (close_to_light) {
-                        auto st = math::Transform{fm44{
-                            fq::from_rotation_between(ddiff.r.d, math::normalize(intr.p))
-                        }};
+                        auto st = math::Transform{fm44{fq::from_rotation_between(ddiff.r.d, math::normalize(intr.p))}};
                         auto rd = st | ddiff;
 
                         auto ldiff = lt ^ rd;
@@ -243,15 +239,10 @@ namespace mtt::monte_carlo {
 
                 auto u = ctx.sampler->generate_1d();
                 auto mode = math::Discrete_Distribution<3>{{p_a, p_s, p_n}}.sample(u);
-                if (mode == 0uz) {
-                    beta *= m_intr.sigma_a / p_a;
-                    break;
-                } else if (mode == 1uz) {
+                if (mode == 0uz) break;
+                else if (mode == 1uz) {
                     phase = std::move(m_intr.phase);
-                    auto pt = math::Transform{fm44{
-                        fq::from_rotation_between(-trace_ctx.r.d, {0.f, 1.f, 0.f})
-                    }};
-
+                    auto pt = math::Transform{fm44{fq::from_rotation_between(-trace_ctx.r.d, {0.f, 1.f, 0.f})}};
                     auto p_ctx = pt | trace_ctx;
                     MTT_OPT_OR_BREAK(p_intr, phase->sample(p_ctx, ctx.sampler->generate_2d()));
                     p_intr.wi = math::normalize(pt ^ math::expand(p_intr.wi, 0.f));
@@ -282,9 +273,7 @@ namespace mtt::monte_carlo {
             }
 
             if (!rdiff.differentiable) {
-                auto st = math::Transform{fm44{
-                    fq::from_rotation_between(ddiff.r.d, math::normalize(intr.p))
-                }};
+                auto st = math::Transform{fm44{fq::from_rotation_between(ddiff.r.d, math::normalize(intr.p))}};
                 rdiff = st | ddiff;
             }
             rdiff.differentiable = false;
@@ -313,9 +302,7 @@ namespace mtt::monte_carlo {
             }
 
             bsdf = std::move(mat_intr.bsdf);
-            auto bt = math::Transform{fm44{
-                fq::from_rotation_between(intr.n, {0.f, 1.f, 0.f})
-            }};
+            auto bt = math::Transform{fm44{fq::from_rotation_between(intr.n, {0.f, 1.f, 0.f})}};
             auto uc = ctx.sampler->generate_1d();
             auto u = ctx.sampler->generate_2d();
 

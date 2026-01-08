@@ -4,28 +4,18 @@ implementing volume;
 #include "PNanoVDB.slang"
 
 namespace mtt::volume {
-    func to_nanovdb_coord(iv3 ijk) -> pnanovdb_coord_t {
-        return int3(ijk.x, ijk.y, -ijk.z);
-    }
-
-    func to_nanovdb_vec3(fv3 pos) -> pnanovdb_vec3_t {
-        return float3(pos.x, pos.y, -pos.z);
-    }
-
-    func from_nanovdb_coord(pnanovdb_coord_t coord) -> iv3 {
-        return iv3(coord.x, coord.y, -coord.z);
-    }
-
-    func from_nanovdb_vec3(pnanovdb_vec3_t vec) -> fv3 {
-        return fv3(vec.x, vec.y, -vec.z);
-    }
-
     public struct Nanovdb_Volume: Volume {
-        tag<byte> handle;
+        public tag<byte> handle;
+        math::Bounding_Box bbox;
 
-        func buf() -> pnanovdb_buf_t {
+        func to(iv3 ijk) -> pnanovdb_coord_t { return {ijk.x, ijk.y, -ijk.z}; }
+        func to(fv3 pos) -> pnanovdb_vec3_t { return {pos.x, pos.y, -pos.z}; }
+        func from(pnanovdb_coord_t coord) -> iv3 { return {coord.x, coord.y, -coord.z}; }
+        func from(pnanovdb_vec3_t vec) -> fv3 { return {vec.x, vec.y, -vec.z}; }
+
+        func buf() -> Ptr<uint> {
             let arr = Ptr<uptr>(resources.volumes);
-            return pnanovdb_buf_t(arr[handle.index()]);
+            return Ptr<uint>(arr[handle.index()]);
         }
 
         func grid() -> pnanovdb_grid_handle_t {
@@ -34,110 +24,83 @@ namespace mtt::volume {
             return grid;
         }
 
+        func type() -> pnanovdb_grid_type_t {
+            return pnanovdb_grid_get_grid_type(buf(), grid());
+        }
+
+        func tree() -> pnanovdb_tree_handle_t {
+            return pnanovdb_grid_get_tree(buf(), grid());
+        }
+
         func root() -> pnanovdb_root_handle_t {
-            var buf = this.buf();
-            var grid = this.grid();
-            var tree = pnanovdb_grid_get_tree(buf, grid);
-            return pnanovdb_tree_get_root(buf, tree);
+            return pnanovdb_tree_get_root(buf(), tree());
+        }
+
+        func accessor() -> pnanovdb_readaccessor_t {
+            var acc: pnanovdb_readaccessor_t;
+            pnanovdb_readaccessor_init(acc, root());
+            return acc;
         }
 
         public func to_local(iv3 ijk) -> fv3 {
-            var buf = this.buf();
-            var grid = this.grid();
-            var vdb_ijk = to_nanovdb_vec3(fv3(ijk));
-            var world_pos = pnanovdb_grid_index_to_worldf(buf, grid, vdb_ijk);
-            return from_nanovdb_vec3(world_pos);
+            let pos = pnanovdb_grid_index_to_worldf(buf(), grid(), to(ijk));
+            return from(pos);
         }
-
         public func to_index(fv3 pos) -> iv3 {
-            var buf = this.buf();
-            var grid = this.grid();
-            var vdb_pos = to_nanovdb_vec3(pos);
-            var index_pos = pnanovdb_grid_world_to_indexf(buf, grid, vdb_pos);
-            return from_nanovdb_coord(iv3(floor(index_pos)));
+            let idx = pnanovdb_grid_world_to_indexf(buf(), grid(), to(pos));
+            return from(iv3(floor(idx)));
         }
-
         public func dimensions() -> uv3 {
-            var buf = this.buf();
-            var root = this.root();
-            var bbox_min = pnanovdb_root_get_bbox_min(buf, root);
-            var bbox_max = pnanovdb_root_get_bbox_max(buf, root);
-            var min_coord = from_nanovdb_coord(bbox_min);
-            var max_coord = from_nanovdb_coord(bbox_max);
-            return abs(max_coord - min_coord) + 1;
+            var bbox_min = pnanovdb_root_get_bbox_min(buf(), root());
+            var bbox_max = pnanovdb_root_get_bbox_max(buf(), root());
+            return abs(bbox_max - bbox_min) + 1;
         }
 
         public func inside(iv3 pos) -> bool {
-            var buf = this.buf();
-            var root = this.root();
-            var bbox_min = pnanovdb_root_get_bbox_min(buf, root);
-            var bbox_max = pnanovdb_root_get_bbox_max(buf, root);
-            var min_coord = from_nanovdb_coord(bbox_min);
-            var max_coord = from_nanovdb_coord(bbox_max);
-            var fpos = fv3(pos);
-            return all(fpos >= fv3(min_coord)) && all(fpos <= fv3(max_coord));
+            var bbox_min = pnanovdb_root_get_bbox_min(buf(), root());
+            var bbox_max = pnanovdb_root_get_bbox_max(buf(), root());
+            return all(to(pos) >= bbox_min) && all(to(pos) <= bbox_max);
         }
-
-        public func inside(fv3 pos) -> bool {
-            return inside(to_index(pos));
-        }
+        public func inside(fv3 pos) -> bool { return math::inside(pos, bbox); }
 
         public func bounding_box() -> math::Bounding_Box {
-            var buf = this.buf();
-            var grid = this.grid();
-            var min_x = f32(pnanovdb_grid_get_world_bbox(buf, grid, 0));
-            var min_y = f32(pnanovdb_grid_get_world_bbox(buf, grid, 1));
-            var min_z = f32(pnanovdb_grid_get_world_bbox(buf, grid, 2));
-            var max_x = f32(pnanovdb_grid_get_world_bbox(buf, grid, 3));
-            var max_y = f32(pnanovdb_grid_get_world_bbox(buf, grid, 4));
-            var max_z = f32(pnanovdb_grid_get_world_bbox(buf, grid, 5));
-
-            var p_min = from_nanovdb_vec3(fv3(min_x, min_y, min_z));
-            var p_max = from_nanovdb_vec3(fv3(max_x, max_y, max_z));
-            math::swap(p_min.z, p_max.z);
-            return {p_min, p_max};
+            return bbox;
         }
-
         public func bounding_box(fv3 pos) -> math::Bounding_Box {
             return bounding_box(to_index(pos));
         }
-
         public func bounding_box(iv3 ijk) -> math::Bounding_Box {
-            if (inside(ijk)) {
-                return {to_local(ijk), to_local(ijk + 1)};
-            } else {
-                return bounding_box();
-            }
+            if (inside(ijk)) return {to_local(ijk), to_local(ijk + 1)};
+            else return bounding_box();
         }
 
         public f32 operator()(fv3 pos) {
-            var buf = this.buf();
-            var grid = this.grid();
-            var tree = pnanovdb_grid_get_tree(buf, grid);
-            var root = pnanovdb_tree_get_root(buf, tree);
-            var acc: pnanovdb_readaccessor_t;
-            pnanovdb_readaccessor_init(acc, root);
+            var acc = accessor();
+            var bbox_min = pnanovdb_root_get_bbox_min(buf(), root());
+            var bbox_max = pnanovdb_root_get_bbox_max(buf(), root());
+            let idx = pnanovdb_grid_world_to_indexf(buf(), grid(), to(pos));
 
-            var vdb_pos = to_nanovdb_vec3(pos);
-            var index_pos = pnanovdb_grid_world_to_indexf(buf, grid, vdb_pos);
-            var ijk = iv3(floor(index_pos));
-            var address = pnanovdb_readaccessor_get_value_address(PNANOVDB_GRID_TYPE_FLOAT, buf, acc, ijk);
-            return pnanovdb_read_float(buf, address);
-        }
+            var value = 0.f;
+            let cell_min = iv3(floor(idx));
+            let cell_max = cell_min + 1;
+            let t = idx - cell_min;
+            for (var i = 0; i < 8; ++i) {
+                let choice = bool3(iv3(i & 1, (i >> 1) & 1, (i >> 2) & 1));
+                let ijk = select(choice, cell_max, cell_min);
+                if (any(ijk < bbox_min) || any(ijk > bbox_max)) continue;
 
-        public __subscript(iv3 ijk) -> f32 {
-            get {
-                var buf = this.buf();
-                var grid = this.grid();
-                var tree = pnanovdb_grid_get_tree(buf, grid);
-                var root = pnanovdb_tree_get_root(buf, tree);
-                var acc: pnanovdb_readaccessor_t;
-                pnanovdb_readaccessor_init(acc, root);
-
-                var vdb_ijk = to_nanovdb_coord(ijk);
-                var address = pnanovdb_readaccessor_get_value_address(PNANOVDB_GRID_TYPE_FLOAT, buf, acc, vdb_ijk);
-                return pnanovdb_read_float(buf, address);
+                let weight = math::prod(select(choice, t, 1 - t));
+                let address = pnanovdb_readaccessor_get_value_address(type(), buf(), acc, ijk);
+                value += weight * pnanovdb_read_float(buf(), address);
             }
+            return value;
         }
+
+        public __subscript(iv3 ijk) -> f32 {get {
+            let type = pnanovdb_grid_get_grid_type(buf(), grid());
+            var acc = accessor();
+            let address = pnanovdb_readaccessor_get_value_address(type, buf(), acc, to(ijk));
+            return pnanovdb_read_float(buf(), address);
+        }}
     }
 }

@@ -29,5 +29,6 @@ namespace mtt::volume {
     private:
         auto grid() const -> view<nanovdb::FloatGrid>;
         tag<nanovdb::GridHandle<>> handle;
+        math::Bounding_Box bbox;
     };
 }

@@ -66,7 +66,7 @@ namespace mtt::media {
 
             auto bbox = majorant->bounding_box(cell + offset);
             auto [t_enter, t_next, i_enter, i_next] = math::hitvi(r, bbox)
-            .value_or({t_boundary, t_boundary, 0uz, 0uz});
+            .value_or(std::make_tuple(t_boundary, t_boundary, 0uz, 0uz));
 
             t_cell = t_next;
             cell += offset;

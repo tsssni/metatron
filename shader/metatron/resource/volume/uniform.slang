@@ -24,11 +24,9 @@ namespace mtt::volume {
         }
 
         public f32 operator()(fv3 pos) { return this[to_index(pos)]; }
-        public __subscript(iv3 ijk) -> f32 {
-            get {
-                let grid = grids.bindless[idx.index()];
-                return grid.Load(iv4(ijk, 0)).x;
-            }
-        }
+        public __subscript(iv3 ijk) -> f32 {get {
+            let grid = grids.bindless[idx.index()];
+            return grid.Load(iv4(ijk, 0)).x;
+        }}
     }
 }

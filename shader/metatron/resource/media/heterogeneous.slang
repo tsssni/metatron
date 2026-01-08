@@ -124,7 +124,7 @@ namespace mtt::media {
                     } else {
                         update_transmittance(t_u);
                         let spectra_pdf = sigma_maj * transmittance;
-                        let density = density_maj; // medium.density(r.o);
+                        let density = medium.density(r.o);
 
                         return Interaction(
                             medium.phase.to_phase(),

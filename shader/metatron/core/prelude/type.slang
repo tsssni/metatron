@@ -13,6 +13,7 @@ namespace mtt {
 
     public typedef float16_t f16;
     public typedef float32_t f32;
+    public typedef float64_t f64;
 
     public typedef u8 byte;
     public typedef u64 uptr;
@@ -268,6 +269,31 @@ namespace mtt {
     public typedef f32m33 f32m3;
     public typedef f32m44 f32m4;
 
+    public typedef float64_t1 f64v1;
+    public typedef float64_t2 f64v2;
+    public typedef float64_t3 f64v3;
+    public typedef float64_t4 f64v4;
+    public typedef float64_t1x1 f64m11;
+    public typedef float64_t1x2 f64m12;
+    public typedef float64_t1x3 f64m13;
+    public typedef float64_t1x4 f64m14;
+    public typedef float64_t2x1 f64m21;
+    public typedef float64_t2x2 f64m22;
+    public typedef float64_t2x3 f64m23;
+    public typedef float64_t2x4 f64m24;
+    public typedef float64_t3x1 f64m31;
+    public typedef float64_t3x2 f64m32;
+    public typedef float64_t3x3 f64m33;
+    public typedef float64_t3x4 f64m34;
+    public typedef float64_t4x1 f64m41;
+    public typedef float64_t4x2 f64m42;
+    public typedef float64_t4x3 f64m43;
+    public typedef float64_t4x4 f64m44;
+    public typedef f64m11 f64m1;
+    public typedef f64m22 f64m2;
+    public typedef f64m33 f64m3;
+    public typedef f64m44 f64m4;
+
     public typedef i32v1 iv1;
     public typedef i32v2 iv2;
     public typedef i32v3 iv3;
@@ -392,4 +418,29 @@ namespace mtt {
     public typedef f32m2 fm2;
     public typedef f32m3 fm3;
     public typedef f32m4 fm4;
+
+    public typedef f64v1 dv1;
+    public typedef f64v2 dv2;
+    public typedef f64v3 dv3;
+    public typedef f64v4 dv4;
+    public typedef f64m11 dm11;
+    public typedef f64m12 dm12;
+    public typedef f64m13 dm13;
+    public typedef f64m14 dm14;
+    public typedef f64m21 dm21;
+    public typedef f64m22 dm22;
+    public typedef f64m23 dm23;
+    public typedef f64m24 dm24;
+    public typedef f64m31 dm31;
+    public typedef f64m32 dm32;
+    public typedef f64m33 dm33;
+    public typedef f64m34 dm34;
+    public typedef f64m41 dm41;
+    public typedef f64m42 dm42;
+    public typedef f64m43 dm43;
+    public typedef f64m44 dm44;
+    public typedef f64m1 dm1;
+    public typedef f64m2 dm2;
+    public typedef f64m3 dm3;
+    public typedef f64m4 dm4;
 }

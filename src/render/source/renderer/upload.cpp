@@ -86,6 +86,7 @@ namespace mtt::renderer {
                     .type = command::Type::render,
                     .size = sequence.size(),
                 });
+
                 transfer.upload(*buffer);
                 transfer.persist(*buffer);
                 vecaddr[i] = buffer->addr;
@@ -111,8 +112,10 @@ namespace mtt::renderer {
                     .ptr = mut<byte>(vol->buffer().data()),
                     .state = opaque::Buffer::State::local,
                     .type = command::Type::render,
-                    .size = vol->bufferSize(),
+                    .size = vol->buffer().size(),
                 });
+
+                vol->buffer().clear();
                 transfer.upload(*buffer);
                 transfer.persist(*buffer);
                 voladdr[i] = buffer->addr;
@@ -154,8 +157,8 @@ namespace mtt::renderer {
                 transfer.persist(*grids[i]);
             }
             barrier->arrive_and_wait();
-            transfer.submit();
 
+            transfer.submit();
             timelines[scheduler.index()] = make_obj<command::Timeline>();
             queue->submit(std::move(cmd), {{timelines[scheduler.index()].get(), 1}});
         });
