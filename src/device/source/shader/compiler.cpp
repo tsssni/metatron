@@ -262,11 +262,6 @@ namespace mtt::shader {
                 int_opt(Option::ForceCLayout, 1),
                 int_opt(Option::VulkanUseEntryPointName, 1),
                 int_opt(Option::Optimization, SlangOptimizationLevel::SLANG_OPTIMIZATION_LEVEL_MAXIMAL),
-                #ifndef MTT_SYSTEM_DARWIN
-                str_opt(Option::MacroDefine, "MTT_TARGET_SPIRV"),
-                #else
-                str_opt(Option::MacroDefine, "MTT_TARGET_METAL"),
-                #endif
             });
 
             global_session->createSession({
