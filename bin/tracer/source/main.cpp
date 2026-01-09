@@ -9,22 +9,25 @@ auto main(i32 argc, mut<char> argv[]) -> i32 {
     auto argparser = argparse::ArgumentParser{"metatron-tracer", "0.2.0"};
 
     argparser.add_argument("-s", "--scene")
-    .required().help("directory contains scene.json")
-    .default_value(std::string{"./"});
+    .help("directory contains scene.json")
+    .default_value(std::string{"./"})
+    .nargs(1).metavar("DIR");
 
     argparser.add_argument("-o", "--output")
-    .required().help("result image path in exr format")
-    .default_value(std::string{"./result.exr"});
+    .help("result exr image path")
+    .default_value(std::string{"./result.exr"})
+    .nargs(1).metavar("PATH");
 
     argparser.add_argument("-d", "--device")
-    .required().help("device to run renderer")
+    .help("device to run renderer")
+    .choices("cpu", "gpu")
     .default_value(std::string{"cpu"})
-    .choices("cpu", "gpu");
-
+    .nargs(1).metavar("{cpu, gpu}");
 
     argparser.add_argument("-a", "--address")
-    .required().help("address to tev server")
-    .default_value(std::string{""});
+    .help("address to tev server")
+    .default_value(std::string{""})
+    .nargs(1).metavar("ADDR");
 
     try {
         argparser.parse_args(argc, argv);

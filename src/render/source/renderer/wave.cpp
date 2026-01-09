@@ -152,6 +152,7 @@ namespace mtt::renderer {
                 transfer.copy(*buffer, *image);
                 transfer.submit();
                 render_queue->submit(std::move(cmd), {{render_timeline.get(), ++render_count}});
+                render_timeline->wait(render_count);
             }
         });
 

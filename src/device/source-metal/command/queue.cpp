@@ -6,9 +6,9 @@
 namespace mtt::command {
     Queue::Queue(Type type) noexcept {
         auto& ctx = Context::instance().impl;
-        impl->queue = ctx->device->newCommandQueue();
-        impl->queue->addResidencySet(ctx->residency.get());
         auto size = stl::scheduler::instance().size();
+        impl->queue = ctx->device->newCommandQueue(size * 8);
+        impl->queue->addResidencySet(ctx->residency.get());
         impl->cmds.resize(size);
     }
     Queue::~Queue() noexcept {}

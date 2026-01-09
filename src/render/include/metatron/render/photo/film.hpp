@@ -42,10 +42,10 @@ namespace mtt::photo {
 
         struct Descriptor final {
             u32 spp = 16;
-            u32 depth = 64;
+            u32 depth = 16;
             u32 stride = 1;
             fv2 film_size = {0.036f, 0.024f};
-            uv2 image_size = {1280, 720};
+            uv2 image_size = {1920, 1080};
             tag<spectra::Spectrum> r = entity<spectra::Spectrum>("/spectrum/CIE-X");
             tag<spectra::Spectrum> g = entity<spectra::Spectrum>("/spectrum/CIE-Y");
             tag<spectra::Spectrum> b = entity<spectra::Spectrum>("/spectrum/CIE-Z");

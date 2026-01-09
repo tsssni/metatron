@@ -8,12 +8,14 @@ auto main(i32 argc, mut<char> argv[]) noexcept -> i32 {
     auto argparser = argparse::ArgumentParser{"metatron-builder", "0.2.0"};
 
     argparser.add_argument("-d", "--directory")
-    .required().help("directory contains shaders")
-    .default_value(std::string{"./"});
+    .help("directory contains shaders")
+    .default_value(std::string{"./"})
+    .nargs(1).metavar("DIR");
 
     argparser.add_argument("-o", "--output")
-    .required().help("directory to dump compiled ir")
-    .default_value(std::string{"./"});
+    .help("directory to dump ir")
+    .default_value(std::string{"./"})
+    .nargs(1).metavar("DIR");
 
     try {
         argparser.parse_args(argc, argv);
