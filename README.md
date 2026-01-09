@@ -6,7 +6,7 @@ Metatron
 
 ## Introduction
 
-Metatron is a physically based renderer unbiasedly simulating radiative transfer equation and spectral transport.
+Metatron is a physically based renderer unbiasedly simulating radiative transfer equation and spectral transport with Metal/Vulkan acceleration.
 
 ## Resources
 
@@ -37,24 +37,28 @@ Metatron is a physically based renderer unbiasedly simulating radiative transfer
 * Integrator
   * LBVH with parallel construction via [PL10](https://research.nvidia.com/sites/default/files/pubs/2010-06_HLBVH-Hierarchical-LBVH/HLBVH-final.pdf).
   * Direct lighting and spectral MIS inspired by [pbrt-v4](https://pbr-book.org/4ed/Light_Transport_II_Volume_Rendering/Volume_Scattering_Integrators#ImprovingtheSamplingTechniques).
+  * Metal/Vulkan acceleration thanks to hardware ray tracing and [slang](https://github.com/shader-slang/slang).
+  * Remote preview of rendering intermediates via [tev](https://github.com/Tom94/tev)
 
 ## Build
 
-Metatron use [nix](https://nixos.org) with [flakes](https://nix.dev/concepts/flakes.html) to build the renderer and manage dependencies on Linux and Darwin.
+Metatron use [nix](https://nixos.org) with [flakes](https://nix.dev/concepts/flakes.html) for package management on Linux and Darwin.
 
 ```nu
 nix build
 ```
 
-Or use [cmake](https://cmake.org/) if dependencies are availabe in environment. Dependencies are declared at [`buildInputs`](https://github.com/tsssni/metatron/blob/master/nix/default.nix#L35).
+Or use [cmake](https://cmake.org/) if [dependencies](https://github.com/tsssni/metatron/blob/master/nix/default.nix#L35) are availabe. Installation is required for runtime resource loading.
 
 ```nu
-cmake -B build
-cmake --preset rel
+cmake --preset rel -DCMAKE_INSTALL_PREFIX=/usr/bin/
 cmake --build build/rel
+cmake --install build/rel
 ```
 
-Metatron can be used as a library. Use `package` output in [flake.nix](https://github.com/tsssni/metatron/blob/master/flake.nix) or copy [package.nix](https://github.com/tsssni/metatron/blob/master/nix/default.nix) to add metatron package.
+## Usage
+
+Metatron can be used as a library. Use `package` output in [flake.nix](https://github.com/tsssni/metatron/blob/master/flake.nix) or copy [package.nix](https://github.com/tsssni/metatron/blob/master/nix/default.nix) to add metatron.
 
 ```nix
 # flake.nix
@@ -78,29 +82,17 @@ Metatron can be used as a library. Use `package` output in [flake.nix](https://g
 }
 ```
 
-Or manually install metatron to environment.
-
-```nu
-cmake --install build/rel --prefix /usr
-```
-
-Modules in [src](https://github.com/tsssni/metatron/tree/master/src) are all optional.
+Modules in [src](https://github.com/tsssni/metatron/tree/master/src) are all optional and chained.
 
 ```cmake
-find_package(metatron-core REQUIRED)
-find_package(metatron-resource REQUIRED)
+find_package(metatron-core REQUIRED) # only import metaron-core
+find_package(metatron-render REQUIRED) # import all as metatron-render depends them
+target_link_libraries(renderer PUBLIC metatron-render)
 ```
+## Run
 
-## Usage
-
-Scene directory and output image path in exr format could be provided, or `./` and `./result.exr` will be used.
+Run `metatron-tracer -h` for option documents.
 
 ```nu
-metatron-tracer -s ~/metatron-scenes/classroom/ -o classroom.exr
-```
-
-Remote preview with [tev](https://github.com/Tom94/tev) is supported.
-
-```nu
-metatron-tracer -a localhost:14158
+metatron-tracer -s ~/metatron-scenes/classroom/ -o classroom.exr -a localhost:14158 -d gpu
 ```
