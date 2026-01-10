@@ -1,5 +1,5 @@
 module monte_carlo;
-__include monte_carlo.volume_path;
+__include monte_carlo.radiative;
 import accel;
 import emitter;
 import sampler;
@@ -27,7 +27,7 @@ namespace mtt::monte_carlo {
         tag<byte> idx;
 
         public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum> {
-            if (idx.type() == 0) return tag<Volume_Path_Integrator>(idx).get().sample(ctx);
+            if (idx.type() == 0) return tag<Radiative_Integrator>(idx).get().sample(ctx);
             else return {};
         }
     }

@@ -41,7 +41,7 @@ namespace mtt::renderer {
         auto transfer_queue = make_obj<command::Queue>(command::Type::transfer);
 
         auto upload_timelines = std::vector<obj<command::Timeline>>(scheduler.size());
-        auto render_timeline = make_obj<command::Timeline>();
+        auto render_timeline = make_obj<command::Timeline>(!remote);
         auto shared_timeline = make_obj<command::Timeline>(true);
         auto network_timeline = make_obj<command::Timeline>(true);
         auto render_count = u64{0};
@@ -130,24 +130,28 @@ namespace mtt::renderer {
 
         auto threads = uv3{film->width, film->height, 1};
         auto group = uv3{8, 8, 1};
-        auto future = scheduler.async_dispatch([&]{
+        auto future = scheduler.async_dispatch(
+        [&, count = remote ? 0 : render_count + 1] mutable {
             auto range = uv2{0, 1};
-            auto count = 1;
             auto next = 1u;
 
             while (range[0] < spp) {
-                shared_timeline->wait(count);
                 if (remote) {
+                    shared_timeline->wait(count);
                     previewer.update(desc.film->image, {buffer->ptr, buffer->size});
                     network_timeline->signal(count);
-                }
+                } else render_timeline->wait(count);
                 ++count; progress + (range[1] - range[0]);
                 range = {range[1], range[1] + next};
                 next = math::min(next * 2, desc.film->stride);
             }
 
             if (!remote) {
-                auto cmd = render_queue->allocate({{render_timeline.get(), render_count}});
+                auto cmd = render_queue->allocate({});
+                auto render_encoder = encoder::Pipeline_Encoder{cmd.get(), postprocess.get()};
+                render_encoder.bind();
+                render_encoder.dispatch(threads, group);
+                render_encoder.submit();
                 auto transfer = encoder::Transfer_Encoder{cmd.get()};
                 transfer.copy(*buffer, *image);
                 transfer.submit();
@@ -169,17 +173,7 @@ namespace mtt::renderer {
             render_encoder.submit();
             render_queue->submit(std::move(cmd), {{render_timeline.get(), ++render_count}});
 
-            if (!remote) {
-                auto cmd = render_queue->allocate({{render_timeline.get(), render_count}});
-                auto render_encoder = encoder::Pipeline_Encoder{cmd.get(), postprocess.get()};
-                render_encoder.bind();
-                render_encoder.dispatch(threads, group);
-                render_encoder.submit();
-                render_queue->submit(std::move(cmd), {
-                    {render_timeline.get(), ++render_count},
-                    {shared_timeline.get(), ++scheduled_count},
-                });
-            } else {
+            if (remote) {
                 auto render_cmd = render_queue->allocate({
                     {render_timeline.get(), render_count},
                     {shared_timeline.get(), scheduled_count},

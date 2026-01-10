@@ -6,13 +6,13 @@
 #include <metatron/core/stl/stack.hpp>
 
 namespace mtt::light {
-    auto constexpr sunsky_num_lambda = 11;
-    auto constexpr sunsky_num_turbility = 10;
-    auto constexpr sunsky_num_albedo = 2;
-    auto constexpr sunsky_lambda = std::array<f32, sunsky_num_lambda>{
+    auto constexpr atomo_num_lambda = 11;
+    auto constexpr atomo_num_turbility = 10;
+    auto constexpr atomo_num_albedo = 2;
+    auto constexpr atomo_lambda = std::array<f32, atomo_num_lambda>{
         320.f, 360.f, 400.f, 440.f, 480.f, 520.f, 560.f, 600.f, 640.f, 680.f, 720.f
     };
-    auto constexpr sunsky_step = 40.f;
+    auto constexpr atomo_step = 40.f;
     auto constexpr sky_num_params = 9;
     auto constexpr sky_num_ctls = 6;
     auto constexpr sun_num_ctls = 4;
@@ -20,18 +20,18 @@ namespace mtt::light {
     auto constexpr sun_num_limb_params = 6;
     auto constexpr sun_aperture = 0.009351474132185619f;
     auto constexpr sun_blackbody_scale = math::pi * 3.19992e-10f;
-    auto constexpr sun_perp_radiance = std::array<f32, sunsky_num_lambda>{
+    auto constexpr sun_perp_radiance = std::array<f32, atomo_num_lambda>{
         7500.0f, 12500.0f, 21127.5f, 26760.5f, 30663.7f, 27825.0f,
         25503.8f, 25134.2f, 23212.1f, 21526.7f, 19870.8f,
     };
-    auto constexpr tgmm_num_turbility = sunsky_num_turbility - 1;
+    auto constexpr tgmm_num_turbility = atomo_num_turbility - 1;
     auto constexpr tgmm_num_segments = 30;
     auto constexpr tgmm_num_mixture = 5;
     auto constexpr tgmm_num_gaussian_params = 4;
     auto constexpr tgmm_num_bilinear = 4;
     auto constexpr tgmm_num_gaussian = tgmm_num_bilinear * tgmm_num_mixture;
 
-    struct Sunsky_Light final {
+    struct Atomosphere_Light final {
         struct Descriptor final {
             fv2 direction;
             f32 turbidity = 1.0f;
@@ -40,8 +40,8 @@ namespace mtt::light {
             f32 temperature = 6504.f;
             f32 intensity = 1.f;
         };
-        Sunsky_Light(cref<Descriptor> desc) noexcept;
-        Sunsky_Light() noexcept = default;
+        Atomosphere_Light(cref<Descriptor> desc) noexcept;
+        Atomosphere_Light() noexcept = default;
 
         auto static init() noexcept -> void;
 
@@ -80,10 +80,10 @@ namespace mtt::light {
         f32 area;
         f32 w_sky;
 
-        buf<f32> sky_params; // fm<sunsky_num_lambda, sky_num_params> sky_params;
-        buf<f32> sky_radiance; // fv<sunsky_num_lambda> sky_radiance;
-        buf<f32> sun_radiance; // fm<sun_num_segments, sunsky_num_lambda, sun_num_ctls> sun_radiance;
-        buf<f32> sun_limb; // fm<sunsky_num_lambda, sun_num_limb_params> sun_limb;
+        buf<f32> sky_params; // fm<atomo_num_lambda, sky_num_params> sky_params;
+        buf<f32> sky_radiance; // fv<atomo_num_lambda> sky_radiance;
+        buf<f32> sun_radiance; // fm<sun_num_segments, atomo_num_lambda, sun_num_ctls> sun_radiance;
+        buf<f32> sun_limb; // fm<atomo_num_lambda, sun_num_limb_params> sun_limb;
         buf<math::Truncated_Gaussian_Distribution> tgmm_phi_distr;
         buf<math::Truncated_Gaussian_Distribution> tgmm_theta_distr;
         math::Array_Distribution tgmm_distr;

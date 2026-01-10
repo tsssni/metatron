@@ -1,10 +1,10 @@
 module light;
 __include light.area;
+__include light.atomosphere;
 __include light.environment;
 __include light.parallel;
 __include light.point;
 __include light.spot;
-__include light.sunsky;
 
 import spectra;
 import shape;
@@ -44,7 +44,7 @@ namespace mtt::light {
             else if (idx.type() == 2) return tag<Spot_Light>(idx).get()(r, lambda);
             else if (idx.type() == 3) return tag<Area_Light>(idx).get()(r, lambda);
             else if (idx.type() == 4) return tag<Environment_Light>(idx).get()(r, lambda);
-            else if (idx.type() == 5) return tag<Sunsky_Light>(idx).get()(r, lambda);
+            else if (idx.type() == 5) return tag<Atomosphere_Light>(idx).get()(r, lambda);
             else return {};
         }
 
@@ -54,7 +54,7 @@ namespace mtt::light {
             else if (idx.type() == 2) return tag<Spot_Light>(idx).get().sample(ctx, u);
             else if (idx.type() == 3) return tag<Area_Light>(idx).get().sample(ctx, u);
             else if (idx.type() == 4) return tag<Environment_Light>(idx).get().sample(ctx, u);
-            else if (idx.type() == 5) return tag<Sunsky_Light>(idx).get().sample(ctx, u);
+            else if (idx.type() == 5) return tag<Atomosphere_Light>(idx).get().sample(ctx, u);
             else return {};
         }
 
@@ -64,7 +64,7 @@ namespace mtt::light {
             else if (idx.type() == 2) return tag<Spot_Light>(idx).get().flags();
             else if (idx.type() == 3) return tag<Area_Light>(idx).get().flags();
             else if (idx.type() == 4) return tag<Environment_Light>(idx).get().flags();
-            else if (idx.type() == 5) return tag<Sunsky_Light>(idx).get().flags();
+            else if (idx.type() == 5) return tag<Atomosphere_Light>(idx).get().flags();
             else return {};
         }
     }

@@ -1,7 +1,7 @@
 implementing monte_carlo;
 
 namespace mtt::monte_carlo {
-    public struct Volume_Path_Integrator: Integrator {
+    public struct Radiative_Integrator: Integrator {
         u32 padding = 0u;
 
         public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum> {

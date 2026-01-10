@@ -1,11 +1,11 @@
 implementing light;
 
 namespace mtt::light {
-    static i32 sunsky_num_lambda = 11;
-    static Array<f32, 11> sunsky_lambda = {
+    static i32 atomo_num_lambda = 11;
+    static Array<f32, 11> atomo_lambda = {
         320.f, 360.f, 400.f, 440.f, 480.f, 520.f, 560.f, 600.f, 640.f, 680.f, 720.f
     };
-    static f32 sunsky_step = 40.f;
+    static f32 atomo_step = 40.f;
     static i32 sky_num_params = 9;
     static i32 sun_num_ctls = 4;
     static i32 sun_num_segments = 45;
@@ -16,7 +16,7 @@ namespace mtt::light {
     static i32 tgmm_num_bilinear = 4;
     static i32 tgmm_num_gaussian = tgmm_num_bilinear * tgmm_num_mixture;
 
-    public struct Sunsky_Light: Light {
+    public struct Atomosphere_Light: Light {
         fv3 d;
         fm44 t;
 
@@ -104,7 +104,7 @@ namespace mtt::light {
         }
 
         func hosek(f32 lambda, f32 cos_theta, f32 cos_gamma) -> f32 {
-            if (lambda > sunsky_lambda[sunsky_num_lambda - 1]) return 0.f;
+            if (lambda > atomo_lambda[atomo_num_lambda - 1]) return 0.f;
             let splitted = split(lambda);
             let low = splitted._0;
             let high = splitted._1;
@@ -174,7 +174,7 @@ namespace mtt::light {
             var L = 0.f;
             for (var i = 0; i < sun_num_ctls; ++i)
                 L += sun_radiance[
-                    segment * sunsky_num_lambda * sun_num_ctls + idx * sun_num_ctls + i
+                    segment * atomo_num_lambda * sun_num_ctls + idx * sun_num_ctls + i
                 ] * pow(x, i);
             return L / spectra::CIE_Y_integral;
         }
@@ -190,8 +190,8 @@ namespace mtt::light {
         }
 
         func split(f32 lambda) -> Tuple<i32, i32, f32> {
-            let norm = (lambda - sunsky_lambda[0]) / sunsky_step;
-            let low = min(sunsky_num_lambda - 2, u32(norm));
+            let norm = (lambda - atomo_lambda[0]) / atomo_step;
+            let low = min(atomo_num_lambda - 2, u32(norm));
             let high = low + 1;
             let alpha = norm - low;
             return {low, high, alpha};

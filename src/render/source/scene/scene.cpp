@@ -3,7 +3,7 @@
 #include <metatron/render/scene/args.hpp>
 #include <metatron/render/scene/serde.hpp>
 #include <metatron/render/renderer/renderer.hpp>
-#include <metatron/render/monte-carlo/volume-path.hpp>
+#include <metatron/render/monte-carlo/radiative.hpp>
 #include <metatron/render/accel/lbvh.hpp>
 #include <metatron/render/accel/hwbvh.hpp>
 #include <metatron/render/emitter/uniform.hpp>
@@ -44,7 +44,7 @@ namespace mtt::scene {
         material_init();
         light_init();
 
-        MTT_DESERIALIZE(Integrator, Volume_Path_Integrator);
+        MTT_DESERIALIZE(Integrator, Radiative_Integrator);
         MTT_DESERIALIZE(Acceleration, LBVH, HWBVH);
         MTT_DESERIALIZE(Emitter, Uniform_Emitter);
         MTT_DESERIALIZE(Sampler, Independent_Sampler, Halton_Sampler, Sobol_Sampler);
@@ -60,7 +60,7 @@ namespace mtt::scene {
                 stl::abort("renderer must be defined");
             auto j = bins[key].front();
 
-            stl::vector<Integrator>::instance().push<Volume_Path_Integrator>("/renderer/default/integrator", {{}});
+            stl::vector<Integrator>::instance().push<Radiative_Integrator>("/renderer/default/integrator", {{}});
             stl::vector<Acceleration>::instance().push<HWBVH>("/renderer/default/accel", {{}});
             stl::vector<Emitter>::instance().push<Uniform_Emitter>("/renderer/default/emitter", {{}});
             stl::vector<Sampler>::instance().push<Sobol_Sampler>("/renderer/default/sampler", {{}});

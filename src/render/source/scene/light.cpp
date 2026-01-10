@@ -4,7 +4,7 @@
 #include <metatron/resource/light/spot.hpp>
 #include <metatron/resource/light/area.hpp>
 #include <metatron/resource/light/environment.hpp>
-#include <metatron/resource/light/sunsky.hpp>
+#include <metatron/resource/light/atomosphere.hpp>
 
 namespace mtt::scene {
     auto light_init() noexcept -> void {
@@ -15,7 +15,7 @@ namespace mtt::scene {
         , Spot_Light
         , Area_Light
         , Environment_Light
-        , Sunsky_Light);
-        light::Sunsky_Light::init();
+        , Atomosphere_Light);
+        light::Atomosphere_Light::init();
     }
 }

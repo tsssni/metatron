@@ -1,13 +1,13 @@
-#include <metatron/render/monte-carlo/volume-path.hpp>
+#include <metatron/render/monte-carlo/radiative.hpp>
 #include <metatron/core/math/distribution/discrete.hpp>
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/plane.hpp>
 
 namespace mtt::monte_carlo {
-    Volume_Path_Integrator::Volume_Path_Integrator(cref<Descriptor>) noexcept {}
+    Radiative_Integrator::Radiative_Integrator(cref<Descriptor>) noexcept {}
 
-    auto Volume_Path_Integrator::sample(
+    auto Radiative_Integrator::sample(
         ref<Context> ctx
     ) const noexcept -> opt<spectra::Stochastic_Spectrum> {
         auto emission = fv4{0.f};

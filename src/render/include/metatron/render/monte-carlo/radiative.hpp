@@ -2,10 +2,10 @@
 #include <metatron/render/monte-carlo/integrator.hpp>
 
 namespace mtt::monte_carlo {
-    struct Volume_Path_Integrator final {
+    struct Radiative_Integrator final {
         struct Descriptor final {};
-        Volume_Path_Integrator(cref<Descriptor>) noexcept;
-        Volume_Path_Integrator() noexcept = default;
+        Radiative_Integrator(cref<Descriptor>) noexcept;
+        Radiative_Integrator() noexcept = default;
 
         // null scattering: https://cs.dartmouth.edu/~wjarosz/publications/miller19null.html
         // mis method: https://pbr-book.org/4ed/Light_Transport_II_Volume_Rendering/Volume_Scattering_Integrators
