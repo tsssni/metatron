@@ -14,7 +14,7 @@ namespace mtt::math {
         if (n == 0) {
             p[0] = T(0); w[0] = T(2);
         } else {
-            p[0] = -math::sqrt(T{1.0 / 3.0});
+            p[0] = -math::pow<1,2>(T{1.0 / 3.0});
             p[1] = -p[0];
             w[0] =  w[1] = T(1);
         }

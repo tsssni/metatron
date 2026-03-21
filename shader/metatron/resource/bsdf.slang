@@ -62,7 +62,7 @@ namespace mtt::bsdf {
     public func fresnel(f32 cos_theta_i, f32 eta) -> f32 {
         let sin2_theta_i = max(0.f, 1.f - cos_theta_i * cos_theta_i);
         let sin2_theta_t = math::guarded_div(sin2_theta_i, eta * eta);
-        let cos_theta_t = math::sqrt(1.f - sin2_theta_t);
+        let cos_theta_t = math::pow<1,2>(1.f - sin2_theta_t);
 
         let r_parl = math::guarded_div(
             eta * cos_theta_i - cos_theta_t,
@@ -72,13 +72,13 @@ namespace mtt::bsdf {
             cos_theta_i - eta * cos_theta_t,
             cos_theta_i + eta * cos_theta_t
         );
-        return (math::sqr(r_parl) + math::sqr(r_perp)) / 2.f;
+        return (math::pow<2>(r_parl) + math::pow<2>(r_perp)) / 2.f;
     }
 
     public func fresnel(f32 cos_theta_i, fc eta) -> f32 {
         let sin2_theta_i = max(0.f, 1.f - cos_theta_i * cos_theta_i);
         let sin2_theta_t = math::guarded_div(sin2_theta_i, eta * eta);
-        let cos_theta_t = math::sqrt(1.f - sin2_theta_t);
+        let cos_theta_t = math::pow<1,2>(1.f - sin2_theta_t);
 
         let conductive = eta.i > math::epsilon;
         if (!conductive && sin2_theta_t.r >= 1.f) return 1.f;
@@ -118,9 +118,9 @@ namespace mtt::bsdf {
         let tan2_theta = math::unit_to_tan2_theta(wo);
         if (isinf(tan2_theta)) return 0.f;
         let alpha2 = 0.f
-        + math::sqr(math::unit_to_cos_theta(wo) * alpha_u)
-        + math::sqr(math::unit_to_sin_theta(wo) * alpha_v);
-        return (math::sqrt(1.f + alpha2 * tan2_theta) - 1.f) / 2.f;
+        + math::pow<2>(math::unit_to_cos_theta(wo) * alpha_u)
+        + math::pow<2>(math::unit_to_sin_theta(wo) * alpha_v);
+        return (math::pow<1,2>(1.f + alpha2 * tan2_theta) - 1.f) / 2.f;
     }
 
     public func smith_mask(fv3 wo, f32 alpha_u, f32 alpha_v) -> f32 {
@@ -136,16 +136,16 @@ namespace mtt::bsdf {
         if (isinf(tan2_theta)) return 0.f;
 
         let cos2_theta = math::unit_to_cos2_theta(wm);
-        let cos4_theta = math::sqr(cos2_theta);
+        let cos4_theta = math::pow<2>(cos2_theta);
         if (cos4_theta < math::epsilon) return 0.f;
 
         let cos_phi = math::unit_to_cos_phi(wm);
         let sin_phi = math::unit_to_sin_phi(wm);
         let e = tan2_theta * (0.f
-        + math::sqr(cos_phi / alpha_u)
-        + math::sqr(sin_phi / alpha_v));
+        + math::pow<2>(cos_phi / alpha_u)
+        + math::pow<2>(sin_phi / alpha_v));
 
-        return 1.f / (math::pi * alpha_u * alpha_v * cos4_theta * math::sqr(1.f + e));
+        return 1.f / (math::pi * alpha_u * alpha_v * cos4_theta * math::pow<2>(1.f + e));
     }
 
     public func visible_trowbridge_reitz(fv3 wo, fv3 wm, f32 alpha_u, f32 alpha_v) -> f32 {
@@ -174,8 +174,8 @@ namespace mtt::bsdf {
             f = F * D * G / abs(4.f * cos_theta_o * cos_theta_i);
             pdf = visible_trowbridge_reitz(wo, wm, alpha_u, alpha_v) / (4.f * abs(cos_theta_om)) * pr / (pr + pt);
         } else {
-            denom = math::sqr(cos_theta_im + cos_theta_om / eta[0]);
-            f = (1.f - F) * D * G * abs(cos_theta_om * cos_theta_im / (denom * cos_theta_i * cos_theta_o)) / math::sqr(eta[0]);
+            denom = math::pow<2>(cos_theta_im + cos_theta_om / eta[0]);
+            f = (1.f - F) * D * G * abs(cos_theta_om * cos_theta_im / (denom * cos_theta_i * cos_theta_o)) / math::pow<2>(eta[0]);
             pdf = visible_trowbridge_reitz(wo, wm, alpha_u, alpha_v) * abs(cos_theta_im) / denom * pt / (pr + pt);
         }
 

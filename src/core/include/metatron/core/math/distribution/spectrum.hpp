@@ -9,7 +9,7 @@ namespace mtt::math {
 
         auto pdf(f32 x) const noexcept -> f32 {
             if (x < 360.f || x > 830.f) return 0.f;
-            return 0.0039398042f / math::sqr(std::cosh(0.0072f * (x - 538.f)));
+            return 0.0039398042f / math::pow<2>(std::cosh(0.0072f * (x - 538.f)));
         }
     };
 }

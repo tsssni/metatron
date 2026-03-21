@@ -62,7 +62,7 @@ namespace mtt::bsdf {
             auto f0 = fresnel(0.f, eta, 0.f);
             for (auto i = 1; i <= fresnel_num_samples; ++i) {
                 auto cos_theta_2 = f32(i) / f32(fresnel_num_samples);
-                auto cos_theta = math::sqrt(cos_theta_2);
+                auto cos_theta = math::pow<1,2>(cos_theta_2);
                 auto f1 = fresnel(cos_theta, eta, 0.f);
                 integral += (f0 + f1) * 0.5f / fresnel_num_samples;
             }
@@ -118,7 +118,7 @@ namespace mtt::bsdf {
             auto Fo = fresnel(math::unit_to_cos_theta(-wo), eta, k);
             auto pdf = math::Cosine_Hemisphere_Distribution{}.pdf(math::unit_to_cos_theta(wi));
             auto internal = 1.f
-            * (1.f - Fi) * (1.f - Fo) / (math::pi * math::sqr(eta))
+            * (1.f - Fi) * (1.f - Fo) / (math::pi * math::pow<2>(eta))
             * (reflectance / (1.f - reflectance * fresnel_reflectance));
             R.f += internal;
             R.pdf *= Fo[0];
@@ -151,7 +151,7 @@ namespace mtt::bsdf {
             if (math::abs(wi[1]) < math::epsilon<f32>) return {};
 
             auto pdf = (reflective ? pr : pt) / (pr + pt);
-            auto f = (reflective ? Fo : (1.f - Fo) / math::sqr(eta[0])) / math::abs(cos_theta_i);
+            auto f = (reflective ? Fo : (1.f - Fo) / math::pow<2>(eta[0])) / math::abs(cos_theta_i);
             return Interaction{f, wi, pdf};
         } else if (dieletric || conductive || (plastic && u[0] < Fo[0])) {
             if (math::abs(wo[1]) < math::epsilon<f32>) return {};
@@ -165,10 +165,10 @@ namespace mtt::bsdf {
             // use polar disk distribution to fetch more samples near center
             auto distr = math::Polar_Disk_Distribution{};
             auto sample_p = distr.sample({u[1], u[2]});
-            auto sample_h = math::sqrt(1.f - math::sqr(sample_p[0]));
+            auto sample_h = math::pow<1,2>(1.f - math::pow<2>(sample_p[0]));
             sample_p[1] = (1.f + wy[1]) / 2.f * sample_p[1] + (1.f - wy[1]) * sample_h / 2.f;
 
-            auto sample_y = math::sqrt(1.f - math::dot(sample_p, sample_p));
+            auto sample_y = math::pow<1,2>(1.f - math::dot(sample_p, sample_p));
             auto wm = sample_p[0] * wx + sample_y * wy + sample_p[1] * wz;
             if (false
             || math::abs(wm[1]) < math::epsilon<f32>
@@ -208,7 +208,7 @@ namespace mtt::bsdf {
             } else {
                 auto Fi = fresnel(math::unit_to_cos_theta(wi), eta, k);
                 auto f = 1.f
-                * (1.f - Fi) * (1.f - Fo) / (math::pi * math::sqr(eta))
+                * (1.f - Fi) * (1.f - Fo) / (math::pi * math::pow<2>(eta))
                 * (reflectance / (1.f - reflectance * fresnel_reflectance));
                 pdf *= (1.f - Fo[0]);
                 return Interaction{f, wi, pdf};

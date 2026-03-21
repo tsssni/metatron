@@ -194,12 +194,12 @@ namespace mtt::shape {
             k_2 + (k_2 * cos_p - k_1 * sin_p) * cos_a,
             (k_2 * sin_p + k_1 * cos_p) * sin_a
         );
-        auto sin_ac1 = math::sqrt(1.f - cos_ac1 * cos_ac1);
+        auto sin_ac1 = math::pow<1,2>(1.f - cos_ac1 * cos_ac1);
         auto c_1 = cos_ac1 * a + sin_ac1 * math::normalize(math::gram_schmidt(c, a));
 
         auto cos_bc1 = math::dot(b, c_1);
         auto cos_bc2 = 1.f - u[1] * (1.f - cos_bc1);
-        auto sin_bc2 = math::sqrt(1.f - cos_bc2 * cos_bc2);
+        auto sin_bc2 = math::pow<1,2>(1.f - cos_bc2 * cos_bc2);
         auto d = cos_bc2 * b + sin_bc2 * math::normalize(math::gram_schmidt(c_1, b));
 
         auto v = math::Vector<fv3, 3>{

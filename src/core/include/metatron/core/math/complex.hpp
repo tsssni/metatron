@@ -127,7 +127,7 @@ namespace mtt::math {
     template<typename T>
     requires std::floating_point<T>
     auto constexpr abs(cref<Complex<T>> z) noexcept -> T {
-        return math::sqrt(norm(z));
+        return math::pow<1,2>(norm(z));
     }
 
     template<typename T>
@@ -141,13 +141,13 @@ namespace mtt::math {
             // v = b / 2u
             // u^4 - a u^2 - b^2 / 4 = 0
             // u^2 = (a + sqrt(a^2 + b^2)) / 2
-            auto u = math::sqrt((a + abs(z)) * T(0.5));
+            auto u = math::pow<1,2>((a + abs(z)) * T(0.5));
             auto v = T(0.5) * b / u;
             return {u, v};
         } else if (a >= T(0)) {
-            return {math::sqrt(a), T(0)};
+            return {math::pow<1,2>(a), T(0)};
         } else {
-            return {T(0), math::sqrt(-a)};
+            return {T(0), math::pow<1,2>(-a)};
         }
     }
 
@@ -155,6 +155,19 @@ namespace mtt::math {
     requires std::floating_point<T>
     auto constexpr sqr(cref<Complex<T>> z) noexcept -> Complex<T> {
         return z * z;
+    }
+
+    template<usize n, usize d = 1, typename T>
+    requires std::floating_point<T>
+    auto constexpr pow(Complex<T> x) noexcept -> Complex<T> {
+        auto y = [&] {
+            if constexpr (d == 1) return x;
+            else if constexpr (d == 2) return sqrt(x);
+        }();
+        if constexpr (n == 0) return Complex<T>{T(1), T(0)};
+        else if constexpr (n == 1) return y;
+        else if constexpr (n % 2 == 0) { auto z = pow<n/2>(y); return z * z; }
+        else { auto z = pow<n/2>(y); return z * z * y; }
     }
 
     template<typename T>

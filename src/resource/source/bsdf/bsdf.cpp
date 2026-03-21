@@ -20,7 +20,7 @@ namespace mtt::bsdf {
 
             auto sin2_theta_i = math::max(0.f, 1.f - cos_theta_i * cos_theta_i);
             auto sin2_theta_t = math::guarded_div(sin2_theta_i, eta * eta);
-            auto cos_theta_t = math::sqrt(1.f - sin2_theta_t);
+            auto cos_theta_t = math::pow<1,2>(1.f - sin2_theta_t);
 
             if constexpr (is_complex) {
                 auto conductive = eta.i > math::epsilon<f32>;
@@ -36,7 +36,7 @@ namespace mtt::bsdf {
                 cos_theta_i + eta * cos_theta_t
             );
             if constexpr (is_complex) return (math::norm(r_parl) + math::norm(r_perp)) / 2.f;
-            else return (math::sqr(r_parl) + math::sqr(r_perp)) / 2.f;
+            else return (math::pow<2>(r_parl) + math::pow<2>(r_perp)) / 2.f;
         };
 
         if (k > math::epsilon<f32>) {
@@ -57,9 +57,9 @@ namespace mtt::bsdf {
         auto tan2_theta = math::unit_to_tan2_theta(wo);
         if (std::isinf(tan2_theta)) return 0.f;
         auto alpha2 = 0.f
-        + math::sqr(math::unit_to_cos_theta(wo) * alpha_u)
-        + math::sqr(math::unit_to_sin_theta(wo) * alpha_v);
-        return (math::sqrt(1.f + alpha2 * tan2_theta) - 1.f) / 2.f;
+        + math::pow<2>(math::unit_to_cos_theta(wo) * alpha_u)
+        + math::pow<2>(math::unit_to_sin_theta(wo) * alpha_v);
+        return (math::pow<1,2>(1.f + alpha2 * tan2_theta) - 1.f) / 2.f;
     }
 
     auto smith_mask(cref<fv3> wo, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
@@ -75,16 +75,16 @@ namespace mtt::bsdf {
         if (std::isinf(tan2_theta)) return 0.f;
 
         auto cos2_theta = math::unit_to_cos2_theta(wm);
-        auto cos4_theta = math::sqr(cos2_theta);
+        auto cos4_theta = math::pow<2>(cos2_theta);
         if (cos4_theta < math::epsilon<f32>) return 0.f;
 
         auto cos_phi = math::unit_to_cos_phi(wm);
         auto sin_phi = math::unit_to_sin_phi(wm);
         auto e = tan2_theta * (0.f
-        + math::sqr(cos_phi / alpha_u)
-        + math::sqr(sin_phi / alpha_v));
+        + math::pow<2>(cos_phi / alpha_u)
+        + math::pow<2>(sin_phi / alpha_v));
 
-        return 1.f / (math::pi * alpha_u * alpha_v * cos4_theta * math::sqr(1.f + e));
+        return 1.f / (math::pi * alpha_u * alpha_v * cos4_theta * math::pow<2>(1.f + e));
     }
 
     auto visible_trowbridge_reitz(cref<fv3> wo, cref<fv3> wm, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
@@ -113,8 +113,8 @@ namespace mtt::bsdf {
             f = F * D * G / math::abs(4.f * cos_theta_o * cos_theta_i);
             pdf = visible_trowbridge_reitz(wo, wm, alpha_u, alpha_v) / (4.f * math::abs(cos_theta_om)) * pr / (pr + pt);
         } else {
-            denom = math::sqr(cos_theta_im + cos_theta_om / eta[0]);
-            f = (1.f - F) * D * G * math::abs(cos_theta_om * cos_theta_im / (denom * cos_theta_i * cos_theta_o)) / math::sqr(eta[0]);
+            denom = math::pow<2>(cos_theta_im + cos_theta_om / eta[0]);
+            f = (1.f - F) * D * G * math::abs(cos_theta_om * cos_theta_im / (denom * cos_theta_i * cos_theta_o)) / math::pow<2>(eta[0]);
             pdf = visible_trowbridge_reitz(wo, wm, alpha_u, alpha_v) * math::abs(cos_theta_im) / denom * pt / (pr + pt);
         }
 

@@ -11,7 +11,7 @@ namespace mtt::math {
 
     auto inline constexpr unit_spherical_to_cartesian(f32 cos_theta, f32 phi) noexcept -> fv3 {
         auto sin_theta_2 = 1.f - cos_theta * cos_theta;
-        auto sin_theta = math::sqrt(sin_theta_2);
+        auto sin_theta = math::pow<1,2>(sin_theta_2);
         auto x = sin_theta * std::cos(phi);
         auto z = sin_theta * std::sin(phi);
         auto y = cos_theta;
@@ -55,7 +55,7 @@ namespace mtt::math {
     }
 
     auto inline constexpr unit_to_sin_theta(cref<fv3> d) noexcept -> f32 {
-        return math::sqrt(unit_to_sin2_theta(d));
+        return math::pow<1,2>(unit_to_sin2_theta(d));
     }
 
     auto inline constexpr unit_to_tan2_theta(cref<fv3> d) noexcept -> f32 {

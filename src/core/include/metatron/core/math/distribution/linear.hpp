@@ -10,7 +10,7 @@ namespace mtt::math {
         auto sample(f32 u) const noexcept -> f32 {
             auto a2 = a * a;
             auto b2 = b * b;
-            auto x =  u * (a + b) / (a + math::sqrt(math::lerp(a2, b2, u)));
+            auto x =  u * (a + b) / (a + math::pow<1,2>(math::lerp(a2, b2, u)));
             return x;
         }
 

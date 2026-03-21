@@ -44,7 +44,7 @@ namespace mtt::light {
         };
 
         auto eta = math::pi * 0.5f - desc.direction[0];
-        auto x = math::pow(eta / (math::pi * 0.5f), 1.f / 3.f);
+        auto x = math::pow<1,3>(eta / (math::pi * 0.5f));
 
         auto t_high = i32(turbidity);
         auto t_low = t_high - 1;
@@ -309,16 +309,16 @@ namespace mtt::light {
         auto [A, B, C, D, E, F, G, I, H] = *view<fv<9>>(&sky_params[idx * sky_num_params]);
         auto chi = [](f32 g, f32 cos_alpha) -> f32 {
             return math::guarded_div(
-                1.f + math::sqr(cos_alpha),
-                math::pow(1.f + math::sqr(g) - 2.f * g * cos_alpha, 1.5f)
+                1.f + math::pow<2>(cos_alpha),
+                math::pow<3, 2>(1.f + math::pow<2>(g) - 2.f * g * cos_alpha)
             );
         };
         auto c0 = 1.f + A * math::exp(math::guarded_div(B, (cos_theta + 0.01f)));
         auto c1 = 0.f
         + C + D * math::exp(E * gamma)
-        + F * math::sqr(cos_gamma)
+        + F * math::pow<2>(cos_gamma)
         + G * chi(H, cos_gamma)
-        + I * math::sqrt(cos_theta);
+        + I * math::pow<1,2>(cos_theta);
 
         return c0 * c1 * sky_radiance[idx] / spectra::CIE_Y_integral;
     }
@@ -327,24 +327,30 @@ namespace mtt::light {
         auto eta = math::pi * 0.5f - math::acos(cos_theta);
         auto segment = math::min(
             sun_num_segments - 1,
-            i32(math::pow(eta / (math::pi * 0.5f), 1.f / 3.f) * sun_num_segments)
+            i32(math::pow<1,3>(eta / (math::pi * 0.5f)) * sun_num_segments)
         );
-        auto x = eta - math::pi * 0.5f * math::pow(f32(segment) / f32(sun_num_segments), 3);
+        auto x = eta - math::pi * 0.5f * math::pow<3>(f32(segment) / f32(sun_num_segments));
         auto L = 0.f;
-        for (auto i = 0; i < sun_num_ctls; ++i)
+        auto x_pow = 1.f;
+        for (auto i = 0; i < sun_num_ctls; ++i) {
             L += sun_radiance[
                 segment * atomo_num_lambda * sun_num_ctls + idx * sun_num_ctls + i
-            ] * math::pow(x, i);
+            ] * x_pow;
+            x_pow *= x;
+        }
         return L / spectra::CIE_Y_integral;
     }
 
     auto Atomosphere_Light::hosek_limb(i32 idx, f32 cos_gamma) const noexcept -> f32 {
-        auto sin_gamma_sqr = 1.f - math::sqr(cos_gamma);
-        auto cos_psi_sqr = 1.f - sin_gamma_sqr / (1.f - math::sqr(cos_sun));
-        auto cos_psi = math::sqrt(cos_psi_sqr);
+        auto sin_gamma_sqr = 1.f - math::pow<2>(cos_gamma);
+        auto cos_psi_sqr = 1.f - sin_gamma_sqr / (1.f - math::pow<2>(cos_sun));
+        auto cos_psi = math::pow<1,2>(cos_psi_sqr);
         auto l = 0.f;
-        for (auto i = 0; i < sun_num_limb_params; ++i)
-            l += sun_limb[idx * sun_num_limb_params + i] * math::pow(cos_psi, i);
+        auto psi_pow = 1.f;
+        for (auto i = 0; i < sun_num_limb_params; ++i) {
+            l += sun_limb[idx * sun_num_limb_params + i] * psi_pow;
+            psi_pow *= cos_psi;
+        }
         return l;
     }
 
@@ -362,7 +368,7 @@ namespace mtt::light {
             auto cos_theta_phi = stl::views::cartesian_product(cos_theta, phi);
             auto cos_gamma = cos_theta_phi | std::views::transform([d = this->d](auto&& cos_theta_phi) {
                 auto [cos_theta, phi] = cos_theta_phi;
-                auto sin_theta = math::sqrt(1.f - math::sqr(cos_theta));
+                auto sin_theta = math::pow<1,2>(1.f - math::pow<2>(cos_theta));
                 auto cos_phi = std::cos(phi);
                 auto sin_phi = std::sin(phi);
                 auto wi = fv3{sin_theta * cos_phi, cos_theta, sin_theta * sin_phi};
@@ -399,7 +405,7 @@ namespace mtt::light {
                 t = this->t
             ](auto&& cos_gamma_phi) {
                 auto [cos_gamma, phi] = cos_gamma_phi;
-                auto sin_gamma = math::sqrt(1.f - math::sqr(cos_gamma));
+                auto sin_gamma = math::pow<1,2>(1.f - math::pow<2>(cos_gamma));
                 auto cos_phi = std::cos(phi);
                 auto sin_phi = std::sin(phi);
                 auto wi_sun = fv3{sin_gamma * cos_phi, cos_gamma, sin_gamma * sin_phi};

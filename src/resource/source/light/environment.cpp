@@ -13,7 +13,7 @@ namespace mtt::light {
         auto u = 1.f - phi / (2.f * math::pi);
         auto v = theta / math::pi;
         auto t = (*env_map.data())({{u, v}}, lambda);
-        auto J = 2.f * math::sqr(math::pi) * std::sin(theta);
+        auto J = 2.f * math::pow<2>(math::pi) * std::sin(theta);
         return Interaction{
             .L = t,
             .wi = r.d,

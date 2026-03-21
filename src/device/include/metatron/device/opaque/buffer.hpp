@@ -25,7 +25,7 @@ namespace mtt::opaque {
         std::vector<uv2> dirty = {};
 
         struct Descriptor final {
-            mut<byte> ptr = nullptr;
+            view<byte> ptr = nullptr;
             State state = State::local;
             command::Type type = command::Type::render;
             usize alignment = 0;

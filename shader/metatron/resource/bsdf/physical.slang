@@ -97,7 +97,7 @@ namespace mtt::bsdf {
                 let Fo = fresnel(math::unit_to_cos_theta(-wo), eta, k);
                 let pdf = math::Cosine_Hemisphere_Distribution().pdf(math::unit_to_cos_theta(wi));
                 let internal = 1.f
-                * (1.f - Fi) * (1.f - Fo) / (math::pi * math::sqr(eta))
+                * (1.f - Fi) * (1.f - Fo) / (math::pi * math::pow<2>(eta))
                 * (reflectance / (1.f - reflectance * fresnel_reflectance));
                 R.f += internal;
                 R.pdf *= Fo[0];
@@ -128,7 +128,7 @@ namespace mtt::bsdf {
                 if (abs(wi[1]) < math::epsilon) return {};
 
                 let pdf = (reflective ? pr : pt) / (pr + pt);
-                let f = (reflective ? Fo : (1.f - Fo) / math::sqr(eta[0])) / abs(cos_theta_i);
+                let f = (reflective ? Fo : (1.f - Fo) / math::pow<2>(eta[0])) / abs(cos_theta_i);
                 return Interaction(f, wi, pdf);
             } else if (dieletric || conductive || (plastic && u[0] < Fo[0])) {
                 if (abs(wo[1]) < math::epsilon) return {};
@@ -142,10 +142,10 @@ namespace mtt::bsdf {
                 // use polar disk distribution to fetch more samples near center
                 let distr = math::Polar_Disk_Distribution();
                 var sample_p = distr.sample({u[1], u[2]});
-                var sample_h = math::sqrt(1.f - math::sqr(sample_p[0]));
+                var sample_h = math::pow<1,2>(1.f - math::pow<2>(sample_p[0]));
                 sample_p[1] = (1.f + wy[1]) / 2.f * sample_p[1] + (1.f - wy[1]) * sample_h / 2.f;
 
-                let sample_y = math::sqrt(1.f - dot(sample_p, sample_p));
+                let sample_y = math::pow<1,2>(1.f - dot(sample_p, sample_p));
                 var wm = sample_p[0] * wx + sample_y * wy + sample_p[1] * wz;
                 if (false
                 || abs(wm[1]) < math::epsilon
@@ -187,7 +187,7 @@ namespace mtt::bsdf {
                 } else {
                     let Fi = fresnel(math::unit_to_cos_theta(wi), eta, k);
                     let f = 1.f
-                    * (1.f - Fi) * (1.f - Fo) / (math::pi * math::sqr(eta))
+                    * (1.f - Fi) * (1.f - Fo) / (math::pi * math::pow<2>(eta))
                     * (reflectance / (1.f - reflectance * fresnel_reflectance));
                     pdf *= (1.f - Fo[0]);
                     return Interaction(f, wi, pdf);

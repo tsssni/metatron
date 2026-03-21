@@ -77,7 +77,7 @@ namespace mtt::renderer {
                 || i == nanodims.index()
                 ) continue;
                 auto& vec = vector.storage[i];
-                auto sequence = vec.pack();
+                auto& sequence = vec.pack();
                 if (sequence.empty()) continue;
 
                 auto buffer = make_desc<opaque::Buffer>({

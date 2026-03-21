@@ -148,8 +148,8 @@ namespace mtt::light {
             struct {
                 f32 operator()(f32 g, f32 cos_alpha) {
                     return math::guarded_div(
-                        1.f + math::sqr(cos_alpha),
-                        pow(1.f + math::sqr(g) - 2.f * g * cos_alpha, 1.5f)
+                        1.f + math::pow<2>(cos_alpha),
+                        pow(1.f + math::pow<2>(g) - 2.f * g * cos_alpha, 1.5f)
                     );
                 }
             } chi;
@@ -157,9 +157,9 @@ namespace mtt::light {
             let c0 = 1.f + A * exp(math::guarded_div(B, (cos_theta + 0.01f)));
             let c1 = 0.f
             + C + D * exp(E * gamma)
-            + F * math::sqr(cos_gamma)
+            + F * math::pow<2>(cos_gamma)
             + G * chi(H, cos_gamma)
-            + I * math::sqrt(cos_theta);
+            + I * math::pow<1,2>(cos_theta);
 
             return c0 * c1 * sky_radiance[idx] / spectra::CIE_Y_integral;
         }
@@ -180,9 +180,9 @@ namespace mtt::light {
         }
 
         func hosek_limb(i32 idx, f32 cos_gamma) -> f32 {
-            let sin_gamma_sqr = 1.f - math::sqr(cos_gamma);
-            let cos_psi_sqr = 1.f - sin_gamma_sqr / (1.f - math::sqr(cos_sun));
-            let cos_psi = math::sqrt(cos_psi_sqr);
+            let sin_gamma_sqr = 1.f - math::pow<2>(cos_gamma);
+            let cos_psi_sqr = 1.f - sin_gamma_sqr / (1.f - math::pow<2>(cos_sun));
+            let cos_psi = math::pow<1,2>(cos_psi_sqr);
             var l = 0.f;
             for (var i = 0; i < sun_num_limb_params; ++i)
                 l += sun_limb[idx * sun_num_limb_params + i] * pow(cos_psi, i);

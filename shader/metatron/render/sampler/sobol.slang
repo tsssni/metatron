@@ -42,31 +42,14 @@ namespace mtt::sampler {
         }
 
         func permute_idx(Context ctx) -> u64 {
-            static Array<bv4, 24> permutations = {
-                {0, 1, 2, 3},
-                {0, 1, 3, 2},
-                {0, 2, 1, 3},
-                {0, 2, 3, 1},
-                {0, 3, 2, 1},
-                {0, 3, 1, 2},
-                {1, 0, 2, 3},
-                {1, 0, 3, 2},
-                {1, 2, 0, 3},
-                {1, 2, 3, 0},
-                {1, 3, 2, 0},
-                {1, 3, 0, 2},
-                {2, 1, 0, 3},
-                {2, 1, 3, 0},
-                {2, 0, 1, 3},
-                {2, 0, 3, 1},
-                {2, 3, 0, 1},
-                {2, 3, 1, 0},
-                {3, 1, 2, 0},
-                {3, 1, 0, 2},
-                {3, 2, 1, 0},
-                {3, 2, 0, 1},
-                {3, 0, 2, 1},
-                {3, 0, 1, 2}
+            static Array<bv4, 32> permutations = {
+                {0, 1, 2, 3}, {0, 1, 3, 2}, {0, 2, 1, 3}, {0, 2, 3, 1}, {0, 3, 2, 1},
+                {0, 3, 1, 2}, {1, 0, 2, 3}, {1, 0, 3, 2}, {1, 2, 0, 3}, {1, 2, 3, 0},
+                {1, 3, 2, 0}, {1, 3, 0, 2}, {2, 1, 0, 3}, {2, 1, 3, 0}, {2, 0, 1, 3},
+                {2, 0, 3, 1}, {2, 3, 0, 1}, {2, 3, 1, 0}, {3, 1, 2, 0}, {3, 1, 0, 2},
+                {3, 2, 1, 0}, {3, 2, 0, 1}, {3, 0, 2, 1}, {3, 0, 1, 2},
+                {0, 1, 2, 3}, {0, 1, 3, 2}, {0, 2, 1, 3}, {0, 2, 3, 1},
+                {0, 3, 2, 1}, {0, 3, 1, 2}, {1, 0, 2, 3}, {1, 0, 3, 2}
             };
 
             let log2_spp = ctx.data[0];
@@ -79,19 +62,26 @@ namespace mtt::sampler {
                 let shift = 2 * i - last_digit;
                 let digit = (morton_idx >> shift) & 3;
                 let higher_digits = morton_idx >> (shift + 2);
-                let p = (math::mix_bits(higher_digits ^ (0x55555555u * ctx.dim)) >> 24) % 24;
+                let p = math::mix_bits_fast(higher_digits ^ (0x55555555u * ctx.dim)) >> 27;
                 idx |= u64(permutations[p][digit]) << shift;
             }
 
             if (last_digit == 1) {
-                int digit = morton_idx & 1;
-                idx |= digit ^ (math::mix_bits((morton_idx >> 1) ^ (0x55555555u * ctx.dim)) & 1);
+                var digit = morton_idx & 1;
+                idx |= digit ^ (math::mix_bits_fast((morton_idx >> 1) ^ (0x55555555u * ctx.dim)) & 1);
             }
             return idx;
         }
 
         func sobol(u64 idx, i32 dim, u32 hash) -> f32 {
             var x = 0u;
+            var offset = dim * sobol_matrix_size;
+            while (idx != 0) {
+                let lo = uint(idx);
+                let skip = lo != 0 ? firstbitlow(lo) : 32 + firstbitlow(uint(idx >> 32));
+                x ^= matrices[offset + skip];
+                idx &= idx - 1;
+            }
             for (var i = dim * sobol_matrix_size; idx != 0; idx >>= 1, ++i)
                 if ((idx & 1) != 0) x ^= matrices[i];
             x = math::fast_binary_owen_scramble(x, hash);

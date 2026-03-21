@@ -40,7 +40,7 @@ namespace mtt::shape {
 
             let pdf = length(r.o) < 1.f
             ? math::Sphere_Distribution().pdf()
-            : math::Cone_Distribution(math::sqrt(1.f - 1.f / dot(r.o, r.o))).pdf();
+            : math::Cone_Distribution(math::pow<1,2>(1.f - 1.f / dot(r.o, r.o))).pdf();
 
             return Interaction(p, n, tn, bn, uv, t, pdf, dpdu, dpdv, dndu, dndv);
         }
@@ -54,7 +54,7 @@ namespace mtt::shape {
                 let dir = normalize(p - ctx.r.o);
                 r = math::Ray(ctx.r.o, dir);
             } else {
-                let cos_theta_max = math::sqrt(1.f - 1.f / (d * d));
+                let cos_theta_max = math::pow<1,2>(1.f - 1.f / (d * d));
                 let distr = math::Cone_Distribution(cos_theta_max);
                 let dir = normalize(-ctx.r.o);
                 var sdir = distr.sample(u);
@@ -75,8 +75,8 @@ namespace mtt::shape {
             let delta = b * b - 4.f * a * c;
             if (delta < 0) return none;
 
-            let x0 = (-b - math::sqrt(delta)) / (2.f * a);
-            let x1 = (-b + math::sqrt(delta)) / (2.f * a);
+            let x0 = (-b - math::pow<1,2>(delta)) / (2.f * a);
+            let x1 = (-b + math::pow<1,2>(delta)) / (2.f * a);
             if (x1 < 0) return none;
             return fv4(0, 0, 0, x0 < 0.f ? x1 : x0);
         }

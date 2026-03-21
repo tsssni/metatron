@@ -48,10 +48,10 @@ Metatron use [nix](https://nixos.org) with [flakes](https://nix.dev/concepts/fla
 nix build
 ```
 
-Or use [cmake](https://cmake.org/) if [dependencies](https://github.com/tsssni/metatron/blob/master/nix/default.nix#L35) are availabe. Installation is required for runtime resource loading.
+Or use [cmake](https://cmake.org/) if [dependencies](https://github.com/tsssni/metatron/blob/master/nix/default.nix#L35) are availabe. Extra flags are required for resource loading and best performance.
 
 ```nu
-cmake --preset rel -DCMAKE_INSTALL_PREFIX=/usr/bin/
+cmake --preset rel -DCMAKE_INSTALL_PREFIX=/usr/bin/ -DCMAKE_CXX_FLAGS="-march=native"
 cmake --build build/rel
 cmake --install build/rel
 ```

@@ -12,7 +12,7 @@ namespace mtt::math {
 
         if (n_rec == n_fma) c_rec[n_rec] = c[n - 1];
         if (n_rec == 0) return c_rec[0];
-        else return estrin<T, (n - 1) / 2 + 1>(math::sqr(x), c_rec);
+        else return estrin<T, (n - 1) / 2 + 1>(math::pow<2>(x), c_rec);
     }
 
     public func polynomial<T: __BuiltinFloatingPointType, let n: u32>(

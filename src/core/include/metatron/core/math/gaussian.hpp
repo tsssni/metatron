@@ -10,7 +10,7 @@ namespace mtt::math {
         auto w = -std::log((T(1) - x) * (T(1) + x));
 
         auto w1 = w - T(2.5);
-        auto w2 = math::sqrt(w) - T(3);
+        auto w2 = math::pow<1,2>(w) - T(3);
 
         auto p1 = T(polynomial(w1, Vector<T, 9>{
             1.50140941,     0.246640727,

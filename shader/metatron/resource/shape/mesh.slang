@@ -89,12 +89,12 @@ namespace mtt::shape {
                 k_2 + (k_2 * cos_p - k_1 * sin_p) * cos_a,
                 (k_2 * sin_p + k_1 * cos_p) * sin_a
             );
-            let sin_ac1 = math::sqrt(1.f - cos_ac1 * cos_ac1);
+            let sin_ac1 = math::pow<1,2>(1.f - cos_ac1 * cos_ac1);
             let c_1 = cos_ac1 * a + sin_ac1 * normalize(math::gram_schmidt(c, a));
 
             let cos_bc1 = dot(b, c_1);
             let cos_bc2 = 1.f - u[1] * (1.f - cos_bc1);
-            let sin_bc2 = math::sqrt(1.f - cos_bc2 * cos_bc2);
+            let sin_bc2 = math::pow<1,2>(1.f - cos_bc2 * cos_bc2);
             let d = cos_bc2 * b + sin_bc2 * normalize(math::gram_schmidt(c_1, b));
 
             let v = Array<fv3, 3>(

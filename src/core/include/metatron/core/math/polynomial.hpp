@@ -12,7 +12,7 @@ namespace mtt::math {
 
         if constexpr (n_rec == n_fma) c_rec[n_rec] = c[n - 1];
         if constexpr (n_rec == 0) return c_rec[0];
-        else return estrin(math::sqr(x), c_rec);
+        else return estrin(math::pow<2>(x), c_rec);
     }
 
     template<typename T, usize n>

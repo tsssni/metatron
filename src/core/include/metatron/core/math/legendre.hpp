@@ -24,7 +24,7 @@ namespace mtt::math {
     auto legendre(i32 l, i32 m, T x) -> T {
         auto mm = T(1);
         if (m > 0) {
-            auto s = math::sqrt((T(1) - x) * (T(1) + x));
+            auto s = math::pow<1,2>((T(1) - x) * (T(1) + x));
             auto f = T(1);
             for (auto i = 1; i <= m; ++i) {
                 mm *= -f * s;

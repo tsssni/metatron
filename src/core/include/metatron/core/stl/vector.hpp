@@ -35,14 +35,14 @@ namespace mtt::stl {
             };
         }
 
-        auto pack() noexcept -> std::vector<byte> {
-            auto buffer = std::vector<byte>{};
+        auto pack() noexcept -> std::vector<byte> const& {
             buffer.resize(length * bytelen);
             for (auto i = 0; i < blocks.size(); ++i) {
                 auto size = (i < blocks.size() - 1 ? block_size : length % block_size);
                 auto offset = buffer.data() + i * block_size * bytelen;
                 std::memcpy(offset, blocks[i], size * bytelen);
             }
+            blocks.clear();
             return buffer;
         }
 
@@ -122,10 +122,14 @@ namespace mtt::stl {
         }
 
         auto at(u32 i) const noexcept -> mut<byte> {
-            return blocks[i / block_size] + bytelen * (i % block_size);
+            if (blocks.empty()) [[likely]]
+                return mut<byte>(buffer.data()) + bytelen * i;
+            else
+                return blocks[i / block_size] + bytelen * (i % block_size);
         }
 
         std::vector<mut<byte>> blocks;
+        std::vector<byte> buffer;
         std::vector<std::string> pathes;
         table<u32> entities;
 
@@ -205,6 +209,12 @@ namespace mtt::stl {
         u32 tid;
     };
 
+    struct vicar final {
+        u32 i: 20;
+        u32 t: 4;
+        u32 s: 8;
+    };
+
     template<pro::facade F>
     struct vector<F> final: singleton<vector<F>> {
         auto constexpr static max_idx = 1 << 4;
@@ -263,22 +273,22 @@ namespace mtt::stl {
         }
 
         auto operator[](u32 idx) noexcept -> mut<F> {
-            auto [s, t, i] = split(idx);
-            auto ptr = raw(s)[i];
-            return reinterpreter[t](ptr);
+            auto v = std::bit_cast<vicar>(idx);
+            auto ptr = raw(v.s)[v.i];
+            return reinterpreter[v.t](ptr);
         }
 
         auto operator[](u32 idx) const noexcept -> view<F> {
-            auto [s, t, i] = split(idx);
-            auto ptr = raw(s)[i];
-            return reinterpreter[t](ptr);
+            auto v = std::bit_cast<vicar>(idx);
+            auto ptr = raw(v.s)[v.i];
+            return reinterpreter[v.t](ptr);
         }
 
         auto operator()(u32 idx) const noexcept -> obj<F>
         requires(F::copyability != pro::constraint_level::none) {
-            auto [s, t, i] = split(idx);
-            auto ptr = raw(s)[i];
-            return copier.at(t)(ptr);
+            auto v = std::bit_cast<vicar>(idx);
+            auto ptr = raw(v.s)[v.i];
+            return copier[v.t](ptr);
         }
 
         template<typename T>
@@ -290,8 +300,8 @@ namespace mtt::stl {
         }
 
         auto path(u32 idx) const noexcept -> std::string_view {
-            auto [s, t, i] = split(idx);
-            return raw(s).path(i);
+            auto v = std::bit_cast<vicar>(idx);
+            return raw(v.s).path(v.i);
         }
 
         auto entity(std::string_view path) const noexcept -> u32 {
@@ -305,11 +315,11 @@ namespace mtt::stl {
 
         template<typename T>
         auto is(u32 idx) const noexcept -> bool {
-            auto [s, t, i] = split(idx);
+            auto v = std::bit_cast<vicar>(idx);
             return true
             && map.contains(typeid(T))
-            && t == map.at(typeid(T))
-            && i < raw(s).size();
+            && v.t == map.at(typeid(T))
+            && v.i < raw(v.s).size();
         }
 
         auto contains(std::string_view path) const noexcept -> bool {
@@ -323,14 +333,6 @@ namespace mtt::stl {
         auto keys() const noexcept { return slot | std::views::keys; }
 
     private:
-        auto split(u32 idx) const noexcept -> uv3 {
-            return {
-                idx >> 24,
-                idx >> 20 & 0xf,
-                idx & 0xfffff,
-            };
-        }
-
         auto raw(u32 tid) noexcept -> ref<vector<byte>> {
             return vector<void>::instance().storage[tid];
         }

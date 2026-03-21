@@ -23,7 +23,7 @@ namespace mtt::math {
         let w = -log((T(1) - x) * (T(1) + x));
 
         let w1 = T(w) - T(2.5);
-        let w2 = T(math::sqrt(w)) - T(3);
+        let w2 = T(math::pow<1,2>(w)) - T(3);
 
         let p1 = T(polynomial<T, 9>(w1, {
             T(1.50140941),     T(0.246640727),

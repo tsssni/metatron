@@ -9,7 +9,7 @@ namespace mtt::math {
 
         auto sample(cref<fv2> u) const noexcept -> fv3 {
             auto cos_theta = 1.f - 2.f * u[0];
-            auto sin_theta = math::sqrt(1 - cos_theta * cos_theta);
+            auto sin_theta = math::pow<1,2>(1 - cos_theta * cos_theta);
             auto phi = 2.f * pi * u[1];
             return {sin_theta * std::cos(phi), cos_theta, sin_theta * std::sin(phi)};
         }
@@ -24,7 +24,7 @@ namespace mtt::math {
 
         auto sample(cref<fv2> u) const noexcept -> fv3 {
             auto z = u[0];
-            auto r = math::sqrt(1 - z * z);
+            auto r = math::pow<1,2>(1 - z * z);
             auto phi = 2.f * pi * u[1];
             return {r * std::cos(phi), r * std::sin(phi), z};
         }
@@ -40,7 +40,7 @@ namespace mtt::math {
         auto sample(cref<fv2> u) const noexcept -> fv3 {
             auto distr = Unifrom_Disk_Distribution{};
             auto d = distr.sample(u);
-            return {d[0], math::sqrt(1.f - math::sqr(d[0]) - math::sqr(d[1])), d[1]};
+            return {d[0], math::pow<1,2>(1.f - math::pow<2>(d[0]) - math::pow<2>(d[1])), d[1]};
         }
 
         auto pdf(f32 cos_theta) const noexcept -> f32 {

@@ -7,7 +7,7 @@ namespace mtt::math {
         Polar_Disk_Distribution() noexcept = default;
 
         auto sample(cref<fv2> u) const noexcept -> fv2 {
-            auto r = math::sqrt(u[0]);
+            auto r = math::pow<1,2>(u[0]);
             auto theta = 2.f * pi * u[1];
             return r * fv2{std::cos(theta), std::sin(theta)};
         }

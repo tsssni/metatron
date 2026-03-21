@@ -283,6 +283,22 @@ namespace mtt::math {
     }
 
     template<typename T, usize size>
+    requires std::floating_point<T>
+    auto constexpr cbrt(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
+        return math::foreach([](cref<T> v, auto) {
+            return cbrt(v);
+        }, x);
+    }
+
+    template<usize n, usize d = 1, typename T, usize size>
+    requires (d == 1 || std::floating_point<T>)
+    auto constexpr pow(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
+        return math::foreach([](cref<T> v, auto) {
+            return pow<n, d>(v);
+        }, x);
+    }
+
+    template<typename T, usize size>
     auto constexpr exp(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
         return math::foreach([](cref<T> v, auto) {
             return exp(v);

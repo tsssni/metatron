@@ -30,7 +30,7 @@ namespace mtt::spectra {
 
         if (math::constant(rgb)) {
             c = fv3{
-                (rgb[0] - 0.5f) / math::sqrt(rgb[0] * (1.f - rgb[0])),
+                (rgb[0] - 0.5f) / math::pow<1,2>(rgb[0] * (1.f - rgb[0])),
                 0.f, 0.f,
             };
             return;
@@ -57,9 +57,9 @@ namespace mtt::spectra {
             // define co lambda for looking up sigmoid polynomial coefficients
             auto co = [&](i32 dx, i32 dy, i32 dz) {
                 return cs->table[0uz
-                + maxc      * math::pow(cs->table_res, 3) * 3
-                + (zi + dz) * math::pow(cs->table_res, 2) * 3
-                + (yi + dy) * math::pow(cs->table_res, 1) * 3
+                + maxc      * math::pow<3>(cs->table_res) * 3
+                + (zi + dz) * math::pow<2>(cs->table_res) * 3
+                + (yi + dy) * cs->table_res * 3
                 + (xi + dx) * 3 + i
                 ];
             };
@@ -83,7 +83,7 @@ namespace mtt::spectra {
     auto Rgb_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
         auto sigmoid = [](f32 x) -> f32 {
             if (std::isinf(x)) return x < 0.f ? 0.f : 1.f;
-            return 0.5f + x / (2.f * math::sqrt(1.f + math::sqr(x)));
+            return 0.5f + x / (2.f * math::pow<1,2>(1.f + math::pow<2>(x)));
         };
         return s
         * sigmoid(math::polynomial(lambda, c))

@@ -12,7 +12,7 @@ namespace mtt::light {
             let u = 1.f - phi / (2.f * math::pi);
             let v = theta / math::pi;
             let t = env_map({{u, v}}, lambda);
-            let J = 2.f * math::sqr(math::pi) * sin(theta);
+            let J = 2.f * math::pow<2>(math::pi) * sin(theta);
             return Interaction(
                 t,
                 r.d,

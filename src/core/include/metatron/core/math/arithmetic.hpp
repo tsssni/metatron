@@ -91,14 +91,35 @@ namespace mtt::math {
 
     template<typename T>
     requires std::floating_point<T>
-    auto constexpr pow(T x, T n) noexcept -> T {
-        return std::pow(x, n);
+    auto constexpr sqrt(T x) noexcept -> T {
+        return std::sqrt(math::max(T(0), x));
     }
 
     template<typename T>
     requires std::floating_point<T>
-    auto constexpr sqrt(T x) noexcept -> T {
-        return std::sqrt(math::max(T(0), x));
+    auto constexpr cbrt(T x) noexcept -> T {
+        return std::cbrt(x);
+    }
+
+    template<usize n, usize d = 1, typename T>
+    requires (d == 1 || std::floating_point<T>)
+    auto constexpr pow(T x) noexcept -> T {
+        auto y = [&] {
+            if constexpr (d == 1) return x;
+            else if constexpr (d == 2) return sqrt(x);
+            else if constexpr (d == 3) return cbrt(x);
+            else return std::pow(x, T(1) / T(d));
+        }();
+        if constexpr (n == 0) return T(1);
+        else if constexpr (n == 1) return y;
+        else if constexpr (n % 2 == 0) { auto z = pow<n/2>(y); return z * z; }
+        else { auto z = pow<n/2>(y); return z * z * y; }
+    }
+
+    template<typename T>
+    requires std::floating_point<T>
+    auto constexpr pow(T x, T n) noexcept -> T {
+        return std::pow(x, n);
     }
 
     template<typename T>

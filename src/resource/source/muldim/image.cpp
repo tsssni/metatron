@@ -125,8 +125,8 @@ namespace mtt::muldim {
             C = math::guarded_div(C, F);
 
             auto det = -B * B + 4.f * A * C;
-            auto u_tan = 2.f * math::guarded_div(math::sqrt(det * C), det);
-            auto v_tan = 2.f * math::guarded_div(math::sqrt(det * A), det);
+            auto u_tan = 2.f * math::guarded_div(math::pow<1,2>(det * C), det);
+            auto v_tan = 2.f * math::guarded_div(math::pow<1,2>(det * A), det);
             auto u_range = iv2{
                 i32(std::ceil(uv[0] - u_tan)),
                 i32(std::ceil(uv[0] + u_tan)),

@@ -8,7 +8,7 @@ namespace mtt::math {
 
         public func pdf(f32 x) -> f32 {
             if (x < 360.f || x > 830.f) return 0.f;
-            return 0.0039398042f / math::sqr(cosh(0.0072f * (x - 538.f)));
+            return 0.0039398042f / math::pow<2>(cosh(0.0072f * (x - 538.f)));
         }
     }
 }

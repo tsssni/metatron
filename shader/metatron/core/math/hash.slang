@@ -32,6 +32,22 @@ namespace mtt::math {
         return murmur_hash(buffer, 0);
     }
 
+    public func mix_bits_fast(u32 x) -> u32 {
+        x ^= (x >> 16);
+        x *= 0x7feb352du;
+        x ^= (x >> 16);
+        return x;
+    }
+
+    public func mix_bits(u32 x) -> u32 {
+        x ^= (x >> 16);
+        x *= 0x7feb352du;
+        x ^= (x >> 15);
+        x *= 0x846ca68bu;
+        x ^= (x >> 16);
+        return x;
+    }
+
     public func mix_bits(u64 x) -> u64 {
         x ^= (x >> 31);
         x *= 0x7fb5d329728ea185ull;

@@ -23,7 +23,7 @@ namespace mtt::math {
         auto sample(f32 u) const noexcept -> f32 {
             auto s = math::lerp(cdf_a, cdf_b, u);
             s = math::clamp(s, math::epsilon<f32>, 1.f - math::epsilon<f32>);
-            return math::sqrt(2.f) * erfinv(2.f * s - 1.f) * sigma + mu;
+            return math::pow<1,2>(2.f) * erfinv(2.f * s - 1.f) * sigma + mu;
         }
 
         auto pdf(f32 x) const noexcept -> f32 {

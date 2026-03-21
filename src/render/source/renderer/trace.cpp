@@ -16,6 +16,10 @@ namespace mtt::renderer {
         auto& args = scene::Args::instance();
         auto addr = wired::Address{args.address};
 
+        auto& vector = stl::vector<void>::instance();
+        for (auto i = 0; i < vector.size(); ++i)
+            vector.storage[i].pack();
+
         auto ct = *entity<math::Transform>("/hierarchy/camera/render");
         auto spp = desc.film->spp;
         auto depth = desc.film->depth;
