@@ -21,6 +21,10 @@ namespace mtt::renderer {
         auto depth = desc.film->depth;
         auto size = uzv2{desc.film->image.size};
 
+        auto& film = desc.film->image;
+        auto image = muldim::Image{.size = film.size, .linear = film.linear};
+        image.pixels.emplace_back(film.pixels.front().size());
+
         auto range = uv2{0, 1};
         auto progress = stl::progress{math::prod(size) * spp};
         auto trace = [&](cref<uzv2> px) {
@@ -50,11 +54,12 @@ namespace mtt::renderer {
                 fixel = Li;
                 ++progress;
             }
-        };
 
-        auto& film = desc.film->image;
-        auto image = muldim::Image{.size = film.size, .linear = film.linear};
-        image.pixels.emplace_back(film.pixels.front().size());
+            auto [i, j] = px;
+            auto pixel = fv4{film[i, j]};
+            pixel /= pixel[3];
+            image[i, j] = pixel;
+        };
 
         auto next = 1u;
         auto previewer = remote::Previewer{addr, "metatron"};
@@ -67,18 +72,8 @@ namespace mtt::renderer {
             range[1] = math::min(spp, range[1] + next);
             next = math::min(next * 2, desc.film->stride);
 
-            auto finished = range[0] == spp;
             future.wait();
-            scheduler.sync_parallel(
-                uzv2{image.size},
-                [&image, &film](auto const& px) {
-                    auto [i, j] = px;
-                    auto pixel = fv4{film[i, j]};
-                    pixel /= pixel[3];
-                    image[i, j] = pixel;
-                }
-            );
-            if (finished) image.to_path(args.output, desc.film->color_space);
+            if (range[0] == spp) image.to_path(args.output, desc.film->color_space);
             if (!addr.host.empty()) future = scheduler.async_dispatch(
                 [&image, &previewer] { previewer.update(image); }
             );

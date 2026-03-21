@@ -3,6 +3,7 @@
   assimp,
   clangStdenv,
   cmake,
+  cpptrace,
   glaze,
   lib,
   metal-cpp,
@@ -43,6 +44,9 @@ stdenv.mkDerivation {
   buildInputs = [
     argparse
     assimp
+    (cpptrace.overrideAttrs {
+      doCheck = !stdenv.isDarwin;
+    })
     glaze
     openimageio
     openssl

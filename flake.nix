@@ -72,6 +72,8 @@
             packages = with pkgs; [
               clang-tools
               cmake-language-server
+              hotspot
+              perf
               vulkan-validation-layers
             ];
             shellHook = ''

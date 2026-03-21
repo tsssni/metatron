@@ -142,8 +142,8 @@ namespace mtt::stl {
                     ++finished;
                 }
 
-                if (finished == 0
-                && dispatched->fetch_add(finished, std::memory_order::acq_rel) + finished == n)
+                auto total = dispatched->fetch_add(finished, std::memory_order::acq_rel) + finished;
+                if (finished > 0 && total == n)
                     promise->set_value();
             });
 

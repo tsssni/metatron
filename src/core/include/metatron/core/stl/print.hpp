@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/core/math/matrix.hpp>
+#include <cpptrace/cpptrace.hpp>
 #include <print>
 #include <format>
 
@@ -33,8 +34,12 @@ namespace mtt::stl {
     template <typename... Args>
     auto abort(std::format_string<Args...> format, Args&&... args) noexcept -> void {
         std::println(format, std::forward<Args>(args)...);
+        cpptrace::generate_trace().print();
         std::abort();
     }
 
-    auto inline abort() noexcept { std::abort(); }
+    auto inline abort() noexcept {
+        cpptrace::generate_trace().print();
+        std::abort();
+    }
 }
