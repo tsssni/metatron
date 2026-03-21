@@ -99,6 +99,7 @@ namespace mtt::media {
                 t_transmitted += t;
                 t_boundary -= t;
                 r.o += t * r.d;
+                u = 1.f - (1.f - u) * exp(sigma_maj[0] * t);
                 transmittance *= exp(-sigma_maj * t);
             }
 

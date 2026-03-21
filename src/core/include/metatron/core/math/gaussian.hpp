@@ -34,7 +34,7 @@ namespace mtt::math {
     template<typename T>
     requires std::floating_point<T>
     auto gaussian(T x, T mu, T sigma) noexcept -> T {
-        return std::exp(-sqr(x - mu) / (T(2) * sqr(sigma))) / (sqrt(T(2) * pi) * sigma);
+        return exp(-sqr(x - mu) / (T(2) * sqr(sigma))) / (sqrt(T(2) * pi) * sigma);
     }
 
     template<typename T>

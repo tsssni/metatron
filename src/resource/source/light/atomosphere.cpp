@@ -44,7 +44,7 @@ namespace mtt::light {
         };
 
         auto eta = math::pi * 0.5f - desc.direction[0];
-        auto x = std::pow(eta / (math::pi * 0.5f), 1.f / 3.f);
+        auto x = math::pow(eta / (math::pi * 0.5f), 1.f / 3.f);
 
         auto t_high = i32(turbidity);
         auto t_low = t_high - 1;
@@ -310,12 +310,12 @@ namespace mtt::light {
         auto chi = [](f32 g, f32 cos_alpha) -> f32 {
             return math::guarded_div(
                 1.f + math::sqr(cos_alpha),
-                std::pow(1.f + math::sqr(g) - 2.f * g * cos_alpha, 1.5f)
+                math::pow(1.f + math::sqr(g) - 2.f * g * cos_alpha, 1.5f)
             );
         };
-        auto c0 = 1.f + A * std::exp(math::guarded_div(B, (cos_theta + 0.01f)));
+        auto c0 = 1.f + A * math::exp(math::guarded_div(B, (cos_theta + 0.01f)));
         auto c1 = 0.f
-        + C + D * std::exp(E * gamma)
+        + C + D * math::exp(E * gamma)
         + F * math::sqr(cos_gamma)
         + G * chi(H, cos_gamma)
         + I * math::sqrt(cos_theta);
@@ -327,7 +327,7 @@ namespace mtt::light {
         auto eta = math::pi * 0.5f - math::acos(cos_theta);
         auto segment = math::min(
             sun_num_segments - 1,
-            i32(std::pow(eta / (math::pi * 0.5f), 1.f / 3.f) * sun_num_segments)
+            i32(math::pow(eta / (math::pi * 0.5f), 1.f / 3.f) * sun_num_segments)
         );
         auto x = eta - math::pi * 0.5f * math::pow(f32(segment) / f32(sun_num_segments), 3);
         auto L = 0.f;

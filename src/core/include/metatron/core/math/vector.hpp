@@ -285,7 +285,7 @@ namespace mtt::math {
     template<typename T, usize size>
     auto constexpr exp(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
         return math::foreach([](cref<T> v, auto) {
-            return std::exp(v);
+            return exp(v);
         }, x);
     }
 

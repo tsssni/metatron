@@ -131,7 +131,7 @@ namespace mtt::renderer {
         auto threads = uv3{film->width, film->height, 1};
         auto group = uv3{8, 8, 1};
         auto future = scheduler.async_dispatch(
-        [&, count = remote ? 0 : render_count + 1] mutable {
+        [&, count = remote ? 1 : render_count + 1] mutable {
             auto range = uv2{0, 1};
             auto next = 1u;
 

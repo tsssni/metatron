@@ -20,10 +20,5 @@ namespace mtt::spectra {
 
     public struct Transfer_Function_Tag {
         tag<byte> idx;
-
-        public func get() -> Transfer_Function {
-            if (idx.index() == 0) return sRGB_Transfer_Function();
-            else return {};
-        }
     }
 }

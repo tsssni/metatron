@@ -10,7 +10,7 @@ namespace mtt::spectra {
         auto constexpr kb = 1.3806488e-23f;
 
         auto l = lambda * 1e-9f;
-        auto L = (2.f * h * c * c) / (math::pow(l, 5) * (std::exp((h * c) / (l * kb * T)) - 1.f));
+        auto L = (2.f * h * c * c) / (math::pow(l, 5) * (math::exp((h * c) / (l * kb * T)) - 1.f));
         return std::isnan(L) ? 0.f : L;
     }
 }

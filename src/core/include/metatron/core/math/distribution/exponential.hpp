@@ -10,7 +10,7 @@ namespace mtt::math {
         }
 
         auto pdf(f32 x) const noexcept -> f32 {
-            return a * std::exp(-a * x);
+            return a * exp(-a * x);
         }
 
     private:

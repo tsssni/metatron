@@ -91,6 +91,12 @@ namespace mtt::math {
 
     template<typename T>
     requires std::floating_point<T>
+    auto constexpr pow(T x, T n) noexcept -> T {
+        return std::pow(x, n);
+    }
+
+    template<typename T>
+    requires std::floating_point<T>
     auto constexpr sqrt(T x) noexcept -> T {
         return std::sqrt(math::max(T(0), x));
     }
@@ -99,6 +105,11 @@ namespace mtt::math {
     requires requires(T x) { {x * x} noexcept -> std::convertible_to<T>; }
     auto constexpr sqr(T x) noexcept -> T {
         return x * x;
+    }
+
+    template<typename T>
+    auto constexpr exp(T x) noexcept -> T {
+        return std::exp(x);
     }
 
     template<typename T>

@@ -12,7 +12,7 @@ namespace mtt::phase {
     ) const noexcept -> opt<Interaction> {
         auto f = math::guarded_div(
             (1.f - g * g) / (4.f * math::pi),
-            std::pow(1.f + g * g + 2.f * g * math::dot(-wo, wi), 1.5f)
+            math::pow(1.f + g * g + 2.f * g * math::dot(-wo, wi), 1.5f)
         );
         return Interaction{fv4{f}, wi, f};
     }
