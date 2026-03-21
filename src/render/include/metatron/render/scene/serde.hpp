@@ -21,8 +21,8 @@ namespace mtt::scene {
     template<typename F, typename... Ts>
     auto constexpr deserialize(
         std::array<std::string, sizeof...(Ts) + 1>&& type,
-        std::function<void()> pre,
-        std::function<void()> post
+        auto (*pre)() -> void,
+        auto (*post)() -> void
     ) noexcept -> void {
         auto& vec = stl::vector<F>::instance();
         if constexpr (pro::facade<F>) (vec.template emplace_type<Ts>(), ...);
@@ -55,8 +55,8 @@ namespace mtt::scene {
     template<typename... Ts>
     auto constexpr deserialize(
         std::string_view text,
-        std::function<void()> pre = []{},
-        std::function<void()> post = []{}
+        auto (*pre)() -> void = []{},
+        auto (*post)() -> void = []{}
     ) noexcept -> void {
         auto i = 0;
         auto type = std::array<std::string, sizeof...(Ts)>{};

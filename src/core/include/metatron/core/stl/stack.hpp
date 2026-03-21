@@ -22,7 +22,7 @@ namespace mtt::stl {
     };
 
     struct stack final: singleton<stack> {
-        using deleter = std::function<void(mut<buf>)>;
+        using deleter = void(*)(mut<buf>);
         std::vector<mut<buf>> bufs;
         std::vector<deleter> deleters;
         std::atomic_flag flag;
@@ -89,7 +89,7 @@ namespace mtt {
             if (!ptr) stl::abort("allocate {} bytes failed", bytelen);
             if constexpr (!std::is_trivially_constructible_v<T>)
                 std::uninitialized_default_construct_n(data(), size);
-            stl::stack::instance().push(this, [this](auto* ptr) {
+            stl::stack::instance().push(this, [](auto* ptr) {
                 mut<buf>(ptr)->release();
             });
         }

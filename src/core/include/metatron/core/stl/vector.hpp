@@ -20,19 +20,23 @@ namespace mtt::stl {
         auto static constexpr block_size = 1 << 6;
         auto static constexpr max_idx = 1 << 20;
         u32 bytelen = 0;
-        std::function<void()> destroier;
         ~vector() noexcept { release(); }
+
+        template<typename T>
+        auto destroy() noexcept -> void {
+            for (auto i = 0; i < blocks.size(); ++i) {
+                auto size = i == blocks.size() - 1
+                ? length % block_size : block_size;
+                std::destroy_n(mut<T>(blocks[i]), size);
+            }
+        }
+        auto (vector::*destroier)() -> void;
 
         template<typename T>
         auto init() noexcept -> void {
             bytelen = sizeof(T);
-            if constexpr (!std::is_trivially_destructible_v<T>) destroier = [this] {
-                for (auto i = 0; i < blocks.size(); ++i) {
-                    auto size = i == blocks.size() - 1
-                    ? length % block_size : block_size;
-                    std::destroy_n(mut<T>(blocks[i]), size);
-                }
-            };
+            if constexpr (!std::is_trivially_destructible_v<T>)
+                destroier = &vector<byte>::destroy<T>;
         }
 
         auto pack() noexcept -> std::vector<byte> const& {
@@ -47,7 +51,7 @@ namespace mtt::stl {
         }
 
         auto release() noexcept -> void {
-            if (destroier) destroier();
+            if (destroier) (this->*destroier)();
             for (auto* block: blocks) std::free(block);
             destroier = nullptr;
             blocks.clear();
@@ -227,12 +231,13 @@ namespace mtt::stl {
             sid.push_back(vector<void>::instance().push<T>());
             map[typeid(T)] = sid.size() - 1;
             length.push_back(sizeof(T));
-            reinterpreter.push_back([](view<byte> ptr) {
+            reinterpreter.push_back([](view<byte> ptr) noexcept {
                 return make_mut<F>(*(mut<T>)ptr);
             });
             if constexpr (F::copyability != pro::constraint_level::none)
-                copier.push_back([](view<byte> ptr) {
-                    auto x = *(mut<T>)ptr; return make_obj<F, T>(std::move(x));
+                copier.push_back([](view<byte> ptr) noexcept {
+                    auto x = *(mut<T>)ptr;
+                    return make_obj<F, T>(std::move(x));
                 });
         }
 
@@ -348,8 +353,8 @@ namespace mtt::stl {
 
         std::vector<u32> sid;
         std::vector<u32> length;
-        std::vector<std::function<mut<F>(view<byte> ptr)>> reinterpreter;
-        std::vector<std::function<obj<F>(view<byte> ptr)>> copier;
+        std::vector<mut<F>(*)(view<byte>) noexcept> reinterpreter;
+        std::vector<obj<F>(*)(view<byte>) noexcept> copier;
     };
 }
 

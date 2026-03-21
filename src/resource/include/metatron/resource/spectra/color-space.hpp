@@ -14,8 +14,8 @@ namespace mtt::spectra {
         };
 
         struct Transfer_Function final {
-            std::function<f32(f32)> transfer;
-            std::function<f32(f32)> linearize;
+            auto (*transfer)(f32) -> f32;
+            auto (*linearize)(f32) -> f32;
         };
 
         fm33 from_XYZ;

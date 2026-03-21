@@ -50,7 +50,7 @@ namespace mtt::stl {
 
         private:
             mut<void> impl;
-            std::function<void(mut<void>)> deleter;
+            auto (*deleter)(mut<void>) -> void;
         } impl;
     };
 }
