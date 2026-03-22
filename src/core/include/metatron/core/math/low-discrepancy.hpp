@@ -42,7 +42,7 @@ namespace mtt::math {
         while (1.f - f32(b - 1) / inv_b < 1.f && reversed < limit) {
             auto next = x / b;
             auto digit = x - next * b;
-            auto digit_hash = mix_bits(hash ^ reversed);
+            auto digit_hash = mix_bits(u64(hash) ^ reversed);
             reversed = reversed * b + biject_permute(digit, b, digit_hash);
             inv_b *= b;
             x = next;

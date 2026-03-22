@@ -48,7 +48,7 @@ Metatron use [nix](https://nixos.org) with [flakes](https://nix.dev/concepts/fla
 nix build
 ```
 
-Or use [cmake](https://cmake.org/) if [dependencies](https://github.com/tsssni/metatron/blob/master/nix/default.nix#L35) are availabe. Extra flags are required for resource loading and best performance.
+Or use [cmake](https://cmake.org/) with manual [dependencies](https://github.com/tsssni/metatron/blob/master/nix/default.nix#L35). Add prefix flag for runtime resource loading.
 
 ```nu
 cmake --preset rel -DCMAKE_INSTALL_PREFIX=/usr/bin/ -DCMAKE_CXX_FLAGS="-march=native"

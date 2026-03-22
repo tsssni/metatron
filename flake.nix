@@ -72,6 +72,7 @@
             packages = with pkgs; [
               clang-tools
               cmake-language-server
+            ] ++ lib.optionals pkgs.stdenv.isLinux [
               hotspot
               perf
               vulkan-validation-layers
