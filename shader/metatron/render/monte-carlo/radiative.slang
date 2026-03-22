@@ -28,6 +28,7 @@ namespace mtt::monte_carlo {
             var acc_opt: Optional<accel::Interaction>;
             var medium: media::Medium_Tag;
             var medium_to_render: tag<math::Transform>;
+            var iter: media::Iterator_Union;
             var rdiff = ctx.ray_differential;
             var ddiff = ctx.default_differential;
             let ct = ctx.render_to_camera;
@@ -95,6 +96,7 @@ namespace mtt::monte_carlo {
                     var direct_to_render = medium_to_render;
                     var gamma = beta * (g / p_e) / (f / p);
                     var mis_d = mis_s * q / p_e * f32(!bool(e_intr.light.flags() & mtt::light::Flags::delta));
+                    var iter: media::Iterator_Union;
                     var mis_l = mis_s;
 
                     while (true) {
@@ -120,6 +122,7 @@ namespace mtt::monte_carlo {
                             direct_ctx.inside = dot(-direct_ctx.r.d, intr.n) < 0.f;
                             volume = direct_ctx.inside ? div.int_medium : div.ext_medium;
                             direct_to_render = direct_ctx.inside ? div.int_to_render : div.ext_to_render;
+                            iter = volume.begin(*direct_to_render.get() / trace_ctx, intr.t);
                             intr.n *= direct_ctx.inside ? -1.f : 1.f;
 
                             let close_to_light = length(intr.p - l_intr.p) < 0.001f;
@@ -151,12 +154,9 @@ namespace mtt::monte_carlo {
                         var intr = acc.intr_opt.value;
                         let div = acc.divider;
 
-                        let mt = *direct_to_render.get();
-                        let m_ctx = mt / direct_ctx;
-                        let m_opt = volume.sample(m_ctx, intr.t, ctx.sampler.generate_1d());
+                        let m_opt = iter.march(ctx.sampler.generate_1d());
                         if (m_opt == none) { gamma = fv4(0.f); break; };
                         var m_intr = m_opt.value;
-                        m_intr.p = (mt * fv4(m_intr.p, 1.f)).xyz;
                         l_intr.t -= m_intr.t;
 
                         let hit = m_intr.t >= intr.t;
@@ -176,6 +176,8 @@ namespace mtt::monte_carlo {
                             direct_ctx.r.o = m_intr.p;
                             crossed = false;
                         } else {
+                            let mt = *direct_to_render.get();
+                            m_intr.p = (mt * fv4(m_intr.p, 1.f)).xyz;
                             direct_ctx.r.o = intr.p - 0.001f * intr.n;
                             crossed = true;
                         }
@@ -217,6 +219,7 @@ namespace mtt::monte_carlo {
                     trace_ctx.inside = dot(-trace_ctx.r.d, intr.n) < 0.f;
                     medium = trace_ctx.inside ? div.int_medium : div.ext_medium;
                     medium_to_render = trace_ctx.inside ? div.int_to_render : div.ext_to_render;
+                    iter = medium.begin(*medium_to_render.get() / trace_ctx, intr.t);
 
                     let flip_n = trace_ctx.inside ? -1.f : 1.f;
                     intr.n *= flip_n;
@@ -224,12 +227,9 @@ namespace mtt::monte_carlo {
                     intr.bn = normalize((lt * fv4(intr.bn * flip_n, 0.f)).xyz);
                 }
 
-                let mt = *medium_to_render.get();
-                let m_ctx = mt / trace_ctx;
-                let m_opt = medium.sample(m_ctx, intr.t, ctx.sampler.generate_1d());
+                let m_opt = iter.march(ctx.sampler.generate_1d());
                 if (m_opt == none) break;
                 var m_intr = m_opt.value;
-                m_intr.p = (mt * fv4(m_intr.p, 1.f)).xyz;
 
                 let hit = m_intr.t >= intr.t;
                 let spectra_pdf = hit
@@ -253,6 +253,9 @@ namespace mtt::monte_carlo {
                     let mode = math::Discrete_Distribution<3>({p_a, p_s, p_n}).sample(u);
                     if (mode == 0) break;
                     else if (mode == 1) {
+                        let mt = *medium_to_render.get();
+                        m_intr.p = (mt * fv4(m_intr.p, 1.f)).xyz;
+
                         phase = m_intr.phase;
                         let pt = math::Transform(fq::from_rotation_between(-trace_ctx.r.d, {0.f, 1.f, 0.f}).transform());
                         let p_ctx = pt * trace_ctx;
@@ -276,9 +279,6 @@ namespace mtt::monte_carlo {
                         beta *= m_intr.sigma_n / p_n;
                         mis_s *= (m_intr.sigma_n / m_intr.sigma_maj) / p_n;
                         mis_e /= p_n;
-
-                        intr.t -= m_intr.t;
-                        trace_ctx.r.o = m_intr.p;
                         scattered = false;
                         crossed = false;
                     }

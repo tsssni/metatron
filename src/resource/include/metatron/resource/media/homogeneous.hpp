@@ -8,8 +8,16 @@ namespace mtt::media {
         tag<spectra::Spectrum> sigma_s = entity<spectra::Spectrum>("/spectrum/zero");
         tag<spectra::Spectrum> sigma_e = entity<spectra::Spectrum>("/spectrum/zero");
 
-        auto sample(
-            cref<math::Context> ctx, f32 t_max, f32 u
-        ) const noexcept -> opt<Interaction>;
+        struct Iterator final {
+            Homogeneous_Medium const* medium;
+            math::Ray r;
+            fv4 lambda;
+            f32 t_max;
+            auto march(f32 u) noexcept -> opt<Interaction>;
+        };
+
+        auto begin(
+            cref<math::Context> ctx, f32 t_max
+        ) const noexcept -> obj<media::Iterator>;
     };
 }

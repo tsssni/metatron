@@ -8,9 +8,15 @@ namespace mtt::media {
         Vaccum_Medium(cref<Descriptor>) noexcept;
         Vaccum_Medium() noexcept = default;
 
-        auto sample(
-            cref<math::Context> ctx, f32 t_max, f32 u
-        ) const noexcept -> opt<Interaction>;
+        struct Iterator final {
+            math::Ray r;
+            f32 t_max;
+            auto march(f32 u) noexcept -> opt<Interaction>;
+        };
+
+        auto begin(
+            cref<math::Context> ctx, f32 t_max
+        ) const noexcept -> obj<media::Iterator>;
 
     private:
         u32 padding;

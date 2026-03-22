@@ -17,12 +17,18 @@ namespace mtt::media {
         fv4 sigma_e;
     };
 
-    MTT_POLY_METHOD(medium_sample, sample);
+    MTT_POLY_METHOD(iterator_march, march);
+    MTT_POLY_METHOD(medium_begin, begin);
+
+    struct Iterator final: pro::facade_builder
+    ::add_convention<iterator_march, auto (f32 u) noexcept -> opt<Interaction>>
+    ::build {};
+
 
     struct Medium final: pro::facade_builder
-    ::add_convention<medium_sample, auto (
-        cref<math::Context> ctx, f32 t_max, f32 u
-    ) const noexcept -> opt<Interaction>>
+    ::add_convention<medium_begin, auto (
+        cref<math::Context> ctx, f32 t_max
+    ) const noexcept -> obj<Iterator>>
     ::add_skill<pro::skills::as_view>
     ::build {};
 

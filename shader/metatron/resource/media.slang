@@ -23,8 +23,8 @@ namespace mtt::media {
     public struct Phase {
         enum Function {
             henyey_greenstein,
-        } function;
-        f32 g;
+        } function = Function::henyey_greenstein;
+        f32 g = 0.f;
 
         public func to_phase() -> phase::Phase_Function_Union {
             switch (function) {
@@ -34,17 +34,32 @@ namespace mtt::media {
         }
     }
 
-    public interface Medium {
-        public func sample(math::Context ctx, f32 t_max, f32 u) -> Optional<Interaction>;
+    public struct Iterator_Union {
+        Homogeneous_Medium.Iterator homogeneous = {};
+        Heterogeneous_Medium.Iterator heterogeneous = {};
+        Vaccum_Medium.Iterator vaccum = {};
+        u32 idx = 0xffffffffu;
+
+        public __init() {}
+        public __init(Homogeneous_Medium.Iterator it) { homogeneous = it; idx = 0; }
+        public __init(Heterogeneous_Medium.Iterator it) { heterogeneous = it; idx = 1; }
+        public __init(Vaccum_Medium.Iterator it) { vaccum = it; idx = 2; }
+
+        [mutating] public func march(f32 u) -> Optional<Interaction> {
+            if (idx == 0) return homogeneous.march(u);
+            else if (idx == 1) return heterogeneous.march(u);
+            else if (idx == 2) return vaccum.march(u);
+            else return {};
+        }
     }
 
-    public struct Medium_Tag: Medium {
+    public struct Medium_Tag {
         public tag<byte> idx;
 
-        public func sample(math::Context ctx, f32 t_max, f32 u) -> Optional<Interaction> {
-            if (idx.type() == 0) return tag<Homogeneous_Medium>(idx).get().sample(ctx, t_max, u);
-            else if (idx.type() == 1) return tag<Heterogeneous_Medium>(idx).get().sample(ctx, t_max, u);
-            else if (idx.type() == 2) return tag<Vaccum_Medium>(idx).get().sample(ctx, t_max, u);
+        public func begin(math::Context ctx, f32 t_max) -> Iterator_Union {
+            if (idx.type() == 0) return Iterator_Union(tag<Homogeneous_Medium>(idx).get().begin(ctx, t_max));
+            else if (idx.type() == 1) return Iterator_Union(tag<Heterogeneous_Medium>(idx).get().begin(ctx, t_max));
+            else if (idx.type() == 2) return Iterator_Union(tag<Vaccum_Medium>(idx).get().begin(ctx, t_max));
             else return {};
         }
     }

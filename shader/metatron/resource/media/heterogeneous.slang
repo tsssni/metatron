@@ -1,44 +1,44 @@
 implementing media;
 
 namespace mtt::media {
-    public struct Heterogeneous_Medium: Medium {
-        Phase phase;
-        spectra::Spectrum_Tag sigma_a;
-        spectra::Spectrum_Tag sigma_s;
-        spectra::Spectrum_Tag sigma_e;
-        volume::Volume_Tag majorant;
-        volume::Volume_Tag density;
-        f32 density_scale;
+    public struct Heterogeneous_Medium {
+        Phase phase = {};
+        spectra::Spectrum_Tag sigma_a = {};
+        spectra::Spectrum_Tag sigma_s = {};
+        spectra::Spectrum_Tag sigma_e = {};
+        volume::Volume_Tag majorant = {};
+        volume::Volume_Tag density = {};
+        f32 density_scale = {};
 
-        struct Iterator {
-            Heterogeneous_Medium medium;
-            fv4 sigma_a;
-            fv4 sigma_s;
-            fv4 sigma_t;
-            fv4 sigma_maj;
+        public struct Iterator {
+            Heterogeneous_Medium medium = {};
+            fv4 sigma_a = {};
+            fv4 sigma_s = {};
+            fv4 sigma_t = {};
+            fv4 sigma_maj = {};
 
+            fv4 lambda = {};
             fv4 transmittance = 1.f;
             f32 density_maj = 0.f;
             math::Exponential_Distribution distr = {0.f};
 
-            math::Context ctx;
-            math::Ray r;
-            f32 u;
+            math::Ray r = {};
+            f32 u = 0.f;
 
-            iv3 cell;
-            iv3 offset;
-            iv3 direction;
+            iv3 cell = {};
+            iv3 offset = {};
+            iv3 direction = {};
 
-            f32 t_max;
-            f32 t_cell;
-            f32 t_boundary;
-            f32 t_transmitted;
+            f32 t_max = 0.f;
+            f32 t_cell = 0.f;
+            f32 t_boundary = 0.f;
+            f32 t_transmitted = 0.f;
 
-            __init(Heterogeneous_Medium medium, math::Context ctx, f32 t_max, f32 u) {
+            __init() {}
+            __init(Heterogeneous_Medium medium, math::Context ctx, f32 t_max) {
                 this.medium = medium;
-                this.ctx = ctx;
                 this.t_max = t_max;
-                this.u = u;
+                this.lambda = ctx.lambda;
 
                 sigma_a = (ctx.lambda & medium.sigma_a) * medium.density_scale;
                 sigma_s = (ctx.lambda & medium.sigma_s) * medium.density_scale;
@@ -98,16 +98,20 @@ namespace mtt::media {
             [mutating] func update_transmittance(f32 t) -> void {
                 t_transmitted += t;
                 t_boundary -= t;
+                t_cell -= t;
                 r.o += t * r.d;
                 u = 1.f - (1.f - u) * exp(sigma_maj[0] * t);
                 transmittance *= exp(-sigma_maj * t);
             }
 
-            [mutating] func sample() -> Optional<Interaction> {
+            [mutating] public func march(f32 uu) -> Optional<Interaction> {
+                transmittance = 1.f;
+                t_transmitted = 0.f;
+                u = uu;
+
                 while (true) {
                     let t_u = distr.sample(u);
-                    if (true
-                    && t_boundary <= t_cell
+                    if (t_boundary <= t_cell
                     && (density_maj < math::epsilon || t_u >= t_boundary)) {
                         update_transmittance(t_boundary);
                         return Interaction(
@@ -137,7 +141,7 @@ namespace mtt::media {
                             max(sigma_maj - density * sigma_t, fv4(0.f)),
                             sigma_maj,
                             density * (!medium.sigma_e.empty()
-                            ? (ctx.lambda & medium.sigma_e) : fv4(0.f)),
+                            ? (lambda & medium.sigma_e) : fv4(0.f)),
                         );
                     }
                 }
@@ -145,9 +149,8 @@ namespace mtt::media {
             }
         }
 
-        public func sample(math::Context ctx, f32 t_max, f32 u) -> Optional<Interaction> {
-            var iter = Iterator(this, ctx, t_max, u);
-            return iter.sample();
+        public func begin(math::Context ctx, f32 t_max) -> Iterator {
+            return Iterator(this, ctx, t_max);
         }
     }
 }

@@ -60,17 +60,20 @@ namespace mtt::sampler {
     }
 
     auto Sobol_Sampler::permute_idx(cref<Context> ctx) const noexcept -> u64 {
-        auto constexpr permutations = std::array<std::array<u8, 4>, 32>{{
-            {0, 1, 2, 3}, {0, 1, 3, 2}, {0, 2, 1, 3}, {0, 2, 3, 1}, {0, 3, 2, 1},
-            {0, 3, 1, 2}, {1, 0, 2, 3}, {1, 0, 3, 2}, {1, 2, 0, 3}, {1, 2, 3, 0},
-            {1, 3, 2, 0}, {1, 3, 0, 2}, {2, 1, 0, 3}, {2, 1, 3, 0}, {2, 0, 1, 3},
-            {2, 0, 3, 1}, {2, 3, 0, 1}, {2, 3, 1, 0}, {3, 1, 2, 0}, {3, 1, 0, 2},
-            {3, 2, 1, 0}, {3, 2, 0, 1}, {3, 0, 2, 1}, {3, 0, 1, 2},
-            // 24 is not a power of 2, uniform distribution is impossible
-            // padded to 32 to replace % 24 with >> 27
-            {0, 1, 2, 3}, {0, 1, 3, 2}, {0, 2, 1, 3}, {0, 2, 3, 1},
-            {0, 3, 2, 1}, {0, 3, 1, 2}, {1, 0, 2, 3}, {1, 0, 3, 2}
-        }};
+        auto constexpr permutations = [] {
+            // precompute 256 permutations to avoid mod 24
+            auto p = std::array<std::array<u8, 4>, 256>{{
+                {0, 1, 2, 3}, {0, 1, 3, 2}, {0, 2, 1, 3}, {0, 2, 3, 1},
+                {0, 3, 2, 1}, {0, 3, 1, 2}, {1, 0, 2, 3}, {1, 0, 3, 2},
+                {1, 2, 0, 3}, {1, 2, 3, 0}, {1, 3, 2, 0}, {1, 3, 0, 2},
+                {2, 1, 0, 3}, {2, 1, 3, 0}, {2, 0, 1, 3}, {2, 0, 3, 1},
+                {2, 3, 0, 1}, {2, 3, 1, 0}, {3, 1, 2, 0}, {3, 1, 0, 2},
+                {3, 2, 1, 0}, {3, 2, 0, 1}, {3, 0, 2, 1}, {3, 0, 1, 2},
+            }};
+            for (auto i = 24; i < 256; i++)
+                p[i] = p[i % 24];
+            return p;
+        } ();
 
         auto log2_spp = ctx.data[0];
         auto base4_digits = ctx.data[1];
@@ -83,8 +86,7 @@ namespace mtt::sampler {
             auto shift = 2 * i - last_digit;
             auto digit = (morton_idx >> shift) & 3;
             auto higher_digits = morton_idx >> (shift + 2);
-            // 24 is not a power of 2, uniform distribution is impossible
-            auto p = math::mix_bits_fast(higher_digits ^ (0x55555555u * ctx.dim)) >> 27;
+            auto p = math::mix_bits_fast(higher_digits ^ (0x55555555u * ctx.dim)) >> 24;
             idx |= u64(permutations[p][digit]) << shift;
         }
 

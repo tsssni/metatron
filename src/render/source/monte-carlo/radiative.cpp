@@ -33,6 +33,7 @@ namespace mtt::monte_carlo {
         auto acc_opt = opt<accel::Interaction>{};
         auto medium = tag<media::Medium>{};
         auto medium_to_render = tag<math::Transform>{};
+        auto iter = obj<media::Iterator>{};
         auto& rdiff = ctx.ray_differential;
         auto& ddiff = ctx.default_differential;
         auto& ct = ctx.render_to_camera;
@@ -78,6 +79,7 @@ namespace mtt::monte_carlo {
 
             auto volume = medium;
             auto direct_to_render = medium_to_render;
+            auto iter = obj<media::Iterator>{};
             auto gamma = beta * (g / p_e) / (f / p);
             auto mis_d = mis_s * q / p_e * f32(!(e_intr.light->flags() & light::Flags::delta));
             auto mis_l = mis_s;
@@ -105,6 +107,7 @@ namespace mtt::monte_carlo {
                     direct_ctx.inside = math::dot(-direct_ctx.r.d, intr.n) < 0.f;
                     volume = direct_ctx.inside ? div.int_medium : div.ext_medium;
                     direct_to_render = direct_ctx.inside ? div.int_to_render : div.ext_to_render;
+                    iter = volume->begin(*direct_to_render ^ trace_ctx, intr.t);
                     intr.n *= direct_ctx.inside ? -1.f : 1.f;
 
                     auto close_to_light = math::length(intr.p - l_intr.p) < 0.001f;
@@ -134,12 +137,9 @@ namespace mtt::monte_carlo {
                 auto& intr = *acc.intr_opt;
                 auto& div = acc.divider;
 
-                auto& mt = *direct_to_render;
-                auto m_ctx = mt ^ direct_ctx;
-                MTT_OPT_OR_CALLBACK(m_intr, volume->sample(m_ctx, intr.t, ctx.sampler->generate_1d()), {
+                MTT_OPT_OR_CALLBACK(m_intr, iter->march(ctx.sampler->generate_1d()), {
                     gamma = fv4{0.f}; break;
                 });
-                m_intr.p = mt | math::expand(m_intr.p, 1.f);
                 l_intr.t -= m_intr.t;
 
                 auto hit = m_intr.t >= intr.t;
@@ -159,6 +159,8 @@ namespace mtt::monte_carlo {
                     direct_ctx.r.o = m_intr.p;
                     crossed = false;
                 } else {
+                    auto& mt = *direct_to_render;
+                    m_intr.p = mt | math::expand(m_intr.p, 1.f);
                     direct_ctx.r.o = intr.p - 0.001f * intr.n;
                     crossed = true;
                 }
@@ -207,6 +209,7 @@ namespace mtt::monte_carlo {
                 trace_ctx.inside = math::dot(-trace_ctx.r.d, intr.n) < 0.f;
                 medium = trace_ctx.inside ? div->int_medium : div->ext_medium;
                 medium_to_render = trace_ctx.inside ? div->int_to_render : div->ext_to_render;
+                iter = medium->begin(*medium_to_render ^ trace_ctx, intr.t);
 
                 auto flip_n = trace_ctx.inside ? -1.f : 1.f;
                 intr.n *= flip_n;
@@ -214,10 +217,7 @@ namespace mtt::monte_carlo {
                 intr.bn = math::normalize(lt | math::expand(intr.bn * flip_n, 0.f));
             }
 
-            auto& mt = *medium_to_render;
-            auto m_ctx = mt ^ trace_ctx;
-            MTT_OPT_OR_BREAK(m_intr, medium->sample(m_ctx, intr.t, ctx.sampler->generate_1d()));
-            m_intr.p = mt | math::expand(m_intr.p, 1.f);
+            MTT_OPT_OR_BREAK(m_intr, iter->march(ctx.sampler->generate_1d()));
 
             auto hit = m_intr.t >= intr.t;
             auto spectra_pdf = hit
@@ -241,6 +241,9 @@ namespace mtt::monte_carlo {
                 auto mode = math::Discrete_Distribution<3>{{p_a, p_s, p_n}}.sample(u);
                 if (mode == 0uz) break;
                 else if (mode == 1uz) {
+                    auto& mt = *medium_to_render;
+                    m_intr.p = mt | math::expand(m_intr.p, 1.f);
+
                     phase = std::move(m_intr.phase);
                     auto pt = math::Transform{fm44{fq::from_rotation_between(-trace_ctx.r.d, {0.f, 1.f, 0.f})}};
                     auto p_ctx = pt | trace_ctx;
@@ -263,9 +266,6 @@ namespace mtt::monte_carlo {
                     beta *= m_intr.sigma_n / p_n;
                     mis_s *= (m_intr.sigma_n / m_intr.sigma_maj) / p_n;
                     mis_e /= p_n;
-
-                    intr.t -= m_intr.t;
-                    trace_ctx.r.o = m_intr.p;
                     scattered = false;
                     crossed = false;
                 }
