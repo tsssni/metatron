@@ -226,8 +226,9 @@ namespace mtt::light {
         );
         wi = math::unit_spherical_to_cartesian({theta, phi});
 
+        auto s = State{math::unit_to_cos_theta(wi), math::dot(d, wi), cos_sun};
         auto L = spectra::visit([&](f32 lambda, usize i) {
-            return hosek(lambda, math::unit_to_cos_theta(wi), math::dot(d, wi));
+            return hosek(lambda, s);
         }, lambda);
 
         auto tgmm_phi = phi + math::pi * 0.5f - phi_sun;
@@ -277,35 +278,41 @@ namespace mtt::light {
         return Flags::inf;
     }
 
-    auto Atomosphere_Light::hosek(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
+    Atomosphere_Light::State::State(f32 cos_theta, f32 cos_gamma, f32 cos_sun) noexcept:
+    cos_theta(cos_theta),
+    cos_gamma(cos_gamma),
+    gamma(math::acos(cos_gamma)),
+    sqrt_cos_theta(math::pow<1,2>(cos_theta)) {
+        auto eta = math::pi * 0.5f - math::acos(cos_theta);
+        segment = math::min(
+            sun_num_segments - 1,
+            i32(math::pow<1,3>(eta / (math::pi * 0.5f)) * sun_num_segments)
+        );
+        x = eta - math::pi * 0.5f * math::pow<3>(f32(segment) / f32(sun_num_segments));
+        auto sin_gamma_sqr = 1.f - math::pow<2>(cos_gamma);
+        cos_psi = math::pow<1,2>(1.f - sin_gamma_sqr / (1.f - math::pow<2>(cos_sun)));
+    }
+
+    auto Atomosphere_Light::hosek(f32 lambda, cref<State> s) const noexcept -> f32 {
         if (lambda > atomo_lambda.back()) return 0.f;
         auto [low, high, alpha] = split(lambda);
 
         auto L = math::lerp(
-            hosek_sky(low, cos_theta, cos_gamma),
-            hosek_sky(high, cos_theta, cos_gamma),
+            hosek_sky(low, s),
+            hosek_sky(high, s),
             alpha
         );
 
-        if (cos_gamma >= cos_sun) {
+        if (s.cos_gamma >= cos_sun) {
             L += area
-            * math::lerp(
-                hosek_sun(low, cos_theta),
-                hosek_sun(high, cos_theta),
-                alpha
-            )
-            * math::lerp(
-                hosek_limb(low, cos_gamma),
-                hosek_limb(high, cos_gamma),
-                alpha
-            );
+            * math::lerp(hosek_sun(low, s), hosek_sun(high, s), alpha)
+            * math::lerp(hosek_limb(low, s), hosek_limb(high, s), alpha);
         }
 
         return L;
     }
 
-    auto Atomosphere_Light::hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) const noexcept -> f32 {
-        auto gamma = math::acos(cos_gamma);
+    auto Atomosphere_Light::hosek_sky(i32 idx, cref<State> s) const noexcept -> f32 {
         auto [A, B, C, D, E, F, G, I, H] = *view<fv<9>>(&sky_params[idx * sky_num_params]);
         auto chi = [](f32 g, f32 cos_alpha) -> f32 {
             return math::guarded_div(
@@ -313,43 +320,34 @@ namespace mtt::light {
                 math::pow<3, 2>(1.f + math::pow<2>(g) - 2.f * g * cos_alpha)
             );
         };
-        auto c0 = 1.f + A * math::exp(math::guarded_div(B, (cos_theta + 0.01f)));
+        auto c0 = 1.f + A * math::exp(math::guarded_div(B, (s.cos_theta + 0.01f)));
         auto c1 = 0.f
-        + C + D * math::exp(E * gamma)
-        + F * math::pow<2>(cos_gamma)
-        + G * chi(H, cos_gamma)
-        + I * math::pow<1,2>(cos_theta);
+        + C + D * math::exp(E * s.gamma)
+        + F * math::pow<2>(s.cos_gamma)
+        + G * chi(H, s.cos_gamma)
+        + I * s.sqrt_cos_theta;
 
         return c0 * c1 * sky_radiance[idx] / spectra::CIE_Y_integral;
     }
 
-    auto Atomosphere_Light::hosek_sun(i32 idx, f32 cos_theta) const noexcept -> f32 {
-        auto eta = math::pi * 0.5f - math::acos(cos_theta);
-        auto segment = math::min(
-            sun_num_segments - 1,
-            i32(math::pow<1,3>(eta / (math::pi * 0.5f)) * sun_num_segments)
-        );
-        auto x = eta - math::pi * 0.5f * math::pow<3>(f32(segment) / f32(sun_num_segments));
+    auto Atomosphere_Light::hosek_sun(i32 idx, cref<State> s) const noexcept -> f32 {
         auto L = 0.f;
         auto x_pow = 1.f;
         for (auto i = 0; i < sun_num_ctls; ++i) {
             L += sun_radiance[
-                segment * atomo_num_lambda * sun_num_ctls + idx * sun_num_ctls + i
+                s.segment * atomo_num_lambda * sun_num_ctls + idx * sun_num_ctls + i
             ] * x_pow;
-            x_pow *= x;
+            x_pow *= s.x;
         }
         return L / spectra::CIE_Y_integral;
     }
 
-    auto Atomosphere_Light::hosek_limb(i32 idx, f32 cos_gamma) const noexcept -> f32 {
-        auto sin_gamma_sqr = 1.f - math::pow<2>(cos_gamma);
-        auto cos_psi_sqr = 1.f - sin_gamma_sqr / (1.f - math::pow<2>(cos_sun));
-        auto cos_psi = math::pow<1,2>(cos_psi_sqr);
+    auto Atomosphere_Light::hosek_limb(i32 idx, cref<State> s) const noexcept -> f32 {
         auto l = 0.f;
         auto psi_pow = 1.f;
         for (auto i = 0; i < sun_num_limb_params; ++i) {
             l += sun_limb[idx * sun_num_limb_params + i] * psi_pow;
-            psi_pow *= cos_psi;
+            psi_pow *= s.cos_psi;
         }
         return l;
     }
@@ -382,7 +380,8 @@ namespace mtt::light {
                     auto [cos_theta_phi, cos_gamma, cartesian_w] = zipped;
                     auto [cos_theta, phi] = cos_theta_phi;
                     auto [w_theta, w_gamma] = cartesian_w;
-                    return hosek_sky(i, cos_theta, cos_gamma) * w_theta * w_gamma;
+                    auto s = State{cos_theta, cos_gamma, cos_sun};
+                    return hosek_sky(i, s) * w_theta * w_gamma;
                 });
                 auto integral = std::ranges::fold_left(radiance, 0.f, std::plus{}) * J;
                 auto CIE_Y = entity<spectra::Spectrum>("/spectrum/CIE-Y").data();
@@ -420,7 +419,8 @@ namespace mtt::light {
                     auto [cos_gamma_phi, cos_theta, cartesian_w] = zipped;
                     auto [cos_gamma, phi] = cos_gamma_phi;
                     auto [w_theta, w_gamma] = cartesian_w;
-                    return area * hosek_sun(i, cos_theta) * hosek_limb(i, cos_gamma) * w_theta * w_gamma;
+                    auto s = State{cos_theta, cos_gamma, cos_sun};
+                    return area * hosek_sun(i, s) * hosek_limb(i, s) * w_theta * w_gamma;
                 });
                 auto integral = std::ranges::fold_left(radiance, 0.f, std::plus{}) * J;
                 auto CIE_Y = entity<spectra::Spectrum>("/spectrum/CIE-Y").data();

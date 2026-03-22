@@ -57,10 +57,20 @@ namespace mtt::light {
         auto flags() const noexcept -> Flags;
 
     private:
-        auto hosek(f32 lambda, f32 cos_theta, f32 cos_gamma) const noexcept -> f32;
-        auto hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) const noexcept -> f32;
-        auto hosek_sun(i32 idx, f32 cos_theta) const noexcept -> f32;
-        auto hosek_limb(i32 idx, f32 cos_gamma) const noexcept -> f32;
+        struct State {
+            f32 cos_theta;
+            f32 cos_gamma;
+            f32 gamma;
+            f32 sqrt_cos_theta;
+            i32 segment;
+            f32 x;
+            f32 cos_psi;
+            State(f32 cos_theta, f32 cos_gamma, f32 cos_sun) noexcept;
+        };
+        auto hosek(f32 lambda, cref<State> s) const noexcept -> f32;
+        auto hosek_sky(i32 idx, cref<State> s) const noexcept -> f32;
+        auto hosek_sun(i32 idx, cref<State> s) const noexcept -> f32;
+        auto hosek_limb(i32 idx, cref<State> s) const noexcept -> f32;
         auto hosek_integral() const noexcept -> f32;
         auto split(f32 lambda) const noexcept -> std::tuple<i32, i32, f32>;
 

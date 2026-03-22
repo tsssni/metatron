@@ -105,8 +105,9 @@ namespace mtt::media {
         t_boundary -= t;
         t_cell -= t;
         r.o += t * r.d;
-        u = 1.f - (1.f - u) * math::exp(sigma_maj[0] * t);
-        transmittance *= math::exp(-sigma_maj * t);
+        auto exp = math::exp(-sigma_maj * t);
+        u = 1.f - (1.f - u) / exp[0];
+        transmittance *= exp;
     }
 
     Heterogeneous_Medium::Heterogeneous_Medium(cref<Descriptor> desc) noexcept:

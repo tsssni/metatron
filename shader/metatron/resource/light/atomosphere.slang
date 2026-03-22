@@ -44,17 +44,18 @@ namespace mtt::light {
             let sin_theta = math::unit_to_sin_theta(wi);
             let cos_gamma = dot(d, wi);
 
-            let s = math::cartesian_to_unit_spherical(r.d);
-            var theta = s.x; var phi = s.y;
+            let sp = math::cartesian_to_unit_spherical(r.d);
+            var theta = sp.x; var phi = sp.y;
             theta = clamp(
                 theta < math::pi * 0.5f ? theta : math::pi - theta,
                 0.f, math::pi * 0.5f - 1e-2f
             );
             wi = math::unit_spherical_to_cartesian({theta, phi});
 
+            let s = State(math::unit_to_cos_theta(wi), dot(d, wi), cos_sun);
             var L = fv4(0);
             for (var i = 0; i < 4; ++i) {
-                L[i] = hosek(lambda[i], math::unit_to_cos_theta(wi), dot(d, wi));
+                L[i] = hosek(lambda[i], s);
                 if (i == 0 && math::constant(lambda)) { L = L[0]; break; }
             }
 
@@ -103,7 +104,32 @@ namespace mtt::light {
             return Flags::inf;
         }
 
-        func hosek(f32 lambda, f32 cos_theta, f32 cos_gamma) -> f32 {
+        struct State {
+            f32 cos_theta;
+            f32 cos_gamma;
+            f32 gamma;
+            f32 sqrt_cos_theta;
+            i32 segment;
+            f32 x;
+            f32 cos_psi;
+
+            __init(f32 cos_theta, f32 cos_gamma, f32 cos_sun) {
+                this.cos_theta = cos_theta;
+                this.cos_gamma = cos_gamma;
+                gamma = math::acos(cos_gamma);
+                sqrt_cos_theta = math::pow<1,2>(cos_theta);
+                let eta = math::pi * 0.5f - math::acos(cos_theta);
+                segment = min(
+                    sun_num_segments - 1,
+                    i32(pow(eta / (math::pi * 0.5f), 1.f / 3.f) * sun_num_segments)
+                );
+                x = eta - math::pi * 0.5f * pow(f32(segment) / f32(sun_num_segments), 3);
+                let sin_gamma_sqr = 1.f - math::pow<2>(cos_gamma);
+                cos_psi = math::pow<1,2>(1.f - sin_gamma_sqr / (1.f - math::pow<2>(cos_sun)));
+            }
+        }
+
+        func hosek(f32 lambda, State s) -> f32 {
             if (lambda > atomo_lambda[atomo_num_lambda - 1]) return 0.f;
             let splitted = split(lambda);
             let low = splitted._0;
@@ -111,30 +137,21 @@ namespace mtt::light {
             let alpha = splitted._2;
 
             var L = lerp(
-                hosek_sky(low, cos_theta, cos_gamma),
-                hosek_sky(high, cos_theta, cos_gamma),
+                hosek_sky(low, s),
+                hosek_sky(high, s),
                 alpha
             );
 
-            if (cos_gamma >= cos_sun) {
+            if (s.cos_gamma >= cos_sun) {
                 L += area
-                * lerp(
-                    hosek_sun(low, cos_theta),
-                    hosek_sun(high, cos_theta),
-                    alpha
-                )
-                * lerp(
-                    hosek_limb(low, cos_gamma),
-                    hosek_limb(high, cos_gamma),
-                    alpha
-                );
+                * lerp(hosek_sun(low, s), hosek_sun(high, s), alpha)
+                * lerp(hosek_limb(low, s), hosek_limb(high, s), alpha);
             }
 
             return L;
         }
 
-        func hosek_sky(i32 idx, f32 cos_theta, f32 cos_gamma) -> f32 {
-            let gamma = math::acos(cos_gamma);
+        func hosek_sky(i32 idx, State s) -> f32 {
             let A = sky_params[idx * sky_num_params + 0];
             let B = sky_params[idx * sky_num_params + 1];
             let C = sky_params[idx * sky_num_params + 2];
@@ -154,38 +171,35 @@ namespace mtt::light {
                 }
             } chi;
 
-            let c0 = 1.f + A * exp(math::guarded_div(B, (cos_theta + 0.01f)));
+            let c0 = 1.f + A * exp(math::guarded_div(B, (s.cos_theta + 0.01f)));
             let c1 = 0.f
-            + C + D * exp(E * gamma)
-            + F * math::pow<2>(cos_gamma)
-            + G * chi(H, cos_gamma)
-            + I * math::pow<1,2>(cos_theta);
+            + C + D * exp(E * s.gamma)
+            + F * math::pow<2>(s.cos_gamma)
+            + G * chi(H, s.cos_gamma)
+            + I * s.sqrt_cos_theta;
 
             return c0 * c1 * sky_radiance[idx] / spectra::CIE_Y_integral;
         }
 
-        func hosek_sun(i32 idx, f32 cos_theta) -> f32 {
-            let eta = math::pi * 0.5f - math::acos(cos_theta);
-            let segment = min(
-                sun_num_segments - 1,
-                i32(pow(eta / (math::pi * 0.5f), 1.f / 3.f) * sun_num_segments)
-            );
-            let x = eta - math::pi * 0.5f * pow(f32(segment) / f32(sun_num_segments), 3);
+        func hosek_sun(i32 idx, State s) -> f32 {
             var L = 0.f;
-            for (var i = 0; i < sun_num_ctls; ++i)
+            var x_pow = 1.f;
+            for (var i = 0; i < sun_num_ctls; ++i) {
                 L += sun_radiance[
-                    segment * atomo_num_lambda * sun_num_ctls + idx * sun_num_ctls + i
-                ] * pow(x, i);
+                    s.segment * atomo_num_lambda * sun_num_ctls + idx * sun_num_ctls + i
+                ] * x_pow;
+                x_pow *= s.x;
+            }
             return L / spectra::CIE_Y_integral;
         }
 
-        func hosek_limb(i32 idx, f32 cos_gamma) -> f32 {
-            let sin_gamma_sqr = 1.f - math::pow<2>(cos_gamma);
-            let cos_psi_sqr = 1.f - sin_gamma_sqr / (1.f - math::pow<2>(cos_sun));
-            let cos_psi = math::pow<1,2>(cos_psi_sqr);
+        func hosek_limb(i32 idx, State s) -> f32 {
             var l = 0.f;
-            for (var i = 0; i < sun_num_limb_params; ++i)
-                l += sun_limb[idx * sun_num_limb_params + i] * pow(cos_psi, i);
+            var psi_pow = 1.f;
+            for (var i = 0; i < sun_num_limb_params; ++i) {
+                l += sun_limb[idx * sun_num_limb_params + i] * psi_pow;
+                psi_pow *= s.cos_psi;
+            }
             return l;
         }
 
