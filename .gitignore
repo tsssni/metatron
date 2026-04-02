@@ -5,6 +5,7 @@
 !/ext/
 !/shader/
 !/share/
+!/spec/
 !/src/
 !/nix
 !/.git*

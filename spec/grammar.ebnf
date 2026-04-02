@@ -1,0 +1,939 @@
+# ================================================================
+# MTT Language Grammar Specification
+# Extended Backus-Naur Form (EBNF)
+# ================================================================
+#
+# Notation:
+#   rule = expr ;                   production rule
+#   'terminal'                      terminal string
+#   rule?                           optional (0 or 1)
+#   rule*                           repetition (0 or more)
+#   rule+                           repetition (1 or more)
+#   ( a | b )                       grouped alternatives
+#   a b                             concatenation
+#   a - b                           a but not b
+#   <description>                   informal description
+#
+# ================================================================
+
+
+# ================================================================
+# 1. Lexical Grammar
+# ================================================================
+
+# ----------------------------------------
+# 1.1 Source Text
+# ----------------------------------------
+
+source_file = top_level_item* ;
+
+comment = '#' <any character except newline>* newline ;
+
+whitespace = ' ' | '\t' | '\r' | '\n' ;
+
+
+# ----------------------------------------
+# 1.2 Identifiers
+# ----------------------------------------
+
+ident = ( letter | '_' ) ( letter | digit | '_' )* - keyword ;
+
+# module path segments may contain hyphens, only valid in use paths
+module_path_segment = ( letter | digit ) ( letter | digit | '-' )* ;
+
+letter = 'a'..'z' | 'A'..'Z' ;
+digit  = '0'..'9' ;
+
+
+# ----------------------------------------
+# 1.3 Keywords
+# ----------------------------------------
+
+keyword
+    # declarations
+    = 'fn' | 'struct' | 'enum' | 'bitflag' | 'layout'
+    | 'tag' | 'concept' | 'derive' | 'operator' | 'alias'
+    # variables
+    | 'view' | 'mut' | 'const'
+    # visibility
+    | 'hidden'
+    # modules
+    | 'use'
+    # control flow
+    | 'if' | 'else' | 'for' | 'in' | 'while' | 'loop'
+    | 'match' | 'return' | 'break' | 'continue'
+    # type conversion
+    | 'as' | 'to'
+    # self
+    | 'self' | 'Self'
+    # literals
+    | 'none' | 'true' | 'false'
+    # assertions
+    | 'static_assert'
+    # composite type constructors
+    | 'ptr' | 'buf' | 'union'
+    # address space / qualifier
+    | 'shared' | 'uniform' | 'atomic'
+    # generics
+    | 'where' | 'requires'
+    # scalar types
+    | 'bool'
+    | 'i8' | 'i16' | 'i32' | 'i64'
+    | 'u8' | 'u16' | 'u32' | 'u64'
+    | 'f16' | 'f32' | 'f64'
+    # vector types
+    | 'fv2' | 'fv3' | 'fv4'
+    | 'iv2' | 'iv3' | 'iv4'
+    | 'uv2' | 'uv3' | 'uv4'
+    | 'bv2' | 'bv3' | 'bv4'
+    # matrix types
+    | 'fm22' | 'fm33' | 'fm44'
+    # quaternion
+    | 'fq'
+    # opaque gpu types
+    | 'Texture_2D' | 'Texture_3D' | 'Sampler'
+    | 'Acceleration_Structure' | 'Ray_Query'
+    ;
+
+
+# ----------------------------------------
+# 1.4 Literals
+# ----------------------------------------
+
+literal
+    = int_literal
+    | float_literal
+    | bool_literal
+    | string_literal
+    | 'none'
+    ;
+
+# 1 = i32 (strict), 1u = u32, 1i = i32 (explicit)
+int_literal     = decimal_int | hex_int | binary_int ;
+decimal_int     = digit ( '_'? digit )* int_suffix? ;
+hex_int         = '0x' hex_digit ( '_'? hex_digit )* int_suffix? ;
+binary_int      = '0b' bin_digit ( '_'? bin_digit )* int_suffix? ;
+int_suffix      = 'u' | 'i' ;
+
+# 1.0 = f32, 1.0f16 = f16, 1.0f64 = f64
+float_literal   = digit+ '.' digit+ exponent? float_suffix? ;
+exponent        = ( 'e' | 'E' ) ( '+' | '-' )? digit+ ;
+float_suffix    = 'f16' | 'f64' ;
+
+bool_literal    = 'true' | 'false' ;
+
+string_literal  = '"' ( <any character except '"' and '\\'> | escape_seq )* '"' ;
+escape_seq      = '\\' ( 'n' | 'r' | 't' | '\\' | '"' | '0' ) ;
+
+hex_digit       = digit | 'a'..'f' | 'A'..'F' ;
+bin_digit       = '0' | '1' ;
+
+
+# ----------------------------------------
+# 1.5 Operators and Punctuation
+# ----------------------------------------
+
+# arithmetic
+op_add = '+' ;  op_sub = '-' ;  op_mul = '*' ;  op_div = '/' ;  op_mod = '%' ;
+
+# bitwise
+op_band = '&' ;  op_bor = '|' ;  op_bxor = '^' ;  op_bnot = '~' ;
+op_shl = '<<' ;  op_shr = '>>' ;
+
+# comparison
+op_eq = '==' ;  op_ne = '!=' ;
+op_lt = '<' ;  op_gt = '>' ;  op_le = '<=' ;  op_ge = '>=' ;
+
+# logical
+op_and = '&&' ;  op_or = '||' ;  op_not = '!' ;
+
+# assignment
+op_assign     = '=' ;
+op_add_assign = '+=' ;  op_sub_assign = '-=' ;
+op_mul_assign = '*=' ;  op_div_assign = '/=' ;  op_mod_assign = '%=' ;
+op_band_assign = '&=' ; op_bor_assign = '|=' ;  op_bxor_assign = '^=' ;
+op_shl_assign = '<<=' ; op_shr_assign = '>>=' ;
+
+# special
+op_deref     = '\'' ;         # pointer dereference
+op_question  = '?' ;          # optional propagation
+op_coalesce  = '??' ;         # null coalescing: a ?? b
+op_range     = '..' ;         # exclusive range
+op_range_inc = '..=' ;        # inclusive range
+op_arrow     = '->' ;         # return type
+op_fatarrow  = '=>' ;         # match arm
+
+# punctuation
+punc_lparen   = '(' ;  punc_rparen   = ')' ;
+punc_lbracket = '[' ;  punc_rbracket = ']' ;
+punc_lbrace   = '{' ;  punc_rbrace   = '}' ;
+punc_comma    = ',' ;  punc_semi     = ';' ;
+punc_dot      = '.' ;  punc_colon    = ':' ;
+punc_dcolon   = '::' ;
+
+
+# ================================================================
+# 2. Top-Level Items
+# ================================================================
+
+top_level_item
+    = attribute* ( use_decl
+                 | struct_decl
+                 | enum_decl
+                 | bitflag_decl
+                 | layout_decl
+                 | tag_decl
+                 | concept_decl
+                 | derive_decl
+                 | operator_decl
+                 | alias_decl
+                 | fn_decl
+                 | const_decl
+                 ) ;
+
+
+# ----------------------------------------
+# 2.1 Attributes
+# ----------------------------------------
+
+attribute = '[[' attribute_entry ( ',' attribute_entry )* ','? ']]' ;
+
+attribute_entry = ident ( '(' attribute_args ')' )? ;
+
+attribute_args = attribute_arg ( ',' attribute_arg )* ','? ;
+
+attribute_arg
+    = literal
+    | ident
+    | ident '(' attribute_args ')'
+    ;
+
+
+# ----------------------------------------
+# 2.2 Use Declarations
+# ----------------------------------------
+
+use_decl = 'use' use_path ';' ;
+
+use_path
+    = module_path '::' '{' use_path_item ( ',' use_path_item )* ','? '}'
+    | module_path
+    ;
+
+use_path_item = ident ;
+
+module_path = module_path_segment ( '::' module_path_segment )* ;
+
+
+# ----------------------------------------
+# 2.3 Visibility
+# ----------------------------------------
+
+# default: visible to all (public)
+# hidden: module-internal only
+
+visibility = 'hidden' ;
+
+
+# ----------------------------------------
+# 2.4 Struct
+# ----------------------------------------
+
+struct_decl = visibility? 'struct' ident generic_params? '{' struct_field_list '}' ;
+
+struct_field_list = ( struct_field ( ',' struct_field )* ','? )? ;
+
+struct_field = visibility? ident ':' type ( '=' expr )? ;
+
+
+# ----------------------------------------
+# 2.5 Enum (C++ style, no associated data)
+# ----------------------------------------
+
+enum_decl = visibility? 'enum' ( '<' scalar_int_type '>' )? ident '{' enum_variant_list '}' ;
+
+enum_variant_list = ( enum_variant ( ',' enum_variant )* ','? )? ;
+
+enum_variant = ident ( '=' expr )? ;
+
+scalar_int_type = 'u8' | 'u16' | 'u32' | 'u64' | 'i8' | 'i16' | 'i32' | 'i64' ;
+
+
+# ----------------------------------------
+# 2.6 Bitflag
+# ----------------------------------------
+
+bitflag_decl = visibility? 'bitflag' ( '<' bitflag_type '>' )? ident '{' bitflag_entry_list '}' ;
+
+bitflag_entry_list = ( bitflag_entry ( ',' bitflag_entry )* ','? )? ;
+
+bitflag_entry = ident '=' expr ;
+
+bitflag_type = 'u32' | 'u64' ;
+
+
+# ----------------------------------------
+# 2.7 Layout (pipeline resource binding)
+# ----------------------------------------
+
+# Metal: argument buffer struct
+# Vulkan: descriptor set layout via VK_EXT_descriptor_buffer
+
+layout_decl = visibility? 'layout' ident '{' layout_field_list '}' ;
+
+layout_field_list = ( layout_field ( ',' layout_field )* ','? )? ;
+
+layout_field = ident ':' type ;
+
+
+# ----------------------------------------
+# 2.8 Tag (polymorphic function table interface)
+# ----------------------------------------
+
+# tag defines a polymorphic function table interface.
+# Compiler collects all types with matching function signatures.
+#
+# Default dispatch: switch statement (inlined, no indirect call overhead).
+# [[indirect]] dispatch: function table.
+#   Metal:  visible function table (hardware thread regrouping)
+#   Vulkan: callable shader SBT entries
+#
+# The tag name becomes a type directly:
+#   tag Material { ... }
+#   view mat: Material;           # 32-bit polymorphic handle
+#   view bsdf: union Material;   # inline tagged union of all Material types
+
+tag_decl = visibility? 'tag' ident '{' tag_fn_sig* '}' ;
+
+tag_fn_sig = 'fn' ident fn_signature_only ;
+
+# fn signature without body: {|params| -> RetType}
+fn_signature_only = '{' '|' param_list '|' ( '->' type )? '}' ;
+
+
+# ----------------------------------------
+# 2.9 Concept (compile-time generic type constraint)
+# ----------------------------------------
+
+# concept is a pure compile-time constraint for generics.
+# Unlike tag, concept does not generate function tables.
+
+concept_decl
+    = visibility? 'concept' ident '{' concept_body '}'
+    | visibility? 'concept' ident '=' concept_expr ';'
+    ;
+
+concept_body = concept_item* ;
+
+concept_item
+    = concept_fn_sig
+    | concept_constraint
+    ;
+
+concept_fn_sig = 'fn' ident fn_signature_only ;
+
+concept_constraint
+    = 'Self' ':' concept_expr ';'
+    | reflection_expr comparison_op expr ';'
+    ;
+
+concept_expr
+    = ident ( '&' ident )*
+    ;
+
+
+# ----------------------------------------
+# 2.10 Derive (code generation template)
+# ----------------------------------------
+
+derive_decl = visibility? 'derive' ident '{' derive_body '}' ;
+
+derive_body = ( const_stmt | fn_decl | static_assert_stmt )* ;
+
+
+# ----------------------------------------
+# 2.11 Operator (overloading block)
+# ----------------------------------------
+
+# self Type in parameter grants access to hidden fields
+
+operator_decl = 'operator' '{' operator_fn* '}' ;
+
+operator_fn = 'fn' operator_symbol fn_body ;
+
+operator_symbol = '+' | '-' | '*' | '/' | '%'
+               | '&' | '|' | '^' | '~'
+               | '<<' | '>>'
+               | '==' | '!=' | '<' | '>' | '<=' | '>='
+               | '!' ;
+
+
+# ----------------------------------------
+# 2.12 Alias
+# ----------------------------------------
+
+alias_decl = visibility? 'alias' ident generic_params? '=' type ';' ;
+
+
+# ----------------------------------------
+# 2.13 Function
+# ----------------------------------------
+
+# Methods are free functions with 'self: Type' as first parameter.
+# No impl blocks — the compiler associates methods by self type.
+#
+# Examples:
+#   fn normalize {|v: fv3| -> fv3 ... }
+#   fn sample {|self: Physical_Material, ctx: Context| -> Interaction? ... }
+#   fn march {|mut self: Iterator, u: f32| -> Interaction? ... }
+
+fn_decl = visibility? 'fn' ident generic_params? where_clause? capture_list? fn_body ;
+
+fn_body
+    = '{' fn_params? fn_return? fn_content '}'
+    ;
+
+fn_params = '|' param_list '|' ;
+
+fn_return = '->' type ;
+
+fn_content
+    = '=' expr                  # single-expression body
+    | stmt*                     # statement body
+    ;
+
+param_list = ( param ( ',' param )* ','? )? ;
+
+param
+    = 'mut'? 'self' ':' type            # method self: self: T, mut self: T
+    | 'mut'? pattern ':' type           # regular param
+    ;
+
+capture_list = '[' ( capture_item ( ',' capture_item )* ','? | '\'' ) ']' ;
+
+capture_item = ident ;
+
+
+# ================================================================
+# 3. Generics and Constraints
+# ================================================================
+
+generic_params = '<' generic_param_list '>' ;
+
+generic_param_list = generic_param ( ',' generic_param )* ','? ;
+
+generic_param
+    = ident ( ':' concept_expr )?               # type parameter with optional bound
+    | 'const' ident ':' type                     # compile-time value parameter
+    ;
+
+where_clause = 'where' where_predicate ( ',' where_predicate )* ;
+
+where_predicate
+    = 'requires' '(' param_list ')' '{' concept_item* '}'
+    | ident ':' concept_expr
+    ;
+
+
+# ================================================================
+# 4. Types
+# ================================================================
+
+type
+    = scalar_type
+    | vector_type
+    | matrix_type
+    | 'fq'
+    | opaque_type
+    | composite_type
+    | qualified_type
+    | tuple_type
+    | array_type
+    | optional_type
+    | named_type
+    ;
+
+scalar_type
+    = 'bool'
+    | 'i8' | 'i16' | 'i32' | 'i64'
+    | 'u8' | 'u16' | 'u32' | 'u64'
+    | 'f16' | 'f32' | 'f64'
+    ;
+
+vector_type
+    = 'fv2' | 'fv3' | 'fv4'
+    | 'iv2' | 'iv3' | 'iv4'
+    | 'uv2' | 'uv3' | 'uv4'
+    | 'bv2' | 'bv3' | 'bv4'
+    ;
+
+matrix_type = 'fm22' | 'fm33' | 'fm44' ;
+
+opaque_type
+    = 'Texture_2D' '<' type_arg_list '>'
+    | 'Texture_3D' '<' type_arg_list '>'
+    | 'Sampler'
+    | 'Acceleration_Structure'
+    | 'Ray_Query'
+    ;
+
+composite_type
+    = 'ptr' '<' type '>'
+    | 'buf' '<' type '>'
+    | 'union' ident                      # inline tagged union of all types satisfying tag
+    | 'atomic' '<' type '>'
+    ;
+
+# tag types are used directly as named_type:
+#   tag Material { ... }
+#   view mat: Material;        # Material is a type (32-bit polymorphic handle)
+
+qualified_type
+    = 'shared' type
+    | 'uniform' type
+    ;
+
+tuple_type = '(' type ',' type ( ',' type )* ','? ')' ;
+
+array_type
+    = '[' type ';' expr ']'        # fixed-size array
+    | '[' type ']'                 # runtime array (inside buf only)
+    ;
+
+optional_type = type '?' ;
+
+named_type = type_path ( '<' type_arg_list '>' )? ;
+
+type_path = ident ( '::' ident )* ;
+
+type_arg_list = type_arg ( ',' type_arg )* ','? ;
+
+type_arg
+    = type
+    | ident           # e.g., readwrite
+    | expr            # const generic arg
+    ;
+
+
+# ================================================================
+# 5. Statements
+# ================================================================
+
+stmt
+    = var_decl
+    | const_decl
+    | expr_stmt
+    | assign_stmt
+    | if_stmt
+    | for_stmt
+    | while_stmt
+    | loop_stmt
+    | match_stmt
+    | return_stmt
+    | break_stmt
+    | continue_stmt
+    | static_assert_stmt
+    | fn_decl                   # local function
+    ;
+
+
+# ----------------------------------------
+# 5.1 Variable Declaration
+# ----------------------------------------
+
+# Uninitialized variables are default-initialized (zero / field defaults).
+#   view x: f32;         ->  0.0
+#   mut v: fv4;          ->  fv4(0, 0, 0, 0)
+#   mut h: Hit;          ->  all fields default
+
+var_decl
+    = ( 'view' | 'mut' ) pattern ( ':' type )? ( '=' expr )? ';'
+    ;
+
+const_decl
+    = 'const' ident ( ':' type )? '=' expr ';'
+    | 'const' 'fn' ident generic_params? fn_body
+    | 'const' for_stmt
+    | 'const' if_stmt
+    ;
+
+
+# ----------------------------------------
+# 5.2 Expression / Assignment Statement
+# ----------------------------------------
+
+expr_stmt = expr ';' ;
+
+assign_stmt = assign_target assign_op expr ';' ;
+
+assign_target
+    = ident
+    | expr '\'' ident            # ptr deref field write
+    | expr '\''                  # ptr deref write
+    | expr '[' expr ']'          # index write
+    | expr '.' ident             # field write
+    | expr '.' swizzle           # swizzle write
+    ;
+
+assign_op
+    = '=' | '+=' | '-=' | '*=' | '/=' | '%='
+    | '&=' | '|=' | '^=' | '<<=' | '>>='
+    ;
+
+
+# ----------------------------------------
+# 5.3 Control Flow
+# ----------------------------------------
+
+if_stmt
+    = 'if' if_cond block ( 'else' 'if' if_cond block )* ( 'else' block )?
+    ;
+
+if_cond
+    = expr                                # boolean condition
+    | 'view' pattern '=' expr             # optional unwrap
+    ;
+
+for_stmt = 'for' pattern 'in' expr block ;
+
+while_stmt = 'while' expr block ;
+
+loop_stmt = 'loop' block ;
+
+match_stmt = 'match' expr '{' match_arm* '}' ;
+
+match_arm = pattern '=>' ( expr | block ) ','? ;
+
+return_stmt = 'return' expr? ';' ;
+
+break_stmt = 'break' ';' ;
+
+continue_stmt = 'continue' ';' ;
+
+static_assert_stmt = 'static_assert' '(' expr ( ',' string_literal )? ')' ';' ;
+
+block = '{' stmt* '}' ;
+
+
+# ================================================================
+# 6. Patterns
+# ================================================================
+
+pattern
+    = ident                                             # binding
+    | '_'                                               # wildcard
+    | literal                                           # literal match
+    | '.' ident                                         # enum variant
+    | 'some' '(' pattern ')'                            # optional some
+    | 'none'                                            # optional none
+    | '{' field_pattern_list '}'                         # struct destructure
+    | '(' pattern ( ',' pattern )* ','? ')'             # tuple destructure
+    | '[' pattern ( ',' pattern )* ','? ']'             # array destructure
+    ;
+
+field_pattern_list = field_pattern ( ',' field_pattern )* ','? ;
+
+field_pattern
+    = ident                       # shorthand: field name = binding name
+    | ident ':' pattern           # renamed: field: binding
+    ;
+
+
+# ================================================================
+# 7. Expressions
+# ================================================================
+
+# ----------------------------------------
+# 7.1 Precedence (low to high)
+# ----------------------------------------
+#
+#   1.  ??                        null coalescing
+#   2.  ||                        logical or
+#   3.  &&                        logical and
+#   4.  |                         bitwise or
+#   5.  ^                         bitwise xor
+#   6.  &                         bitwise and
+#   7.  == !=                     equality
+#   8.  < > <= >=                 comparison
+#   9.  << >>                     shift
+#  10.  + -                       additive
+#  11.  * / %                     multiplicative
+#  12.  as to                     type cast
+#  13.  - ! ~                     unary prefix
+#  14.  postfix                   ' [] () . ? .[[]]
+#  15.  primary                   literal, ident, (), {}, []
+
+
+# ----------------------------------------
+# 7.2 Expression Grammar
+# ----------------------------------------
+
+expr = coalesce_expr ;
+
+coalesce_expr   = or_expr ( '??' or_expr )* ;
+or_expr         = and_expr ( '||' and_expr )* ;
+and_expr        = bitor_expr ( '&&' bitor_expr )* ;
+bitor_expr      = bitxor_expr ( '|' bitxor_expr )* ;
+bitxor_expr     = bitand_expr ( '^' bitand_expr )* ;
+bitand_expr     = equality_expr ( '&' equality_expr )* ;
+equality_expr   = comparison_expr ( ( '==' | '!=' ) comparison_expr )* ;
+comparison_expr = shift_expr ( ( '<' | '>' | '<=' | '>=' ) shift_expr )* ;
+shift_expr      = additive_expr ( ( '<<' | '>>' ) additive_expr )* ;
+additive_expr   = mult_expr ( ( '+' | '-' ) mult_expr )* ;
+mult_expr       = cast_expr ( ( '*' | '/' | '%' ) cast_expr )* ;
+
+cast_expr
+    = unary_expr ( ( 'to' | 'as' ) type )*
+    ;
+
+unary_expr
+    = '-' unary_expr
+    | '!' unary_expr
+    | '~' unary_expr
+    | postfix_expr
+    ;
+
+postfix_expr
+    = primary_expr postfix_op*
+    ;
+
+postfix_op
+    = '\'' ident                  # ptr dereference + field access: p'x
+    | '\''                        # ptr dereference (load value): p'
+    | '[' expr ']'                # index: a[i]
+    | '(' arg_list ')'            # function call: f(x, y)
+    | '.' ident                   # field access: s.x
+    | '.' swizzle                 # vector swizzle: v.xyz
+    | '.' '[[' ident ']]'        # reflective field access: val.[[field]]
+    | '?'                         # optional propagation
+    ;
+
+# swizzle: 1-4 components from xyzw or rgba (cannot mix sets)
+swizzle = <1 to 4 characters from [xyzw]>
+        | <1 to 4 characters from [rgba]> ;
+
+primary_expr
+    = literal
+    | ident ( '::' ident )*       # name or qualified name (sv::dispatch_thread_id)
+    | '(' expr ')'                # grouping
+    | '(' expr ',' expr_list ')'  # tuple construction
+    | '[' expr_list ']'           # array construction
+    | '{' construction_body '}'   # struct construction
+    | lambda_expr                 # anonymous function
+    | reflection_expr             # compile-time reflection
+    ;
+
+expr_list = ( expr ( ',' expr )* ','? )? ;
+
+arg_list = ( expr ( ',' expr )* ','? )? ;
+
+
+# ----------------------------------------
+# 7.3 Construction
+# ----------------------------------------
+
+# Type is inferred from context (assignment target, parameter, return type).
+# {} with no context type is default initialization.
+
+construction_body
+    = named_field_init ( ',' named_field_init )* ','?    # named: { x: 1, y: 2 }
+    | expr ( ',' expr )* ','?                            # positional: { 1, 2 }
+    |                                                    # empty: {} (default init)
+    ;
+
+named_field_init
+    = ident ':' expr              # field: value
+    | ident                       # shorthand: field name = variable name
+    ;
+
+
+# ----------------------------------------
+# 7.4 Lambda (anonymous function)
+# ----------------------------------------
+
+# Lambdas and named functions share syntax.
+# Lambdas can only appear in expression context.
+# Captures are explicit; outer scope is not visible by default.
+
+lambda_expr = capture_list? '{' '|' param_list '|' fn_return? fn_content '}' ;
+
+# capture_list:
+#   [a, b]    explicit captures (value copy)
+#   [']       capture all visible variables
+
+
+# ----------------------------------------
+# 7.5 Range
+# ----------------------------------------
+
+# Ranges are valid in for-in expressions.
+
+range_expr
+    = expr '..' expr              # exclusive range
+    | expr '..=' expr             # inclusive range
+    ;
+
+
+# ----------------------------------------
+# 7.6 Reflection Expressions
+# ----------------------------------------
+
+# Reflection expressions evaluate at compile time.
+# They use [[keyword(arg)]] syntax, shared with attributes.
+# Parser disambiguates: in expression context [[...]] is reflection,
+# before a declaration [[...]] is an attribute.
+
+reflection_expr
+    = '[[' 'fields' '(' type ')' ']]'       # field list of type
+    | '[[' 'size'   '(' type ')' ']]'       # sizeof(type) in bytes
+    | '[[' 'align'  '(' type ')' ']]'       # alignof(type) in bytes
+    | '[[' 'name'   '(' expr ')' ']]'       # field name (compile-time string)
+    | '[[' 'type'   '(' expr ')' ']]'       # field type
+    | '[[' 'offset' '(' expr ')' ']]'       # field byte offset
+    | '[[' 'types'  '(' ident ')' ']]'      # all types satisfying a tag
+    ;
+
+
+# ================================================================
+# 8. System Value Types
+# ================================================================
+
+# System values are accessed via the sv:: namespace.
+# Used as parameter types in [[kernel]] functions.
+# Parsed as regular qualified names (ident '::' ident).
+#
+#   sv::dispatch_thread_id      uv3
+#   sv::group_id                uv3
+#   sv::group_thread_id         uv3
+#   sv::group_index             u32
+
+
+# ================================================================
+# 9. Type Conversion
+# ================================================================
+
+# 'to' — explicit value conversion (may change bits, preserves value)
+#   count to f32          u32 -> f32
+#   x to u32              f32 -> u32 (truncates)
+#
+# 'as' — bitcast (same size, reinterpret bit pattern)
+#   x as u32              f32 IEEE bits -> u32
+#   size mismatch -> compile error
+#
+# implicit — only for safe widening and literal adaptation
+#   view a: f32 = 1;         int literal -> f32
+#   view b: fv3 = {1, 1, 1}; scalar -> vector via construction
+#   view c: f64 = a;         f32 -> f64 (lossless)
+
+
+# ================================================================
+# 10. Function and Method Resolution
+# ================================================================
+
+# Methods are free functions with 'self: Type' as first parameter.
+# expr.method(args) is resolved by finding fn method {|self: typeof(expr), ...|}
+# Function overloading: same name, different parameter types is allowed.
+# Return type is NOT part of the overload signature.
+#
+# Example:
+#   fn sample {|self: Physical_Material, ctx: Context| -> Interaction? ... }
+#   fn sample {|self: Interface_Material, ctx: Context| -> Interaction? ... }
+#   material.sample(ctx)   # resolved by typeof(material)
+
+
+# ================================================================
+# 11. Tag and Concept Semantics
+# ================================================================
+
+# tag: defines a runtime polymorphic interface.
+#   Compiler collects all types with matching function signatures.
+#   Tag name becomes a type: a 32-bit polymorphic handle.
+#
+#   tag Material {
+#       fn sample {|self, ctx: Context, coord: Coordinate| -> Interaction?}
+#       fn flags  {|self| -> Material_Flags}
+#   }
+#   view mat: Material;
+#   mat.sample(ctx, coord);   # dispatched at runtime
+#
+#   Dispatch strategy:
+#     default:        switch statement (inlined, low overhead)
+#     [[indirect]]:   function table
+#       Metal  → visible function table (hardware thread regrouping)
+#       Vulkan → callable shader SBT (executeCallableEXT)
+#
+#   [[indirect]]
+#   tag Material { ... }   # uses function table dispatch
+#
+#   tag Medium { ... }     # uses switch dispatch (default)
+#
+# concept: defines a compile-time generic type constraint.
+#   Used in generic parameters for monomorphization.
+#   Does NOT generate function tables or dispatch code.
+#
+#   concept Serializable {
+#       fn serialize {|self, writer: ptr<u8>| -> u32}
+#   }
+#   fn process<T: Serializable> {|x: T| ... }   # T is known at compile time
+#
+# A tag implicitly defines a concept with the same constraints.
+#   Types satisfying tag Material also satisfy concept Material.
+
+
+# ================================================================
+# 12. Compilation Targets
+# ================================================================
+
+# A source file produces:
+#
+#   For each [[kernel]] fn:
+#     <module>.<fn_name>.spirv       Vulkan SPIR-V (GLCompute / RayGenerationKHR)
+#     <module>.<fn_name>.metal       Metal MSL ([[kernel]])
+#
+#   For each [[visible]] fn:
+#     <module>.<fn_name>.spirv       SPIR-V (CallableKHR)
+#     <module>.<fn_name>.metal       MSL ([[visible]])
+#
+#   For each [[intersection(...)]] fn:
+#     <module>.<fn_name>.spirv       SPIR-V (IntersectionKHR)
+#     <module>.<fn_name>.metal       MSL ([[intersection(...)]])
+#
+#   C++ header:
+#     <module>.hpp                   struct definitions, layout, aliases
+#
+#   Reflection data:
+#     <module>.json                  struct layouts, tag type sets, fn table indices
+
+
+# ================================================================
+# 13. Operator Precedence Table
+# ================================================================
+
+#  Prec  | Assoc | Operators                   | Notes
+# -------+-------+-----------------------------+---------------------
+#   1    | left  | ??                          | null coalescing
+#   2    | left  | ||                          | logical or
+#   3    | left  | &&                          | logical and
+#   4    | left  | |                           | bitwise or
+#   5    | left  | ^                           | bitwise xor
+#   6    | left  | &                           | bitwise and
+#   7    | left  | == !=                       | equality
+#   8    | left  | < > <= >=                   | comparison
+#   9    | left  | << >>                       | shift
+#  10    | left  | + -                         | additive
+#  11    | left  | * / %                       | multiplicative
+#  12    | left  | to  as                      | type cast / bitcast
+#  13    | right | - ! ~                       | unary prefix
+#  14    | left  | ' [] () . ? .[[]]           | postfix
+#  15    | -     | literal ident () {} [] [[]]  | primary
+
+
+# ================================================================
+# 14. Naming Conventions
+# ================================================================
+
+# keywords:             fn view mut const struct enum tag concept derive ...
+# types / structs:      Physical_Material, Path_State, Scatter_Event
+# functions / vars:     normalize, max_depth, sample_direct
+# constants:            max_depth, pi  (same as variables, lowercase)
+# modules / files:      core, render, monte-carlo  (lowercase, hyphens allowed)
