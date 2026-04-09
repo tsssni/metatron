@@ -581,7 +581,6 @@ stmt
     | for_stmt
     | while_stmt
     | loop_stmt
-    | match_stmt
     | return_stmt
     | break_stmt
     | continue_stmt
@@ -653,10 +652,6 @@ for_stmt = 'for' pattern 'in' expr block ;
 while_stmt = 'while' expr block ;
 
 loop_stmt = 'loop' block ;
-
-match_stmt = 'match' expr '{' match_arm* '}' ;
-
-match_arm = pattern '=>' ( expr | block ) ','? ;
 
 return_stmt = 'return' expr? ';' ;
 
@@ -835,7 +830,35 @@ reflection_expr
 
 
 # ================================================================
-# 10. Operator Precedence Table
+# 10. Compilation Output
+# ================================================================
+
+# All outputs are part of the metatron RHI.
+#
+# struct →
+#   .hpp: C++ POD struct with layout guarantees (static_assert).
+#         Exported as metatron RHI types for CPU-side creation.
+#
+# tag →
+#   .hpp: Type registry (type index mapping, visit dispatch).
+#
+# layout →
+#   .hpp: Struct definitions for each descriptor set member.
+#         Supports argument buffer creation and usage.
+#
+# table →
+#   .cpp: Embedded SPIR-V / MSL for each [[indirect]], [[procedural]], [[anyhit]] function.
+#         Creates and populates SBT (Vulkan) / VFT + IFT (Metal).
+#         Ready-to-use: build() + bind().
+#
+# kernel →
+#   .cpp: Embedded SPIR-V / MSL for the kernel entry point.
+#         Pipeline creation.
+#         Accepts corresponding layout argument buffers and table.
+
+
+# ================================================================
+# 11. Operator Precedence Table
 # ================================================================
 
 #  Prec  | Assoc | Operators
