@@ -9,7 +9,6 @@
   metal-cpp,
   ninja,
   openimageio,
-  openssl,
   openvdb,
   proxy,
   shader-slang,
@@ -24,7 +23,7 @@ let
 in
 stdenv.mkDerivation {
   pname = "metatron";
-  version = "0.2.0";
+  version = "0.2.2";
 
   src = ../.;
   # src = fetchFromGitHub {
@@ -44,12 +43,12 @@ stdenv.mkDerivation {
   buildInputs = [
     argparse
     assimp
-    (cpptrace.overrideAttrs {
-      doCheck = !stdenv.isDarwin;
+    cpptrace
+    (glaze.override {
+      enableSSL = false;
+      enableInterop = false;
     })
-    glaze
     openimageio
-    openssl
     openvdb
     proxy
     zlib

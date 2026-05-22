@@ -6,7 +6,7 @@ namespace mtt::stl {
     template<typename... Ts>
     struct array final {
         template<usize idx>
-        using type = std::tuple_element_t<idx, std::tuple<Ts...>>;
+        using type = Ts...[idx];
 
         template<typename T>
         auto constexpr static contains = (std::is_same_v<T, Ts> || ...);
@@ -14,7 +14,7 @@ namespace mtt::stl {
         template<typename T>
         auto constexpr static index = [] -> usize {
             auto idx = 0;
-            auto found = ((std::is_same_v<T, Ts> ? false : (++idx, true)) && ...);
+            auto _ = ((std::is_same_v<T, Ts> ? false : (++idx, true)) && ...);
             return idx;
         }();
 
@@ -24,7 +24,7 @@ namespace mtt::stl {
             auto size = 0uz;
             auto offset = 0uz;
             auto idx = 0uz;
-            auto aligned = ((index<Ts> > index<T> ? false : ((
+            auto _ = ((index<Ts> > index<T> ? false : ((
                 offset = math::align(size, alignof(Ts)),
                 size = offset + sizeof(Ts),
             true))) && ...);

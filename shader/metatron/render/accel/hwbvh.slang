@@ -34,7 +34,7 @@ namespace mtt::accel {
             let hb = rq.CommittedTriangleBarycentrics();
             let pos = fv4(1 - hb[0] - hb[1], hb[0], hb[1], ht);
             let intr = div.shape(or, on, pos, prim);
-            return Interaction(div, prim, intr);
+            return Interaction(div, prim, intr.value, intr.hasValue);
         }
     }
 }

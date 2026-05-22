@@ -17,7 +17,8 @@ namespace mtt::accel {
     public struct Interaction {
         public Divider divider = {};
         public u32 primitive = 0;
-        public Optional<shape::Interaction> intr_opt = {};
+        public shape::Interaction intr = {};
+        public bool valid = false;
     };
 
     public interface Acceleration {

@@ -10,7 +10,7 @@ namespace mtt::stl {
         variant(cref<variant>) noexcept = delete;
         variant(rref<variant> rhs) noexcept {
             idx = rhs.idx;
-            if (idx != math::maxv<u32>) auto v = ((
+            if (idx != math::maxv<u32>) auto _ = ((
             idx == ts::template index<Ts> ? (
                 std::construct_at(mut<Ts>(data(idx)), std::move(*mut<Ts>(rhs.data(idx))))
             , true) : false) || ...);
@@ -49,7 +49,7 @@ namespace mtt::stl {
 
         auto data() noexcept -> mut<F> {
             auto ref = mut<F>{};
-            auto v = ((
+            auto _ = ((
               idx == ts::template index<Ts>
               ? (ref = make_mut(*mut<Ts>(data(idx))), true) : false
             ) || ...);
@@ -63,7 +63,7 @@ namespace mtt::stl {
         auto clone() const noexcept -> obj<F>
         requires(F::copyability != pro::constraint_level::none) {
             auto ref = obj<F>{};
-            auto v = ((
+            auto _ = ((
               idx == ts::template index<Ts>
               ? (ref = make_obj<F, Ts>(*(view<Ts>)data(idx)), true) : false
             ) || ...);
@@ -85,7 +85,7 @@ namespace mtt::stl {
 
     private:
         auto destroy() noexcept -> void {
-            if (idx != math::maxv<u32>) auto v = ((
+            if (idx != math::maxv<u32>) auto _ = ((
             idx == ts::template index<Ts> ? (
                 std::destroy_at(mut<Ts>(data(idx)))
             , true) : false) || ...);

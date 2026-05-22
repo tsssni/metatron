@@ -4,7 +4,7 @@
             "name": "default",
             "generator": "Ninja",
             "cacheVariables": {
-                "CMAKE_CXX_STANDARD": "23",
+                "CMAKE_CXX_STANDARD": "26",
                 "CMAKE_CXX_EXTENSIONS": "OFF",
                 "CMAKE_CXX_SCAN_FOR_MODULES": "OFF",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",

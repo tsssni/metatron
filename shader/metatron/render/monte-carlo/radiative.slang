@@ -111,9 +111,9 @@ namespace mtt::monte_carlo {
 
                         if (crossed) {
                             acc_opt = ctx.accel(direct_ctx.r, direct_ctx.n);
-                            if (!acc_opt.hasValue || !acc_opt.value.intr_opt.hasValue) break;
+                            if (!acc_opt.hasValue || !acc_opt.value.valid) break;
                             let acc = acc_opt.value;
-                            var intr = acc.intr_opt.value;
+                            var intr = acc.intr;
                             let div = acc.divider;
                             let lt = *div.local_to_render.get();
 
@@ -152,7 +152,7 @@ namespace mtt::monte_carlo {
                         }
 
                         let acc = acc_opt.value;
-                        var intr = acc.intr_opt.value;
+                        var intr = acc.intr;
                         let div = acc.divider;
 
                         let m_opt = iter.march(ctx.sampler.generate_1d());
@@ -190,7 +190,7 @@ namespace mtt::monte_carlo {
                 } while (false);
 
                 if (scattered || crossed) acc_opt = ctx.accel(trace_ctx.r, trace_ctx.n);
-                if (!acc_opt.hasValue || !acc_opt.value.intr_opt.hasValue) {
+                if (!acc_opt.hasValue || !acc_opt.value.valid) {
                     let e_opt = ctx.emitter.sample_infinite(trace_ctx, ctx.sampler.generate_1d());
                     if (e_opt == none) break;
                     let e_intr = e_opt.value;
@@ -210,7 +210,7 @@ namespace mtt::monte_carlo {
                 }
 
                 let acc = acc_opt.value;
-                var intr = acc.intr_opt.value;
+                var intr = acc.intr;
                 let div = acc.divider;
                 let lt = *div.local_to_render.get();
 

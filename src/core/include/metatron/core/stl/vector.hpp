@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/core/stl/singleton.hpp>
+#include <metatron/core/stl/array.hpp>
 #include <metatron/core/stl/string.hpp>
 #include <metatron/core/stl/ranges.hpp>
 #include <metatron/core/stl/print.hpp>
@@ -12,7 +13,7 @@
 #include <cstring>
 
 namespace mtt::stl {
-    template<typename T>
+    template<typename... Ts>
     struct vector;
 
     template<>
@@ -162,55 +163,68 @@ namespace mtt::stl {
         u32 length = 0;
     };
 
-    template<typename T>
-    struct vector final: singleton<vector<T>> {
-        vector() noexcept {
-            tid = vector<void>::instance().push<T>();
-            raw().template init<T>();
-        }
+    template<typename... Ts>
+    requires (sizeof...(Ts) >= 1)
+    struct vector<Ts...> final: singleton<vector<Ts...>> {
+        using ts = stl::array<Ts...>;
+        using F = ts::template type<0>;
+        vector() noexcept {((
+            tid[ts::template index<Ts>] = vector<void>::instance().push<Ts>(),
+            raw<Ts>().template init<Ts>()
+        ), ...);}
 
-        template<typename... Args>
-        requires std::is_constructible_v<T, Args...>
+        template<typename T = F, typename... Args>
+        requires ts::template contains<T> && std::is_constructible_v<T, Args...>
         auto emplace_back(Args&&... args) noexcept -> u32 {
-            auto idx = raw().template emplace_back<T>(std::forward<Args>(args)...);
-            return (tid << 24) | idx;
+            auto idx = raw<T>().template emplace_back<T>(std::forward<Args>(args)...);
+            return (tid[ts::template index<T>] << 24) | idx;
         }
 
-        template<typename... Args>
+        template<typename T = F, typename... Args>
         requires std::is_constructible_v<T, Args...>
         auto emplace(std::string_view path, Args&&... args) noexcept -> u32 {
-            auto idx = raw().template emplace<T>(path, std::forward<Args>(args)...);
-            return (tid << 24) | idx;
+            auto idx = raw<T>().template emplace<T>(path, std::forward<Args>(args)...);
+            return (tid[ts::template index<T>] << 24) | idx;
         }
 
+        template<typename T = F>
         auto push_back(rref<T> x) noexcept -> u32 { return emplace_back(std::move(x)); }
+        template<typename T = F>
         auto push_back(cref<T> x) noexcept -> u32 { return emplace_back(x); }
-        auto push(std::string_view path, rref<T> x) noexcept -> u32 {
-            return emplace(path, std::move(x));
-        }
-        auto push(std::string_view path, cref<T> x) noexcept -> u32 {
-            return emplace(path, x);
-        }
+        template<typename T = F>
+        auto push(std::string_view path, rref<T> x) noexcept -> u32 { return emplace(path, std::move(x)); }
+        template<typename T = F>
+        auto push(std::string_view path, cref<T> x) noexcept -> u32 { return emplace(path, x); }
 
-        auto operator[](u32 i) noexcept -> mut<T> { return mut<T>(raw()[i & 0xfffff]); }
-        auto operator[](u32 i) const noexcept -> view<T> { return view<T>(raw()[i & 0xfffff]); }
-        auto path(u32 i) const noexcept -> std::string_view { return raw().path(i & 0xfffff); }
-        auto entity(std::string_view path) const noexcept -> u32 { return (tid << 24) | raw().entity(path); }
-        auto contains(std::string_view path) const noexcept -> bool { return raw().contains(path); }
-        auto index() const noexcept -> u32 { return tid; }
-        auto size() const noexcept -> usize { return raw().size(); }
-        auto keys() const noexcept { return raw().keys(); }
+        template<typename T = F>
+        auto operator[](u32 i) noexcept -> mut<T> { return mut<T>(raw<T>()[i & 0xfffff]); }
+        template<typename T = F>
+        auto operator[](u32 i) const noexcept -> view<T> { return view<T>(raw<T>()[i & 0xfffff]); }
+        template<typename T = F>
+        auto path(u32 i) const noexcept -> std::string_view { return raw<T>().path(i & 0xfffff); }
+        template<typename T = F>
+        auto entity(std::string_view path) const noexcept -> u32 { return (index<T>() << 24) | raw<T>().entity(path); }
+        template<typename T = F>
+        auto contains(std::string_view path) const noexcept -> bool { return raw<T>().contains(path); }
+        template<typename T = F>
+        auto index() const noexcept -> u32 { return tid[ts::template index<T>]; }
+        template<typename T = F>
+        auto size() const noexcept -> usize { return raw<T>().size(); }
+        template<typename T = F>
+        auto keys() const noexcept { return raw<T>().keys(); }
 
     private:
+        template<typename T>
         auto raw() noexcept -> ref<vector<byte>> {
-            return vector<void>::instance().storage[tid];
+            return vector<void>::instance().storage[tid[ts::template index<T>]];
         }
 
+        template<typename T>
         auto raw() const noexcept -> cref<vector<byte>> {
-            return vector<void>::instance().storage[tid];
+            return vector<void>::instance().storage[tid[ts::template index<T>]];
         }
 
-        u32 tid;
+        std::array<u32, sizeof...(Ts)> tid;
     };
 
     struct vicar final {
@@ -359,8 +373,11 @@ namespace mtt::stl {
 }
 
 namespace mtt {
-    template<typename T>
+    template<typename... Ts>
     struct tag final {
+        using ts = stl::array<Ts...>;
+        using F = ts::template type<0>;
+        template<typename T>
         using vec = stl::vector<T>;
 
         tag(): idx(math::maxv<u32>) {};
@@ -369,19 +386,24 @@ namespace mtt {
         auto storage() noexcept -> u32 { return idx >> 24; }
         auto type() noexcept -> u32 { return idx >> 20 & 0xf; };
         auto index() noexcept -> u32 { return idx & 0xffff; };
-        auto data() noexcept -> mut<T> { return vec::instance()[idx]; }
-        auto data() const noexcept -> view<T> { return vec::instance()[idx]; }
-        template<typename U>
-        auto is() const noexcept -> bool { return vec::instance().template is<U>(idx); }
+        template<typename T = F>
+        auto data() noexcept -> mut<T> { return vec<T>::instance()[idx]; }
+        template<typename T = F>
+        auto data() const noexcept -> view<T> { return vec<T>::instance()[idx]; }
+        template<typename T>
+        auto is() const noexcept -> bool { return vec<F>::instance().template is<T>(idx); }
 
+        template<typename T = F>
         auto operator->() noexcept -> mut<T> { return data(); }
+        template<typename T = F>
         auto operator->() const noexcept -> view<T> { return data(); }
+        template<typename T = F>
         auto operator*() noexcept -> ref<T> requires(!pro::facade<T>) { return *data(); }
+        template<typename T = F>
         auto operator*() const noexcept -> cref<T> requires(!pro::facade<T>) { return *data(); }
+        template<typename T = F>
         auto operator*() const noexcept -> obj<T>
-        requires(pro::facade<T> && T::copyability != pro::constraint_level::none) {
-            return vec::instance()(idx);
-        }
+        requires(pro::facade<T> && T::copyability != pro::constraint_level::none) { return vec<T>::instance()(idx); }
 
         operator u32() const noexcept { return idx; }
         operator bool() const noexcept { return idx != math::maxv<u32>; }

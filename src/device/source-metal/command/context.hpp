@@ -1,6 +1,8 @@
 #pragma once
 #include <metatron/device/command/context.hpp>
 #include <Metal/Metal.hpp>
+#undef nil
+#undef Nil
 
 namespace mtt {
     template<typename T>
