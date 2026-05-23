@@ -29,9 +29,9 @@ namespace mtt::filter {
     }
 
     auto Gaussian_Filter::sample(cref<fv2> u) const noexcept -> opt<filter::Interaction> {
-        auto p = distr->sample(u);
+        auto p = distr.sample(u);
         auto w = (*this)(math::reverse(p));
-        auto pdf = distr->pdf(p);
+        auto pdf = distr.pdf(p);
         return Interaction{p, w, pdf};
     }
 }

@@ -22,7 +22,7 @@ namespace mtt::media {
         distr = math::Exponential_Distribution{0.f};
 
         r = ctx.r;
-        cell = medium->majorant->to_index(r.o); offset = iv3{0};
+        cell = medium->majorant.to_index(r.o); offset = iv3{0};
         direction = math::foreach([](f32 x, auto){return math::sign(x);}, r.d);
 
         t_max = t;
@@ -30,10 +30,10 @@ namespace mtt::media {
         t_boundary = t_max;
         t_transmitted = 0.f;
 
-        if (!medium->majorant->inside(cell)) {
-            auto [t_enter, t_exit] = math::hit(r, medium->majorant->bounding_box()).value_or(fv2{0.f});
+        if (!medium->majorant.inside(cell)) {
+            auto [t_enter, t_exit] = math::hit(r, medium->majorant.bounding_box()).value_or(fv2{0.f});
             r.o = r.o + t_enter * r.d;
-            cell = math::clamp<i32, 3>(medium->majorant->to_index(r.o), iv3{0}, medium->majorant->dimensions() - 1);
+            cell = math::clamp<i32, 3>(medium->majorant.to_index(r.o), iv3{0}, medium->majorant.dimensions() - 1);
         }
         update_majorant(t_max);
     }
@@ -63,7 +63,7 @@ namespace mtt::media {
             } else {
                 update_transmittance(t_u);
                 auto spectra_pdf = sigma_maj * transmittance;
-                auto density = (*std::as_const(medium->density).data())(r.o);
+                auto density = std::as_const(medium->density)(r.o);
                 return Interaction{
                     medium->phase.to_phase(),
                     r.o,
@@ -80,14 +80,14 @@ namespace mtt::media {
     }
 
     auto Heterogeneous_Medium::Iterator::update_majorant(f32 t) noexcept -> void {
-        auto inside = medium->majorant->inside(cell);
-        auto next_inside = medium->majorant->inside(cell + offset);
+        auto inside = medium->majorant.inside(cell);
+        auto next_inside = medium->majorant.inside(cell + offset);
         if (inside && !next_inside) {
             t_cell = t_boundary;
             return;
         }
 
-        auto bbox = medium->majorant->bounding_box(cell + offset);
+        auto bbox = medium->majorant.bounding_box(cell + offset);
         auto [t_enter, t_next, i_enter, i_next] = math::hitvi(r, bbox)
         .value_or(std::make_tuple(t_boundary, t_boundary, 0uz, 0uz));
 
@@ -95,7 +95,7 @@ namespace mtt::media {
         cell += offset;
         offset = direction * iv3{i_next == 0, i_next == 1, i_next == 2};
 
-        density_maj = (*medium->majorant.data())[cell];
+        density_maj = medium->majorant[cell];
         sigma_maj = density_maj * sigma_t;
         distr = math::Exponential_Distribution(sigma_maj[0]);
     }
@@ -117,7 +117,7 @@ namespace mtt::media {
     sigma_e(desc.sigma_e),
     density(desc.density),
     density_scale(desc.density_scale) {
-        auto sigmaj = volume::Uniform_Volume{{density->bounding_box(), desc.dimensions}};
+        auto sigmaj = volume::Uniform_Volume{{density.bounding_box(), desc.dimensions}};
         stl::scheduler::instance().sync_parallel(
             sigmaj.dimensions(),
             [&](cref<uzv3> xyz) mutable {
@@ -125,24 +125,23 @@ namespace mtt::media {
                 auto voxel_bbox = sigmaj.bounding_box(ijk);
                 auto maj = math::low<f32>;
 
-                auto b_min = density->to_index(voxel_bbox.p_min);
-                auto b_max = density->to_index(voxel_bbox.p_max);
+                auto b_min = density.to_index(voxel_bbox.p_min);
+                auto b_max = density.to_index(voxel_bbox.p_max);
                 auto p_min = math::min(b_min, b_max);
                 auto p_max = math::max(b_min, b_max);
 
                 for (auto i = p_min[0]; i <= p_max[0]; ++i)
                     for (auto j = p_min[1]; j <= p_max[1]; ++j)
                         for (auto k = p_min[2]; k <= p_max[2]; ++k)
-                            maj = math::max(maj, (*std::as_const(density).data())[{i, j, k}]);
+                            maj = math::max(maj, std::as_const(density)[{i, j, k}]);
                 sigmaj[ijk] = maj;
             }
         );
 
-        auto& vec = stl::vector<volume::Volume>::instance();
-        majorant = vec.push_back<volume::Uniform_Volume>(std::move(sigmaj));
+        majorant = volume::Volume::push_back<volume::Uniform_Volume>(std::move(sigmaj));
     }
 
-    auto Heterogeneous_Medium::begin(cref<math::Context> ctx, f32 t_max) const noexcept -> obj<media::Iterator> {
-        return make_obj<media::Iterator, Iterator>(*this, ctx, t_max);
+    auto Heterogeneous_Medium::begin(cref<math::Context> ctx, f32 t_max) const noexcept -> Iterator {
+        return Iterator{*this, ctx, t_max};
     }
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/render/sampler/sampler.hpp>
+#include <metatron/render/sampler/context.hpp>
 #include <metatron/core/stl/stack.hpp>
 
 namespace mtt::sampler {

@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/render/accel/accel.hpp>
+#include <metatron/render/accel/interaction.hpp>
 
 namespace mtt::accel {
     struct HWBVH final {

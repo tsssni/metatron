@@ -1,43 +1,45 @@
 #pragma once
-#include <metatron/resource/phase/phase-function.hpp>
-#include <metatron/resource/spectra/spectrum.hpp>
-#include <metatron/core/math/eval.hpp>
+#include <metatron/resource/media/interaction.hpp>
 #include <metatron/core/math/ray.hpp>
+#include <metatron/core/math/eval.hpp>
+#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::media {
-    struct Interaction final {
-        obj<phase::Phase_Function> phase;
-        fv3 p;
-        f32 t;
-        fv4 transmittance;
-        fv4 sigma_a;
-        fv4 sigma_s;
-        fv4 sigma_n;
-        fv4 sigma_maj;
-        fv4 sigma_e;
+    struct Homogeneous_Medium;
+    struct Heterogeneous_Medium;
+    struct Vaccum_Medium;
+    struct Iterator;
+}
+
+#include <metatron/resource/media/homogeneous.hpp>
+#include <metatron/resource/media/heterogeneous.hpp>
+#include <metatron/resource/media/vaccum.hpp>
+
+namespace mtt::media {
+    struct Iterator final: stl::variant<
+        Iterator,
+        Homogeneous_Medium::Iterator,
+        Heterogeneous_Medium::Iterator,
+        Vaccum_Medium::Iterator
+    > {
+        using variant::variant;
+
+        auto march(f32 u) noexcept -> opt<Interaction> {
+            return visit([u](auto* p) noexcept { return p->march(u); });
+        }
     };
 
-    MTT_POLY_METHOD(iterator_march, march);
-    MTT_POLY_METHOD(medium_begin, begin);
+    struct Medium final: stl::polynomial<
+        Medium,
+        Homogeneous_Medium,
+        Heterogeneous_Medium,
+        Vaccum_Medium
+    > {
+        using polynomial::polynomial;
+        auto static init() noexcept -> void;
 
-    struct Iterator final: pro::facade_builder
-    ::add_convention<iterator_march, auto (f32 u) noexcept -> opt<Interaction>>
-    ::build {};
-
-
-    struct Medium final: pro::facade_builder
-    ::add_convention<medium_begin, auto (
-        cref<math::Context> ctx, f32 t_max
-    ) const noexcept -> obj<Iterator>>
-    ::add_skill<pro::skills::as_view>
-    ::build {};
-
-    struct Phase final {
-        enum struct Function {
-            henyey_greenstein,
-        } function = Function::henyey_greenstein;
-        f32 g = 0.f;
-
-        auto to_phase() const noexcept -> obj<phase::Phase_Function>;
+        auto begin(cref<math::Context> ctx, f32 t_max) const noexcept -> Iterator {
+            return visit([&, t_max](auto* p) noexcept { return Iterator{p->begin(ctx, t_max)}; });
+        }
     };
 }

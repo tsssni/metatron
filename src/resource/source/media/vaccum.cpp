@@ -13,7 +13,7 @@ namespace mtt::media {
 
     auto Vaccum_Medium::begin(
         cref<math::Context> ctx, f32 t_max
-    ) const noexcept -> obj<media::Iterator> {
-        return make_obj<media::Iterator, Iterator>(ctx.r, t_max);
+    ) const noexcept -> Iterator {
+        return Iterator{ctx.r, t_max};
     }
 }

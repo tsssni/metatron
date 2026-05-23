@@ -1,4 +1,5 @@
 #include <metatron/resource/bsdf/physical.hpp>
+#include <metatron/resource/bsdf/bsdf.hpp>
 #include <metatron/resource/spectra/constant.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/sphere.hpp>

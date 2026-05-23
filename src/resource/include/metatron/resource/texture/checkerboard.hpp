@@ -1,12 +1,14 @@
 #pragma once
-#include <metatron/resource/texture/texture.hpp>
+#include <metatron/resource/spectra/spectrum.hpp>
+#include <metatron/resource/muldim/image.hpp>
+#include <metatron/core/math/eval.hpp>
 #include <metatron/core/stl/vector.hpp>
 
 namespace mtt::texture {
     struct Checkerboard_Texture final {
         struct Descriptor final {
-            tag<spectra::Spectrum> x;
-            tag<spectra::Spectrum> y;
+            spectra::Spectrum x;
+            spectra::Spectrum y;
             uv2 uv_scale = uv2{1};
         };
         Checkerboard_Texture(cref<Descriptor> desc) noexcept;
@@ -21,8 +23,8 @@ namespace mtt::texture {
         auto pdf(cref<fv2> uv) const noexcept -> f32;
 
     private:
-        tag<spectra::Spectrum> x;
-        tag<spectra::Spectrum> y;
+        spectra::Spectrum x;
+        spectra::Spectrum y;
         uv2 uv_scale;
 
         f32 w_x;

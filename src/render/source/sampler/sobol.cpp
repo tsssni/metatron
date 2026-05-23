@@ -86,14 +86,14 @@ namespace mtt::sampler {
             auto shift = 2 * i - last_digit;
             auto digit = (morton_idx >> shift) & 3;
             auto higher_digits = morton_idx >> (shift + 2);
-            auto p = math::mix_bits_fast(higher_digits ^ (0x55555555u * ctx.dim)) >> 24;
+            auto p = math::mix_bits(higher_digits ^ (0x55555555u * ctx.dim)) >> 24;
             idx |= u64(permutations[p][digit]) << shift;
         }
 
         // handle power-of-2 (but not 4) spp
         if (last_digit == 1) {
             auto digit = morton_idx & 1;
-            idx |= digit ^ (math::mix_bits_fast((morton_idx >> 1) ^ (0x55555555u * ctx.dim)) & 1);
+            idx |= digit ^ (math::mix_bits((morton_idx >> 1) ^ (0x55555555u * ctx.dim)) & 1);
         }
         return idx;
     }

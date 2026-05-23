@@ -1,9 +1,15 @@
 #include <metatron/resource/bsdf/bsdf.hpp>
+#include <metatron/resource/bsdf/physical.hpp>
+#include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/complex.hpp>
 #include <metatron/core/math/sphere.hpp>
 
 namespace mtt::bsdf {
+    auto Bsdf::init() noexcept -> void {
+        Physical_Bsdf::init();
+    }
+
     auto lambert(f32 reflectance) noexcept -> f32 {
         return reflectance / math::pi;
     }

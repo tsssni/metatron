@@ -1,6 +1,6 @@
 #pragma once
-#include <metatron/resource/volume/volume.hpp>
 #include <metatron/resource/muldim/grid.hpp>
+#include <metatron/core/math/bounding-box.hpp>
 #include <metatron/core/stl/vector.hpp>
 
 namespace mtt::volume {
@@ -31,6 +31,6 @@ namespace mtt::volume {
         math::Bounding_Box bbox;
         iv3 dims;
         fv3 voxel_size;
-        tag<muldim::Grid> storage;
+        muldim::proxy::Grid storage;
     };
 }

@@ -1,21 +1,16 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
-#include <metatron/core/math/ray.hpp>
+#include <metatron/render/photo/lens/interaction.hpp>
+#include <metatron/render/photo/lens/pinhole.hpp>
+#include <metatron/render/photo/lens/thin.hpp>
+#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::photo {
-    namespace lens {
-        struct Interaction final {
-            math::Ray r;
-            f32 pdf;
-        };
-    }
+    struct Lens final: stl::polynomial<Lens, Pinhole_Lens, Thin_Lens> {
+        using polynomial::polynomial;
+        auto static init() noexcept -> void;
 
-    MTT_POLY_METHOD(lens_sample, sample);
-
-    struct Lens final: pro::facade_builder
-    ::add_convention<lens_sample, auto (
-        cref<fv2> o, cref<fv2> u
-    ) const noexcept -> opt<lens::Interaction>>
-    ::add_skill<pro::skills::as_view>
-    ::build {};
+        auto sample(cref<fv2> o, cref<fv2> u) const noexcept -> opt<lens::Interaction> {
+            return visit([&](auto* p) noexcept { return p->sample(o, u); });
+        }
+    };
 }

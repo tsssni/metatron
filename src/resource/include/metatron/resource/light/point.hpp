@@ -1,9 +1,9 @@
 #pragma once
-#include <metatron/resource/light/light.hpp>
+#include <metatron/resource/light/interaction.hpp>
 
 namespace mtt::light {
     struct Point_Light final {
-        tag<spectra::Spectrum> L;
+        spectra::Spectrum L;
 
         auto operator()(
             cref<math::Ray> r, cref<fv4> lambda

@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/resource/light/light.hpp>
+#include <metatron/resource/light/interaction.hpp>
 #include <metatron/core/math/distribution/discrete.hpp>
 #include <metatron/core/math/distribution/gaussian.hpp>
 #include <metatron/core/math/distribution/cone.hpp>

@@ -62,13 +62,6 @@ namespace mtt::math {
         return h;
     }
 
-    auto inline constexpr mix_bits_fast(u32 x) noexcept -> u32 {
-        x ^= (x >> 16);
-        x *= 0x7feb352du;
-        x ^= (x >> 16);
-        return x;
-    }
-
     auto inline constexpr mix_bits(u32 x) noexcept -> u32 {
         x ^= (x >> 16);
         x *= 0x7feb352du;

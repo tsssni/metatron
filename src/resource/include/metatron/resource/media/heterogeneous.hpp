@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/resource/media/medium.hpp>
+#include <metatron/resource/media/interaction.hpp>
 #include <metatron/resource/volume/volume.hpp>
 #include <metatron/core/math/bounding-box.hpp>
 #include <metatron/core/math/distribution/exponential.hpp>
@@ -8,11 +8,11 @@ namespace mtt::media {
     struct Heterogeneous_Medium final {
         struct Descriptor final {
             Phase phase;
-            tag<spectra::Spectrum> sigma_a = entity<spectra::Spectrum>("/spectrum/zero");
-            tag<spectra::Spectrum> sigma_s = entity<spectra::Spectrum>("/spectrum/zero");
-            tag<spectra::Spectrum> sigma_e = entity<spectra::Spectrum>("/spectrum/zero");
+            spectra::Spectrum sigma_a = spectra::Spectrum::entity("/spectrum/zero");
+            spectra::Spectrum sigma_s = spectra::Spectrum::entity("/spectrum/zero");
+            spectra::Spectrum sigma_e = spectra::Spectrum::entity("/spectrum/zero");
             uzv3 dimensions;
-            tag<volume::Volume> density;
+            volume::Volume density;
             f32 density_scale;
         };
         Heterogeneous_Medium(cref<Descriptor> desc) noexcept;
@@ -56,17 +56,17 @@ namespace mtt::media {
             f32 t_transmitted;
         };
 
-        auto begin(cref<math::Context> ctx, f32 t_max) const noexcept -> obj<media::Iterator>;
+        auto begin(cref<math::Context> ctx, f32 t_max) const noexcept -> Iterator;
 
     private:
         friend Iterator;
 
         Phase phase;
-        tag<spectra::Spectrum> sigma_a;
-        tag<spectra::Spectrum> sigma_s;
-        tag<spectra::Spectrum> sigma_e;
-        tag<volume::Volume> majorant;
-        tag<volume::Volume> density;
+        spectra::Spectrum sigma_a;
+        spectra::Spectrum sigma_s;
+        spectra::Spectrum sigma_e;
+        volume::Volume majorant;
+        volume::Volume density;
         f32 density_scale;
     };
 }

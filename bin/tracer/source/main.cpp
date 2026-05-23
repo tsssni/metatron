@@ -1,5 +1,5 @@
-#include <metatron/render/scene/args.hpp>
 #include <metatron/render/scene/scene.hpp>
+#include <metatron/resource/serde/args.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <argparse/argparse.hpp>
 

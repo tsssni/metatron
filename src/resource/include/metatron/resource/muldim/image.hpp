@@ -1,6 +1,7 @@
 #pragma once
-#include <metatron/resource/spectra/color-space.hpp>
+#include <metatron/resource/color/color-space.hpp>
 #include <metatron/core/math/vector.hpp>
+#include <metatron/core/stl/protocol.hpp>
 #include <metatron/core/stl/stack.hpp>
 #include <vector>
 
@@ -51,8 +52,17 @@ namespace mtt::muldim {
         ) noexcept -> Image;
         auto to_path(
             std::string_view path,
-            tag<spectra::Color_Space> cs,
+            color::proxy::Color_Space cs,
             std::span<byte const> data = {}
         ) const noexcept -> void;
+    };
+}
+
+namespace mtt::muldim::proxy {
+    struct Image: stl::proxy<Image, muldim::Image> {
+        using proxy::proxy;
+        auto operator()(cref<Coordinate> coord) const noexcept -> fv4 { return (*idx)(coord); }
+        auto operator[](usize x, usize y, usize lod = 0) noexcept -> muldim::Image::Pixel { return (*idx)[x, y, lod]; }
+        auto operator[](usize x, usize y, usize lod = 0) const noexcept -> muldim::Image::Pixel const { return (*idx)[x, y, lod]; }
     };
 }

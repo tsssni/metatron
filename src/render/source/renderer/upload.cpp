@@ -72,9 +72,9 @@ namespace mtt::renderer {
             i = 0;
             while ((i = vc->fetch_add(1, std::memory_order::relaxed)) < vsize) {
                 if (false
-                || i == bidims.index()
-                || i == tridims.index()
-                || i == nanodims.index()
+                || i == bidims.storage()
+                || i == tridims.storage()
+                || i == nanodims.storage()
                 ) continue;
                 auto& vec = vector.storage[i];
                 auto& sequence = vec.pack();
@@ -107,15 +107,15 @@ namespace mtt::renderer {
 
             i = 0;
             while ((i = nc->fetch_add(1, std::memory_order::relaxed)) < nsize) {
-                auto vol = nanodims[i];
+                auto& vol = nanodims[i];
                 auto buffer = make_desc<opaque::Buffer>({
-                    .ptr = mut<byte>(vol->buffer().data()),
+                    .ptr = mut<byte>(vol.buffer().data()),
                     .state = opaque::Buffer::State::local,
                     .type = command::Type::render,
-                    .size = vol->buffer().size(),
+                    .size = vol.buffer().size(),
                 });
 
-                vol->buffer().clear();
+                vol.buffer().clear();
                 transfer.upload(*buffer);
                 transfer.persist(*buffer);
                 voladdr[i] = buffer->addr;
@@ -137,7 +137,7 @@ namespace mtt::renderer {
             i = 0;
             while ((i = ic->fetch_add(1, std::memory_order::relaxed)) < isize) {
                 images[i] = make_desc<opaque::Image>({
-                    .image = bidims[i],
+                    .image = bidims.get(i),
                     .state = opaque::Image::State::samplable,
                     .type = command::Type::render,
                 });
@@ -149,7 +149,7 @@ namespace mtt::renderer {
             i = 0;
             while ((i = gc->fetch_add(1, std::memory_order::relaxed)) < gsize) {
                 grids[i] = make_desc<opaque::Grid>({
-                    .grid = tridims[i],
+                    .grid = tridims.get(i),
                     .state = opaque::Grid::State::readonly,
                     .type = command::Type::render,
                 });

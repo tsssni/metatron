@@ -1,18 +1,20 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
+#include <metatron/render/filter/interaction.hpp>
+#include <metatron/render/filter/box.hpp>
+#include <metatron/render/filter/gaussian.hpp>
+#include <metatron/render/filter/lanczos.hpp>
+#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::filter {
-    struct Interaction final {
-        fv2 p;
-        f32 weight;
-        f32 pdf;
+    struct Filter final: stl::polynomial<Filter, Box_Filter, Gaussian_Filter, Lanczos_Filter> {
+        using polynomial::polynomial;
+        auto static init() noexcept -> void;
+
+        auto operator()(cref<fv2> p) const noexcept -> f32 {
+            return visit([&](auto* x) noexcept { return (*x)(p); });
+        }
+        auto sample(cref<fv2> u) const noexcept -> opt<Interaction> {
+            return visit([&](auto* x) noexcept { return x->sample(u); });
+        }
     };
-
-    MTT_POLY_METHOD(filter_sample, sample);
-
-    struct Filter final: pro::facade_builder
-    ::add_convention<pro::operator_dispatch<"()">, auto (cref<fv2> p) const noexcept -> f32>
-    ::add_convention<filter_sample, auto (cref<fv2> u) const -> opt<Interaction>>
-    ::add_skill<pro::skills::as_view>
-    ::build {};
 }

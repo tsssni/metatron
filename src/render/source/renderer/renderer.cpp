@@ -1,6 +1,6 @@
 #include "renderer.hpp"
 #include <metatron/render/renderer/renderer.hpp>
-#include <metatron/render/scene/args.hpp>
+#include <metatron/resource/serde/args.hpp>
 
 namespace mtt::renderer {
     Renderer::Renderer(rref<Descriptor> desc) noexcept:

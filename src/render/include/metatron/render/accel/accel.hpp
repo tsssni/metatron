@@ -1,36 +1,17 @@
 #pragma once
-#include <metatron/render/scene/hierarchy.hpp>
-#include <metatron/resource/shape/shape.hpp>
-#include <metatron/resource/material/material.hpp>
-#include <metatron/resource/media/medium.hpp>
-#include <metatron/core/math/bounding-box.hpp>
+#include <metatron/render/accel/interaction.hpp>
+#include <metatron/render/accel/lbvh.hpp>
+#include <metatron/render/accel/hwbvh.hpp>
 #include <metatron/core/math/ray.hpp>
-#include <metatron/core/math/transform.hpp>
+#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::accel {
-    auto constexpr default_medium = "/medium/vaccum";
-    auto constexpr default_transform = "/hierarchy/medium/vaccum";
+    struct Acceleration final: stl::polynomial<Acceleration, LBVH, HWBVH> {
+        using polynomial::polynomial;
+        auto static init() noexcept -> void;
 
-    struct Divider final {
-        tag<shape::Shape> shape{};
-        tag<media::Medium> int_medium{entity<media::Medium>(default_medium)};
-        tag<media::Medium> ext_medium{entity<media::Medium>(default_medium)};
-        tag<material::Material> material{};
-        tag<math::Transform> local_to_render{};
-        tag<math::Transform> int_to_render{entity<math::Transform>(default_transform)};
-        tag<math::Transform> ext_to_render{entity<math::Transform>(default_transform)};
+        auto operator()(cref<math::Ray> r, cref<fv3> n) const noexcept -> opt<Interaction> {
+            return visit([&](auto* p) noexcept { return (*p)(r, n); });
+        }
     };
-
-    struct Interaction final {
-        tag<Divider> divider = {};
-        u32 primitive = 0;
-        opt<shape::Interaction> intr_opt = {};
-    };
-
-    struct Acceleration final: pro::facade_builder
-    ::add_convention<pro::operator_dispatch<"()">, auto (
-        cref<math::Ray> r, cref<fv3> n
-    ) const noexcept -> opt<Interaction>>
-    ::add_skill<pro::skills::as_view>
-    ::build {};
 }

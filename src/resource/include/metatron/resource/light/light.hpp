@@ -1,33 +1,36 @@
 #pragma once
-#include <metatron/core/math/eval.hpp>
-#include <metatron/resource/spectra/spectrum.hpp>
+#include <metatron/resource/light/interaction.hpp>
+#include <metatron/resource/light/parallel.hpp>
+#include <metatron/resource/light/point.hpp>
+#include <metatron/resource/light/spot.hpp>
+#include <metatron/resource/light/area.hpp>
+#include <metatron/resource/light/environment.hpp>
+#include <metatron/resource/light/atomosphere.hpp>
 #include <metatron/core/math/ray.hpp>
+#include <metatron/core/math/eval.hpp>
+#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::light {
-    struct Interaction final {
-        fv4 L;
-        fv3 wi;
-        fv3 p;
-        f32 t;
-        f32 pdf;
+    struct Light final: stl::polynomial<
+        Light,
+        Parallel_Light,
+        Point_Light,
+        Spot_Light,
+        Area_Light,
+        Environment_Light,
+        Atomosphere_Light
+    > {
+        using polynomial::polynomial;
+        auto static init() noexcept -> void;
+
+        auto operator()(cref<math::Ray> r, cref<fv4> lambda) const noexcept -> opt<Interaction> {
+            return visit([&](auto* p) noexcept { return (*p)(r, lambda); });
+        }
+        auto sample(cref<math::Context> ctx, cref<fv2> u) const noexcept -> opt<Interaction> {
+            return visit([&](auto* p) noexcept { return p->sample(ctx, u); });
+        }
+        auto flags() const noexcept -> Flags {
+            return visit([&](auto* p) noexcept { return p->flags(); });
+        }
     };
-
-    enum Flags {
-        delta = 1 << 0,
-        inf = 1 << 1,
-    };
-
-    MTT_POLY_METHOD(light_sample, sample);
-    MTT_POLY_METHOD(light_flags, flags);
-
-    struct Light final: pro::facade_builder
-    ::add_convention<pro::operator_dispatch<"()">, auto (
-        cref<math::Ray> r, cref<fv4> spec
-    ) const noexcept -> opt<Interaction>>
-    ::add_convention<light_sample, auto (
-        cref<math::Context> ctx, cref<fv2> u
-    ) const noexcept -> opt<Interaction>>
-    ::add_convention<light_flags, auto () const noexcept -> Flags>
-    ::add_skill<pro::skills::as_view>
-    ::build {};
 }

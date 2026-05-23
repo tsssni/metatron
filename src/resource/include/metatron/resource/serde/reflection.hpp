@@ -1,27 +1,35 @@
 #pragma once
-#include <metatron/render/scene/hierarchy.hpp>
-#include <metatron/resource/spectra/color-space.hpp>
+#include <metatron/resource/serde/hierarchy.hpp>
+#include <metatron/resource/color/color-space.hpp>
 #include <metatron/core/math/matrix.hpp>
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/stl/vector.hpp>
-#include <metatron/core/stl/variant.hpp>
+#include <metatron/core/stl/protocol.hpp>
 #include <metatron/core/stl/json.hpp>
 #include <metatron/core/stl/print.hpp>
 
 namespace glz {
     template<>
-    struct meta<mtt::spectra::Color_Space::Spectrum_Type> {
-        using enum mtt::spectra::Color_Space::Spectrum_Type;
+    struct meta<mtt::color::Color_Space::Spectrum_Type> {
+        using enum mtt::color::Color_Space::Spectrum_Type;
         auto constexpr static value = glz::enumerate(albedo, unbounded, illuminant);
     };
 
-    template<typename F>
-    struct from<JSON, mtt::tag<F>> {
+    template<typename T>
+    requires mtt::stl::is_polynomial<T> || mtt::stl::is_proxy<T>
+    struct meta<T> {
+        auto static constexpr custom_read = true;
+        auto static constexpr custom_write = true;
+    };
+
+    template<typename T>
+    requires mtt::stl::is_polynomial<T> || mtt::stl::is_proxy<T>
+    struct from<JSON, T> {
         template<auto Opts>
-        auto static op(mtt::tag<F>& v, auto&&... args) noexcept -> void {
+        auto static op(T& v, auto&&... args) noexcept -> void {
             auto path = std::string{};
             parse<JSON>::op<Opts>(path, args...);
-            v = mtt::entity<F>(path);
+            v = T::entity(path);
         }
     };
 
@@ -30,25 +38,9 @@ namespace glz {
     struct from<JSON, T> {
         template<auto Opts>
         auto static op(T& v, auto&&... args) noexcept -> void {
-            auto desc = (typename mtt::descriptor<T>::type){};
+            auto desc = mtt::descriptor_t<T>{};
             parse<JSON>::op<Opts>(desc, args...);
             v = std::move(desc);
-        }
-    };
-
-    template<pro::facade F, typename... Ts> struct from<JSON, mtt::stl::variant<F, Ts...>> {
-        template<auto Opts>
-        auto static op(mtt::stl::variant<F, Ts...>& v, auto&&... args) noexcept -> void {
-            auto var = std::variant<typename mtt::descriptor<Ts>::type...>{};
-            parse<JSON>::op<Opts>(var, args...);
-            std::visit([&v](auto&& desc) {
-                ([&v]<typename T>(auto&& d) {
-                    if constexpr (std::is_same_v<
-                        typename mtt::descriptor<T>::type,
-                        std::decay_t<decltype(desc)>
-                    >) v.template emplace<T>(std::forward<decltype(d)>(d));
-                }.template operator()<Ts>(desc), ...);
-            }, var);
         }
     };
 

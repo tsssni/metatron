@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/resource/volume/volume.hpp>
+#include <metatron/core/math/bounding-box.hpp>
 #include <metatron/core/stl/vector.hpp>
 #include <nanovdb/io/IO.h>
 
@@ -27,8 +27,9 @@ namespace mtt::volume {
         auto operator[](cref<iv3> ijk) const noexcept -> f32;
 
     private:
+        using Grid = tag<nanovdb::GridHandle<>>;
         auto grid() const -> view<nanovdb::FloatGrid>;
-        tag<nanovdb::GridHandle<>> handle;
+        Grid handle;
         math::Bounding_Box bbox;
     };
 }

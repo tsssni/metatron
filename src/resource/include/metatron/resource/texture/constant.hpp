@@ -1,10 +1,12 @@
 #pragma once
-#include <metatron/resource/texture/texture.hpp>
+#include <metatron/resource/spectra/spectrum.hpp>
+#include <metatron/resource/muldim/image.hpp>
+#include <metatron/core/math/eval.hpp>
 #include <metatron/core/stl/vector.hpp>
 
 namespace mtt::texture {
     struct Constant_Spectrum_Texture final {
-        tag<spectra::Spectrum> x;
+        spectra::Spectrum x;
 
         auto operator()(
             cref<muldim::Coordinate> coord, cref<fv4> spec

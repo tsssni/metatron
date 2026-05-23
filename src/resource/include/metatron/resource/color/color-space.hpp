@@ -1,11 +1,13 @@
 #pragma once
-#include <metatron/resource/spectra/spectrum.hpp>
+#include <metatron/resource/color/transfer-function.hpp>
+#include <metatron/resource/spectra/interaction.hpp>
 #include <metatron/core/math/vector.hpp>
+#include <metatron/core/stl/protocol.hpp>
 #include <metatron/core/stl/vector.hpp>
 #include <metatron/core/stl/stack.hpp>
 #include <functional>
 
-namespace mtt::spectra {
+namespace mtt::color {
     struct Color_Space final {
         enum struct Spectrum_Type {
             albedo,
@@ -13,15 +15,10 @@ namespace mtt::spectra {
             illuminant,
         };
 
-        struct Transfer_Function final {
-            auto (*transfer)(f32) -> f32;
-            auto (*linearize)(f32) -> f32;
-        };
-
         fm33 from_XYZ;
         fm33 to_XYZ;
-        tag<Spectrum> illuminant;
-        tag<Transfer_Function> transfer_function;
+        u32 illuminant;
+        Transfer_Function transfer_function;
 
         i32 table_res;
         f32 illuminant_Y_integral;
@@ -30,9 +27,8 @@ namespace mtt::spectra {
 
         Color_Space(
             std::string_view name,
-            cref<fv2> r, cref<fv2> g, cref<fv2> b,
-            tag<Spectrum> illuminant,
-            tag<Transfer_Function> transfer_function
+            cref<fv2> r, cref<fv2> g, cref<fv2> b, u32 i,
+            Transfer_Function transfer_function
         ) noexcept;
     };
 
@@ -45,4 +41,11 @@ namespace mtt::spectra {
         auto s = math::sum(XYZ);
         return {XYZ[0] / s, XYZ[1] / s, XYZ[1]};
     }
+}
+
+namespace mtt::color::proxy {
+    struct Color_Space: stl::proxy<Color_Space, color::Color_Space> {
+        using proxy::proxy;
+        auto static init() noexcept -> void;
+    };
 }

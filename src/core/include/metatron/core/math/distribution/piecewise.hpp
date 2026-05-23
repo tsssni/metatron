@@ -2,6 +2,7 @@
 #include <metatron/core/math/matrix.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <metatron/core/stl/protocol.hpp>
 #include <metatron/core/stl/ranges.hpp>
 #include <metatron/core/stl/stack.hpp>
 
@@ -149,5 +150,18 @@ namespace mtt::math {
         fv2 low = {};
         fv2 high = {};
         fv2 delta = {};
+    };
+}
+
+namespace mtt::math::proxy {
+    struct Sequential_Distribution: stl::proxy<Sequential_Distribution, math::Sequential_Distribution> {
+        using proxy::proxy;
+        auto sample(f32 u) const noexcept { return (*idx).sample(u); }
+        auto pdf(f32 p) const noexcept { return (*idx).pdf(p); }
+    };
+    struct Planar_Distribution: stl::proxy<Planar_Distribution, math::Planar_Distribution> {
+        using proxy::proxy;
+        auto sample(cref<fv2> u) const noexcept { return (*idx).sample(u); }
+        auto pdf(cref<fv2> p) const noexcept { return (*idx).pdf(p); }
     };
 }

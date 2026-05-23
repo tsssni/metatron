@@ -13,14 +13,10 @@ namespace mtt::spectra {
         value = fv4{v};
     }
 
-    auto Stochastic_Spectrum::operator()(view<Spectrum> s) const noexcept -> f32 {
+    auto Stochastic_Spectrum::operator()(Spectrum s) const noexcept -> f32 {
         auto pdf = math::foreach([&](f32 l, usize i) {
             return math::Spectrum_Distribution{}.pdf(l);
         }, lambda);
         return math::sum(value * (lambda & s) / pdf) / 4.f;
-    }
-
-    auto Stochastic_Spectrum::operator()(tag<Spectrum> spectrum) const noexcept -> f32 {
-        return (*this)(spectrum.data());
     }
 }

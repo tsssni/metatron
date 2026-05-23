@@ -1,11 +1,11 @@
 #pragma once
-#include <metatron/resource/light/light.hpp>
+#include <metatron/resource/light/interaction.hpp>
 #include <metatron/resource/shape/shape.hpp>
 #include <metatron/core/stl/vector.hpp>
 
 namespace mtt::light {
     struct Area_Light final {
-        tag<shape::Shape> shape;
+        shape::Shape shape;
         u32 primitive;
 
         auto operator()(

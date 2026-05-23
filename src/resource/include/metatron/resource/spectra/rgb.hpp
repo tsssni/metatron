@@ -1,6 +1,5 @@
 #pragma once
-#include <metatron/resource/spectra/spectrum.hpp>
-#include <metatron/resource/spectra/color-space.hpp>
+#include <metatron/resource/color/color-space.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/stl/vector.hpp>
 
@@ -10,8 +9,8 @@ namespace mtt::spectra {
     struct Rgb_Spectrum final {
         struct Descriptor final {
             fv3 c;
-            Color_Space::Spectrum_Type type;
-            tag<Color_Space> color_space = entity<Color_Space>("/color-space/sRGB");
+            color::Color_Space::Spectrum_Type type;
+            color::proxy::Color_Space color_space = color::proxy::Color_Space::entity("/color-space/sRGB");
         };
         Rgb_Spectrum(cref<Descriptor> desc) noexcept;
         Rgb_Spectrum() noexcept = default;
@@ -20,6 +19,6 @@ namespace mtt::spectra {
     private:
         fv3 c;
         f32 s;
-        tag<Spectrum> illuminant;
+        u32 illuminant;
     };
 }

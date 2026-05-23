@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/render/monte-carlo/integrator.hpp>
+#include <metatron/render/monte-carlo/context.hpp>
 
 namespace mtt::monte_carlo {
     struct Radiative_Integrator final {

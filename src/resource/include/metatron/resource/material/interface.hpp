@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/resource/material/material.hpp>
+#include <metatron/resource/material/interaction.hpp>
 
 namespace mtt::material {
     struct Interface_Material final {

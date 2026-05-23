@@ -14,7 +14,7 @@ namespace mtt::photo {
 
     struct Camera final {
         auto sample(
-            view<Lens> lens,
+            Lens lens,
             cref<fv2> pos,
             cref<fv2> dxdy,
             cref<fv2> u

@@ -1,37 +1,26 @@
 #pragma once
+#include <metatron/resource/bsdf/interaction.hpp>
+#include <metatron/resource/bsdf/physical.hpp>
+#include <metatron/resource/bsdf/interface.hpp>
 #include <metatron/core/math/eval.hpp>
-#include <metatron/resource/spectra/spectrum.hpp>
-#include <metatron/core/math/vector.hpp>
+#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::bsdf {
-    struct Interaction final {
-        fv4 f;
-        fv3 wi;
-        f32 pdf;
-        bool degraded = false;
+    struct Bsdf final: stl::variant<Bsdf, Physical_Bsdf, Interface_Bsdf> {
+        using variant::variant;
+
+        auto static init() noexcept -> void;
+
+        auto operator()(cref<fv3> wo, cref<fv3> wi) const noexcept -> opt<Interaction> {
+            return visit([&](auto* p) noexcept { return (*p)(wo, wi); });
+        }
+        auto sample(cref<math::Context> ctx, cref<fv3> u) const noexcept -> opt<Interaction> {
+            return visit([&](auto* p) noexcept { return p->sample(ctx, u); });
+        }
+        auto flags() const noexcept -> Flags {
+            return visit([](auto* p) noexcept { return p->flags(); });
+        }
     };
-
-    MTT_POLY_METHOD(bsdf_sample, sample);
-    MTT_POLY_METHOD(bsdf_flags, flags);
-
-    enum Flags {
-        reflective = 1 << 0,
-        transmissive = 1 << 1,
-        specular = 1 << 2,
-        interface = 1 << 3,
-    };
-
-    struct Bsdf final: pro::facade_builder
-    ::add_convention<pro::operator_dispatch<"()">, auto (
-        cref<fv3> wo, cref<fv3> wi
-    ) const noexcept -> opt<Interaction>>
-    ::add_convention<bsdf_sample, auto (
-        cref<math::Context> ctx, cref<fv3> u
-    ) const noexcept -> opt<Interaction>>
-    ::add_convention<bsdf_flags, auto () const noexcept -> Flags>
-    ::add_skill<pro::skills::as_view>
-    ::restrict_layout<128>
-    ::build {};
 
     auto lambert(f32 reflectance) noexcept -> f32;
     auto lambert(cref<fv4> reflectance) noexcept -> fv4;

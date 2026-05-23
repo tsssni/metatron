@@ -1,5 +1,6 @@
 #pragma once
-#include <metatron/resource/phase/phase-function.hpp>
+#include <metatron/resource/phase/interaction.hpp>
+#include <metatron/core/math/eval.hpp>
 
 namespace mtt::phase {
     struct Henyey_Greenstein_Phase_Function final {

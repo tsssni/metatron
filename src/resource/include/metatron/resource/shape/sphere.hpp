@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/resource/shape/shape.hpp>
+#include <metatron/resource/shape/interaction.hpp>
 
 namespace mtt::shape {
     struct Sphere final {

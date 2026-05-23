@@ -1,5 +1,4 @@
 #pragma once
-#include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/stl/stack.hpp>
 
 namespace mtt::spectra {

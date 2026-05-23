@@ -3,6 +3,7 @@
 #include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/ray.hpp>
+#include <metatron/core/stl/protocol.hpp>
 #include <metatron/core/stl/ranges.hpp>
 #include <vector>
 
@@ -150,4 +151,20 @@ namespace mtt::math {
         inv_t.inv_transform = t.transform;
         return inv_t;
     }
+}
+
+namespace mtt::math::proxy {
+    struct Transform: stl::proxy<Transform, math::Transform> {
+        using proxy::proxy;
+        explicit operator fm44() const noexcept { return (fm44)(*idx); }
+
+        template<math::Transformable T>
+        auto operator|(T&& rhs) const { return (*idx) | std::forward<T>(rhs); }
+        template<math::Transformable T>
+        auto operator^(T&& rhs) const { return (*idx) ^ std::forward<T>(rhs); }
+        auto operator|(cref<math::Transform> rhs) const noexcept { return (*idx) | rhs; }
+        auto operator^(cref<math::Transform> rhs) const noexcept { return (*idx) ^ rhs; }
+        auto operator|(Transform rhs) const noexcept { return (*idx) | (cref<math::Transform>)rhs; }
+        auto operator^(Transform rhs) const noexcept { return (*idx) ^ (cref<math::Transform>)rhs; }
+    };
 }

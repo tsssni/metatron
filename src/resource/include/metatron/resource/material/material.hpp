@@ -1,29 +1,21 @@
 #pragma once
-#include <metatron/resource/texture/texture.hpp>
-#include <metatron/resource/bsdf/bsdf.hpp>
-#include <metatron/resource/media/medium.hpp>
+#include <metatron/resource/material/physical.hpp>
+#include <metatron/resource/material/interface.hpp>
+#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::material {
-    struct Interaction final {
-        obj<bsdf::Bsdf> bsdf;
-        fv4 emission;
-        fv3 normal = {0.f};
-        bool degraded = false;
+    struct Material final: stl::polynomial<Material, Physical_Material, Interface_Material> {
+        using polynomial::polynomial;
+        auto static init() noexcept -> void;
+
+        auto sample(
+            cref<math::Context> ctx,
+            cref<muldim::Coordinate> coord
+        ) const noexcept -> opt<Interaction> {
+            return visit([&](auto* p) noexcept { return p->sample(ctx, coord); });
+        }
+        auto flags() const noexcept -> Flags {
+            return visit([&](auto* p) noexcept { return p->flags(); });
+        }
     };
-
-    MTT_POLY_METHOD(material_sample, sample);
-    MTT_POLY_METHOD(material_flags, flags);
-
-    enum Flags {
-        interface = 1 << 0,
-        emissive = 1 << 1,
-    };
-
-    struct Material final: pro::facade_builder
-    ::add_convention<material_sample, auto (
-        cref<math::Context> ctx,
-        cref<muldim::Coordinate> coord
-    ) const noexcept -> opt<Interaction>>
-    ::add_convention<material_flags, auto () const noexcept -> Flags>
-    ::build {};
 }

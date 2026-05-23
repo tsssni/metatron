@@ -10,7 +10,6 @@ namespace mtt::spectra {
         Stochastic_Spectrum(cref<fv4> lambda, cref<fv4> value) noexcept;
         Stochastic_Spectrum(f32 u, f32 v = 0.f) noexcept;
 
-        auto operator()(view<Spectrum> spectrum) const noexcept -> f32;
-        auto operator()(tag<Spectrum> spectrum) const noexcept -> f32;
+        auto operator()(Spectrum spectrum) const noexcept -> f32;
     };
 }

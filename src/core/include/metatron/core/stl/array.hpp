@@ -1,12 +1,13 @@
 #pragma once
 #include <metatron/core/math/bit.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <tuple>
 
 namespace mtt::stl {
     template<typename... Ts>
     struct array final {
         template<usize idx>
-        using type = Ts...[idx];
+        using type = std::tuple_element_t<idx, std::tuple<Ts...>>;
 
         template<typename T>
         auto constexpr static contains = (std::is_same_v<T, Ts> || ...);

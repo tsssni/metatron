@@ -1,27 +1,37 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
+#include <metatron/render/sampler/context.hpp>
+#include <metatron/render/sampler/independent.hpp>
+#include <metatron/render/sampler/halton.hpp>
+#include <metatron/render/sampler/sobol.hpp>
+#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::sampler {
-    struct Context final {
-        uv4 data;
-        uv2 pixel;
-        uv2 size;
-        u32 idx;
-        u32 spp;
-        u32 dim;
-        u32 seed;
+    struct Sampler final: stl::polynomial<Sampler, Independent_Sampler, Halton_Sampler, Sobol_Sampler> {
+        using polynomial::polynomial;
+        auto static init() noexcept -> void;
+
+        auto start(ref<Context> ctx) const noexcept -> void {
+            visit([&](auto* p) noexcept { p->start(ctx); });
+        }
+        auto generate_1d(ref<Context> ctx) const noexcept -> f32 {
+            return visit([&](auto* p) noexcept { return p->generate_1d(ctx); });
+        }
+        auto generate_2d(ref<Context> ctx) const noexcept -> fv2 {
+            return visit([&](auto* p) noexcept { return p->generate_2d(ctx); });
+        }
+        auto generate_pixel_2d(ref<Context> ctx) const noexcept -> fv2 {
+            return visit([&](auto* p) noexcept { return p->generate_pixel_2d(ctx); });
+        }
     };
+}
 
-    MTT_POLY_METHOD(sampler_start, start);
-    MTT_POLY_METHOD(sampler_generate_1d, generate_1d);
-    MTT_POLY_METHOD(sampler_generate_2d, generate_2d);
-    MTT_POLY_METHOD(sampler_generate_pixel_2d, generate_pixel_2d);
-
-    struct Sampler final: pro::facade_builder
-    ::add_convention<sampler_start, auto (ref<Context> ctx) const noexcept -> void>
-    ::add_convention<sampler_generate_1d, auto (ref<Context> ctx) const noexcept -> f32>
-    ::add_convention<sampler_generate_2d, auto (ref<Context> ctx) const noexcept -> fv2>
-    ::add_convention<sampler_generate_pixel_2d, auto (ref<Context> ctx) const noexcept -> fv2>
-    ::add_skill<pro::skills::as_view>
-    ::build {};
+namespace mtt::sampler::proxy {
+    struct Sampler final {
+        sampler::Sampler sampler;
+        Context ctx;
+        auto start() noexcept -> void { sampler.start(ctx); }
+        auto generate_1d() noexcept -> f32 { return sampler.generate_1d(ctx); }
+        auto generate_2d() noexcept -> fv2 { return sampler.generate_2d(ctx); }
+        auto generate_pixel_2d() noexcept -> fv2 { return sampler.generate_pixel_2d(ctx); }
+    };
 }

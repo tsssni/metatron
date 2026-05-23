@@ -1,12 +1,14 @@
 #include <metatron/render/sampler/independent.hpp>
+#include <metatron/core/math/hash.hpp>
 #include <cstring>
 
 namespace mtt::sampler {
     auto Independent_Sampler::start(ref<Context> ctx) const noexcept -> void {
-        auto rng = std::minstd_rand{u32(ctx.seed)};
+        auto seed = u32(math::murmur_hash(ctx.pixel, ctx.idx, ctx.seed));
+        auto rng = std::minstd_rand{seed};
         auto distr = std::uniform_real_distribution<f32>{1e-4f, 1.f - 1e-4f};
         std::memcpy(&ctx.data[0], &rng, sizeof(rng));
-        std::memcpy(&ctx.data[2], &rng, sizeof(distr));
+        std::memcpy(&ctx.data[2], &distr, sizeof(distr));
     }
 
     auto Independent_Sampler::generate_1d(ref<Context> ctx) const noexcept -> f32 {

@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 
 namespace mtt::stl {
     #define MTT_OPT_OR_CALLBACK(x, opt, f)\

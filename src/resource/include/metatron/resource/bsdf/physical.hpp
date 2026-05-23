@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/resource/bsdf/bsdf.hpp>
+#include <metatron/resource/bsdf/interaction.hpp>
 #include <metatron/core/stl/stack.hpp>
 
 namespace mtt::bsdf {

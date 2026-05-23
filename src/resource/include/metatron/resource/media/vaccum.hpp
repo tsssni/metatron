@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/resource/media/medium.hpp>
+#include <metatron/resource/media/interaction.hpp>
 #include <metatron/resource/phase/phase-function.hpp>
 
 namespace mtt::media {
@@ -16,7 +16,7 @@ namespace mtt::media {
 
         auto begin(
             cref<math::Context> ctx, f32 t_max
-        ) const noexcept -> obj<media::Iterator>;
+        ) const noexcept -> Iterator;
 
     private:
         u32 padding;

@@ -1,16 +1,17 @@
 #include <metatron/resource/spectra/rgb.hpp>
+#include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/polynomial.hpp>
 #include <metatron/core/stl/print.hpp>
 
 namespace mtt::spectra {
-    using Spectrum_Type = Color_Space::Spectrum_Type;
+    using Spectrum_Type = color::Color_Space::Spectrum_Type;
 
     Rgb_Spectrum::Rgb_Spectrum(cref<Descriptor> desc) noexcept {
         auto rgb = desc.c;
         auto cs = desc.color_space;
         illuminant = desc.type == Spectrum_Type::illuminant
-        ? desc.color_space->illuminant : tag<Spectrum>{};
+        ? desc.color_space->illuminant : math::maxv<u32>;
 
         s = 1.f;
         switch (desc.type) {
@@ -85,8 +86,9 @@ namespace mtt::spectra {
             if (std::isinf(x)) return x < 0.f ? 0.f : 1.f;
             return 0.5f + x / (2.f * math::pow<1,2>(1.f + math::pow<2>(x)));
         };
+        auto illuminant = Spectrum{this->illuminant};
         return s
         * sigmoid(math::polynomial(lambda, c))
-        * (illuminant ? (*illuminant.data())(lambda) : 1.f);
+        * (illuminant ? illuminant(lambda) : 1.f);
     }
 }

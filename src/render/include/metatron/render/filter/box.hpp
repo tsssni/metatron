@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/render/filter/filter.hpp>
+#include <metatron/render/filter/interaction.hpp>
 
 namespace mtt::filter {
     struct Box_Filter final {

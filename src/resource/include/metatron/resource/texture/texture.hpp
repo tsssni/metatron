@@ -1,34 +1,49 @@
 #pragma once
-#include <metatron/resource/shape/sphere.hpp>
-#include <metatron/resource/spectra/spectrum.hpp>
-#include <metatron/resource/muldim/image.hpp>
-#include <metatron/core/math/eval.hpp>
+#include <metatron/resource/texture/constant.hpp>
+#include <metatron/resource/texture/image.hpp>
+#include <metatron/resource/texture/checkerboard.hpp>
+#include <metatron/resource/shape/interaction.hpp>
+#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::texture {
-    MTT_POLY_METHOD(texture_sample, sample);
-    MTT_POLY_METHOD(texture_pdf, pdf);
+    struct Spectrum_Texture final: stl::polynomial<
+        Spectrum_Texture,
+        Constant_Spectrum_Texture,
+        Image_Spectrum_Texture,
+        Checkerboard_Texture
+    > {
+        using polynomial::polynomial;
+        auto static init() noexcept -> void;
 
-    struct Spectrum_Texture final: pro::facade_builder
-    ::add_convention<pro::operator_dispatch<"()">, auto (
-        cref<muldim::Coordinate> coord, cref<fv4> lambda
-    ) const noexcept -> fv4>
-    ::add_convention<texture_sample, auto (
-        cref<math::Context> ctx, cref<fv2> u
-    ) const noexcept -> fv2>
-    ::add_convention<texture_pdf, auto (cref<fv2> uv) const noexcept -> f32>
-    ::template add_skill<pro::skills::as_view>
-    ::build {};
+        auto operator()(cref<muldim::Coordinate> coord, cref<fv4> lambda) const noexcept -> fv4 {
+            return visit([&](auto* p) noexcept { return (*p)(coord, lambda); });
+        }
+        auto sample(cref<math::Context> ctx, cref<fv2> u) const noexcept -> fv2 {
+            return visit([&](auto* p) noexcept { return p->sample(ctx, u); });
+        }
+        auto pdf(cref<fv2> uv) const noexcept -> f32 {
+            return visit([&](auto* p) noexcept { return p->pdf(uv); });
+        }
+    };
 
-    struct Vector_Texture final: pro::facade_builder
-    ::add_convention<pro::operator_dispatch<"()">, auto (
-        cref<muldim::Coordinate> coord
-    ) const noexcept -> fv4>
-    ::add_convention<texture_sample, auto (
-        cref<math::Context> ctx, fv2 u
-    ) const noexcept -> fv2>
-    ::add_convention<texture_pdf, auto (fv2 uv) const noexcept -> f32>
-    ::template add_skill<pro::skills::as_view>
-    ::build {};
+    struct Vector_Texture final: stl::polynomial<
+        Vector_Texture,
+        Constant_Vector_Texture,
+        Image_Vector_Texture
+    > {
+        using polynomial::polynomial;
+        auto static init() noexcept -> void;
+
+        auto operator()(cref<muldim::Coordinate> coord) const noexcept -> fv4 {
+            return visit([&](auto* p) noexcept { return (*p)(coord); });
+        }
+        auto sample(cref<math::Context> ctx, fv2 u) const noexcept -> fv2 {
+            return visit([&, u](auto* p) noexcept { return p->sample(ctx, u); });
+        }
+        auto pdf(fv2 uv) const noexcept -> f32 {
+            return visit([uv](auto* p) noexcept { return p->pdf(uv); });
+        }
+    };
 
     auto grad(
         cref<math::Ray_Differential> diff,

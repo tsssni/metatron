@@ -1,12 +1,12 @@
 #pragma once
-#include <metatron/render/accel/accel.hpp>
+#include <metatron/render/accel/interaction.hpp>
 #include <metatron/core/stl/stack.hpp>
 
 namespace mtt::accel {
     struct LBVH final {
         struct Primitive final {
             math::Bounding_Box bbox;
-            tag<Divider> instance;
+            proxy::Divider instance;
             u32 primitive;
             u32 morton_code;
         };

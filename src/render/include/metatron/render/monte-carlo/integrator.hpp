@@ -1,31 +1,15 @@
 #pragma once
-#include <metatron/render/emitter/emitter.hpp>
-#include <metatron/render/accel/accel.hpp>
-#include <metatron/render/photo/camera.hpp>
-#include <metatron/render/sampler/proxy.hpp>
-#include <metatron/resource/media/medium.hpp>
-#include <metatron/resource/spectra/stochastic.hpp>
+#include <metatron/render/monte-carlo/context.hpp>
+#include <metatron/render/monte-carlo/radiative.hpp>
+#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::monte_carlo {
-    struct Context final {
-        view<accel::Acceleration> accel;
-        view<emitter::Emitter> emitter;
-        mut<sampler::Proxy_Sampler> sampler;
-        fv4 lambda;
-        math::Ray_Differential ray_differential;
-        math::Ray_Differential default_differential;
-        math::Transform render_to_camera;
-        uv2 pixel;
-        u32 sample_index;
-        u32 max_depth;
+    struct Integrator final: stl::polynomial<Integrator, Radiative_Integrator> {
+        using polynomial::polynomial;
+        auto static init() noexcept -> void;
+
+        auto sample(ref<Context> ctx) const noexcept -> opt<spectra::Stochastic_Spectrum> {
+            return visit([&](auto* p) noexcept { return p->sample(ctx); });
+        }
     };
-
-    MTT_POLY_METHOD(integrator_sample, sample);
-
-    struct Integrator final: pro::facade_builder
-    ::add_convention<integrator_sample, auto (
-        ref<Context> ctx
-    ) const noexcept -> opt<spectra::Stochastic_Spectrum>>
-    ::add_skill<pro::skills::as_view>
-    ::build {};
 }

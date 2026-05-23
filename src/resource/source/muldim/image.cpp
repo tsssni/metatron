@@ -1,5 +1,5 @@
 #include <metatron/resource/muldim/image.hpp>
-#include <metatron/resource/spectra/color-space.hpp>
+#include <metatron/resource/color/color-space.hpp>
 #include <metatron/core/math/bit.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/thread.hpp>
@@ -266,7 +266,7 @@ namespace mtt::muldim {
 
     auto Image::to_path(
         std::string_view path,
-        tag<spectra::Color_Space> cs,
+        color::proxy::Color_Space cs,
         std::span<byte const> data
     ) const noexcept -> void {
         data = data.size() == 0 ? pixels.front() : data;
@@ -276,7 +276,7 @@ namespace mtt::muldim {
             i32(width), i32(height), i32(channels), type
         };
 
-        auto cs_path = mtt::path(cs);
+        auto cs_path = cs.path();
         auto cs_name = cs_path.substr(cs_path.find_last_of('/'));
         spec.attribute("oiio::ColorSpace", cs_name);
         spec.attribute("planarconfig", "contig");

@@ -9,7 +9,7 @@ namespace mtt::material {
         cref<muldim::Coordinate> coord
     ) const noexcept -> opt<Interaction> {
         return Interaction{
-            .bsdf = make_obj<bsdf::Bsdf, bsdf::Interface_Bsdf>(),
+            .bsdf = bsdf::Bsdf{bsdf::Interface_Bsdf{}},
             .emission = fv4{0.f},
             .normal = {0.f, 0.f, 1.f},
             .degraded = false,

@@ -1,9 +1,10 @@
 #pragma once
 #include <metatron/render/filter/filter.hpp>
 #include <metatron/resource/spectra/stochastic.hpp>
-#include <metatron/resource/spectra/color-space.hpp>
+#include <metatron/resource/color/color-space.hpp>
 #include <metatron/resource/muldim/image.hpp>
 #include <metatron/core/math/vector.hpp>
+#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::photo {
     struct Film;
@@ -38,7 +39,7 @@ namespace mtt::photo {
         u32 stride;
         fv2 film_size;
         fv2 dxdy;
-        tag<spectra::Color_Space> color_space;
+        color::proxy::Color_Space color_space;
 
         struct Descriptor final {
             u32 spp = 16;
@@ -46,24 +47,35 @@ namespace mtt::photo {
             u32 stride = 1;
             fv2 film_size = {0.036f, 0.024f};
             uv2 image_size = {1920, 1080};
-            tag<spectra::Spectrum> r = entity<spectra::Spectrum>("/spectrum/CIE-X");
-            tag<spectra::Spectrum> g = entity<spectra::Spectrum>("/spectrum/CIE-Y");
-            tag<spectra::Spectrum> b = entity<spectra::Spectrum>("/spectrum/CIE-Z");
-            tag<spectra::Color_Space> color_space = entity<spectra::Color_Space>("/color-space/sRGB");
+            spectra::Spectrum r = spectra::Spectrum::entity("/spectrum/CIE-X");
+            spectra::Spectrum g = spectra::Spectrum::entity("/spectrum/CIE-Y");
+            spectra::Spectrum b = spectra::Spectrum::entity("/spectrum/CIE-Z");
+            color::proxy::Color_Space color_space = color::proxy::Color_Space::entity("/color-space/sRGB");
         };
         Film(cref<Descriptor> desc) noexcept;
         Film() noexcept = default;
 
         auto operator()(
-            view<filter::Filter> filter,
+            filter::Filter filter,
             cref<uzv2> pixel,
             cref<fv2> u
         ) noexcept -> Fixel;
 
     private:
-        tag<spectra::Spectrum> r;
-        tag<spectra::Spectrum> g;
-        tag<spectra::Spectrum> b;
+        spectra::Spectrum r;
+        spectra::Spectrum g;
+        spectra::Spectrum b;
         friend Fixel;
+    };
+}
+
+namespace mtt::photo::proxy {
+    struct Film: stl::proxy<Film, photo::Film> {
+        using proxy::proxy;
+        auto static init() noexcept -> void;
+
+        auto operator()(filter::Filter filter, cref<uzv2> pixel, cref<fv2> u) noexcept -> Fixel {
+            return (*idx)(filter, pixel, u);
+        }
     };
 }

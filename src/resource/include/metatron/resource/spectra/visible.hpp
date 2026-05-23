@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/resource/spectra/spectrum.hpp>
+#include <metatron/resource/spectra/interaction.hpp>
 
 namespace mtt::spectra {
     auto constexpr visible_range = usize(visible_lambda[1] - visible_lambda[0] + 1.f);

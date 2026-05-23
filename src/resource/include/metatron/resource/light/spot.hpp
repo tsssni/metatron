@@ -1,11 +1,11 @@
 #pragma once
-#include <metatron/resource/light/light.hpp>
+#include <metatron/resource/light/interaction.hpp>
 #include <metatron/core/stl/vector.hpp>
 
 namespace mtt::light {
     struct Spot_Light final {
         struct Descriptor final {
-            tag<spectra::Spectrum> L;
+            spectra::Spectrum L;
             f32 falloff_start_theta;
             f32 falloff_end_theta;
         };
@@ -21,7 +21,7 @@ namespace mtt::light {
         auto flags() const noexcept -> Flags;
 
     private:
-        tag<spectra::Spectrum> L;
+        spectra::Spectrum L;
         f32 falloff_start_cos_theta;
         f32 falloff_end_cos_theta;
     };

@@ -1,6 +1,6 @@
 #include "renderer.hpp"
 #include "resource.hpp"
-#include <metatron/render/scene/args.hpp>
+#include <metatron/resource/serde/args.hpp>
 #include <metatron/device/command/context.hpp>
 #include <metatron/device/encoder/transfer.hpp>
 #include <metatron/device/encoder/argument.hpp>
@@ -112,7 +112,7 @@ namespace mtt::renderer {
             math::Transform ct; buf<f32> fresnel;
         } entry{
             std::move(desc), seed,
-            {}, *entity<math::Transform>("/hierarchy/camera/render"),
+            {}, *math::proxy::Transform::entity("/hierarchy/camera/render"),
             bsdf::Physical_Bsdf::fresnel_reflectance_table,
         };
 

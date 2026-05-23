@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/render/scene/json.hpp>
+#include <metatron/resource/serde/json.hpp>
 #include <metatron/core/stl/capsule.hpp>
 #include <metatron/core/stl/singleton.hpp>
 

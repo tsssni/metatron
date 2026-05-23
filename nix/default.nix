@@ -10,7 +10,6 @@
   ninja,
   openimageio,
   openvdb,
-  proxy,
   shader-slang,
   spirv-cross,
   vulkan-loader,
@@ -50,7 +49,6 @@ stdenv.mkDerivation {
     })
     openimageio
     openvdb
-    proxy
     zlib
   ]
   ++ (lib.optionals stdenv.isLinux [

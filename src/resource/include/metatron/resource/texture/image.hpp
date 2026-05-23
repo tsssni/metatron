@@ -1,7 +1,8 @@
 #pragma once
-#include <metatron/resource/texture/texture.hpp>
-#include <metatron/resource/spectra/color-space.hpp>
+#include <metatron/resource/color/color-space.hpp>
+#include <metatron/resource/muldim/image.hpp>
 #include <metatron/core/math/distribution/piecewise.hpp>
+#include <metatron/core/math/eval.hpp>
 
 namespace mtt::texture {
     enum struct Image_Distribution {
@@ -28,16 +29,16 @@ namespace mtt::texture {
         auto pdf(cref<fv2> uv) const noexcept -> f32;
 
     private:
-        tag<muldim::Image> texture;
-        tag<math::Planar_Distribution> distr;
+        muldim::proxy::Image texture;
+        math::proxy::Planar_Distribution distr;
     };
 
     struct Image_Spectrum_Texture final {
         struct Descriptor final {
             std::string path;
-            spectra::Color_Space::Spectrum_Type type;
+            color::Color_Space::Spectrum_Type type;
             Image_Distribution distr = Image_Distribution::none;
-            tag<spectra::Color_Space> color_space = entity<spectra::Color_Space>("/color-space/sRGB");
+            color::proxy::Color_Space color_space = color::proxy::Color_Space::entity("/color-space/sRGB");
         };
         Image_Spectrum_Texture(cref<Descriptor> desc) noexcept;
         Image_Spectrum_Texture() noexcept = default;
@@ -51,8 +52,8 @@ namespace mtt::texture {
         auto pdf(cref<fv2> uv) const noexcept -> f32;
 
     private:
-        tag<spectra::Color_Space> color_space;
-        spectra::Color_Space::Spectrum_Type type;
+        color::proxy::Color_Space color_space;
+        color::Color_Space::Spectrum_Type type;
         Image_Vector_Texture image_tex;
     };
 }

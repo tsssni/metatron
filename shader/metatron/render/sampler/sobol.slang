@@ -117,13 +117,13 @@ namespace mtt::sampler {
                 let shift = 2 * i - last_digit;
                 let digit = (morton_idx >> shift) & 3;
                 let higher_digits = morton_idx >> (shift + 2);
-                let p = math::mix_bits_fast(higher_digits ^ (0x55555555u * ctx.dim)) >> 24;
+                let p = math::mix_bits(higher_digits ^ (0x55555555u * ctx.dim)) >> 24;
                 idx |= u64(permutations[p][digit]) << shift;
             }
 
             if (last_digit == 1) {
                 var digit = morton_idx & 1;
-                idx |= digit ^ (math::mix_bits_fast((morton_idx >> 1) ^ (0x55555555u * ctx.dim)) & 1);
+                idx |= digit ^ (math::mix_bits((morton_idx >> 1) ^ (0x55555555u * ctx.dim)) & 1);
             }
             return idx;
         }
