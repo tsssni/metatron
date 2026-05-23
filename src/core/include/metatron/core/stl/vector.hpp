@@ -144,7 +144,7 @@ namespace mtt::stl {
     };
 
     template<>
-    struct vector<void> final: singleton<vector<void>> {
+    struct vector<void> final: inline_singleton<vector<void>> {
         auto constexpr static max_idx = 256;
         std::array<stl::vector<byte>, max_idx> storage;
 
@@ -164,7 +164,7 @@ namespace mtt::stl {
 
     template<typename... Ts>
     requires (sizeof...(Ts) >= 1)
-    struct vector<Ts...> final: singleton<vector<Ts...>> {
+    struct vector<Ts...> final: inline_singleton<vector<Ts...>> {
         using ts = stl::array<Ts...>;
         using F = ts::template type<0>;
         vector() noexcept {

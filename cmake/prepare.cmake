@@ -41,4 +41,5 @@ function(prepare)
 
     add_library(metatron-build INTERFACE)
     predefine()
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE PARENT_SCOPE)
 endfunction()

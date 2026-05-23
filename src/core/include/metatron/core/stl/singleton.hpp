@@ -19,4 +19,18 @@ namespace mtt::stl {
             }
         }
     };
+
+    // avoids magic-static atomic guard load on every access.
+    template<typename T>
+    struct inline_singleton {
+        inline_singleton() noexcept = default;
+        inline_singleton(cref<inline_singleton>) = delete;
+        inline_singleton(rref<inline_singleton>) = delete;
+        auto operator=(cref<inline_singleton>) -> ref<inline_singleton> = delete;
+        auto operator=(rref<inline_singleton>) -> ref<inline_singleton> = delete;
+
+        inline static T inst{};
+        auto static instance() noexcept -> ref<T> { return inst; }
+    };
+
 }
