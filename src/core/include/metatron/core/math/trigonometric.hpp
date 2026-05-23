@@ -5,7 +5,8 @@
 
 namespace mtt::math {
     auto constexpr sinc(f32 x) noexcept -> f32 {
-        return guarded_div(std::sin(pi * x), pi * x);
+        if (math::abs(x) < epsilon<f32>) return 1.f;
+        return std::sin(pi * x) / (pi * x);
     };
 
     auto constexpr windowed_sinc(f32 x, f32 tau) noexcept -> f32 {

@@ -40,7 +40,7 @@ namespace mtt::material {
         return Interaction{
             .bsdf = bsdf::Bsdf{bsdf::Physical_Bsdf{
                 reflectance,
-                ctx.inside ? 1.f / eta : eta,
+                (ctx.inside && eta != fv4{0.f}) ? 1.f / eta : eta,
                 k, alpha_u, alpha_v
             }},
             .emission = emission,

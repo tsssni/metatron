@@ -16,20 +16,13 @@ namespace mtt::math {
 
     auto constexpr hit(
         cref<Ray> r,
+        cref<fv3> inv_d,
         cref<Bounding_Box> bbox
     ) noexcept -> opt<fv2> {
-        auto hit_min = (bbox.p_min - r.o) / r.d;
-        auto hit_max = (bbox.p_max - r.o) / r.d;
-        for (auto i = 0uz; i < 3uz; ++i)
-            if (math::abs(r.d[i]) < epsilon<f32>) {
-                hit_min[i] = -inf<f32>;
-                hit_max[i] = +inf<f32>;
-            } else if (hit_min[i] > hit_max[i]) {
-                std::swap(hit_min[i], hit_max[i]);
-            }
-
-        auto t_enter = max(hit_min);
-        auto t_exit = min(hit_max);
+        auto t1 = (bbox.p_min - r.o) * inv_d;
+        auto t2 = (bbox.p_max - r.o) * inv_d;
+        auto t_enter = max(math::min(t1, t2));
+        auto t_exit  = min(math::max(t1, t2));
         if (t_exit < -epsilon<f32> || t_enter > t_exit + epsilon<f32>) return {};
         return fv2{t_enter, t_exit};
     }

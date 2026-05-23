@@ -83,7 +83,7 @@ namespace mtt::spectra {
 
     auto Rgb_Spectrum::operator()(f32 lambda) const noexcept -> f32 {
         auto sigmoid = [](f32 x) -> f32 {
-            if (std::isinf(x)) return x < 0.f ? 0.f : 1.f;
+            if (math::isinf(x)) return x < 0.f ? 0.f : 1.f;
             return 0.5f + x / (2.f * math::pow<1,2>(1.f + math::pow<2>(x)));
         };
         auto illuminant = Spectrum{this->illuminant};

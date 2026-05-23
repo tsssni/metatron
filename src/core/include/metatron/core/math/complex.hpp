@@ -56,8 +56,8 @@ namespace mtt::math {
         auto constexpr operator/(cref<Complex> rhs) const noexcept -> Complex {
             auto denom = rhs.r * rhs.r + rhs.i * rhs.i;
             return {
-                math::guarded_div(r * rhs.r + i * rhs.i, denom),
-                math::guarded_div(i * rhs.r - r * rhs.i, denom),
+                (r * rhs.r + i * rhs.i) / denom,
+                (i * rhs.r - r * rhs.i) / denom,
             };
         }
 

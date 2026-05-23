@@ -345,7 +345,7 @@ namespace mtt::monte_carlo {
             p = b_intr.pdf;
         }
 
-        if (math::isnan(emission) || math::isinf(emission)) return {};
+        if (!math::isfinite(emission)) return {};
         return spectra::Stochastic_Spectrum{trace_ctx.lambda, emission};
     }
 }

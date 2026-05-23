@@ -36,7 +36,7 @@ namespace mtt::emitter {
         return Interaction{
             prim.light,
             prim.local_to_render,
-            math::guarded_div(1.f, f32(prims.size()))
+            1.f / f32(prims.size())
         };
     }
 
@@ -49,7 +49,7 @@ namespace mtt::emitter {
         return Interaction{
             prim.light,
             prim.local_to_render,
-            math::guarded_div(1.f, f32(inf_prims.size()))
+            1.f / f32(inf_prims.size())
         };
     }
 }

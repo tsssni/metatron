@@ -304,7 +304,7 @@ namespace mtt::math {
         auto constexpr operator/(cref<Matrix> rhs) const noexcept -> Matrix {
             auto result = Matrix{};
             for (auto i = 0; i < first_dim; ++i)
-                result[i] = math::guarded_div(storage[i], rhs[i]);
+                result[i] = storage[i] / rhs[i];
             return result;
         }
 
@@ -316,7 +316,7 @@ namespace mtt::math {
         auto constexpr operator/(cref<T> rhs) const noexcept -> Matrix {
             auto result = Matrix{};
             for (auto i = 0; i < first_dim; ++i)
-                result[i] = math::guarded_div(storage[i], rhs);
+                result[i] = storage[i] / rhs;
             return result;
         }
 

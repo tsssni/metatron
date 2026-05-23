@@ -34,7 +34,7 @@ namespace mtt::renderer {
         auto trace = [&](cref<uzv2> px) {
             for (auto n = range[0]; n < range[1]; ++n) {
                 auto sp = sampler::proxy::Sampler{desc.sampler, {{}, px, size, n, spp, 0, seed}};
-                // if (px != uzv2{0} || n != 0) continue;
+                // if (px != uzv2{0, 343} || n != 0) continue;
                 sp.start();
                 auto fixel = desc.film(desc.filter, px, sp.generate_pixel_2d());
                 auto spec = spectra::Stochastic_Spectrum{sp.generate_1d()};

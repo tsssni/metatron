@@ -204,6 +204,7 @@ namespace mtt::accel {
         cref<math::Ray> r, cref<fv3> n
     ) const noexcept -> opt<Interaction> {
         auto prim = view<Primitive>{};
+        auto inv_d = 1.f / r.d;
         auto q_opt = opt<fv4>{};
         auto stack = std::array<u32, 64>{};
         auto top = 0uz;
@@ -212,7 +213,7 @@ namespace mtt::accel {
         while (top > 0) {
             auto idx = stack[--top];
             auto node = &bvh[idx];
-            auto b_opt = math::hit(r, node->bbox);
+            auto b_opt = math::hit(r, inv_d, node->bbox);
             if (!b_opt || (q_opt && (*q_opt)[3] < b_opt.value()[0])) continue;
 
             if (node->num_prims < 0) {

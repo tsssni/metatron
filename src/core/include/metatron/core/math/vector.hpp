@@ -64,6 +64,14 @@ namespace mtt::math {
     }
 
     template<typename T, usize size>
+    requires std::floating_point<T>
+    auto constexpr isfinite(cref<Vector<T, size>> x) noexcept -> bool {
+        return all([](T x, auto){
+            return isfinite(x);
+        }, x);
+    }
+
+    template<typename T, usize size>
     auto constexpr dot(cref<Vector<T, size>> x, cref<Vector<T, size>> y) noexcept -> T {
         auto result = T{};
         for (auto i = 0; i < size; ++i)

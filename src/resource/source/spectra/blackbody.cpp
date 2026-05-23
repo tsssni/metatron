@@ -11,6 +11,6 @@ namespace mtt::spectra {
 
         auto l = lambda * 1e-9f;
         auto L = (2.f * h * c * c) / (math::pow<5>(l) * (math::exp((h * c) / (l * kb * T)) - 1.f));
-        return std::isnan(L) ? 0.f : L;
+        return math::isfinite(L) ? L : 0.f;
     }
 }

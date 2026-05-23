@@ -39,8 +39,14 @@ namespace mtt::math {
 
     template<typename T>
     requires std::floating_point<T>
+    auto constexpr isfinite(T x) noexcept -> bool {
+        return std::isfinite(x);
+    }
+
+    template<typename T>
+    requires std::floating_point<T>
     auto constexpr saturate(T x) noexcept -> T {
-        if (isnan(x) || isinf(x)) return T(0);
+        if (!isfinite(x)) return T(0);
         return clamp(x, T(0), T(1));
     }
 

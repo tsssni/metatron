@@ -320,7 +320,7 @@ namespace mtt::light {
                 math::pow<3, 2>(1.f + math::pow<2>(g) - 2.f * g * cos_alpha)
             );
         };
-        auto c0 = 1.f + A * math::exp(math::guarded_div(B, (s.cos_theta + 0.01f)));
+        auto c0 = 1.f + A * math::exp(B / (s.cos_theta + 0.01f));
         auto c1 = 0.f
         + C + D * math::exp(E * s.gamma)
         + F * math::pow<2>(s.cos_gamma)

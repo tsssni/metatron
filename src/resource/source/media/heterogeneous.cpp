@@ -31,7 +31,7 @@ namespace mtt::media {
         t_transmitted = 0.f;
 
         if (!medium->majorant.inside(cell)) {
-            auto [t_enter, t_exit] = math::hit(r, medium->majorant.bounding_box()).value_or(fv2{0.f});
+            auto [t_enter, t_exit] = math::hit(r, 1.f / r.d, medium->majorant.bounding_box()).value_or(fv2{0.f});
             r.o = r.o + t_enter * r.d;
             cell = math::clamp<i32, 3>(medium->majorant.to_index(r.o), iv3{0}, medium->majorant.dimensions() - 1);
         }
