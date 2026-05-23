@@ -41,5 +41,8 @@ namespace mtt::stl {
             using U = type<sizeof...(Ts) - 1>;
             return offset<U> + sizeof(U);
         }();
+
+        // union layout storage
+        auto constexpr static storage = math::max(sizeof(Ts)...);
     };
 }

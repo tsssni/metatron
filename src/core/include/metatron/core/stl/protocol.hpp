@@ -22,8 +22,10 @@ namespace mtt::stl {
 
         auto path() const noexcept -> std::string_view {
             auto sv = std::string_view{};
-            auto _ = ((idx.storage() == vs::instance().template storage<Ts>()
-            ? (sv = vs::instance().template path<Ts>(idx), true) : false) || ...);
+            auto t = idx.type();
+            auto _ = ((t == ts::template index<Ts> ? (
+                sv = vs::instance().template path<Ts>(idx)
+            , true) : false) || ...);
             return sv;
         }
 
@@ -47,7 +49,7 @@ namespace mtt::stl {
 
         template<typename T>
         auto is() const noexcept -> bool {
-            return idx.storage() == vs::instance().template storage<T>();
+            return idx.type() == ts::template index<T>;
         }
 
         operator u32() const noexcept { return idx; }
@@ -55,22 +57,18 @@ namespace mtt::stl {
 
         template<typename S, typename F>
         auto constexpr visit(this S&& self, F&& f) -> decltype(auto) {
-            using R = decltype(f(self.idx.data()));
-            if constexpr (std::is_void_v<R>) {
-                auto _ = ((self.idx.storage() == vs::instance().template storage<Ts>()
-                ? (f(self.idx.template data<Ts>()), true) : false) || ...);
-            } else if constexpr (std::is_reference_v<R>) {
-                using P = std::remove_reference_t<R>*;
-                auto p = (P)nullptr;
-                auto _ = ((self.idx.storage() == vs::instance().template storage<Ts>()
-                ? (p = &f(self.idx.template data<Ts>()), true) : false) || ...);
-                return static_cast<R>(*p);
-            } else {
-                auto r = R{};
-                auto _ = ((self.idx.storage() == vs::instance().template storage<Ts>()
-                ? (r = f(self.idx.template data<Ts>()), true) : false) || ...);
-                return r;
-            }
+            using First = typename ts::template type<0>;
+            using R = decltype(f(self.idx.template data<First>()));
+            using SS = std::remove_reference_t<S>;
+            using thunk_t = R(*)(SS&, F&);
+            return [&]<usize... Is>(std::index_sequence<Is...>) -> R {
+                auto constexpr table = std::to_array({
+                    +[](SS& s, F& f) -> R {
+                        return f(s.idx.template data<typename ts::template type<Is>>());
+                    }...
+                });
+                return table[self.idx.type()](self, f);
+            }(std::make_index_sequence<sizeof...(Ts)>{});
         }
     };
 
@@ -83,8 +81,8 @@ namespace mtt::stl {
         using variant_marker = u32;
         using ts = stl::array<Ts...>;
 
-        std::array<byte, ts::size> storage;
-        u32 idx = math::maxv<u32>;
+        std::array<byte, ts::storage> storage;
+        byte idx = math::maxv<byte>;
 
         variant() noexcept = default;
 
@@ -95,12 +93,10 @@ namespace mtt::stl {
         variant(cref<variant>) noexcept = delete;
         variant(rref<variant> rhs) noexcept {
             idx = rhs.idx;
-            if (idx != math::maxv<u32>) auto _ = ((
-            idx == ts::template index<Ts>
-            ? (std::construct_at(get<Ts>(), std::move(*rhs.template get<Ts>())), true)
-            : false
-            ) || ...);
-            rhs.idx = math::maxv<u32>;
+            if (idx != math::maxv<byte>) auto _ = ((idx == ts::template index<Ts> ? (
+                std::construct_at(get<Ts>(), std::move(*rhs.template get<Ts>()))
+            , true) : false) || ...);
+            rhs.idx = math::maxv<byte>;
         }
         ~variant() noexcept { destroy(); }
 
@@ -129,38 +125,33 @@ namespace mtt::stl {
         auto is() const noexcept -> bool { return ts::template index<T> == idx; }
         auto path() const noexcept -> std::string_view { return {}; }
         template<typename T>
-        auto get() noexcept -> mut<T> { return mut<T>(&storage[ts::template offset<T>]); }
+        auto get() noexcept -> mut<T> { return mut<T>(storage.data()); }
         template<typename T>
-        auto get() const noexcept -> view<T> { return view<T>(&storage[ts::template offset<T>]); }
+        auto get() const noexcept -> view<T> { return view<T>(storage.data()); }
         auto index() const noexcept -> u32 { return idx; }
         auto size() const noexcept -> usize { return storage.size(); }
 
         operator u32() const noexcept { return idx; }
-        operator bool() const noexcept { return idx != math::maxv<u32>; }
+        operator bool() const noexcept { return idx != math::maxv<byte>; }
 
         template<typename S, typename F>
         auto constexpr visit(this S&& self, F&& f) -> decltype(auto) {
             using R = decltype(f(self.template get<typename ts::template type<0>>()));
-            if constexpr (std::is_void_v<R>) {
-                auto _ = ((self.idx == ts::template index<Ts>
-                ? (f(self.template get<Ts>()), true) : false) || ...);
-            } else if constexpr (std::is_reference_v<R>) {
-                using P = std::remove_reference_t<R>*;
-                auto p = (P)nullptr;
-                auto _ = ((self.idx == ts::template index<Ts>
-                ? (p = &f(self.template get<Ts>()), true) : false) || ...);
-                return static_cast<R>(*p);
-            } else {
-                auto r = R{};
-                auto _ = ((self.idx == ts::template index<Ts>
-                ? (r = f(self.template get<Ts>()), true) : false) || ...);
-                return r;
-            }
+            using RS = ref<std::remove_reference_t<S>>;
+            using thunk_t = R(*)(RS, F&);
+            return [&]<usize... Is>(std::index_sequence<Is...>) -> R {
+                auto constexpr table = std::to_array({
+                    +[](RS s, F& f) -> R {
+                        return f(s.template get<typename ts::template type<Is>>());
+                    }...
+                });
+                return table[self.idx](self, f);
+            }(std::make_index_sequence<sizeof...(Ts)>{});
         }
 
     private:
         auto destroy() noexcept -> void {
-            if (idx != math::maxv<u32>) auto _ = ((
+            if (idx != math::maxv<byte>) auto _ = ((
                 idx == ts::template index<Ts>
                 ? (std::destroy_at(get<Ts>()), true) : false
             ) || ...);

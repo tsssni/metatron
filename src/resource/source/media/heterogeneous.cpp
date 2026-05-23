@@ -13,17 +13,14 @@ namespace mtt::media {
         medium = &m;
         sigma_a = (ctx.lambda & medium->sigma_a) * medium->density_scale;
         sigma_s = (ctx.lambda & medium->sigma_s) * medium->density_scale;
-        sigma_t = sigma_a + sigma_s;
-        sigma_maj = sigma_t;
+        sigma_e = medium->sigma_e
+        ? (ctx.lambda & medium->sigma_e) * medium->density_scale
+        : fv4{0.f};
+        sigma_maj = sigma_a + sigma_s;
 
-        lambda = ctx.lambda;
         transmittance = fv4{1.f};
-        density_maj = 0.f;
-        distr = math::Exponential_Distribution{0.f};
-
         r = ctx.r;
         cell = medium->majorant.to_index(r.o); offset = iv3{0};
-        direction = math::foreach([](f32 x, auto){return math::sign(x);}, r.d);
 
         t_max = t;
         t_cell = t_max;
@@ -44,9 +41,10 @@ namespace mtt::media {
         u = uu;
 
         while (true) {
-            auto t_u = distr.sample(u);
-            if (t_boundary <= t_cell
-            && (density_maj < math::epsilon<f32> || t_u >= t_boundary)) {
+            auto sigma_t = sigma_a + sigma_s;
+            auto t_u = math::Exponential_Distribution{sigma_maj[0]}.sample(u);
+            auto thin = sigma_maj[0] < math::epsilon<f32>;
+            if (t_boundary <= t_cell && (thin || t_u >= t_boundary)) {
                 update_transmittance(t_boundary);
                 return Interaction{
                     medium->phase.to_phase(),
@@ -55,14 +53,11 @@ namespace mtt::media {
                     transmittance,
                     {}, {}, {}, {}, {},
                 };
-            } else if (true
-            && t_boundary > t_cell
-            && (density_maj < math::epsilon<f32> || t_u >= t_cell)) {
+            } else if (t_boundary > t_cell && (thin || t_u >= t_cell)) {
                 update_transmittance(t_cell);
                 update_majorant(t_boundary);
             } else {
                 update_transmittance(t_u);
-                auto spectra_pdf = sigma_maj * transmittance;
                 auto density = std::as_const(medium->density)(r.o);
                 return Interaction{
                     medium->phase.to_phase(),
@@ -73,7 +68,7 @@ namespace mtt::media {
                     density * sigma_s,
                     math::max(sigma_maj - density * sigma_t, fv4{0.f}),
                     sigma_maj,
-                    density * (medium->sigma_e ? (lambda & medium->sigma_e) : fv4{0.f}),
+                    density * sigma_e,
                 };
             }
         }
@@ -93,11 +88,10 @@ namespace mtt::media {
 
         t_cell = t_next;
         cell += offset;
-        offset = direction * iv3{i_next == 0, i_next == 1, i_next == 2};
-
-        density_maj = medium->majorant[cell];
-        sigma_maj = density_maj * sigma_t;
-        distr = math::Exponential_Distribution(sigma_maj[0]);
+        offset = 1
+        * math::foreach([](f32 x, auto){return math::sign(x);}, r.d)
+        * iv3{i_next == 0, i_next == 1, i_next == 2};
+        sigma_maj = medium->majorant[cell] * (sigma_a + sigma_s);
     }
 
     auto Heterogeneous_Medium::Iterator::update_transmittance(f32 t) noexcept -> void {

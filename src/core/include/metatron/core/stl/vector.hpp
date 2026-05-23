@@ -167,23 +167,25 @@ namespace mtt::stl {
     struct vector<Ts...> final: singleton<vector<Ts...>> {
         using ts = stl::array<Ts...>;
         using F = ts::template type<0>;
-        vector() noexcept {((
-            tid[ts::template index<Ts>] = vector<void>::instance().push<Ts>(),
-            raw<Ts>().template init<Ts>()
-        ), ...);}
+        vector() noexcept {
+            base_storage = vector<void>::instance().push<F>(); raw<F>().template init<F>();
+            (((void)((ts::template index<Ts> > 0) ? (
+                vector<void>::instance().push<Ts>(), raw<Ts>().template init<Ts>()
+            , 0) : 0)), ...);
+        }
 
         template<typename T = F, typename... Args>
         requires ts::template contains<T> && std::is_constructible_v<T, Args...>
         auto emplace_back(Args&&... args) noexcept -> u32 {
             auto idx = raw<T>().template emplace_back<T>(std::forward<Args>(args)...);
-            return (tid[ts::template index<T>] << 20) | idx;
+            return (storage<T>() << 24) | (ts::template index<T> << 20) | idx;
         }
 
         template<typename T = F, typename... Args>
         requires std::is_constructible_v<T, Args...>
         auto emplace(std::string_view path, Args&&... args) noexcept -> u32 {
             auto idx = raw<T>().template emplace<T>(path, std::forward<Args>(args)...);
-            return (tid[ts::template index<T>] << 20) | idx;
+            return (storage<T>() << 24) | (ts::template index<T> << 20) | idx;
         }
 
         auto entity(std::string_view path) noexcept -> u32 {
@@ -212,29 +214,36 @@ namespace mtt::stl {
         template<typename T = F>
         auto path(u32 i) const noexcept -> std::string_view { return raw<T>().path(i & 0xfffff); }
         template<typename T = F>
-        auto entity(std::string_view path) const noexcept -> u32 { return (storage<T>() << 20) | raw<T>().entity(path); }
+        auto entity(std::string_view path) const noexcept -> u32 {
+            return (storage<T>() << 24) | (ts::template index<T> << 20) | raw<T>().entity(path);
+        }
         template<typename T = F>
         auto contains(std::string_view path) const noexcept -> bool { return raw<T>().contains(path); }
         template<typename T = F>
-        auto storage() const noexcept -> u32 { return tid[ts::template index<T>]; }
-        auto type(u32 idx) const noexcept -> u32 { return (idx >> 20) - storage<F>(); }
+        auto storage() const noexcept -> u32 { return base_storage + ts::template index<T>; }
         template<typename T = F>
         auto size() const noexcept -> usize { return raw<T>().size(); }
         template<typename T = F>
         auto keys() const noexcept { return raw<T>().keys(); }
 
+        auto raw(u32 type_idx) noexcept -> ref<vector<byte>> {
+            return vector<void>::instance().storage[base_storage + type_idx];
+        }
+        auto raw(u32 type_idx) const noexcept -> cref<vector<byte>> {
+            return vector<void>::instance().storage[base_storage + type_idx];
+        }
+
     private:
         template<typename T>
         auto raw() noexcept -> ref<vector<byte>> {
-            return vector<void>::instance().storage[tid[ts::template index<T>]];
+            return vector<void>::instance().storage[base_storage + ts::template index<T>];
         }
-
         template<typename T>
         auto raw() const noexcept -> cref<vector<byte>> {
-            return vector<void>::instance().storage[tid[ts::template index<T>]];
+            return vector<void>::instance().storage[base_storage + ts::template index<T>];
         }
 
-        std::array<u32, sizeof...(Ts)> tid;
+        u32 base_storage = 0;
     };
 }
 
@@ -248,8 +257,8 @@ namespace mtt {
         tag(): idx(math::maxv<u32>) {};
         tag(u32 idx): idx(idx) {}
 
-        auto storage() const noexcept -> u32 { return idx >> 20; }
-        auto type() const noexcept -> u32 { return vs::instance().type(idx); }
+        auto storage() const noexcept -> u32 { return idx >> 24; }
+        auto type() const noexcept -> u32 { return (idx >> 20) & 0xf; }
         auto index() const noexcept -> u32 { return idx & 0xfffff; }
         template<typename T = F>
         auto data() noexcept -> mut<T> { return vs::instance().template get<T>(idx); }
