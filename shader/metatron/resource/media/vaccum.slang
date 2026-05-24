@@ -16,7 +16,7 @@ namespace mtt::media {
 
             [mutating] public func march(f32 u) -> Optional<Interaction> {
                 return Interaction(
-                    phase::Phase_Function_Union(),
+                    phase::Phase_Function(),
                     r.o + t_max * r.d,
                     t_max, fv4(1.f),
                     {}, {}, {}, {}, {},

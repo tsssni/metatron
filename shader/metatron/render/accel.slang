@@ -1,36 +1,36 @@
 module accel;
 __include accel.hwbvh;
 __include accel.lbvh;
+__include accel.proxy;
 import metatron.resource;
+
+#define DISPATCH_OP(...) \
+         if (idx.type() == 0) return tag<LBVH>(idx).get()(__VA_ARGS__); \
+    else if (idx.type() == 1) return tag<HWBVH>(idx).get()(__VA_ARGS__); \
+    else return {};
 
 namespace mtt::accel {
     public struct Divider {
-        public shape::Shape_Tag shape = {};
-        public media::Medium_Tag int_medium = {};
-        public media::Medium_Tag ext_medium = {};
-        public material::Material_Tag material = {};
-        public tag<math::Transform> local_to_render = {};
-        public tag<math::Transform> int_to_render = {};
-        public tag<math::Transform> ext_to_render = {};
+        public shape::Shape shape = {};
+        public media::Medium int_medium = {};
+        public media::Medium ext_medium = {};
+        public material::Material material = {};
+        public math::proxy::Transform local_to_render = {};
+        public math::proxy::Transform int_to_render = {};
+        public math::proxy::Transform ext_to_render = {};
     }
 
     public struct Interaction {
-        public Divider divider = {};
+        public proxy::Divider divider = {};
         public u32 primitive = 0;
-        public Optional<shape::Interaction> intr_opt = {};
+        public shape::Interaction intr = {};
+        public bool valid = false;
     };
 
-    public interface Acceleration {
-        public Optional<Interaction> operator()(math::Ray r, fv3 n);
-    }
-
-    public struct Acceleration_Tag: Acceleration {
+    public struct Acceleration {
         tag<byte> idx;
-
-        public Optional<Interaction> operator()(math::Ray r, fv3 n) {
-            if (idx.type() == 0) return tag<LBVH>(idx).get()(r, n);
-            else if (idx.type() == 1) return tag<HWBVH>(idx).get()(r, n);
-            else return {};
-        }
+        public Optional<Interaction> operator()(math::Ray r, fv3 n) { DISPATCH_OP(r, n) }
     }
 }
+
+#undef DISPATCH_OP

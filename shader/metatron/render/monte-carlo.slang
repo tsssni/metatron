@@ -5,11 +5,16 @@ import emitter;
 import sampler;
 import metatron.resource;
 
+#define DISPATCH_V(method, ...) \
+    if (idx.type() == 0) return tag<Radiative_Integrator>(idx).get().method(__VA_ARGS__);
+
+#define DISPATCH_R(method, ...) DISPATCH_V(method, __VA_ARGS__) else return {};
+
 namespace mtt::monte_carlo {
     public struct Context {
-        public accel::Acceleration_Tag accel = {};
-        public emitter::Emitter_Tag emitter = {};
-        public sampler::Proxy_Sampler sampler = {};
+        public accel::Acceleration accel = {};
+        public emitter::Emitter emitter = {};
+        public sampler::proxy::Sampler sampler = {};
         public fv4 lambda = 0;
         public math::Ray_Differential ray_differential = {};
         public math::Ray_Differential default_differential = {};
@@ -19,16 +24,11 @@ namespace mtt::monte_carlo {
         public u32 max_depth = 0;
     }
 
-    public interface Integrator {
-        public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum>;
-    }
-
-    public struct Integrator_Tag: Integrator {
+    public struct Integrator {
         tag<byte> idx;
-
-        public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum> {
-            if (idx.type() == 0) return tag<Radiative_Integrator>(idx).get().sample(ctx);
-            else return {};
-        }
+        public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum> { DISPATCH_R(sample, ctx) }
     }
 }
+
+#undef DISPATCH_V
+#undef DISPATCH_R

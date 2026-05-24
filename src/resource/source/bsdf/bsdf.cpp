@@ -1,9 +1,15 @@
 #include <metatron/resource/bsdf/bsdf.hpp>
+#include <metatron/resource/bsdf/physical.hpp>
+#include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/complex.hpp>
 #include <metatron/core/math/sphere.hpp>
 
 namespace mtt::bsdf {
+    auto Bsdf::init() noexcept -> void {
+        Physical_Bsdf::init();
+    }
+
     auto lambert(f32 reflectance) noexcept -> f32 {
         return reflectance / math::pi;
     }
@@ -19,7 +25,7 @@ namespace mtt::bsdf {
             auto constexpr is_complex = std::is_same_v<T, fc>;
 
             auto sin2_theta_i = math::max(0.f, 1.f - cos_theta_i * cos_theta_i);
-            auto sin2_theta_t = math::guarded_div(sin2_theta_i, eta * eta);
+            auto sin2_theta_t = sin2_theta_i / (eta * eta);
             auto cos_theta_t = math::pow<1,2>(1.f - sin2_theta_t);
 
             if constexpr (is_complex) {
@@ -55,7 +61,7 @@ namespace mtt::bsdf {
 
     auto lambda(cref<fv3> wo, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
         auto tan2_theta = math::unit_to_tan2_theta(wo);
-        if (std::isinf(tan2_theta)) return 0.f;
+        if (math::isinf(tan2_theta)) return 0.f;
         auto alpha2 = 0.f
         + math::pow<2>(math::unit_to_cos_theta(wo) * alpha_u)
         + math::pow<2>(math::unit_to_sin_theta(wo) * alpha_v);
@@ -72,7 +78,7 @@ namespace mtt::bsdf {
 
     auto trowbridge_reitz(cref<fv3> wm, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
         auto tan2_theta = math::unit_to_tan2_theta(wm);
-        if (std::isinf(tan2_theta)) return 0.f;
+        if (math::isinf(tan2_theta)) return 0.f;
 
         auto cos2_theta = math::unit_to_cos2_theta(wm);
         auto cos4_theta = math::pow<2>(cos2_theta);

@@ -1,16 +1,16 @@
 implementing material;
 
 namespace mtt::material {
-    public struct Physical_Material: Material {
-        texture::Spectrum_Texture_Tag reflectance;
-        texture::Spectrum_Texture_Tag eta;
-        texture::Spectrum_Texture_Tag k;
-        texture::Spectrum_Texture_Tag emission;
+    public struct Physical_Material {
+        texture::Spectrum_Texture reflectance;
+        texture::Spectrum_Texture eta;
+        texture::Spectrum_Texture k;
+        texture::Spectrum_Texture emission;
 
-        texture::Vector_Texture_Tag alpha;
-        texture::Vector_Texture_Tag alpha_u;
-        texture::Vector_Texture_Tag alpha_v;
-        texture::Vector_Texture_Tag normal;
+        texture::Vector_Texture alpha;
+        texture::Vector_Texture alpha_u;
+        texture::Vector_Texture alpha_v;
+        texture::Vector_Texture normal;
 
         public func sample(
             math::Context ctx,
@@ -42,7 +42,7 @@ namespace mtt::material {
             }
 
             return Interaction(
-                bsdf::Bsdf_Union(bsdf::Physical_Bsdf(
+                bsdf::Bsdf(bsdf::Physical_Bsdf(
                     reflectance, ctx.inside
                     ? (math::max(eta) < math::epsilon ? 0.f : 1.f / eta)
                     : eta, k, alpha_u, alpha_v,
@@ -58,7 +58,7 @@ namespace mtt::material {
         }
 
         func guarded_sample(
-            texture::Spectrum_Texture_Tag tex, fv4 fallback,
+            texture::Spectrum_Texture tex, fv4 fallback,
             texture::Coordinate coord, fv4 lambda
         ) -> fv4 {
             if (tex.empty()) return fallback;
@@ -66,7 +66,7 @@ namespace mtt::material {
         }
 
         func guarded_sample(
-            texture::Vector_Texture_Tag tex, fv4 fallback,
+            texture::Vector_Texture tex, fv4 fallback,
             texture::Coordinate coord
         ) -> fv4 {
             if (tex.empty()) return fallback;

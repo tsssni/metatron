@@ -5,13 +5,12 @@
   cmake,
   cpptrace,
   glaze,
+  heitz,
   lib,
   metal-cpp,
   ninja,
   openimageio,
-  openssl,
   openvdb,
-  proxy,
   shader-slang,
   spirv-cross,
   vulkan-loader,
@@ -24,7 +23,7 @@ let
 in
 stdenv.mkDerivation {
   pname = "metatron";
-  version = "0.2.0";
+  version = "0.2.2";
 
   src = ../.;
   # src = fetchFromGitHub {
@@ -44,14 +43,14 @@ stdenv.mkDerivation {
   buildInputs = [
     argparse
     assimp
-    (cpptrace.overrideAttrs {
-      doCheck = !stdenv.isDarwin;
+    cpptrace
+    (glaze.override {
+      enableSSL = false;
+      enableInterop = false;
     })
-    glaze
+    heitz
     openimageio
-    openssl
     openvdb
-    proxy
     zlib
   ]
   ++ (lib.optionals stdenv.isLinux [

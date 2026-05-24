@@ -1,9 +1,9 @@
 implementing texture;
 
 namespace mtt::texture {
-    struct Checkerboard_Texture: Spectrum_Texture {
-        spectra::Spectrum_Tag x;
-        spectra::Spectrum_Tag y;
+    struct Checkerboard_Texture {
+        spectra::Spectrum x;
+        spectra::Spectrum y;
         uv2 uv_scale;
 
         f32 w_x;

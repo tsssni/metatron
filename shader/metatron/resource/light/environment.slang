@@ -1,8 +1,8 @@
 implementing light;
 
 namespace mtt::light {
-    public struct Environment_Light: Light {
-        texture::Spectrum_Texture_Tag env_map;
+    public struct Environment_Light {
+        texture::Spectrum_Texture env_map;
 
         public Optional<Interaction> operator()(
             math::Ray r, fv4 lambda

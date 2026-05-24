@@ -1,5 +1,5 @@
 #include <metatron/resource/muldim/image.hpp>
-#include <metatron/resource/spectra/color-space.hpp>
+#include <metatron/resource/color/color-space.hpp>
 #include <metatron/core/math/bit.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/thread.hpp>
@@ -88,14 +88,9 @@ namespace mtt::muldim {
         auto c = coord;
         if (sl * anisotropy < ll && sl > 0.f) {
             auto s = ll / (sl * anisotropy);
+            if (ul < vl) { c.dudx *= s; c.dudy *= s; }
+            else { c.dvdx *= s; c.dvdy *= s; }
             sl *= s;
-            if (ul == sl) {
-                c.dudx *= s;
-                c.dudy *= s;
-            } else {
-                c.dvdx *= s;
-                c.dvdy *= s;
-            }
         } else if (sl == 0.f) {
             auto [x, y] = iv2{math::round(coord.uv * fv2{width, height} - 0.5f)};
             x = math::pmod(x, i32(width));
@@ -110,11 +105,11 @@ namespace mtt::muldim {
             auto width = math::max(1uz, this->width >> lod);
             auto height = math::max(1uz, this->height >> lod);
             auto& pixels = this->pixels[lod];
-            auto uv = coord.uv * uzv2{width, height} - 0.5f;
-            auto ux = coord.dudx * width;
-            auto uy = coord.dudy * height;
-            auto vx = coord.dvdx * width;
-            auto vy = coord.dvdy * height;
+            auto uv = c.uv * uzv2{width, height} - 0.5f;
+            auto ux = c.dudx * width;
+            auto uy = c.dudy * height;
+            auto vx = c.dvdx * width;
+            auto vy = c.dvdy * height;
 
             auto A = uy * uy + vy * vy + 1.f;
             auto B = -2.f * (ux * uy + vx * vy);
@@ -188,6 +183,11 @@ namespace mtt::muldim {
                     sum_t += w * fv4{(*this)[wi, wj, lod]};
                     sum_w += w;
                 }
+            }
+            if (sum_w == 0.f) {
+                auto wi = math::pmod(i32(std::round(uv[0])), i32(width));
+                auto wj = math::pmod(i32(std::round(uv[1])), i32(height));
+                return fv4{(*this)[wi, wj, lod]};
             }
             return sum_t / sum_w;
         };
@@ -266,7 +266,7 @@ namespace mtt::muldim {
 
     auto Image::to_path(
         std::string_view path,
-        tag<spectra::Color_Space> cs,
+        color::proxy::Color_Space cs,
         std::span<byte const> data
     ) const noexcept -> void {
         data = data.size() == 0 ? pixels.front() : data;
@@ -276,7 +276,7 @@ namespace mtt::muldim {
             i32(width), i32(height), i32(channels), type
         };
 
-        auto cs_path = mtt::path(cs);
+        auto cs_path = cs.path();
         auto cs_name = cs_path.substr(cs_path.find_last_of('/'));
         spec.attribute("oiio::ColorSpace", cs_name);
         spec.attribute("planarconfig", "contig");

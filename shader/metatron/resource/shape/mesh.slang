@@ -1,7 +1,7 @@
 implementing shape;
 
 namespace mtt::shape {
-    public struct Mesh: Shape {
+    public struct Mesh {
         buf<uv3> indices;
 
         buf<fv3> vertices;

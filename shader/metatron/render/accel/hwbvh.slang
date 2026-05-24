@@ -1,7 +1,7 @@
 implementing accel;
 
 namespace mtt::accel {
-    public struct HWBVH: Acceleration {
+    public struct HWBVH {
         u32 idx = 0xffffffffu;
 
         public Optional<Interaction> operator()(math::Ray r, fv3 n) {
@@ -23,7 +23,9 @@ namespace mtt::accel {
             }
             if (rq.CommittedStatus() == COMMITTED_NOTHING) return none;
 
-            let div = vector[rq.CommittedInstanceIndex()];
+            let inst = rq.CommittedInstanceIndex();
+            let idx = proxy::Divider((idx << 24) | inst);
+            let div = vector[inst];
             let prim = rq.CommittedPrimitiveIndex();
             let or = math::Ray(
                 rq.CommittedRayObjectRayOrigin(),
@@ -34,7 +36,7 @@ namespace mtt::accel {
             let hb = rq.CommittedTriangleBarycentrics();
             let pos = fv4(1 - hb[0] - hb[1], hb[0], hb[1], ht);
             let intr = div.shape(or, on, pos, prim);
-            return Interaction(div, prim, intr);
+            return Interaction(idx, prim, intr.value, intr.hasValue);
         }
     }
 }

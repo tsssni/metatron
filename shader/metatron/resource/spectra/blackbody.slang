@@ -1,7 +1,7 @@
 implementing spectra;
 
 namespace mtt::spectra {
-    public struct Blackbody_Spectrum: Spectrum {
+    public struct Blackbody_Spectrum {
         f32 T;
 
         public f32 operator()(f32 lambda) {
@@ -13,7 +13,7 @@ namespace mtt::spectra {
 
             let l = lambda * 1e-9f;
             let L = (2.f * h * c * c) / (pow(l, 5) * (exp((h * c) / (l * kb * T)) - 1.f));
-            return isnan(L) ? 0.f : L;
+            return isfinite(L) ? L : 0.f;
         }
     };
 }

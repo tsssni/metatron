@@ -1,8 +1,8 @@
 implementing light;
 
 namespace mtt::light {
-    public struct Spot_Light: Light {
-        spectra::Spectrum_Tag L;
+    public struct Spot_Light {
+        spectra::Spectrum L;
         f32 falloff_start_cos_theta;
         f32 falloff_end_cos_theta;
 

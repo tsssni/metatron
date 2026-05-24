@@ -52,8 +52,7 @@ Or use [cmake](https://cmake.org/) with manual [dependencies](https://github.com
 
 ```nu
 cmake --preset rel -DCMAKE_INSTALL_PREFIX=/usr/bin/ -DCMAKE_CXX_FLAGS="-march=native"
-cmake --build build/rel
-cmake --install build/rel
+cmake --build build/rel --target install
 ```
 
 ## Usage

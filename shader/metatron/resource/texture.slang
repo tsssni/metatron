@@ -2,71 +2,49 @@ module texture;
 __include texture.checkerboard;
 __include texture.constant;
 __include texture.image;
+import color;
 import shape;
 import spectra;
 import metatron.core;
 
+#define SPEC_V(method, ...) \
+         if (idx.type() == 0) return tag<Constant_Spectrum_Texture>(idx).get().method(__VA_ARGS__); \
+    else if (idx.type() == 1) return tag<Image_Spectrum_Texture>(idx).get().method(__VA_ARGS__); \
+    else if (idx.type() == 2) return tag<Checkerboard_Texture>(idx).get().method(__VA_ARGS__);
+
+#define SPEC_R(method, ...) SPEC_V(method, __VA_ARGS__) else return {};
+
+#define SPEC_OP(...) \
+         if (idx.type() == 0) return tag<Constant_Spectrum_Texture>(idx).get()(__VA_ARGS__); \
+    else if (idx.type() == 1) return tag<Image_Spectrum_Texture>(idx).get()(__VA_ARGS__); \
+    else if (idx.type() == 2) return tag<Checkerboard_Texture>(idx).get()(__VA_ARGS__); \
+    else return {};
+
+#define VEC_V(method, ...) \
+         if (idx.type() == 0) return tag<Constant_Vector_Texture>(idx).get().method(__VA_ARGS__); \
+    else if (idx.type() == 1) return tag<Image_Vector_Texture>(idx).get().method(__VA_ARGS__);
+
+#define VEC_R(method, ...) VEC_V(method, __VA_ARGS__) else return {};
+
+#define VEC_OP(...) \
+         if (idx.type() == 0) return tag<Constant_Vector_Texture>(idx).get()(__VA_ARGS__); \
+    else if (idx.type() == 1) return tag<Image_Vector_Texture>(idx).get()(__VA_ARGS__); \
+    else return {};
+
 namespace mtt::texture {
-    public interface Spectrum_Texture {
-        public fv4 operator()(Coordinate coord, fv4 spec);
-        public func sample(math::Context ctx, fv2 u) -> fv2;
-        public func pdf(fv2 uv) -> f32;
-    }
-
-    public interface Vector_Texture {
-        public fv4 operator()(Coordinate coord);
-        public func sample(math::Context ctx, fv2 u) -> fv2;
-        public func pdf(fv2 uv) -> f32;
-    }
-
-    public struct Spectrum_Texture_Tag: Spectrum_Texture {
+    public struct Spectrum_Texture {
         tag<byte> idx;
-
-        public fv4 operator()(Coordinate coord, fv4 spec) {
-            if (idx.type() == 0) return tag<Constant_Spectrum_Texture>(idx).get()(coord, spec);
-            else if (idx.type() == 1) return tag<Image_Spectrum_Texture>(idx).get()(coord, spec);
-            else if (idx.type() == 2) return tag<Checkerboard_Texture>(idx).get()(coord, spec);
-            else return {};
-        }
-
-        public func sample(math::Context ctx, fv2 u) -> fv2 {
-            if (idx.type() == 0) return tag<Constant_Spectrum_Texture>(idx).get().sample(ctx, u);
-            else if (idx.type() == 1) return tag<Image_Spectrum_Texture>(idx).get().sample(ctx, u);
-            else if (idx.type() == 2) return tag<Checkerboard_Texture>(idx).get().sample(ctx, u);
-            else return {};
-        }
-
-        public func pdf(fv2 uv) -> f32 {
-            if (idx.type() == 0) return tag<Constant_Spectrum_Texture>(idx).get().pdf(uv);
-            else if (idx.type() == 1) return tag<Image_Spectrum_Texture>(idx).get().pdf(uv);
-            else if (idx.type() == 2) return tag<Checkerboard_Texture>(idx).get().pdf(uv);
-            else return {};
-        }
-
+        public fv4 operator()(Coordinate coord, fv4 spec) { SPEC_OP(coord, spec) }
+        public func sample(math::Context ctx, fv2 u) -> fv2 { SPEC_R(sample, ctx, u) }
+        public func pdf(fv2 uv) -> f32 { SPEC_R(pdf, uv) }
         public func empty() -> bool { return idx.empty(); }
     }
 
-    public struct Vector_Texture_Tag: Vector_Texture {
+    public struct Vector_Texture {
         tag<byte> idx;
-
-        public fv4 operator()(Coordinate coord) {
-            if (idx.type() == 0) return tag<Constant_Vector_Texture>(idx).get()(coord);
-            else if (idx.type() == 1) return tag<Image_Vector_Texture>(idx).get()(coord);
-            else return {};
-        }
-
-        public func sample(math::Context ctx, fv2 u) -> fv2 {
-            if (idx.type() == 0) return tag<Constant_Vector_Texture>(idx).get().sample(ctx, u);
-            else if (idx.type() == 1) return tag<Image_Vector_Texture>(idx).get().sample(ctx, u);
-            else return {};
-        }
-
-        public func pdf(fv2 uv) -> f32 {
-            if (idx.type() == 0) return tag<Constant_Vector_Texture>(idx).get().pdf(uv);
-            else if (idx.type() == 1) return tag<Image_Vector_Texture>(idx).get().pdf(uv);
-            else return {};
-        }
-
+        public fv4 operator()(Coordinate coord) { VEC_OP(coord) }
+        public func sample(math::Context ctx, fv2 u) -> fv2 { VEC_R(sample, ctx, u) }
+        public func pdf(fv2 uv) -> f32 { VEC_R(pdf, uv) }
         public func empty() -> bool { return idx.empty(); }
     }
 
@@ -98,3 +76,10 @@ namespace mtt::texture {
         return Coordinate(intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]);
     }
 }
+
+#undef SPEC_V
+#undef SPEC_R
+#undef SPEC_OP
+#undef VEC_V
+#undef VEC_R
+#undef VEC_OP

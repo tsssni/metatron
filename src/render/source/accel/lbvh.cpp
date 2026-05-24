@@ -1,10 +1,9 @@
 #include <metatron/render/accel/lbvh.hpp>
-#include <metatron/render/scene/hierarchy.hpp>
-#include <metatron/render/scene/args.hpp>
+#include <metatron/resource/serde/hierarchy.hpp>
+#include <metatron/resource/serde/args.hpp>
 #include <metatron/core/math/encode.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <ranges>
-#include <stack>
 
 namespace mtt::accel {
     LBVH::LBVH(cref<Descriptor> desc) noexcept {
@@ -22,13 +21,13 @@ namespace mtt::accel {
         auto prims = std::vector<Primitive>{};
         auto bvh = std::vector<Index>{};
         for (auto i = 0u; i < divs.size(); ++i) {
-            auto div = divs[i];
-            auto s = div->shape;
-            for (auto j = 0u; j < s->size(); ++j) {
-                auto lt = div->local_to_render;
+            auto& div = divs[i];
+            auto s = div.shape;
+            for (auto j = 0u; j < s.size(); ++j) {
+                auto lt = div.local_to_render;
                 prims.push_back(Primitive{
-                    .bbox = s->bounding_box(*lt, j),
-                    .instance = i,
+                    .bbox = s.bounding_box(lt, j),
+                    .instance = {i},
                     .primitive = j,
                 });
             }
@@ -204,20 +203,17 @@ namespace mtt::accel {
     auto LBVH::operator()(
         cref<math::Ray> r, cref<fv3> n
     ) const noexcept -> opt<Interaction> {
-        using Storage = std::vector<u32>;
         auto prim = view<Primitive>{};
+        auto inv_d = 1.f / r.d;
         auto q_opt = opt<fv4>{};
-        auto storage = std::vector<u32>{};
-        auto stack = std::stack<u32, decltype(storage)>{};
-        storage.reserve(128);
-        stack = decltype(stack){std::move(storage)};
-        stack.push(0u);
+        auto stack = std::array<u32, 64>{};
+        auto top = 0uz;
+        stack[top++] = 0u;
 
-        while (!stack.empty()) {
-            auto idx = stack.top();
-            stack.pop();
+        while (top > 0) {
+            auto idx = stack[--top];
             auto node = &bvh[idx];
-            auto b_opt = math::hit(r, node->bbox);
+            auto b_opt = math::hit(r, inv_d, node->bbox);
             if (!b_opt || (q_opt && (*q_opt)[3] < b_opt.value()[0])) continue;
 
             if (node->num_prims < 0) {
@@ -225,9 +221,9 @@ namespace mtt::accel {
                     auto idx = node->prim + i;
                     auto& p = prims[idx];
                     auto div = p.instance;
-                    auto lr = (*p.instance->local_to_render) ^ r;
+                    auto lr = p.instance->local_to_render ^ r;
 
-                    MTT_OPT_OR_CONTINUE(t, div->shape->query(lr, p.primitive));
+                    MTT_OPT_OR_CONTINUE(t, div->shape.query(lr, p.primitive));
                     if (!q_opt || t[3] < (*q_opt)[3]) {
                         q_opt = t_opt;
                         prim = &p;
@@ -235,11 +231,11 @@ namespace mtt::accel {
                 }
             } else {
                 if (r.d[node->axis] < 0.f) {
-                    stack.push(idx + 1);
-                    stack.push(node->right);
+                    stack[top++] = idx + 1;
+                    stack[top++] = node->right;
                 } else {
-                    stack.push(node->right);
-                    stack.push(idx + 1);
+                    stack[top++] = node->right;
+                    stack[top++] = idx + 1;
                 }
             }
         }
@@ -247,9 +243,9 @@ namespace mtt::accel {
         return !prim ? opt<Interaction>{} : Interaction{
             .divider = prim->instance,
             .primitive = prim->primitive,
-            .intr_opt = (*prim->instance->shape.data())(
-                (*prim->instance->local_to_render) ^ r,
-                (*prim->instance->local_to_render) ^ n,
+            .intr_opt = prim->instance->shape(
+                prim->instance->local_to_render ^ r,
+                prim->instance->local_to_render ^ n,
                 *q_opt,
                 prim->primitive
             ),

@@ -8,7 +8,6 @@
 #include <metatron/core/stl/print.hpp>
 #include <vulkan/vulkan.hpp>
 #include <atomic>
-#include <mutex>
 
 namespace mtt::command {
     struct Context::Impl final {

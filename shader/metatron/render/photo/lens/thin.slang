@@ -1,7 +1,7 @@
 implementing photo;
 
 namespace mtt::photo {
-    public struct Thin_Lens: Lens {
+    public struct Thin_Lens {
         public f32 aperture;
         public f32 focal_length;
         public f32 focus_distance;

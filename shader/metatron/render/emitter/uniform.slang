@@ -1,10 +1,10 @@
 implementing emitter;
 
 namespace mtt::emitter {
-    public struct Uniform_Emitter: Emitter {
+    public struct Uniform_Emitter {
         struct Primitive {
-            light::Light_Tag light;
-            tag<math::Transform> local_to_render;
+            light::Light light;
+            math::proxy::Transform local_to_render;
         }
         buf<Primitive> prims = {};
         buf<Primitive> inf_prims = {};

@@ -3,9 +3,9 @@ implementing media;
 namespace mtt::media {
     public struct Homogeneous_Medium {
         Phase phase = {};
-        spectra::Spectrum_Tag sigma_a = {};
-        spectra::Spectrum_Tag sigma_s = {};
-        spectra::Spectrum_Tag sigma_e = {};
+        spectra::Spectrum sigma_a = {};
+        spectra::Spectrum sigma_s = {};
+        spectra::Spectrum sigma_e = {};
 
         public struct Iterator {
             Homogeneous_Medium medium = {};

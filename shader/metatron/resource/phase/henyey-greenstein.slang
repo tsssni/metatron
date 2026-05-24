@@ -1,7 +1,7 @@
 implementing phase;
 
 namespace mtt::phase {
-    public struct Henyey_Greenstein_Phase_Function: Phase_Function {
+    public struct Henyey_Greenstein_Phase_Function {
         f32 g = 0.f;
         public __init() {}
         public __init(f32 g) { this.g = g; }

@@ -4,6 +4,7 @@ namespace mtt {
     public struct tag<T> {
         public u32 idx;
         public __init() { idx = 0xffffffffu; }
+        public __init(u32 i) { idx = i; }
         public __init<U>(tag<U> t) { idx = t.idx; }
 
         public func storage() -> u32 { return idx >> 24; }

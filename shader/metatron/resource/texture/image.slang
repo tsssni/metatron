@@ -7,9 +7,9 @@ namespace mtt::texture {
         spherical,
     }
 
-    struct Image_Spectrum_Texture: Spectrum_Texture {
-        tag<spectra::Color_Space> color_space;
-        spectra::Color_Space::Spectrum_Type type;
+    struct Image_Spectrum_Texture {
+        color::proxy::Color_Space color_space;
+        color::Color_Space::Spectrum_Type type;
         Image_Vector_Texture image_tex;
 
         fv4 operator()(Coordinate coord, fv4 spec) {
@@ -19,7 +19,10 @@ namespace mtt::texture {
                 type,
                 color_space,
             );
-            return spec & rgb_spec;
+            if (math::constant(spec)) return rgb_spec(spec[0]);
+            var value: fv4;
+            for (var i = 0; i < 4; ++i) value[i] = rgb_spec(spec[i]);
+            return value;
         }
 
         func sample(math::Context ctx, fv2 u) -> fv2 {
@@ -31,9 +34,9 @@ namespace mtt::texture {
         }
     }
 
-    struct Image_Vector_Texture: Vector_Texture {
+    struct Image_Vector_Texture {
         tag<u32> idx;
-        tag<math::Planar_Distribution> distr;
+        math::proxy::Planar_Distribution distr;
 
         fv4 operator()(Coordinate coord) {
             let texture = textures.bindless[idx.index()];
@@ -45,12 +48,12 @@ namespace mtt::texture {
         }
 
         func sample(math::Context ctx, fv2 u) -> fv2 {
-            let vu = distr.get().sample(u);
+            let vu = distr.sample(u);
             return vu.yx;
         }
 
         func pdf(fv2 uv) -> f32 {
-            return distr.get().pdf(uv.yx);
+            return distr.pdf(uv.yx);
         }
     }
 }

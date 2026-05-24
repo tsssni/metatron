@@ -24,19 +24,11 @@ namespace mtt::math {
         return h;
     }
 
-
     public func murmur_hash<let n: u32>(Array<uv2, n> key) -> u64 {
         var buffer: Array<u64, n>;
         for (var i = 0; i < n; ++i)
             buffer[i] = u64(key[i].x) | (u64(key[i].y) << 32);
         return murmur_hash(buffer, 0);
-    }
-
-    public func mix_bits_fast(u32 x) -> u32 {
-        x ^= (x >> 16);
-        x *= 0x7feb352du;
-        x ^= (x >> 16);
-        return x;
     }
 
     public func mix_bits(u32 x) -> u32 {

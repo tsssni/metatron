@@ -1,5 +1,6 @@
 #include <metatron/resource/texture/image.hpp>
 #include <metatron/resource/spectra/rgb.hpp>
+#include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::texture {
@@ -31,17 +32,17 @@ namespace mtt::texture {
     auto Image_Vector_Texture::operator()(
         cref<muldim::Coordinate> coord
     ) const noexcept -> fv4 {
-        return (*texture)(coord);
+        return texture(coord);
     }
 
     auto Image_Vector_Texture::sample(
         cref<math::Context> ctx, cref<fv2> u
     ) const noexcept -> fv2 {
-        return math::reverse(distr->sample(u));
+        return math::reverse(distr.sample(u));
     }
 
     auto Image_Vector_Texture::pdf(cref<fv2> uv) const noexcept -> f32 {
-        return distr->pdf(math::reverse(uv));
+        return distr.pdf(math::reverse(uv));
     }
 
     Image_Spectrum_Texture::Image_Spectrum_Texture(
@@ -61,7 +62,7 @@ namespace mtt::texture {
             type,
             color_space,
         }};
-        return spec & (&rgb_spec);
+        return spec & rgb_spec;
     }
 
     auto Image_Spectrum_Texture::sample(

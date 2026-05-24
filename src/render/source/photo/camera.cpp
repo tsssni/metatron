@@ -3,7 +3,7 @@
 
 namespace mtt::photo {
     auto Camera::sample(
-        view<Lens> lens,
+        Lens lens,
         cref<fv2> pos,
         cref<fv2> dxdy,
         cref<fv2> u
@@ -16,9 +16,9 @@ namespace mtt::photo {
             auto rx_pos = r_pos + fv2{dxdy[0], 0.f};
             auto ry_pos = r_pos + fv2{0.f, dxdy[1]};
 
-            MTT_OPT_OR_RETURN(r_intr, lens->sample(r_pos, u), {});
-            MTT_OPT_OR_RETURN(rx_intr, lens->sample(rx_pos, u), {});
-            MTT_OPT_OR_RETURN(ry_intr, lens->sample(ry_pos, u), {});
+            MTT_OPT_OR_RETURN(r_intr, lens.sample(r_pos, u), {});
+            MTT_OPT_OR_RETURN(rx_intr, lens.sample(rx_pos, u), {});
+            MTT_OPT_OR_RETURN(ry_intr, lens.sample(ry_pos, u), {});
 
             ray.differentiable = true;
             ray.r = r_intr.r;
@@ -33,9 +33,9 @@ namespace mtt::photo {
             auto rx_pos = r_pos + fv2{dxdy[0], 0.f};
             auto ry_pos = r_pos + fv2{0.f, dxdy[1]};
 
-            MTT_OPT_OR_RETURN(r_intr, lens->sample(r_pos, {0.f}), {});
-            MTT_OPT_OR_RETURN(rx_intr, lens->sample(rx_pos, {0.f}), {});
-            MTT_OPT_OR_RETURN(ry_intr, lens->sample(ry_pos, {0.f}), {});
+            MTT_OPT_OR_RETURN(r_intr, lens.sample(r_pos, {0.f}), {});
+            MTT_OPT_OR_RETURN(rx_intr, lens.sample(rx_pos, {0.f}), {});
+            MTT_OPT_OR_RETURN(ry_intr, lens.sample(ry_pos, {0.f}), {});
 
             ray.differentiable = false;
             ray.r = r_intr.r;

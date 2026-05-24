@@ -1,10 +1,14 @@
 #include <metatron/render/photo/film.hpp>
+#include <metatron/resource/serde/serde.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::photo {
     muldim::Image Film::image;
+    auto proxy::Film::init() noexcept -> void {
+        MTT_DESERIALIZE(photo::Film);
+    }
 
     Fixel::Fixel(
         mut<Film> film,
@@ -50,11 +54,11 @@ namespace mtt::photo {
     }
 
     auto Film::operator()(
-        view<filter::Filter> filter,
+        filter::Filter filter,
         cref<uzv2> pixel,
         cref<fv2> u
     ) noexcept -> Fixel {
-        auto f_intr = *filter->sample(u);
+        auto f_intr = *filter.sample(u);
         auto pixel_position = fv2{pixel} + 0.5f + f_intr.p;
         auto uv = pixel_position / image.size;
         auto film_position = (uv - 0.5f) * fv2{-1.f, 1.f} * film_size;

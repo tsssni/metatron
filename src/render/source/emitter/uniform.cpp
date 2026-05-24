@@ -1,5 +1,5 @@
 #include <metatron/render/emitter/uniform.hpp>
-#include <metatron/render/scene/hierarchy.hpp>
+#include <metatron/resource/serde/hierarchy.hpp>
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/constant.hpp>
 #include <metatron/core/stl/thread.hpp>
@@ -7,16 +7,21 @@
 
 namespace mtt::emitter {
     Uniform_Emitter::Uniform_Emitter(cref<Descriptor>) noexcept {
-        auto& lvec = stl::vector<light::Light>::instance();
         auto prims = std::vector<Primitive>{};
         auto inf_prims = std::vector<Primitive>{};
-        for (auto const& et: lvec.keys()) {
-            auto light = entity<light::Light>(et);
-            auto t = entity<math::Transform>(et);
-            prims.emplace_back(light, t);
-            if (light->flags() & light::Flags::inf)
-                inf_prims.emplace_back(light, t);
-        }
+        [&]<typename... Ls>(stl::array<Ls...>*) {
+            auto& lvec = light::Light::vs::instance();
+            auto add = [&]<typename L>() {
+                for (auto const& et: lvec.template keys<L>()) {
+                    auto light = light::Light{lvec.template entity<L>(et)};
+                    auto t = math::proxy::Transform::entity(et);
+                    prims.emplace_back(light, t);
+                    if (light.flags() & light::Flags::inf)
+                        inf_prims.emplace_back(light, t);
+                }
+            };
+            (add.template operator()<Ls>(), ...);
+        }((light::Light::ts*)nullptr);
 
         this->prims = std::span{prims};
         this->inf_prims = std::span{inf_prims};
@@ -31,7 +36,7 @@ namespace mtt::emitter {
         return Interaction{
             prim.light,
             prim.local_to_render,
-            math::guarded_div(1.f, f32(prims.size()))
+            1.f / f32(prims.size())
         };
     }
 
@@ -44,7 +49,7 @@ namespace mtt::emitter {
         return Interaction{
             prim.light,
             prim.local_to_render,
-            math::guarded_div(1.f, f32(inf_prims.size()))
+            1.f / f32(inf_prims.size())
         };
     }
 }

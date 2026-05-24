@@ -1,8 +1,8 @@
 implementing light;
 
 namespace mtt::light {
-    public struct Area_Light: Light {
-        shape::Shape_Tag shape;
+    public struct Area_Light {
+        shape::Shape shape;
         u32 primitive;
 
         public Optional<Interaction> operator()(

@@ -3,6 +3,17 @@ __include bsdf.interface;
 __include bsdf.physical;
 import metatron.core;
 
+#define DISPATCH_V(method, ...) \
+         if (idx == 0) return physical.method(__VA_ARGS__); \
+    else if (idx == 1) return interface.method(__VA_ARGS__);
+
+#define DISPATCH_R(method, ...) DISPATCH_V(method, __VA_ARGS__) else return {};
+
+#define DISPATCH_OP(...) \
+         if (idx == 0) return physical(__VA_ARGS__); \
+    else if (idx == 1) return interface(__VA_ARGS__); \
+    else return {};
+
 namespace mtt::bsdf {
     public struct Interaction {
         public fv4 f;
@@ -18,13 +29,7 @@ namespace mtt::bsdf {
         interface = 1 << 3,
     }
 
-    public interface Bsdf {
-        public Optional<Interaction> operator()(fv3 wo, fv3 wi);
-        public func sample(math::Context ctx, fv3 u) -> Optional<Interaction>;
-        public func flags() -> Flags;
-    }
-
-    public struct Bsdf_Union: Bsdf {
+    public struct Bsdf {
         Physical_Bsdf physical = {};
         Interface_Bsdf interface = {};
         u32 idx = 0xffffffffu;
@@ -32,23 +37,9 @@ namespace mtt::bsdf {
         public __init(Physical_Bsdf p) { physical = p; idx = 0; }
         public __init(Interface_Bsdf i) { interface = i; idx = 1; }
 
-        public Optional<Interaction> operator()(fv3 wo, fv3 wi) {
-            if (idx == 0) return physical(wo, wi);
-            else if (idx == 1) return interface(wo, wi);
-            else return {};
-        }
-
-        public func sample(math::Context ctx, fv3 u) -> Optional<Interaction> {
-            if (idx == 0) return physical.sample(ctx, u);
-            else if (idx == 1) return interface.sample(ctx, u);
-            else return {};
-        }
-
-        public func flags() -> Flags {
-            if (idx == 0) return physical.flags();
-            else if (idx == 1) return interface.flags();
-            else return {};
-        }
+        public Optional<Interaction> operator()(fv3 wo, fv3 wi) { DISPATCH_OP(wo, wi) }
+        public func sample(math::Context ctx, fv3 u) -> Optional<Interaction> { DISPATCH_R(sample, ctx, u) }
+        public func flags() -> Flags { DISPATCH_R(flags) }
     }
 
     public func lambert(f32 reflectance) -> f32 {
@@ -183,4 +174,8 @@ namespace mtt::bsdf {
         return Interaction(f, wi, pdf);
     }
 }
+
+#undef DISPATCH_V
+#undef DISPATCH_R
+#undef DISPATCH_OP
 

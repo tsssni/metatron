@@ -320,7 +320,7 @@ namespace mtt::light {
                 math::pow<3, 2>(1.f + math::pow<2>(g) - 2.f * g * cos_alpha)
             );
         };
-        auto c0 = 1.f + A * math::exp(math::guarded_div(B, (s.cos_theta + 0.01f)));
+        auto c0 = 1.f + A * math::exp(B / (s.cos_theta + 0.01f));
         auto c1 = 0.f
         + C + D * math::exp(E * s.gamma)
         + F * math::pow<2>(s.cos_gamma)
@@ -384,8 +384,8 @@ namespace mtt::light {
                     return hosek_sky(i, s) * w_theta * w_gamma;
                 });
                 auto integral = std::ranges::fold_left(radiance, 0.f, std::plus{}) * J;
-                auto CIE_Y = entity<spectra::Spectrum>("/spectrum/CIE-Y").data();
-                luminance += integral * (*CIE_Y)(atomo_lambda[i]);
+                auto CIE_Y = spectra::Spectrum::entity("/spectrum/CIE-Y");
+                luminance += integral * CIE_Y(atomo_lambda[i]);
             }
             return luminance;
         }();
@@ -423,8 +423,8 @@ namespace mtt::light {
                     return area * hosek_sun(i, s) * hosek_limb(i, s) * w_theta * w_gamma;
                 });
                 auto integral = std::ranges::fold_left(radiance, 0.f, std::plus{}) * J;
-                auto CIE_Y = entity<spectra::Spectrum>("/spectrum/CIE-Y").data();
-                luminance += integral * (*CIE_Y)(atomo_lambda[i]);
+                auto CIE_Y = spectra::Spectrum::entity("/spectrum/CIE-Y");
+                luminance += integral * CIE_Y(atomo_lambda[i]);
             }
             return luminance;
         }();

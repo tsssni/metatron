@@ -1,9 +1,9 @@
 implementing sampler;
 
-namespace mtt::sampler {
-    public struct Proxy_Sampler {
-        public Context ctx;
-        public Sampler_Tag sampler;
+namespace mtt::sampler::proxy {
+    public struct Sampler {
+        public mtt::sampler::Context ctx;
+        public mtt::sampler::Sampler sampler;
 
         [mutating] public func start() -> void { sampler.start(ctx); }
         [mutating] public func generate_1d() -> f32 { return sampler.generate_1d(ctx); }

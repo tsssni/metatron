@@ -5,7 +5,7 @@ namespace mtt::bsdf {
     static i32 fresnel_length = 256;
     public static buf<f32> fresnel_reflectance_table = {};
 
-    public struct Physical_Bsdf: Bsdf {
+    public struct Physical_Bsdf {
         fv4 reflectance = {2.f};
         fv4 fresnel_reflectance = {2.f};
         fv4 eta = {0.f};

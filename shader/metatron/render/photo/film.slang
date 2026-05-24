@@ -23,13 +23,13 @@ namespace mtt::photo {
         public u32 stride;
         public fv2 film_size;
         public fv2 dxdy;
-        public tag<spectra::Color_Space> color_space;
-        public spectra::Spectrum_Tag r;
-        public spectra::Spectrum_Tag g;
-        public spectra::Spectrum_Tag b;
+        public color::proxy::Color_Space color_space;
+        public spectra::Spectrum r;
+        public spectra::Spectrum g;
+        public spectra::Spectrum b;
 
         public Fixel operator()(
-            filter::Filter_Tag filter,
+            filter::Filter filter,
             uv2 pixel,
             uv2 size,
             fv2 u
@@ -46,7 +46,7 @@ namespace mtt::photo {
             fixel.pixel = pixel;
             fixel.position = film_position;
             fixel.dxdy = dxdy;
-            fixel.weight = 1.0;
+            fixel.weight = math::guarded_div(f_intr.weight, f_intr.pdf);
             return fixel;
         }
     };

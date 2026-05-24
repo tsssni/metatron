@@ -1,7 +1,48 @@
 #include <metatron/resource/texture/texture.hpp>
+#include <metatron/resource/texture/constant.hpp>
+#include <metatron/resource/texture/image.hpp>
+#include <metatron/resource/texture/checkerboard.hpp>
+#include <metatron/resource/serde/serde.hpp>
 #include <metatron/core/math/plane.hpp>
 
+namespace glz {
+    template<>
+    struct meta<mtt::texture::Image_Distribution> {
+        using enum mtt::texture::Image_Distribution;
+        auto constexpr static value = glz::enumerate(none, uniform, spherical);
+    };
+}
+
 namespace mtt::texture {
+    auto Vector_Texture::init() noexcept -> void {
+        MTT_DESERIALIZE(
+            Constant_Vector_Texture,
+            Image_Vector_Texture
+        );
+        stl::vector<muldim::Image>::instance().init();
+        stl::vector<math::Planar_Distribution>::instance().init();
+    }
+
+    auto Spectrum_Texture::init() noexcept -> void {
+        MTT_DESERIALIZE(
+            Constant_Spectrum_Texture,
+            Image_Spectrum_Texture,
+            Checkerboard_Texture
+        );
+
+        [&]<typename... Ss>(stl::array<Ss...>*) {
+            auto& svec = spectra::Spectrum::vs::instance();
+            auto add = [&]<typename S>() {
+                for (auto const& path: svec.template keys<S>())
+                    Spectrum_Texture::push<Constant_Spectrum_Texture>(
+                        std::string{path}.replace(1, 8, "texture"),
+                        {spectra::Spectrum{svec.template entity<S>(path)}}
+                    );
+            };
+            (add.template operator()<Ss>(), ...);
+        }((spectra::Spectrum::ts*)nullptr);
+    }
+
     auto grad(
         cref<math::Ray_Differential> diff,
         cref<shape::Interaction> intr

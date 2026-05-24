@@ -1,5 +1,4 @@
 #include "renderer.hpp"
-#include <metatron/render/scene/args.hpp>
 #include <metatron/network/remote/preview.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/progress.hpp>
@@ -8,19 +7,18 @@
 #include <random>
 
 namespace mtt::renderer {
-    auto Renderer::Impl::trace() noexcept -> void {
+    auto Renderer::Impl::trace(cref<scene::Args> args) noexcept -> void {
         auto rd = std::random_device{};
         auto seed = rd();
         stl::print("seed: 0x{:x}", seed);
 
-        auto& args = scene::Args::instance();
         auto addr = wired::Address{args.address};
 
         auto& vector = stl::vector<void>::instance();
         for (auto i = 0; i < vector.size(); ++i)
             vector.storage[i].pack();
 
-        auto ct = *entity<math::Transform>("/hierarchy/camera/render");
+        auto ct = *math::proxy::Transform::entity("/hierarchy/camera/render");
         auto spp = desc.film->spp;
         auto depth = desc.film->depth;
         auto size = uzv2{desc.film->image.size};
@@ -33,25 +31,25 @@ namespace mtt::renderer {
         auto progress = stl::progress{math::prod(size) * spp};
         auto trace = [&](cref<uzv2> px) {
             for (auto n = range[0]; n < range[1]; ++n) {
-                auto sp = sampler::Proxy_Sampler{desc.sampler, {{}, px, size, n, spp, 0, seed}};
+                auto sp = sampler::proxy::Sampler{desc.sampler, {{}, px, size, n, spp, 0, seed}};
                 sp.start();
-                auto fixel = (*desc.film)(desc.filter.data(), px, sp.generate_pixel_2d());
+                auto fixel = desc.film(desc.filter, px, sp.generate_pixel_2d());
                 auto spec = spectra::Stochastic_Spectrum{sp.generate_1d()};
                 MTT_OPT_OR_CALLBACK(s, photo::Camera{}.sample(
-                    desc.lens.data(), fixel.position, fixel.dxdy, sp.generate_2d()
+                    desc.lens, fixel.position, fixel.dxdy, sp.generate_2d()
                 ), stl::abort("ray generation failed"););
                 s.ray_differential = ct ^ s.ray_differential;
                 s.default_differential = ct ^ s.default_differential;
 
                 auto ctx = monte_carlo::Context{
-                    desc.accel.data(),
-                    desc.emitter.data(),
-                    &sp, spec.lambda,
+                    desc.accel,
+                    desc.emitter,
+                    sp, spec.lambda,
                     s.ray_differential,
                     s.default_differential,
                     ct, px, n, depth,
                 };
-                MTT_OPT_OR_CALLBACK(Li, desc.integrator->sample(ctx),
+                MTT_OPT_OR_CALLBACK(Li, desc.integrator.sample(ctx),
                     stl::abort("invalid value appears in pixel {} sample {}", px, n);
                 );
                 Li.value /= s.pdf;

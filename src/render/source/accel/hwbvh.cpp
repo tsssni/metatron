@@ -4,7 +4,7 @@
 namespace mtt::accel {
     HWBVH::HWBVH(cref<Descriptor>) noexcept {
         auto& dividers = stl::vector<Divider>::instance();
-        idx = dividers.index();
+        idx = dividers.storage();
     }
 
     auto HWBVH::operator()(

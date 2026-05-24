@@ -1,5 +1,6 @@
 module resource;
 __exported import resource.bsdf;
+__exported import resource.color;
 __exported import resource.light;
 __exported import resource.material;
 __exported import resource.media;
