@@ -3,13 +3,13 @@
 #include <metatron/core/stl/stack.hpp>
 
 namespace mtt::sampler {
-    auto constexpr num_sobol_dimensions = 2;
-    auto constexpr sobol_matrix_size = 52;
+    auto constexpr num_sobol_dimensions = 2uz;
+    auto constexpr sobol_matrix_size = 52uz;
 
-    struct Sobol_Sampler final {
+    struct Z_Sobol_Sampler final {
         struct Descriptor final {};
-        Sobol_Sampler(cref<Descriptor>) noexcept;
-        Sobol_Sampler() noexcept = default;
+        Z_Sobol_Sampler(cref<Descriptor>) noexcept;
+        Z_Sobol_Sampler() noexcept = default;
 
         auto static init() noexcept -> void;
         auto start(ref<Context> ctx) const noexcept -> void;

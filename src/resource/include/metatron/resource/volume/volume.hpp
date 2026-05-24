@@ -4,7 +4,9 @@
 #include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::volume {
-    struct Volume final: stl::polynomial<Volume, Uniform_Volume, Nanovdb_Volume> {
+    struct Volume final: stl::polynomial<Volume
+    , Uniform_Volume
+    , Nanovdb_Volume> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 

@@ -6,7 +6,9 @@
 #include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::accel {
-    struct Acceleration final: stl::polynomial<Acceleration, LBVH, HWBVH> {
+    struct Acceleration final: stl::polynomial<Acceleration
+    , LBVH
+    , HWBVH> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 

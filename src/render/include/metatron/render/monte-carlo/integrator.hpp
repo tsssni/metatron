@@ -4,7 +4,8 @@
 #include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::monte_carlo {
-    struct Integrator final: stl::polynomial<Integrator, Radiative_Integrator> {
+    struct Integrator final: stl::polynomial<Integrator
+    , Radiative_Integrator> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 

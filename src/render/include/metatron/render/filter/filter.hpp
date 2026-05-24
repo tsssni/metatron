@@ -6,7 +6,10 @@
 #include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::filter {
-    struct Filter final: stl::polynomial<Filter, Box_Filter, Gaussian_Filter, Lanczos_Filter> {
+    struct Filter final: stl::polynomial<Filter
+    , Box_Filter
+    , Gaussian_Filter
+    , Lanczos_Filter> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 

@@ -6,12 +6,10 @@
 #include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::texture {
-    struct Spectrum_Texture final: stl::polynomial<
-        Spectrum_Texture,
-        Constant_Spectrum_Texture,
-        Image_Spectrum_Texture,
-        Checkerboard_Texture
-    > {
+    struct Spectrum_Texture final: stl::polynomial<Spectrum_Texture
+    , Constant_Spectrum_Texture
+    , Image_Spectrum_Texture
+    , Checkerboard_Texture> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 
@@ -26,11 +24,9 @@ namespace mtt::texture {
         }
     };
 
-    struct Vector_Texture final: stl::polynomial<
-        Vector_Texture,
-        Constant_Vector_Texture,
-        Image_Vector_Texture
-    > {
+    struct Vector_Texture final: stl::polynomial<Vector_Texture
+    , Constant_Vector_Texture
+    , Image_Vector_Texture> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 

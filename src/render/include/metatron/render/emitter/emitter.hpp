@@ -4,7 +4,8 @@
 #include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::emitter {
-    struct Emitter final: stl::polynomial<Emitter, Uniform_Emitter> {
+    struct Emitter final: stl::polynomial<Emitter
+    , Uniform_Emitter> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 

@@ -5,6 +5,7 @@
   cmake,
   cpptrace,
   glaze,
+  heitz,
   lib,
   metal-cpp,
   ninja,
@@ -47,6 +48,7 @@ stdenv.mkDerivation {
       enableSSL = false;
       enableInterop = false;
     })
+    heitz
     openimageio
     openvdb
     zlib

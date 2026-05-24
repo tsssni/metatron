@@ -6,7 +6,8 @@
 namespace mtt::material {
     auto Material::init() noexcept -> void {
         MTT_DESERIALIZE(
-        Physical_Material,
-        Interface_Material);
+            Physical_Material,
+            Interface_Material
+        );
     }
 }

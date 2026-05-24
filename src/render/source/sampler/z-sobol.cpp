@@ -1,4 +1,4 @@
-#include <metatron/render/sampler/sobol.hpp>
+#include <metatron/render/sampler/z-sobol.hpp>
 #include <metatron/core/math/low-discrepancy.hpp>
 #include <metatron/core/math/encode.hpp>
 #include <metatron/core/math/hash.hpp>
@@ -8,12 +8,12 @@
 #include <fstream>
 
 namespace mtt::sampler {
-    inline buf<u32> Sobol_Sampler::sobol_matrices;
+    inline buf<u32> Z_Sobol_Sampler::sobol_matrices;
 
     // avoid extra parameters uploaded to gpu
-    Sobol_Sampler::Sobol_Sampler(cref<Descriptor>) noexcept: matrices(std::span<u32>(sobol_matrices)) {}
+    Z_Sobol_Sampler::Z_Sobol_Sampler(cref<Descriptor>) noexcept: matrices(std::span<u32>(sobol_matrices)) {}
 
-    auto Sobol_Sampler::init() noexcept -> void {
+    auto Z_Sobol_Sampler::init() noexcept -> void {
         auto path = "sampler/sobol.bin";
         auto data = stl::filesystem::find(path);
 
@@ -24,10 +24,9 @@ namespace mtt::sampler {
         f.read(mut<char>(&size), sizeof(size));
         sobol_matrices = size;
         f.read(mut<char>(sobol_matrices.ptr), sobol_matrices.bytelen);
-        f.close();
     }
 
-    auto Sobol_Sampler::start(ref<Context> ctx) const noexcept -> void {
+    auto Z_Sobol_Sampler::start(ref<Context> ctx) const noexcept -> void {
         auto log2_spp = u32(math::log2i(ctx.spp));
         auto res = std::bit_ceil(u32(math::max(ctx.size)));
         auto log4_spp = (log2_spp + 1) / 2;
@@ -39,27 +38,27 @@ namespace mtt::sampler {
         ctx.data[2] = morton_idx;
     }
 
-    auto Sobol_Sampler::generate_1d(ref<Context> ctx) const noexcept -> f32 {
+    auto Z_Sobol_Sampler::generate_1d(ref<Context> ctx) const noexcept -> f32 {
         auto idx = permute_idx(ctx);
         ++ctx.dim;
         return sobol(idx, 0, u32(math::murmur_hash(ctx.dim, ctx.seed)));
     }
 
-    auto Sobol_Sampler::generate_2d(ref<Context> ctx) const noexcept -> fv2 {
+    auto Z_Sobol_Sampler::generate_2d(ref<Context> ctx) const noexcept -> fv2 {
         auto idx = permute_idx(ctx);
         ctx.dim += 2;
         auto bits = math::murmur_hash(ctx.dim, ctx.seed);
         return {
-            sobol(idx, 0, bits),
-            sobol(idx, 1, bits >> 32),
+            sobol(idx, 0, u32(bits)),
+            sobol(idx, 1, u32(bits >> 32)),
         };
     }
 
-    auto Sobol_Sampler::generate_pixel_2d(ref<Context> ctx) const noexcept -> fv2 {
+    auto Z_Sobol_Sampler::generate_pixel_2d(ref<Context> ctx) const noexcept -> fv2 {
         return generate_2d(ctx);
     }
 
-    auto Sobol_Sampler::permute_idx(cref<Context> ctx) const noexcept -> u64 {
+    auto Z_Sobol_Sampler::permute_idx(cref<Context> ctx) const noexcept -> u64 {
         auto constexpr permutations = [] {
             // precompute 256 permutations to avoid mod 24
             auto p = std::array<std::array<u8, 4>, 256>{{
@@ -98,7 +97,7 @@ namespace mtt::sampler {
         return idx;
     }
 
-    auto Sobol_Sampler::sobol(u64 idx, i32 dim, u32 hash) const noexcept -> f32 {
+    auto Z_Sobol_Sampler::sobol(u64 idx, i32 dim, u32 hash) const noexcept -> f32 {
         auto x = 0u;
         auto offset = dim * sobol_matrix_size;
         while (idx != 0) {

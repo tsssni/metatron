@@ -8,7 +8,9 @@
 #include <metatron/core/math/eval.hpp>
 
 namespace mtt::shape {
-    struct Shape final: stl::polynomial<Shape, Mesh, Sphere> {
+    struct Shape final: stl::polynomial<Shape
+    , Mesh
+    , Sphere> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 

@@ -3,6 +3,10 @@
 
 namespace mtt::filter {
     auto Filter::init() noexcept -> void {
-        MTT_DESERIALIZE(Box_Filter, Gaussian_Filter, Lanczos_Filter);
+        MTT_DESERIALIZE(
+            Box_Filter,
+            Gaussian_Filter,
+            Lanczos_Filter
+        );
     }
 }

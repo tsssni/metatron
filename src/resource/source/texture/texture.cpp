@@ -16,15 +16,17 @@ namespace glz {
 namespace mtt::texture {
     auto Vector_Texture::init() noexcept -> void {
         MTT_DESERIALIZE(
-        Constant_Vector_Texture,
-        Image_Vector_Texture);
+            Constant_Vector_Texture,
+            Image_Vector_Texture
+        );
     }
 
     auto Spectrum_Texture::init() noexcept -> void {
         MTT_DESERIALIZE(
-        Constant_Spectrum_Texture,
-        Image_Spectrum_Texture,
-        Checkerboard_Texture);
+            Constant_Spectrum_Texture,
+            Image_Spectrum_Texture,
+            Checkerboard_Texture
+        );
 
         [&]<typename... Ss>(stl::array<Ss...>*) {
             auto& svec = spectra::Spectrum::vs::instance();

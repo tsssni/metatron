@@ -16,12 +16,10 @@ namespace mtt::media {
 #include <metatron/resource/media/vaccum.hpp>
 
 namespace mtt::media {
-    struct Iterator final: stl::variant<
-        Iterator,
-        Homogeneous_Medium::Iterator,
-        Heterogeneous_Medium::Iterator,
-        Vaccum_Medium::Iterator
-    > {
+    struct Iterator final: stl::variant<Iterator
+    , Homogeneous_Medium::Iterator
+    , Heterogeneous_Medium::Iterator
+    , Vaccum_Medium::Iterator> {
         using variant::variant;
 
         auto march(f32 u) noexcept -> opt<Interaction> {
@@ -29,12 +27,10 @@ namespace mtt::media {
         }
     };
 
-    struct Medium final: stl::polynomial<
-        Medium,
-        Homogeneous_Medium,
-        Heterogeneous_Medium,
-        Vaccum_Medium
-    > {
+    struct Medium final: stl::polynomial<Medium
+    , Homogeneous_Medium
+    , Heterogeneous_Medium
+    , Vaccum_Medium> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 

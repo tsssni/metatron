@@ -4,7 +4,9 @@
 #include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::material {
-    struct Material final: stl::polynomial<Material, Physical_Material, Interface_Material> {
+    struct Material final: stl::polynomial<Material
+    , Physical_Material
+    , Interface_Material> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 

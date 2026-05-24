@@ -11,15 +11,13 @@
 #include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::light {
-    struct Light final: stl::polynomial<
-        Light,
-        Parallel_Light,
-        Point_Light,
-        Spot_Light,
-        Area_Light,
-        Environment_Light,
-        Atomosphere_Light
-    > {
+    struct Light final: stl::polynomial<Light
+    , Parallel_Light
+    , Point_Light
+    , Spot_Light
+    , Area_Light
+    , Environment_Light
+    , Atomosphere_Light> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 

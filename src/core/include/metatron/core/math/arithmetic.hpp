@@ -1,5 +1,7 @@
 #pragma once
 #include <metatron/core/math/constant.hpp>
+#include <algorithm>
+#include <bit>
 #include <cmath>
 
 namespace mtt::math {

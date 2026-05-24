@@ -5,7 +5,9 @@
 #include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::photo {
-    struct Lens final: stl::polynomial<Lens, Pinhole_Lens, Thin_Lens> {
+    struct Lens final: stl::polynomial<Lens
+    , Pinhole_Lens
+    , Thin_Lens> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 

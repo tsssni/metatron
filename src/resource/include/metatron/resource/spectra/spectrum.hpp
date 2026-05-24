@@ -10,14 +10,12 @@
 #include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::spectra {
-    struct Spectrum final: stl::polynomial<
-        Spectrum,
-        Constant_Spectrum,
-        Rgb_Spectrum,
-        Blackbody_Spectrum,
-        Visible_Spectrum,
-        Discrete_Spectrum
-    > {
+    struct Spectrum final: stl::polynomial<Spectrum
+    , Constant_Spectrum
+    , Rgb_Spectrum
+    , Blackbody_Spectrum
+    , Visible_Spectrum
+    , Discrete_Spectrum> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 

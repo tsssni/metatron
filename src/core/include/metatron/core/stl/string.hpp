@@ -1,5 +1,6 @@
 #pragma once
 #include <metatron/core/stl/hash.hpp>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 
