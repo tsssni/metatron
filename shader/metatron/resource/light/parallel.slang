@@ -1,8 +1,8 @@
 implementing light;
 
 namespace mtt::light {
-    public struct Parallel_Light: Light {
-        spectra::Spectrum_Tag L;
+    public struct Parallel_Light {
+        spectra::Spectrum L;
 
         public Optional<Interaction> operator()(
             math::Ray r, fv4 lambda
@@ -20,7 +20,7 @@ namespace mtt::light {
         }
 
         public func flags() -> Flags {
-            return Flags(Flags::delta & Flags::inf);
+            return Flags(Flags::delta | Flags::inf);
         }
     }
 }

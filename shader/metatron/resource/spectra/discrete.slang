@@ -1,7 +1,7 @@
 implementing spectra;
 
 namespace mtt::spectra {
-    public struct Discrete_Spectrum: Spectrum {
+    public struct Discrete_Spectrum {
         buf<f32> lambda;
         buf<f32> storage;
 

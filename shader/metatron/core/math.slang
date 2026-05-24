@@ -14,6 +14,7 @@ __include math.ops;
 __include math.plane;
 __include math.polynomial;
 __include math.prime;
+__include math.proxy;
 __include math.quaternion;
 __include math.ray;
 __include math.sphere;

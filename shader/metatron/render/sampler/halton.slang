@@ -1,7 +1,7 @@
 implementing sampler;
 
 namespace mtt::sampler {
-    public struct Halton_Sampler: Sampler {
+    public struct Halton_Sampler {
         iv2 exponential = 0;
         iv2 scale = 0;
         iv2 scale_mulinv = 0;

@@ -4,7 +4,7 @@ implementing volume;
 #include "PNanoVDB.slang"
 
 namespace mtt::volume {
-    public struct Nanovdb_Volume: Volume {
+    public struct Nanovdb_Volume {
         public tag<byte> handle;
         math::Bounding_Box bbox;
 

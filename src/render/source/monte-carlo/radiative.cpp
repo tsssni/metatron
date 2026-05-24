@@ -178,7 +178,7 @@ namespace mtt::monte_carlo {
             if (depth >= ctx.max_depth) break;
 
             auto q = math::max(beta * math::guarded_div(1.f, math::avg(mis_s)));
-            if (q < 1.f && depth > 1u) {
+            if (q < 1.f) {
                 auto rr_u = ctx.sampler.generate_1d();
                 if (rr_u > q) break;
                 else beta /= q;

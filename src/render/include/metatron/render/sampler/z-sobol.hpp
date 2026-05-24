@@ -3,8 +3,8 @@
 #include <metatron/core/stl/stack.hpp>
 
 namespace mtt::sampler {
-    auto constexpr num_sobol_dimensions = 2uz;
-    auto constexpr sobol_matrix_size = 52uz;
+    auto constexpr num_sobol_dimensions = 2u;
+    auto constexpr sobol_matrix_size = 52u;
 
     struct Z_Sobol_Sampler final {
         struct Descriptor final {};

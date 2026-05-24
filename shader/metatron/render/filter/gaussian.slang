@@ -1,8 +1,8 @@
 implementing filter;
 
 namespace mtt::filter {
-    public struct Gaussian_Filter: Filter {
-        tag<math::Planar_Distribution> piecewise;
+    public struct Gaussian_Filter {
+        math::proxy::Planar_Distribution piecewise;
         fv2 radius;
         f32 sigma;
 
@@ -13,9 +13,9 @@ namespace mtt::filter {
         }
 
         public func sample(fv2 u) -> Optional<Interaction> {
-            let p = piecewise.get().sample(u);
+            let p = piecewise.sample(u);
             let w = this(p.yx);
-            let pdf = piecewise.get().pdf(p);
+            let pdf = piecewise.pdf(p);
             return Interaction(p, w, pdf);
         }
     }

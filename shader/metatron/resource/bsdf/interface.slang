@@ -1,7 +1,7 @@
 implementing bsdf;
 
 namespace mtt::bsdf {
-    public struct Interface_Bsdf: Bsdf {
+    public struct Interface_Bsdf {
         u32 padding = 0u;
 
         public Optional<Interaction> operator()(fv3 wo, fv3 wi) {

@@ -1,7 +1,7 @@
 implementing shape;
 
 namespace mtt::shape {
-    public struct Sphere: Shape {
+    public struct Sphere {
         u32 padding = 0u;
 
         public func size() -> u32 { return 1; }

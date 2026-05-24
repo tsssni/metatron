@@ -8,7 +8,7 @@
 #include <fstream>
 
 namespace mtt::sampler {
-    inline buf<u32> Z_Sobol_Sampler::sobol_matrices;
+    buf<u32> Z_Sobol_Sampler::sobol_matrices;
 
     // avoid extra parameters uploaded to gpu
     Z_Sobol_Sampler::Z_Sobol_Sampler(cref<Descriptor>) noexcept: matrices(std::span<u32>(sobol_matrices)) {}

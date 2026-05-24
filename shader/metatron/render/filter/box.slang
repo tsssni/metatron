@@ -1,7 +1,7 @@
 implementing filter;
 
 namespace mtt::filter {
-    public struct Box_Filter: Filter {
+    public struct Box_Filter {
         fv2 radius;
 
         public f32 operator()(fv2 p) {

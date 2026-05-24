@@ -170,7 +170,7 @@ namespace mtt::scene {
             monte_carlo::Integrator::push<monte_carlo::Radiative_Integrator>("/renderer/default/integrator", {{}});
             accel::Acceleration::push<accel::HWBVH>("/renderer/default/accel", {{}});
             emitter::Emitter::push<emitter::Uniform_Emitter>("/renderer/default/emitter", {{}});
-            sampler::Sampler::push<sampler::Heitz_Sampler>("/renderer/default/sampler", {{}});
+            sampler::Sampler::push<sampler::Z_Sobol_Sampler>("/renderer/default/sampler", {{}});
             filter::Filter::push<filter::Lanczos_Filter>("/renderer/default/filter", {{}});
             photo::Lens::push<photo::Thin_Lens>("/renderer/default/lens", {{}});
 

@@ -35,11 +35,15 @@ namespace mtt::stl {
     auto abort(std::format_string<Args...> format, Args&&... args) noexcept -> void {
         std::println(format, std::forward<Args>(args)...);
         cpptrace::generate_trace().print();
+        std::fflush(stdout);
+        std::fflush(stderr);
         std::abort();
     }
 
     auto inline abort() noexcept {
         cpptrace::generate_trace().print();
+        std::fflush(stdout);
+        std::fflush(stderr);
         std::abort();
     }
 }

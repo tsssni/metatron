@@ -1,8 +1,8 @@
 implementing light;
 
 namespace mtt::light {
-    public struct Point_Light: Light {
-        spectra::Spectrum_Tag L;
+    public struct Point_Light {
+        spectra::Spectrum L;
 
         public Optional<Interaction> operator()(
             math::Ray r, fv4 lambda

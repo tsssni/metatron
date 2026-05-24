@@ -3,10 +3,11 @@
 #include <metatron/core/stl/stack.hpp>
 
 namespace mtt::sampler {
-    auto constexpr heitz_sobol_n = 4096uz;
-    auto constexpr heitz_sobol_d = 256uz;
-    auto constexpr heitz_mask_size = 128uz;
-    auto constexpr heitz_pair_d = 2uz;
+    auto constexpr heitz_spp = 256u;
+    auto constexpr heitz_sobol_n = 256u;
+    auto constexpr heitz_sobol_d = 256u;
+    auto constexpr heitz_tile_size = 128u;
+    auto constexpr heitz_tile_d = 8u;
 
     struct Heitz_Sampler final {
         struct Descriptor final {};
@@ -22,8 +23,10 @@ namespace mtt::sampler {
 
     private:
         buf<u32> static heitz_sobol;
-        buf<u32> static heitz_mask;
+        buf<u32> static heitz_ranking;
+        buf<u32> static heitz_scrambling;
         buf<u32> sobol = {};
-        buf<u32> mask = {};
+        buf<u32> ranking = {};
+        buf<u32> scrambling = {};
     };
 }

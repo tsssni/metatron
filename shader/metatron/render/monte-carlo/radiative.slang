@@ -1,7 +1,7 @@
 implementing monte_carlo;
 
 namespace mtt::monte_carlo {
-    public struct Radiative_Integrator: Integrator {
+    public struct Radiative_Integrator {
         u32 padding = 0u;
 
         public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum> {
@@ -17,8 +17,8 @@ namespace mtt::monte_carlo {
 
             var p = 0.f;
             var f = fv4(0.f);
-            var bsdf: bsdf::Bsdf_Union;
-            var phase: phase::Phase_Function_Union;
+            var bsdf: bsdf::Bsdf;
+            var phase: phase::Phase_Function;
 
             var trace_ctx: math::Context;
             var history_ctx: math::Context;
@@ -26,9 +26,9 @@ namespace mtt::monte_carlo {
             trace_ctx.lambda = ctx.lambda;
 
             var acc_opt: Optional<accel::Interaction>;
-            var medium: media::Medium_Tag;
-            var medium_to_render: tag<math::Transform>;
-            var iter: media::Iterator_Union;
+            var medium: media::Medium;
+            var medium_to_render: math::proxy::Transform;
+            var iter: media::Iterator;
             var rdiff = ctx.ray_differential;
             var ddiff = ctx.default_differential;
             let ct = ctx.render_to_camera;
@@ -38,7 +38,7 @@ namespace mtt::monte_carlo {
                 if (depth >= ctx.max_depth) break;
 
                 let q = math::max(beta * math::guarded_div(1.f, math::avg(mis_s)));
-                if (q < 1.f && depth > 1) {
+                if (q < 1.f) {
                     let rr_u = ctx.sampler.generate_1d();
                     if (rr_u > q) break;
                     else beta /= q;
@@ -96,7 +96,7 @@ namespace mtt::monte_carlo {
                     var direct_to_render = medium_to_render;
                     var gamma = beta * (g / p_e) / (f / p);
                     var mis_d = mis_s * q / p_e * f32(!bool(e_intr.light.flags() & mtt::light::Flags::delta));
-                    var iter: media::Iterator_Union;
+                    var iter: media::Iterator;
                     var mis_l = mis_s;
 
                     while (true) {
@@ -114,7 +114,7 @@ namespace mtt::monte_carlo {
                             if (!acc_opt.hasValue || !acc_opt.value.valid) break;
                             let acc = acc_opt.value;
                             var intr = acc.intr;
-                            let div = acc.divider;
+                            let div = acc.divider.get();
                             let lt = *div.local_to_render.get();
 
                             intr.p = (lt * fv4(intr.p, 1.f)).xyz;
@@ -153,7 +153,7 @@ namespace mtt::monte_carlo {
 
                         let acc = acc_opt.value;
                         var intr = acc.intr;
-                        let div = acc.divider;
+                        let div = acc.divider.get();
 
                         let m_opt = iter.march(ctx.sampler.generate_1d());
                         if (m_opt == none) { gamma = fv4(0.f); break; };
@@ -211,7 +211,7 @@ namespace mtt::monte_carlo {
 
                 let acc = acc_opt.value;
                 var intr = acc.intr;
-                let div = acc.divider;
+                let div = acc.divider.get();
                 let lt = *div.local_to_render.get();
 
                 if (scattered || crossed) {
@@ -359,7 +359,7 @@ namespace mtt::monte_carlo {
                 p = b_intr.pdf;
             }
 
-            if (any(isnan(emission) || isinf(emission))) return {};
+            if (!all(isfinite(emission))) return {};
             return spectra::Stochastic_Spectrum(trace_ctx.lambda, emission);
         }
     }

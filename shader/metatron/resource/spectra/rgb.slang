@@ -1,22 +1,22 @@
 implementing spectra;
 
 namespace mtt::spectra {
-    typedef Color_Space::Spectrum_Type Spectrum_Type;
+    typedef color::Color_Space::Spectrum_Type Spectrum_Type;
 
-    public struct Rgb_Spectrum: Spectrum {
+    public struct Rgb_Spectrum {
         Array<f32, 3> c = {};
         f32 s = {};
-        tag<Discrete_Spectrum> illuminant = {};
+        u32 illuminant = 0xffffffffu;
 
         public __init(
-            fv3 color,
-            Color_Space::Spectrum_Type type,
-            tag<Color_Space> color_space,
+            fv3 rgb_in,
+            color::Color_Space::Spectrum_Type type,
+            color::proxy::Color_Space color_space,
         ) {
-            var rgb = color;
+            var rgb = rgb_in;
             let cs = color_space.get();
             illuminant = type == Spectrum_Type::illuminant
-            ? cs.illuminant : tag<Discrete_Spectrum>();
+            ? cs.illuminant : 0xffffffffu;
 
             s = 1.f;
             switch (type) {
@@ -66,7 +66,7 @@ namespace mtt::spectra {
 
             struct Coefficient {
                 i32 xi; i32 yi; i32 zi;
-                i32 maxc; Ptr<Color_Space> cs;
+                i32 maxc; Ptr<color::Color_Space> cs;
 
                 f32 operator()(i32 dx, i32 dy, i32 dz) {
                     return cs.table[0
@@ -103,7 +103,7 @@ namespace mtt::spectra {
         public f32 operator()(f32 lambda) {
             return s
             * sigmoid(math::polynomial(lambda, c))
-            * (!illuminant.empty() ? (illuminant.get())(lambda) : 1.f);
+            * (illuminant != 0xffffffffu ? tag<Discrete_Spectrum>(illuminant).get()(lambda) : 1.f);
         }
 
         func sigmoid(f32 x) -> f32 {

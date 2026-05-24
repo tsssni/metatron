@@ -7,9 +7,23 @@ import spectra;
 import volume;
 import metatron.core;
 
+#define ITER_V(method, ...) \
+         if (idx == 0) return homogeneous.method(__VA_ARGS__); \
+    else if (idx == 1) return heterogeneous.method(__VA_ARGS__); \
+    else if (idx == 2) return vaccum.method(__VA_ARGS__);
+
+#define ITER_R(method, ...) ITER_V(method, __VA_ARGS__) else return {};
+
+#define MED_V(method, ...) \
+         if (idx.type() == 0) return Iterator(tag<Homogeneous_Medium>(idx).get().method(__VA_ARGS__)); \
+    else if (idx.type() == 1) return Iterator(tag<Heterogeneous_Medium>(idx).get().method(__VA_ARGS__)); \
+    else if (idx.type() == 2) return Iterator(tag<Vaccum_Medium>(idx).get().method(__VA_ARGS__));
+
+#define MED_R(method, ...) MED_V(method, __VA_ARGS__) else return {};
+
 namespace mtt::media {
     public struct Interaction {
-        public phase::Phase_Function_Union phase;
+        public phase::Phase_Function phase;
         public fv3 p;
         public f32 t;
         public fv4 transmittance;
@@ -26,7 +40,7 @@ namespace mtt::media {
         } function = Function::henyey_greenstein;
         f32 g = 0.f;
 
-        public func to_phase() -> phase::Phase_Function_Union {
+        public func to_phase() -> phase::Phase_Function {
             switch (function) {
             case Function::henyey_greenstein: return {phase::Henyey_Greenstein_Phase_Function(g)};
             default: return {};
@@ -34,7 +48,7 @@ namespace mtt::media {
         }
     }
 
-    public struct Iterator_Union {
+    public struct Iterator {
         Homogeneous_Medium.Iterator homogeneous = {};
         Heterogeneous_Medium.Iterator heterogeneous = {};
         Vaccum_Medium.Iterator vaccum = {};
@@ -45,22 +59,16 @@ namespace mtt::media {
         public __init(Heterogeneous_Medium.Iterator it) { heterogeneous = it; idx = 1; }
         public __init(Vaccum_Medium.Iterator it) { vaccum = it; idx = 2; }
 
-        [mutating] public func march(f32 u) -> Optional<Interaction> {
-            if (idx == 0) return homogeneous.march(u);
-            else if (idx == 1) return heterogeneous.march(u);
-            else if (idx == 2) return vaccum.march(u);
-            else return {};
-        }
+        [mutating] public func march(f32 u) -> Optional<Interaction> { ITER_R(march, u) }
     }
 
-    public struct Medium_Tag {
+    public struct Medium {
         public tag<byte> idx;
-
-        public func begin(math::Context ctx, f32 t_max) -> Iterator_Union {
-            if (idx.type() == 0) return Iterator_Union(tag<Homogeneous_Medium>(idx).get().begin(ctx, t_max));
-            else if (idx.type() == 1) return Iterator_Union(tag<Heterogeneous_Medium>(idx).get().begin(ctx, t_max));
-            else if (idx.type() == 2) return Iterator_Union(tag<Vaccum_Medium>(idx).get().begin(ctx, t_max));
-            else return {};
-        }
+        public func begin(math::Context ctx, f32 t_max) -> Iterator { MED_R(begin, ctx, t_max) }
     }
 }
+
+#undef ITER_V
+#undef ITER_R
+#undef MED_V
+#undef MED_R

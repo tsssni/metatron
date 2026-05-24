@@ -16,7 +16,7 @@ namespace mtt::light {
     static i32 tgmm_num_bilinear = 4;
     static i32 tgmm_num_gaussian = tgmm_num_bilinear * tgmm_num_mixture;
 
-    public struct Atomosphere_Light: Light {
+    public struct Atomosphere_Light {
         fv3 d;
         fm44 t;
 

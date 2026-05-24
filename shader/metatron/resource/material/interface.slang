@@ -1,7 +1,7 @@
 implementing material;
 
 namespace mtt::material {
-    public struct Interface_Material: Material {
+    public struct Interface_Material {
         u32 padding = 0u;
 
         public func sample(
@@ -9,7 +9,7 @@ namespace mtt::material {
             texture::Coordinate coord
         ) -> Optional<Interaction> {
             return Interaction(
-                bsdf::Bsdf_Union(bsdf::Interface_Bsdf()),
+                bsdf::Bsdf(bsdf::Interface_Bsdf()),
                 fv4(0.f),
                 {0.f, 0.f, 1.f},
                 false,

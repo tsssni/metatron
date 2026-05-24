@@ -1,6 +1,6 @@
-implementing spectra;
+implementing color;
 
-namespace mtt::spectra {
+namespace mtt::color {
     public struct Color_Space {
         public enum Spectrum_Type {
             albedo,
@@ -10,8 +10,8 @@ namespace mtt::spectra {
 
         public fm33 from_XYZ;
         public fm33 to_XYZ;
-        public tag<Discrete_Spectrum> illuminant;
-        public Transfer_Function_Tag transfer_function;
+        public u32 illuminant;
+        public Transfer_Function transfer_function;
 
         public i32 table_res;
         public f32 illuminant_Y_integral;

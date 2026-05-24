@@ -1,7 +1,7 @@
 implementing volume;
 
 namespace mtt::volume {
-    public struct Uniform_Volume: Volume {
+    public struct Uniform_Volume {
         math::Bounding_Box bbox;
         iv3 dims;
         fv3 voxel_size;

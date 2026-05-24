@@ -6,12 +6,11 @@
 #include <metatron/core/math/bit.hpp>
 
 namespace mtt::math {
-    auto constexpr radical_inverse(usize x, i32 b) noexcept -> f32 {
-        auto reversed = 0uz;
-        auto limit = (~0uz - b) / b;
-        auto inv_b = 1uz;
+    auto constexpr radical_inverse(u32 x, i32 b) noexcept -> f32 {
+        auto reversed = 0u;
+        auto limit = (~0u - b) / b;
+        auto inv_b = 1u;
 
-        // stop when next reversed will overflow
         while (x && reversed < limit) {
             auto next = x / b;
             auto digit = x - next * b;
@@ -23,9 +22,9 @@ namespace mtt::math {
         return min(reversed / f32(inv_b), 1.f - epsilon<f32>);
     }
 
-    auto constexpr inverse_radical(usize reversed, i32 b, i32 n) noexcept -> usize {
-        auto idx = 0uz;
-        for (auto i = 0uz; i < n; ++i) {
+    auto constexpr inverse_radical(u32 reversed, i32 b, i32 n) noexcept -> u32 {
+        auto idx = 0u;
+        for (auto i = 0; i < n; ++i) {
             auto digit = reversed % b;
             reversed /= b;
             idx = idx * b + digit;
@@ -33,16 +32,15 @@ namespace mtt::math {
         return idx;
     }
 
-    auto constexpr owen_scrambled_radical_inverse(usize x, i32 b, u32 hash) noexcept -> f32 {
-        auto reversed = 0uz;
-        auto limit = (~0uz - b) / b;
-        auto inv_b = 1uz;
+    auto constexpr owen_scrambled_radical_inverse(u32 x, i32 b, u32 hash) noexcept -> f32 {
+        auto reversed = 0u;
+        auto limit = (~0u - b) / b;
+        auto inv_b = 1u;
 
-        // stop when precision of highest number in current bit not enough
         while (1.f - f32(b - 1) / inv_b < 1.f && reversed < limit) {
             auto next = x / b;
             auto digit = x - next * b;
-            auto digit_hash = mix_bits(u64(hash) ^ reversed);
+            auto digit_hash = mix_bits(hash ^ reversed);
             reversed = reversed * b + biject_permute(digit, b, digit_hash);
             inv_b *= b;
             x = next;

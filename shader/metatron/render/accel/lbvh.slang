@@ -5,10 +5,10 @@ namespace mtt::accel {
     // support software acceleration structure in the future.
     // now just occupy the space in variant.
 
-    public struct LBVH: Acceleration {
+    public struct LBVH {
         struct Primitive {
             math::Bounding_Box bbox;
-            tag<Divider> instance;
+            proxy::Divider instance;
             u32 primitive;
             u32 morton_code;
         };

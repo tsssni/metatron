@@ -2,13 +2,13 @@ import metatron;
 
 namespace mtt {
     struct Constants {
-        monte_carlo::Integrator_Tag integrator;
-        accel::Acceleration_Tag accel;
-        emitter::Emitter_Tag emitter;
-        sampler::Sampler_Tag sampler;
-        filter::Filter_Tag filter;
-        photo::Lens_Tag lens;
-        tag<photo::Film> film;
+        monte_carlo::Integrator integrator;
+        accel::Acceleration accel;
+        emitter::Emitter emitter;
+        sampler::Sampler sampler;
+        filter::Filter filter;
+        photo::Lens lens;
+        photo::proxy::Film film;
         u32 seed;
         uv2 range;
         math::Transform ct;
@@ -31,7 +31,7 @@ namespace mtt {
         bsdf::fresnel_reflectance_table = cb.fresnel;
 
         for (var n = cb.range.x; n < cb.range.y; ++n) {
-            var sp: sampler::Proxy_Sampler;
+            var sp: sampler::proxy::Sampler;
             sp.ctx.pixel = pixel;
             sp.ctx.size = size;
             sp.ctx.idx = n;

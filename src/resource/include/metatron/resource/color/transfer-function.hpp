@@ -9,11 +9,11 @@ namespace mtt::color {
         auto static init() noexcept -> void;
 
         auto transfer(f32 x) const noexcept -> f32 {
-            return visit([x](auto* p) noexcept { return p->transfer(x); });
+            return visit([x](auto* p) noexcept -> f32 { return p->transfer(x); });
         }
 
         auto linearize(f32 x) const noexcept -> f32 {
-            return visit([x](auto* p) noexcept { return p->linearize(x); });
+            return visit([x](auto* p) noexcept -> f32 { return p->linearize(x); });
         }
     };
 }

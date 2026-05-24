@@ -4,7 +4,7 @@ namespace mtt::sampler {
     static u32 num_sobol_dimensions = 2;
     static u32 sobol_matrix_size = 52;
 
-    public struct Sobol_Sampler: Sampler {
+    public struct Z_Sobol_Sampler {
         buf<u32> matrices = {};
 
         public func start(inout Context ctx) -> void {
