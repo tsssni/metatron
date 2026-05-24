@@ -1,6 +1,7 @@
 #pragma once
 #include <metatron/device/command/context.hpp>
 #include <Metal/Metal.hpp>
+#include <string_view>
 #undef nil
 #undef Nil
 

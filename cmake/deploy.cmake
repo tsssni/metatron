@@ -1,5 +1,8 @@
 function(derive unit)
     set(target metatron-${unit})
+    if(NOT TARGET ${target})
+        return()
+    endif()
     get_property(path TARGET ${target} PROPERTY metatron-path)
     get_property(mode TARGET ${target} PROPERTY metatron-mode)
 
@@ -20,12 +23,7 @@ function(derive unit)
         )
     endif()
 
-    if(${mode} STREQUAL "src" AND EXISTS ${path}/include)
-        install(
-            DIRECTORY ${path}/include/
-            DESTINATION include/${target}
-        )
-    elseif(${mode} STREQUAL "lib" AND EXISTS ${path}/src/include)
+    if(${mode} STREQUAL "lib" AND EXISTS ${path}/src/include)
         install(
             DIRECTORY ${path}/src/include/
             DESTINATION include/${target}
@@ -37,6 +35,34 @@ function(release)
     get_property(metatron-units TARGET metatron-build PROPERTY metatron-units)
     get_property(metatron-exts TARGET metatron-build PROPERTY metatron-exts)
     get_property(metatron-mods TARGET metatron-build PROPERTY metatron-mods)
+
+    install(
+        TARGETS metatron
+        EXPORT metatron-targets
+        LIBRARY DESTINATION lib
+    )
+
+    install(
+        DIRECTORY ${CMAKE_SOURCE_DIR}/include/metatron/
+        DESTINATION include/metatron
+        FILES_MATCHING PATTERN "*.hpp"
+    )
+
+    # Inject the prelude include at the top of every installed header so
+    # downstream code that uses prelude aliases (cref<T>, f32, ...) compiles
+    # without any extra compile flag. The prelude itself is skipped.
+    install(CODE [[
+        file(GLOB_RECURSE _hpps "${CMAKE_INSTALL_PREFIX}/include/metatron/*.hpp")
+        set(_prelude "${CMAKE_INSTALL_PREFIX}/include/metatron/core/prelude/prelude.hpp")
+        foreach(_h ${_hpps})
+            if(NOT _h STREQUAL _prelude)
+                file(READ "${_h}" _content)
+                if(NOT _content MATCHES "metatron/core/prelude/prelude\\.hpp")
+                    file(WRITE "${_h}" "#include <metatron/core/prelude/prelude.hpp>\n${_content}")
+                endif()
+            endif()
+        endforeach()
+    ]])
 
     install(
         EXPORT metatron-targets

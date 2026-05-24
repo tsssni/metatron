@@ -34,7 +34,7 @@ namespace mtt::volume {
 
     Nanovdb_Volume::Nanovdb_Volume(cref<Descriptor> desc) noexcept {
         auto path = stl::filesystem::find(desc.path);
-        auto& vec = stl::vector<nanovdb::GridHandle<>>::instance();
+        auto& vec = stl::vector<Grid>::instance();
         handle = vec.push_back(nanovdb::io::readGrid(path));
         bbox = from_nanovdb(grid()->worldBBox());
     }

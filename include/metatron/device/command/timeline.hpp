@@ -1,0 +1,16 @@
+#pragma once
+#include <metatron/core/math/constant.hpp>
+#include <metatron/core/stl/capsule.hpp>
+#include <vector>
+
+namespace mtt::command {
+    struct Timeline final: stl::capsule<Timeline> {
+        struct Impl;
+        Timeline(bool shared = false) noexcept;
+        auto wait(u64 count, u64 timeout = math::maxv<u64>) noexcept -> bool;
+        auto signal(u64 count) noexcept -> void;
+    };
+
+    using Pair = std::tuple<mut<Timeline>, u64>;
+    using Pairs = std::vector<Pair>;
+}

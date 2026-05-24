@@ -1,1 +1,1 @@
-list(APPEND deps resource device network argparse heitz)
+list(APPEND deps heitz)

@@ -1,5 +1,4 @@
 #include "renderer.hpp"
-#include <metatron/resource/serde/args.hpp>
 #include <metatron/network/remote/preview.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/progress.hpp>
@@ -8,12 +7,11 @@
 #include <random>
 
 namespace mtt::renderer {
-    auto Renderer::Impl::trace() noexcept -> void {
+    auto Renderer::Impl::trace(cref<scene::Args> args) noexcept -> void {
         auto rd = std::random_device{};
         auto seed = rd();
         stl::print("seed: 0x{:x}", seed);
 
-        auto& args = scene::Args::instance();
         auto addr = wired::Address{args.address};
 
         auto& vector = stl::vector<void>::instance();

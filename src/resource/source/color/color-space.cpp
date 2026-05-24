@@ -13,7 +13,7 @@ namespace mtt::color {
     auto proxy::Color_Space::init() noexcept -> void {
         Transfer_Function::init();
 
-        auto& cvec = stl::vector<color::Color_Space>::instance();
+        auto& cvec = stl::vector<color::Color_Space>::instance(); cvec.init();
         auto cs_name = std::to_array<std::string>({"sRGB"});
         auto red_primitive = std::to_array<fv2>({{0.64f, 0.33f}});
         auto green_primitive = std::to_array<fv2>({{0.30f, 0.60f}});

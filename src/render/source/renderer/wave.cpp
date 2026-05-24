@@ -1,6 +1,5 @@
 #include "renderer.hpp"
 #include "resource.hpp"
-#include <metatron/resource/serde/args.hpp>
 #include <metatron/device/command/context.hpp>
 #include <metatron/device/encoder/transfer.hpp>
 #include <metatron/device/encoder/argument.hpp>
@@ -29,8 +28,7 @@ namespace mtt::renderer {
         ref<u64> count
     ) noexcept -> obj<opaque::Acceleration>;
 
-    auto Renderer::Impl::wave() noexcept -> void {
-        auto& args = scene::Args::instance();
+    auto Renderer::Impl::wave(cref<scene::Args> args) noexcept -> void {
         auto addr = wired::Address{args.address};
         auto remote = !addr.host.empty();
         auto previewer = remote::Previewer{addr, "metatron"};

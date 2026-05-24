@@ -1,8 +1,8 @@
 #include "resource.hpp"
 #include <metatron/device/command/timeline.hpp>
 #include <metatron/device/encoder/transfer.hpp>
+#include <metatron/resource/volume/nanovdb.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <nanovdb/GridHandle.h>
 #include <barrier>
 
 namespace mtt::renderer {
@@ -16,7 +16,7 @@ namespace mtt::renderer {
 
         auto& bidims = stl::vector<muldim::Image>::instance();
         auto& tridims = stl::vector<muldim::Grid>::instance();
-        auto& nanodims = stl::vector<nanovdb::GridHandle<>>::instance();
+        auto& nanodims = stl::vector<volume::Nanovdb_Volume::Grid>::instance();
 
         auto bsize = stack.bufs.size();
         auto vsize = vector.size();

@@ -4,7 +4,7 @@
 namespace mtt::renderer {
     struct Renderer::Impl final {
         Descriptor desc;
-        auto trace() noexcept -> void;
-        auto wave() noexcept -> void;
+        auto trace(cref<scene::Args> args) noexcept -> void;
+        auto wave(cref<scene::Args> args) noexcept -> void;
     };
 }

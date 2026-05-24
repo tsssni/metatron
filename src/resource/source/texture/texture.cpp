@@ -19,6 +19,8 @@ namespace mtt::texture {
             Constant_Vector_Texture,
             Image_Vector_Texture
         );
+        stl::vector<muldim::Image>::instance().init();
+        stl::vector<math::Planar_Distribution>::instance().init();
     }
 
     auto Spectrum_Texture::init() noexcept -> void {

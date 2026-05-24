@@ -132,14 +132,15 @@ namespace mtt::scene {
         trace(math::proxy::Transform::entity("/hierarchy/light"), parents, children);
     }
 
-    auto run() noexcept -> void {
+    auto run(cref<Args> args) noexcept -> void {
         using namespace photo;
         auto& hierarchy = Hierarchy::instance();
-        auto& args = Args::instance();
 
         MTT_DESERIALIZE_CALLBACK([]{}, []{
             merge(); trace();
         }, Local_Transform, Look_At_Transform);
+        stl::vector<math::Transform>::instance().init();
+
         spectra::Spectrum::init();
         color::proxy::Color_Space::init();
         shape::Shape::init();
@@ -189,6 +190,6 @@ namespace mtt::scene {
             renderer = make_obj<renderer::Renderer>(std::move(desc));
         });
         hierarchy.populate(args.scene);
-        renderer->render();
+        renderer->render(args);
     }
 }
