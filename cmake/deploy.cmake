@@ -48,22 +48,6 @@ function(release)
         FILES_MATCHING PATTERN "*.hpp"
     )
 
-    # Inject the prelude include at the top of every installed header so
-    # downstream code that uses prelude aliases (cref<T>, f32, ...) compiles
-    # without any extra compile flag. The prelude itself is skipped.
-    install(CODE [[
-        file(GLOB_RECURSE _hpps "${CMAKE_INSTALL_PREFIX}/include/metatron/*.hpp")
-        set(_prelude "${CMAKE_INSTALL_PREFIX}/include/metatron/core/prelude/prelude.hpp")
-        foreach(_h ${_hpps})
-            if(NOT _h STREQUAL _prelude)
-                file(READ "${_h}" _content)
-                if(NOT _content MATCHES "metatron/core/prelude/prelude\\.hpp")
-                    file(WRITE "${_h}" "#include <metatron/core/prelude/prelude.hpp>\n${_content}")
-                endif()
-            endif()
-        endforeach()
-    ]])
-
     install(
         EXPORT metatron-targets
         FILE metatron-targets.cmake

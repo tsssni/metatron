@@ -19,6 +19,7 @@
 #include <metatron/resource/texture/texture.hpp>
 #include <metatron/resource/bsdf/bsdf.hpp>
 #include <metatron/core/stl/print.hpp>
+#include <metatron/core/stl/chrono.hpp>
 
 namespace mtt::scene {
     struct Local_Transform final {
@@ -135,6 +136,7 @@ namespace mtt::scene {
     auto run(cref<Args> args) noexcept -> void {
         using namespace photo;
         auto& hierarchy = Hierarchy::instance();
+        auto timer = stl::timer{};
 
         MTT_DESERIALIZE_CALLBACK([]{}, []{
             merge(); trace();
@@ -180,16 +182,17 @@ namespace mtt::scene {
             stl::json::load(j.serialized.str, desc);
 
             if (gpu && !desc.accel.is<accel::HWBVH>()) {
-                stl::print("fallback to HWBVH on gpu");
+                stl::print("fallback to HWBVH on GPU");
                 desc.accel = accel::Acceleration::entity("/renderer/default/accel");
             } else if (!gpu && desc.accel.is<accel::HWBVH>()) {
-                stl::print("fallback to LBVH on cpu");
+                stl::print("fallback to LBVH on CPU");
                 accel::Acceleration::push<accel::LBVH>("/renderer/default/bccel", {{}});
                 desc.accel = accel::Acceleration::entity("/renderer/default/bccel");
             }
             renderer = make_obj<renderer::Renderer>(std::move(desc));
         });
         hierarchy.populate(args.scene);
+        stl::print("init duration: {:.3}s", timer.t<f64, stl::seconds>());
         renderer->render(args);
     }
 }

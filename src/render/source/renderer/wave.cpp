@@ -12,8 +12,7 @@
 #include <metatron/network/remote/preview.hpp>
 #include <metatron/core/math/bit.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/progress.hpp>
-#include <random>
+#include <metatron/core/stl/chrono.hpp>
 
 namespace mtt::renderer {
     auto upload(

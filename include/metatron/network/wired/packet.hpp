@@ -1,8 +1,8 @@
 #pragma once
 #include <string>
+#include <cstring>
 #include <span>
 #include <vector>
-#include <cstdint>
 
 namespace mtt::wired {
     struct Packet final {

@@ -1,7 +1,7 @@
 #include "renderer.hpp"
 #include <metatron/network/remote/preview.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/progress.hpp>
+#include <metatron/core/stl/chrono.hpp>
 #include <metatron/core/stl/memory.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <random>

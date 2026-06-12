@@ -42,8 +42,5 @@ function(prepare)
     add_library(metatron-build INTERFACE)
     predefine()
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE PARENT_SCOPE)
-
-    # All modules share one include tree and one auto-included prelude.
     include_directories(${CMAKE_SOURCE_DIR}/include)
-    add_compile_options(-include ${CMAKE_SOURCE_DIR}/include/metatron/core/prelude/prelude.hpp)
 endfunction()
