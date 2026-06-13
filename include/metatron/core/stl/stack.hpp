@@ -23,33 +23,30 @@ namespace mtt::stl {
 
     struct stack final: singleton<stack> {
         using deleter = void(*)(mut<buf>);
-        std::vector<mut<buf>> bufs;
-        std::vector<deleter> deleters;
-        std::atomic_flag flag;
+        auto static constexpr max_idx = 1 << 20;
+
+        std::array<std::atomic<mut<buf>>, max_idx> bufs;
+        std::array<std::atomic<deleter>, max_idx> deleters;
+        std::atomic<u32> length = 0;
 
         auto push(mut<buf> buf, deleter f) noexcept -> void {
-            while (flag.test_and_set(std::memory_order::acquire));
-            buf->idx = bufs.size();
-            if (bufs.size() >= math::maxv<u32>)
-                stl::abort("stack overflow");
-            bufs.push_back(buf);
-            deleters.push_back(f);
-            flag.clear(std::memory_order::release);
+            buf->idx = length.fetch_add(1, std::memory_order::relaxed);
+            if (buf->idx >= max_idx) stl::abort("stack overflow");
+            deleters[buf->idx].store(f, std::memory_order::release);
+            bufs[buf->idx].store(buf, std::memory_order::release);
         }
 
         auto swap(mut<buf> buf) noexcept -> void {
             if (buf->idx == math::maxv<u32>) return;
-            while (flag.test_and_set(std::memory_order::acquire));
-            if (bufs[buf->idx] != buf) bufs[buf->idx] = buf;
-            flag.clear(std::memory_order::release);
+            bufs[buf->idx].store(buf, std::memory_order::release);
         }
 
         auto release(mut<buf> buf) noexcept -> void {
-            if (buf->idx == math::maxv<u32>) return;
-            auto idx = buf->idx;
-            if (bufs[idx] == buf)
-                deleters[buf->idx](buf);
+            if (buf->idx != math::maxv<u32> && bufs[buf->idx].load(std::memory_order::acquire) == buf)
+                deleters[buf->idx].load(std::memory_order::acquire)(buf);
         }
+
+        auto size() noexcept -> usize { return length.load(std::memory_order::relaxed); }
     };
 }
 

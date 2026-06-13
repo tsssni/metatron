@@ -89,7 +89,7 @@ namespace mtt::stl {
             for (auto p = (u32)(std::hash<std::string_view>{}(path) & slot_mask);;p = (p + 1) & slot_mask) {
                 auto& slot = *(exchange<true>(slots, p, sizeof(u32), math::maxv<u32>) + (p & block_mask));
                 auto s = slot.load(std::memory_order::acquire);
-                if (s == math::maxv<u32> && slot.compare_exchange_strong(s, idx, std::memory_order::release, std::memory_order::acquire)) break;
+                if (s == math::maxv<u32> && slot.compare_exchange_strong(s, idx, std::memory_order::release, std::memory_order::relaxed)) break;
                 // concurrent emplace with same path is not allowed
             }
             return idx;

@@ -18,7 +18,7 @@ namespace mtt::renderer {
         auto& tridims = stl::vector<muldim::Grid>::instance();
         auto& nanodims = stl::vector<volume::Nanovdb_Volume::Grid>::instance();
 
-        auto bsize = stack.bufs.size();
+        auto bsize = stack.size();
         auto vsize = vector.size();
         auto nsize = nanodims.size();
         auto isize = bidims.size();
@@ -49,7 +49,7 @@ namespace mtt::renderer {
 
             auto i = 0;
             while ((i = bc->fetch_add(1, std::memory_order::relaxed)) < bsize) {
-                auto& buf = stack.bufs[i];
+                auto buf = stack.bufs[i].load(std::memory_order::acquire);
                 if (buf->idx != i) continue;
 
                 auto buffer = make_desc<opaque::Buffer>({
