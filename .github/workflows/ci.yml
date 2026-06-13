@@ -1,0 +1,70 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CACHIX_CACHE: tsssni
+  NIX_EXTRA_CONF: |
+    experimental-features = nix-command flakes pipe-operators
+  NIX_EXTRA_SUBSTITUTERS: |
+    extra-substituters = https://nix-community.cachix.org
+    extra-substituters = https://cache.nixos-cuda.org
+    extra-substituters = https://jovian.cachix.org
+    extra-trusted-public-keys = nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
+    extra-trusted-public-keys = cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M=
+    extra-trusted-public-keys = jovian.cachix.org-1:8Vq4Txku6VZIRhYrHYki3Ab9XHJRoWmdYqMqj4rB/Uc=
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { system: x86_64-linux, os: ubuntu-latest, platform: linux }
+          - { system: aarch64-linux, os: ubuntu-24.04-arm, platform: linux }
+          - { system: aarch64-darwin, os: macos-26, platform: darwin }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: nothing-but-nix
+        if: matrix.platform == 'linux'
+        uses: wimpysworld/nothing-but-nix@main
+      - name: nix
+        uses: DeterminateSystems/nix-installer-action@v22
+        with:
+          extra-conf: |
+            ${{ env.NIX_EXTRA_CONF }}
+            ${{ matrix.platform == 'linux' && 'build-dir = /nix/build' || '' }}
+      - name: cachix
+        uses: cachix/cachix-action@v17
+        with:
+          name: ${{ env.CACHIX_CACHE }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: substituters
+        shell: bash
+        run: |
+          mkdir -p ~/.config/nix
+          printf '%s\n' "$NIX_EXTRA_SUBSTITUTERS" >> ~/.config/nix/nix.conf
+          nix show-config | grep -E "^(substituters|trusted-public-keys) ="
+      - name: build
+        shell: bash
+        run: |
+          set -euo pipefail
+          attr=".#packages.${{ matrix.system }}.default"
+          echo "::group::nix build $attr"
+          nix build --no-link --print-build-logs "$attr"
+          echo "::endgroup::"
