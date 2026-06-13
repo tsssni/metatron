@@ -1,5 +1,4 @@
 #include <metatron/resource/texture/image.hpp>
-#include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/stl/thread.hpp>
 
@@ -10,7 +9,7 @@ namespace mtt::texture {
         if (desc.distr != Image_Distribution::none) {
             auto size = uzv2{tex.size};
             auto pdf = std::vector<f32>(math::prod(size));
-            stl::scheduler::instance().sync_parallel(size, [&](auto px) mutable {
+            stl::scheduler::sync_parallel(size, [&](auto px) mutable {
                 auto c = fv4{tex[px[0], px[1]]};
                 auto w = 1.f;
                 if (desc.distr == Image_Distribution::spherical) {
@@ -21,12 +20,10 @@ namespace mtt::texture {
                 pdf[px[0] + px[1] * size[0]] = math::avg(math::shrink(c)) * w;
             });
 
-            auto& vec = stl::vector<math::Planar_Distribution>::instance();
-            distr = vec.emplace_back(std::span{pdf}, math::reverse(size), fv2{0.f}, fv2{1.f});
+            distr = stl::vector<math::Planar_Distribution>::emplace_back(std::span{pdf}, math::reverse(size), fv2{0.f}, fv2{1.f});
         }
 
-        auto& vec = stl::vector<muldim::Image>::instance();
-        texture = vec.push_back(std::move(tex));
+        texture = stl::vector<muldim::Image>::push_back(std::move(tex));
     }
 
     auto Image_Vector_Texture::operator()(

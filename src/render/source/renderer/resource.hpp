@@ -1,6 +1,4 @@
 #pragma once
-#include <metatron/device/opaque/buffer.hpp>
-#include <metatron/device/opaque/buffer.hpp>
 #include <metatron/device/opaque/image.hpp>
 #include <metatron/device/opaque/grid.hpp>
 

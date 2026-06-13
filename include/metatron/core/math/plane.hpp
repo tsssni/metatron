@@ -1,5 +1,4 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/ray.hpp>
 
 namespace mtt::math {

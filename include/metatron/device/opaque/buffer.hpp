@@ -1,7 +1,6 @@
 #pragma once
 #include <metatron/device/command/queue.hpp>
 #include <metatron/core/math/vector.hpp>
-#include <metatron/core/stl/capsule.hpp>
 #include <metatron/core/stl/stack.hpp>
 
 namespace mtt::opaque {

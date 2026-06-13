@@ -1,8 +1,4 @@
 #include <metatron/render/monte-carlo/radiative.hpp>
-#include <metatron/core/math/distribution/discrete.hpp>
-#include <metatron/core/math/quaternion.hpp>
-#include <metatron/core/math/arithmetic.hpp>
-#include <metatron/core/math/plane.hpp>
 
 namespace mtt::monte_carlo {
     Radiative_Integrator::Radiative_Integrator(cref<Descriptor>) noexcept {}

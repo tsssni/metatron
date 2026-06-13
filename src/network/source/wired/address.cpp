@@ -1,5 +1,4 @@
 #include <metatron/network/wired/address.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::wired {
     Address::Address(std::string_view address) noexcept {

@@ -1,9 +1,5 @@
 #pragma once
-#include <metatron/core/math/matrix.hpp>
-#include <metatron/core/math/vector.hpp>
-#include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/protocol.hpp>
-#include <metatron/core/stl/ranges.hpp>
 #include <metatron/core/stl/stack.hpp>
 
 namespace mtt::math {

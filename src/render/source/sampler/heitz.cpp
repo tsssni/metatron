@@ -1,10 +1,6 @@
 #include <metatron/render/sampler/heitz.hpp>
-#include <metatron/core/math/arithmetic.hpp>
-#include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/hash.hpp>
-#include <metatron/core/stl/print.hpp>
 #include <heitz/heitz.h>
-#include <cstring>
 
 namespace mtt::sampler {
     buf<u32> Heitz_Sampler::heitz_sobol;

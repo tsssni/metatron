@@ -2,8 +2,6 @@
 #include <metatron/render/emitter/emitter.hpp>
 #include <metatron/render/accel/accel.hpp>
 #include <metatron/render/photo/camera.hpp>
-#include <metatron/resource/media/medium.hpp>
-#include <metatron/resource/spectra/stochastic.hpp>
 
 namespace mtt::monte_carlo {
     struct Context final {

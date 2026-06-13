@@ -1,8 +1,8 @@
 #pragma once
 #include <string>
+#include <cstring>
 #include <span>
 #include <vector>
-#include <cstdint>
 
 namespace mtt::wired {
     struct Packet final {
@@ -18,7 +18,7 @@ namespace mtt::wired {
 
         template<typename T>
         auto emplace(std::span<T> span) noexcept -> void {
-            if constexpr (std::is_same_v<T, std::string_view>) {
+            if constexpr (std::same_as<T, std::string_view>) {
                 for (auto str: span) emplace(str);
             } else {
                 auto size = span.size() * sizeof(T);

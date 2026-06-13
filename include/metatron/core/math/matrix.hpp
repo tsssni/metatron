@@ -1,8 +1,6 @@
 #pragma once
-#include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/optional.hpp>
-#include <algorithm>
 #include <array>
 #include <span>
 #include <tuple>
@@ -19,7 +17,7 @@ namespace mtt::math {
         auto constexpr static dimensions = std::array<usize, 1 + sizeof...(rest_dims)>{first_dim, rest_dims...};
 
         constexpr Matrix() noexcept {
-            if constexpr (std::is_floating_point_v<Element> || std::is_integral_v<Element>)
+            if constexpr (std::floating_point<Element> || std::integral<Element>)
                 storage.fill(Element{0});
             else
                 storage.fill(Element{});
@@ -35,7 +33,7 @@ namespace mtt::math {
 
         // make convertible elements accepatable by 1d matrix intialization
         template<typename E>
-        requires (dimensions.size() == 1uz && std::is_convertible_v<E, Element>)
+        requires (dimensions.size() == 1uz && std::convertible_to<E, Element>)
         constexpr Matrix(std::initializer_list<E const> initializer_list) noexcept {
             if (initializer_list.size() > 1)
                 std::copy_n(initializer_list.begin(), math::min(first_dim, initializer_list.size()), storage.begin());
@@ -44,7 +42,7 @@ namespace mtt::math {
         }
 
         template<typename E>
-        requires std::is_convertible_v<E, Element>
+        requires std::convertible_to<E, Element>
         constexpr Matrix(std::span<E const> initializer_list) noexcept
         {
             if (initializer_list.size() > 1)
@@ -54,7 +52,7 @@ namespace mtt::math {
         }
 
         template<typename U>
-        requires std::is_convertible_v<U, T>
+        requires std::convertible_to<U, T>
         explicit constexpr Matrix(U&& scalar) noexcept {
             if constexpr (dimensions.size() == 1) {
                 storage.fill(scalar);
@@ -69,7 +67,7 @@ namespace mtt::math {
 
         template<typename... Args>
         requires (true
-        && (std::is_convertible_v<Args, T> && ...)
+        && (std::convertible_to<Args, T> && ...)
         && dimensions.size() > 1
         && sizeof...(Args) <= math::min(*(dimensions.end() - 2), *(dimensions.end() - 1))
         )
@@ -84,8 +82,8 @@ namespace mtt::math {
 
         template<typename U, typename... Args, usize rhs_first_dim>
         requires (true
-        && std::is_convertible_v<U, T>
-        && (std::is_convertible_v<Args, Element> && ...)
+        && std::convertible_to<U, T>
+        && (std::convertible_to<Args, Element> && ...)
         )
         constexpr Matrix(cref<Matrix<U, rhs_first_dim, rest_dims...>> rhs, Args&&... rest) noexcept {
             *this = rhs;
@@ -97,8 +95,8 @@ namespace mtt::math {
 
         template<typename U, typename... Args, usize rhs_first_dim>
         requires (true
-        && std::is_convertible_v<U, T>
-        && (std::is_convertible_v<Args, Element> && ...)
+        && std::convertible_to<U, T>
+        && (std::convertible_to<Args, Element> && ...)
         )
         constexpr Matrix(Matrix<U, rhs_first_dim, rest_dims...>&& rhs, Args&&... rest) noexcept {
             *this = std::move(rhs);
@@ -130,7 +128,7 @@ namespace mtt::math {
 
         template<typename U, usize rhs_first_dim, usize... rhs_rest_dims>
         requires true
-        && std::is_convertible_v<U, T>
+        && std::convertible_to<U, T>
         && (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
         auto constexpr operator=(cref<Matrix<U, rhs_first_dim, rhs_rest_dims...>> rhs) noexcept -> ref<Matrix> {
             std::copy_n(rhs.storage.begin(), math::min(first_dim, rhs_first_dim), storage.begin());
@@ -139,7 +137,7 @@ namespace mtt::math {
 
         template<typename U, usize rhs_first_dim, usize... rhs_rest_dims>
         requires true
-        && std::is_convertible_v<U, T>
+        && std::convertible_to<U, T>
         && (sizeof...(rest_dims) == sizeof...(rhs_rest_dims))
         auto constexpr operator=(Matrix<U, rhs_first_dim, rhs_rest_dims...>&& rhs) noexcept -> ref<Matrix> {
             std::move(rhs.storage.begin(), rhs.storage.begin() + math::min(first_dim, rhs_first_dim), storage.begin());

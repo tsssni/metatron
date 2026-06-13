@@ -1,5 +1,4 @@
 #include <metatron/resource/material/interface.hpp>
-#include <metatron/resource/bsdf/interface.hpp>
 
 namespace mtt::material {
     Interface_Material::Interface_Material(cref<Descriptor>) noexcept {}

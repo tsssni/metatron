@@ -1,11 +1,7 @@
 #include <metatron/render/sampler/z-sobol.hpp>
 #include <metatron/core/math/low-discrepancy.hpp>
 #include <metatron/core/math/encode.hpp>
-#include <metatron/core/math/hash.hpp>
-#include <metatron/core/math/vector.hpp>
 #include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/print.hpp>
-#include <fstream>
 
 namespace mtt::sampler {
     buf<u32> Z_Sobol_Sampler::sobol_matrices;

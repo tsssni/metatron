@@ -1,6 +1,5 @@
 #include <metatron/render/sampler/independent.hpp>
 #include <metatron/core/math/hash.hpp>
-#include <cstring>
 
 namespace mtt::sampler {
     auto Independent_Sampler::start(ref<Context> ctx) const noexcept -> void {

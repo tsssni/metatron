@@ -1,7 +1,5 @@
 #pragma once
 #include <metatron/resource/color/color-space.hpp>
-#include <metatron/core/math/vector.hpp>
-#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::spectra {
     // method: https://jo.dreggn.org/home/2019_wide_gamut.pdf

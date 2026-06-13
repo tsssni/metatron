@@ -1,9 +1,5 @@
 #include <metatron/resource/spectra/spectrum.hpp>
-#include <metatron/resource/color/color-space.hpp>
 #include <metatron/resource/serde/serde.hpp>
-#include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::spectra {
     auto Spectrum::init() noexcept -> void {
@@ -48,7 +44,7 @@ namespace mtt::spectra {
         })
         | std::ranges::to<std::vector<std::filesystem::path>>();
 
-        stl::scheduler::instance().sync_parallel(uzv1{spectra.size()}, [&](auto idx) {
+        stl::scheduler::sync_parallel(uzv1{spectra.size()}, [&](auto idx) {
             auto [i] = idx;
             auto path = spectra[i];
             auto ext = path.extension();

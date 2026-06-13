@@ -13,8 +13,7 @@ namespace mtt::filter {
             }
         }
 
-        auto& vec = stl::vector<math::Planar_Distribution>::instance();
-        distr = vec.emplace_back(
+        distr = stl::vector<math::Planar_Distribution>::emplace_back(
             std::span{matrix.data(), matrix.size()},
             iv2{64, 64},
             fv2{-radius[1], -radius[0]},

@@ -1,6 +1,4 @@
 #include <metatron/resource/media/homogeneous.hpp>
-#include <metatron/resource/phase/henyey-greenstein.hpp>
-#include <metatron/resource/spectra/constant.hpp>
 #include <metatron/core/math/distribution/exponential.hpp>
 
 namespace mtt::media {

@@ -1,10 +1,8 @@
 #include <metatron/render/accel/hwbvh.hpp>
-#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::accel {
     HWBVH::HWBVH(cref<Descriptor>) noexcept {
-        auto& dividers = stl::vector<Divider>::instance();
-        idx = dividers.storage();
+        idx = stl::vector<Divider>::storage();
     }
 
     auto HWBVH::operator()(

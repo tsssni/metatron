@@ -1,5 +1,4 @@
 #pragma once
-#include <metatron/device/command/buffer.hpp>
 #include <metatron/device/shader/pipeline.hpp>
 
 namespace mtt::encoder {

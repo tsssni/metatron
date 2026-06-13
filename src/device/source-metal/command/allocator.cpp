@@ -2,7 +2,7 @@
 
 namespace mtt::command {
     Memory::Memory(u32 type, u32 flags) noexcept {
-        auto& ctx = Context::instance().impl;
+        auto& ctx = Context::internal();
         auto device = ctx->device.get();
         auto desc = MTL::HeapDescriptor::alloc()->init();
         desc->setSize(memory_size);
@@ -18,7 +18,7 @@ namespace mtt::command {
     Memory::~Memory() noexcept {}
 
     Allocator::Allocator() noexcept {
-        auto& ctx = Context::instance().impl;
+        auto& ctx = Context::internal();
         heaps.resize(num_heaps);
         offsets.resize(heaps.size());
         locks.resize(heaps.size());

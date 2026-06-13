@@ -1,19 +1,11 @@
-#include <metatron/resource/color/color-space.hpp>
-#include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/resource/serde/serde.hpp>
-#include <metatron/core/math/arithmetic.hpp>
-#include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/print.hpp>
-#include <fstream>
-#include <cstring>
 
 namespace mtt::color {
     auto proxy::Color_Space::init() noexcept -> void {
         Transfer_Function::init();
 
-        auto& cvec = stl::vector<color::Color_Space>::instance(); cvec.init();
+        using cvec = stl::vector<color::Color_Space>; cvec::init();
         auto cs_name = std::to_array<std::string>({"sRGB"});
         auto red_primitive = std::to_array<fv2>({{0.64f, 0.33f}});
         auto green_primitive = std::to_array<fv2>({{0.30f, 0.60f}});
@@ -21,9 +13,9 @@ namespace mtt::color {
         auto white_point = std::to_array<std::string>({"CIE-D65"});
         auto transfer_function_name = std::to_array<std::string>({"Rec709"});
 
-        stl::scheduler::instance().sync_parallel(uzv1{cs_name.size()}, [&](auto idx) {
+        stl::scheduler::sync_parallel(uzv1{cs_name.size()}, [&](auto idx) {
             auto i = idx[0];
-            cvec.push("/color-space/" + cs_name[i], color::Color_Space{
+            cvec::push("/color-space/" + cs_name[i], color::Color_Space{
                 cs_name[i],
                 red_primitive[i],
                 green_primitive[i],

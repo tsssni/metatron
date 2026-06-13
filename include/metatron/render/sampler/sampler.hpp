@@ -1,5 +1,4 @@
 #pragma once
-#include <metatron/render/sampler/context.hpp>
 #include <metatron/render/sampler/independent.hpp>
 #include <metatron/render/sampler/halton.hpp>
 #include <metatron/render/sampler/z-sobol.hpp>

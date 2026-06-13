@@ -1,7 +1,5 @@
 #pragma once
 #include <metatron/render/emitter/interaction.hpp>
-#include <metatron/core/math/distribution/discrete.hpp>
-#include <metatron/core/stl/stack.hpp>
 
 namespace mtt::emitter {
     struct Uniform_Emitter final {

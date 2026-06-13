@@ -5,9 +5,8 @@
 
 namespace mtt::opaque {
     Acceleration::Acceleration(cref<Descriptor> desc) noexcept {
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
-        auto& allocator = command::Allocator::instance();
 
         impl->primitives.resize(desc.primitives.size());
         impl->primitives_descs.resize(desc.primitives.size());
@@ -24,7 +23,7 @@ namespace mtt::opaque {
             } else bbox_offsets[i + 1] = bbox_offsets[i];
         auto bboxes_data = std::vector<math::Bounding_Box>(bbox_size * num_bboxes);
 
-        stl::scheduler::instance().sync_parallel(uzv1{desc.primitives.size()}, [&](auto idx) {
+        stl::scheduler::sync_parallel(uzv1{desc.primitives.size()}, [&](auto idx) {
             auto [i] = idx;
             auto& prim = desc.primitives[i];
             auto procedural = prim.type == Primitive::Type::aabb;
@@ -41,7 +40,7 @@ namespace mtt::opaque {
         }) : nullptr;
 
         auto primitives = std::vector<mut<NS::Object>>(desc.primitives.size());
-        stl::scheduler::instance().sync_parallel(uzv1{desc.primitives.size()}, [&](auto idx) {
+        stl::scheduler::sync_parallel(uzv1{desc.primitives.size()}, [&](auto idx) {
             auto [i] = idx;
             auto& prim = desc.primitives[i];
             auto procedural = prim.type == Primitive::Type::aabb;
@@ -83,7 +82,7 @@ namespace mtt::opaque {
             });
 
             auto sa = device->heapAccelerationStructureSizeAndAlign(pesc);
-            auto alloc = allocator.allocate(u32(command::Memory::Impl::Type::local), 0, sa.align, sa.size);
+            auto alloc = command::Allocator::allocate(u32(command::Memory::Impl::Type::local), 0, sa.align, sa.size);
             auto heap = alloc.memory->impl->heap.get();
             impl->primitives[i] = heap->newAccelerationStructure(sa.size, alloc.offset);
             impl->primitives_descs[i] = pesc->retain();
@@ -91,7 +90,7 @@ namespace mtt::opaque {
         });
 
         auto instances_data = std::vector<MTL::AccelerationStructureInstanceDescriptor>(desc.instances.size());
-        stl::scheduler::instance().sync_parallel(uzv1{desc.instances.size()}, [&](auto idx) {
+        stl::scheduler::sync_parallel(uzv1{desc.instances.size()}, [&](auto idx) {
             auto [i] = idx;
             auto& instance = desc.instances[i];
             auto& info = instances_data[i];
@@ -128,7 +127,7 @@ namespace mtt::opaque {
         });
 
         auto sa = device->heapAccelerationStructureSizeAndAlign(iesc);
-        auto alloc = allocator.allocate(u32(command::Memory::Impl::Type::local), 0, sa.align, sa.size);
+        auto alloc = command::Allocator::allocate(u32(command::Memory::Impl::Type::local), 0, sa.align, sa.size);
         auto heap = alloc.memory->impl->heap.get();
         impl->instances = heap->newAccelerationStructure(sa.size, alloc.offset);
         impl->instances_desc = iesc->retain();

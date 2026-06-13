@@ -3,7 +3,7 @@
 
 namespace mtt::command {
     Timeline::Timeline(bool shared) noexcept {
-        auto& ctx = Context::instance().impl;
+        auto& ctx = Context::internal();
         auto device = ctx->device.get();
         if (shared) {
             impl->shared = device->newSharedEvent();

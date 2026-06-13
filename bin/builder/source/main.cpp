@@ -26,6 +26,6 @@ auto main(i32 argc, mut<char> argv[]) noexcept -> i32 {
 
     auto directory = argparser.get<std::string>("-d");
     auto output = argparser.get<std::string>("-o");
-    shader::Compiler::instance().build(directory, output);
+    shader::Compiler::build(directory, output);
     return 0;
 }

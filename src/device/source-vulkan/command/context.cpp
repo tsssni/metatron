@@ -1,12 +1,4 @@
-#include "context.hpp"
-#include "queue.hpp"
 #include "../shader/argument.hpp"
-#include "../shader/pipeline.hpp"
-#include <metatron/device/command/context.hpp>
-#include <metatron/device/shader/pipeline.hpp>
-#include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/print.hpp>
-#include <metatron/core/math/vector.hpp>
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
@@ -250,5 +242,9 @@ namespace mtt::command {
 
     auto Context::init() noexcept -> void {
         Context::instance();
+    }
+
+    auto Context::internal() noexcept -> ref<stl::capsule<Context>::Impl> {
+        return instance().impl;
     }
 }

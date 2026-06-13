@@ -1,17 +1,13 @@
-#include <metatron/resource/serde/hierarchy.hpp>
 #include <metatron/resource/serde/reflection.hpp>
-#include <metatron/core/stl/vector.hpp>
-#include <metatron/core/stl/array.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::scene {
-    template<typename T>
-    auto attach(auto&& vec, cref<json> j, std::string_view type) noexcept -> bool {
+    template<typename V, typename T>
+    auto attach(cref<json> j, std::string_view type) noexcept -> bool {
         if (j.type != type) return false;
         auto d = T{};
         stl::json::load(j.serialized.str, d);
-        vec.template push<T>(j.entity, std::move(d));
+        V::template push<T>(j.entity, std::move(d));
         return true;
     }
 
@@ -21,9 +17,8 @@ namespace mtt::scene {
         auto (*pre)() -> void,
         auto (*post)() -> void
     ) noexcept -> void {
-        auto& vec = stl::vector<Ts...>::instance();
-        vec.init();
-        Hierarchy::instance().filter([&vec, type = std::move(type), pre, post](auto bins) {
+        stl::vector<Ts...>::init();
+        Hierarchy::filter([type = std::move(type), pre, post](auto bins) {
             using ts = stl::array<Ts...>;
             pre();
 
@@ -32,10 +27,10 @@ namespace mtt::scene {
             | std::views::join
             | std::ranges::to<std::vector<json>>();
 
-            stl::scheduler::instance().sync_parallel(uzv1{list.size()}, [&vec, &list, &type](auto idx) {
+            stl::scheduler::sync_parallel(uzv1{list.size()}, [&list, &type](auto idx) {
                 auto [i] = idx;
                 auto j = std::move(list[i]);
-                auto v = false || (attach<Ts>(vec, j, type[ts::template index<Ts>]) || ...);
+                auto v = (attach<stl::vector<Ts...>, Ts>(j, type[ts::template index<Ts>]) || ...);
                 if (!v) stl::abort("deserialize {} with invalid type {}", j.serialized.str, j.type);
             });
             post();

@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/device/command/timeline.hpp>
-#include <metatron/core/stl/capsule.hpp>
 #include <metatron/core/stl/singleton.hpp>
 #include <queue>
 

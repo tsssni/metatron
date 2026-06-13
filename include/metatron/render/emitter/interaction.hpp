@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/resource/light/light.hpp>
-#include <metatron/core/math/transform.hpp>
 
 namespace mtt::emitter {
     struct Interaction final {

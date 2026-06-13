@@ -1,12 +1,4 @@
 #include "argument.hpp"
-#include "../command/buffer.hpp"
-#include "../opaque/buffer.hpp"
-#include "../opaque/image.hpp"
-#include "../opaque/grid.hpp"
-#include "../opaque/sampler.hpp"
-#include <metatron/device/shader/layout.hpp>
-#include <metatron/device/encoder/transfer.hpp>
-#include <metatron/core/math/bit.hpp>
 
 namespace mtt::shader {
     Argument::Argument(cref<Descriptor> desc) noexcept {
@@ -53,7 +45,7 @@ namespace mtt::shader {
             });
         }
 
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
         impl->layout = command::guard(device.createDescriptorSetLayoutUnique({
             .flags = vk::DescriptorSetLayoutCreateFlagBits::eDescriptorBufferEXT,

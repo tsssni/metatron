@@ -1,12 +1,7 @@
 #pragma once
 #include <metatron/resource/serde/hierarchy.hpp>
 #include <metatron/resource/color/color-space.hpp>
-#include <metatron/core/math/matrix.hpp>
 #include <metatron/core/math/quaternion.hpp>
-#include <metatron/core/stl/vector.hpp>
-#include <metatron/core/stl/protocol.hpp>
-#include <metatron/core/stl/json.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace glz {
     template<>

@@ -1,10 +1,5 @@
 #include "pipeline.hpp"
 #include "argument.hpp"
-#include <metatron/device/shader/layout.hpp>
-#include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/json.hpp>
-#include <metatron/core/stl/ranges.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::shader {
     Pipeline::Pipeline(cref<Descriptor> desc) noexcept: args(std::move(desc.args)) {
@@ -12,7 +7,7 @@ namespace mtt::shader {
         auto ir_path = stl::path{base_path}.concat(".spirv");
         auto spirv = stl::filesystem::load(stl::filesystem::find(ir_path), std::ios::binary);
 
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
         auto cache = ctx->pipeline_cache.get();
 

@@ -1,7 +1,6 @@
 #pragma once
 #include <metatron/resource/light/interaction.hpp>
 #include <metatron/resource/shape/shape.hpp>
-#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::light {
     struct Area_Light final {

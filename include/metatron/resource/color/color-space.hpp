@@ -1,11 +1,7 @@
 #pragma once
 #include <metatron/resource/color/transfer-function.hpp>
 #include <metatron/resource/spectra/interaction.hpp>
-#include <metatron/core/math/vector.hpp>
-#include <metatron/core/stl/protocol.hpp>
-#include <metatron/core/stl/vector.hpp>
 #include <metatron/core/stl/stack.hpp>
-#include <functional>
 
 namespace mtt::color {
     struct Color_Space final {

@@ -1,8 +1,5 @@
 #include <metatron/render/photo/film.hpp>
 #include <metatron/resource/serde/serde.hpp>
-#include <metatron/core/math/constant.hpp>
-#include <metatron/core/math/arithmetic.hpp>
-#include <metatron/core/stl/thread.hpp>
 
 namespace mtt::photo {
     muldim::Image Film::image;

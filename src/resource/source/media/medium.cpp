@@ -1,5 +1,4 @@
 #include <metatron/resource/media/medium.hpp>
-#include <metatron/resource/phase/henyey-greenstein.hpp>
 #include <metatron/resource/serde/serde.hpp>
 
 namespace glz {

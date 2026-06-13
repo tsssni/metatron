@@ -1,6 +1,5 @@
 #include <metatron/resource/volume/nanovdb.hpp>
 #include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/print.hpp>
 #include <nanovdb/math/SampleFromVoxels.h>
 
 namespace mtt::volume {
@@ -34,8 +33,7 @@ namespace mtt::volume {
 
     Nanovdb_Volume::Nanovdb_Volume(cref<Descriptor> desc) noexcept {
         auto path = stl::filesystem::find(desc.path);
-        auto& vec = stl::vector<Grid>::instance();
-        handle = vec.push_back(nanovdb::io::readGrid(path));
+        handle = stl::vector<Grid>::push_back(nanovdb::io::readGrid(path));
         bbox = from_nanovdb(grid()->worldBBox());
     }
 

@@ -1,9 +1,6 @@
 #include <metatron/render/accel/lbvh.hpp>
-#include <metatron/resource/serde/hierarchy.hpp>
-#include <metatron/resource/serde/args.hpp>
 #include <metatron/core/math/encode.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <ranges>
 
 namespace mtt::accel {
     LBVH::LBVH(cref<Descriptor> desc) noexcept {
@@ -17,11 +14,11 @@ namespace mtt::accel {
             u32 num_prims{0u};
         };
 
-        auto& divs = stl::vector<Divider>::instance();
+        using divs = stl::vector<Divider>;
         auto prims = std::vector<Primitive>{};
         auto bvh = std::vector<Index>{};
-        for (auto i = 0u; i < divs.size(); ++i) {
-            auto& div = divs[i];
+        for (auto i = 0u; i < divs::size(); ++i) {
+            auto& div = *divs::get(i);
             auto s = div.shape;
             for (auto j = 0u; j < s.size(); ++j) {
                 auto lt = div.local_to_render;
@@ -87,7 +84,7 @@ namespace mtt::accel {
             }
         };
         auto lbvh_nodes = std::vector<obj<Node>>(intervals.size());
-        stl::scheduler::instance().sync_parallel(
+        stl::scheduler::sync_parallel(
             uzv1{intervals.size()},
             [&](auto idx) {
                 auto [i] = idx;

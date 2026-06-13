@@ -4,16 +4,9 @@
 #include <metatron/device/encoder/transfer.hpp>
 #include <metatron/device/encoder/argument.hpp>
 #include <metatron/device/encoder/pipeline.hpp>
-#include <metatron/device/opaque/sampler.hpp>
-#include <metatron/device/opaque/accel.hpp>
-#include <metatron/device/shader/argument.hpp>
-#include <metatron/device/shader/pipeline.hpp>
-#include <metatron/resource/bsdf/physical.hpp>
 #include <metatron/network/remote/preview.hpp>
-#include <metatron/core/math/bit.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/progress.hpp>
-#include <random>
+#include <metatron/core/stl/chrono.hpp>
 
 namespace mtt::renderer {
     auto upload(
@@ -34,11 +27,10 @@ namespace mtt::renderer {
         auto previewer = remote::Previewer{addr, "metatron"};
 
         command::Context::init();
-        auto& scheduler = stl::scheduler::instance();
         auto render_queue = make_obj<command::Queue>(command::Type::render);
         auto transfer_queue = make_obj<command::Queue>(command::Type::transfer);
 
-        auto upload_timelines = std::vector<obj<command::Timeline>>(scheduler.size());
+        auto upload_timelines = std::vector<obj<command::Timeline>>(stl::scheduler::size());
         auto render_timeline = make_obj<command::Timeline>(!remote);
         auto shared_timeline = make_obj<command::Timeline>(true);
         auto network_timeline = make_obj<command::Timeline>(true);
@@ -128,7 +120,7 @@ namespace mtt::renderer {
 
         auto threads = uv3{film->width, film->height, 1};
         auto group = uv3{8, 8, 1};
-        auto future = scheduler.async_dispatch(
+        auto future = stl::scheduler::async_dispatch(
         [&, count = remote ? 1 : render_count + 1] mutable {
             auto range = uv2{0, 1};
             auto next = 1u;

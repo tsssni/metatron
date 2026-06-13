@@ -1,8 +1,6 @@
 #pragma once
 #include <metatron/device/opaque/buffer.hpp>
 #include <metatron/resource/shape/mesh.hpp>
-#include <metatron/core/math/vector.hpp>
-#include <metatron/core/math/bounding-box.hpp>
 
 namespace mtt::opaque {
     struct Acceleration final: stl::capsule<Acceleration> {

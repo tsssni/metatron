@@ -8,7 +8,7 @@ namespace mtt::shader {
         auto metal = stl::filesystem::load(stl::filesystem::find(shader_path), {}, true);
         auto src = to_mtl(std::string_view{view<char>(metal.data()), metal.size()});
 
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
         auto options = MTL::CompileOptions::alloc()->init();
         options->setLanguageVersion(MTL::LanguageVersion3_2);

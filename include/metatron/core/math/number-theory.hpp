@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
-#include <tuple>
 
 namespace mtt::math {
     auto inline constexpr gcd(usize a, usize b) noexcept -> usize {

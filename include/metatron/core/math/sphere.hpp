@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
-#include <metatron/core/math/arithmetic.hpp>
 
 namespace mtt::math {
     auto inline constexpr cartesian_to_unit_spherical(cref<fv3> d) noexcept -> fv2 {

@@ -1,10 +1,8 @@
 #pragma once
 #include <metatron/device/shader/layout.hpp>
-#include <metatron/device/opaque/buffer.hpp>
 #include <metatron/device/opaque/image.hpp>
 #include <metatron/device/opaque/grid.hpp>
 #include <metatron/device/command/buffer.hpp>
-#include <metatron/core/stl/capsule.hpp>
 
 namespace mtt::shader {
     template<typename T>

@@ -1,11 +1,7 @@
 #pragma once
-#include <metatron/resource/media/interaction.hpp>
 #include <metatron/resource/media/homogeneous.hpp>
 #include <metatron/resource/media/heterogeneous.hpp>
 #include <metatron/resource/media/vaccum.hpp>
-#include <metatron/core/math/ray.hpp>
-#include <metatron/core/math/eval.hpp>
-#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::media {
     struct Iterator final: stl::variant<Iterator

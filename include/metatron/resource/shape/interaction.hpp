@@ -1,5 +1,4 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/bounding-box.hpp>
 #include <metatron/core/math/eval.hpp>
 

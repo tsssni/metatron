@@ -5,6 +5,13 @@ function(derive unit)
     endif()
     get_property(path TARGET ${target} PROPERTY metatron-path)
     get_property(mode TARGET ${target} PROPERTY metatron-mode)
+    get_property(origin TARGET metatron-build PROPERTY metatron-origin)
+
+    if(${mode} STREQUAL "bin")
+        set_target_properties(${target} PROPERTIES INSTALL_RPATH "${origin}/../lib")
+    elseif(${mode} STREQUAL "lib")
+        set_target_properties(${target} PROPERTIES INSTALL_RPATH "${origin}")
+    endif()
 
     if(EXISTS ${path}/include)
         install(
@@ -35,7 +42,9 @@ function(release)
     get_property(metatron-units TARGET metatron-build PROPERTY metatron-units)
     get_property(metatron-exts TARGET metatron-build PROPERTY metatron-exts)
     get_property(metatron-mods TARGET metatron-build PROPERTY metatron-mods)
+    get_property(origin TARGET metatron-build PROPERTY metatron-origin)
 
+    set_target_properties(metatron PROPERTIES INSTALL_RPATH "${origin}")
     install(
         TARGETS metatron
         EXPORT metatron-targets
@@ -47,22 +56,6 @@ function(release)
         DESTINATION include/metatron
         FILES_MATCHING PATTERN "*.hpp"
     )
-
-    # Inject the prelude include at the top of every installed header so
-    # downstream code that uses prelude aliases (cref<T>, f32, ...) compiles
-    # without any extra compile flag. The prelude itself is skipped.
-    install(CODE [[
-        file(GLOB_RECURSE _hpps "${CMAKE_INSTALL_PREFIX}/include/metatron/*.hpp")
-        set(_prelude "${CMAKE_INSTALL_PREFIX}/include/metatron/core/prelude/prelude.hpp")
-        foreach(_h ${_hpps})
-            if(NOT _h STREQUAL _prelude)
-                file(READ "${_h}" _content)
-                if(NOT _content MATCHES "metatron/core/prelude/prelude\\.hpp")
-                    file(WRITE "${_h}" "#include <metatron/core/prelude/prelude.hpp>\n${_content}")
-                endif()
-            endif()
-        endforeach()
-    ]])
 
     install(
         EXPORT metatron-targets
@@ -99,6 +92,7 @@ function(release)
     install(
         DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/shader/
         DESTINATION share/metatron/shader
+        PATTERN "cache.json" EXCLUDE
     )
 endfunction()
 

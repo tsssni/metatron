@@ -2,8 +2,6 @@
 #include <metatron/render/photo/film.hpp>
 #include <metatron/render/photo/lens/lens.hpp>
 #include <metatron/render/sampler/sampler.hpp>
-#include <metatron/core/math/vector.hpp>
-#include <metatron/core/math/ray.hpp>
 
 namespace mtt::photo {
     struct Interaction final {

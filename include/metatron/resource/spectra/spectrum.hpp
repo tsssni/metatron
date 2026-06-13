@@ -4,10 +4,7 @@
 #include <metatron/resource/spectra/blackbody.hpp>
 #include <metatron/resource/spectra/visible.hpp>
 #include <metatron/resource/spectra/discrete.hpp>
-#include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/eval.hpp>
-#include <metatron/core/stl/vector.hpp>
-#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::spectra {
     struct Spectrum final: stl::polynomial<Spectrum
@@ -47,7 +44,7 @@ namespace mtt::spectra {
     }
 
     template<typename Func, typename... Args>
-    requires (std::is_same_v<std::decay_t<Args>, fv4> && ...)
+    requires (std::same_as<std::decay_t<Args>, fv4> && ...)
     auto constexpr visit(Func f, Args&&... lambda) noexcept -> fv4 {
         if ((math::constant(lambda) && ...)) return fv4{f(lambda[0]..., 0)};
         else return math::foreach(f, lambda...);

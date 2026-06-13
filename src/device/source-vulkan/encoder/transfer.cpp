@@ -1,6 +1,5 @@
 #include "transfer.hpp"
 #include "../command/buffer.hpp"
-#include "../opaque/buffer.hpp"
 #include "../opaque/image.hpp"
 #include "../opaque/grid.hpp"
 
@@ -142,7 +141,7 @@ namespace mtt::encoder {
     auto Transfer_Encoder::Impl::transfer(mut<Transfer_Encoder> encoder, T view, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void {
         auto cmd = encoder->cmd->impl->cmd.get();
         auto barrier = view.ptr->impl->update(dst, src);
-        if constexpr (std::is_same_v<T, Buffer::View>)
+        if constexpr (std::same_as<T, Buffer::View>)
             cmd.pipelineBarrier2({
                 .bufferMemoryBarrierCount = 1,
                 .pBufferMemoryBarriers = &barrier,
@@ -191,7 +190,7 @@ namespace mtt::encoder {
         auto dst_barrier = dst->update(this->dst_barrier);
         auto barrier_info = vk::DependencyInfo{.bufferMemoryBarrierCount = 1, .imageMemoryBarrierCount = 1};
         auto region_info = vk::BufferImageCopy2{.bufferRowLength = 0, .bufferImageHeight = 0};
-        if constexpr (std::is_same_v<U, Buffer::View>) {
+        if constexpr (std::same_as<U, Buffer::View>) {
             barrier_info.pBufferMemoryBarriers = &src_barrier;
             barrier_info.pImageMemoryBarriers = &dst_barrier;
             cmd.pipelineBarrier2(barrier_info);

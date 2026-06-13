@@ -1,9 +1,7 @@
 #pragma once
-#include <metatron/render/filter/interaction.hpp>
 #include <metatron/render/filter/box.hpp>
 #include <metatron/render/filter/gaussian.hpp>
 #include <metatron/render/filter/lanczos.hpp>
-#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::filter {
     struct Filter final: stl::polynomial<Filter

@@ -1,6 +1,4 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
-#include <metatron/core/math/ray.hpp>
 #include <metatron/core/math/transform.hpp>
 
 namespace mtt::math {

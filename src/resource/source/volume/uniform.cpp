@@ -8,8 +8,7 @@ namespace mtt::volume {
         auto grid = muldim::Grid{};
         grid.size = dims;
         grid.cells.resize(math::prod(dims));
-        auto& vec = stl::vector<muldim::Grid>::instance();
-        storage = vec.push_back(std::move(grid));
+        storage = stl::vector<muldim::Grid>::push_back(std::move(grid));
     }
 
     auto Uniform_Volume::to_local(cref<iv3> ijk) const noexcept -> fv3 { return bbox.p_min + ijk * voxel_size; }

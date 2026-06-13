@@ -1,9 +1,7 @@
 #include <metatron/resource/shape/mesh.hpp>
-#include <metatron/core/math/transform.hpp>
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/distribution/linear.hpp>
 #include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/print.hpp>
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>

@@ -3,7 +3,6 @@
 #include "../command/buffer.hpp"
 #include "../opaque/accel.hpp"
 #include "../opaque/sampler.hpp"
-#include "../opaque/buffer.hpp"
 #include "../opaque/image.hpp"
 #include "../opaque/grid.hpp"
 #include <metatron/device/encoder/transfer.hpp>
@@ -59,7 +58,7 @@ namespace mtt::encoder {
         auto args = encoder->args;
         auto binding = args->index(field);
         auto& desc = args->reflection[binding];
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
         auto readonly = desc.access == shader::Descriptor::Access::readonly;
         auto size = readonly
@@ -90,7 +89,7 @@ namespace mtt::encoder {
         auto args = encoder->args;
         auto binding = args->index(field);
         auto& desc = args->reflection[binding];
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
         auto readonly = desc.access == shader::Descriptor::Access::readonly;
         auto size = readonly
@@ -122,7 +121,7 @@ namespace mtt::encoder {
     auto Argument_Encoder::bind(std::string_view field, view<opaque::Acceleration> accel) noexcept -> void {
         auto binding = args->index(field);
         auto& desc = args->reflection[binding];
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
         auto size = ctx->descriptor_buffer_props.accelerationStructureDescriptorSize;
         auto info = vk::DescriptorGetInfoEXT{
@@ -137,7 +136,7 @@ namespace mtt::encoder {
     auto Argument_Encoder::bind(std::string_view field, view<opaque::Sampler> sampler) noexcept -> void {
         auto binding = args->index(field);
         auto& desc = args->reflection[binding];
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
         auto size = ctx->descriptor_buffer_props.samplerDescriptorSize;
         auto info = vk::DescriptorGetInfoEXT{
@@ -161,7 +160,7 @@ namespace mtt::encoder {
         auto args = encoder->args;
         auto binding = args->index(field);
         auto& desc = args->reflection[binding];
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto cmd = encoder->cmd->impl->cmd.get();
 
         auto state = update(desc, view.ptr->impl->barrier);
@@ -175,7 +174,7 @@ namespace mtt::encoder {
     auto Argument_Encoder::acquire(std::string_view field, std::span<byte const> uniform) noexcept -> void {
         auto binding = args->index(field);
         auto& desc = args->reflection[binding];
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto cmd = this->cmd->impl->cmd.get();
         auto device = ctx->device.get();
         auto size = ctx->descriptor_buffer_props.uniformBufferDescriptorSize;

@@ -1,7 +1,6 @@
 #pragma once
 #include <metatron/render/filter/interaction.hpp>
 #include <metatron/core/math/distribution/piecewise.hpp>
-#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::filter {
     struct Lanczos_Filter final {

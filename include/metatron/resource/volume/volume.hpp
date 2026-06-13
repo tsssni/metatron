@@ -1,7 +1,6 @@
 #pragma once
 #include <metatron/resource/volume/uniform.hpp>
 #include <metatron/resource/volume/nanovdb.hpp>
-#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::volume {
     struct Volume final: stl::polynomial<Volume

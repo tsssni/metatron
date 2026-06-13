@@ -3,7 +3,6 @@
 #include <metatron/resource/texture/image.hpp>
 #include <metatron/resource/texture/checkerboard.hpp>
 #include <metatron/resource/shape/interaction.hpp>
-#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::texture {
     struct Spectrum_Texture final: stl::polynomial<Spectrum_Texture

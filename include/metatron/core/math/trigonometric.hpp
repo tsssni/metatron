@@ -1,7 +1,5 @@
 #pragma once
-#include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/arithmetic.hpp>
-#include <cmath>
 
 namespace mtt::math {
     auto constexpr sinc(f32 x) noexcept -> f32 {

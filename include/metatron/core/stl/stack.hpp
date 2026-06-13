@@ -1,7 +1,6 @@
 #pragma once
 #include <metatron/core/stl/singleton.hpp>
 #include <metatron/core/stl/print.hpp>
-#include <metatron/core/math/constant.hpp>
 #include <cstring>
 #include <vector>
 #include <atomic>
@@ -23,33 +22,35 @@ namespace mtt::stl {
 
     struct stack final: singleton<stack> {
         using deleter = void(*)(mut<buf>);
-        std::vector<mut<buf>> bufs;
-        std::vector<deleter> deleters;
-        std::atomic_flag flag;
+        auto static constexpr max_idx = 1 << 20;
 
-        auto push(mut<buf> buf, deleter f) noexcept -> void {
-            while (flag.test_and_set(std::memory_order::acquire));
-            buf->idx = bufs.size();
-            if (bufs.size() >= math::maxv<u32>)
-                stl::abort("stack overflow");
-            bufs.push_back(buf);
-            deleters.push_back(f);
-            flag.clear(std::memory_order::release);
+        auto static push(mut<buf> buf, deleter f) noexcept -> void {
+            buf->idx = instance().length.fetch_add(1, std::memory_order::relaxed);
+            if (buf->idx >= max_idx) stl::abort("stack overflow");
+            instance().deleters[buf->idx].store(f, std::memory_order::release);
+            instance().bufs[buf->idx].store(buf, std::memory_order::release);
         }
 
-        auto swap(mut<buf> buf) noexcept -> void {
+        auto static swap(mut<buf> buf) noexcept -> void {
             if (buf->idx == math::maxv<u32>) return;
-            while (flag.test_and_set(std::memory_order::acquire));
-            if (bufs[buf->idx] != buf) bufs[buf->idx] = buf;
-            flag.clear(std::memory_order::release);
+            instance().bufs[buf->idx].store(buf, std::memory_order::release);
         }
 
-        auto release(mut<buf> buf) noexcept -> void {
-            if (buf->idx == math::maxv<u32>) return;
-            auto idx = buf->idx;
-            if (bufs[idx] == buf)
-                deleters[buf->idx](buf);
+        auto static raw(u32 idx) noexcept -> mut<buf> {
+            return instance().bufs[idx].load(std::memory_order::acquire);
         }
+
+        auto static release(mut<buf> buf) noexcept -> void {
+            if (buf->idx != math::maxv<u32> && instance().bufs[buf->idx].load(std::memory_order::acquire) == buf)
+                instance().deleters[buf->idx].load(std::memory_order::acquire)(buf);
+        }
+
+        auto static size() noexcept -> usize { return instance().length.load(std::memory_order::relaxed); }
+
+    private:
+        std::array<std::atomic<mut<buf>>, max_idx> bufs;
+        std::array<std::atomic<deleter>, max_idx> deleters;
+        std::atomic<u32> length = 0;
     };
 }
 
@@ -66,7 +67,7 @@ namespace mtt {
         buf(rref<buf> rhs) noexcept {
             std::construct_at(this, rhs);
             idx = rhs.idx;
-            stl::stack::instance().swap(this);
+            stl::stack::swap(this);
             rhs.reset();
         }
 
@@ -89,13 +90,13 @@ namespace mtt {
             if (!ptr) stl::abort("allocate {} bytes failed", bytelen);
             if constexpr (!std::is_trivially_constructible_v<T>)
                 std::uninitialized_default_construct_n(data(), size);
-            stl::stack::instance().push(this, [](auto* ptr) {
+            stl::stack::push(this, [](auto* ptr) {
                 mut<buf>(ptr)->release();
             });
         }
 
         template<typename U>
-        requires std::is_same_v<T, std::remove_const_t<U>>
+        requires std::same_as<T, std::remove_const_t<U>>
         buf(std::span<U> range) noexcept: buf(range.size()) {
             std::memcpy(data(), range.data(), bytelen);
         }

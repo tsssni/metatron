@@ -1,7 +1,6 @@
 #pragma once
 #include <metatron/resource/material/physical.hpp>
 #include <metatron/resource/material/interface.hpp>
-#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::material {
     struct Material final: stl::polynomial<Material

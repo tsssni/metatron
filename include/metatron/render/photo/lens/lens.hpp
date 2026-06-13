@@ -1,5 +1,4 @@
 #pragma once
-#include <metatron/render/photo/lens/interaction.hpp>
 #include <metatron/render/photo/lens/pinhole.hpp>
 #include <metatron/render/photo/lens/thin.hpp>
 #include <metatron/core/stl/protocol.hpp>

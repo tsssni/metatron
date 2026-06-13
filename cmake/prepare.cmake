@@ -4,9 +4,11 @@ function(predefine)
 
     if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         set_property(TARGET metatron-build PROPERTY metatron-system "linux")
+        set_property(TARGET metatron-build PROPERTY metatron-origin "$ORIGIN")
         add_compile_definitions(MTT_SYSTEM_LINUX)
     elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
         set_property(TARGET metatron-build PROPERTY metatron-system "darwin")
+        set_property(TARGET metatron-build PROPERTY metatron-origin "@loader_path")
         add_compile_definitions(MTT_SYSTEM_DARWIN)
     else()
         message(FATAL_ERROR "system ${CMAKE_SYSTEM_NAME} not supported")
@@ -37,13 +39,11 @@ function(prepare)
 
     define_property(TARGET PROPERTY metatron-system)
     define_property(TARGET PROPERTY metatron-arch)
+    define_property(TARGET PROPERTY metatron-origin)
     define_property(TARGET PROPERTY metatron-prefix)
 
     add_library(metatron-build INTERFACE)
     predefine()
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE PARENT_SCOPE)
-
-    # All modules share one include tree and one auto-included prelude.
     include_directories(${CMAKE_SOURCE_DIR}/include)
-    add_compile_options(-include ${CMAKE_SOURCE_DIR}/include/metatron/core/prelude/prelude.hpp)
 endfunction()

@@ -3,8 +3,6 @@
 #include <metatron/resource/shape/shape.hpp>
 #include <metatron/resource/material/material.hpp>
 #include <metatron/resource/media/medium.hpp>
-#include <metatron/core/math/transform.hpp>
-#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::accel {
     auto constexpr default_medium = "/medium/vaccum";

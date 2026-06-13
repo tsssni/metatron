@@ -3,7 +3,6 @@
 #include <metatron/core/math/distribution/discrete.hpp>
 #include <metatron/core/math/distribution/gaussian.hpp>
 #include <metatron/core/math/distribution/cone.hpp>
-#include <metatron/core/stl/stack.hpp>
 
 namespace mtt::light {
     auto constexpr atomo_num_lambda = 11;

@@ -1,5 +1,4 @@
 #include <metatron/render/photo/lens/pinhole.hpp>
-#include <metatron/core/math/constant.hpp>
 
 namespace mtt::photo {
     auto Pinhole_Lens::sample(cref<fv2> o, cref<fv2> u) const noexcept -> opt<lens::Interaction> {

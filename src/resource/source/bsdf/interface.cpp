@@ -1,5 +1,4 @@
 #include <metatron/resource/bsdf/interface.hpp>
-#include <metatron/core/math/constant.hpp>
 
 namespace mtt::bsdf {
     Interface_Bsdf::Interface_Bsdf(cref<Descriptor>) noexcept {}
