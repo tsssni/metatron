@@ -108,7 +108,7 @@ namespace mtt::stl {
         }
 
         template<typename T, typename... Args>
-        requires std::is_constructible_v<T, Args...> && ts::template contains<T>
+        requires std::constructible_from<T, Args...> && ts::template contains<T>
         auto emplace(Args&&... args) noexcept -> void {
             destroy();
             idx = ts::template index<T>;

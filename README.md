@@ -1,7 +1,7 @@
 ![dispersion](https://github.com/tsssni/metatron-scenes/raw/master/dispersion/dispersion.png)
 Metatron
 [<img src="https://builtwithnix.org/badge.svg" height="20">](https://builtwithnix.org)
-[<img src="https://github.com/tsssni/metatron/actions/workflows/ci.yml/badge.svg?branch=master" height="18">](https://github.com/tsssni/metatron/actions/workflows/ci.yml)
+[<img src="https://github.com/tsssni/metatron/actions/workflows/ci.yml/badge.svg?branch=master" height="20">](https://github.com/tsssni/metatron/actions/workflows/ci.yml)
 ========
 
 ## Introduction

@@ -27,7 +27,7 @@ namespace mtt::opaque {
                 .srcQueueFamilyIndex = family,
                 .dstQueueFamilyIndex = family,
             };
-            if constexpr (std::is_same_v<T, vk::ImageMemoryBarrier2>) {
+            if constexpr (std::same_as<T, vk::ImageMemoryBarrier2>) {
                 barrier.oldLayout = layout;
                 barrier.newLayout = desc.layout;
             }
@@ -47,7 +47,7 @@ namespace mtt::opaque {
                 .srcQueueFamilyIndex = command::Queue::Impl::families[u32(src->type)].idx,
                 .dstQueueFamilyIndex = command::Queue::Impl::families[u32(dst->type)].idx,
             };
-            if constexpr (std::is_same_v<T, vk::ImageMemoryBarrier2>) {
+            if constexpr (std::same_as<T, vk::ImageMemoryBarrier2>) {
                 barrier.oldLayout = layout;
                 barrier.newLayout = layout;
             }

@@ -86,7 +86,7 @@ namespace mtt::math {
     };
 
     template<typename C, typename T>
-    concept complex = std::is_same_v<C, Complex<T>>;
+    concept complex = std::same_as<C, Complex<T>>;
 
     template<typename T>
     auto constexpr operator+(cref<T> lhs, cref<Complex<T>> rhs) noexcept -> Complex<T> {

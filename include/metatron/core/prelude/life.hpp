@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <type_traits>
+#include <concepts>
 
 namespace mtt::inline prelude {
     template<typename T>
@@ -12,7 +13,7 @@ namespace mtt::inline prelude {
     using obj = obj_impl<T>::type;
 
     template<typename T, typename... Args>
-    requires std::is_constructible_v<T, Args...>
+    requires std::constructible_from<T, Args...>
     auto make_obj(Args&&... args) -> obj<T> {
         return std::make_unique<T>(std::forward<Args>(args)...);
     }

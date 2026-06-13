@@ -27,7 +27,7 @@ namespace mtt::stl {
         template<typename T>
         auto init() noexcept -> void {
             bytelen = sizeof(T);
-            destroier = &vector<byte>::destroy<T>;
+            destroyer = &vector<byte>::destroy<T>;
         }
 
         auto pack() noexcept -> std::vector<byte> const& {
@@ -45,7 +45,7 @@ namespace mtt::stl {
         }
 
         auto release() noexcept -> void {
-            if (destroier) (this->*destroier)();
+            if (destroyer) (this->*destroyer)();
             auto rel = []<typename... Args>(Args&&... ptrs) {
                 auto r = [](auto&& ptrs) {
                     for (auto& ptr: ptrs) std::free(ptr.load(std::memory_order::relaxed));
@@ -54,11 +54,11 @@ namespace mtt::stl {
                 (r(ptrs) && ...);
             };
             rel(blocks, pathes, slots);
-            destroier = nullptr;
+            destroyer = nullptr;
         }
 
         template<typename T, typename... Args>
-        requires std::is_constructible_v<T, Args...>
+        requires std::constructible_from<T, Args...>
         auto emplace_back(Args&&... args) noexcept -> u32 {
             auto [ptr, idx] = alloc();
             std::construct_at(mut<T>(ptr), std::forward<Args>(args)...);
@@ -66,7 +66,7 @@ namespace mtt::stl {
         }
 
         template<typename T, typename... Args>
-        requires std::is_constructible_v<T, Args...>
+        requires std::constructible_from<T, Args...>
         auto emplace(std::string_view path, Args&&... args) noexcept -> u32 {
             auto [ptr, idx] = alloc();
             std::construct_at(mut<T>(ptr), std::forward<Args>(args)...);
@@ -82,13 +82,13 @@ namespace mtt::stl {
         }
 
         template<typename T>
-        requires std::is_constructible_v<std::decay_t<T>, T>
+        requires std::constructible_from<std::decay_t<T>, T>
         auto push_back(T&& x) noexcept -> u32 {
             return emplace_back<std::decay_t<T>>(std::forward<T>(x));
         }
 
         template<typename T>
-        requires std::is_constructible_v<std::decay_t<T>, T>
+        requires std::constructible_from<std::decay_t<T>, T>
         auto push(std::string_view path, T&& x) noexcept -> u32 {
             return emplace<std::decay_t<T>>(path, std::forward<T>(x));
         }
@@ -193,7 +193,7 @@ namespace mtt::stl {
         std::array<std::atomic<mut<std::atomic<u32>>>, block_count> slots;
         std::vector<byte> buffer;
         std::atomic<u32> length = 0;
-        auto (vector::*destroier)() -> void = nullptr;
+        auto (vector::*destroyer)() -> void = nullptr;
     };
 
     template<>
@@ -230,14 +230,14 @@ namespace mtt::stl {
         }
 
         template<typename T = F, typename... Args>
-        requires ts::template contains<T> && std::is_constructible_v<T, Args...>
+        requires ts::template contains<T> && std::constructible_from<T, Args...>
         auto static emplace_back(Args&&... args) noexcept -> u32 {
             auto idx = raw<T>().template emplace_back<T>(std::forward<Args>(args)...);
             return (storage<T>() << 24) | (ts::template index<T> << 20) | idx;
         }
 
         template<typename T = F, typename... Args>
-        requires std::is_constructible_v<T, Args...>
+        requires std::constructible_from<T, Args...>
         auto static emplace(std::string_view path, Args&&... args) noexcept -> u32 {
             auto idx = raw<T>().template emplace<T>(path, std::forward<Args>(args)...);
             return (storage<T>() << 24) | (ts::template index<T> << 20) | idx;

@@ -185,7 +185,7 @@ namespace mtt::light {
             f.read(mut<char>(intermediate.data()), intermediate.size() * sizeof(U));
             f.close();
 
-            if constexpr (std::is_same_v<T, U>) {
+            if constexpr (std::same_as<T, U>) {
                 storage = std::span{intermediate};
             } else {
                 auto target = std::vector<T>(elems);

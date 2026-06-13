@@ -96,7 +96,7 @@ namespace mtt {
         }
 
         template<typename U>
-        requires std::is_same_v<T, std::remove_const_t<U>>
+        requires std::same_as<T, std::remove_const_t<U>>
         buf(std::span<U> range) noexcept: buf(range.size()) {
             std::memcpy(data(), range.data(), bytelen);
         }

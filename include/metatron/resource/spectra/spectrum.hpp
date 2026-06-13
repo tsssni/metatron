@@ -44,7 +44,7 @@ namespace mtt::spectra {
     }
 
     template<typename Func, typename... Args>
-    requires (std::is_same_v<std::decay_t<Args>, fv4> && ...)
+    requires (std::same_as<std::decay_t<Args>, fv4> && ...)
     auto constexpr visit(Func f, Args&&... lambda) noexcept -> fv4 {
         if ((math::constant(lambda) && ...)) return fv4{f(lambda[0]..., 0)};
         else return math::foreach(f, lambda...);

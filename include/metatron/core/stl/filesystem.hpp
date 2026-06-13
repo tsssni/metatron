@@ -14,8 +14,8 @@ namespace mtt::stl {
 
     template<typename T>
     concept buffer = requires {false
-    || std::is_convertible_v<T, std::span<byte const>>
-    || std::is_convertible_v<T, std::string_view>;
+    || std::convertible_to<T, std::span<byte const>>
+    || std::convertible_to<T, std::string_view>;
     };
 
     using path = std::filesystem::path;

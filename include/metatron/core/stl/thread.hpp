@@ -1,11 +1,11 @@
 #pragma once
 #include <metatron/core/stl/singleton.hpp>
+#include <metatron/core/stl/function.hpp>
 #include <metatron/core/math/vector.hpp>
 #include <thread>
 #include <atomic>
 #include <future>
 #include <mutex>
-#include <functional>
 #include <stack>
 
 namespace mtt::stl {
@@ -35,19 +35,19 @@ namespace mtt::stl {
         }
 
         template<typename F, usize size>
-        requires (std::is_invocable_v<F, uzv<size>> && size >= 1 && size <= 3)
+        requires (std::invocable<F, uzv<size>> && size >= 1 && size <= 3)
         auto static sync_parallel(cref<uzv<size>> grid, F&& f) noexcept {
             instance().parallel(grid, std::forward<F>(f), true).wait();
         }
 
         template<typename F, usize size>
-        requires (std::is_invocable_v<F, uzv<size>> && size >= 1 && size <= 3)
+        requires (std::invocable<F, uzv<size>> && size >= 1 && size <= 3)
         auto static async_parallel(cref<uzv<size>> grid, F&& f) noexcept {
             return instance().parallel(grid, std::forward<F>(f), false);
         }
 
         template<typename F>
-        requires (std::is_invocable_v<F>)
+        requires (std::invocable<F>)
         auto static async_dispatch(F&& f) noexcept {
             return instance().dispatch(std::forward<F>(f));
         }
@@ -64,7 +64,7 @@ namespace mtt::stl {
     private:
         template<typename F, usize size>
         requires (true
-        && std::is_invocable_v<F, uzv<size>>
+        && std::invocable<F, uzv<size>>
         && std::same_as<std::invoke_result_t<F, uzv<size>>, void>
         && size >= 1 && size <= 3)
         auto parallel(cref<uzv<size>> grid, F&& f, bool sync) noexcept {
@@ -75,7 +75,7 @@ namespace mtt::stl {
             auto n = math::prod(grid);
             if (n == 0) { promise.set_value(); return future; }
 
-            auto task = std::make_shared<std::move_only_function<void()>>([
+            auto task = std::make_shared<function<void()>>([
                 f = std::forward<F>(f),
                 state = std::move(state),
                 grid,
@@ -106,13 +106,13 @@ namespace mtt::stl {
         }
 
         template<typename F>
-        requires (std::is_invocable_v<F>)
+        requires (std::invocable<F>)
         auto dispatch(F&& f) noexcept {
             using R = std::invoke_result_t<F>;
             auto promise = std::make_unique<std::promise<R>>();
             auto future = promise->get_future().share();
 
-            auto task = std::make_shared<std::move_only_function<void()>>([
+            auto task = std::make_shared<function<void()>>([
                 promise = std::move(promise),
                 f = std::forward<F>(f)
             ]() mutable {
@@ -129,7 +129,7 @@ namespace mtt::stl {
             return future;
         }
 
-        using task = std::shared_ptr<std::move_only_function<void()>>;
+        using task = std::shared_ptr<function<void()>>;
         std::mutex mutex;
         std::condition_variable cv;
         std::vector<std::thread> threads;

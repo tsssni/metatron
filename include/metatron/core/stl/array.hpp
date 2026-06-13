@@ -9,12 +9,12 @@ namespace mtt::stl {
         using type = std::tuple_element_t<idx, std::tuple<Ts...>>;
 
         template<typename T>
-        auto constexpr static contains = (std::is_same_v<T, Ts> || ...);
+        auto constexpr static contains = (std::same_as<T, Ts> || ...);
 
         template<typename T>
         auto constexpr static index = [] -> usize {
             auto idx = 0;
-            auto _ = ((std::is_same_v<T, Ts> ? false : (++idx, true)) && ...);
+            auto _ = ((std::same_as<T, Ts> ? false : (++idx, true)) && ...);
             return idx;
         }();
 

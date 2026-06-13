@@ -18,7 +18,7 @@ namespace mtt::math {
     template<typename Func, typename... Ts, usize size>
     auto constexpr any(Func f, cref<Vector<Ts, size>>... vectors) noexcept -> bool {
         using Return_Type = decltype(f(vectors[0]..., 0uz));
-        static_assert(std::is_same_v<Return_Type, bool>, "f must return bool");
+        static_assert(std::same_as<Return_Type, bool>, "f must return bool");
 
         auto r = foreach(f, vectors...);
         for (auto i = 0uz; i < size; ++i)
@@ -29,7 +29,7 @@ namespace mtt::math {
     template<typename Func, typename... Ts, usize size>
     auto constexpr all(Func f, cref<Vector<Ts, size>>... vectors) noexcept -> bool {
         using Return_Type = decltype(f(vectors[0]..., 0uz));
-        static_assert(std::is_same_v<Return_Type, bool>, "f must return bool");
+        static_assert(std::same_as<Return_Type, bool>, "f must return bool");
 
         auto r = foreach(f, vectors...);
         for (auto i = 0uz; i < size; ++i)
@@ -129,13 +129,13 @@ namespace mtt::math {
     }
 
     template<typename T, typename... Ts, usize n, usize tail = sizeof...(Ts)>
-    requires (std::is_convertible_v<T, Ts> && ...)
+    requires (std::convertible_to<T, Ts> && ...)
     auto constexpr expand(cref<Vector<T, n>> x, Ts... v) noexcept -> Vector<T, n + tail> {
         return Vector<T, n + sizeof...(v)>{x, v...};
     }
 
     template<typename T, typename... Ts, usize n, usize head = sizeof...(Ts)>
-    requires (std::is_convertible_v<T, Ts> && ...)
+    requires (std::convertible_to<T, Ts> && ...)
     auto constexpr consume(cref<Vector<T, n>> x, Ts... v) noexcept -> Vector<T, n + head> {
         return Vector<T, n + head>{reverse(Vector<T, head>{v...}), x};
     }

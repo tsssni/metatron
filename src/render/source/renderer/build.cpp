@@ -11,7 +11,7 @@ namespace mtt::renderer {
     ) noexcept -> void {
         using shapes = shape::Shape::vs;
         for (auto i = 0; i < shapes::size<T>(); ++i)
-            if constexpr (std::is_same_v<T, shape::Mesh>) {
+            if constexpr (std::same_as<T, shape::Mesh>) {
                 auto mesh = shapes::get<T>(i);
                 primitives.push_back({
                     .type = opaque::Acceleration::Primitive::Type::mesh,
