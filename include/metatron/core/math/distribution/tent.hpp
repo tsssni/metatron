@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/core/math/distribution/linear.hpp>
-#include <cmath>
 
 namespace mtt::math {
     struct Tent_Distribution final {

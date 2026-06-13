@@ -1,7 +1,6 @@
 #pragma once
 #include <metatron/resource/muldim/grid.hpp>
 #include <metatron/core/math/bounding-box.hpp>
-#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::volume {
     struct Uniform_Volume final {

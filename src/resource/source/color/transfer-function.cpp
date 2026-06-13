@@ -1,4 +1,3 @@
-#include <metatron/resource/color/transfer-function.hpp>
 #include <metatron/resource/serde/serde.hpp>
 
 namespace mtt::color {

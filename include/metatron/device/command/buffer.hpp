@@ -1,7 +1,5 @@
 #pragma once
-#include <metatron/device/command/queue.hpp>
 #include <metatron/device/command/block.hpp>
-#include <metatron/device/command/timeline.hpp>
 
 namespace mtt::command {
     struct Buffer final: stl::capsule<Buffer> {

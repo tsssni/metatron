@@ -1,9 +1,5 @@
-#include <metatron/resource/serde/hierarchy.hpp>
 #include <metatron/resource/serde/reflection.hpp>
-#include <metatron/core/stl/vector.hpp>
-#include <metatron/core/stl/array.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::scene {
     template<typename V, typename T>

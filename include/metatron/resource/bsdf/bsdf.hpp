@@ -1,9 +1,6 @@
 #pragma once
-#include <metatron/resource/bsdf/interaction.hpp>
 #include <metatron/resource/bsdf/physical.hpp>
 #include <metatron/resource/bsdf/interface.hpp>
-#include <metatron/core/math/eval.hpp>
-#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::bsdf {
     struct Bsdf final: stl::variant<Bsdf, Physical_Bsdf, Interface_Bsdf> {

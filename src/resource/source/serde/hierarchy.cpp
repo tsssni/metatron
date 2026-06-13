@@ -1,9 +1,4 @@
-#include <metatron/resource/serde/hierarchy.hpp>
 #include <metatron/resource/serde/reflection.hpp>
-#include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/print.hpp>
-#include <unordered_map>
 
 namespace mtt::scene {
     struct Hierarchy::Impl final {
@@ -13,7 +8,7 @@ namespace mtt::scene {
     Hierarchy::Hierarchy() noexcept {}
 
     auto Hierarchy::filter(filter_function f) noexcept -> void {
-        instance().impl->filters.push_back(f);
+        instance().impl->filters.push_back(std::move(f));
     }
 
     auto Hierarchy::populate(cref<stl::path> path) noexcept -> void {

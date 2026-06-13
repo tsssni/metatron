@@ -3,8 +3,6 @@
 #define VULKAN_HPP_NO_EXCEPTIONS 1
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <metatron/device/command/context.hpp>
-#include <metatron/core/stl/singleton.hpp>
-#include <metatron/core/stl/capsule.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <vulkan/vulkan.hpp>
 #include <atomic>

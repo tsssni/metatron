@@ -1,8 +1,4 @@
 #include <metatron/resource/shape/sphere.hpp>
-#include <metatron/core/math/constant.hpp>
-#include <metatron/core/math/arithmetic.hpp>
-#include <metatron/core/math/sphere.hpp>
-#include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>
 #include <metatron/core/math/distribution/cone.hpp>
 

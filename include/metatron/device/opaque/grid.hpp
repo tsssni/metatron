@@ -1,7 +1,6 @@
 #pragma once
 #include <metatron/device/opaque/buffer.hpp>
 #include <metatron/resource/muldim/grid.hpp>
-#include <metatron/core/stl/capsule.hpp>
 
 namespace mtt::opaque {
     struct Grid final: stl::capsule<Grid> {

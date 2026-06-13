@@ -3,7 +3,6 @@
 #include "../command/buffer.hpp"
 #include "../opaque/accel.hpp"
 #include "../opaque/sampler.hpp"
-#include "../opaque/buffer.hpp"
 #include "../opaque/image.hpp"
 #include "../opaque/grid.hpp"
 #include <metatron/device/encoder/transfer.hpp>

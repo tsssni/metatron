@@ -1,7 +1,5 @@
 #include <metatron/render/sampler/halton.hpp>
-#include <metatron/core/math/prime.hpp>
 #include <metatron/core/math/low-discrepancy.hpp>
-#include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/number-theory.hpp>
 
 namespace mtt::sampler {

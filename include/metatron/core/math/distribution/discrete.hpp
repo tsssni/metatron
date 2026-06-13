@@ -1,5 +1,4 @@
 #pragma once
-#include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/stack.hpp>
 
 namespace mtt::math {

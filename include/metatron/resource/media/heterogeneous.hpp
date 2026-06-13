@@ -1,7 +1,6 @@
 #pragma once
 #include <metatron/resource/media/interaction.hpp>
 #include <metatron/resource/volume/volume.hpp>
-#include <metatron/core/math/bounding-box.hpp>
 #include <metatron/core/math/distribution/exponential.hpp>
 
 namespace mtt::media {

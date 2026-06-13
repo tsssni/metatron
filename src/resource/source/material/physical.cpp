@@ -1,5 +1,4 @@
 #include <metatron/resource/material/physical.hpp>
-#include <metatron/resource/bsdf/physical.hpp>
 
 namespace mtt::material {
     auto Physical_Material::sample(

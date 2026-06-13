@@ -1,24 +1,5 @@
-#include <metatron/resource/serde/hierarchy.hpp>
-#include <metatron/resource/serde/args.hpp>
 #include <metatron/resource/serde/serde.hpp>
 #include <metatron/render/renderer/renderer.hpp>
-#include <metatron/render/monte-carlo/integrator.hpp>
-#include <metatron/render/accel/accel.hpp>
-#include <metatron/render/emitter/emitter.hpp>
-#include <metatron/render/sampler/sampler.hpp>
-#include <metatron/render/filter/filter.hpp>
-#include <metatron/render/photo/lens/lens.hpp>
-#include <metatron/render/photo/film.hpp>
-#include <metatron/resource/shape/shape.hpp>
-#include <metatron/resource/spectra/spectrum.hpp>
-#include <metatron/resource/color/color-space.hpp>
-#include <metatron/resource/media/medium.hpp>
-#include <metatron/resource/volume/volume.hpp>
-#include <metatron/resource/light/light.hpp>
-#include <metatron/resource/material/material.hpp>
-#include <metatron/resource/texture/texture.hpp>
-#include <metatron/resource/bsdf/bsdf.hpp>
-#include <metatron/core/stl/print.hpp>
 #include <metatron/core/stl/chrono.hpp>
 
 namespace mtt::scene {

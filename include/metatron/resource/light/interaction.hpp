@@ -1,5 +1,4 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
 
 namespace mtt::light {

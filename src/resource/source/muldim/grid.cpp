@@ -1,5 +1,4 @@
 #include <metatron/resource/muldim/grid.hpp>
-#include <functional>
 
 namespace mtt::muldim {
     auto Grid::operator[](usize x, usize y, usize z) noexcept -> f32& {

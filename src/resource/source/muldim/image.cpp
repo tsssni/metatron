@@ -1,9 +1,6 @@
 #include <metatron/resource/muldim/image.hpp>
-#include <metatron/resource/color/color-space.hpp>
-#include <metatron/core/math/bit.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/print.hpp>
 #include <OpenImageIO/imageio.h>
 
 namespace mtt::muldim {

@@ -1,13 +1,6 @@
-#include <metatron/resource/bsdf/physical.hpp>
 #include <metatron/resource/bsdf/bsdf.hpp>
-#include <metatron/resource/spectra/constant.hpp>
-#include <metatron/core/math/constant.hpp>
-#include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>
-#include <metatron/core/math/distribution/disk.hpp>
-#include <metatron/core/math/integral.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/ranges.hpp>
 
 namespace mtt::bsdf {
     auto constexpr fresnel_num_samples = 65536;

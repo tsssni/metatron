@@ -1,11 +1,7 @@
 #pragma once
-#include <metatron/core/math/matrix.hpp>
-#include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/stl/protocol.hpp>
-#include <metatron/core/stl/ranges.hpp>
-#include <vector>
 
 namespace mtt::math {
     template<typename T>

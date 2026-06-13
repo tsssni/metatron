@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/core/math/bounding-box.hpp>
-#include <metatron/core/stl/vector.hpp>
 #include <nanovdb/io/IO.h>
 
 namespace mtt::volume {

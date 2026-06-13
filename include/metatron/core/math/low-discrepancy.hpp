@@ -1,9 +1,7 @@
 #pragma once
 #include <metatron/core/math/arithmetic.hpp>
-#include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/prime.hpp>
 #include <metatron/core/math/hash.hpp>
-#include <metatron/core/math/bit.hpp>
 
 namespace mtt::math {
     auto constexpr radical_inverse(u32 x, i32 b) noexcept -> f32 {

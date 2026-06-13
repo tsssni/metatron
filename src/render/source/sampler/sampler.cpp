@@ -1,5 +1,4 @@
 #include <metatron/render/sampler/sampler.hpp>
-#include <metatron/render/sampler/heitz.hpp>
 #include <metatron/resource/serde/serde.hpp>
 
 namespace mtt::sampler {

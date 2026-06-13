@@ -3,7 +3,6 @@
 #include <atomic>
 #include <chrono>
 #include <cstdio>
-#include <tuple>
 
 namespace mtt::stl {
     using nanoseconds = std::ratio<1, 1000000000>;

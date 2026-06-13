@@ -1,10 +1,6 @@
 #include <metatron/render/accel/accel.hpp>
-#include <metatron/device/command/buffer.hpp>
-#include <metatron/device/command/timeline.hpp>
 #include <metatron/device/encoder/accel.hpp>
 #include <metatron/device/encoder/transfer.hpp>
-#include <metatron/device/opaque/accel.hpp>
-#include <metatron/core/stl/vector.hpp>
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::renderer {

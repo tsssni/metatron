@@ -1,5 +1,4 @@
 #include <metatron/render/photo/camera.hpp>
-#include <metatron/core/stl/optional.hpp>
 
 namespace mtt::photo {
     auto Camera::sample(

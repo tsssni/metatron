@@ -1,7 +1,4 @@
 #include <metatron/resource/media/heterogeneous.hpp>
-#include <metatron/resource/phase/henyey-greenstein.hpp>
-#include <metatron/resource/volume/uniform.hpp>
-#include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::media {

@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/render/accel/interaction.hpp>
-#include <metatron/core/stl/stack.hpp>
 
 namespace mtt::accel {
     struct LBVH final {

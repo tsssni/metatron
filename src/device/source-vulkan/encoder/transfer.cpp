@@ -1,6 +1,5 @@
 #include "transfer.hpp"
 #include "../command/buffer.hpp"
-#include "../opaque/buffer.hpp"
 #include "../opaque/image.hpp"
 #include "../opaque/grid.hpp"
 

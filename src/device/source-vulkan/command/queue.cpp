@@ -2,7 +2,6 @@
 #include "buffer.hpp"
 #include "timeline.hpp"
 #include <metatron/core/stl/thread.hpp>
-#include <atomic>
 
 namespace mtt::command {
     std::array<Family, num_types> Queue::Impl::families;

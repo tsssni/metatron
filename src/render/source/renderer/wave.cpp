@@ -4,13 +4,7 @@
 #include <metatron/device/encoder/transfer.hpp>
 #include <metatron/device/encoder/argument.hpp>
 #include <metatron/device/encoder/pipeline.hpp>
-#include <metatron/device/opaque/sampler.hpp>
-#include <metatron/device/opaque/accel.hpp>
-#include <metatron/device/shader/argument.hpp>
-#include <metatron/device/shader/pipeline.hpp>
-#include <metatron/resource/bsdf/physical.hpp>
 #include <metatron/network/remote/preview.hpp>
-#include <metatron/core/math/bit.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/chrono.hpp>
 

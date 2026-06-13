@@ -1,9 +1,5 @@
 #include <metatron/resource/spectra/spectrum.hpp>
-#include <metatron/resource/color/color-space.hpp>
 #include <metatron/resource/serde/serde.hpp>
-#include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::spectra {
     auto Spectrum::init() noexcept -> void {

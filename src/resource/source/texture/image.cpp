@@ -1,5 +1,4 @@
 #include <metatron/resource/texture/image.hpp>
-#include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/stl/thread.hpp>
 

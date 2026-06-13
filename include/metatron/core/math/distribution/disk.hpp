@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/core/math/vector.hpp>
-#include <metatron/core/math/arithmetic.hpp>
 
 namespace mtt::math {
     struct Polar_Disk_Distribution final {

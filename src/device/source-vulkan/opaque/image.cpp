@@ -1,5 +1,4 @@
 #include "image.hpp"
-#include "../command/queue.hpp"
 #include "../command/allocator.hpp"
 
 namespace mtt::opaque {

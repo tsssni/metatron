@@ -1,5 +1,4 @@
 #pragma once
-#include <metatron/resource/color/color-space.hpp>
 #include <metatron/resource/muldim/image.hpp>
 #include <metatron/core/math/distribution/piecewise.hpp>
 #include <metatron/core/math/eval.hpp>

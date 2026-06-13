@@ -1,7 +1,6 @@
 #pragma once
 #include <metatron/resource/phase/phase-function.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
-#include <metatron/core/math/vector.hpp>
 
 namespace mtt::media {
     struct Interaction final {

@@ -1,5 +1,4 @@
 #include "resource.hpp"
-#include <metatron/device/command/timeline.hpp>
 #include <metatron/device/encoder/transfer.hpp>
 #include <metatron/resource/volume/nanovdb.hpp>
 #include <metatron/core/stl/thread.hpp>

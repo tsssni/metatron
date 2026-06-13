@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/resource/media/interaction.hpp>
-#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::media {
     struct Homogeneous_Medium final {

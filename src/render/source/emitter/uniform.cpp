@@ -1,9 +1,4 @@
 #include <metatron/render/emitter/uniform.hpp>
-#include <metatron/resource/serde/hierarchy.hpp>
-#include <metatron/core/math/sphere.hpp>
-#include <metatron/core/math/constant.hpp>
-#include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::emitter {
     Uniform_Emitter::Uniform_Emitter(cref<Descriptor>) noexcept {

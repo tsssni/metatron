@@ -1,5 +1,4 @@
 #include "renderer.hpp"
-#include <metatron/render/renderer/renderer.hpp>
 
 namespace mtt::renderer {
     Renderer::Renderer(rref<Descriptor> desc) noexcept:

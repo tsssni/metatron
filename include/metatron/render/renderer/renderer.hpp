@@ -1,13 +1,6 @@
 #pragma once
 #include <metatron/render/monte-carlo/integrator.hpp>
-#include <metatron/render/accel/accel.hpp>
-#include <metatron/render/emitter/emitter.hpp>
-#include <metatron/render/sampler/sampler.hpp>
-#include <metatron/render/filter/filter.hpp>
-#include <metatron/render/photo/lens/lens.hpp>
-#include <metatron/render/photo/film.hpp>
 #include <metatron/resource/serde/args.hpp>
-#include <metatron/core/stl/capsule.hpp>
 
 namespace mtt::renderer {
     struct Renderer final: stl::capsule<Renderer> {

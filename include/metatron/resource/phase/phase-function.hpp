@@ -1,8 +1,5 @@
 #pragma once
-#include <metatron/resource/phase/interaction.hpp>
 #include <metatron/resource/phase/henyey-greenstein.hpp>
-#include <metatron/core/math/eval.hpp>
-#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::phase {
     struct Phase_Function final: stl::variant<Phase_Function, Henyey_Greenstein_Phase_Function> {

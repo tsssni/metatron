@@ -1,10 +1,6 @@
 #pragma once
-#include <metatron/device/command/buffer.hpp>
-#include <metatron/device/opaque/buffer.hpp>
 #include <metatron/device/opaque/accel.hpp>
 #include <metatron/device/opaque/sampler.hpp>
-#include <metatron/device/opaque/image.hpp>
-#include <metatron/device/opaque/grid.hpp>
 #include <metatron/device/shader/argument.hpp>
 
 namespace mtt::encoder {

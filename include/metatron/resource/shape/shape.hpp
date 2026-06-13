@@ -1,11 +1,6 @@
 #pragma once
-#include <metatron/resource/shape/interaction.hpp>
 #include <metatron/resource/shape/mesh.hpp>
 #include <metatron/resource/shape/sphere.hpp>
-#include <metatron/core/stl/protocol.hpp>
-#include <metatron/core/math/ray.hpp>
-#include <metatron/core/math/bounding-box.hpp>
-#include <metatron/core/math/eval.hpp>
 
 namespace mtt::shape {
     struct Shape final: stl::polynomial<Shape

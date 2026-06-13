@@ -1,10 +1,5 @@
 #include <metatron/resource/phase/henyey-greenstein.hpp>
-#include <metatron/resource/spectra/constant.hpp>
-#include <metatron/core/math/constant.hpp>
-#include <metatron/core/math/arithmetic.hpp>
-#include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/sphere.hpp>
-#include <metatron/core/math/quaternion.hpp>
 
 namespace mtt::phase {
     auto Henyey_Greenstein_Phase_Function::operator()(

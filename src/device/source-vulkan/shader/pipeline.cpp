@@ -1,10 +1,5 @@
 #include "pipeline.hpp"
 #include "argument.hpp"
-#include <metatron/device/shader/layout.hpp>
-#include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/json.hpp>
-#include <metatron/core/stl/ranges.hpp>
-#include <metatron/core/stl/print.hpp>
 
 namespace mtt::shader {
     Pipeline::Pipeline(cref<Descriptor> desc) noexcept: args(std::move(desc.args)) {

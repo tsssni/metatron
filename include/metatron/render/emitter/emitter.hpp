@@ -1,7 +1,5 @@
 #pragma once
-#include <metatron/render/emitter/interaction.hpp>
 #include <metatron/render/emitter/uniform.hpp>
-#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::emitter {
     struct Emitter final: stl::polynomial<Emitter

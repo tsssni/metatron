@@ -1,8 +1,4 @@
 #include <metatron/resource/light/environment.hpp>
-#include <metatron/resource/spectra/rgb.hpp>
-#include <metatron/core/math/sphere.hpp>
-#include <metatron/core/math/vector.hpp>
-#include <metatron/core/math/quaternion.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>
 
 namespace mtt::light {

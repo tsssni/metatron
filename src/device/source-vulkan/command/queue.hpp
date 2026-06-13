@@ -1,7 +1,6 @@
 #pragma once
 #include "context.hpp"
 #include <metatron/device/command/queue.hpp>
-#include <atomic>
 
 namespace mtt::command {
     struct Family final {

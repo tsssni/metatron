@@ -1,5 +1,4 @@
 #include <metatron/render/accel/hwbvh.hpp>
-#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::accel {
     HWBVH::HWBVH(cref<Descriptor>) noexcept {

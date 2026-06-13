@@ -1,5 +1,4 @@
 #pragma once
-#include <metatron/core/math/bit.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <tuple>
 

@@ -1,9 +1,5 @@
 #pragma once
 #include <metatron/resource/color/color-space.hpp>
-#include <metatron/core/math/vector.hpp>
-#include <metatron/core/stl/protocol.hpp>
-#include <metatron/core/stl/stack.hpp>
-#include <vector>
 
 namespace mtt::muldim {
     struct Coordinate final {

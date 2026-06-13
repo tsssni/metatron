@@ -1,7 +1,5 @@
 #pragma once
-#include <metatron/render/monte-carlo/context.hpp>
 #include <metatron/render/monte-carlo/radiative.hpp>
-#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::monte_carlo {
     struct Integrator final: stl::polynomial<Integrator

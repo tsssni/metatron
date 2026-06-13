@@ -1,9 +1,5 @@
 #include <metatron/device/shader/compiler.hpp>
 #include <metatron/device/shader/layout.hpp>
-#include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/ranges.hpp>
-#include <metatron/core/stl/json.hpp>
-#include <metatron/core/stl/print.hpp>
 #include <spirv_cross/spirv_msl.hpp>
 #include <slang-com-ptr.h>
 #include <slang.h>

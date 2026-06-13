@@ -4,10 +4,7 @@
 #include <metatron/resource/spectra/blackbody.hpp>
 #include <metatron/resource/spectra/visible.hpp>
 #include <metatron/resource/spectra/discrete.hpp>
-#include <metatron/core/math/vector.hpp>
 #include <metatron/core/math/eval.hpp>
-#include <metatron/core/stl/vector.hpp>
-#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::spectra {
     struct Spectrum final: stl::polynomial<Spectrum

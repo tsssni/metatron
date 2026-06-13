@@ -1,7 +1,5 @@
 #include <metatron/resource/bsdf/bsdf.hpp>
-#include <metatron/resource/bsdf/physical.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
-#include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/math/complex.hpp>
 #include <metatron/core/math/sphere.hpp>
 

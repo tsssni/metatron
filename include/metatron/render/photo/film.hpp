@@ -1,10 +1,7 @@
 #pragma once
 #include <metatron/render/filter/filter.hpp>
 #include <metatron/resource/spectra/stochastic.hpp>
-#include <metatron/resource/color/color-space.hpp>
 #include <metatron/resource/muldim/image.hpp>
-#include <metatron/core/math/vector.hpp>
-#include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::photo {
     struct Film;

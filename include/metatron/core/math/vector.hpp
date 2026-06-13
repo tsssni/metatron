@@ -1,7 +1,5 @@
 #pragma once
 #include <metatron/core/math/matrix.hpp>
-#include <metatron/core/math/arithmetic.hpp>
-#include <cmath>
 
 namespace mtt::math {
     template<typename T, usize size>

@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/core/stl/singleton.hpp>
-#include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <filesystem>
 #include <fstream>

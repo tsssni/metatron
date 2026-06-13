@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/resource/spectra/spectrum.hpp>
-#include <metatron/core/math/vector.hpp>
 
 namespace mtt::spectra {
     struct Stochastic_Spectrum final {

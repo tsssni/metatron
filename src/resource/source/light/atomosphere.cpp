@@ -1,16 +1,7 @@
 #include <metatron/resource/light/atomosphere.hpp>
-#include <metatron/resource/spectra/blackbody.hpp>
-#include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/trigonometric.hpp>
-#include <metatron/core/math/gaussian.hpp>
 #include <metatron/core/math/integral.hpp>
 #include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/ranges.hpp>
-#include <metatron/core/stl/print.hpp>
-#include <ranges>
-#include <fstream>
-#include <cstring>
-#include <algorithm>
 
 namespace mtt::light {
     buf<f32> Atomosphere_Light::sky_params_table;

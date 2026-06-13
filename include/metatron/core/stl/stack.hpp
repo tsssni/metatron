@@ -1,7 +1,6 @@
 #pragma once
 #include <metatron/core/stl/singleton.hpp>
 #include <metatron/core/stl/print.hpp>
-#include <metatron/core/math/constant.hpp>
 #include <cstring>
 #include <vector>
 #include <atomic>

@@ -1,8 +1,6 @@
 #pragma once
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/resource/muldim/image.hpp>
-#include <metatron/core/math/eval.hpp>
-#include <metatron/core/stl/vector.hpp>
 
 namespace mtt::texture {
     struct Checkerboard_Texture final {

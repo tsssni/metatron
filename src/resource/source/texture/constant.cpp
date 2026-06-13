@@ -1,5 +1,4 @@
 #include <metatron/resource/texture/constant.hpp>
-#include <metatron/resource/spectra/rgb.hpp>
 
 namespace mtt::texture {
     auto Constant_Spectrum_Texture::operator()(

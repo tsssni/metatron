@@ -1,7 +1,4 @@
 #include <metatron/resource/texture/texture.hpp>
-#include <metatron/resource/texture/constant.hpp>
-#include <metatron/resource/texture/image.hpp>
-#include <metatron/resource/texture/checkerboard.hpp>
 #include <metatron/resource/serde/serde.hpp>
 #include <metatron/core/math/plane.hpp>
 

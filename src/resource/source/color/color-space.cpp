@@ -1,13 +1,5 @@
-#include <metatron/resource/color/color-space.hpp>
-#include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/resource/serde/serde.hpp>
-#include <metatron/core/math/arithmetic.hpp>
-#include <metatron/core/stl/filesystem.hpp>
-#include <metatron/core/stl/thread.hpp>
-#include <metatron/core/stl/print.hpp>
-#include <fstream>
-#include <cstring>
 
 namespace mtt::color {
     auto proxy::Color_Space::init() noexcept -> void {

@@ -1,9 +1,6 @@
 #include <metatron/render/accel/lbvh.hpp>
-#include <metatron/resource/serde/hierarchy.hpp>
-#include <metatron/resource/serde/args.hpp>
 #include <metatron/core/math/encode.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <ranges>
 
 namespace mtt::accel {
     LBVH::LBVH(cref<Descriptor> desc) noexcept {

@@ -1,6 +1,5 @@
 #pragma once
 #include <metatron/resource/media/interaction.hpp>
-#include <metatron/resource/phase/phase-function.hpp>
 
 namespace mtt::media {
     struct Vaccum_Medium final {

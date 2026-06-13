@@ -1,8 +1,6 @@
 #pragma once
-#include <metatron/core/math/constant.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 #include <metatron/core/stl/optional.hpp>
-#include <algorithm>
 #include <array>
 #include <span>
 #include <tuple>
