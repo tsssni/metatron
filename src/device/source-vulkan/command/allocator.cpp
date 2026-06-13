@@ -2,7 +2,7 @@
 
 namespace mtt::command {
     Memory::Memory(u32 type, u32 flags) noexcept {
-        auto& ctx = Context::instance().impl;
+        auto& ctx = Context::internal();
         auto device = ctx->device.get();
         auto info = vk::MemoryAllocateFlagsInfo{.flags = vk::MemoryAllocateFlags(flags)};
         auto alloc = vk::MemoryAllocateInfo{
@@ -20,13 +20,13 @@ namespace mtt::command {
     }
 
     Memory::~Memory() noexcept {
-        auto& ctx = Context::instance().impl;
+        auto& ctx = Context::internal();
         auto device = ctx->device.get();
         if (mapped) guard(device.unmapMemory2({.memory = impl->memory.get()}));
     }
 
     Allocator::Allocator() noexcept {
-        auto& ctx = Context::instance().impl;
+        auto& ctx = Context::internal();
         heaps.resize(ctx->memory_props.memoryProperties.memoryTypeCount);
         offsets.resize(heaps.size());
         locks.resize(heaps.size());

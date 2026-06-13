@@ -56,7 +56,7 @@ namespace mtt::bsdf {
 
     auto Physical_Bsdf::init() noexcept -> void {
         fresnel_reflectance_table = fresnel_length + 1;
-        stl::scheduler::instance().sync_parallel(uzv1{fresnel_length + 1}, [&](auto idx) {
+        stl::scheduler::sync_parallel(uzv1{fresnel_length + 1}, [&](auto idx) {
             auto i = idx[0];
             auto integral = 0.0;
             auto eta = i * 3.f / fresnel_length;

@@ -5,8 +5,8 @@
 
 namespace mtt::command {
     Queue::Queue(Type type) noexcept {
-        auto& ctx = Context::instance().impl;
-        auto size = stl::scheduler::instance().size();
+        auto& ctx = Context::internal();
+        auto size = stl::scheduler::size();
         impl->queue = ctx->device->newCommandQueue(size * 8);
         impl->queue->addResidencySet(ctx->residency.get());
         impl->cmds.resize(size);
@@ -14,7 +14,7 @@ namespace mtt::command {
     Queue::~Queue() noexcept {}
 
     auto Queue::allocate(rref<Pairs> waits) noexcept -> obj<Buffer> {
-        auto& ctx = Context::instance().impl;
+        auto& ctx = Context::internal();
         auto device = ctx->device.get();
         auto idx = stl::scheduler::index();
         auto& cmds = impl->cmds[idx];

@@ -46,9 +46,8 @@ namespace mtt::opaque {
             desc.image->pixels.clear();
         }
 
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
-        auto& allocator = command::Allocator::instance();
 
         auto tesc = MTL::TextureDescriptor::alloc()->init();
         tesc->setTextureType(MTL::TextureType2D);
@@ -64,7 +63,7 @@ namespace mtt::opaque {
         : MTL::TextureUsageShaderRead | MTL::TextureUsageShaderWrite);
 
         auto sa = device->heapTextureSizeAndAlign(tesc);
-        auto alloc = allocator.allocate(u32(command::Memory::Impl::Type::local), 0, sa.align, sa.size);
+        auto alloc = command::Allocator::allocate(u32(command::Memory::Impl::Type::local), 0, sa.align, sa.size);
         auto heap = alloc.memory->impl->heap.get();
         impl->texture = heap->newTexture(tesc, alloc.offset);
     }

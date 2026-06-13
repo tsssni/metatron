@@ -12,7 +12,7 @@ namespace mtt::shader {
         auto ir_path = stl::path{base_path}.concat(".spirv");
         auto spirv = stl::filesystem::load(stl::filesystem::find(ir_path), std::ios::binary);
 
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
         auto cache = ctx->pipeline_cache.get();
 

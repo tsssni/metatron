@@ -10,10 +10,10 @@ namespace mtt::emitter {
         auto prims = std::vector<Primitive>{};
         auto inf_prims = std::vector<Primitive>{};
         [&]<typename... Ls>(stl::array<Ls...>*) {
-            auto& lvec = light::Light::vs::instance();
+            using lvec = light::Light::vs;
             auto add = [&]<typename L>() {
-                for (auto const& et: lvec.template keys<L>()) {
-                    auto light = light::Light{lvec.template entity<L>(et)};
+                for (auto const& et: lvec::keys<L>()) {
+                    auto light = light::Light{lvec::entity<L>(et)};
                     auto t = math::proxy::Transform::entity(et);
                     prims.emplace_back(light, t);
                     if (light.flags() & light::Flags::inf)

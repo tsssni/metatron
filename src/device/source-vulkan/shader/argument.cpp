@@ -53,7 +53,7 @@ namespace mtt::shader {
             });
         }
 
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
         impl->layout = command::guard(device.createDescriptorSetLayoutUnique({
             .flags = vk::DescriptorSetLayoutCreateFlagBits::eDescriptorBufferEXT,

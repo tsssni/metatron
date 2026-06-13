@@ -4,7 +4,7 @@
 
 namespace mtt::opaque {
     Acceleration::Acceleration(cref<Descriptor> desc) noexcept {
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto props = ctx->accel_props;
         auto device = ctx->device.get();
 
@@ -25,7 +25,7 @@ namespace mtt::opaque {
                 num_bboxes += desc.primitives[i].aabbs.size();
             } else bbox_offsets[i + 1] = bbox_offsets[i];
         auto bboxes_data = std::vector<math::Bounding_Box>(bbox_size * num_bboxes);
-        stl::scheduler::instance().sync_parallel(uzv1{desc.primitives.size()}, [&](auto idx) {
+        stl::scheduler::sync_parallel(uzv1{desc.primitives.size()}, [&](auto idx) {
             auto [i] = idx;
             auto& prim = desc.primitives[i];
             auto procedural = prim.type == Primitive::Type::aabb;
@@ -43,7 +43,7 @@ namespace mtt::opaque {
         }) : nullptr;
 
 
-        stl::scheduler::instance().sync_parallel(uzv1{desc.primitives.size()}, [&](auto idx) {
+        stl::scheduler::sync_parallel(uzv1{desc.primitives.size()}, [&](auto idx) {
             auto [i] = idx;
             auto& prim = desc.primitives[i];
             auto procedural = prim.type == Primitive::Type::aabb;
@@ -112,7 +112,7 @@ namespace mtt::opaque {
         });
 
         auto instances_data = std::vector<vk::AccelerationStructureInstanceKHR>(desc.instances.size());
-        stl::scheduler::instance().sync_parallel(uzv1{desc.instances.size()}, [&](auto idx) {
+        stl::scheduler::sync_parallel(uzv1{desc.instances.size()}, [&](auto idx) {
             auto [i] = idx;
             auto& instance = desc.instances[i];
             auto& info = instances_data[i];

@@ -13,7 +13,7 @@ namespace mtt::scene {
     Hierarchy::Hierarchy() noexcept {}
 
     auto Hierarchy::filter(filter_function f) noexcept -> void {
-        impl->filters.push_back(f);
+        instance().impl->filters.push_back(f);
     }
 
     auto Hierarchy::populate(cref<stl::path> path) noexcept -> void {
@@ -22,6 +22,6 @@ namespace mtt::scene {
         stl::json::load(path / "scene.json", jsons);
         auto bins = binmap{};
         for (auto& j: jsons) bins[j.type].push_back(std::move(j));
-        for (auto& f: impl->filters) f(bins);
+        for (auto& f: instance().impl->filters) f(bins);
     }
 }

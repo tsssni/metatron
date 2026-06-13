@@ -120,8 +120,7 @@ namespace mtt::opaque {
         default: break;
         }
 
-        auto& ctx = command::Context::instance().impl;
-        auto& allocator = command::Allocator::instance();
+        auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
         impl->image = command::guard(device.createImageUnique({
             .imageType = vk::ImageType::e2D,
@@ -141,7 +140,7 @@ namespace mtt::opaque {
             vk::MemoryPropertyFlagBits::eDeviceLocal,
             ctx->device_heap, reqs.memoryTypeBits
         );
-        auto alloc = allocator.allocate(type, 0, reqs.alignment, reqs.size);
+        auto alloc = command::Allocator::allocate(type, 0, reqs.alignment, reqs.size);
 
         auto info = vk::BindImageMemoryInfo{
             .image = impl->image.get(),

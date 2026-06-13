@@ -5,6 +5,13 @@ function(derive unit)
     endif()
     get_property(path TARGET ${target} PROPERTY metatron-path)
     get_property(mode TARGET ${target} PROPERTY metatron-mode)
+    get_property(origin TARGET metatron-build PROPERTY metatron-origin)
+
+    if(${mode} STREQUAL "bin")
+        set_target_properties(${target} PROPERTIES INSTALL_RPATH "${origin}/../lib")
+    elseif(${mode} STREQUAL "lib")
+        set_target_properties(${target} PROPERTIES INSTALL_RPATH "${origin}")
+    endif()
 
     if(EXISTS ${path}/include)
         install(
@@ -35,7 +42,9 @@ function(release)
     get_property(metatron-units TARGET metatron-build PROPERTY metatron-units)
     get_property(metatron-exts TARGET metatron-build PROPERTY metatron-exts)
     get_property(metatron-mods TARGET metatron-build PROPERTY metatron-mods)
+    get_property(origin TARGET metatron-build PROPERTY metatron-origin)
 
+    set_target_properties(metatron PROPERTIES INSTALL_RPATH "${origin}")
     install(
         TARGETS metatron
         EXPORT metatron-targets
@@ -83,6 +92,7 @@ function(release)
     install(
         DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/shader/
         DESTINATION share/metatron/shader
+        PATTERN "cache.json" EXCLUDE
     )
 endfunction()
 

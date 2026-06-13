@@ -33,6 +33,10 @@ namespace mtt::command {
         Context::instance();
     }
 
+    auto Context::internal() noexcept -> ref<stl::capsule<Context>::Impl> {
+        return instance().impl;
+    }
+
     auto guard(mut<NS::Error> err) noexcept -> void {
         if (err->code() != NS::Integer{0}) stl::abort("metal error: {}"
         , err->localizedDescription()->cString(NS::UTF8StringEncoding));

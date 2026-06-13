@@ -42,50 +42,25 @@ namespace mtt::stl {
 
         template<typename F, usize size>
         requires (std::is_invocable_v<F, uzv<size>> && size >= 1 && size <= 3)
-        auto sync_parallel(
+        auto static sync_parallel(
             cref<uzv<size>> grid, F&& f
         ) noexcept -> void {
-            auto future = parallel(grid, std::forward<F>(f), true);
+            auto future = instance().parallel(grid, std::forward<F>(f), true);
             future.wait();
         }
 
         template<typename F, usize size>
         requires (std::is_invocable_v<F, uzv<size>> && size >= 1 && size <= 3)
-        auto async_parallel(
+        auto static async_parallel(
             cref<uzv<size>> grid, F&& f
         ) noexcept -> std::shared_future<void> {
-            return parallel(grid, std::forward<F>(f), false);
+            return instance().parallel(grid, std::forward<F>(f), false);
         }
 
         template<typename F>
         requires (std::is_invocable_v<F>)
-        auto async_dispatch(
-            F&& f
-        ) noexcept {
-            using R = std::invoke_result_t<F>;
-            auto promise = std::make_shared<std::promise<R>>();
-            auto future = promise->get_future().share();
-
-            auto task = std::make_shared<std::function<void()>>([
-                promise = std::move(promise),
-                future,
-                f = std::forward<F>(f)
-            ]() mutable {
-                if constexpr (std::same_as<R, void>) {
-                    f();
-                    promise->set_value();
-                } else {
-                    promise->set_value(f());
-                }
-            });
-
-            {
-                auto lock = std::lock_guard{mutex};
-                tasks.emplace(task);
-            }
-
-            cv.notify_one();
-            return future;
+        auto static async_dispatch(F&& f) noexcept {
+            return instance().dispatch(std::forward<F>(f));
         }
 
         auto static index() noexcept -> usize {
@@ -95,7 +70,7 @@ namespace mtt::stl {
             return tid;
         }
 
-        auto size() noexcept -> usize { return threads.size() + 1; }
+        auto static size() noexcept -> usize { return instance().threads.size() + 1; }
 
     private:
         template<typename F, usize size>
@@ -155,6 +130,35 @@ namespace mtt::stl {
 
             cv.notify_all();
             if (sync) (*task)();
+            return future;
+        }
+
+        template<typename F>
+        requires (std::is_invocable_v<F>)
+        auto dispatch(F&& f) noexcept {
+            using R = std::invoke_result_t<F>;
+            auto promise = std::make_shared<std::promise<R>>();
+            auto future = promise->get_future().share();
+
+            auto task = std::make_shared<std::function<void()>>([
+                promise = std::move(promise),
+                future,
+                f = std::forward<F>(f)
+            ]() mutable {
+                if constexpr (std::same_as<R, void>) {
+                    f();
+                    promise->set_value();
+                } else {
+                    promise->set_value(f());
+                }
+            });
+
+            {
+                auto lock = std::lock_guard{mutex};
+                tasks.emplace(task);
+            }
+
+            cv.notify_one();
             return future;
         }
 

@@ -112,7 +112,7 @@ namespace mtt::media {
     density(desc.density),
     density_scale(desc.density_scale) {
         auto sigmaj = volume::Uniform_Volume{{density.bounding_box(), desc.dimensions}};
-        stl::scheduler::instance().sync_parallel(
+        stl::scheduler::sync_parallel(
             sigmaj.dimensions(),
             [&](cref<uzv3> xyz) mutable {
                 auto ijk = iv3{xyz};

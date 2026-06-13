@@ -21,7 +21,7 @@ namespace mtt::command {
 
     struct Allocator final: stl::singleton<Allocator> {
         Allocator() noexcept;
-        auto allocate(
+        auto static allocate(
             u32 type, u32 flags,
             usize alignment, usize size
         ) noexcept -> Allocation;

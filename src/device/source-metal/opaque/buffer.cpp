@@ -5,13 +5,12 @@ namespace mtt::opaque {
     Buffer::Buffer(cref<Descriptor> desc) noexcept:
     size(desc.size),
     state(desc.state) {
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
-        auto& allocator = command::Allocator::instance();
 
         auto alloc = [&](MTL::ResourceOptions options, command::Memory::Impl::Type type) {
             auto sa = device->heapBufferSizeAndAlign(desc.size, options);
-            auto alloc = allocator.allocate(u32(type), 0, sa.align, sa.size);
+            auto alloc = command::Allocator::allocate(u32(type), 0, sa.align, sa.size);
             auto heap = alloc.memory->impl->heap.get();
             return heap->newBuffer(sa.size, options, alloc.offset);
         };
@@ -31,7 +30,7 @@ namespace mtt::opaque {
 
     Buffer::Buffer(rref<Buffer> rhs) noexcept { *this = std::move(rhs); }
     auto Buffer::operator=(rref<Buffer> rhs) noexcept -> ref<Buffer> {
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
         state = rhs.state; ptr = rhs.ptr;
         addr = rhs.addr; size = rhs.size; dirty = std::move(rhs.dirty);

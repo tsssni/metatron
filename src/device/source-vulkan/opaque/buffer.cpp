@@ -12,7 +12,7 @@ namespace mtt::opaque {
     | vk::BufferUsageFlagBits2::eShaderDeviceAddress;
 
     auto Buffer::Impl::search(vk::MemoryPropertyFlags flags, u32 heap, u32 type) -> u32 {
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto i = 0u;
         while (type > 0) {
             if (!(type & 1)) {
@@ -47,9 +47,8 @@ namespace mtt::opaque {
     size(desc.size),
     state(desc.state) {
         impl->barrier.family = command::Queue::Impl::families[u32(desc.type)].idx;
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto& props = ctx->memory_props;
-        auto& allocator = command::Allocator::instance();
         if (desc.size == 0) stl::abort("empty buffer not supported");
 
         auto device = ctx->device.get();
@@ -80,7 +79,7 @@ namespace mtt::opaque {
                 vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible,
                 ctx->host_heap, reqs.memoryTypeBits
             );
-            host_alloc = allocator.allocate(
+            host_alloc = command::Allocator::allocate(
                 type, u32(Impl::flags),
                 math::max(desc.alignment, reqs.alignment),
                 reqs.size
@@ -97,7 +96,7 @@ namespace mtt::opaque {
                 vk::MemoryPropertyFlagBits::eDeviceLocal,
                 ctx->device_heap, reqs.memoryTypeBits
             );
-            device_alloc = allocator.allocate(
+            device_alloc = command::Allocator::allocate(
                 type, u32(Impl::flags),
                 math::max(desc.alignment, reqs.alignment),
                 reqs.size
@@ -124,7 +123,7 @@ namespace mtt::opaque {
 
     Buffer::Buffer(rref<Buffer> rhs) noexcept { *this = std::move(rhs); }
     auto Buffer::operator=(rref<Buffer> rhs) noexcept -> ref<Buffer> {
-        auto& ctx = command::Context::instance().impl;
+        auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
         state = rhs.state; ptr = rhs.ptr;
         addr = rhs.addr; size = rhs.size; dirty = std::move(rhs.dirty);

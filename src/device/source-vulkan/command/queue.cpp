@@ -8,7 +8,7 @@ namespace mtt::command {
     std::array<Family, num_types> Queue::Impl::families;
 
     Queue::Queue(Type type) noexcept: type(type) {
-        auto& ctx = Context::instance().impl;
+        auto& ctx = Context::internal();
         auto& family = impl->families[u32(type)];
         auto device = ctx->device.get();
         auto idx = family.allocated;
@@ -19,7 +19,7 @@ namespace mtt::command {
             .queueFamilyIndex = family.idx,
             .queueIndex = idx,
         });
-        auto size = stl::scheduler::instance().size();
+        auto size = stl::scheduler::size();
         impl->pools.resize(size);
         impl->cmds.resize(size);
         for (auto i = 0; i < size; ++i)
@@ -30,13 +30,13 @@ namespace mtt::command {
     }
 
     Queue::~Queue() noexcept {
-        auto& ctx = Context::instance().impl;
+        auto& ctx = Context::internal();
         auto device = ctx->device.get();
         guard(impl->queue.waitIdle());
     }
 
     auto Queue::allocate(rref<Pairs> pairs) noexcept -> obj<Buffer> {
-        auto& ctx = Context::instance().impl;
+        auto& ctx = Context::internal();
         auto device = ctx->device.get();
         auto idx = stl::scheduler::index();
         auto& cmds = impl->cmds[idx];
@@ -90,7 +90,7 @@ namespace mtt::command {
         cmd->signals = pairs;
         guard(cmd->impl->cmd->end());
         auto collect = [](cref<Pairs> semaphores, vk::PipelineStageFlags2 flags) {
-            auto& ctx = Context::instance().impl;
+            auto& ctx = Context::internal();
             auto collected = std::vector<vk::SemaphoreSubmitInfo>(semaphores.size());
             for (auto i = 0; i < collected.size(); ++i) {
                 auto [timeline, count] = semaphores[i];

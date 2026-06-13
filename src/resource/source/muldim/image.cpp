@@ -228,7 +228,7 @@ namespace mtt::muldim {
         auto channels = img.size[2];
         auto stride = img.size[3];
         if (spec.nchannels == 3) // fill alpha channel with 1
-            stl::scheduler::instance().sync_parallel(size, [&img](auto px) mutable {
+            stl::scheduler::sync_parallel(size, [&img](auto px) mutable {
                 auto [i, j] = px;
                 auto v = fv4{img[i, j, 0]};
                 v[3] = 1.0;
@@ -255,7 +255,7 @@ namespace mtt::muldim {
             };
 
             if (math::prod(size) > 1024)
-                stl::scheduler::instance().sync_parallel(size, down);
+                stl::scheduler::sync_parallel(size, down);
             else for (auto j = 0; j < size[1]; ++j)
                     for (auto i = 0; i < size[0]; ++i)
                         down({i, j});

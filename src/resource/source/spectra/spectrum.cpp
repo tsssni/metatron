@@ -48,7 +48,7 @@ namespace mtt::spectra {
         })
         | std::ranges::to<std::vector<std::filesystem::path>>();
 
-        stl::scheduler::instance().sync_parallel(uzv1{spectra.size()}, [&](auto idx) {
+        stl::scheduler::sync_parallel(uzv1{spectra.size()}, [&](auto idx) {
             auto [i] = idx;
             auto path = spectra[i];
             auto ext = path.extension();

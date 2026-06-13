@@ -14,9 +14,8 @@ namespace mtt::renderer {
 
         auto addr = wired::Address{args.address};
 
-        auto& vector = stl::vector<void>::instance();
-        for (auto i = 0; i < vector.size(); ++i)
-            vector.storage[i].pack();
+        for (auto i = 0u; i < stl::vector<void>::size(); ++i)
+            stl::vector<void>::raw(i).pack();
 
         auto ct = *math::proxy::Transform::entity("/hierarchy/camera/render");
         auto spp = desc.film->spp;
@@ -65,18 +64,17 @@ namespace mtt::renderer {
 
         auto next = 1u;
         auto previewer = remote::Previewer{addr, "metatron"};
-        auto& scheduler = stl::scheduler::instance();
-        auto future = std::shared_future<void>{scheduler.async_dispatch([]{})};
+        auto future = std::shared_future<void>{stl::scheduler::async_dispatch([]{})};
 
         while (range[0] < spp) {
-            stl::scheduler::instance().sync_parallel(uzv2{size}, trace);
+            stl::scheduler::sync_parallel(uzv2{size}, trace);
             range[0] = range[1];
             range[1] = math::min(spp, range[1] + next);
             next = math::min(next * 2, desc.film->stride);
 
             future.wait();
             if (range[0] == spp) image.to_path(args.output, desc.film->color_space);
-            if (!addr.host.empty()) future = scheduler.async_dispatch(
+            if (!addr.host.empty()) future = stl::scheduler::async_dispatch(
                 [&image, &previewer] { previewer.update(image); }
             );
         }

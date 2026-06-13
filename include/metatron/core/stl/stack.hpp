@@ -25,28 +25,33 @@ namespace mtt::stl {
         using deleter = void(*)(mut<buf>);
         auto static constexpr max_idx = 1 << 20;
 
+        auto static push(mut<buf> buf, deleter f) noexcept -> void {
+            buf->idx = instance().length.fetch_add(1, std::memory_order::relaxed);
+            if (buf->idx >= max_idx) stl::abort("stack overflow");
+            instance().deleters[buf->idx].store(f, std::memory_order::release);
+            instance().bufs[buf->idx].store(buf, std::memory_order::release);
+        }
+
+        auto static swap(mut<buf> buf) noexcept -> void {
+            if (buf->idx == math::maxv<u32>) return;
+            instance().bufs[buf->idx].store(buf, std::memory_order::release);
+        }
+
+        auto static raw(u32 idx) noexcept -> mut<buf> {
+            return instance().bufs[idx].load(std::memory_order::acquire);
+        }
+
+        auto static release(mut<buf> buf) noexcept -> void {
+            if (buf->idx != math::maxv<u32> && instance().bufs[buf->idx].load(std::memory_order::acquire) == buf)
+                instance().deleters[buf->idx].load(std::memory_order::acquire)(buf);
+        }
+
+        auto static size() noexcept -> usize { return instance().length.load(std::memory_order::relaxed); }
+
+    private:
         std::array<std::atomic<mut<buf>>, max_idx> bufs;
         std::array<std::atomic<deleter>, max_idx> deleters;
         std::atomic<u32> length = 0;
-
-        auto push(mut<buf> buf, deleter f) noexcept -> void {
-            buf->idx = length.fetch_add(1, std::memory_order::relaxed);
-            if (buf->idx >= max_idx) stl::abort("stack overflow");
-            deleters[buf->idx].store(f, std::memory_order::release);
-            bufs[buf->idx].store(buf, std::memory_order::release);
-        }
-
-        auto swap(mut<buf> buf) noexcept -> void {
-            if (buf->idx == math::maxv<u32>) return;
-            bufs[buf->idx].store(buf, std::memory_order::release);
-        }
-
-        auto release(mut<buf> buf) noexcept -> void {
-            if (buf->idx != math::maxv<u32> && bufs[buf->idx].load(std::memory_order::acquire) == buf)
-                deleters[buf->idx].load(std::memory_order::acquire)(buf);
-        }
-
-        auto size() noexcept -> usize { return length.load(std::memory_order::relaxed); }
     };
 }
 
@@ -63,7 +68,7 @@ namespace mtt {
         buf(rref<buf> rhs) noexcept {
             std::construct_at(this, rhs);
             idx = rhs.idx;
-            stl::stack::instance().swap(this);
+            stl::stack::swap(this);
             rhs.reset();
         }
 
@@ -86,7 +91,7 @@ namespace mtt {
             if (!ptr) stl::abort("allocate {} bytes failed", bytelen);
             if constexpr (!std::is_trivially_constructible_v<T>)
                 std::uninitialized_default_construct_n(data(), size);
-            stl::stack::instance().push(this, [](auto* ptr) {
+            stl::stack::push(this, [](auto* ptr) {
                 mut<buf>(ptr)->release();
             });
         }

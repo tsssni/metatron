@@ -288,6 +288,6 @@ namespace mtt::shader {
     Compiler::Compiler() noexcept {}
 
     auto Compiler::build(std::string_view dir, std::string_view out) noexcept -> void {
-        return impl->build(dir, out);
+        return instance().impl->build(dir, out);
     }
 }

@@ -251,4 +251,8 @@ namespace mtt::command {
     auto Context::init() noexcept -> void {
         Context::instance();
     }
+
+    auto Context::internal() noexcept -> ref<stl::capsule<Context>::Impl> {
+        return instance().impl;
+    }
 }

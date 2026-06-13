@@ -19,8 +19,8 @@ namespace mtt::texture {
             Constant_Vector_Texture,
             Image_Vector_Texture
         );
-        stl::vector<muldim::Image>::instance().init();
-        stl::vector<math::Planar_Distribution>::instance().init();
+        stl::vector<muldim::Image>::init();
+        stl::vector<math::Planar_Distribution>::init();
     }
 
     auto Spectrum_Texture::init() noexcept -> void {
@@ -31,12 +31,12 @@ namespace mtt::texture {
         );
 
         [&]<typename... Ss>(stl::array<Ss...>*) {
-            auto& svec = spectra::Spectrum::vs::instance();
+            using svec = spectra::Spectrum::vs;
             auto add = [&]<typename S>() {
-                for (auto const& path: svec.template keys<S>())
+                for (auto const& path: svec::keys<S>())
                     Spectrum_Texture::push<Constant_Spectrum_Texture>(
                         std::string{path}.replace(1, 8, "texture"),
-                        {spectra::Spectrum{svec.template entity<S>(path)}}
+                        {spectra::Spectrum{svec::entity<S>(path)}}
                     );
             };
             (add.template operator()<Ss>(), ...);
