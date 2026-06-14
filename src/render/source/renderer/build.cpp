@@ -2,6 +2,7 @@
 #include <metatron/device/encoder/accel.hpp>
 #include <metatron/device/encoder/transfer.hpp>
 #include <metatron/core/stl/thread.hpp>
+#include <metatron/core/stl/chrono.hpp>
 
 namespace mtt::renderer {
     template<typename T>
@@ -36,6 +37,7 @@ namespace mtt::renderer {
         ref<u64> count
     ) noexcept -> obj<opaque::Acceleration> {
         using dividers = stl::vector<accel::Divider>;
+        auto timer = stl::timer{};
         auto counts = std::vector<u32>{0};
         auto primitives = std::vector<opaque::Acceleration::Primitive>{};
         auto instances = std::vector<opaque::Acceleration::Instance>{};
@@ -73,6 +75,8 @@ namespace mtt::renderer {
         builder.persist();
         builder.submit();
         queue->submit(std::move(cmd), {{timeline, ++count}});
+
+        stl::print("acceleration build: {:.3}s", timer.t<f64, stl::seconds>());
         return accel;
     }
 }

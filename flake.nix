@@ -8,7 +8,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixgl = {
-      url = "github:nix-community/nixGL";
+      url = "github:tsssni/nixGL";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -54,17 +54,7 @@
             overlays = tsssni.pkgs;
             config.allowUnfree = true;
           };
-          glpkgs =
-            let
-              isx86 = system == "x86_64-linux";
-            in
-            import nixgl {
-              inherit pkgs nvidiaVersion;
-              enable32bits = isx86;
-              enableIntelX86Extensions = isx86;
-            };
-          externalNvidiaVersion = builtins.getEnv "MTT_IMPURE_NVIDIA_VERSION";
-          nvidiaVersion = if externalNvidiaVersion == "" then null else externalNvidiaVersion;
+          glpkgs = import nixgl { inherit pkgs; };
         in
         rec {
           default = pkgs.mkShell.override { stdenv = pkgs.clangStdenv; } {

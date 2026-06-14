@@ -172,7 +172,7 @@ namespace mtt::scene {
             renderer = make_obj<renderer::Renderer>(std::move(desc));
         });
         Hierarchy::populate(args.scene);
-        stl::print("init duration: {:.3}s", timer.t<f64, stl::seconds>());
+        stl::print("initialization: {:.3}s", timer.t<f64, stl::seconds>());
         renderer->render(args);
     }
 }

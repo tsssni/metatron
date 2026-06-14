@@ -2,6 +2,7 @@
 #include <metatron/device/encoder/transfer.hpp>
 #include <metatron/resource/volume/nanovdb.hpp>
 #include <metatron/core/stl/thread.hpp>
+#include <metatron/core/stl/chrono.hpp>
 #include <barrier>
 
 namespace mtt::renderer {
@@ -12,6 +13,7 @@ namespace mtt::renderer {
         using bidims = stl::vector<muldim::Image>;
         using tridims = stl::vector<muldim::Grid>;
         using nanodims = stl::vector<volume::Nanovdb_Volume::Grid>;
+        auto timer = stl::timer{};
 
         auto bsize = stl::stack::size();
         auto vsize = stl::vector<void>::size();
@@ -30,20 +32,18 @@ namespace mtt::renderer {
         auto images = std::vector<obj<opaque::Image>>(isize);
         auto grids = std::vector<obj<opaque::Grid>>(gsize);
 
+        using A = std::atomic<u32>;
+        using B = std::barrier<>;
+        using S = std::tuple<B, A, A, A, A, A>;
         stl::scheduler::sync_parallel(uzv1{stl::scheduler::size()}, [
-            &,
-            barrier = std::make_shared<std::barrier<>>(stl::scheduler::size()),
-            bc = std::make_shared<std::atomic<u32>>(0),
-            vc = std::make_shared<std::atomic<u32>>(0),
-            nc = std::make_shared<std::atomic<u32>>(0),
-            ic = std::make_shared<std::atomic<u32>>(0),
-            gc = std::make_shared<std::atomic<u32>>(0)
+            &, state = std::make_unique<S>(stl::scheduler::size(), 0, 0, 0, 0, 0)
         ](auto) {
+            auto& [barrier, bc, vc, nc, ic, gc] = *state;
             auto cmd = queue->allocate({});
             auto transfer = encoder::Transfer_Encoder{cmd.get()};
 
             auto i = 0;
-            while ((i = bc->fetch_add(1, std::memory_order::relaxed)) < bsize) {
+            while ((i = bc.fetch_add(1, std::memory_order::relaxed)) < bsize) {
                 auto buf = stl::stack::raw(i);
                 if (buf->idx != i) continue;
 
@@ -62,10 +62,10 @@ namespace mtt::renderer {
                 buf->idx = math::maxv<u32>;
                 buffers[i] = std::move(buffer);
             }
-            barrier->arrive_and_wait();
+            barrier.arrive_and_wait();
 
             i = 0;
-            while ((i = vc->fetch_add(1, std::memory_order::relaxed)) < vsize) {
+            while ((i = vc.fetch_add(1, std::memory_order::relaxed)) < vsize) {
                 if (false
                 || i == bidims::storage()
                 || i == tridims::storage()
@@ -87,7 +87,7 @@ namespace mtt::renderer {
                 vecaddr[i] = buffer->addr;
                 vectors[i] = std::move(buffer);
             }
-            barrier->arrive_and_wait();
+            barrier.arrive_and_wait();
 
             if (stl::scheduler::index() == 0) {
                 vecarr = make_desc<opaque::Buffer>({
@@ -101,7 +101,7 @@ namespace mtt::renderer {
             }
 
             i = 0;
-            while ((i = nc->fetch_add(1, std::memory_order::relaxed)) < nsize) {
+            while ((i = nc.fetch_add(1, std::memory_order::relaxed)) < nsize) {
                 auto& vol = *nanodims::get(i);
                 auto buffer = make_desc<opaque::Buffer>({
                     .ptr = mut<byte>(vol.buffer().data()),
@@ -116,7 +116,7 @@ namespace mtt::renderer {
                 voladdr[i] = buffer->addr;
                 volumes[i] = std::move(buffer);
             }
-            barrier->arrive_and_wait();
+            barrier.arrive_and_wait();
 
             if (stl::scheduler::index() == 0 && voladdr.size() > 0) {
                 volarr = make_desc<opaque::Buffer>({
@@ -128,9 +128,10 @@ namespace mtt::renderer {
                 transfer.upload(*volarr);
                 transfer.persist(*volarr);
             }
+            barrier.arrive_and_wait();
 
             i = 0;
-            while ((i = ic->fetch_add(1, std::memory_order::relaxed)) < isize) {
+            while ((i = ic.fetch_add(1, std::memory_order::relaxed)) < isize) {
                 images[i] = make_desc<opaque::Image>({
                     .image = bidims::get(i),
                     .state = opaque::Image::State::samplable,
@@ -139,10 +140,10 @@ namespace mtt::renderer {
                 transfer.upload(*images[i]);
                 transfer.persist(*images[i]);
             }
-            barrier->arrive_and_wait();
+            barrier.arrive_and_wait();
 
             i = 0;
-            while ((i = gc->fetch_add(1, std::memory_order::relaxed)) < gsize) {
+            while ((i = gc.fetch_add(1, std::memory_order::relaxed)) < gsize) {
                 grids[i] = make_desc<opaque::Grid>({
                     .grid = tridims::get(i),
                     .state = opaque::Grid::State::readonly,
@@ -151,13 +152,14 @@ namespace mtt::renderer {
                 transfer.upload(*grids[i]);
                 transfer.persist(*grids[i]);
             }
-            barrier->arrive_and_wait();
+            barrier.arrive_and_wait();
 
             transfer.submit();
             timelines[stl::scheduler::index()] = make_obj<command::Timeline>();
             queue->submit(std::move(cmd), {{timelines[stl::scheduler::index()].get(), 1}});
         });
 
+        stl::print("upload resources: {:.3}s", timer.t<f64, stl::seconds>());
         return Resources{
             std::move(buffers),
             std::move(vectors),
