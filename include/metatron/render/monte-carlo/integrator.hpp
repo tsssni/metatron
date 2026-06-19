@@ -1,9 +1,11 @@
 #pragma once
 #include <metatron/render/monte-carlo/radiative.hpp>
+#include <metatron/render/monte-carlo/restir.hpp>
 
 namespace mtt::monte_carlo {
     struct Integrator final: stl::polynomial<Integrator
-    , Radiative_Integrator> {
+    , Radiative_Integrator
+    , Restir_Integrator> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 

@@ -77,7 +77,8 @@ namespace mtt::monte_carlo {
             auto direct_to_render = medium_to_render;
             auto iter = media::Iterator{};
             auto gamma = beta * (g / p_e) / (f / p);
-            auto mis_d = mis_s * q / p_e * f32(!(e_intr.light.flags() & light::Flags::delta));
+            auto delta = e_intr.light.flags() & light::Flags::delta;
+            auto mis_d = mis_s * q / p_e * f32(!delta);
             auto mis_l = mis_s;
 
             while (true) {
@@ -103,15 +104,15 @@ namespace mtt::monte_carlo {
                     direct_ctx.inside = math::dot(-direct_ctx.r.d, intr.n) < 0.f;
                     volume = direct_ctx.inside ? div.int_medium : div.ext_medium;
                     direct_to_render = direct_ctx.inside ? div.int_to_render : div.ext_to_render;
-                    iter = volume.begin(direct_to_render ^ trace_ctx, intr.t);
+                    iter = volume.begin(direct_to_render ^ trace_ctx, math::min(intr.t, l_intr.t));
                     intr.n *= direct_ctx.inside ? -1.f : 1.f;
 
+                    auto light_in_medium = l_intr.t < intr.t - 0.001f;
                     auto close_to_light = math::length(intr.p - l_intr.p) < 0.001f;
                     auto is_interface = div.material.flags() & material::Flags::interface;
                     auto is_emissive = div.material.flags() & material::Flags::emissive;
-                    if (!is_interface && (!is_emissive || !close_to_light)) {
-                        gamma = fv4{0.f}; break;
-                    } else if (close_to_light) {
+                    if (!light_in_medium && !is_interface && (!is_emissive || !close_to_light)) return;
+                    else if (close_to_light) {
                         auto st = math::Transform{};
                         st.transform = fm44{fq::from_rotation_between(ddiff.r.d, math::normalize(intr.p))};
                         st.inv_transform = math::transpose(st.transform);
@@ -121,12 +122,8 @@ namespace mtt::monte_carlo {
                         auto d_intr = intr;
                         d_intr.p = lt ^ d_intr.p;
                         d_intr.n = lt ^ d_intr.n;
-                        MTT_OPT_OR_CALLBACK(tcoord, texture::grad(ldiff, d_intr), {
-                            gamma = fv4{0.f}; break;
-                        });
-                        MTT_OPT_OR_CALLBACK(mat_intr, div.material.sample(direct_ctx, tcoord), {
-                            gamma = fv4{0.f}; break;
-                        });
+                        MTT_OPT_OR_RETURN(tcoord, texture::grad(ldiff, d_intr));
+                        MTT_OPT_OR_RETURN(mat_intr, div.material.sample(direct_ctx, tcoord));
                         l_intr.L = mat_intr.emission;
                     }
                 }
@@ -135,12 +132,10 @@ namespace mtt::monte_carlo {
                 auto& intr = *acc.intr_opt;
                 auto& div = acc.divider;
 
-                MTT_OPT_OR_CALLBACK(m_intr, iter.march(ctx.sampler.generate_1d()), {
-                    gamma = fv4{0.f}; break;
-                });
-                l_intr.t -= m_intr.t;
+                MTT_OPT_OR_RETURN(m_intr, iter.march(ctx.sampler.generate_1d()));
 
-                auto hit = m_intr.t >= intr.t;
+                auto hit = m_intr.t >= math::min(intr.t, l_intr.t);
+                l_intr.t -= m_intr.t;
                 auto spectra_pdf = hit
                 ? m_intr.transmittance
                 : m_intr.sigma_maj * m_intr.transmittance;

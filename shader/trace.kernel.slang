@@ -48,8 +48,8 @@ namespace mtt {
             var s = s_opt.value;
             s.ray_differential = cb.ct / s.ray_differential;
             s.default_differential = cb.ct / s.default_differential;
-
             let spec = spectra::Stochastic_Spectrum(sp.generate_1d());
+
             var ctx: monte_carlo::Context;
             ctx.accel = cb.accel;
             ctx.emitter = cb.emitter;

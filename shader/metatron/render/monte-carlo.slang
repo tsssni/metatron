@@ -1,12 +1,14 @@
 module monte_carlo;
 __include monte_carlo.radiative;
+__include monte_carlo.restir;
 import accel;
 import emitter;
 import sampler;
 import metatron.resource;
 
 #define DISPATCH_V(method, ...) \
-    if (idx.type() == 0) return tag<Radiative_Integrator>(idx).get().method(__VA_ARGS__);
+    if (idx.type() == 0) return tag<Radiative_Integrator>(idx).get().method(__VA_ARGS__); \
+    else if (idx.type() == 1) return tag<Restir_Integrator>(idx).get().method(__VA_ARGS__);
 
 #define DISPATCH_R(method, ...) DISPATCH_V(method, __VA_ARGS__) else return {};
 

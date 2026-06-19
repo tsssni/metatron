@@ -30,12 +30,12 @@ namespace mtt::renderer {
                 auto sp = sampler::proxy::Sampler{desc.sampler, {{}, px, size, n, spp, 0, seed}};
                 sp.start();
                 auto fixel = desc.film(desc.filter, px, sp.generate_pixel_2d());
-                auto spec = spectra::Stochastic_Spectrum{sp.generate_1d()};
                 MTT_OPT_OR_CALLBACK(s, photo::Camera{}.sample(
                     desc.lens, fixel.position, fixel.dxdy, sp.generate_2d()
                 ), stl::abort("ray generation failed"););
                 s.ray_differential = ct ^ s.ray_differential;
                 s.default_differential = ct ^ s.default_differential;
+                auto spec = spectra::Stochastic_Spectrum{sp.generate_1d()};
 
                 auto ctx = monte_carlo::Context{
                     desc.accel,

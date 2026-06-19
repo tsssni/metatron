@@ -3,6 +3,6 @@
 
 namespace mtt::monte_carlo {
     auto Integrator::init() noexcept -> void {
-        MTT_DESERIALIZE(Radiative_Integrator);
+        MTT_DESERIALIZE(Radiative_Integrator, Restir_Integrator);
     }
 }
