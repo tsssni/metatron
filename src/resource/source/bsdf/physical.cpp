@@ -5,6 +5,7 @@
 namespace mtt::bsdf {
     auto constexpr fresnel_num_samples = 65536;
     auto constexpr fresnel_length = 256;
+    auto constexpr reconnection_alpha = 0.04f;
 
     buf<f32> Physical_Bsdf::fresnel_reflectance_table;
 
@@ -65,11 +66,12 @@ namespace mtt::bsdf {
     }
 
     auto Physical_Bsdf::operator()(
-        cref<fv3> wo, cref<fv3> wi
+        cref<fv3> wo, cref<fv3> wi, f32 u
     ) const noexcept -> opt<Interaction> {
         auto flags = this->flags();
+        auto specular = flags & Flags::specular;
         if (false
-        || flags & Flags::specular
+        || (!plastic && specular)
         || math::abs(wo[1]) < math::epsilon<f32>
         || math::abs(wi[1]) < math::epsilon<f32>
         ) return {};
@@ -90,34 +92,43 @@ namespace mtt::bsdf {
             .pdf = math::Cosine_Hemisphere_Distribution{}.pdf(math::unit_to_cos_theta(wi)),
         };
 
-        auto F = fresnel(math::dot(-wo, wm), eta, k);
-        auto D = trowbridge_reitz(wm, alpha_u, alpha_v);
-        auto G = smith_shadow(wo, wi, alpha_u, alpha_v);
+        auto replay = u != -1;
+        auto R = Interaction{.f = fv4{0}, .wi = wi, .pdf = 0};
+        auto Fo = !plastic ? fv4{1.f} :
+        fresnel(math::unit_to_cos_theta(-wo), eta, k);
 
-        auto pr = F[0];
-        auto pt = 1.f - F[0];
-        pr *= bool(flags & Flags::reflective);
-        pt *= bool(flags & Flags::transmissive);
-        if (pr == 0.f && pt == 0.f) return {};
-
-        MTT_OPT_OR_RETURN(R, torrance_sparrow(
-            reflective, pr, pt,
-            F, D, G,
-            wo, wi, wm,
-            eta, alpha_u, alpha_v
-        ), {});
-
-        if (plastic) {
+        if (plastic && (!replay || u >= Fo[0])) {
             auto Fi = fresnel(math::unit_to_cos_theta(wi), eta, k);
-            auto Fo = fresnel(math::unit_to_cos_theta(-wo), eta, k);
             auto pdf = math::Cosine_Hemisphere_Distribution{}.pdf(math::unit_to_cos_theta(wi));
             auto internal = 1.f
             * (1.f - Fi) * (1.f - Fo) / (math::pi * math::pow<2>(eta))
             * (reflectance / (1.f - reflectance * fresnel_reflectance));
-            R.f += internal;
-            R.pdf *= Fo[0];
-            R.pdf += (1.f - Fo[0]) * pdf;
+            R.f = internal;
+            R.pdf = (1.f - Fo[0]) * pdf;
+            if (replay) return R;
         }
+
+        if (!plastic || !specular) {
+            auto F = fresnel(math::dot(-wo, wm), eta, k);
+            auto D = trowbridge_reitz(wm, alpha_u, alpha_v);
+            auto G = smith_shadow(wo, wi, alpha_u, alpha_v);
+
+            auto pr = F[0];
+            auto pt = 1.f - F[0];
+            pr *= bool(flags & Flags::reflective);
+            pt *= bool(flags & Flags::transmissive);
+            if (pr == 0.f && pt == 0.f) return {};
+
+            MTT_OPT_OR_RETURN(T, torrance_sparrow(
+                reflective, pr, pt,
+                F, D, G,
+                wo, wi, wm,
+                eta, alpha_u, alpha_v
+            ), {});
+            R.f += T.f;
+            R.pdf += Fo[0] * T.pdf;
+        }
+
         return R;
     }
 
@@ -189,6 +200,7 @@ namespace mtt::bsdf {
                 eta, alpha_u, alpha_v
             ), {});
             R.pdf *= plastic ? Fo[0] : 1.f;
+            R.connectable = alpha_u >= reconnection_alpha && alpha_v >= reconnection_alpha;
             return R;
         } else {
             auto distr = math::Cosine_Hemisphere_Distribution{};
@@ -198,14 +210,14 @@ namespace mtt::bsdf {
 
             if (lambertian) {
                 auto f = lambert(reflectance);
-                return Interaction{f, wi, pdf};
+                return Interaction{f, wi, pdf, true};
             } else {
                 auto Fi = fresnel(math::unit_to_cos_theta(wi), eta, k);
                 auto f = 1.f
                 * (1.f - Fi) * (1.f - Fo) / (math::pi * math::pow<2>(eta))
                 * (reflectance / (1.f - reflectance * fresnel_reflectance));
                 pdf *= (1.f - Fo[0]);
-                return Interaction{f, wi, pdf};
+                return Interaction{f, wi, pdf, true};
             }
         }
     }

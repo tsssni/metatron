@@ -31,11 +31,13 @@ namespace mtt::monte_carlo {
             if (!scattered || specular) return;
 
             auto direct_ctx = trace_ctx;
-            MTT_OPT_OR_RETURN(e_intr, ctx.emitter.sample(direct_ctx, ctx.sampler.generate_1d()));
+            auto eu = ctx.sampler.generate_1d();
+            auto lu = ctx.sampler.generate_2d();
+            MTT_OPT_OR_RETURN(e_intr, ctx.emitter.sample(direct_ctx, eu));
             auto et = e_intr.local_to_render;
             auto light = e_intr.light;
             auto l_ctx = et ^ direct_ctx;
-            MTT_OPT_OR_RETURN(l_intr, light.sample(l_ctx, ctx.sampler.generate_2d()));
+            MTT_OPT_OR_RETURN(l_intr, light.sample(l_ctx, lu));
 
             auto e_pdf = e_intr.pdf;
             auto l_pdf = l_intr.pdf;
