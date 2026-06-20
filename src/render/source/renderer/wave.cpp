@@ -98,17 +98,16 @@ namespace mtt::renderer {
         stl::print("seed: 0x{:x}", seed);
 
         struct {
-            Descriptor desc; u32 seed; uv2 range;
-            math::Transform ct; buf<f32> fresnel;
+            Descriptor desc; u32 seed; uv2 range; math::Transform ct;
         } entry{
             std::move(desc), seed,
             {}, *math::proxy::Transform::entity("/hierarchy/camera/render"),
-            bsdf::Physical_Bsdf::fresnel_reflectance_table,
         };
 
-        struct { uptr vectors; uptr volumes; } global{
+        struct { uptr vectors; uptr volumes; uptr fresnel; } global{
             resources.vecarr->addr,
-            resources.volarr ? resources.volarr->addr : 0
+            resources.volarr ? resources.volarr->addr : 0,
+            (uptr)bsdf::Physical_Bsdf::fresnel_reflectance_table.ptr,
         };
 
         auto resources_args_encoder = encoder::Argument_Encoder{render.get(), resources_args.get()};

@@ -1,19 +1,25 @@
 #include <metatron/render/monte-carlo/restir.hpp>
 
 namespace mtt::monte_carlo {
-    Restir_Integrator::Restir_Integrator(cref<Descriptor>) noexcept {}
+    auto constexpr reconnection_t = 1e-2f;
 
     auto Restir_Integrator::sample(
         ref<Context> ctx
     ) const noexcept -> opt<spectra::Stochastic_Spectrum> {
-        auto emission = fv4{0.f};
+        auto constexpr half_mask = (1 << 16) - 1;
+        auto path = Path{
+            .Li = {ctx.lambda, fv4{0.f}},
+            .pixel = (ctx.pixel[0] & half_mask) | ((ctx.pixel[1] << 16)),
+        };
         auto beta = fv4{1.f};
 
         auto depth = 0u;
         auto scattered = false;
         auto specular = false;
+        auto connectable = false;
 
         auto p = 0.f;
+        auto rr = 1.f;
         auto f = fv4{0.f};
         auto bsdf = bsdf::Bsdf{};
 
@@ -31,13 +37,12 @@ namespace mtt::monte_carlo {
             if (!scattered || specular) return;
 
             auto direct_ctx = trace_ctx;
-            auto eu = ctx.sampler.generate_1d();
-            auto lu = ctx.sampler.generate_2d();
-            MTT_OPT_OR_RETURN(e_intr, ctx.emitter.sample(direct_ctx, eu));
+            auto u = fv4{ctx.sampler.generate_2d(), ctx.sampler.generate_2d()};
+            MTT_OPT_OR_RETURN(e_intr, ctx.emitter.sample(direct_ctx, u[0]));
             auto et = e_intr.local_to_render;
             auto light = e_intr.light;
             auto l_ctx = et ^ direct_ctx;
-            MTT_OPT_OR_RETURN(l_intr, light.sample(l_ctx, lu));
+            MTT_OPT_OR_RETURN(l_intr, light.sample(l_ctx, {u[1], u[2]}));
 
             auto e_pdf = e_intr.pdf;
             auto l_pdf = l_intr.pdf;
@@ -63,7 +68,7 @@ namespace mtt::monte_carlo {
             auto mis_u = math::guarded_div(1.f, math::avg(mis_d + mis_l));
             acc_opt = ctx.accel(direct_ctx.r, direct_ctx.n);
             if (!acc_opt || !acc_opt->intr_opt) {
-                emission += mis_u * gamma * l_intr.L;
+                path({trace_ctx.lambda, mis_u * gamma * l_intr.L}, rr, u[3]);
                 return;
             }
 
@@ -95,22 +100,23 @@ namespace mtt::monte_carlo {
                 MTT_OPT_OR_RETURN(mat_intr, div.material.sample(direct_ctx, tcoord));
                 l_intr.L = mat_intr.emission;
             }
-            emission += mis_u * gamma * l_intr.L;
+            path({trace_ctx.lambda, mis_u * gamma * l_intr.L}, rr, u[3]);
         };
 
         while (true) {
             depth += usize(scattered);
             if (depth >= ctx.max_depth) break;
 
-            auto q = math::max(beta);
+            auto q = math::max(beta * rr);
             if (q < 1.f) {
                 auto rr_u = ctx.sampler.generate_1d();
                 if (rr_u > q) break;
-                else beta /= q;
+                else rr /= q;
             }
 
             direct_lighting();
             acc_opt = ctx.accel(trace_ctx.r, trace_ctx.n);
+            auto eu = ctx.sampler.generate_1d();
             if (!acc_opt || !acc_opt->intr_opt) {
                 MTT_OPT_OR_BREAK(e_intr, ctx.emitter.sample_infinite(trace_ctx, ctx.sampler.generate_1d()));
                 auto light = e_intr.light;
@@ -121,7 +127,7 @@ namespace mtt::monte_carlo {
 
                 auto mis_e = fv4{specular ? 0.f : math::guarded_div(e_intr.pdf * l_intr.pdf, p)};
                 auto mis_w = math::guarded_div(1.f, math::avg(1.f + mis_e));
-                emission += beta * mis_w * l_intr.L;
+                path({trace_ctx.lambda, beta * mis_w * l_intr.L}, rr, eu);
                 break;
             }
 
@@ -157,14 +163,14 @@ namespace mtt::monte_carlo {
                 // TODO: need correct way to fetch area light pdf on GPU, use 1.f now
                 auto mis_e = fv4{specular ? 0.f : math::guarded_div(intr.pdf * 1.f, p)};
                 auto mis_w = math::guarded_div(1.f, math::avg(1.f + mis_e));
-                emission += mis_w * beta * mat_intr.emission;
+                path({trace_ctx.lambda, beta * mis_w * mat_intr.emission}, rr, eu);
             }
 
             auto tbn = math::transpose(fm33{intr.tn, intr.bn, intr.n});
             intr.n = tbn | mat_intr.normal;
 
             if (mat_intr.degraded && !math::constant(trace_ctx.lambda)) {
-                emission = fv4{emission[0]}; beta = fv4{beta[0]};
+                beta = fv4{beta[0]};
                 trace_ctx.lambda = fv4{trace_ctx.lambda[0]};
                 history_ctx.lambda = trace_ctx.lambda;
             }
@@ -187,16 +193,31 @@ namespace mtt::monte_carlo {
             b_intr.wi = math::normalize(bt ^ math::expand(b_intr.wi, 0.f));
             b_intr.f *= math::abs(math::dot(b_intr.wi, trace_n));
 
+            beta *= b_intr.f / b_intr.pdf;
             history_ctx.r = trace_ctx.r;
             history_ctx.n = trace_ctx.n;
             trace_ctx.r = {trace_p, b_intr.wi};
             trace_ctx.n = trace_n;
-            beta *= b_intr.f / b_intr.pdf;
+
+            if (connectable && b_intr.connectable && intr.t > reconnection_t) {
+                path.divider = div;
+                path.beta = beta;
+                path.p = intr.p;
+                path.wi = b_intr.wi;
+                path.pdf = {p, b_intr.pdf};
+                path.depth = depth - 1;
+            }
+
+            connectable = (path.depth == 0) && b_intr.connectable;
             f = b_intr.f;
             p = b_intr.pdf;
         }
 
-        if (!math::isfinite(emission)) return {};
-        return spectra::Stochastic_Spectrum{trace_ctx.lambda, emission};
+        // support set of different path depth is not intersected
+        path.reservoir.M = 1.f;
+        path.reservoir.finalize();
+        path.Li.value *= path.reservoir.W;
+        if (!math::isfinite(path.Li.value)) return {};
+        return path.Li;
     }
 }

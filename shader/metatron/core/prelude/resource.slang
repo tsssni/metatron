@@ -4,6 +4,7 @@ namespace mtt {
     public struct Resources {
         public uptr vectors;
         public uptr volumes;
+        public uptr fresnel;
         [vk_binding(1, 1)] public RaytracingAccelerationStructure accel;
     }
     [vk_binding(0, 1)] public ParameterBlock<Resources> resources;

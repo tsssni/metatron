@@ -3,7 +3,6 @@ implementing bsdf;
 namespace mtt::bsdf {
     static i32 fresnel_num_samples = 65536;
     static i32 fresnel_length = 256;
-    public static buf<f32> fresnel_reflectance_table = {};
 
     public struct Physical_Bsdf {
         fv4 reflectance = {2.f};
@@ -46,6 +45,8 @@ namespace mtt::bsdf {
                 let low = i32(idx);
                 let high = clamp(low + 1, 0, fresnel_num_samples);
                 let alpha = idx - low;
+                var fresnel_reflectance_table: buf<f32>;
+                fresnel_reflectance_table.ptr = resources.fresnel;
                 fresnel_reflectance[i] = lerp(fresnel_reflectance_table[low], fresnel_reflectance_table[high], alpha);
             }
         }

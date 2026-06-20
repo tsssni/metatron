@@ -2,17 +2,50 @@ implementing monte_carlo;
 
 namespace mtt::monte_carlo {
     public struct Restir_Integrator {
-        u32 padding = 0u;
+        struct Path {
+            math::Reservoir reservoir;
+            spectra::Stochastic_Spectrum Li;
+            accel::proxy::Divider divider;
+            fv4 beta;
+            fv3 p;
+            fv3 wi;
+            fv2 pdf;
+            u32 pixel;
+            u32 depth = 0; // 0 means unavailable for reconnection
 
+            [mutating] void operator()(spectra::Stochastic_Spectrum Li, f32 W, f32 u) {
+                let y = math::max(Li.value);
+                var r: math::Reservoir;
+                r.p_hat = y;
+                r.M = 1.f;
+                r.W = W;
+                r.shift(1.f);
+                if (reservoir(r, u)) this.Li = Li;
+            }
+        }
+
+        u32 reuse_iterations = 5;
+        u32 reuse_confidence = 32;
+        u32 spatial_samples = 4;
+
+        // gris: https://graphics.cs.utah.edu/research/projects/gris/
         public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum> {
-            var emission = fv4(0.f);
+            let reconnection_t = 1e-2f;
+            let half_mask = (1u << 16) - 1u;
+
+            var path: Path;
+            path.Li = spectra::Stochastic_Spectrum(ctx.lambda, fv4(0.f));
+            path.pixel = (ctx.pixel[0] & half_mask) | (ctx.pixel[1] << 16);
+
             var beta = fv4(1.f);
 
             var depth = 0u;
             var scattered = false;
             var specular = false;
+            var connectable = false;
 
             var p = 0.f;
+            var rr = 1.f;
             var f = fv4(0.f);
             var bsdf: bsdf::Bsdf;
 
@@ -30,25 +63,26 @@ namespace mtt::monte_carlo {
                 depth += u32(scattered);
                 if (depth >= ctx.max_depth) break;
 
-                let q = math::max(beta);
+                let q = math::max(beta * rr);
                 if (q < 1.f) {
                     let rr_u = ctx.sampler.generate_1d();
                     if (rr_u > q) break;
-                    else beta /= q;
+                    else rr /= q;
                 }
 
                 do {
                     if (!scattered || specular) break;
                     var direct_ctx = trace_ctx;
 
-                    let e_opt = ctx.emitter.sample(direct_ctx, ctx.sampler.generate_1d());
+                    let u = fv4(ctx.sampler.generate_2d(), ctx.sampler.generate_2d());
+                    let e_opt = ctx.emitter.sample(direct_ctx, u[0]);
                     if (e_opt == none) break;
                     let e_intr = e_opt.value;
                     let et = *e_intr.local_to_render.get();
 
                     let light = e_intr.light;
                     let l_ctx = et / direct_ctx;
-                    let l_opt = light.sample(l_ctx, ctx.sampler.generate_2d());
+                    let l_opt = light.sample(l_ctx, {u[1], u[2]});
                     if (l_opt == none) break;
                     var l_intr = l_opt.value;
 
@@ -78,7 +112,7 @@ namespace mtt::monte_carlo {
                     let mis_u = math::guarded_div(1.f, math::avg(mis_d + mis_l));
                     acc_opt = ctx.accel(direct_ctx.r, direct_ctx.n);
                     if (!acc_opt.hasValue || !acc_opt.value.valid) {
-                        emission += mis_u * gamma * l_intr.L;
+                        path(spectra::Stochastic_Spectrum(trace_ctx.lambda, mis_u * gamma * l_intr.L), rr, u[3]);
                         break;
                     }
 
@@ -92,10 +126,11 @@ namespace mtt::monte_carlo {
                     direct_ctx.inside = dot(-direct_ctx.r.d, intr.n) < 0.f;
                     intr.n *= direct_ctx.inside ? -1.f : 1.f;
 
+                    let light_before_surface = l_intr.t < intr.t - 0.001f;
                     let close_to_light = length(intr.p - l_intr.p) < 0.001f;
                     let is_emissive = bool(div.material.flags() & material::Flags::emissive);
-                    if (!is_emissive || !close_to_light) break;
-                    else {
+                    if (!light_before_surface && (!is_emissive || !close_to_light)) break;
+                    else if (!light_before_surface) {
                         let stm = fq::from_rotation_between(ddiff.r.d, normalize(intr.p)).transform();
                         let st = math::Transform(stm, transpose(stm));
                         let rd = st * ddiff;
@@ -114,10 +149,11 @@ namespace mtt::monte_carlo {
                         let mat_intr = mat_opt.value;
                         l_intr.L = mat_intr.emission;
                     }
-                    emission += mis_u * gamma * l_intr.L;
+                    path(spectra::Stochastic_Spectrum(trace_ctx.lambda, mis_u * gamma * l_intr.L), rr, u[3]);
                 } while (false);
 
                 acc_opt = ctx.accel(trace_ctx.r, trace_ctx.n);
+                let eu = ctx.sampler.generate_1d();
                 if (!acc_opt.hasValue || !acc_opt.value.valid) {
                     let e_opt = ctx.emitter.sample_infinite(trace_ctx, ctx.sampler.generate_1d());
                     if (e_opt == none) break;
@@ -133,7 +169,7 @@ namespace mtt::monte_carlo {
 
                     let mis_e = fv4(specular ? 0.f : math::guarded_div(e_intr.pdf * l_intr.pdf, p));
                     let mis_w = math::guarded_div(1.f, math::avg(fv4(1.f) + mis_e));
-                    emission += beta * mis_w * l_intr.L;
+                    path(spectra::Stochastic_Spectrum(trace_ctx.lambda, beta * mis_w * l_intr.L), rr, eu);
                     break;
                 }
 
@@ -172,14 +208,14 @@ namespace mtt::monte_carlo {
                     // TODO: need correct way to fetch area light pdf on GPU, use 1.f now
                     let mis_e = fv4(specular ? 0.f : math::guarded_div(intr.pdf * 1.f, p));
                     let mis_w = math::guarded_div(1.f, math::avg(fv4(1.f) + mis_e));
-                    emission += mis_w * beta * mat_intr.emission;
+                    path(spectra::Stochastic_Spectrum(trace_ctx.lambda, beta * mis_w * mat_intr.emission), rr, eu);
                 }
 
                 let tbn = transpose(fm33(intr.tn, intr.bn, intr.n));
                 intr.n = mul(tbn, mat_intr.normal);
 
                 if (mat_intr.degraded && !math::constant(trace_ctx.lambda)) {
-                    emission = fv4(emission[0]); beta = fv4(beta[0]);
+                    beta = fv4(beta[0]);
                     trace_ctx.lambda = fv4(trace_ctx.lambda[0]);
                     history_ctx.lambda = trace_ctx.lambda;
                 }
@@ -203,17 +239,32 @@ namespace mtt::monte_carlo {
                 b_intr.wi = normalize((bt / fv4(b_intr.wi, 0.f)).xyz);
                 b_intr.f *= abs(dot(b_intr.wi, trace_n));
 
+                beta *= b_intr.f / b_intr.pdf;
                 history_ctx.r = trace_ctx.r;
                 history_ctx.n = trace_ctx.n;
                 trace_ctx.r = {trace_p, b_intr.wi};
                 trace_ctx.n = trace_n;
-                beta *= b_intr.f / b_intr.pdf;
+
+                if (connectable && b_intr.connectable && intr.t > reconnection_t) {
+                    path.divider = acc.divider;
+                    path.beta = beta;
+                    path.p = intr.p;
+                    path.wi = b_intr.wi;
+                    path.pdf = {p, b_intr.pdf};
+                    path.depth = depth - 1;
+                }
+
+                connectable = (path.depth == 0) && b_intr.connectable;
                 f = b_intr.f;
                 p = b_intr.pdf;
             }
 
-            if (!all(isfinite(emission))) return {};
-            return spectra::Stochastic_Spectrum(trace_ctx.lambda, emission);
+            // support set of different path depth is not intersected
+            path.reservoir.M = 1.f;
+            path.reservoir.finalize();
+            path.Li.value *= path.reservoir.W;
+            if (!all(isfinite(path.Li.value))) return {};
+            return path.Li;
         }
     }
 }

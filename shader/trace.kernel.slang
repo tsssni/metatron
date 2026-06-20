@@ -12,7 +12,6 @@ namespace mtt {
         u32 seed;
         uv2 range;
         math::Transform ct;
-        buf<f32> fresnel;
         [vk_binding(1, 0)] RWTexture2D image;
     }
     [vk_binding(0, 0)] ParameterBlock<Constants> constants;
@@ -28,7 +27,6 @@ namespace mtt {
         var size: uv2;
         cb.image.GetDimensions(size.x, size.y);
         if (any(pixel != clamp(pixel, 0, size - 1))) return;
-        bsdf::fresnel_reflectance_table = cb.fresnel;
 
         for (var n = cb.range.x; n < cb.range.y; ++n) {
             var sp: sampler::proxy::Sampler;
