@@ -46,7 +46,8 @@ namespace mtt::monte_carlo {
                 sp, spec.lambda,
                 s.ray_differential,
                 s.default_differential,
-                ct, px, ctx.sample_index, depth,
+                ct, px, image.size,
+                ctx.sample_index, depth,
             };
             MTT_OPT_OR_CALLBACK(Li, sample(r),
                 stl::abort("invalid value appears in pixel {} sample {}", px, ctx.sample_index);
@@ -373,23 +374,16 @@ namespace mtt::monte_carlo {
             auto tbn = math::transpose(fm33{intr.tn, intr.bn, intr.n});
             intr.n = tbn | mat_intr.normal;
 
-            if (mat_intr.degraded && !math::constant(trace_ctx.lambda)) {
-                emission = fv4{emission[0]}; beta = fv4{beta[0]};
-                mis_s = fv4{mis_s[0]}; mis_e = fv4{mis_e[0]};
-                trace_ctx.lambda = fv4{trace_ctx.lambda[0]};
-                history_ctx.lambda = trace_ctx.lambda;
-            }
-
             bsdf = std::move(mat_intr.bsdf);
             auto bt = math::Transform{};
             bt.transform = fm44{fq::from_rotation_between(intr.n, {0.f, 1.f, 0.f})};
             bt.inv_transform = math::transpose(bt.transform);
-            auto uc = r.sampler.generate_1d();
-            auto u = r.sampler.generate_2d();
+            auto cu = r.sampler.generate_1d();
+            auto du = r.sampler.generate_2d();
 
             auto b_ctx = bt | trace_ctx;
             b_ctx.r.d = math::normalize(b_ctx.r.d);
-            MTT_OPT_OR_BREAK(b_intr, bsdf.sample(b_ctx, {uc, u[0], u[1]}));
+            MTT_OPT_OR_BREAK(b_intr, bsdf.sample(b_ctx, {cu, du[0], du[1]}));
 
             if (b_ctx.r.d == b_intr.wi) {
                 scattered = false;
@@ -405,8 +399,8 @@ namespace mtt::monte_carlo {
 
             auto trace_n = (crossed ? -1.f : 1.f) * intr.n;
             auto trace_p = intr.p + 0.001f * trace_n;
+            b_intr.f *= math::abs(math::unit_to_cos_theta(b_intr.wi));
             b_intr.wi = math::normalize(bt ^ math::expand(b_intr.wi, 0.f));
-            b_intr.f *= math::abs(math::dot(b_intr.wi, trace_n));
 
             history_ctx.r = trace_ctx.r;
             history_ctx.n = trace_ctx.n;
@@ -416,6 +410,13 @@ namespace mtt::monte_carlo {
             mis_e = mis_s;
             f = b_intr.f;
             p = b_intr.pdf;
+
+            if (mat_intr.degraded && crossed && !math::constant(trace_ctx.lambda)) {
+                emission = fv4{emission[0]}; beta = fv4{beta[0]};
+                mis_s = fv4{mis_s[0]}; mis_e = fv4{mis_e[0]}; f = fv4{f[0]};
+                trace_ctx.lambda = fv4{trace_ctx.lambda[0]};
+                history_ctx.lambda = trace_ctx.lambda;
+            }
         }
 
         if (!math::isfinite(emission)) return {};

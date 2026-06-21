@@ -316,22 +316,15 @@ namespace mtt::monte_carlo {
                 let tbn = transpose(fm33(intr.tn, intr.bn, intr.n));
                 intr.n = mul(tbn, mat_intr.normal);
 
-                if (mat_intr.degraded && !math::constant(ctx.lambda)) {
-                    emission = fv4(emission[0]); beta = fv4(beta[0]);
-                    mis_s = fv4(mis_s[0]); mis_e = fv4(mis_e[0]);
-                    trace_ctx.lambda = fv4(ctx.lambda[0]);
-                    history_ctx.lambda = trace_ctx.lambda;
-                }
-
                 bsdf = mat_intr.bsdf;
                 let btm = fq::from_rotation_between(intr.n, {0.f, 1.f, 0.f}).transform();
                 let bt = math::Transform(btm, transpose(btm));
-                let uc = ctx.sampler.generate_1d();
-                let u = ctx.sampler.generate_2d();
+                let cu = ctx.sampler.generate_1d();
+                let du = ctx.sampler.generate_2d();
 
                 var b_ctx = bt * trace_ctx;
                 b_ctx.r.d = normalize(b_ctx.r.d);
-                let b_opt = bsdf.sample(b_ctx, {uc, u[0], u[1]});
+                let b_opt = bsdf.sample(b_ctx, {cu, du[0], du[1]});
                 if (b_opt == none) break;
                 var b_intr = b_opt.value;
 
@@ -349,8 +342,8 @@ namespace mtt::monte_carlo {
 
                 let trace_n = (crossed ? -1.f : 1.f) * intr.n;
                 let trace_p = intr.p + 0.001f * trace_n;
+                b_intr.f *= abs(math::unit_to_cos_theta(b_intr.wi));
                 b_intr.wi = normalize((bt / fv4(b_intr.wi, 0.f)).xyz);
-                b_intr.f *= abs(dot(b_intr.wi, trace_n));
 
                 history_ctx.r = trace_ctx.r;
                 history_ctx.n = trace_ctx.n;
@@ -360,6 +353,13 @@ namespace mtt::monte_carlo {
                 mis_e = mis_s;
                 f = b_intr.f;
                 p = b_intr.pdf;
+
+                if (mat_intr.degraded && crossed && !math::constant(ctx.lambda)) {
+                    emission = fv4(emission[0]); beta = fv4(beta[0]);
+                    mis_s = fv4(mis_s[0]); mis_e = fv4(mis_e[0]); f = fv4(f[0]);
+                    trace_ctx.lambda = fv4(ctx.lambda[0]);
+                    history_ctx.lambda = trace_ctx.lambda;
+                }
             }
 
             if (!all(isfinite(emission))) return {};

@@ -14,7 +14,7 @@ namespace mtt::monte_carlo {
         auto release() noexcept -> void {
             return visit([&](auto* p) noexcept { return p->release(); });
         }
-        auto trace(ref<Context> ctx) const noexcept -> void {
+        auto trace(ref<Context> ctx) noexcept -> void {
             return visit([&](auto* p) noexcept { return p->trace(ctx); });
         }
         auto wave(ref<Context> ctx) const noexcept -> void {

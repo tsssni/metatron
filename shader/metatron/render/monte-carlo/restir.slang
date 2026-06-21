@@ -216,36 +216,39 @@ namespace mtt::monte_carlo {
                 let tbn = transpose(fm33(intr.tn, intr.bn, intr.n));
                 intr.n = mul(tbn, mat_intr.normal);
 
-                if (mat_intr.degraded && !math::constant(trace_ctx.lambda)) {
-                    beta = fv4(beta[0]);
-                    trace_ctx.lambda = fv4(trace_ctx.lambda[0]);
-                    history_ctx.lambda = trace_ctx.lambda;
-                }
-
                 bsdf = mat_intr.bsdf;
                 let btm = fq::from_rotation_between(intr.n, {0.f, 1.f, 0.f}).transform();
                 let bt = math::Transform(btm, transpose(btm));
-                let uc = ctx.sampler.generate_1d();
-                let u = ctx.sampler.generate_2d();
+                let cu = ctx.sampler.generate_1d();
+                let du = ctx.sampler.generate_2d();
 
                 var b_ctx = bt * trace_ctx;
                 b_ctx.r.d = normalize(b_ctx.r.d);
-                let b_opt = bsdf.sample(b_ctx, {uc, u[0], u[1]});
+                let b_opt = bsdf.sample(b_ctx, {cu, du[0], du[1]});
                 if (b_opt == none) break;
                 var b_intr = b_opt.value;
 
                 scattered = true;
                 specular = (bsdf.flags() & mtt::bsdf::Flags::specular) != 0;
+                let reflected = b_intr.wi[1] >= 0.f;
                 let trace_n = (b_intr.wi[1] < 0.f ? -1.f : 1.f) * intr.n;
                 let trace_p = intr.p + 0.001f * trace_n;
+                b_intr.f *= abs(math::unit_to_cos_theta(b_intr.wi));
                 b_intr.wi = normalize((bt / fv4(b_intr.wi, 0.f)).xyz);
-                b_intr.f *= abs(dot(b_intr.wi, trace_n));
 
                 beta *= b_intr.f / b_intr.pdf;
                 history_ctx.r = trace_ctx.r;
                 history_ctx.n = trace_ctx.n;
                 trace_ctx.r = {trace_p, b_intr.wi};
                 trace_ctx.n = trace_n;
+                f = b_intr.f;
+                p = b_intr.pdf;
+
+                if (mat_intr.degraded && !reflected && !math::constant(trace_ctx.lambda)) {
+                    beta = fv4(beta[0]); f = fv4(f[0]);
+                    trace_ctx.lambda = fv4(trace_ctx.lambda[0]);
+                    history_ctx.lambda = trace_ctx.lambda;
+                }
 
                 if (connectable && b_intr.connectable && intr.t > reconnection_t) {
                     path.divider = acc.divider;
@@ -255,10 +258,7 @@ namespace mtt::monte_carlo {
                     path.pdf = {p, b_intr.pdf};
                     path.depth = depth - 1;
                 }
-
                 connectable = (path.depth == 0) && b_intr.connectable;
-                f = b_intr.f;
-                p = b_intr.pdf;
             }
 
             // support set of different path depth is not intersected

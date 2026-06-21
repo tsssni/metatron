@@ -107,6 +107,7 @@ namespace mtt::bsdf {
             R.pdf = (1.f - Fo[0]) * pdf;
             if (replay) return R;
         }
+        if (replay && (alpha_u < reconnection_alpha || alpha_v < reconnection_alpha)) return {};
 
         if (!plastic || !specular) {
             auto F = fresnel(math::dot(-wo, wm), eta, k);

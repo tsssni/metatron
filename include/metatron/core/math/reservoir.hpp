@@ -8,7 +8,7 @@ namespace mtt::math {
         f32 M = 0;
         f32 W = 0;
 
-        auto operator()(cref<Reservoir> r, f32 u) noexcept -> bool {
+        auto merge(cref<Reservoir> r, f32 u) noexcept -> bool {
             auto replaced = u < math::guarded_div(r.w_sum, (w_sum + r.w_sum));
             if (replaced) p_hat = r.p_hat;
             w_sum += r.w_sum;
@@ -16,12 +16,12 @@ namespace mtt::math {
             return replaced;
         }
 
-        auto shift(f32 J) noexcept -> void {
-            w_sum = p_hat * W * M * J;
+        auto shift(f32 J, f32 mis) noexcept -> void {
+            w_sum = p_hat * W * mis * J;
         }
 
         auto finalize() noexcept -> void {
-            W = math::guarded_div(w_sum, M * p_hat);
+            W = math::guarded_div(w_sum, p_hat);
         }
     };
 }

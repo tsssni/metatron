@@ -7,32 +7,28 @@
 namespace mtt::monte_carlo {
     struct Restir_Integrator final {
         struct Path final {
-            math::Reservoir reservoir;
+            math::Reservoir r;
             spectra::Stochastic_Spectrum Li;
-            accel::proxy::Divider divider;
             fv4 beta;
             fv3 p;
+            f32 t;
             fv3 wi;
+            f32 cos_theta;
             fv2 pdf;
+            f32 J;
             u32 pixel;
+            u32 primitive;
             u32 depth = 0; // 0 means unavailable for reconnnection
+            uv2 padding;
 
-            auto operator()(spectra::Stochastic_Spectrum Li, f32 W, f32 u) noexcept -> void {
-                auto y = math::max(Li.value);
-                auto r = math::Reservoir{
-                    .p_hat = y,
-                    .M = 1.f,
-                    .W = W,
-                };
-                r.shift(1.f);
-                if (reservoir(r, u)) this->Li = Li;
-            }
+            auto estimate(spectra::Stochastic_Spectrum Li, f32 W, f32 u) noexcept -> void;
+            auto merge(cref<Path> p, f32 u) noexcept -> void;
         };
 
         struct Descriptor final {
-            u32 reuse_iterations = 5;
-            u32 reuse_confidence = 32;
-            u32 spatial_samples = 4;
+            u32 reuse_iterations = 3;
+            u32 spatial_samples = 3;
+            u32 spatial_radius = 20;
         };
         Restir_Integrator(cref<Descriptor> desc) noexcept;
         Restir_Integrator() noexcept = default;
@@ -40,16 +36,17 @@ namespace mtt::monte_carlo {
         // gris: https://graphics.cs.utah.edu/research/projects/gris/
         auto acquire(cref<Context> ctx, cref<Resources> res) noexcept -> void;
         auto release() noexcept -> void;
-        auto trace(ref<Context> ctx) const noexcept -> void;
+        auto trace(ref<Context> ctx) noexcept -> void;
         auto wave(ref<Context> ctx) const noexcept -> void;
-        auto sample(ref<Ray> r) const noexcept -> opt<spectra::Stochastic_Spectrum>;
+        auto sample(ref<Ray> r) const noexcept -> opt<Path>;
+        auto replay(ref<Ray> r, cref<Path> np, f32 u) const noexcept -> opt<Path>;
 
     private:
         obj<shader::Pipeline> integrate;
         obj<shader::Argument> constants;
         std::array<buf<Path>, 2> pathes;
         u32 reuse_iterations;
-        u32 reuse_confidence;
         u32 spatial_samples;
+        u32 spatial_radius;
     };
 }
