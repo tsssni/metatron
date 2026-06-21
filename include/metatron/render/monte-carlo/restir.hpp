@@ -1,5 +1,7 @@
 #pragma once
 #include <metatron/render/monte-carlo/context.hpp>
+#include <metatron/device/shader/argument.hpp>
+#include <metatron/device/shader/pipeline.hpp>
 #include <metatron/core/math/reservoir.hpp>
 
 namespace mtt::monte_carlo {
@@ -27,11 +29,27 @@ namespace mtt::monte_carlo {
             }
         };
 
-        u32 reuse_iterations = 5;
-        u32 reuse_confidence = 32;
-        u32 spatial_samples = 4;
+        struct Descriptor final {
+            u32 reuse_iterations = 5;
+            u32 reuse_confidence = 32;
+            u32 spatial_samples = 4;
+        };
+        Restir_Integrator(cref<Descriptor> desc) noexcept;
+        Restir_Integrator() noexcept = default;
 
         // gris: https://graphics.cs.utah.edu/research/projects/gris/
-        auto sample(ref<Context> ctx) const noexcept -> opt<spectra::Stochastic_Spectrum>;
+        auto acquire(cref<Context> ctx, cref<Resources> res) noexcept -> void;
+        auto release() noexcept -> void;
+        auto trace(ref<Context> ctx) const noexcept -> void;
+        auto wave(ref<Context> ctx) const noexcept -> void;
+        auto sample(ref<Ray> r) const noexcept -> opt<spectra::Stochastic_Spectrum>;
+
+    private:
+        obj<shader::Pipeline> integrate;
+        obj<shader::Argument> constants;
+        std::array<buf<Path>, 2> pathes;
+        u32 reuse_iterations;
+        u32 reuse_confidence;
+        u32 spatial_samples;
     };
 }

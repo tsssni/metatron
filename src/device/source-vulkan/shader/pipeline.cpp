@@ -3,8 +3,7 @@
 
 namespace mtt::shader {
     Pipeline::Pipeline(cref<Descriptor> desc) noexcept: args(std::move(desc.args)) {
-        auto base_path = stl::path{"shader"} / desc.name;
-        auto ir_path = stl::path{base_path}.concat(".spirv");
+        auto ir_path = (stl::path{"shader"} / desc.name).concat(".spirv");
         auto spirv = stl::filesystem::load(stl::filesystem::find(ir_path), std::ios::binary);
 
         auto& ctx = command::Context::internal();

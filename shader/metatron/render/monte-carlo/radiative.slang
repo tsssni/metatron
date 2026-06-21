@@ -2,7 +2,8 @@ implementing monte_carlo;
 
 namespace mtt::monte_carlo {
     public struct Radiative_Integrator {
-        u32 padding = 0u;
+        uptr integrate = 0;
+        uptr trace_args = 0;
 
         public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum> {
             var emission = fv4(0.f);
@@ -122,13 +123,14 @@ namespace mtt::monte_carlo {
                             direct_ctx.inside = dot(-direct_ctx.r.d, intr.n) < 0.f;
                             volume = direct_ctx.inside ? div.int_medium : div.ext_medium;
                             direct_to_render = direct_ctx.inside ? div.int_to_render : div.ext_to_render;
-                            iter = volume.begin(*direct_to_render.get() / trace_ctx, intr.t);
+                            iter = volume.begin(*direct_to_render.get() / trace_ctx, min(intr.t, l_intr.t));
                             intr.n *= direct_ctx.inside ? -1.f : 1.f;
 
+                            let light_in_medium = l_intr.t < intr.t - 0.001f;
                             let close_to_light = length(intr.p - l_intr.p) < 0.001f;
                             let is_interface = bool(div.material.flags() & material::Flags::interface);
                             let is_emissive = bool(div.material.flags() & material::Flags::emissive);
-                            if (!is_interface && (!is_emissive || !close_to_light)) {
+                            if (!light_in_medium && !is_interface && (!is_emissive || !close_to_light)) {
                                 gamma = fv4(0.f); break;
                             } else if (close_to_light) {
                                 let stm = fq::from_rotation_between(ddiff.r.d, normalize(intr.p)).transform();
@@ -158,9 +160,9 @@ namespace mtt::monte_carlo {
                         let m_opt = iter.march(ctx.sampler.generate_1d());
                         if (m_opt == none) { gamma = fv4(0.f); break; };
                         var m_intr = m_opt.value;
-                        l_intr.t -= m_intr.t;
 
-                        let hit = m_intr.t >= intr.t;
+                        let hit = m_intr.t >= min(intr.t, l_intr.t);
+                        l_intr.t -= m_intr.t;
                         let spectra_pdf = hit
                         ? m_intr.transmittance
                         : m_intr.sigma_maj * m_intr.transmittance;
@@ -200,7 +202,7 @@ namespace mtt::monte_carlo {
 
                     let l_ctx = lt / trace_ctx;
                     let l_opt = light(l_ctx.r, l_ctx.lambda);
-                    if (l_opt == none) continue;
+                    if (l_opt == none) break;
                     let l_intr = l_opt.value;
 
                     mis_e *= specular ? 0.f : math::guarded_div(e_intr.pdf * l_intr.pdf, p);
@@ -276,7 +278,8 @@ namespace mtt::monte_carlo {
                         f = p_intr.f;
                         p = p_intr.pdf;
                         history_ctx = trace_ctx;
-                        trace_ctx = {{m_intr.p, p_intr.wi}, {}, ctx.lambda};
+                        trace_ctx.r = {m_intr.p, p_intr.wi};
+                        trace_ctx.n = fv3(0.f);
                     } else {
                         beta *= m_intr.sigma_n / p_n;
                         mis_s *= (m_intr.sigma_n / m_intr.sigma_maj) / p_n;

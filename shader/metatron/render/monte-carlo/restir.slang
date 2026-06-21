@@ -3,16 +3,17 @@ implementing monte_carlo;
 namespace mtt::monte_carlo {
     public struct Restir_Integrator {
         struct Path {
-            math::Reservoir reservoir;
-            spectra::Stochastic_Spectrum Li;
-            accel::proxy::Divider divider;
-            fv4 beta;
-            fv3 p;
-            fv3 wi;
-            fv2 pdf;
-            u32 pixel;
+            math::Reservoir reservoir = {};
+            spectra::Stochastic_Spectrum Li = {};
+            accel::proxy::Divider divider = {};
+            fv4 beta = {};
+            fv3 p = {};
+            fv3 wi = {};
+            fv2 pdf = {};
+            u32 pixel = 0;
             u32 depth = 0; // 0 means unavailable for reconnection
 
+            __init() {}
             [mutating] void operator()(spectra::Stochastic_Spectrum Li, f32 W, f32 u) {
                 let y = math::max(Li.value);
                 var r: math::Reservoir;
@@ -24,19 +25,20 @@ namespace mtt::monte_carlo {
             }
         }
 
+        uptr integrate = 0;
+        uptr trace_args = 0;
+        buf<Path> pathes[2];
         u32 reuse_iterations = 5;
         u32 reuse_confidence = 32;
         u32 spatial_samples = 4;
 
         // gris: https://graphics.cs.utah.edu/research/projects/gris/
         public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum> {
-            let reconnection_t = 1e-2f;
-            let half_mask = (1u << 16) - 1u;
-
+            static f32 reconnection_t = 1e-2f;
+            static i32 half_mask = (1 << 16) - 1;
             var path: Path;
             path.Li = spectra::Stochastic_Spectrum(ctx.lambda, fv4(0.f));
             path.pixel = (ctx.pixel[0] & half_mask) | (ctx.pixel[1] << 16);
-
             var beta = fv4(1.f);
 
             var depth = 0u;

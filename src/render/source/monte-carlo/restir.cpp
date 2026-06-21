@@ -1,15 +1,103 @@
 #include <metatron/render/monte-carlo/restir.hpp>
+#include <metatron/core/stl/thread.hpp>
+#include <metatron/device/encoder/argument.hpp>
+#include <metatron/device/encoder/pipeline.hpp>
 
 namespace mtt::monte_carlo {
-    auto constexpr reconnection_t = 1e-2f;
+    Restir_Integrator::Restir_Integrator(cref<Descriptor> desc) noexcept:
+    reuse_iterations(desc.reuse_iterations),
+    reuse_confidence(desc.reuse_confidence),
+    spatial_samples(desc.spatial_samples) {}
 
-    auto Restir_Integrator::sample(
-        ref<Context> ctx
-    ) const noexcept -> opt<spectra::Stochastic_Spectrum> {
+    auto Restir_Integrator::acquire(cref<Context> ctx, cref<Resources> res) noexcept -> void {
+        auto pixels = math::prod(uzv2{ctx.film->image.size});
+        pathes[0] = pixels;
+        pathes[1] = pixels;
+        if (!ctx.image) return;
+        constants = make_desc<shader::Argument>({"metatron/render/monte-carlo/restir.constants"});
+        integrate = make_desc<shader::Pipeline>({"metatron/render/monte-carlo/restir.wave",
+        {constants.get(), res.resources.get(), res.textures.get(), res.grids.get()}});
+        auto args = encoder::Argument_Encoder{ctx.render, constants.get()};
+        args.bind("constants.image", *ctx.image);
+        args.upload();
+        args.submit();
+    }
+
+    auto Restir_Integrator::release() noexcept -> void {
+        integrate.reset();
+        constants.reset();
+    }
+
+    auto Restir_Integrator::trace(ref<Context> ctx) const noexcept -> void {
+        auto ct = *math::proxy::Transform::entity("/hierarchy/camera/render");
+        auto spp = ctx.film->spp;
+        auto depth = ctx.film->depth;
+        auto size = uzv2{ctx.film->image.size};
+        auto& image = ctx.film->image;
+
+        auto trace = [&](auto&& px) {
+            auto sp = sampler::proxy::Sampler{ctx.sampler, {{}, px, size, ctx.sample_index, spp, 0, ctx.seed}};
+            sp.start();
+            auto fixel = ctx.film(ctx.filter, px, sp.generate_pixel_2d());
+            MTT_OPT_OR_CALLBACK(s, photo::Camera{}.sample(
+                ctx.lens, fixel.position, fixel.dxdy, sp.generate_2d()
+            ), stl::abort("ray generation failed"););
+            s.ray_differential = ct ^ s.ray_differential;
+            s.default_differential = ct ^ s.default_differential;
+            auto spec = spectra::Stochastic_Spectrum{sp.generate_1d()};
+
+            auto r = Ray{
+                ctx.accel, ctx.emitter,
+                sp, spec.lambda,
+                s.ray_differential,
+                s.default_differential,
+                ct, px, ctx.sample_index, depth,
+            };
+            MTT_OPT_OR_CALLBACK(Li, sample(r),
+                stl::abort("invalid value appears in pixel {} sample {}", px, ctx.sample_index);
+            );
+            Li.value /= s.pdf;
+            fixel = Li;
+        };
+        stl::scheduler::sync_parallel(uzv2{size}, trace);
+    }
+
+    auto Restir_Integrator::wave(ref<Context> ctx) const noexcept -> void {
+        struct {
+            accel::Acceleration accel;
+            emitter::Emitter emitter;
+            sampler::Sampler sampler;
+            filter::Filter filter;
+            photo::Lens lens;
+            photo::proxy::Film film;
+            math::Transform ct;
+            u32 seed;
+            u32 sample_index;
+            u32 integrator;
+        } entry{
+            ctx.accel, ctx.emitter, ctx.sampler, ctx.filter, ctx.lens, ctx.film,
+            *math::proxy::Transform::entity("/hierarchy/camera/render"),
+            ctx.seed, ctx.sample_index,
+            ctx.integrator,
+        };
+        auto args = encoder::Argument_Encoder{ctx.render, constants.get()};
+        args.acquire("constants", entry);
+        args.acquire("constants.image", *ctx.image);
+        args.submit();
+        auto threads = uv3{ctx.image->width, ctx.image->height, 1};
+        auto group = uv3{8, 8, 1};
+        auto pipeline = encoder::Pipeline_Encoder{ctx.render, integrate.get()};
+        pipeline.bind();
+        pipeline.dispatch(threads, group);
+        pipeline.submit();
+    }
+
+    auto Restir_Integrator::sample(ref<Ray> r) const noexcept -> opt<spectra::Stochastic_Spectrum> {
+        auto constexpr reconnection_t = 1e-2f;
         auto constexpr half_mask = (1 << 16) - 1;
         auto path = Path{
-            .Li = {ctx.lambda, fv4{0.f}},
-            .pixel = (ctx.pixel[0] & half_mask) | ((ctx.pixel[1] << 16)),
+            .Li = {r.lambda, fv4{0.f}},
+            .pixel = (r.pixel[0] & half_mask) | ((r.pixel[1] << 16)),
         };
         auto beta = fv4{1.f};
 
@@ -25,20 +113,20 @@ namespace mtt::monte_carlo {
 
         auto trace_ctx = math::Context{};
         auto history_ctx = math::Context{};
-        trace_ctx.r = ctx.ray_differential.r;
-        trace_ctx.lambda = ctx.lambda;
+        trace_ctx.r = r.ray_differential.r;
+        trace_ctx.lambda = r.lambda;
 
         auto acc_opt = opt<accel::Interaction>{};
-        auto& rdiff = ctx.ray_differential;
-        auto& ddiff = ctx.default_differential;
-        auto& ct = ctx.render_to_camera;
+        auto& rdiff = r.ray_differential;
+        auto& ddiff = r.default_differential;
+        auto& ct = r.render_to_camera;
 
         auto direct_lighting = [&]() {
             if (!scattered || specular) return;
 
             auto direct_ctx = trace_ctx;
-            auto u = fv4{ctx.sampler.generate_2d(), ctx.sampler.generate_2d()};
-            MTT_OPT_OR_RETURN(e_intr, ctx.emitter.sample(direct_ctx, u[0]));
+            auto u = fv4{r.sampler.generate_2d(), r.sampler.generate_2d()};
+            MTT_OPT_OR_RETURN(e_intr, r.emitter.sample(direct_ctx, u[0]));
             auto et = e_intr.local_to_render;
             auto light = e_intr.light;
             auto l_ctx = et ^ direct_ctx;
@@ -66,7 +154,7 @@ namespace mtt::monte_carlo {
             auto mis_d = q / p_e * f32(!(e_intr.light.flags() & light::Flags::delta));
             auto mis_l = fv4{1.f};
             auto mis_u = math::guarded_div(1.f, math::avg(mis_d + mis_l));
-            acc_opt = ctx.accel(direct_ctx.r, direct_ctx.n);
+            acc_opt = r.accel(direct_ctx.r, direct_ctx.n);
             if (!acc_opt || !acc_opt->intr_opt) {
                 path({trace_ctx.lambda, mis_u * gamma * l_intr.L}, rr, u[3]);
                 return;
@@ -105,20 +193,20 @@ namespace mtt::monte_carlo {
 
         while (true) {
             depth += usize(scattered);
-            if (depth >= ctx.max_depth) break;
+            if (depth >= r.max_depth) break;
 
             auto q = math::max(beta * rr);
             if (q < 1.f) {
-                auto rr_u = ctx.sampler.generate_1d();
+                auto rr_u = r.sampler.generate_1d();
                 if (rr_u > q) break;
                 else rr /= q;
             }
 
             direct_lighting();
-            acc_opt = ctx.accel(trace_ctx.r, trace_ctx.n);
-            auto eu = ctx.sampler.generate_1d();
+            acc_opt = r.accel(trace_ctx.r, trace_ctx.n);
+            auto eu = r.sampler.generate_1d();
             if (!acc_opt || !acc_opt->intr_opt) {
-                MTT_OPT_OR_BREAK(e_intr, ctx.emitter.sample_infinite(trace_ctx, ctx.sampler.generate_1d()));
+                MTT_OPT_OR_BREAK(e_intr, r.emitter.sample_infinite(trace_ctx, r.sampler.generate_1d()));
                 auto light = e_intr.light;
                 auto lt = e_intr.local_to_render;
 
@@ -179,8 +267,8 @@ namespace mtt::monte_carlo {
             auto bt = math::Transform{};
             bt.transform = fm44{fq::from_rotation_between(intr.n, {0.f, 1.f, 0.f})};
             bt.inv_transform = math::transpose(bt.transform);
-            auto uc = ctx.sampler.generate_1d();
-            auto u = ctx.sampler.generate_2d();
+            auto uc = r.sampler.generate_1d();
+            auto u = r.sampler.generate_2d();
 
             auto b_ctx = bt | trace_ctx;
             b_ctx.r.d = math::normalize(b_ctx.r.d);

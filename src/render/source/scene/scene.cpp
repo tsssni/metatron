@@ -1,5 +1,6 @@
-#include <metatron/resource/serde/serde.hpp>
 #include <metatron/render/renderer/renderer.hpp>
+#include <metatron/resource/serde/serde.hpp>
+#include <metatron/resource/serde/args.hpp>
 #include <metatron/core/stl/chrono.hpp>
 
 namespace mtt::scene {
@@ -114,11 +115,13 @@ namespace mtt::scene {
         trace(math::proxy::Transform::entity("/hierarchy/light"), parents, children);
     }
 
-    auto run(cref<Args> args) noexcept -> void {
+    auto run() noexcept -> void {
         using namespace photo;
         auto timer = stl::timer{};
 
-        MTT_DESERIALIZE_CALLBACK([]{}, []{
+        MTT_DESERIALIZE_CALLBACK(
+        Hierarchy::default_filter,
+        [](ref<Hierarchy::binmap>) noexcept {
             merge(); trace();
         }, Local_Transform, Look_At_Transform);
         stl::vector<math::Transform>::init();
@@ -142,37 +145,10 @@ namespace mtt::scene {
         photo::Lens::init();
         photo::proxy::Film::init();
 
+        auto& args = scene::Args::instance();
         auto renderer = obj<renderer::Renderer>();
-        auto gpu = args.device == "gpu";
-        Hierarchy::filter([&renderer, &gpu](auto bins){
-            auto key = std::string{"renderer"};
-            if (!bins.contains(key))
-                stl::abort("renderer must be defined");
-            auto j = bins[key].front();
-
-            monte_carlo::Integrator::push<monte_carlo::Radiative_Integrator>("/renderer/default/integrator", {{}});
-            accel::Acceleration::push<accel::HWBVH>("/renderer/default/accel", {{}});
-            emitter::Emitter::push<emitter::Uniform_Emitter>("/renderer/default/emitter", {{}});
-            sampler::Sampler::push<sampler::Z_Sobol_Sampler>("/renderer/default/sampler", {{}});
-            filter::Filter::push<filter::Lanczos_Filter>("/renderer/default/filter", {{}});
-            photo::Lens::push<photo::Thin_Lens>("/renderer/default/lens", {{}});
-
-            using Descriptor = renderer::Renderer::Descriptor;
-            auto desc = Descriptor{};
-            stl::json::load(j.serialized.str, desc);
-
-            if (gpu && !desc.accel.is<accel::HWBVH>()) {
-                stl::print("fallback to HWBVH on GPU");
-                desc.accel = accel::Acceleration::entity("/renderer/default/accel");
-            } else if (!gpu && desc.accel.is<accel::HWBVH>()) {
-                stl::print("fallback to LBVH on CPU");
-                accel::Acceleration::push<accel::LBVH>("/renderer/default/bccel", {{}});
-                desc.accel = accel::Acceleration::entity("/renderer/default/bccel");
-            }
-            renderer = make_obj<renderer::Renderer>(std::move(desc));
-        });
         Hierarchy::populate(args.scene);
         stl::print("initialization: {:.3}s", timer.t<f64, stl::seconds>());
-        renderer->render(args);
+        args.device == "gpu" ? renderer->wave() : renderer->trace();
     }
 }

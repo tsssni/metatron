@@ -10,7 +10,7 @@ namespace mtt::stl {
     struct function;
 
     template<typename R, typename... Args>
-    struct function<R(Args...)> final {
+    struct function<R(Args...)noexcept> final {
         function() noexcept = default;
         ~function() noexcept { if (table && table->destroyer) (this->*(table->destroyer))(); }
 
@@ -18,13 +18,13 @@ namespace mtt::stl {
         requires (true
         && std::same_as<F, std::decay_t<E>>
         && !std::same_as<F, function>
-        && std::is_invocable_r_v<R, ref<F>, Args...>)
+        && std::is_nothrow_invocable_r_v<R, ref<F>, Args...>)
         function(E&& f) noexcept {
             storage.resize(sizeof(F));
             std::construct_at((F*)storage.data(), std::forward<E>(f));
             table = &vtable<F>;
         }
-        auto operator()(Args... args) -> R { return (this->*(table->caller))(std::forward<Args>(args)...); }
+        auto operator()(Args... args) const noexcept -> R { return (this->*(table->caller))(std::forward<Args>(args)...); }
         operator bool() const noexcept { return table; }
 
         function(rref<function> rhs) noexcept { *this = std::move(rhs); }
@@ -42,7 +42,7 @@ namespace mtt::stl {
 
     private:
         template<typename F>
-        auto call(Args... args) noexcept -> R {
+        auto call(Args... args) const noexcept -> R {
             return std::invoke(*(F*)storage.data(), std::forward<Args>(args)...);
         }
 
@@ -59,7 +59,7 @@ namespace mtt::stl {
         }
 
         struct dispatch final {
-            auto (function::*caller)(Args... args) -> R = nullptr;
+            auto (function::*caller)(Args... args) const -> R = nullptr;
             auto (function::*mover)(ref<function> dst) -> void = nullptr;
             auto (function::*destroyer)() -> void = nullptr;
 

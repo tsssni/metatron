@@ -8,9 +8,18 @@ namespace mtt::monte_carlo {
     , Restir_Integrator> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
-
-        auto sample(ref<Context> ctx) const noexcept -> opt<spectra::Stochastic_Spectrum> {
-            return visit([&](auto* p) noexcept { return p->sample(ctx); });
+        auto acquire(cref<Context> ctx, cref<Resources> res) noexcept -> void {
+            return visit([&](auto* p) noexcept { return p->acquire(ctx, res); });
+        }
+        auto release() noexcept -> void {
+            return visit([&](auto* p) noexcept { return p->release(); });
+        }
+        auto trace(ref<Context> ctx) const noexcept -> void {
+            return visit([&](auto* p) noexcept { return p->trace(ctx); });
+        }
+        auto wave(ref<Context> ctx) const noexcept -> void {
+            ctx.integrator = u32(*this);
+            return visit([&](auto* p) noexcept { return p->wave(ctx); });
         }
     };
 }

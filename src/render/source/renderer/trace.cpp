@@ -1,76 +1,58 @@
-#include "renderer.hpp"
+#include <metatron/render/renderer/renderer.hpp>
+#include <metatron/resource/serde/args.hpp>
 #include <metatron/network/remote/preview.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/core/stl/chrono.hpp>
 
 namespace mtt::renderer {
-    auto Renderer::Impl::trace(cref<scene::Args> args) noexcept -> void {
+    auto Renderer::trace() noexcept -> void {
+        auto& args = scene::Args::instance();
         auto rd = std::random_device{};
         auto seed = rd();
         stl::print("seed: 0x{:x}", seed);
 
         auto addr = wired::Address{args.address};
-
         for (auto i = 0u; i < stl::vector<void>::size(); ++i)
             stl::vector<void>::raw(i).pack();
 
-        auto ct = *math::proxy::Transform::entity("/hierarchy/camera/render");
-        auto spp = desc.film->spp;
-        auto depth = desc.film->depth;
-        auto size = uzv2{desc.film->image.size};
+        auto ctx = monte_carlo::Context{};
+        auto spp = ctx.film->spp;
+        auto size = uzv2{ctx.film->image.size};
+        auto intg = monte_carlo::Integrator::entity("/integrator");
+        intg.acquire(ctx, {});
 
-        auto& film = desc.film->image;
+        auto& film = ctx.film->image;
         auto image = muldim::Image{.size = film.size, .linear = film.linear};
         image.pixels.emplace_back(film.pixels.front().size());
 
         auto range = uv2{0, 1};
-        auto progress = stl::progress{math::prod(size) * spp};
-        auto trace = [&](cref<uzv2> px) {
-            for (auto n = range[0]; n < range[1]; ++n) {
-                auto sp = sampler::proxy::Sampler{desc.sampler, {{}, px, size, n, spp, 0, seed}};
-                sp.start();
-                auto fixel = desc.film(desc.filter, px, sp.generate_pixel_2d());
-                MTT_OPT_OR_CALLBACK(s, photo::Camera{}.sample(
-                    desc.lens, fixel.position, fixel.dxdy, sp.generate_2d()
-                ), stl::abort("ray generation failed"););
-                s.ray_differential = ct ^ s.ray_differential;
-                s.default_differential = ct ^ s.default_differential;
-                auto spec = spectra::Stochastic_Spectrum{sp.generate_1d()};
-
-                auto ctx = monte_carlo::Context{
-                    desc.accel,
-                    desc.emitter,
-                    sp, spec.lambda,
-                    s.ray_differential,
-                    s.default_differential,
-                    ct, px, n, depth,
-                };
-                MTT_OPT_OR_CALLBACK(Li, desc.integrator.sample(ctx),
-                    stl::abort("invalid value appears in pixel {} sample {}", px, n);
-                );
-                Li.value /= s.pdf;
-                fixel = Li;
-                ++progress;
-            }
-
-            auto [i, j] = px;
-            auto pixel = fv4{film[i, j]};
-            pixel /= pixel[3];
-            image[i, j] = pixel;
-        };
+        auto progress = stl::progress{spp};
 
         auto next = 1u;
         auto previewer = remote::Previewer{addr, "metatron"};
         auto future = std::shared_future<void>{stl::scheduler::async_dispatch([]{})};
 
         while (range[0] < spp) {
-            stl::scheduler::sync_parallel(uzv2{size}, trace);
+            for (auto i = range[0]; i < range[1]; i++) {
+                ctx.sample_index = i;
+                ctx.seed = seed;
+                intg.trace(ctx);
+                ++progress;
+            }
+
+            stl::scheduler::sync_parallel(uzv2{size}, [&film, &image](cref<uzv2> px) {
+                auto [i, j] = px;
+                auto pixel = fv4{film[i, j]};
+                pixel /= pixel[3];
+                image[i, j] = pixel;
+            });
+
             range[0] = range[1];
             range[1] = math::min(spp, range[1] + next);
-            next = math::min(next * 2, desc.film->stride);
+            next = math::min(next * 2, ctx.film->stride);
 
             future.wait();
-            if (range[0] == spp) image.to_path(args.output, desc.film->color_space);
+            if (range[0] == spp) image.to_path(args.output, ctx.film->color_space);
             if (!addr.host.empty()) future = stl::scheduler::async_dispatch(
                 [&image, &previewer] { previewer.update(image); }
             );

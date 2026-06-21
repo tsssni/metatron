@@ -14,13 +14,13 @@ namespace mtt::scene {
     template<typename... Ts>
     auto constexpr deserialize(
         std::array<std::string, sizeof...(Ts)>&& type,
-        auto (*pre)() -> void,
-        auto (*post)() -> void
+        Hierarchy::filter_function pre,
+        Hierarchy::filter_function post
     ) noexcept -> void {
         stl::vector<Ts...>::init();
-        Hierarchy::filter([type = std::move(type), pre, post](auto bins) {
+        Hierarchy::filter([type = std::move(type), pre = std::move(pre), post = std::move(post)](auto& bins) noexcept {
             using ts = stl::array<Ts...>;
-            pre();
+            pre(bins);
 
             auto list = type
             | std::views::transform([&bins](auto x){return bins[x];})
@@ -33,21 +33,21 @@ namespace mtt::scene {
                 auto v = (attach<stl::vector<Ts...>, Ts>(j, type[ts::template index<Ts>]) || ...);
                 if (!v) stl::abort("deserialize {} with invalid type {}", j.serialized.str, j.type);
             });
-            post();
+            post(bins);
         });
     }
 
     template<typename... Ts>
     auto constexpr deserialize(
         std::string_view text,
-        auto (*pre)() -> void = []{},
-        auto (*post)() -> void = []{}
+        Hierarchy::filter_function pre = Hierarchy::default_filter,
+        Hierarchy::filter_function post = Hierarchy::default_filter
     ) noexcept -> void {
         auto i = 0;
         auto type = std::array<std::string, sizeof...(Ts)>{};
         for (auto t: text
         | std::views::split(',')
-        | std::views::transform([](auto&& x) {
+        | std::views::transform([](auto x) {
             auto y = std::string{x.begin(), x.end()};
             auto l = y.find_first_not_of(" \t\r\n");
             auto r = y.find_last_not_of(" \t\r\n");
@@ -59,7 +59,7 @@ namespace mtt::scene {
             std::ranges::transform(t, t.begin(), ::tolower);
             type[i++] = t;
         }
-        deserialize<Ts...>(std::move(type), pre, post);
+        deserialize<Ts...>(std::move(type), std::move(pre), std::move(post));
     }
 
     #define MTT_DESERIALIZE(...) mtt::scene::deserialize<__VA_ARGS__>(#__VA_ARGS__)

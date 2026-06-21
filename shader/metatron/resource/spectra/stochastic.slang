@@ -4,6 +4,7 @@ namespace mtt::spectra {
     public struct Stochastic_Spectrum {
         public fv4 lambda = {};
         public fv4 value = {};
+        public __init() {}
         public __init(fv4 lambda, fv4 value) {
             this.lambda = lambda;
             this.value = value;

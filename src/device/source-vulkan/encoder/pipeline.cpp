@@ -49,6 +49,9 @@ namespace mtt::encoder {
         cmd.bindPipeline(vk::PipelineBindPoint::eCompute, ppl->impl->pipeline.get());
     }
 
+    auto push(std::span<byte const> uniform) noexcept -> void {
+    }
+
     auto Pipeline_Encoder::dispatch(uv3 threads, uv3 group) noexcept -> void {
         auto [x, y, z] = (threads + group - 1) / group;
         auto cmd = this->cmd->impl->cmd.get();

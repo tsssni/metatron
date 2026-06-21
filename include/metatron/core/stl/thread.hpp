@@ -75,12 +75,12 @@ namespace mtt::stl {
             auto n = math::prod(grid);
             if (n == 0) { promise.set_value(); return future; }
 
-            auto task = std::make_shared<function<void()>>([
+            auto task = std::make_shared<function<void() noexcept>>([
                 f = std::forward<F>(f),
                 state = std::move(state),
                 grid,
                 n
-            ]() mutable {
+            ]() mutable noexcept {
                 auto& [index, dispatched, promise] = *state;
                 auto i = 0u;
                 auto finished = 0u;
@@ -112,10 +112,10 @@ namespace mtt::stl {
             auto promise = std::make_unique<std::promise<R>>();
             auto future = promise->get_future().share();
 
-            auto task = std::make_shared<function<void()>>([
+            auto task = std::make_shared<function<void() noexcept>>([
                 promise = std::move(promise),
                 f = std::forward<F>(f)
-            ]() mutable {
+            ]() mutable noexcept {
                 if constexpr (!std::same_as<R, void>) promise->set_value(f());
                 else { f(); promise->set_value(); }
             });
@@ -129,7 +129,7 @@ namespace mtt::stl {
             return future;
         }
 
-        using task = std::shared_ptr<function<void()>>;
+        using task = std::shared_ptr<function<void() noexcept>>;
         std::mutex mutex;
         std::condition_variable cv;
         std::vector<std::thread> threads;

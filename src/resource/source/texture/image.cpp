@@ -9,7 +9,7 @@ namespace mtt::texture {
         if (desc.distr != Image_Distribution::none) {
             auto size = uzv2{tex.size};
             auto pdf = std::vector<f32>(math::prod(size));
-            stl::scheduler::sync_parallel(size, [&](auto px) mutable {
+            stl::scheduler::sync_parallel(size, [&](auto&& px) mutable {
                 auto c = fv4{tex[px[0], px[1]]};
                 auto w = 1.f;
                 if (desc.distr == Image_Distribution::spherical) {
