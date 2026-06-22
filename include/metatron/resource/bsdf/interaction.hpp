@@ -6,6 +6,7 @@ namespace mtt::bsdf {
         fv4 f;
         fv3 wi;
         f32 pdf;
+        bool connectable = false;
         bool degraded = false;
     };
 

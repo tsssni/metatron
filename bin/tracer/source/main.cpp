@@ -36,13 +36,12 @@ auto main(i32 argc, mut<char> argv[]) -> i32 {
         stl::abort("argparser error: {}", err.what());
     }
 
-    auto args = scene::Args{
-        .scene = argparser.get<std::string>("-s"),
-        .output = argparser.get<std::string>("-o"),
-        .address = argparser.get<std::string>("-a"),
-        .device = argparser.get<std::string>("-d"),
-    };
-    scene::run(args);
+    auto& args = scene::Args::instance();
+    args.scene = argparser.get<std::string>("-s");
+    args.output = argparser.get<std::string>("-o");
+    args.address = argparser.get<std::string>("-a");
+    args.device = argparser.get<std::string>("-d");
+    scene::run();
 
     return 0;
 }

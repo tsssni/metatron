@@ -1,5 +1,6 @@
-#include "renderer.hpp"
 #include "resource.hpp"
+#include <metatron/render/renderer/renderer.hpp>
+#include <metatron/resource/serde/args.hpp>
 #include <metatron/device/command/context.hpp>
 #include <metatron/device/encoder/transfer.hpp>
 #include <metatron/device/encoder/argument.hpp>
@@ -21,7 +22,8 @@ namespace mtt::renderer {
         ref<u64> count
     ) noexcept -> obj<opaque::Acceleration>;
 
-    auto Renderer::Impl::wave(cref<scene::Args> args) noexcept -> void {
+    auto Renderer::wave() noexcept -> void {
+        auto& args = scene::Args::instance();
         auto addr = wired::Address{args.address};
         auto remote = !addr.host.empty();
         auto previewer = remote::Previewer{addr, "metatron"};
@@ -30,6 +32,10 @@ namespace mtt::renderer {
         auto render_queue = make_obj<command::Queue>(command::Type::render);
         auto transfer_queue = make_obj<command::Queue>(command::Type::transfer);
 
+        auto intg = monte_carlo::Integrator::entity("/integrator");
+        auto ctx = monte_carlo::Context{};
+        auto res = monte_carlo::Resources{};
+
         auto upload_timelines = std::vector<obj<command::Timeline>>(stl::scheduler::size());
         auto render_timeline = make_obj<command::Timeline>(!remote);
         auto shared_timeline = make_obj<command::Timeline>(true);
@@ -37,30 +43,27 @@ namespace mtt::renderer {
         auto render_count = u64{0};
         auto scheduled_count = u64{0};
 
+        intg.upload(ctx);
         auto resources = upload(render_queue.get(), upload_timelines);
         auto accel = build(render_queue.get(), upload_timelines, render_timeline.get(), render_count);
         auto render = render_queue->allocate({{render_timeline.get(), render_count}});
 
         auto sampler = make_desc<opaque::Sampler>({opaque::Sampler::Mode::repeat});
-        auto film = make_desc<opaque::Image>({&desc.film->image, opaque::Image::State::storable, command::Type::render});
-        auto image = make_desc<opaque::Image>({&desc.film->image, opaque::Image::State::storable, command::Type::render});
+        auto film = make_desc<opaque::Image>({&ctx.film->image, opaque::Image::State::storable, command::Type::render});
+        auto image = make_desc<opaque::Image>({&ctx.film->image, opaque::Image::State::storable, command::Type::render});
         auto buffer = make_desc<opaque::Buffer>({
             .state = opaque::Buffer::State::visible,
             .type = remote ? command::Type::transfer : command::Type::render,
-            .size = math::prod(desc.film->image.size),
+            .size = math::prod(ctx.film->image.size),
         });
 
-        auto resources_args = make_desc<shader::Argument>({"resources"});
-        auto textures_args = make_desc<shader::Argument>({"textures"});
-        auto grids_args = make_desc<shader::Argument>({"grids"});
-        auto trace_args = make_desc<shader::Argument>({"trace"});
-        auto post_args = make_desc<shader::Argument>({"postprocess"});
+        res.resources = make_desc<shader::Argument>({"resources"});
+        res.textures = make_desc<shader::Argument>({"textures"});
+        res.grids = make_desc<shader::Argument>({"grids"});
+        auto post_args = make_desc<shader::Argument>({"metatron/render/monte-carlo/postprocess.constants"});
+        auto postprocess = make_desc<shader::Pipeline>({"metatron/render/monte-carlo/postprocess.wave", {post_args.get()}});
 
-        auto integrate = make_desc<shader::Pipeline>({"trace.wave", {trace_args.get()
-        , resources_args.get(), textures_args.get(), grids_args.get()}});
-        auto postprocess = make_desc<shader::Pipeline>({"postprocess.wave", {post_args.get()}});
-
-        auto textures_args_encoder = encoder::Argument_Encoder{render.get(), textures_args.get()};
+        auto textures_args_encoder = encoder::Argument_Encoder{render.get(), res.textures.get()};
         auto images_view = resources.images
         | std::views::transform([](auto&& x) -> opaque::Image::View { return *x; })
         | std::ranges::to<std::vector<opaque::Image::View>>();
@@ -69,7 +72,7 @@ namespace mtt::renderer {
         textures_args_encoder.upload();
         textures_args_encoder.submit();
 
-        auto grids_args_encoder = encoder::Argument_Encoder{render.get(), grids_args.get()};
+        auto grids_args_encoder = encoder::Argument_Encoder{render.get(), res.grids.get()};
         auto grids_view = resources.grids
         | std::views::transform([](auto&& x) -> opaque::Grid::View { return *x; })
         | std::ranges::to<std::vector<opaque::Grid::View>>();
@@ -77,45 +80,35 @@ namespace mtt::renderer {
         grids_args_encoder.upload();
         grids_args_encoder.submit();
 
-        auto integrate_args_encoder = encoder::Argument_Encoder{render.get(), trace_args.get()};
-        integrate_args_encoder.acquire("constants.image", *film);
-        integrate_args_encoder.bind("constants.image", *film);
-        integrate_args_encoder.upload();
-        integrate_args_encoder.submit();
-
         auto postprocess_args_encoder = encoder::Argument_Encoder{render.get(), post_args.get()};
-        postprocess_args_encoder.acquire("constants.image", *image);
         postprocess_args_encoder.bind("constants.film", *film);
         postprocess_args_encoder.bind("constants.image", *image);
         postprocess_args_encoder.upload();
         postprocess_args_encoder.submit();
 
         auto next = 1u;
-        auto spp = desc.film->spp;
+        auto spp = ctx.film->spp;
         auto range = uv2{0, 1};
         auto progress = stl::progress{spp};
         auto seed = std::random_device{}();
         stl::print("seed: 0x{:x}", seed);
 
-        struct {
-            Descriptor desc; u32 seed; uv2 range;
-            math::Transform ct; buf<f32> fresnel;
-        } entry{
-            std::move(desc), seed,
-            {}, *math::proxy::Transform::entity("/hierarchy/camera/render"),
-            bsdf::Physical_Bsdf::fresnel_reflectance_table,
-        };
-
-        struct { uptr vectors; uptr volumes; } global{
+        struct { uptr vectors; uptr volumes; uptr fresnel; } global{
             resources.vecarr->addr,
-            resources.volarr ? resources.volarr->addr : 0
+            resources.volarr ? resources.volarr->addr : 0,
+            (uptr)bsdf::Physical_Bsdf::fresnel_reflectance_table.ptr,
         };
 
-        auto resources_args_encoder = encoder::Argument_Encoder{render.get(), resources_args.get()};
+        auto resources_args_encoder = encoder::Argument_Encoder{render.get(), res.resources.get()};
         resources_args_encoder.bind("resources.accel", accel.get());
         resources_args_encoder.acquire("resources", global);
         resources_args_encoder.upload();
         resources_args_encoder.submit();
+
+        ctx.seed = seed;
+        ctx.render = render.get();
+        ctx.image = film.get();
+        intg.acquire(ctx, res);
         render_queue->submit(std::move(render), {{render_timeline.get(), ++render_count}});
 
         auto threads = uv3{film->width, film->height, 1};
@@ -128,23 +121,27 @@ namespace mtt::renderer {
             while (range[0] < spp) {
                 if (remote) {
                     shared_timeline->wait(count);
-                    previewer.update(desc.film->image, {buffer->ptr, buffer->size});
+                    previewer.update(ctx.film->image, {buffer->ptr, buffer->size});
                     network_timeline->signal(count);
                 } else render_timeline->wait(count);
                 ++count; progress + (range[1] - range[0]);
                 range = {range[1], range[1] + next};
-                next = math::min(next * 2, desc.film->stride);
+                next = math::min(next * 2, ctx.film->stride);
             }
 
             if (!remote) {
                 auto cmd = render_queue->allocate({});
+                auto args_encoder = encoder::Argument_Encoder{cmd.get(), post_args.get()};
+                args_encoder.acquire("constants.film", *film);
+                args_encoder.acquire("constants.image", *image);
+                args_encoder.submit();
                 auto render_encoder = encoder::Pipeline_Encoder{cmd.get(), postprocess.get()};
                 render_encoder.bind();
                 render_encoder.dispatch(threads, group);
                 render_encoder.submit();
-                auto transfer = encoder::Transfer_Encoder{cmd.get()};
-                transfer.copy(*buffer, *image);
-                transfer.submit();
+                auto transfer_encoder = encoder::Transfer_Encoder{cmd.get()};
+                transfer_encoder.copy(*buffer, *image);
+                transfer_encoder.submit();
                 render_queue->submit(std::move(cmd), {{render_timeline.get(), ++render_count}});
                 render_timeline->wait(render_count);
             }
@@ -152,15 +149,11 @@ namespace mtt::renderer {
 
         while (range[0] < spp) {
             auto cmd = render_queue->allocate({{render_timeline.get(), render_count}});
-            auto args_encoder = encoder::Argument_Encoder{cmd.get(), trace_args.get()};
-            entry.range = {range[0], range[1]};
-            args_encoder.acquire("constants", entry);
-            args_encoder.submit();
-
-            auto render_encoder = encoder::Pipeline_Encoder{cmd.get(), integrate.get()};
-            render_encoder.bind();
-            render_encoder.dispatch(threads, group);
-            render_encoder.submit();
+            ctx.render = cmd.get();
+            for (auto i = range[0]; i < range[1]; i++) {
+                ctx.sample_index = i;
+                intg.wave(ctx);
+            }
             render_queue->submit(std::move(cmd), {{render_timeline.get(), ++render_count}});
 
             if (remote) {
@@ -180,6 +173,7 @@ namespace mtt::renderer {
                 }
 
                 auto args_encoder = encoder::Argument_Encoder{render_cmd.get(), post_args.get()};
+                args_encoder.acquire("constants.film", *film);
                 args_encoder.acquire("constants.image", *image);
                 args_encoder.submit();
 
@@ -204,11 +198,12 @@ namespace mtt::renderer {
 
             range[0] = range[1];
             range[1] = math::min(spp, range[1] + next);
-            next = math::min(next * 2, desc.film->stride);
+            next = math::min(next * 2, ctx.film->stride);
         }
 
         future.wait();
+        intg.release();
         auto data = std::span<byte const>{buffer->ptr, buffer->size};
-        desc.film->image.to_path(args.output, desc.film->color_space, data);
+        ctx.film->image.to_path(args.output, ctx.film->color_space, data);
     }
 }

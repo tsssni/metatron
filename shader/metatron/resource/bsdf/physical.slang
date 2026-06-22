@@ -3,7 +3,6 @@ implementing bsdf;
 namespace mtt::bsdf {
     static i32 fresnel_num_samples = 65536;
     static i32 fresnel_length = 256;
-    public static buf<f32> fresnel_reflectance_table = {};
 
     public struct Physical_Bsdf {
         fv4 reflectance = {2.f};
@@ -46,14 +45,17 @@ namespace mtt::bsdf {
                 let low = i32(idx);
                 let high = clamp(low + 1, 0, fresnel_num_samples);
                 let alpha = idx - low;
+                var fresnel_reflectance_table: buf<f32>;
+                fresnel_reflectance_table.ptr = resources.fresnel;
                 fresnel_reflectance[i] = lerp(fresnel_reflectance_table[low], fresnel_reflectance_table[high], alpha);
             }
         }
 
-        public Optional<Interaction> operator()(fv3 wo, fv3 wi) {
+        public Optional<Interaction> operator()(fv3 wo, fv3 wi, f32 u) {
             let flags = this.flags();
+            let specular = bool(flags & Flags::specular);
             if (false
-            || flags & Flags::specular
+            || (!plastic && specular)
             || abs(wo[1]) < math::epsilon
             || abs(wi[1]) < math::epsilon
             ) return {};
@@ -73,36 +75,45 @@ namespace mtt::bsdf {
                 math::Cosine_Hemisphere_Distribution().pdf(math::unit_to_cos_theta(wi)),
             );
 
-            let F = fresnel(dot(-wo, wm), eta, k);
-            let D = trowbridge_reitz(wm, alpha_u, alpha_v);
-            let G = smith_shadow(wo, wi, alpha_u, alpha_v);
+            let replay = u != -1.f;
+            var R = Interaction(fv4(0.f), wi, 0.f);
+            let Fo = !plastic ? fv4(1.f) :
+            fresnel(math::unit_to_cos_theta(-wo), eta, k);
 
-            var pr = F[0];
-            var pt = 1.f - F[0];
-            pr *= float(bool(flags & Flags::reflective));
-            pt *= float(bool(flags & Flags::transmissive));
-            if (pr == 0.f && pt == 0.f) return {};
-
-            let R_opt = torrance_sparrow(
-                reflective, pr, pt,
-                F, D, G,
-                wo, wi, wm,
-                eta, alpha_u, alpha_v
-            );
-            if (R_opt == none) return {};
-            var R = R_opt.value;
-
-            if (plastic) {
+            if (plastic && (!replay || u >= Fo[0])) {
                 let Fi = fresnel(math::unit_to_cos_theta(wi), eta, k);
-                let Fo = fresnel(math::unit_to_cos_theta(-wo), eta, k);
                 let pdf = math::Cosine_Hemisphere_Distribution().pdf(math::unit_to_cos_theta(wi));
                 let internal = 1.f
                 * (1.f - Fi) * (1.f - Fo) / (math::pi * math::pow<2>(eta))
                 * (reflectance / (1.f - reflectance * fresnel_reflectance));
-                R.f += internal;
-                R.pdf *= Fo[0];
-                R.pdf += (1.f - Fo[0]) * pdf;
+                R.f = internal;
+                R.pdf = (1.f - Fo[0]) * pdf;
+                if (replay) return R;
             }
+
+            if (!plastic || !specular) {
+                let F = fresnel(dot(-wo, wm), eta, k);
+                let D = trowbridge_reitz(wm, alpha_u, alpha_v);
+                let G = smith_shadow(wo, wi, alpha_u, alpha_v);
+
+                var pr = F[0];
+                var pt = 1.f - F[0];
+                pr *= float(bool(flags & Flags::reflective));
+                pt *= float(bool(flags & Flags::transmissive));
+                if (pr == 0.f && pt == 0.f) return {};
+
+                let T_opt = torrance_sparrow(
+                    reflective, pr, pt,
+                    F, D, G,
+                    wo, wi, wm,
+                    eta, alpha_u, alpha_v
+                );
+                if (T_opt == none) return {};
+                let T = T_opt.value;
+                R.f += T.f;
+                R.pdf += Fo[0] * T.pdf;
+            }
+
             return R;
         }
 
@@ -174,6 +185,7 @@ namespace mtt::bsdf {
                 if (R_opt == none) return {};
                 var R = R_opt.value;
                 R.pdf *= plastic ? Fo[0] : 1.f;
+                R.connectable = alpha_u >= 0.04f && alpha_v >= 0.04f;
                 return R;
             } else {
                 let distr = math::Cosine_Hemisphere_Distribution();
@@ -183,14 +195,14 @@ namespace mtt::bsdf {
 
                 if (lambertian) {
                     let f = lambert(reflectance);
-                    return Interaction(f, wi, pdf);
+                    return Interaction(f, wi, pdf, true);
                 } else {
                     let Fi = fresnel(math::unit_to_cos_theta(wi), eta, k);
                     let f = 1.f
                     * (1.f - Fi) * (1.f - Fo) / (math::pi * math::pow<2>(eta))
                     * (reflectance / (1.f - reflectance * fresnel_reflectance));
                     pdf *= (1.f - Fo[0]);
-                    return Interaction(f, wi, pdf);
+                    return Interaction(f, wi, pdf, true);
                 }
             }
         }

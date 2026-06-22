@@ -156,6 +156,7 @@ namespace mtt::shader {
                 auto Index = Unit::DescriptorTableSlot;
                 auto Set = Unit::SubElementRegisterSpace;
                 auto Size = Unit::Uniform;
+                auto Push = Unit::PushConstantBuffer;
 
                 auto type = reflection->getTypeLayout();
                 auto element = type->getElementTypeLayout();
@@ -217,8 +218,10 @@ namespace mtt::shader {
             parse_var(reflection->getGlobalParamsVarLayout(), layout);
             auto size = globalized ? 1 : layout.sets.size();
             for (auto i = 0; i < size; ++i) {
-                auto postfix = (i == 0 ? path.stem().string() : layout.names[i]) + ".json";
-                stl::json::store(stl::path{out} / postfix, layout.sets[i]);
+                auto file = i == 0
+                ? path.parent_path() / (path.stem().string() + "." + layout.names[i] + ".json")
+                : stl::path{layout.names[i] + ".json"};
+                stl::json::store(stl::path{out} / file, layout.sets[i]);
             }
             globalized = true;
             return layout;

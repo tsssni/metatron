@@ -9,7 +9,8 @@ namespace mtt::scene {
         Hierarchy() noexcept;
 
         using binmap = std::unordered_map<std::string, std::vector<json>>;
-        using filter_function = stl::function<auto (cref<binmap>) -> void>;
+        using filter_function = stl::function<auto (ref<binmap>) noexcept -> void>;
+        auto static constexpr default_filter = +[](ref<binmap>) noexcept {};
         auto static filter(filter_function f) noexcept -> void;
         auto static populate(cref<stl::path> path) noexcept -> void;
     };

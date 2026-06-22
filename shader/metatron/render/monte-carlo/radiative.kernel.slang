@@ -1,10 +1,11 @@
-implementing monte_carlo;
+import metatron;
 
-namespace mtt::monte_carlo {
-    public struct Radiative_Integrator {
-        u32 padding = 0u;
+namespace mtt {
+    struct Radiative_Integrator {
+        uptr tracer = 0;
+        uptr constants = 0;
 
-        public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum> {
+        func sample(monte_carlo::Context ctx) -> Optional<spectra::Stochastic_Spectrum> {
             var emission = fv4(0.f);
             var beta = fv4(1.f);
             var mis_s = fv4(1.f);
@@ -122,13 +123,14 @@ namespace mtt::monte_carlo {
                             direct_ctx.inside = dot(-direct_ctx.r.d, intr.n) < 0.f;
                             volume = direct_ctx.inside ? div.int_medium : div.ext_medium;
                             direct_to_render = direct_ctx.inside ? div.int_to_render : div.ext_to_render;
-                            iter = volume.begin(*direct_to_render.get() / trace_ctx, intr.t);
+                            iter = volume.begin(*direct_to_render.get() / trace_ctx, min(intr.t, l_intr.t));
                             intr.n *= direct_ctx.inside ? -1.f : 1.f;
 
+                            let light_in_medium = l_intr.t < intr.t - 0.001f;
                             let close_to_light = length(intr.p - l_intr.p) < 0.001f;
                             let is_interface = bool(div.material.flags() & material::Flags::interface);
                             let is_emissive = bool(div.material.flags() & material::Flags::emissive);
-                            if (!is_interface && (!is_emissive || !close_to_light)) {
+                            if (!light_in_medium && !is_interface && (!is_emissive || !close_to_light)) {
                                 gamma = fv4(0.f); break;
                             } else if (close_to_light) {
                                 let stm = fq::from_rotation_between(ddiff.r.d, normalize(intr.p)).transform();
@@ -158,9 +160,9 @@ namespace mtt::monte_carlo {
                         let m_opt = iter.march(ctx.sampler.generate_1d());
                         if (m_opt == none) { gamma = fv4(0.f); break; };
                         var m_intr = m_opt.value;
-                        l_intr.t -= m_intr.t;
 
-                        let hit = m_intr.t >= intr.t;
+                        let hit = m_intr.t >= min(intr.t, l_intr.t);
+                        l_intr.t -= m_intr.t;
                         let spectra_pdf = hit
                         ? m_intr.transmittance
                         : m_intr.sigma_maj * m_intr.transmittance;
@@ -200,7 +202,7 @@ namespace mtt::monte_carlo {
 
                     let l_ctx = lt / trace_ctx;
                     let l_opt = light(l_ctx.r, l_ctx.lambda);
-                    if (l_opt == none) continue;
+                    if (l_opt == none) break;
                     let l_intr = l_opt.value;
 
                     mis_e *= specular ? 0.f : math::guarded_div(e_intr.pdf * l_intr.pdf, p);
@@ -276,7 +278,8 @@ namespace mtt::monte_carlo {
                         f = p_intr.f;
                         p = p_intr.pdf;
                         history_ctx = trace_ctx;
-                        trace_ctx = {{m_intr.p, p_intr.wi}, {}, ctx.lambda};
+                        trace_ctx.r = {m_intr.p, p_intr.wi};
+                        trace_ctx.n = fv3(0.f);
                     } else {
                         beta *= m_intr.sigma_n / p_n;
                         mis_s *= (m_intr.sigma_n / m_intr.sigma_maj) / p_n;
@@ -313,22 +316,15 @@ namespace mtt::monte_carlo {
                 let tbn = transpose(fm33(intr.tn, intr.bn, intr.n));
                 intr.n = mul(tbn, mat_intr.normal);
 
-                if (mat_intr.degraded && !math::constant(ctx.lambda)) {
-                    emission = fv4(emission[0]); beta = fv4(beta[0]);
-                    mis_s = fv4(mis_s[0]); mis_e = fv4(mis_e[0]);
-                    trace_ctx.lambda = fv4(ctx.lambda[0]);
-                    history_ctx.lambda = trace_ctx.lambda;
-                }
-
                 bsdf = mat_intr.bsdf;
                 let btm = fq::from_rotation_between(intr.n, {0.f, 1.f, 0.f}).transform();
                 let bt = math::Transform(btm, transpose(btm));
-                let uc = ctx.sampler.generate_1d();
-                let u = ctx.sampler.generate_2d();
+                let cu = ctx.sampler.generate_1d();
+                let du = ctx.sampler.generate_2d();
 
                 var b_ctx = bt * trace_ctx;
                 b_ctx.r.d = normalize(b_ctx.r.d);
-                let b_opt = bsdf.sample(b_ctx, {uc, u[0], u[1]});
+                let b_opt = bsdf.sample(b_ctx, {cu, du[0], du[1]});
                 if (b_opt == none) break;
                 var b_intr = b_opt.value;
 
@@ -346,8 +342,8 @@ namespace mtt::monte_carlo {
 
                 let trace_n = (crossed ? -1.f : 1.f) * intr.n;
                 let trace_p = intr.p + 0.001f * trace_n;
+                b_intr.f *= abs(math::unit_to_cos_theta(b_intr.wi));
                 b_intr.wi = normalize((bt / fv4(b_intr.wi, 0.f)).xyz);
-                b_intr.f *= abs(dot(b_intr.wi, trace_n));
 
                 history_ctx.r = trace_ctx.r;
                 history_ctx.n = trace_ctx.n;
@@ -357,10 +353,86 @@ namespace mtt::monte_carlo {
                 mis_e = mis_s;
                 f = b_intr.f;
                 p = b_intr.pdf;
+
+                if (mat_intr.degraded && crossed && !math::constant(ctx.lambda)) {
+                    emission = fv4(emission[0]); beta = fv4(beta[0]);
+                    mis_s = fv4(mis_s[0]); mis_e = fv4(mis_e[0]); f = fv4(f[0]);
+                    trace_ctx.lambda = fv4(ctx.lambda[0]);
+                    history_ctx.lambda = trace_ctx.lambda;
+                }
             }
 
             if (!all(isfinite(emission))) return {};
             return spectra::Stochastic_Spectrum(trace_ctx.lambda, emission);
         }
+    }
+
+    struct Constants {
+        accel::Acceleration accel;
+        emitter::Emitter emitter;
+        sampler::Sampler sampler;
+        filter::Filter filter;
+        photo::Lens lens;
+        photo::proxy::Film film;
+        math::Transform ct;
+        u32 seed;
+        u32 sample_index;
+        u32 integrator;
+        [vk_binding(1, 0)] RWTexture2D image;
+    }
+    [vk_binding(0, 0)] ParameterBlock<Constants> constants;
+
+    [shader("compute"), numthreads(8, 8, 1)]
+    func trace(
+        iv3 global_idx: SV_DispatchThreadID,
+    ) -> void {
+        let pixel = global_idx.xy;
+        let cb = constants;
+        let film = cb.film.get();
+        var size: uv2;
+        cb.image.GetDimensions(size.x, size.y);
+        if (any(pixel != clamp(pixel, 0, size - 1))) return;
+
+        var sp: sampler::proxy::Sampler;
+        sp.ctx.pixel = pixel;
+        sp.ctx.size = size;
+        sp.ctx.idx = cb.sample_index;
+        sp.ctx.spp = film.spp;
+        sp.ctx.dim = 0;
+        sp.ctx.seed = cb.seed;
+        sp.sampler = cb.sampler;
+        sp.start();
+
+        let fixel = film(cb.filter, pixel, size, sp.generate_2d());
+        let camera: photo::Camera;
+        let s_opt = camera.sample(cb.lens, fixel.position, fixel.dxdy, sp.generate_2d());
+        if (s_opt == none) return;
+        var s = s_opt.value;
+        s.ray_differential = cb.ct / s.ray_differential;
+        s.default_differential = cb.ct / s.default_differential;
+        let spec = spectra::Stochastic_Spectrum(sp.generate_1d());
+
+        var ctx: monte_carlo::Context;
+        ctx.accel = cb.accel;
+        ctx.emitter = cb.emitter;
+        ctx.sampler = sp;
+        ctx.lambda = spec.lambda;
+        ctx.ray_differential = s.ray_differential;
+        ctx.default_differential = s.default_differential;
+        ctx.render_to_camera = cb.ct;
+        ctx.pixel = pixel;
+        ctx.sample_index = cb.sample_index;
+        ctx.max_depth = film.depth;
+
+        let intg = tag<Radiative_Integrator>(cb.integrator).get();
+        let Li_opt = intg.sample(ctx);
+        if (Li_opt == none) return;
+        var Li = Li_opt.value;
+        Li.value /= s.pdf;
+        let rgb = fixel(film, Li);
+        let value = fv4(rgb * fixel.weight, fixel.weight);
+
+        let sampled = cb.image.Load(pixel) + value;
+        cb.image.Store(pixel, sampled);
     }
 }

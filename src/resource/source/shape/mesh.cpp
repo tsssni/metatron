@@ -242,7 +242,7 @@ namespace mtt::shape {
             -rs[0], -rs[1], 1.f
         } / rs[2];
 
-        auto local_to_shear = [&](auto const& x) {
+        auto local_to_shear = [&](auto&& x) {
             auto y = x - r.o;
             std::swap(y[2], y[ri]);
             auto z = y[2] * rt;

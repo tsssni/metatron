@@ -8,8 +8,9 @@ namespace mtt::bsdf {
 
         auto static init() noexcept -> void;
 
-        auto operator()(cref<fv3> wo, cref<fv3> wi) const noexcept -> opt<Interaction> {
-            return visit([&](auto* p) noexcept { return (*p)(wo, wi); });
+        // u for lobe selection replay
+        auto operator()(cref<fv3> wo, cref<fv3> wi, f32 u = -1) const noexcept -> opt<Interaction> {
+            return visit([&](auto* p) noexcept { return (*p)(wo, wi, u); });
         }
         auto sample(cref<math::Context> ctx, cref<fv3> u) const noexcept -> opt<Interaction> {
             return visit([&](auto* p) noexcept { return p->sample(ctx, u); });

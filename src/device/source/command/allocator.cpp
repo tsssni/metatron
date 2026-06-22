@@ -7,7 +7,7 @@ namespace mtt::command {
         usize alignment, usize size
     ) noexcept -> Allocation {
         auto& self = instance();
-        while(self.locks[type]->test_and_set(std::memory_order::acquire));
+        while(self.lock.test_and_set(std::memory_order::acquire));
         auto idx = 0;
         auto offset = 0uz;
 
@@ -24,7 +24,7 @@ namespace mtt::command {
         }
 
         self.offsets[type][idx] = offset + size;
-        self.locks[type]->clear(std::memory_order::release);
+        self.lock.clear(std::memory_order::release);
         return {self.heaps[type][idx].get(), offset};
     }
 }

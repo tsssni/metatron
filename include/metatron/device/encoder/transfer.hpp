@@ -18,6 +18,10 @@ namespace mtt::encoder {
         auto persist(opaque::Image::View buffer) noexcept -> void;
         auto persist(opaque::Grid::View buffer) noexcept -> void;
 
+        auto liberate(opaque::Buffer::View buffer) noexcept -> void;
+        auto liberate(opaque::Image::View buffer) noexcept -> void;
+        auto liberate(opaque::Grid::View buffer) noexcept -> void;
+
         auto transfer(opaque::Buffer::View buffer, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void;
         auto transfer(opaque::Image::View image, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void;
         auto transfer(opaque::Grid::View grid, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void;

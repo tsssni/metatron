@@ -29,17 +29,36 @@ namespace mtt::command {
             .apiVersion = vk::makeApiVersion(0, 1, 4, 328),
         };
 
+        auto chain = vk::StructureChain<
+            vk::InstanceCreateInfo,
+            vk::ValidationFeaturesEXT
+        >{};
+
         auto layers = std::vector<view<char>>{};
+        auto extensions = std::vector<view<char>>{};
         for (auto props: guard(vk::enumerateInstanceLayerProperties())) {
             auto constexpr validation_layer = "VK_LAYER_KHRONOS_validation";
-            if (std::string_view{props.layerName} == validation_layer)
+            if (std::string_view{props.layerName} == validation_layer) {
+                auto constexpr enabled = std::to_array<vk::ValidationFeatureEnableEXT>({
+                    vk::ValidationFeatureEnableEXT::eDebugPrintf,
+                    vk::ValidationFeatureEnableEXT::eSynchronizationValidation,
+                });
+                auto& features = chain.get<vk::ValidationFeaturesEXT>();
+                features.enabledValidationFeatureCount = u32(enabled.size());
+                features.pEnabledValidationFeatures = enabled.data();
                 layers.push_back(validation_layer);
+                extensions.push_back("VK_EXT_validation_features");
+            }
         }
-        instance = guard(vk::createInstanceUnique({
-            .pApplicationInfo = &app,
-            .enabledLayerCount = u32(layers.size()),
-            .ppEnabledLayerNames = layers.data(),
-        }));
+
+        auto& info = chain.get<vk::InstanceCreateInfo>();
+        info.pApplicationInfo = &app;
+        info.enabledLayerCount = u32(layers.size()),
+        info.ppEnabledLayerNames = layers.data(),
+        info.enabledExtensionCount = u32(extensions.size()),
+        info.ppEnabledExtensionNames = extensions.data(),
+
+        instance = guard(vk::createInstanceUnique(info));
         VULKAN_HPP_DEFAULT_DISPATCHER.init(instance.get());
     }
 

@@ -1,14 +1,8 @@
 module monte_carlo;
-__include monte_carlo.radiative;
 import accel;
 import emitter;
 import sampler;
 import metatron.resource;
-
-#define DISPATCH_V(method, ...) \
-    if (idx.type() == 0) return tag<Radiative_Integrator>(idx).get().method(__VA_ARGS__);
-
-#define DISPATCH_R(method, ...) DISPATCH_V(method, __VA_ARGS__) else return {};
 
 namespace mtt::monte_carlo {
     public struct Context {
@@ -23,12 +17,4 @@ namespace mtt::monte_carlo {
         public u32 sample_index = 0;
         public u32 max_depth = 0;
     }
-
-    public struct Integrator {
-        tag<byte> idx;
-        public func sample(Context ctx) -> Optional<spectra::Stochastic_Spectrum> { DISPATCH_R(sample, ctx) }
-    }
 }
-
-#undef DISPATCH_V
-#undef DISPATCH_R

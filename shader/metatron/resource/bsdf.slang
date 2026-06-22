@@ -19,6 +19,7 @@ namespace mtt::bsdf {
         public fv4 f;
         public fv3 wi;
         public f32 pdf;
+        public bool connectable = false;
         public bool degraded = false;
     }
 
@@ -37,7 +38,8 @@ namespace mtt::bsdf {
         public __init(Physical_Bsdf p) { physical = p; idx = 0; }
         public __init(Interface_Bsdf i) { interface = i; idx = 1; }
 
-        public Optional<Interaction> operator()(fv3 wo, fv3 wi) { DISPATCH_OP(wo, wi) }
+        // u for lobe selection replay
+        public Optional<Interaction> operator()(fv3 wo, fv3 wi, f32 u = -1.f) { DISPATCH_OP(wo, wi, u) }
         public func sample(math::Context ctx, fv3 u) -> Optional<Interaction> { DISPATCH_R(sample, ctx, u) }
         public func flags() -> Flags { DISPATCH_R(flags) }
     }

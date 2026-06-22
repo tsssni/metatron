@@ -23,12 +23,28 @@ namespace mtt::encoder {
             .layout = vk::ImageLayout::eTransferDstOptimal,
             .family = cmd->impl->family,
         };
+        impl->tex_barrier = {
+            .stage = vk::PipelineStageFlags2{}
+            | vk::PipelineStageFlagBits2::eComputeShader
+            | vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR,
+            .access = vk::AccessFlagBits2::eShaderSampledRead,
+            .layout = vk::ImageLayout::eShaderReadOnlyOptimal,
+            .family = cmd->impl->family,
+        };
         impl->pst_barrier = {
             .stage = vk::PipelineStageFlags2{}
             | vk::PipelineStageFlagBits2::eComputeShader
             | vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR,
             .access = vk::AccessFlagBits2::eShaderRead,
             .layout = vk::ImageLayout::eShaderReadOnlyOptimal,
+            .family = cmd->impl->family,
+        };
+        impl->lib_barrier = {
+            .stage = vk::PipelineStageFlags2{}
+            | vk::PipelineStageFlagBits2::eComputeShader
+            | vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR,
+            .access = vk::AccessFlagBits2::eShaderStorageRead | vk::AccessFlagBits2::eShaderStorageWrite,
+            .layout = vk::ImageLayout::eGeneral,
             .family = cmd->impl->family,
         };
     }
@@ -117,7 +133,7 @@ namespace mtt::encoder {
     auto Transfer_Encoder::Impl::persist(mut<Transfer_Encoder> encoder, T view) noexcept -> void {
         auto cmd = encoder->cmd->impl->cmd.get();
         auto image = view.ptr;
-        auto barrier = image->impl->update(pst_barrier);
+        auto barrier = image->impl->update(tex_barrier);
         cmd.pipelineBarrier2({
             .imageMemoryBarrierCount = 1,
             .pImageMemoryBarriers = &barrier,
@@ -136,6 +152,31 @@ namespace mtt::encoder {
 
     auto Transfer_Encoder::persist(opaque::Image::View view) noexcept -> void { impl->persist(this, view); }
     auto Transfer_Encoder::persist(opaque::Grid::View view) noexcept -> void { impl->persist(this, view); }
+
+    template<typename T>
+    auto Transfer_Encoder::Impl::liberate(mut<Transfer_Encoder> encoder, T view) noexcept -> void {
+        auto cmd = encoder->cmd->impl->cmd.get();
+        auto image = view.ptr;
+        auto barrier = image->impl->update(lib_barrier);
+        cmd.pipelineBarrier2({
+            .imageMemoryBarrierCount = 1,
+            .pImageMemoryBarriers = &barrier,
+        });
+    }
+
+    auto Transfer_Encoder::liberate(Buffer::View view) noexcept -> void {
+        auto cmd = this->cmd->impl->cmd.get();
+        auto buffer = view.ptr;
+        auto barrier = buffer->impl->update(impl->lib_barrier);
+        cmd.pipelineBarrier2({
+            .bufferMemoryBarrierCount = 1,
+            .pBufferMemoryBarriers = &barrier,
+        });
+    }
+
+    auto Transfer_Encoder::liberate(opaque::Image::View view) noexcept -> void { impl->persist(this, view); }
+    auto Transfer_Encoder::liberate(opaque::Grid::View view) noexcept -> void { impl->persist(this, view); }
+
 
     template<typename T>
     auto Transfer_Encoder::Impl::transfer(mut<Transfer_Encoder> encoder, T view, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void {

@@ -8,7 +8,7 @@ namespace mtt::bsdf {
         Interface_Bsdf() noexcept = default;
 
         auto operator()(
-            cref<fv3> wo, cref<fv3> wi
+            cref<fv3> wo, cref<fv3> wi, f32 u
         ) const noexcept -> opt<Interaction>;
         auto sample(
             cref<math::Context> ctx, cref<fv3> u

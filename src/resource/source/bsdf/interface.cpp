@@ -4,7 +4,7 @@ namespace mtt::bsdf {
     Interface_Bsdf::Interface_Bsdf(cref<Descriptor>) noexcept {}
 
     auto Interface_Bsdf::operator()(
-        cref<fv3> wo, cref<fv3> wi
+        cref<fv3> wo, cref<fv3> wi, f32 u
     ) const noexcept -> opt<Interaction> {
         return Interaction{fv4{1.f}, wo, 1.f};
     }

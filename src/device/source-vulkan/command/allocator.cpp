@@ -29,7 +29,5 @@ namespace mtt::command {
         auto& ctx = Context::internal();
         heaps.resize(ctx->memory_props.memoryProperties.memoryTypeCount);
         offsets.resize(heaps.size());
-        locks.resize(heaps.size());
-        for (auto& f: locks) f = make_obj<std::atomic_flag>(0);
     }
 }

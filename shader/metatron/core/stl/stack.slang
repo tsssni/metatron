@@ -7,7 +7,10 @@ namespace mtt {
         public u32 bytelen = 0;
         public u32 idx = 0xffffffffu;
 
-        public __subscript(u32 i) -> T { get { return Ptr<T>(ptr)[i]; } }
+        public __subscript(u32 i) -> T {
+            get { return Ptr<T>(ptr)[i]; }
+            [nonmutating] set { Ptr<T>(ptr)[i] = newValue; }
+        }
         public func size() -> u32 { return bytelen / sizeof(T); }
         public func empty() -> bool { return bytelen == 0; }
     }
