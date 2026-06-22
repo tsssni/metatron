@@ -29,6 +29,6 @@ namespace mtt::command {
     private:
         std::vector<std::vector<obj<Memory>>> heaps;
         std::vector<std::vector<usize>> offsets;
-        std::vector<obj<std::atomic_flag>> locks;
+        std::atomic_flag lock;
     };
 }
