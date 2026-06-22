@@ -156,6 +156,10 @@ namespace mtt::encoder {
     auto Transfer_Encoder::persist(opaque::Image::View image) noexcept -> void {}
     auto Transfer_Encoder::persist(opaque::Grid::View grid) noexcept -> void {}
 
+    auto Transfer_Encoder::liberate(opaque::Buffer::View buffer) noexcept -> void {}
+    auto Transfer_Encoder::liberate(opaque::Image::View image) noexcept -> void {}
+    auto Transfer_Encoder::liberate(opaque::Grid::View grid) noexcept -> void {}
+
     auto Transfer_Encoder::transfer(opaque::Buffer::View buffer, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void {}
     auto Transfer_Encoder::transfer(opaque::Image::View image, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void {}
     auto Transfer_Encoder::transfer(opaque::Grid::View grid, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void {}

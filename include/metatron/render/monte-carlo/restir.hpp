@@ -17,9 +17,8 @@ namespace mtt::monte_carlo {
             fv2 pdf;
             f32 J;
             u32 pixel;
-            u32 primitive;
-            u32 depth = 0; // 0 means unavailable for reconnnection
-            uv2 padding;
+            u32 depth = 0;
+            uv3 padding;
 
             auto estimate(spectra::Stochastic_Spectrum Li, f32 W, f32 u) noexcept -> void;
             auto merge(cref<Path> p, f32 u) noexcept -> void;
@@ -34,6 +33,7 @@ namespace mtt::monte_carlo {
         Restir_Integrator() noexcept = default;
 
         // gris: https://graphics.cs.utah.edu/research/projects/gris/
+        auto upload(cref<Context> ctx) noexcept -> void;
         auto acquire(cref<Context> ctx, cref<Resources> res) noexcept -> void;
         auto release() noexcept -> void;
         auto trace(ref<Context> ctx) noexcept -> void;
@@ -42,7 +42,8 @@ namespace mtt::monte_carlo {
         auto replay(ref<Ray> r, cref<Path> np, f32 u) const noexcept -> opt<Path>;
 
     private:
-        obj<shader::Pipeline> integrate;
+        obj<shader::Pipeline> tracer;
+        obj<shader::Pipeline> reuser;
         obj<shader::Argument> constants;
         std::array<buf<Path>, 2> pathes;
         u32 reuse_iterations;

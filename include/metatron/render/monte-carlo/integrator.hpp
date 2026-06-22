@@ -8,6 +8,9 @@ namespace mtt::monte_carlo {
     , Restir_Integrator> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
+        auto upload(cref<Context> ctx) noexcept -> void {
+            return visit([&](auto* p) noexcept { return p->upload(ctx); });
+        }
         auto acquire(cref<Context> ctx, cref<Resources> res) noexcept -> void {
             return visit([&](auto* p) noexcept { return p->acquire(ctx, res); });
         }

@@ -2,6 +2,8 @@
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/device/encoder/argument.hpp>
 #include <metatron/device/encoder/pipeline.hpp>
+#include <metatron/device/encoder/transfer.hpp>
+#include <metatron/device/opaque/buffer.hpp>
 
 namespace mtt::monte_carlo {
     auto constexpr reconnection_t = 1e-2f;
@@ -32,14 +34,21 @@ namespace mtt::monte_carlo {
     spatial_samples(desc.spatial_samples),
     spatial_radius(desc.spatial_radius) {}
 
-    auto Restir_Integrator::acquire(cref<Context> ctx, cref<Resources> res) noexcept -> void {
+    auto Restir_Integrator::upload(cref<Context> ctx) noexcept -> void {
         auto pixels = math::prod(uzv2{ctx.film->image.size});
         pathes[0] = pixels;
         pathes[1] = pixels;
+    }
+
+    auto Restir_Integrator::acquire(cref<Context> ctx, cref<Resources> res) noexcept -> void {
         if (!ctx.image) return;
         constants = make_desc<shader::Argument>({"metatron/render/monte-carlo/restir.constants"});
-        integrate = make_desc<shader::Pipeline>({"metatron/render/monte-carlo/restir.wave",
-        {constants.get(), res.resources.get(), res.textures.get(), res.grids.get()}});
+        auto pipeline = [&](std::string_view name) {
+            return make_desc<shader::Pipeline>({name,
+            {constants.get(), res.resources.get(), res.textures.get(), res.grids.get()}});
+        };
+        tracer = pipeline("metatron/render/monte-carlo/restir.trace");
+        reuser = pipeline("metatron/render/monte-carlo/restir.reuse");
         auto args = encoder::Argument_Encoder{ctx.render, constants.get()};
         args.bind("constants.image", *ctx.image);
         args.upload();
@@ -47,7 +56,8 @@ namespace mtt::monte_carlo {
     }
 
     auto Restir_Integrator::release() noexcept -> void {
-        integrate.reset();
+        tracer.reset();
+        reuser.reset();
         constants.reset();
     }
 
@@ -152,6 +162,11 @@ namespace mtt::monte_carlo {
                 };
                 MTT_OPT_OR_CONTINUE(d, replay(nr, p, u[2]));
 
+                if (false
+                || !math::isfinite(c.J) || !math::isfinite(d.J)
+                || !math::isfinite(d.r.p_hat)
+                || !math::isfinite(c.Li.value)) continue;
+
                 valid++;
                 auto Mi = np.r.M;
                 auto Mc = p.r.M;
@@ -199,23 +214,42 @@ namespace mtt::monte_carlo {
             math::Transform ct;
             u32 seed;
             u32 sample_index;
+            u32 iter;
             u32 integrator;
         } entry{
             ctx.accel, ctx.emitter, ctx.sampler, ctx.filter, ctx.lens, ctx.film,
             *math::proxy::Transform::entity("/hierarchy/camera/render"),
             ctx.seed, ctx.sample_index,
-            ctx.integrator,
+            0, ctx.integrator,
         };
-        auto args = encoder::Argument_Encoder{ctx.render, constants.get()};
-        args.acquire("constants", entry);
-        args.acquire("constants.image", *ctx.image);
-        args.submit();
         auto threads = uv3{ctx.image->width, ctx.image->height, 1};
         auto group = uv3{8, 8, 1};
-        auto pipeline = encoder::Pipeline_Encoder{ctx.render, integrate.get()};
-        pipeline.bind();
-        pipeline.dispatch(threads, group);
-        pipeline.submit();
+
+        auto dispatch = [&](mut<shader::Pipeline> ppl, u32 iter) {
+            entry.iter = iter;
+            auto args = encoder::Argument_Encoder{ctx.render, constants.get()};
+            args.acquire("constants", entry);
+            args.acquire("constants.image", *ctx.image);
+            args.submit();
+            auto pipeline = encoder::Pipeline_Encoder{ctx.render, ppl};
+            pipeline.bind();
+            pipeline.dispatch(threads, group);
+            pipeline.submit();
+        };
+
+        auto barrier = [&]() {
+            auto transfer = encoder::Transfer_Encoder{ctx.render};
+            for (auto& path : pathes)
+                transfer.liberate(*(mut<opaque::Buffer>)path.handle);
+            transfer.submit();
+        };
+
+        barrier();
+        dispatch(tracer.get(), 0);
+        for (auto i = 0u; i < reuse_iterations; i++) {
+            barrier();
+            dispatch(reuser.get(), i);
+        }
     }
 
     auto Restir_Integrator::sample(ref<Ray> r) const noexcept -> opt<Path> {
@@ -418,7 +452,6 @@ namespace mtt::monte_carlo {
                 path.wi = b_intr.wi;
                 path.cos_theta = math::abs(math::unit_to_cos_theta(b_ctx.r.d));
                 path.pdf = {p, b_intr.pdf};
-                path.primitive = acc_opt->primitive;
                 path.depth = depth - 1;
             }
             connectable = (path.depth == 0) && b_intr.connectable;

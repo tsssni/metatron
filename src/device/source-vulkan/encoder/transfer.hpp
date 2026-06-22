@@ -6,10 +6,14 @@ namespace mtt::encoder {
     struct Transfer_Encoder::Impl final {
         opaque::Barrier src_barrier;
         opaque::Barrier dst_barrier;
+        opaque::Barrier tex_barrier;
         opaque::Barrier pst_barrier;
+        opaque::Barrier lib_barrier;
 
         template<typename T>
         auto persist(mut<Transfer_Encoder> encoder, T view) noexcept -> void;
+        template<typename T>
+        auto liberate(mut<Transfer_Encoder> encoder, T view) noexcept -> void;
         template<typename T>
         auto transfer(mut<Transfer_Encoder> encoder, T view, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void;
         template<typename T, typename U>

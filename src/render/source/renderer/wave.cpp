@@ -43,6 +43,7 @@ namespace mtt::renderer {
         auto render_count = u64{0};
         auto scheduled_count = u64{0};
 
+        intg.upload(ctx);
         auto resources = upload(render_queue.get(), upload_timelines);
         auto accel = build(render_queue.get(), upload_timelines, render_timeline.get(), render_count);
         auto render = render_queue->allocate({{render_timeline.get(), render_count}});

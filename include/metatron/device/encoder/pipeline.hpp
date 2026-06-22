@@ -11,12 +11,5 @@ namespace mtt::encoder {
         auto submit() noexcept -> void;
         auto bind() noexcept -> void;
         auto dispatch(uv3 threads, uv3 group) noexcept -> void;
-
-        template<typename T>
-        requires std::is_aggregate_v<std::decay_t<T>> || std::is_scalar_v<std::decay_t<T>>
-        auto push(T&& constants) noexcept -> void {
-            push({view<byte>(&constants), sizeof(constants)});
-        }
-        auto push(std::span<byte const> uniform) noexcept -> void;
     };
 }

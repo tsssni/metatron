@@ -6,10 +6,12 @@
 namespace mtt::monte_carlo {
     Radiative_Integrator::Radiative_Integrator(cref<Descriptor>) noexcept {}
 
+    auto Radiative_Integrator::upload(cref<Context> ctx) noexcept -> void {}
+
     auto Radiative_Integrator::acquire(cref<Context> ctx, cref<Resources> res) noexcept -> void {
         if (!ctx.image) return;
         constants = make_desc<shader::Argument>({"metatron/render/monte-carlo/radiative.constants"});
-        integrate = make_desc<shader::Pipeline>({"metatron/render/monte-carlo/radiative.wave",
+        integrate = make_desc<shader::Pipeline>({"metatron/render/monte-carlo/radiative.trace",
         {constants.get(), res.resources.get(), res.textures.get(), res.grids.get()}});
         auto args = encoder::Argument_Encoder{ctx.render, constants.get()};
         args.bind("constants.image", *ctx.image);

@@ -15,12 +15,12 @@ namespace mtt::math {
             return replaced;
         }
 
-        [mutating] public func shift(f32 J) {
-            w_sum = p_hat * W * M * J;
+        [mutating] public func shift(f32 J, f32 mis) {
+            w_sum = p_hat * W * mis * J;
         }
 
         [mutating] public func finalize() {
-            W = guarded_div(w_sum, M * p_hat);
+            W = guarded_div(w_sum, p_hat);
         }
     }
 }
