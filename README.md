@@ -34,9 +34,11 @@ Metatron is a physically based renderer unbiasedly simulating radiative transfer
   * Environment light with image importance sampling.
   * Area light for shapes with emissive material. Spherical triangle sampling via [A95](https://www.graphics.cornell.edu/pubs/1995/Arv95c.pdf).
   * Atomosphere with alien world support via [HW12](https://cgg.mff.cuni.cz/projects/SkylightModelling/HosekWilkie_SkylightModel_SIGGRAPH2012_Preprint_lowres.pdf) and [HW13](https://cgg.mff.cuni.cz/publications/adding-a-solar-radiance-function-to-the-hosek-wilkie-skylight-model/). TGMM sky sampling via [VV21](https://diglib.eg.org/items/b3f1efca-1d13-44d0-ad60-741c4abe3d21).
+* Sampler
+  * Heitz sampler for fast convergence via [HB19](https://eheitzresearch.wordpress.com/762-2/)
+  * Z Sobol sampler for visual quality via [AW20](https://repository.kaust.edu.sa/items/1269ae24-2596-400b-a839-e54486033a93)
 * Integrator
-  * LBVH with parallel construction via [PL10](https://research.nvidia.com/sites/default/files/pubs/2010-06_HLBVH-Hierarchical-LBVH/HLBVH-final.pdf).
-  * Direct lighting and spectral MIS inspired by [pbrt-v4](https://pbr-book.org/4ed/Light_Transport_II_Volume_Rendering/Volume_Scattering_Integrators#ImprovingtheSamplingTechniques).
+  * Unbiased ReSTIR PT with pairwise MIS via [LK22](https://graphics.cs.utah.edu/research/projects/gris/)
   * Metal/Vulkan acceleration thanks to hardware ray tracing and [slang](https://github.com/shader-slang/slang).
   * Remote preview of rendering intermediates via [tev](https://github.com/Tom94/tev)
 
@@ -48,7 +50,7 @@ Metatron use [nix](https://nixos.org) with [flakes](https://nix.dev/concepts/fla
 nix build
 ```
 
-Or use [cmake](https://cmake.org/) with manual [dependencies](https://github.com/tsssni/metatron/blob/master/nix/default.nix#L35). Add prefix flag for runtime resource loading.
+Or use [CMake](https://cmake.org/) with manual [dependencies](https://github.com/tsssni/metatron/blob/master/nix/default.nix#L35). Add prefix flag for runtime resource loading.
 
 ```nu
 cmake --preset rel -DCMAKE_INSTALL_PREFIX=/usr/bin/ -DCMAKE_CXX_FLAGS="-march=native"
@@ -81,13 +83,13 @@ Metatron can be used as a library. Use `package` output in [flake.nix](https://g
 }
 ```
 
-Modules in [src](https://github.com/tsssni/metatron/tree/master/src) are all optional and chained.
+Metatron will be linked as a shared library.
 
 ```cmake
-find_package(metatron-core REQUIRED) # only import metaron-core
-find_package(metatron-render REQUIRED) # import all as metatron-render depends them
-target_link_libraries(renderer PUBLIC metatron-render)
+find_package(metatron REQUIRED)
+target_link_libraries(renderer PUBLIC metatron)
 ```
+
 ## Run
 
 Run `metatron-tracer -h` for option documents.
