@@ -494,7 +494,7 @@ namespace mtt::monte_carlo {
             auto& intr = *acc.intr_opt;
             if (connected) {
                 auto rt = math::length(p.p - trace_ctx.r.o);
-                if (rt - intr.t > 1e-3f) break;
+                if (rt - intr.t > 0.001f * rt) break;
             }
             auto div = acc.divider;
             auto lt = div->local_to_render;

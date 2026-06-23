@@ -310,7 +310,7 @@ namespace mtt {
                 var intr = acc.intr;
                 if (connected) {
                     let rt = length(p.p - trace_ctx.r.o);
-                    if (rt - intr.t > 1e-3f) break;
+                    if (rt - intr.t > 0.001f * rt) break;
                 }
                 let div = acc.divider.get();
                 let lt = *div.local_to_render.get();

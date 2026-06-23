@@ -65,11 +65,9 @@
             ] ++ lib.optionals pkgs.stdenv.isLinux [
               hotspot
               perf
-              vulkan-validation-layers
             ];
             shellHook = ''
               export CMAKE_INSTALL_PREFIX=$HOME/metatron/out
-              export SHELL=nu
             ''
             + lib.optionalString pkgs.stdenv.isLinux ''
               export VK_LAYER_PATH=${pkgs.vulkan-validation-layers}/share/vulkan/explicit_layer.d
@@ -84,7 +82,7 @@
               oldAttrs.nativeBuildInputs
               ++ (with glpkgs; [
                 nixVulkanIntel
-                nixVulkanNvidia
+                auto.nixVulkanNvidia
               ]);
           });
         }

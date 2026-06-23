@@ -12,7 +12,7 @@ namespace mtt::stl {
     template<typename R, typename... Args>
     struct function<R(Args...)noexcept> final {
         function() noexcept = default;
-        ~function() noexcept { if (table && table->destroyer) (this->*(table->destroyer))(); }
+        ~function() noexcept { if (table && table->destroyer) table->destroyer(*this); }
 
         template<typename E, typename F = std::decay_t<E>>
         requires (true
@@ -24,7 +24,7 @@ namespace mtt::stl {
             std::construct_at((F*)storage.data(), std::forward<E>(f));
             table = &vtable<F>;
         }
-        auto operator()(Args... args) const noexcept -> R { return (this->*(table->caller))(std::forward<Args>(args)...); }
+        auto operator()(Args... args) const noexcept -> R { return table->caller(*this, std::forward<Args>(args)...); }
         operator bool() const noexcept { return table; }
 
         function(rref<function> rhs) noexcept { *this = std::move(rhs); }
@@ -32,8 +32,8 @@ namespace mtt::stl {
         auto operator=(cref<function>) -> function& = delete;
         auto operator=(rref<function> rhs) noexcept -> ref<function> {
             if (this == &rhs) return *this;
-            if (table && table->destroyer) (this->*(table->destroyer))();
-            if (rhs.table && rhs.table->mover) (rhs.*(rhs.table->mover))(*this);
+            if (table && table->destroyer) table->destroyer(*this);
+            if (rhs.table && rhs.table->mover) rhs.table->mover(rhs, *this);
             else storage = std::move(rhs.storage);
             table = rhs.table;
             rhs.table = nullptr;
@@ -42,26 +42,26 @@ namespace mtt::stl {
 
     private:
         template<typename F>
-        auto call(Args... args) const noexcept -> R {
-            return std::invoke(*(F*)storage.data(), std::forward<Args>(args)...);
+        auto call(this cref<function> self, Args... args) noexcept -> R {
+            return std::invoke(*(F*)self.storage.data(), std::forward<Args>(args)...);
         }
 
         template<typename F>
-        auto move(ref<function> dst) noexcept -> void {
+        auto move(this ref<function> self, ref<function> dst) noexcept -> void {
             dst.storage.resize(sizeof(F));
-            std::construct_at((F*)dst.storage.data(), std::move(*(F*)storage.data()));
-            std::destroy_at((F*)storage.data());
+            std::construct_at((F*)dst.storage.data(), std::move(*(F*)self.storage.data()));
+            std::destroy_at((F*)self.storage.data());
         }
 
         template<typename F>
-        auto destroy() noexcept -> void {
-            std::destroy_at((F*)storage.data());
+        auto destroy(this ref<function> self) noexcept -> void {
+            std::destroy_at((F*)self.storage.data());
         }
 
         struct dispatch final {
-            auto (function::*caller)(Args... args) const -> R = nullptr;
-            auto (function::*mover)(ref<function> dst) -> void = nullptr;
-            auto (function::*destroyer)() -> void = nullptr;
+            auto (*caller)(cref<function> self, Args... args) -> R = nullptr;
+            auto (*mover)(ref<function> self, ref<function> dst) -> void = nullptr;
+            auto (*destroyer)(ref<function> self) -> void = nullptr;
 
             template<typename F>
             consteval dispatch(std::type_identity<F>) noexcept {

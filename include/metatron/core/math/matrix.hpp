@@ -69,8 +69,7 @@ namespace mtt::math {
         requires (true
         && (std::convertible_to<Args, T> && ...)
         && dimensions.size() > 1
-        && sizeof...(Args) <= math::min(*(dimensions.end() - 2), *(dimensions.end() - 1))
-        )
+        && sizeof...(Args) <= math::min(*(dimensions.end() - 2), *(dimensions.end() - 1)))
         explicit constexpr Matrix(Args&&... args) noexcept {
             if constexpr (dimensions.size() > 2)
                 for (auto& line: storage) line = {args...};
@@ -83,8 +82,7 @@ namespace mtt::math {
         template<typename U, typename... Args, usize rhs_first_dim>
         requires (true
         && std::convertible_to<U, T>
-        && (std::convertible_to<Args, Element> && ...)
-        )
+        && (std::convertible_to<Args, Element> && ...))
         constexpr Matrix(cref<Matrix<U, rhs_first_dim, rest_dims...>> rhs, Args&&... rest) noexcept {
             *this = rhs;
             if constexpr (first_dim > rhs_first_dim)
@@ -96,8 +94,7 @@ namespace mtt::math {
         template<typename U, typename... Args, usize rhs_first_dim>
         requires (true
         && std::convertible_to<U, T>
-        && (std::convertible_to<Args, Element> && ...)
-        )
+        && (std::convertible_to<Args, Element> && ...))
         constexpr Matrix(Matrix<U, rhs_first_dim, rest_dims...>&& rhs, Args&&... rest) noexcept {
             *this = std::move(rhs);
             if constexpr (first_dim > rhs_first_dim)

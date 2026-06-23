@@ -40,7 +40,6 @@ namespace mtt::command {
             auto constexpr validation_layer = "VK_LAYER_KHRONOS_validation";
             if (std::string_view{props.layerName} == validation_layer) {
                 auto constexpr enabled = std::to_array<vk::ValidationFeatureEnableEXT>({
-                    vk::ValidationFeatureEnableEXT::eDebugPrintf,
                     vk::ValidationFeatureEnableEXT::eSynchronizationValidation,
                 });
                 auto& features = chain.get<vk::ValidationFeaturesEXT>();
