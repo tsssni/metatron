@@ -29,13 +29,11 @@ namespace mtt::texture {
 
         [&]<typename... Ss>(stl::array<Ss...>*) {
             using svec = spectra::Spectrum::vs;
-            auto add = [&]<typename S>() {
-                for (auto const& path: svec::keys<S>())
-                    Spectrum_Texture::push<Constant_Spectrum_Texture>(
-                        std::string{path}.replace(1, 8, "texture"),
-                        {spectra::Spectrum{svec::entity<S>(path)}}
-                    );
-            };
+            auto add = [&]<typename S>() { for (auto const& path: svec::keys<S>())
+            Spectrum_Texture::push<Constant_Spectrum_Texture>(
+                std::string{path}.replace(1, 8, "texture"),
+                {spectra::Spectrum{svec::entity<S>(path)}}
+            ); };
             (add.template operator()<Ss>(), ...);
         }((spectra::Spectrum::ts*)nullptr);
     }
@@ -52,7 +50,7 @@ namespace mtt::texture {
         auto p = diff.r.o + dt * diff.r.d;
         auto dpdx = diff.rx.o + dxt * diff.rx.d - p;
         auto dpdy = diff.ry.o + dyt * diff.ry.d - p;
-        auto dpduv =  math::transpose(fm23{intr.dpdu, intr.dpdv});
+        auto dpduv = math::transpose(fm23{intr.dpdu, intr.dpdv});
         auto duvdx = math::least_squares(dpduv, dpdx);
         auto duvdy = math::least_squares(dpduv, dpdy);
 

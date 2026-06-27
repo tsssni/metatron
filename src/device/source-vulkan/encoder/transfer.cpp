@@ -72,6 +72,7 @@ namespace mtt::encoder {
             auto dirty = std::move(buffer->dirty);
             auto sum = std::ranges::fold_left(dirty, 0, [](auto&& x, auto&& y) { return x + y[1];});
             if (!sum) return;
+
             auto block = cmd->blocks.allocate(sum);
             auto regions = std::vector<vk::BufferCopy2>{};
             for (auto [offset, size]: dirty) {

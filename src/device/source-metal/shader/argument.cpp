@@ -4,41 +4,32 @@
 namespace mtt::shader {
     Argument::Argument(cref<Descriptor> desc) noexcept {
         using Type = shader::Descriptor::Type;
-        using Access = shader::Descriptor::Access;
         auto path = (stl::path{"shader"} / desc.name).concat(".json");
         stl::json::load(stl::filesystem::find(path), reflection);
+        impl->offsets.resize(reflection.size());
 
-        auto size = 0u;
-        auto id = sizeof(MTL::ResourceID);
+        auto size = (u32)sizeof(MTL::ResourceID);
+        auto slots = 0u;
         for (auto i = 0u; i < reflection.size(); ++i) {
             auto& refl = reflection[i];
-            table[refl.path] = i;
-            if (refl.type == Type::parameter) size += 1;
-            else size += math::clamp(refl.size, 1u, 8192u - size);
+            impl->offsets[i] = slots * size;
+            slots += refl.type == Type::parameter
+            ? 1u : (refl.count == 0 ? 8192u - slots : refl.count);
         }
+
         set = make_desc<opaque::Buffer>({
             .state = opaque::Buffer::State::twin,
             .type = command::Type::render,
-            .size = size * id,
+            .size = slots * size,
         });
+        if (reflection.empty() || reflection.front().type != Type::parameter) return;
 
-        for (auto i = 0uz; i < reflection.size(); ++i) {
-            auto& refl = reflection[i];
-            if (refl.type == Type::parameter) {
-                parameters = make_desc<opaque::Buffer>({
-                    .state = opaque::Buffer::State::twin,
-                    .type = command::Type::render,
-                    .size = refl.size,
-                });
-                mut<uptr>(set->ptr)[i] = parameters->impl->device_buffer->gpuAddress();
-                set->dirty.push_back({i * id, id});
-            }
-        }
-    }
-
-    auto Argument::index(std::string_view field) noexcept -> u32 {
-        auto idx = table.find(field);
-        if (idx == table.end()) stl::abort("field {} does not exits", field);
-        return idx->second;
+        impl->parameters = make_desc<opaque::Buffer>({
+            .state = opaque::Buffer::State::twin,
+            .type = command::Type::render,
+            .size = reflection.front().size,
+        });
+        *mut<uptr>(set->ptr) = impl->parameters->impl->device_buffer->gpuAddress();
+        set->dirty.push_back({0, size});
     }
 }

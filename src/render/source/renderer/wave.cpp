@@ -73,8 +73,8 @@ namespace mtt::renderer {
             | std::ranges::to<std::vector<opaque::Image::View>>(),
         }; {
             auto encoder = encoder::Argument_Encoder{render.get(), res.textures.get()};
-            encoder.push(textures, {0, sizeof(textures)});
-            encoder.push(textures, 0, textures.textures);
+            encoder.push(textures);
+            encoder.push<opaque::Image>(textures, {0, textures.textures});
             encoder.submit();
         }
 
@@ -86,7 +86,7 @@ namespace mtt::renderer {
             | std::ranges::to<std::vector<opaque::Grid::View>>()
         }; {
             auto encoder = encoder::Argument_Encoder{render.get(), res.grids.get()};
-            encoder.push(grids, 0, grids.grids);
+            encoder.push<opaque::Grid>(grids, {0, grids.grids});
             encoder.submit();
         }
 
@@ -95,7 +95,7 @@ namespace mtt::renderer {
             opaque::Image::View image;
         } constants{*film, *image}; {
             auto encoder = encoder::Argument_Encoder{render.get(), arguments.get()};
-            encoder.push(constants, {0, sizeof(constants)});
+            encoder.push(constants);
             encoder.submit();
         }
 

@@ -101,6 +101,7 @@ namespace mtt::shader {
 
             for (auto i = 0; i <= layout.sets.size(); i++)
                 compiler.set_argument_buffer_device_address_space(i, true);
+
             auto metal = compiler.compile();
             auto compiled = std::ofstream{(out / path).concat(".metal")};
             compiled.write(metal.c_str(), metal.size());

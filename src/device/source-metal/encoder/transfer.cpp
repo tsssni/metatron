@@ -37,11 +37,12 @@ namespace mtt::encoder {
         } else if (buffer->state == State::twin && !buffer->dirty.empty()) {
             auto buffer = view.ptr;
             auto dirty = std::move(buffer->dirty);
-            auto sum = std::ranges::fold_left(dirty, 0, [](i32 x, uv2 y) {
-                return x + y[1];
-            });
+            auto sum = std::ranges::fold_left(dirty, 0, [](i32 x, uv2 y) { return x + y[1];});
+            if (!sum) return;
+
             auto block = cmd->blocks.allocate(sum);
             auto uploaded = std::ranges::fold_left(dirty, 0, [&](i32 x, uv2 y) {
+                if (y[1] == 0) return (u32)x;
                 std::memcpy(block.ptr->ptr + block.offset + x, buffer->ptr + y[0], y[1]);
                 copy(
                     Buffer::View{buffer, y[0], y[1]},
