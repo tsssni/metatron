@@ -5,8 +5,6 @@
 namespace mtt::encoder {
     struct Argument_Encoder::Impl final {
         template<typename T>
-        auto bind(mut<Argument_Encoder> encoder, std::string_view field, T resource) noexcept -> void;
-        template<typename T>
-        auto bind(mut<Argument_Encoder> encoder, std::string_view field, shader::Bindless<T> bindless) noexcept -> void;
+        auto identify(auto transform, T src, mut<shader::Argument> args, u32 base) noexcept -> void;
     };
 }

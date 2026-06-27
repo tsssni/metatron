@@ -5,12 +5,6 @@
 #include <metatron/device/command/buffer.hpp>
 
 namespace mtt::shader {
-    template<typename T>
-    struct Bindless final {
-        usize offset;
-        std::span<typename T::View> list;
-    };
-
     struct Argument final: stl::capsule<Argument> {
         Set reflection;
         obj<opaque::Buffer> set;

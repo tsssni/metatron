@@ -21,7 +21,7 @@ namespace mtt::monte_carlo {
         integrate = make_desc<shader::Pipeline>({"metatron/render/monte-carlo/radiative.trace",
         {arguments.get(), res.resources.get(), res.textures.get(), res.grids.get()}});
         auto args = encoder::Argument_Encoder{ctx.render, arguments.get()};
-        args.push(*constants, {0, sizeof(Constants)});
+        args.push(*constants);
         args.submit();
     }
 
@@ -68,7 +68,7 @@ namespace mtt::monte_carlo {
     auto Radiative_Integrator::wave(ref<Context> ctx) const noexcept -> void {
         constants->sample_index = ctx.sample_index;
         auto args = encoder::Argument_Encoder{ctx.render, arguments.get()};
-        args.push(*constants, {offsetof(Constants, sample_index), sizeof(Constants::sample_index)});
+        args.push(*constants, &Constants::sample_index);
         args.submit();
 
         auto liberate = encoder::Transfer_Encoder{ctx.render};

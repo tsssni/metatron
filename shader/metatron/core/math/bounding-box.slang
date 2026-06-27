@@ -4,6 +4,8 @@ namespace mtt::math {
     public struct Bounding_Box {
         public fv3 p_min = high;
         public fv3 p_max = low;
+        public __init() {}
+        public __init(fv3 p_min, fv3 p_max) { this.p_min = p_min; this.p_max = p_max; };
     }
 
     public func inside(fv3 p, Bounding_Box bbox) -> bool {

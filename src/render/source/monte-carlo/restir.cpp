@@ -58,7 +58,7 @@ namespace mtt::monte_carlo {
         restir = pipeline("metatron/render/monte-carlo/restir.reuse");
 
         auto args = encoder::Argument_Encoder{ctx.render, arguments.get()};
-        args.push(*constants, {0, sizeof(Constants)});
+        args.push(*constants);
         args.submit();
     }
 
@@ -217,7 +217,7 @@ namespace mtt::monte_carlo {
 
         constants->sample_index = ctx.sample_index;
         auto args = encoder::Argument_Encoder{ctx.render, arguments.get()};
-        args.push(*constants, {offsetof(Constants, sample_index), sizeof(Constants::sample_index)});
+        args.push(*constants, &Constants::sample_index);
         args.submit();
 
         auto liberate = encoder::Transfer_Encoder{ctx.render};
@@ -227,7 +227,7 @@ namespace mtt::monte_carlo {
         auto dispatch = [&](mut<shader::Pipeline> ppl, u32 iter) {
             constants->iter = iter;
             auto args = encoder::Argument_Encoder{ctx.render, arguments.get()};
-            args.push(*constants, {offsetof(Constants, iter), sizeof(Constants::iter)});
+            args.push(*constants, &Constants::iter);
             args.submit();
 
             auto pipeline = encoder::Pipeline_Encoder{ctx.render, ppl};

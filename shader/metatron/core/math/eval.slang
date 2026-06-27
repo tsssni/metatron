@@ -5,6 +5,7 @@ namespace mtt::math {
         public Ray r = {};
         public fv3 n = {};
         public fv4 lambda = {};
-        public bool inside;
+        public bool inside = false;
+        public __init() {}
     };
 }
