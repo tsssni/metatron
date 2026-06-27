@@ -1,4 +1,5 @@
 #include "argument.hpp"
+#include <metatron/core/math/bit.hpp>
 
 namespace mtt::shader {
     Argument::Argument(cref<Descriptor> desc) noexcept {
@@ -12,7 +13,7 @@ namespace mtt::shader {
         auto bindings = std::vector<vk::DescriptorSetLayoutBinding>{};
         for (auto i = 0u; i < reflection.size(); ++i) {
             auto constexpr types = std::to_array<Binding>({
-                Binding::eUniformBuffer,
+                Binding::eInlineUniformBlock,
                 Binding::eSampler,
                 Binding::eSampledImage,
                 Binding::eSampledImage,
@@ -21,22 +22,12 @@ namespace mtt::shader {
 
             auto& refl = reflection[i];
             auto type = types[i32(refl.type)];
-            // compiler ensures only one uniform buffer
-            if (refl.type == Type::parameter)
-                parameters = make_desc<opaque::Buffer>({
-                    .state = opaque::Buffer::State::twin,
-                    .type = command::Type::render,
-                    .size = refl.size,
-                    .flags = u64(vk::BufferUsageFlagBits2::eUniformBuffer),
-                });
             if (type == Binding::eSampledImage && refl.access != Access::readonly)
                 type = Binding::eStorageImage;
 
-            auto count = math::max(1u,
-            refl.type == Type::parameter ? 1 :
-            (refl.size == math::maxv<u32> ? 8192 - total : refl.size));
+            auto count = refl.type == Type::parameter
+            ? refl.size : (refl.count == 0 ? 8192 : refl.count);
             total += count;
-            table[refl.path] = i;
             bindings.push_back(vk::DescriptorSetLayoutBinding{
                 .binding = i,
                 .descriptorType = type,
@@ -66,29 +57,9 @@ namespace mtt::shader {
         });
 
         impl->offsets.resize(reflection.size());
-        for (auto i = 0; i < reflection.size(); ++i) {
-            auto* offset = impl->offsets.data() + i;
+        for (auto i = 0; i < reflection.size(); ++i)
             device.getDescriptorSetLayoutBindingOffsetEXT(
-                impl->layout.get(), i, offset
+                impl->layout.get(), i, &impl->offsets[i]
             );
-            if (reflection[i].type != Type::parameter) continue;
-            auto address = vk::DescriptorAddressInfoEXT{
-                .address = parameters->addr,
-                .range = parameters->size,
-            };
-            auto info = vk::DescriptorGetInfoEXT{
-                .type = Binding::eUniformBuffer,
-                .data = vk::DescriptorDataEXT{.pUniformBuffer = &address},
-            };
-            auto size = props.uniformBufferDescriptorSize;
-            set->dirty.push_back({*offset, size});
-            device.getDescriptorEXT(&info, size, set->ptr + *offset);
-        }
-    }
-
-    auto Argument::index(std::string_view field) noexcept -> u32 {
-        auto idx = table.find(field);
-        if (idx == table.end()) stl::abort("field {} does not exits", field);
-        return idx->second;
     }
 }

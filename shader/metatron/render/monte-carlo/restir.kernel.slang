@@ -35,13 +35,15 @@ namespace mtt {
             }
         }
 
-        public uptr tracer = 0;
-        public uptr reuser = 0;
-        public uptr constants = 0;
-        public buf<Path> pathes[2];
+        public Array<buf<Path>, 2> pathes;
         public u32 reuse_iterations = 5;
         public u32 spatial_samples = 4;
         public u32 spatial_radius = 16;
+
+        public uptr integrate = 0;
+        public uptr restir = 0;
+        public uptr arguments = 0;
+        public uptr constants = 0;
 
         // gris: https://graphics.cs.utah.edu/research/projects/gris/
         public func sample(monte_carlo::Context ctx) -> Optional<Path> {
@@ -463,12 +465,18 @@ namespace mtt {
         ctx.max_depth = film.depth;
 
         let intg = tag<Restir_Integrator>(cb.integrator).get();
-        var path: Restir_Integrator.Path;
-        path.Li = spectra::Stochastic_Spectrum(spec.lambda, fv4(0.f));
-        path.pixel = (u32(pixel.x) & 0xffffu) | (u32(pixel.y) << 16);
+        var p: Restir_Integrator.Path;
+        p.Li = spectra::Stochastic_Spectrum(spec.lambda, fv4(0.f));
+        p.pixel = (u32(pixel.x) & 0xffffu) | (u32(pixel.y) << 16);
         let p_opt = intg.sample(ctx);
-        if (p_opt != none) path = p_opt.value;
-        intg.pathes[0][u32(pixel.y) * size.x + u32(pixel.x)] = path;
+        if (p_opt != none) p = p_opt.value;
+        if (intg.reuse_iterations == 0) {
+            p.Li.value *= p.r.W / s.pdf;
+            let rgb = fixel(film, p.Li);
+            let value = fv4(rgb * fixel.weight, fixel.weight);
+            let sampled = cb.image.Load(pixel) + value;
+            cb.image.Store(pixel, sampled);
+        } else intg.pathes[0][u32(pixel.y) * size.x + u32(pixel.x)] = p;
     }
 
     [shader("compute"), numthreads(8, 8, 1)]
@@ -600,9 +608,8 @@ namespace mtt {
         if (iter < intg.reuse_iterations - 1) {
             intg.pathes[(iter + 1) & 1][pi] = dst;
         } else {
-            var Li = dst.Li;
-            Li.value *= dst.r.W / s.pdf;
-            let rgb = fixel(film, Li);
+            dst.Li.value *= dst.r.W / s.pdf;
+            let rgb = fixel(film, dst.Li);
             let value = fv4(rgb * fixel.weight, fixel.weight);
             let sampled = cb.image.Load(pixel) + value;
             cb.image.Store(pixel, sampled);

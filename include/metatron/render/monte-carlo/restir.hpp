@@ -24,6 +24,21 @@ namespace mtt::monte_carlo {
             auto merge(cref<Path> p, f32 u) noexcept -> void;
         };
 
+        struct Constants {
+            accel::Acceleration accel;
+            emitter::Emitter emitter;
+            sampler::Sampler sampler;
+            filter::Filter filter;
+            photo::Lens lens;
+            photo::proxy::Film film;
+            math::Transform ct;
+            u32 seed;
+            u32 sample_index;
+            u32 iter;
+            u32 integrator;
+            opaque::Image::View image;
+        };
+
         struct Descriptor final {
             u32 reuse_iterations = 3;
             u32 spatial_samples = 3;
@@ -33,8 +48,8 @@ namespace mtt::monte_carlo {
         Restir_Integrator() noexcept = default;
 
         // gris: https://graphics.cs.utah.edu/research/projects/gris/
-        auto upload(cref<Context> ctx) noexcept -> void;
-        auto acquire(cref<Context> ctx, cref<Resources> res) noexcept -> void;
+        auto upload(ref<Context> ctx) noexcept -> void;
+        auto acquire(ref<Context> ctx, cref<Resources> res) noexcept -> void;
         auto release() noexcept -> void;
         auto trace(ref<Context> ctx) noexcept -> void;
         auto wave(ref<Context> ctx) const noexcept -> void;
@@ -42,12 +57,14 @@ namespace mtt::monte_carlo {
         auto replay(ref<Ray> r, cref<Path> np, f32 u) const noexcept -> opt<Path>;
 
     private:
-        obj<shader::Pipeline> tracer;
-        obj<shader::Pipeline> reuser;
-        obj<shader::Argument> constants;
         std::array<buf<Path>, 2> pathes;
         u32 reuse_iterations;
         u32 spatial_samples;
         u32 spatial_radius;
+
+        obj<shader::Pipeline> integrate;
+        obj<shader::Pipeline> restir;
+        obj<shader::Argument> arguments;
+        obj<Constants> constants;
     };
 }

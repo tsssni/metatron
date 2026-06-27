@@ -70,12 +70,12 @@ namespace mtt::encoder {
         } else if (buffer->state == State::twin && !buffer->dirty.empty()) {
             auto buffer = view.ptr;
             auto dirty = std::move(buffer->dirty);
-            auto sum = std::ranges::fold_left(dirty, 0, [](auto&& x, auto&& y) {
-                return x + y[1];
-            });
+            auto sum = std::ranges::fold_left(dirty, 0, [](auto&& x, auto&& y) { return x + y[1];});
+            if (!sum) return;
             auto block = cmd->blocks.allocate(sum);
             auto regions = std::vector<vk::BufferCopy2>{};
             for (auto [offset, size]: dirty) {
+                if (!size) continue;
                 auto dst = block.ptr->ptr + block.offset;
                 auto src = buffer->ptr + offset;
                 std::memcpy(dst, src, size);
@@ -174,8 +174,8 @@ namespace mtt::encoder {
         });
     }
 
-    auto Transfer_Encoder::liberate(opaque::Image::View view) noexcept -> void { impl->persist(this, view); }
-    auto Transfer_Encoder::liberate(opaque::Grid::View view) noexcept -> void { impl->persist(this, view); }
+    auto Transfer_Encoder::liberate(opaque::Image::View view) noexcept -> void { impl->liberate(this, view); }
+    auto Transfer_Encoder::liberate(opaque::Grid::View view) noexcept -> void { impl->liberate(this, view); }
 
 
     template<typename T>
@@ -209,10 +209,12 @@ namespace mtt::encoder {
             .pBufferMemoryBarriers = barriers.data(),
         });
 
+        auto size = math::min(dst.size, src.size);
+        if (!size) return;
         auto region = vk::BufferCopy2{
             .srcOffset = src.offset,
             .dstOffset = dst.offset,
-            .size = math::min(dst.size, src.size),
+            .size = size,
         };
         cmd.copyBuffer2({
             .srcBuffer = src.ptr->impl->device_buffer.get(),

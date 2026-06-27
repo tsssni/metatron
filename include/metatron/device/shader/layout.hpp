@@ -3,7 +3,6 @@
 
 namespace mtt::shader {
     struct Descriptor final {
-        std::string path;
         enum struct Type {
             parameter,
             sampler,
@@ -15,9 +14,9 @@ namespace mtt::shader {
             readonly,
             readwrite,
         } access = Access::readonly;
-        // parameter: struct size
-        // array: element count
         u32 size = 0;
+        u32 offset = 0;
+        u32 count = 1;
     };
     using Set = std::vector<Descriptor>;
 }

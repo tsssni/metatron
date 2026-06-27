@@ -1,27 +1,33 @@
 #include <metatron/render/monte-carlo/radiative.hpp>
 #include <metatron/core/stl/thread.hpp>
 #include <metatron/device/encoder/argument.hpp>
+#include <metatron/device/encoder/transfer.hpp>
 #include <metatron/device/encoder/pipeline.hpp>
 
 namespace mtt::monte_carlo {
     Radiative_Integrator::Radiative_Integrator(cref<Descriptor>) noexcept {}
 
-    auto Radiative_Integrator::upload(cref<Context> ctx) noexcept -> void {}
+    auto Radiative_Integrator::upload(ref<Context> ctx) noexcept -> void {}
 
-    auto Radiative_Integrator::acquire(cref<Context> ctx, cref<Resources> res) noexcept -> void {
+    auto Radiative_Integrator::acquire(ref<Context> ctx, cref<Resources> res) noexcept -> void {
         if (!ctx.image) return;
-        constants = make_desc<shader::Argument>({"metatron/render/monte-carlo/radiative.constants"});
+        constants = make_obj<Constants>(Constants{
+            ctx.accel, ctx.emitter, ctx.sampler, ctx.filter, ctx.lens, ctx.film,
+            *math::proxy::Transform::entity("/hierarchy/camera/render"),
+            ctx.seed, ctx.sample_index,
+            ctx.integrator, *ctx.image
+        });
+        arguments = make_desc<shader::Argument>({"metatron/render/monte-carlo/radiative.constants"});
         integrate = make_desc<shader::Pipeline>({"metatron/render/monte-carlo/radiative.trace",
-        {constants.get(), res.resources.get(), res.textures.get(), res.grids.get()}});
-        auto args = encoder::Argument_Encoder{ctx.render, constants.get()};
-        args.bind("constants.image", *ctx.image);
-        args.upload();
+        {arguments.get(), res.resources.get(), res.textures.get(), res.grids.get()}});
+        auto args = encoder::Argument_Encoder{ctx.render, arguments.get()};
+        args.push(*constants, {0, sizeof(Constants)});
         args.submit();
     }
 
     auto Radiative_Integrator::release() noexcept -> void {
         integrate.reset();
-        constants.reset();
+        arguments.reset();
     }
 
     auto Radiative_Integrator::trace(ref<Context> ctx) const noexcept -> void {
@@ -29,7 +35,6 @@ namespace mtt::monte_carlo {
         auto spp = ctx.film->spp;
         auto depth = ctx.film->depth;
         auto size = uzv2{ctx.film->image.size};
-
         auto& image = ctx.film->image;
 
         auto trace = [&](auto&& px) {
@@ -61,27 +66,15 @@ namespace mtt::monte_carlo {
     }
 
     auto Radiative_Integrator::wave(ref<Context> ctx) const noexcept -> void {
-        struct {
-            accel::Acceleration accel;
-            emitter::Emitter emitter;
-            sampler::Sampler sampler;
-            filter::Filter filter;
-            photo::Lens lens;
-            photo::proxy::Film film;
-            math::Transform ct;
-            u32 seed;
-            u32 sample_index;
-            u32 integrator;
-        } entry{
-            ctx.accel, ctx.emitter, ctx.sampler, ctx.filter, ctx.lens, ctx.film,
-            *math::proxy::Transform::entity("/hierarchy/camera/render"),
-            ctx.seed, ctx.sample_index,
-            ctx.integrator,
-        };
-        auto args = encoder::Argument_Encoder{ctx.render, constants.get()};
-        args.acquire("constants", entry);
-        args.acquire("constants.image", *ctx.image);
+        constants->sample_index = ctx.sample_index;
+        auto args = encoder::Argument_Encoder{ctx.render, arguments.get()};
+        args.push(*constants, {offsetof(Constants, sample_index), sizeof(Constants::sample_index)});
         args.submit();
+
+        auto liberate = encoder::Transfer_Encoder{ctx.render};
+        liberate.liberate(*ctx.image);
+        liberate.submit();
+
         auto threads = uv3{ctx.image->width, ctx.image->height, 1};
         auto group = uv3{8, 8, 1};
         auto pipeline = encoder::Pipeline_Encoder{ctx.render, integrate.get()};

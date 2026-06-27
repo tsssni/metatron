@@ -3,6 +3,7 @@ import metatron;
 namespace mtt {
     struct Radiative_Integrator {
         uptr tracer = 0;
+        uptr arguments = 0;
         uptr constants = 0;
 
         func sample(monte_carlo::Context ctx) -> Optional<spectra::Stochastic_Spectrum> {

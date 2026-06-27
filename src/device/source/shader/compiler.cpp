@@ -1,5 +1,10 @@
 #include <metatron/device/shader/compiler.hpp>
 #include <metatron/device/shader/layout.hpp>
+#include <metatron/device/opaque/image.hpp>
+#include <metatron/device/opaque/grid.hpp>
+#include <metatron/device/opaque/accel.hpp>
+#include <metatron/device/opaque/sampler.hpp>
+#include <metatron/core/math/bit.hpp>
 #include <spirv_cross/spirv_msl.hpp>
 #include <slang-com-ptr.h>
 #include <slang.h>
@@ -118,21 +123,23 @@ namespace mtt::shader {
             ) {
                 using Type = Descriptor::Type;
                 using Access = Descriptor::Access;
+                auto assign = [&desc]<typename T>(Type t, std::type_identity<T> x) {
+                    desc.type = t;
+                    desc.size = desc.count == 0 ? sizeof(std::vector<T>) : sizeof(T) * desc.count;
+                };
 
                 switch (t->getResourceShape()) {
-                case SLANG_TEXTURE_2D: desc.type = Type::image; break;
-                case SLANG_TEXTURE_3D: desc.type = Type::grid; break;
-                case SLANG_ACCELERATION_STRUCTURE: desc.type = Type::accel; break;
-                default:
-                    stl::abort("descriptor type {} not support", i32(t->getResourceShape()));
+                case SLANG_TEXTURE_2D: assign(Type::image, std::type_identity<opaque::Image::View>{}); break;
+                case SLANG_TEXTURE_3D: assign(Type::grid, std::type_identity<opaque::Grid::View>{}); break;
+                case SLANG_ACCELERATION_STRUCTURE: assign(Type::accel, std::type_identity<mut<opaque::Acceleration>>{}); break;
+                default: stl::abort("descriptor type {} not support", i32(t->getResourceShape()));
                 }
 
                 switch (t->getResourceAccess()) {
                 case SLANG_RESOURCE_ACCESS_NONE:
                 case SLANG_RESOURCE_ACCESS_READ: desc.access = Access::readonly; break;
                 case SLANG_RESOURCE_ACCESS_READ_WRITE: desc.access = Access::readwrite; break;
-                default:
-                    stl::abort("descriptor access {} not supported", i32(t->getResourceAccess()));
+                default: stl::abort("descriptor access {} not supported", i32(t->getResourceAccess()));
                 }
             };
 
@@ -191,36 +198,48 @@ namespace mtt::shader {
                 case Kind::ParameterBlock:
                     desc.type = Descriptor::Type::parameter;
                     desc.size = element->getSize();
-                    if (!parameter) parameter = true;
-                    else stl::abort("embedded parameter block not allowed");
+                    if (parameter) stl::abort("embedded parameter block not allowed");
+                    parameter = true;
                     break;
                 case Kind::SamplerState:
                     desc.type = Descriptor::Type::sampler;
+                    desc.size = sizeof(mut<opaque::Sampler>);
                     break;
                 case Kind::Resource:
+                    desc.count = 1;
                     parse_resource(type, desc);
                     break;
                 case Kind::Array:
-                    desc.size = type->getElementCount();
-                    if (desc.size == 0) desc.size = math::maxv<u32>; // bindless
+                    desc.count = type->getElementCount();
                     parse_resource(type->getElementTypeLayout(), desc);
                     break;
                 default: break;
                 }
 
-                desc.path = field;
                 layout.sets[set][index] = desc;
                 path = field; block = set;
                 parse_type(table ? element : type);
+            };
+
+            auto parse_set = [](ref<Set> set) {
+                auto offset = 0uz;
+                for (auto i = 0; i < set.size(); i++) {
+                    using Type = Descriptor::Type;
+                    auto& desc = set[i];
+                    if (i > 0 && desc.type == Type::parameter) stl::abort("uniform block should occupy the head");
+                    if (i < set.size() - 1 && desc.count == 0) stl::abort("bindless resources should occupy the tail");
+                    set[i].offset = math::align(offset, alignof(mut<void>));
+                    offset += set[i].size;
+                }
             };
 
             auto layout = Layout{};
             parse_var(reflection->getGlobalParamsVarLayout(), layout);
             auto size = globalized ? 1 : layout.sets.size();
             for (auto i = 0; i < size; ++i) {
-                auto file = i == 0
-                ? path.parent_path() / (path.stem().string() + "." + layout.names[i] + ".json")
-                : stl::path{layout.names[i] + ".json"};
+                parse_set(layout.sets[i]);
+                auto file = i > 0 ? stl::path{layout.names[i] + ".json"}
+                : path.parent_path() / (path.stem().string() + "." + layout.names[i] + ".json");
                 stl::json::store(stl::path{out} / file, layout.sets[i]);
             }
             globalized = true;

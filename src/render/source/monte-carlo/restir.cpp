@@ -34,31 +34,38 @@ namespace mtt::monte_carlo {
     spatial_samples(desc.spatial_samples),
     spatial_radius(desc.spatial_radius) {}
 
-    auto Restir_Integrator::upload(cref<Context> ctx) noexcept -> void {
+    auto Restir_Integrator::upload(ref<Context> ctx) noexcept -> void {
         auto pixels = math::prod(uzv2{ctx.film->image.size});
         pathes[0] = pixels;
         pathes[1] = pixels;
     }
 
-    auto Restir_Integrator::acquire(cref<Context> ctx, cref<Resources> res) noexcept -> void {
+    auto Restir_Integrator::acquire(ref<Context> ctx, cref<Resources> res) noexcept -> void {
         if (!ctx.image) return;
-        constants = make_desc<shader::Argument>({"metatron/render/monte-carlo/restir.constants"});
+        constants = make_obj<Constants>(Constants{
+            ctx.accel, ctx.emitter, ctx.sampler, ctx.filter, ctx.lens, ctx.film,
+            *math::proxy::Transform::entity("/hierarchy/camera/render"),
+            ctx.seed, ctx.sample_index, 0,
+            ctx.integrator, *ctx.image
+        });
+        arguments = make_desc<shader::Argument>({"metatron/render/monte-carlo/restir.constants"});
+
         auto pipeline = [&](std::string_view name) {
             return make_desc<shader::Pipeline>({name,
-            {constants.get(), res.resources.get(), res.textures.get(), res.grids.get()}});
+            {arguments.get(), res.resources.get(), res.textures.get(), res.grids.get()}});
         };
-        tracer = pipeline("metatron/render/monte-carlo/restir.trace");
-        reuser = pipeline("metatron/render/monte-carlo/restir.reuse");
-        auto args = encoder::Argument_Encoder{ctx.render, constants.get()};
-        args.bind("constants.image", *ctx.image);
-        args.upload();
+        integrate = pipeline("metatron/render/monte-carlo/restir.trace");
+        restir = pipeline("metatron/render/monte-carlo/restir.reuse");
+
+        auto args = encoder::Argument_Encoder{ctx.render, arguments.get()};
+        args.push(*constants, {0, sizeof(Constants)});
         args.submit();
     }
 
     auto Restir_Integrator::release() noexcept -> void {
-        tracer.reset();
-        reuser.reset();
-        constants.reset();
+        integrate.reset();
+        restir.reset();
+        arguments.reset();
     }
 
     auto Restir_Integrator::trace(ref<Context> ctx) noexcept -> void {
@@ -91,9 +98,10 @@ namespace mtt::monte_carlo {
             MTT_OPT_OR_CALLBACK(p, sample(r),
                 stl::abort("invalid value appears in pixel {} sample {}", px, ctx.sample_index);
             );
-            if (reuse_iterations == 0) p.Li.value *= p.r.W / s.pdf;
-            if (reuse_iterations == 0) fixel = p.Li;
-            else pathes[0][px[1] * size[0] + px[0]] = p;
+            if (reuse_iterations == 0) {
+                p.Li.value *= p.r.W / s.pdf;
+                fixel = p.Li;
+            } else pathes[0][px[1] * size[0] + px[0]] = p;
         };
 
         auto reuse = [&](auto&& px) {
@@ -204,33 +212,24 @@ namespace mtt::monte_carlo {
     }
 
     auto Restir_Integrator::wave(ref<Context> ctx) const noexcept -> void {
-        struct {
-            accel::Acceleration accel;
-            emitter::Emitter emitter;
-            sampler::Sampler sampler;
-            filter::Filter filter;
-            photo::Lens lens;
-            photo::proxy::Film film;
-            math::Transform ct;
-            u32 seed;
-            u32 sample_index;
-            u32 iter;
-            u32 integrator;
-        } entry{
-            ctx.accel, ctx.emitter, ctx.sampler, ctx.filter, ctx.lens, ctx.film,
-            *math::proxy::Transform::entity("/hierarchy/camera/render"),
-            ctx.seed, ctx.sample_index,
-            0, ctx.integrator,
-        };
         auto threads = uv3{ctx.image->width, ctx.image->height, 1};
         auto group = uv3{8, 8, 1};
 
+        constants->sample_index = ctx.sample_index;
+        auto args = encoder::Argument_Encoder{ctx.render, arguments.get()};
+        args.push(*constants, {offsetof(Constants, sample_index), sizeof(Constants::sample_index)});
+        args.submit();
+
+        auto liberate = encoder::Transfer_Encoder{ctx.render};
+        liberate.liberate(*ctx.image);
+        liberate.submit();
+
         auto dispatch = [&](mut<shader::Pipeline> ppl, u32 iter) {
-            entry.iter = iter;
-            auto args = encoder::Argument_Encoder{ctx.render, constants.get()};
-            args.acquire("constants", entry);
-            args.acquire("constants.image", *ctx.image);
+            constants->iter = iter;
+            auto args = encoder::Argument_Encoder{ctx.render, arguments.get()};
+            args.push(*constants, {offsetof(Constants, iter), sizeof(Constants::iter)});
             args.submit();
+
             auto pipeline = encoder::Pipeline_Encoder{ctx.render, ppl};
             pipeline.bind();
             pipeline.dispatch(threads, group);
@@ -238,17 +237,17 @@ namespace mtt::monte_carlo {
         };
 
         auto barrier = [&]() {
-            auto transfer = encoder::Transfer_Encoder{ctx.render};
-            for (auto& path : pathes)
-                transfer.liberate(*(mut<opaque::Buffer>)path.handle);
-            transfer.submit();
+            auto liberate = encoder::Transfer_Encoder{ctx.render};
+            for (auto& path: pathes)
+                liberate.liberate(*mut<opaque::Buffer>(path.handle));
+            liberate.submit();
         };
 
         barrier();
-        dispatch(tracer.get(), 0);
-        for (auto i = 0u; i < reuse_iterations; i++) {
+        dispatch(integrate.get(), 0);
+        for (auto i = 0; i < reuse_iterations; i++) {
             barrier();
-            dispatch(reuser.get(), i);
+            dispatch(restir.get(), i);
         }
     }
 

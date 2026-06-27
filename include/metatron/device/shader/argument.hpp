@@ -13,16 +13,14 @@ namespace mtt::shader {
 
     struct Argument final: stl::capsule<Argument> {
         Set reflection;
-        stl::table<u32> table;
         obj<opaque::Buffer> set;
-        obj<opaque::Buffer> parameters;
 
         struct Descriptor final {
             std::string_view name;
+            usize count;
         };
 
         struct Impl;
         Argument(cref<Descriptor> desc) noexcept;
-        auto index(std::string_view field) noexcept -> u32;
     };
 }

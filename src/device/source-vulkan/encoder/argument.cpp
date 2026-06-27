@@ -12,9 +12,7 @@ namespace mtt::encoder {
         mut<command::Buffer> cmd, mut<shader::Argument> args
     ) noexcept: cmd(cmd), args(args) {}
 
-    auto Argument_Encoder::submit() noexcept -> void {}
-
-    auto Argument_Encoder::upload() noexcept -> void {
+    auto Argument_Encoder::submit() noexcept -> void {
         auto transfer = encoder::Transfer_Encoder{cmd};
         transfer.upload(*args->set);
         transfer.submit();
@@ -51,148 +49,117 @@ namespace mtt::encoder {
         return barrier;
     }
 
-    template<typename T>
-    auto Argument_Encoder::Impl::bind(
-        mut<Argument_Encoder> encoder, std::string_view field, T view
-    ) noexcept -> void {
-        auto args = encoder->args;
-        auto binding = args->index(field);
-        auto& desc = args->reflection[binding];
+    auto Argument_Encoder::push(std::span<byte const> set, uv2 range) noexcept -> void {
+        using Type = shader::Descriptor::Type;
+        using Access = shader::Descriptor::Access;
         auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
-        auto readonly = desc.access == shader::Descriptor::Access::readonly;
-        auto size = readonly
-        ? ctx->descriptor_buffer_props.sampledImageDescriptorSize
-        : ctx->descriptor_buffer_props.storageImageDescriptorSize;
+        auto& props = ctx->descriptor_buffer_props;
 
-        auto image = vk::DescriptorImageInfo{
-            .imageView = view.ptr->impl->view.get(),
-            .imageLayout = view.ptr->impl->barrier.layout,
-        };
-        auto info = vk::DescriptorGetInfoEXT{
-            .type = readonly
-            ? vk::DescriptorType::eSampledImage
-            : vk::DescriptorType::eStorageImage,
-            .data = readonly
-            ? vk::DescriptorDataEXT{.pSampledImage = &image}
-            : vk::DescriptorDataEXT{.pStorageImage = &image}
-        };
-        auto offset = args->impl->offsets[binding];
-        args->set->dirty.push_back({offset, size});
-        device.getDescriptorEXT(&info, size, args->set->ptr + offset);
-    }
+        auto begin = range[0];
+        auto end = range[0] + range[1];
+        auto first = std::ranges::upper_bound(
+            args->reflection, begin, {}, &shader::Descriptor::offset
+        ) - std::ranges::begin(args->reflection) - 1;
 
-    template<typename T>
-    auto Argument_Encoder::Impl::bind(
-        mut<Argument_Encoder> encoder, std::string_view field, shader::Bindless<T> bindless
-    ) noexcept -> void {
-        auto args = encoder->args;
-        auto binding = args->index(field);
-        auto& desc = args->reflection[binding];
-        auto& ctx = command::Context::internal();
-        auto device = ctx->device.get();
-        auto readonly = desc.access == shader::Descriptor::Access::readonly;
-        auto size = readonly
-        ? ctx->descriptor_buffer_props.sampledImageDescriptorSize
-        : ctx->descriptor_buffer_props.storageImageDescriptorSize;
-        auto offset = args->impl->offsets[binding] + bindless.offset * size;
-        auto range = bindless.list.size() * size;
-        args->set->dirty.push_back({offset, range});
+        for (auto i = first; i < args->reflection.size(); ++i) {
+            auto& desc = args->reflection[i];
+            if (desc.offset >= end) break;
+            if (desc.count == 0) continue;
+            auto src = set.data() + desc.offset;
+            auto base = (u32)args->impl->offsets[i];
 
-        for (auto i = 0; i < bindless.list.size(); ++i) {
-            auto view = bindless.list[i];
-            auto image = vk::DescriptorImageInfo{
-                .imageView = view.ptr->impl->view.get(),
-                .imageLayout = view.ptr->impl->barrier.layout,
-            };
-            auto info = vk::DescriptorGetInfoEXT{
-                .type = readonly
-                ? vk::DescriptorType::eSampledImage
-                : vk::DescriptorType::eStorageImage,
-                .data = readonly
-                ? vk::DescriptorDataEXT{.pSampledImage = &image}
-                : vk::DescriptorDataEXT{.pStorageImage = &image}
-            };
-            auto ptr = args->set->ptr + offset + i * size;
-            device.getDescriptorEXT(&info, size, ptr);
+            switch (desc.type) {
+            case Type::parameter: {
+                auto lo = math::max(begin, desc.offset);
+                auto hi = math::min(end, desc.offset + desc.size);
+                auto offset = base + (lo - desc.offset);
+                auto size = hi - lo;
+                std::memcpy(args->set->ptr + offset, set.data() + lo, size);
+                args->set->dirty.push_back({offset, size});
+                break;
+            }
+            case Type::sampler: {
+                auto sampler = *mut<mut<opaque::Sampler>>(src);
+                auto size = (u32)props.samplerDescriptorSize;
+                auto info = vk::DescriptorGetInfoEXT{
+                    .type = vk::DescriptorType::eSampler,
+                    .data = vk::DescriptorDataEXT{.pSampler = &sampler->impl->sampler.get()},
+                };
+                args->set->dirty.push_back({base, size});
+                device.getDescriptorEXT(&info, size, args->set->ptr + base);
+                break;
+            }
+            case Type::accel: {
+                auto accel = *mut<mut<opaque::Acceleration>>(src);
+                auto size = (u32)props.accelerationStructureDescriptorSize;
+                auto info = vk::DescriptorGetInfoEXT{
+                    .type = vk::DescriptorType::eAccelerationStructureKHR,
+                    .data = vk::DescriptorDataEXT{.accelerationStructure = accel->impl->instances_addr},
+                };
+                args->set->dirty.push_back({base, size});
+                device.getDescriptorEXT(&info, size, args->set->ptr + base);
+                break;
+            }
+            case Type::image:
+            case Type::grid: {
+                auto readonly = desc.access == Access::readonly;
+                auto size = (u32)(readonly ? props.sampledImageDescriptorSize : props.storageImageDescriptorSize);
+                auto encode = [&]<typename V>(std::type_identity<V>) {
+                    args->set->dirty.push_back({base, desc.count * size});
+                    for (auto k = 0u; k < desc.count; ++k) {
+                        auto view = mut<V>(src) + k;
+                        auto image = vk::DescriptorImageInfo{
+                            .imageView = view->ptr->impl->view.get(),
+                            .imageLayout = view->ptr->impl->barrier.layout,
+                        };
+                        auto info = vk::DescriptorGetInfoEXT{
+                            .type = readonly ? vk::DescriptorType::eSampledImage : vk::DescriptorType::eStorageImage,
+                            .data = readonly ? vk::DescriptorDataEXT{.pSampledImage = &image} : vk::DescriptorDataEXT{.pStorageImage = &image},
+                        };
+                        device.getDescriptorEXT(&info, size, args->set->ptr + base + k * size);
+                    }
+                };
+                if (desc.type == Type::image) encode(std::type_identity<opaque::Image::View>{});
+                else encode(std::type_identity<opaque::Grid::View>{});
+                break;
+            }
+            }
         }
     }
 
-    auto Argument_Encoder::bind(std::string_view field, view<opaque::Acceleration> accel) noexcept -> void {
-        auto binding = args->index(field);
-        auto& desc = args->reflection[binding];
-        auto& ctx = command::Context::internal();
-        auto device = ctx->device.get();
-        auto size = ctx->descriptor_buffer_props.accelerationStructureDescriptorSize;
-        auto info = vk::DescriptorGetInfoEXT{
-            .type = vk::DescriptorType::eAccelerationStructureKHR,
-            .data = vk::DescriptorDataEXT{.accelerationStructure = accel->impl->instances_addr},
-        };
-        auto offset = args->impl->offsets[binding];
-        args->set->dirty.push_back({offset, size});
-        device.getDescriptorEXT(&info, size, args->set->ptr + offset);
-    }
-
-    auto Argument_Encoder::bind(std::string_view field, view<opaque::Sampler> sampler) noexcept -> void {
-        auto binding = args->index(field);
-        auto& desc = args->reflection[binding];
-        auto& ctx = command::Context::internal();
-        auto device = ctx->device.get();
-        auto size = ctx->descriptor_buffer_props.samplerDescriptorSize;
-        auto info = vk::DescriptorGetInfoEXT{
-            .type = vk::DescriptorType::eSampler,
-            .data = vk::DescriptorDataEXT{.pSampler = &sampler->impl->sampler.get()}
-        };
-        auto offset = args->impl->offsets[binding];
-        args->set->dirty.push_back({offset, size});
-        device.getDescriptorEXT(&info, size, args->set->ptr + offset);
-    }
-
-    auto Argument_Encoder::bind(std::string_view field, opaque::Image::View image) noexcept -> void { impl->bind(this, field, image); }
-    auto Argument_Encoder::bind(std::string_view field, opaque::Grid::View grid) noexcept -> void { impl->bind(this, field, grid); }
-    auto Argument_Encoder::bind(std::string_view field, shader::Bindless<opaque::Image> images) noexcept -> void { impl->bind(this, field, images); }
-    auto Argument_Encoder::bind(std::string_view field, shader::Bindless<opaque::Grid> grids) noexcept -> void { impl->bind(this, field, grids); }
-
-    template<typename T>
-    auto Argument_Encoder::Impl::acquire(
-        mut<Argument_Encoder> encoder, std::string_view field, T view
+    auto Argument_Encoder::push(
+        std::span<byte const>, u32 offset, std::span<byte const> bindless
     ) noexcept -> void {
-        auto args = encoder->args;
-        auto binding = args->index(field);
-        auto& desc = args->reflection[binding];
+        using Type = shader::Descriptor::Type;
+        using Access = shader::Descriptor::Access;
         auto& ctx = command::Context::internal();
-        auto cmd = encoder->cmd->impl->cmd.get();
-
-        auto state = update(desc, view.ptr->impl->barrier);
-        auto barrier = view.ptr->impl->update(state);
-        cmd.pipelineBarrier2({
-            .imageMemoryBarrierCount = 1,
-            .pImageMemoryBarriers = &barrier,
-        });
-    }
-
-    auto Argument_Encoder::acquire(std::string_view field, std::span<byte const> uniform) noexcept -> void {
-        auto binding = args->index(field);
-        auto& desc = args->reflection[binding];
-        auto& ctx = command::Context::internal();
-        auto cmd = this->cmd->impl->cmd.get();
         auto device = ctx->device.get();
-        auto size = ctx->descriptor_buffer_props.uniformBufferDescriptorSize;
+        auto& props = ctx->descriptor_buffer_props;
 
-        args->parameters->dirty.push_back({0, u32(uniform.size())});
-        std::memcpy(args->parameters->ptr, uniform.data(), uniform.size());
-        auto transfer = encoder::Transfer_Encoder{this->cmd};
-        transfer.upload(*args->parameters);
-        transfer.submit();
+        auto last = args->reflection.size() - 1;
+        auto& desc = args->reflection[last];
+        auto readonly = desc.access == Access::readonly;
+        auto size = (u32)(readonly ? props.sampledImageDescriptorSize : props.storageImageDescriptorSize);
+        auto base = (u32)args->impl->offsets[last] + offset * size;
 
-        auto state = impl->update(desc, args->parameters->impl->barrier);
-        auto barrier = args->parameters->impl->update(state);
-        cmd.pipelineBarrier2({
-            .bufferMemoryBarrierCount = 1,
-            .pBufferMemoryBarriers = &barrier,
-        });
+        auto encode = [&]<typename V>(std::type_identity<V>) {
+            auto n = (u32)(bindless.size() / sizeof(V));
+            args->set->dirty.push_back({base, n * size});
+            for (auto k = 0u; k < n; ++k) {
+                auto view = mut<V>(bindless.data()) + k;
+                auto image = vk::DescriptorImageInfo{
+                    .imageView = view->ptr->impl->view.get(),
+                    .imageLayout = view->ptr->impl->barrier.layout,
+                };
+                auto info = vk::DescriptorGetInfoEXT{
+                    .type = readonly ? vk::DescriptorType::eSampledImage : vk::DescriptorType::eStorageImage,
+                    .data = readonly ? vk::DescriptorDataEXT{.pSampledImage = &image} : vk::DescriptorDataEXT{.pStorageImage = &image},
+                };
+                device.getDescriptorEXT(&info, size, args->set->ptr + base + k * size);
+            }
+        };
+        if (desc.type == Type::image) encode(std::type_identity<opaque::Image::View>{});
+        else encode(std::type_identity<opaque::Grid::View>{});
     }
-
-    auto Argument_Encoder::acquire(std::string_view field, opaque::Image::View image) noexcept -> void { impl->acquire(this, field, image); }
-    auto Argument_Encoder::acquire(std::string_view field, opaque::Grid::View grid) noexcept -> void { impl->acquire(this, field, grid); }
 }

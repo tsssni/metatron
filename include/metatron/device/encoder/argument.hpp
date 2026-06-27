@@ -4,6 +4,9 @@
 #include <metatron/device/shader/argument.hpp>
 
 namespace mtt::encoder {
+    template<typename T>
+    concept Set = std::is_aggregate_v<std::decay_t<T>> || std::is_scalar_v<std::decay_t<T>>;
+
     struct Argument_Encoder final: stl::capsule<Argument_Encoder> {
         mut<command::Buffer> cmd;
         mut<shader::Argument> args;
@@ -11,23 +14,23 @@ namespace mtt::encoder {
         Argument_Encoder(mut<command::Buffer> cmd, mut<shader::Argument> args) noexcept;
 
         auto submit() noexcept -> void;
-        auto upload() noexcept -> void;
-        auto bind() noexcept -> void;
 
-        auto bind(std::string_view field, view<opaque::Acceleration> accel) noexcept -> void;
-        auto bind(std::string_view field, view<opaque::Sampler> sampler) noexcept -> void;
-        auto bind(std::string_view field, opaque::Image::View image) noexcept -> void;
-        auto bind(std::string_view field, opaque::Grid::View grid) noexcept -> void;
-        auto bind(std::string_view field, shader::Bindless<opaque::Image> images) noexcept -> void;
-        auto bind(std::string_view field, shader::Bindless<opaque::Grid> grids) noexcept -> void;
-
-        template<typename T>
-        requires std::is_aggregate_v<std::decay_t<T>> || std::is_scalar_v<std::decay_t<T>>
-        auto acquire(std::string_view field, T&& uniform) noexcept -> void {
-            acquire(field, {view<byte>(&uniform), sizeof(uniform)});
+        template<Set S>
+        auto push(S&& set, uv2 range) noexcept -> void {
+            push({view<byte>(&set), sizeof(set)}, range);
         }
-        auto acquire(std::string_view field, std::span<byte const> uniform) noexcept -> void;
-        auto acquire(std::string_view field, opaque::Image::View image) noexcept -> void;
-        auto acquire(std::string_view field, opaque::Grid::View grid) noexcept -> void;
+        auto push(std::span<byte const> set, uv2 range) noexcept -> void;
+
+        template<Set S, typename L, typename V = typename std::decay_t<L>::value_type>
+        auto push(S&& set, u32 offset, L&& bindless) noexcept -> void {
+            using Type = shader::Descriptor::Type;
+            auto desc = args->reflection.back();
+            auto type = Type{};
+            if constexpr (std::is_same_v<V, opaque::Image::View>) type = Type::image;
+            else if constexpr (std::is_same_v<V, opaque::Grid::View>) type = Type::grid;
+            if (desc.type != type || desc.count != 0) stl::abort("set does not have bindless resources");
+            push({view<byte>(&set), sizeof(set)}, offset, {view<byte>(bindless.data()), bindless.size() * sizeof(V)});
+        }
+        auto push(std::span<byte const> set, u32 offset, std::span<byte const> bindless) noexcept -> void;
     };
 }
