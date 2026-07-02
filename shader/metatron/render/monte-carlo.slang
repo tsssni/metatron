@@ -5,7 +5,7 @@ import sampler;
 import metatron.resource;
 
 namespace mtt::monte_carlo {
-    public struct Context {
+    public struct Ray {
         public accel::Acceleration accel = {};
         public emitter::Emitter emitter = {};
         public sampler::proxy::Sampler sampler = {};
@@ -14,6 +14,7 @@ namespace mtt::monte_carlo {
         public math::Ray_Differential default_differential = {};
         public math::Transform render_to_camera = {};
         public uv2 pixel = 0;
+        public uv2 size = 0;
         public u32 sample_index = 0;
         public u32 max_depth = 0;
     }

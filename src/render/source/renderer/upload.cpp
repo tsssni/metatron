@@ -51,7 +51,9 @@ namespace mtt::renderer {
                     .ptr = buf->ptr,
                     .state = opaque::Buffer::State::local,
                     .type = command::Type::render,
+                    .alignment = buf->alignment,
                     .size = buf->bytelen,
+                    .flags = buf->flags,
                 });
                 transfer.upload(*buffer);
                 transfer.persist(*buffer);

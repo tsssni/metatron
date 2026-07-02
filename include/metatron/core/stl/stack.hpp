@@ -9,7 +9,15 @@
 namespace mtt::stl {
     struct buf {
         mut<byte> ptr = nullptr;
-        uptr handle = 0;
+
+        union {
+            uptr handle = 0;
+            struct {
+                u32 alignment;
+                u32 flags;
+            };
+        };
+
         u32 bytelen = 0;
         u32 idx = math::maxv<u32>;
 

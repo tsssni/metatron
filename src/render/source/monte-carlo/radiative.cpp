@@ -248,8 +248,8 @@ namespace mtt::monte_carlo {
 
             auto q = math::max(beta * math::guarded_div(1.f, math::avg(mis_s)));
             if (q < 1.f) {
-                auto rr_u = r.sampler.generate_1d();
-                if (rr_u > q) break;
+                auto rru = r.sampler.generate_1d();
+                if (rru > q) break;
                 else beta /= q;
             }
 

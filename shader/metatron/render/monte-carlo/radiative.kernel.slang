@@ -6,7 +6,7 @@ namespace mtt {
         uptr arguments = 0;
         uptr constants = 0;
 
-        func sample(monte_carlo::Context ctx) -> Optional<spectra::Stochastic_Spectrum> {
+        func sample(monte_carlo::Ray r) -> Optional<spectra::Stochastic_Spectrum> {
             var emission = fv4(0.f);
             var beta = fv4(1.f);
             var mis_s = fv4(1.f);
@@ -24,25 +24,25 @@ namespace mtt {
 
             var trace_ctx: math::Context;
             var history_ctx: math::Context;
-            trace_ctx.r = ctx.ray_differential.r;
-            trace_ctx.lambda = ctx.lambda;
+            trace_ctx.r = r.ray_differential.r;
+            trace_ctx.lambda = r.lambda;
 
             var acc_opt: Optional<accel::Interaction>;
             var medium: media::Medium;
             var medium_to_render: math::proxy::Transform;
             var iter: media::Iterator;
-            var rdiff = ctx.ray_differential;
-            var ddiff = ctx.default_differential;
-            let ct = ctx.render_to_camera;
+            var rdiff = r.ray_differential;
+            var ddiff = r.default_differential;
+            let ct = r.render_to_camera;
 
             while (true) {
                 depth += u32(scattered);
-                if (depth >= ctx.max_depth) break;
+                if (depth >= r.max_depth) break;
 
                 let q = math::max(beta * math::guarded_div(1.f, math::avg(mis_s)));
                 if (q < 1.f) {
-                    let rr_u = ctx.sampler.generate_1d();
-                    if (rr_u > q) break;
+                    let rru = r.sampler.generate_1d();
+                    if (rru > q) break;
                     else beta /= q;
                 }
 
@@ -50,14 +50,14 @@ namespace mtt {
                     if (!scattered || specular) break;
                     var direct_ctx = trace_ctx;
 
-                    let e_opt = ctx.emitter.sample(direct_ctx, ctx.sampler.generate_1d());
+                    let e_opt = r.emitter.sample(direct_ctx, r.sampler.generate_1d());
                     if (e_opt == none) break;
                     let e_intr = e_opt.value;
                     let et = *e_intr.local_to_render.get();
 
                     let light = e_intr.light;
                     let l_ctx = et / direct_ctx;
-                    let l_opt = light.sample(l_ctx, ctx.sampler.generate_2d());
+                    let l_opt = light.sample(l_ctx, r.sampler.generate_2d());
                     if (l_opt == none) break;
                     var l_intr = l_opt.value;
 
@@ -106,13 +106,13 @@ namespace mtt {
 
                         if (math::max(gamma * math::guarded_div(1.f, math::avg(mis_d + mis_l))) < 0.05f) {
                             let q = 0.25f;
-                            if (ctx.sampler.generate_1d() > q) {
+                            if (r.sampler.generate_1d() > q) {
                                 gamma = fv4(0.f); break;
                             } else gamma /= q;
                         }
 
                         if (crossed) {
-                            acc_opt = ctx.accel(direct_ctx.r, direct_ctx.n);
+                            acc_opt = r.accel(direct_ctx.r, direct_ctx.n);
                             if (!acc_opt.hasValue || !acc_opt.value.valid) break;
                             let acc = acc_opt.value;
                             var intr = acc.intr;
@@ -158,7 +158,7 @@ namespace mtt {
                         var intr = acc.intr;
                         let div = acc.divider.get();
 
-                        let m_opt = iter.march(ctx.sampler.generate_1d());
+                        let m_opt = iter.march(r.sampler.generate_1d());
                         if (m_opt == none) { gamma = fv4(0.f); break; };
                         var m_intr = m_opt.value;
 
@@ -192,9 +192,9 @@ namespace mtt {
                     emission += gamma * mis_u * l_intr.L;
                 } while (false);
 
-                if (scattered || crossed) acc_opt = ctx.accel(trace_ctx.r, trace_ctx.n);
+                if (scattered || crossed) acc_opt = r.accel(trace_ctx.r, trace_ctx.n);
                 if (!acc_opt.hasValue || !acc_opt.value.valid) {
-                    let e_opt = ctx.emitter.sample_infinite(trace_ctx, ctx.sampler.generate_1d());
+                    let e_opt = r.emitter.sample_infinite(trace_ctx, r.sampler.generate_1d());
                     if (e_opt == none) break;
                     let e_intr = e_opt.value;
 
@@ -231,7 +231,7 @@ namespace mtt {
                     intr.bn = normalize((lt * fv4(intr.bn * flip_n, 0.f)).xyz);
                 }
 
-                let m_opt = iter.march(ctx.sampler.generate_1d());
+                let m_opt = iter.march(r.sampler.generate_1d());
                 if (m_opt == none) break;
                 var m_intr = m_opt.value;
 
@@ -253,7 +253,7 @@ namespace mtt {
                     let p_s = math::guarded_div(m_intr.sigma_s[0], m_intr.sigma_maj[0]);
                     let p_n = math::guarded_div(m_intr.sigma_n[0], m_intr.sigma_maj[0]);
 
-                    let u = ctx.sampler.generate_1d();
+                    let u = r.sampler.generate_1d();
                     let mode = math::Discrete_Distribution<3>({p_a, p_s, p_n}).sample(u);
                     if (mode == 0) break;
                     else if (mode == 1) {
@@ -264,7 +264,7 @@ namespace mtt {
                         let ptm = fq::from_rotation_between(-trace_ctx.r.d, {0.f, 1.f, 0.f}).transform();
                         let pt = math::Transform(ptm, transpose(ptm));
                         let p_ctx = pt * trace_ctx;
-                        let p_opt = phase.sample(p_ctx, ctx.sampler.generate_2d());
+                        let p_opt = phase.sample(p_ctx, r.sampler.generate_2d());
                         if (p_opt == none) break;
                         var p_intr = p_opt.value;
                         p_intr.wi = normalize((pt / fv4(p_intr.wi, 0.f)).xyz);
@@ -320,8 +320,8 @@ namespace mtt {
                 bsdf = mat_intr.bsdf;
                 let btm = fq::from_rotation_between(intr.n, {0.f, 1.f, 0.f}).transform();
                 let bt = math::Transform(btm, transpose(btm));
-                let cu = ctx.sampler.generate_1d();
-                let du = ctx.sampler.generate_2d();
+                let cu = r.sampler.generate_1d();
+                let du = r.sampler.generate_2d();
 
                 var b_ctx = bt * trace_ctx;
                 b_ctx.r.d = normalize(b_ctx.r.d);
@@ -355,10 +355,10 @@ namespace mtt {
                 f = b_intr.f;
                 p = b_intr.pdf;
 
-                if (mat_intr.degraded && crossed && !math::constant(ctx.lambda)) {
+                if (mat_intr.degraded && crossed && !math::constant(r.lambda)) {
                     emission = fv4(emission[0]); beta = fv4(beta[0]);
                     mis_s = fv4(mis_s[0]); mis_e = fv4(mis_e[0]); f = fv4(f[0]);
-                    trace_ctx.lambda = fv4(ctx.lambda[0]);
+                    trace_ctx.lambda = fv4(r.lambda[0]);
                     history_ctx.lambda = trace_ctx.lambda;
                 }
             }
@@ -413,20 +413,21 @@ namespace mtt {
         s.default_differential = cb.ct / s.default_differential;
         let spec = spectra::Stochastic_Spectrum(sp.generate_1d());
 
-        var ctx: monte_carlo::Context;
-        ctx.accel = cb.accel;
-        ctx.emitter = cb.emitter;
-        ctx.sampler = sp;
-        ctx.lambda = spec.lambda;
-        ctx.ray_differential = s.ray_differential;
-        ctx.default_differential = s.default_differential;
-        ctx.render_to_camera = cb.ct;
-        ctx.pixel = pixel;
-        ctx.sample_index = cb.sample_index;
-        ctx.max_depth = film.depth;
+        var r: monte_carlo::Ray;
+        r.accel = cb.accel;
+        r.emitter = cb.emitter;
+        r.sampler = sp;
+        r.lambda = spec.lambda;
+        r.ray_differential = s.ray_differential;
+        r.default_differential = s.default_differential;
+        r.render_to_camera = cb.ct;
+        r.pixel = pixel;
+        r.size = size;
+        r.sample_index = cb.sample_index;
+        r.max_depth = film.depth;
 
         let intg = tag<Radiative_Integrator>(cb.integrator).get();
-        let Li_opt = intg.sample(ctx);
+        let Li_opt = intg.sample(r);
         if (Li_opt == none) return;
         var Li = Li_opt.value;
         Li.value /= s.pdf;

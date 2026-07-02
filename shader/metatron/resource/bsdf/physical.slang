@@ -3,6 +3,7 @@ implementing bsdf;
 namespace mtt::bsdf {
     static i32 fresnel_num_samples = 65536;
     static i32 fresnel_length = 256;
+    static f32 reconnection_alpha = 0.04f;
 
     public struct Physical_Bsdf {
         fv4 reflectance = {2.f};
@@ -185,7 +186,7 @@ namespace mtt::bsdf {
                 if (R_opt == none) return {};
                 var R = R_opt.value;
                 R.pdf *= plastic ? Fo[0] : 1.f;
-                R.connectable = alpha_u >= 0.04f && alpha_v >= 0.04f;
+                R.connectable = alpha_u >= reconnection_alpha && alpha_v >= reconnection_alpha;
                 return R;
             } else {
                 let distr = math::Cosine_Hemisphere_Distribution();

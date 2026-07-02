@@ -6,21 +6,32 @@
 
 namespace mtt::monte_carlo {
     struct Restir_Integrator final {
-        struct Path final {
-            math::Reservoir r;
+        struct Estimation final {
             spectra::Stochastic_Spectrum Li;
             fv4 beta;
-            fv3 p;
-            f32 t;
+            f32 mis;
+            f32 p_e;
             fv3 wi;
-            f32 cos_theta;
-            fv2 pdf;
-            f32 J;
-            u32 pixel;
-            u32 depth = 0;
-            uv3 padding;
+            u32 end;
+            f32 W;
+            f32 u;
+        };
 
-            auto estimate(spectra::Stochastic_Spectrum Li, f32 W, f32 u) noexcept -> void;
+        struct Path final {
+            math::Reservoir r;
+            fv4 Li;
+            fv4 beta;
+            fv4 gamma;
+            fv3 p;
+            u32 pixel;
+            fv3 wi;
+            f32 J;
+            fv3 we;
+            f32 mis;
+            fv3 pdf;
+            u32 depth;
+
+            auto estimate(Estimation&& e) noexcept -> void;
             auto merge(cref<Path> p, f32 u) noexcept -> void;
         };
 
@@ -43,6 +54,7 @@ namespace mtt::monte_carlo {
             u32 reuse_iterations = 3;
             u32 spatial_samples = 3;
             u32 spatial_radius = 20;
+            f32 near_field_distance = 1e-1f;
         };
         Restir_Integrator(cref<Descriptor> desc) noexcept;
         Restir_Integrator() noexcept = default;
@@ -54,13 +66,14 @@ namespace mtt::monte_carlo {
         auto trace(ref<Context> ctx) noexcept -> void;
         auto wave(ref<Context> ctx) const noexcept -> void;
         auto sample(ref<Ray> r) const noexcept -> opt<Path>;
-        auto replay(ref<Ray> r, cref<Path> np, f32 u) const noexcept -> opt<Path>;
+        auto replay(ref<Ray> r, cref<Path> np, f32 u) const noexcept -> opt<std::tuple<Path, f32>>;
 
     private:
         std::array<buf<Path>, 2> pathes;
         u32 reuse_iterations;
         u32 spatial_samples;
         u32 spatial_radius;
+        f32 near_field_distance;
 
         obj<shader::Pipeline> integrate;
         obj<shader::Pipeline> restir;

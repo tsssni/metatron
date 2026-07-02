@@ -1,20 +1,34 @@
 import metatron;
 
 namespace mtt {
+    static u32 half_bits = 16;
+    static u32 half_mask = (1u << 16) - 1;
+
     public struct Restir_Integrator {
-        public struct Path {
-            public math::Reservoir r = {};
+        public struct Estimation {
             public spectra::Stochastic_Spectrum Li = {};
             public fv4 beta = {};
-            public fv3 p = {};
-            public f32 t = 0.f;
+            public f32 mis = 0.f;
+            public f32 p_e = 0.f;
             public fv3 wi = {};
-            public f32 cos_theta = 0.f;
-            public fv2 pdf = {};
-            public f32 J = 1.f;
+            public u32 end = 0;
+            public f32 W = 0.f;
+            public f32 u = 0.f;
+        }
+
+        public struct Path {
+            public math::Reservoir r = {};
+            public fv4 Li = {};
+            public fv4 beta = {};
+            public fv4 gamma = {};
+            public fv3 p = {};
             public u32 pixel = 0;
+            public fv3 wi = {};
+            public f32 J = 0.f;
+            public fv3 we = {};
+            public f32 mis = 0.f;
+            public fv3 pdf = {};
             public u32 depth = 0;
-            public uv3 padding = 0;
             public __init() {}
 
             [mutating] public void merge(Path o, f32 u) {
@@ -24,21 +38,34 @@ namespace mtt {
                     this.r = res;
                 }
             }
-            [mutating] public void operator()(spectra::Stochastic_Spectrum Li, f32 W, f32 u) {
-                let y = math::max(Li.value);
+            [mutating] public void estimate(Estimation e) {
+                let y = math::max(e.mis * e.beta * e.Li.value);
                 var r: math::Reservoir;
                 r.p_hat = y;
-                r.M = 1.f;
-                r.W = W;
+                r.M = 0.f;
+                r.W = e.W;
                 r.shift(1.f, 1.f);
-                if (this.r(r, u)) this.Li = Li;
+                if (this.r(r, e.u)) {
+                    this.Li = e.beta * e.Li.value;
+                    this.gamma = e.beta;
+                    this.we = e.wi;
+                    this.mis = e.mis;
+                    this.pdf[2] = e.p_e;
+                    this.depth = (this.depth & half_mask) | (e.end << half_bits);
+                }
             }
+        }
+
+        public struct Shift {
+            public Path path = {};
+            public f32 J = 1.f;
         }
 
         public Array<buf<Path>, 2> pathes;
         public u32 reuse_iterations = 5;
         public u32 spatial_samples = 4;
         public u32 spatial_radius = 16;
+        public f32 near_field_distance = 1e-1f;
 
         public uptr integrate = 0;
         public uptr restir = 0;
@@ -46,12 +73,9 @@ namespace mtt {
         public uptr constants = 0;
 
         // gris: https://graphics.cs.utah.edu/research/projects/gris/
-        public func sample(monte_carlo::Context ctx) -> Optional<Path> {
-            static f32 reconnection_t = 1e-2f;
-            static i32 half_mask = (1 << 16) - 1;
+        public func sample(monte_carlo::Ray r) -> Optional<Path> {
             var path: Path;
-            path.Li = spectra::Stochastic_Spectrum(ctx.lambda, fv4(0.f));
-            path.pixel = (ctx.pixel[0] & half_mask) | (ctx.pixel[1] << 16);
+            path.pixel = (r.pixel[0] & half_mask) | (r.pixel[1] << 16);
             var beta = fv4(1.f);
 
             var depth = 0u;
@@ -66,22 +90,22 @@ namespace mtt {
 
             var trace_ctx: math::Context;
             var history_ctx: math::Context;
-            trace_ctx.r = ctx.ray_differential.r;
-            trace_ctx.lambda = ctx.lambda;
+            trace_ctx.r = r.ray_differential.r;
+            trace_ctx.lambda = r.lambda;
 
             var acc_opt: Optional<accel::Interaction>;
-            var rdiff = ctx.ray_differential;
-            var ddiff = ctx.default_differential;
-            let ct = ctx.render_to_camera;
+            var rdiff = r.ray_differential;
+            var ddiff = r.default_differential;
+            let ct = r.render_to_camera;
 
             while (true) {
                 depth += 1u;
-                if (depth >= ctx.max_depth) break;
+                if (depth >= r.max_depth) break;
 
                 let q = math::max(beta * rr);
+                let rru = r.sampler.generate_1d();
                 if (q < 1.f) {
-                    let rr_u = ctx.sampler.generate_1d();
-                    if (rr_u > q) break;
+                    if (rru > q) break;
                     else rr /= q;
                 }
 
@@ -89,9 +113,9 @@ namespace mtt {
                     if (!scattered) break;
                     var direct_ctx = trace_ctx;
 
-                    let u = fv4(ctx.sampler.generate_2d(), ctx.sampler.generate_2d());
+                    let u = fv4(r.sampler.generate_2d(), r.sampler.generate_2d());
                     if (specular) break;
-                    let e_opt = ctx.emitter.sample(direct_ctx, u[0]);
+                    let e_opt = r.emitter.sample(direct_ctx, u[0]);
                     if (e_opt == none) break;
                     let e_intr = e_opt.value;
                     let et = *e_intr.local_to_render.get();
@@ -124,11 +148,13 @@ namespace mtt {
 
                     var acc_opt: Optional<accel::Interaction>;
                     let mis_d = q / p_e * f32(!bool(e_intr.light.flags() & mtt::light::Flags::delta));
-                    let mis_l = fv4(1.f);
-                    let mis_u = math::guarded_div(1.f, math::avg(mis_d + mis_l));
-                    acc_opt = ctx.accel(direct_ctx.r, direct_ctx.n);
+                    let mis_u = 1.f / (mis_d + 1.f);
+                    acc_opt = r.accel(direct_ctx.r, direct_ctx.n);
                     if (!acc_opt.hasValue || !acc_opt.value.valid) {
-                        path(spectra::Stochastic_Spectrum(trace_ctx.lambda, mis_u * gamma * l_intr.L), rr, u[3]);
+                        path.estimate(Estimation(
+                            spectra::Stochastic_Spectrum(trace_ctx.lambda, l_intr.L),
+                            gamma, mis_u, p_e, l_intr.wi, depth, rr, u[3]
+                        ));
                         break;
                     }
 
@@ -165,13 +191,16 @@ namespace mtt {
                         let mat_intr = mat_opt.value;
                         l_intr.L = mat_intr.emission;
                     }
-                    path(spectra::Stochastic_Spectrum(trace_ctx.lambda, mis_u * gamma * l_intr.L), rr, u[3]);
+                    path.estimate(Estimation(
+                        spectra::Stochastic_Spectrum(trace_ctx.lambda, l_intr.L),
+                        gamma, mis_u, p_e, l_intr.wi, depth, rr, u[3]
+                    ));
                 } while (false);
 
-                acc_opt = ctx.accel(trace_ctx.r, trace_ctx.n);
-                let eu = ctx.sampler.generate_1d();
+                acc_opt = r.accel(trace_ctx.r, trace_ctx.n);
                 if (!acc_opt.hasValue || !acc_opt.value.valid) {
-                    let e_opt = ctx.emitter.sample_infinite(trace_ctx, ctx.sampler.generate_1d());
+                    let eu = r.sampler.generate_1d();
+                    let e_opt = r.emitter.sample_infinite(trace_ctx, r.sampler.generate_1d());
                     if (e_opt == none) break;
                     let e_intr = e_opt.value;
 
@@ -183,9 +212,13 @@ namespace mtt {
                     if (l_opt == none) break;
                     let l_intr = l_opt.value;
 
-                    let mis_e = fv4(specular ? 0.f : math::guarded_div(e_intr.pdf * l_intr.pdf, p));
-                    let mis_w = math::guarded_div(1.f, math::avg(fv4(1.f) + mis_e));
-                    path(spectra::Stochastic_Spectrum(trace_ctx.lambda, beta * mis_w * l_intr.L), rr, eu);
+                    let p_e = e_intr.pdf * l_intr.pdf;
+                    let mis_e = specular ? 0.f : math::guarded_div(p_e, p);
+                    let mis_w = 1.f / (1.f + mis_e);
+                    path.estimate(Estimation(
+                        spectra::Stochastic_Spectrum(trace_ctx.lambda, l_intr.L),
+                        beta, mis_w, -p_e, path.wi, depth, rr, eu
+                    ));
                     break;
                 }
 
@@ -221,10 +254,13 @@ namespace mtt {
                 let mat_intr = mat_opt.value;
 
                 if (math::max(mat_intr.emission) > math::epsilon) {
-                    // TODO: need correct way to fetch area light pdf on GPU, use 1.f now
-                    let mis_e = fv4(specular ? 0.f : math::guarded_div(intr.pdf * 1.f, p));
-                    let mis_w = math::guarded_div(1.f, math::avg(fv4(1.f) + mis_e));
-                    path(spectra::Stochastic_Spectrum(trace_ctx.lambda, beta * mis_w * mat_intr.emission), rr, eu);
+                    let eu = r.sampler.generate_1d();
+                    let mis_e = specular ? 0.f : math::guarded_div(intr.pdf * 1.f, p);
+                    let mis_w = 1.f / (1.f + mis_e);
+                    path.estimate(Estimation(
+                        spectra::Stochastic_Spectrum(trace_ctx.lambda, mat_intr.emission),
+                        beta, mis_w, -intr.pdf, path.wi, depth, rr, eu
+                    ));
                 }
 
                 let tbn = transpose(fm33(intr.tn, intr.bn, intr.n));
@@ -233,8 +269,8 @@ namespace mtt {
                 bsdf = mat_intr.bsdf;
                 let btm = fq::from_rotation_between(intr.n, {0.f, 1.f, 0.f}).transform();
                 let bt = math::Transform(btm, transpose(btm));
-                let cu = ctx.sampler.generate_1d();
-                let du = ctx.sampler.generate_2d();
+                let cu = r.sampler.generate_1d();
+                let du = r.sampler.generate_2d();
 
                 var b_ctx = bt * trace_ctx;
                 b_ctx.r.d = normalize(b_ctx.r.d);
@@ -255,8 +291,6 @@ namespace mtt {
                 history_ctx.n = trace_ctx.n;
                 trace_ctx.r = {trace_p, b_intr.wi};
                 trace_ctx.n = trace_n;
-                f = b_intr.f;
-                p = b_intr.pdf;
 
                 if (mat_intr.degraded && !reflected && !math::constant(trace_ctx.lambda)) {
                     beta = fv4(beta[0]); f = fv4(f[0]);
@@ -264,49 +298,51 @@ namespace mtt {
                     history_ctx.lambda = trace_ctx.lambda;
                 }
 
-                if (connectable && b_intr.connectable && intr.t > reconnection_t) {
+                if (connectable && b_intr.connectable && intr.t > near_field_distance) {
                     path.beta = beta;
                     path.p = intr.p;
-                    path.t = intr.t;
                     path.wi = b_intr.wi;
-                    path.cos_theta = abs(math::unit_to_cos_theta(b_ctx.r.d));
-                    path.pdf = {p, b_intr.pdf};
-                    path.depth = depth - 1;
+                    path.J = math::sqr(intr.t) / abs(math::unit_to_cos_theta(b_ctx.r.d));
+                    path.pdf[0] = p;
+                    path.pdf[1] = b_intr.pdf;
+                    path.depth = (path.depth & ~half_mask) | (depth - 1);
                 }
-                connectable = (path.depth == 0) && b_intr.connectable;
+
+                f = b_intr.f;
+                p = b_intr.pdf;
+                connectable = ((path.depth & half_mask) == 0) && b_intr.connectable;
             }
 
-            // support set of different path depth is not intersected
-            if (!all(isfinite(path.Li.value))) return {};
+            if (!all(isfinite(path.Li))) return {};
             path.r.M = 1.f;
             path.r.finalize();
             return path;
         }
 
-        public func replay(monte_carlo::Context ctx, Path np, f32 u) -> Optional<Path> {
+        public func replay(monte_carlo::Ray r, Path np, f32 u) -> Optional<Shift> {
             var p = np;
-            p.J = 1.f;
+            var J = 1.f;
+            let connection = p.depth & half_mask;
+            let end = p.depth >> half_bits;
             var depth = 0u;
             var beta = fv4(1.f);
             var connected = false;
 
             var trace_ctx: math::Context;
             var history_ctx: math::Context;
-            trace_ctx.r = ctx.ray_differential.r;
-            trace_ctx.lambda = ctx.lambda;
+            trace_ctx.r = r.ray_differential.r;
+            trace_ctx.lambda = r.lambda;
 
-            var rdiff = ctx.ray_differential;
-            var ddiff = ctx.default_differential;
+            var rdiff = r.ray_differential;
+            var ddiff = r.default_differential;
 
             while (true) {
                 depth += 1;
-                if (depth > p.depth + u32(connected)) break;
-                // skip direct lighting
-                if (depth > 1) { ctx.sampler.generate_2d(); ctx.sampler.generate_2d(); }
-                // skip final lighting
-                ctx.sampler.generate_1d();
+                if (depth > connection + u32(connected)) break;
+                if (depth > 1) { r.sampler.generate_2d(); r.sampler.generate_2d(); }
+                r.sampler.generate_1d();
 
-                let acc_opt = ctx.accel(trace_ctx.r, trace_ctx.n);
+                let acc_opt = r.accel(trace_ctx.r, trace_ctx.n);
                 if (!acc_opt.hasValue || !acc_opt.value.valid) break;
                 let acc = acc_opt.value;
                 var intr = acc.intr;
@@ -356,34 +392,50 @@ namespace mtt {
                 let bt = math::Transform(btm, transpose(btm));
                 var b_ctx = bt * trace_ctx;
                 b_ctx.r.d = normalize(b_ctx.r.d);
-                let cu = ctx.sampler.generate_1d();
-                let du = ctx.sampler.generate_2d();
+                let cu = r.sampler.generate_1d();
+                let du = r.sampler.generate_2d();
 
                 var b_intr: mtt::bsdf::Interaction;
-                if (depth == p.depth) {
-                    var wi = normalize(p.p - intr.p);
-                    wi = (bt * fv4(wi, 0.f)).xyz;
+                let delta = abs(p.mis) == 1.f;
+                let mised = connection + 2 == end;
+                let direct = mised && p.pdf[2] > 0.f;
+
+                if (depth == connection) {
+                    let rt = length(p.p - intr.p);
+                    if (rt < near_field_distance) break;
+                    let wi = (bt * fv4((p.p - intr.p) / rt, 0.f)).xyz;
                     let c_opt = bsdf(b_ctx.r.d, wi, cu);
                     if (c_opt == none) break;
                     b_intr = c_opt.value;
-                    p.J *= b_intr.pdf / math::prod(p.pdf) * math::sqr(p.t) / p.cos_theta;
+                    J *= b_intr.pdf / p.pdf[0] * p.J;
                     p.pdf[0] = b_intr.pdf;
-                    connected = true;
-                } else if (depth == p.depth + 1) {
-                    let wi = (bt * fv4(p.wi, 0.f)).xyz;
-                    let c_opt = bsdf(b_ctx.r.d, wi, cu);
+                    connected = end > connection + 1;
+                } else if (depth == connection + 1) {
+                    let wi = (bt * fv4(mised ? p.we : p.wi, 0.f)).xyz;
+                    let c_opt = bsdf(b_ctx.r.d, wi, direct ? -1.f : cu);
                     if (c_opt == none) break;
                     b_intr = c_opt.value;
                     b_intr.f *= abs(math::unit_to_cos_theta(b_intr.wi));
-                    beta *= b_intr.f / b_intr.pdf;
-                    p.Li.value = p.Li.value / p.beta * beta;
-                    p.beta = beta;
-                    p.t = intr.t;
+
+                    let pdf = direct ? p.pdf[2] : b_intr.pdf;
+                    let jdiv = direct ? 1.f : b_intr.pdf / p.pdf[1];
+                    let geo = math::sqr(intr.t) / abs(math::unit_to_cos_theta(b_ctx.r.d));
                     p.pdf[1] = b_intr.pdf;
-                    p.cos_theta = abs(math::unit_to_cos_theta(b_ctx.r.d));
-                    p.J *= b_intr.pdf / math::sqr(p.t) * p.cos_theta;
-                    p.r.p_hat = math::max(p.Li.value);
-                    return p;
+
+                    let mis_r = delta ? 0.f : !direct
+                    ? math::guarded_div(-p.pdf[2], b_intr.pdf)
+                    : math::guarded_div(b_intr.pdf, p.pdf[2]);
+                    p.mis = mised ? 1.f / (1.f + mis_r) : p.mis;
+
+                    beta *= b_intr.f / pdf;
+                    let base = mised ? p.gamma : p.beta;
+                    p.Li *= beta / base;
+                    if (mised) p.gamma = beta;
+                    else p.beta = beta;
+                    J *= jdiv / geo;
+                    p.J = geo;
+                    p.r.p_hat = math::max(p.mis * p.Li);
+                    return Shift(p, J);
                 } else {
                     let c_opt = bsdf.sample(b_ctx, {cu, du[0], du[1]});
                     if (c_opt == none) break;
@@ -452,27 +504,27 @@ namespace mtt {
         s.default_differential = cb.ct / s.default_differential;
         let spec = spectra::Stochastic_Spectrum(sp.generate_1d());
 
-        var ctx: monte_carlo::Context;
-        ctx.accel = cb.accel;
-        ctx.emitter = cb.emitter;
-        ctx.sampler = sp;
-        ctx.lambda = spec.lambda;
-        ctx.ray_differential = s.ray_differential;
-        ctx.default_differential = s.default_differential;
-        ctx.render_to_camera = cb.ct;
-        ctx.pixel = pixel;
-        ctx.sample_index = cb.sample_index;
-        ctx.max_depth = film.depth;
+        var r: monte_carlo::Ray;
+        r.accel = cb.accel;
+        r.emitter = cb.emitter;
+        r.sampler = sp;
+        r.lambda = spec.lambda;
+        r.ray_differential = s.ray_differential;
+        r.default_differential = s.default_differential;
+        r.render_to_camera = cb.ct;
+        r.pixel = pixel;
+        r.size = size;
+        r.sample_index = cb.sample_index;
+        r.max_depth = film.depth;
 
         let intg = tag<Restir_Integrator>(cb.integrator).get();
         var p: Restir_Integrator.Path;
-        p.Li = spectra::Stochastic_Spectrum(spec.lambda, fv4(0.f));
         p.pixel = (u32(pixel.x) & 0xffffu) | (u32(pixel.y) << 16);
-        let p_opt = intg.sample(ctx);
+        let p_opt = intg.sample(r);
         if (p_opt != none) p = p_opt.value;
         if (intg.reuse_iterations == 0) {
-            p.Li.value *= p.r.W / s.pdf;
-            let rgb = fixel(film, p.Li);
+            p.Li *= p.mis * p.r.W / s.pdf;
+            let rgb = fixel(film, spectra::Stochastic_Spectrum(spec.lambda, p.Li));
             let value = fv4(rgb * fixel.weight, fixel.weight);
             let sampled = cb.image.Load(pixel) + value;
             cb.image.Store(pixel, sampled);
@@ -495,6 +547,7 @@ namespace mtt {
         let N = f32(intg.spatial_samples);
         let camera: photo::Camera;
 
+        var spec = fv4(0.f);
         var sp: sampler::proxy::Sampler;
         sp.ctx.size = size;
         sp.ctx.idx = cb.sample_index;
@@ -543,57 +596,63 @@ namespace mtt {
             ns.default_differential = cb.ct / ns.default_differential;
 
             sp.ctx.pixel = pz;
-            sp.ctx.dim = 5;
+            sp.ctx.dim = 4;
             sp.start();
-            var rctx: monte_carlo::Context;
-            rctx.accel = cb.accel;
-            rctx.emitter = cb.emitter;
-            rctx.sampler = sp;
-            rctx.lambda = np.Li.lambda;
-            rctx.ray_differential = s.ray_differential;
-            rctx.default_differential = s.default_differential;
-            rctx.render_to_camera = cb.ct;
-            rctx.pixel = pixel;
-            rctx.sample_index = cb.sample_index;
-            rctx.max_depth = film.depth;
-            let c_opt = intg.replay(rctx, np, u[1]);
+            spec = spectra::Stochastic_Spectrum(sp.generate_1d()).lambda;
+            var r: monte_carlo::Ray;
+            r.accel = cb.accel;
+            r.emitter = cb.emitter;
+            r.sampler = sp;
+            r.lambda = spec;
+            r.ray_differential = s.ray_differential;
+            r.default_differential = s.default_differential;
+            r.render_to_camera = cb.ct;
+            r.pixel = pixel;
+            r.size = size;
+            r.sample_index = cb.sample_index;
+            r.max_depth = film.depth;
+            let c_opt = intg.replay(r, np, u[1]);
             if (c_opt == none) continue;
-            var c = c_opt.value;
+            var c = c_opt.value.path;
+            let cJ = c_opt.value.J;
 
             sp.ctx.pixel = pw;
-            sp.ctx.dim = 5;
+            sp.ctx.dim = 4;
             sp.start();
-            var nrctx: monte_carlo::Context;
-            nrctx.accel = cb.accel;
-            nrctx.emitter = cb.emitter;
-            nrctx.sampler = sp;
-            nrctx.lambda = p.Li.lambda;
-            nrctx.ray_differential = ns.ray_differential;
-            nrctx.default_differential = ns.default_differential;
-            nrctx.render_to_camera = cb.ct;
-            nrctx.pixel = py;
-            nrctx.sample_index = cb.sample_index;
-            nrctx.max_depth = film.depth;
-            let d_opt = intg.replay(nrctx, p, u[2]);
+            spec = spectra::Stochastic_Spectrum(sp.generate_1d()).lambda;
+            var nr: monte_carlo::Ray;
+            nr.accel = cb.accel;
+            nr.emitter = cb.emitter;
+            nr.sampler = sp;
+            nr.lambda = spec;
+            nr.ray_differential = ns.ray_differential;
+            nr.default_differential = ns.default_differential;
+            nr.render_to_camera = cb.ct;
+            nr.pixel = py;
+            nr.size = size;
+            nr.sample_index = cb.sample_index;
+            nr.max_depth = film.depth;
+            let d_opt = intg.replay(nr, p, u[2]);
             if (d_opt == none) continue;
-            var d = d_opt.value;
+            var d = d_opt.value.path;
+            let dJ = d_opt.value.J;
 
             if (false
-            || !isfinite(c.J) || !isfinite(d.J)
+            || !isfinite(cJ) || !isfinite(dJ)
             || !isfinite(d.r.p_hat)
-            || !all(isfinite(c.Li.value))) continue;
+            || !all(isfinite(c.Li))) continue;
 
             valid += 1;
             let Mi = np.r.M;
             let Mc = p.r.M;
-            let pni_hat = math::guarded_div(np.r.p_hat, c.J);
+            let pni_hat = math::guarded_div(np.r.p_hat, cJ);
             let pnc_hat = c.r.p_hat;
             let mi = math::guarded_div(Mi * pni_hat, Mi * pni_hat + Mc / N * pnc_hat);
-            let pci_hat = d.r.p_hat * d.J;
+            let pci_hat = d.r.p_hat * dJ;
             let pcc_hat = p.r.p_hat;
             canonical += math::guarded_div(Mc / N * pcc_hat, Mi * pci_hat + Mc / N * pcc_hat);
 
-            c.r.shift(c.J, mi);
+            c.r.shift(cJ, mi);
             dst.merge(c, u[3]);
         }
 
@@ -608,8 +667,13 @@ namespace mtt {
         if (iter < intg.reuse_iterations - 1) {
             intg.pathes[(iter + 1) & 1][pi] = dst;
         } else {
-            dst.Li.value *= dst.r.W / s.pdf;
-            let rgb = fixel(film, dst.Li);
+            let dz = uv2(u32(dst.pixel) & half_mask, u32(dst.pixel) >> half_bits);
+            sp.ctx.pixel = dz;
+            sp.ctx.dim = 4;
+            sp.start();
+            var Li = spectra::Stochastic_Spectrum(sp.generate_1d());
+            Li.value = dst.Li * dst.mis * dst.r.W / s.pdf;
+            let rgb = fixel(film, Li);
             let value = fv4(rgb * fixel.weight, fixel.weight);
             let sampled = cb.image.Load(pixel) + value;
             cb.image.Store(pixel, sampled);
