@@ -19,8 +19,6 @@ namespace mtt::renderer {
         auto spp = ctx.film->spp;
         auto size = uzv2{ctx.film->image.size};
         auto intg = monte_carlo::Integrator::entity("/integrator");
-        intg.upload(ctx);
-        intg.acquire(ctx, {});
 
         auto& film = ctx.film->image;
         auto image = muldim::Image{.size = film.size, .linear = film.linear};

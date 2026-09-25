@@ -5,14 +5,11 @@
   cmake,
   cpptrace,
   glaze,
-  heitz,
   lib,
   metal-cpp,
   ninja,
   openimageio,
   openvdb,
-  shader-slang,
-  spirv-cross,
   vulkan-loader,
   vulkan-headers,
   vulkan-tools,
@@ -23,7 +20,7 @@ let
 in
 stdenv.mkDerivation {
   pname = "metatron";
-  version = "0.2.2";
+  version = "0.3.0";
 
   src = ../.;
   # src = fetchFromGitHub {
@@ -36,8 +33,6 @@ stdenv.mkDerivation {
   nativeBuildInputs = [
     cmake
     ninja
-    shader-slang
-    spirv-cross
   ];
 
   buildInputs = [
@@ -48,17 +43,16 @@ stdenv.mkDerivation {
       enableSSL = false;
       enableInterop = false;
     })
-    heitz
     openimageio
     openvdb
     zlib
   ]
-  ++ (lib.optionals stdenv.isLinux [
+  ++ (lib.optionals stdenv.hostPlatform.isLinux [
     vulkan-loader
     vulkan-headers
     vulkan-tools
   ])
-  ++ (lib.optionals stdenv.isDarwin [
+  ++ (lib.optionals stdenv.hostPlatform.isDarwin [
     metal-cpp
   ]);
 

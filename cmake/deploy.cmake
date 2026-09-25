@@ -89,11 +89,6 @@ function(release)
         DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/share/
         DESTINATION share
     )
-    install(
-        DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/shader/
-        DESTINATION share/metatron/shader
-        PATTERN "cache.json" EXCLUDE
-    )
 endfunction()
 
 function(deploy)

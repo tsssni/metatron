@@ -2,15 +2,13 @@
 #include <metatron/render/sampler/independent.hpp>
 #include <metatron/render/sampler/halton.hpp>
 #include <metatron/render/sampler/z-sobol.hpp>
-#include <metatron/render/sampler/heitz.hpp>
 #include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::sampler {
     struct Sampler final: stl::polynomial<Sampler
     , Independent_Sampler
     , Halton_Sampler
-    , Z_Sobol_Sampler
-    , Heitz_Sampler> {
+    , Z_Sobol_Sampler> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 

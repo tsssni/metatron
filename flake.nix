@@ -38,7 +38,7 @@
         let
           pkgs = import nixpkgs {
             inherit system;
-            overlays = tsssni.pkgs;
+            overlays = [ tsssni.overlays.default ];
           };
         in
         {
@@ -51,7 +51,7 @@
         let
           pkgs = import nixpkgs {
             inherit system;
-            overlays = tsssni.pkgs;
+            overlays = [ tsssni.overlays.default ];
             config.allowUnfree = true;
           };
           glpkgs = import nixgl { inherit pkgs; };
@@ -59,20 +59,23 @@
         rec {
           default = pkgs.mkShell.override { stdenv = pkgs.clangStdenv; } {
             inputsFrom = [ packages.${system}.default ];
-            packages = with pkgs; [
-              clang-tools
-              cmake-language-server
-            ] ++ lib.optionals pkgs.stdenv.isLinux [
-              hotspot
-              perf
-            ];
+            packages =
+              with pkgs;
+              [
+                clang-tools
+                cmake-language-server
+              ]
+              ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+                hotspot
+                perf
+              ];
             shellHook = ''
               export CMAKE_INSTALL_PREFIX=$HOME/metatron/out
             ''
-            + lib.optionalString pkgs.stdenv.isLinux ''
+            + lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
               export VK_LAYER_PATH=${pkgs.vulkan-validation-layers}/share/vulkan/explicit_layer.d
             ''
-            + lib.optionalString pkgs.stdenv.isDarwin ''
+            + lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
               export MTL_DEBUG_LAYER=1
             '';
           };

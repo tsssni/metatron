@@ -18,12 +18,6 @@ auto main(i32 argc, mut<char> argv[]) -> i32 {
     .default_value(std::string{"./result.exr"})
     .nargs(1).metavar("PATH");
 
-    argparser.add_argument("-d", "--device")
-    .help("device to run renderer")
-    .choices("cpu", "gpu")
-    .default_value(std::string{"cpu"})
-    .nargs(1).metavar("{cpu, gpu}");
-
     argparser.add_argument("-a", "--address")
     .help("address to tev server")
     .default_value(std::string{""})
@@ -40,7 +34,6 @@ auto main(i32 argc, mut<char> argv[]) -> i32 {
     args.scene = argparser.get<std::string>("-s");
     args.output = argparser.get<std::string>("-o");
     args.address = argparser.get<std::string>("-a");
-    args.device = argparser.get<std::string>("-d");
     scene::run();
 
     return 0;

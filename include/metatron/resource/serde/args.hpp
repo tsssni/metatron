@@ -7,6 +7,5 @@ namespace mtt::scene {
         std::string scene;
         std::string output;
         std::string address;
-        std::string device;
     };
 }

@@ -1,34 +1,8 @@
 #include <metatron/render/monte-carlo/radiative.hpp>
 #include <metatron/core/stl/thread.hpp>
-#include <metatron/device/encoder/argument.hpp>
-#include <metatron/device/encoder/transfer.hpp>
-#include <metatron/device/encoder/pipeline.hpp>
 
 namespace mtt::monte_carlo {
     Radiative_Integrator::Radiative_Integrator(cref<Descriptor>) noexcept {}
-
-    auto Radiative_Integrator::upload(ref<Context> ctx) noexcept -> void {}
-
-    auto Radiative_Integrator::acquire(ref<Context> ctx, cref<Resources> res) noexcept -> void {
-        if (!ctx.image) return;
-        constants = make_obj<Constants>(Constants{
-            ctx.accel, ctx.emitter, ctx.sampler, ctx.filter, ctx.lens, ctx.film,
-            *math::proxy::Transform::entity("/hierarchy/camera/render"),
-            ctx.seed, ctx.sample_index,
-            ctx.integrator, *ctx.image
-        });
-        arguments = make_desc<shader::Argument>({"metatron/render/monte-carlo/radiative.constants"});
-        integrate = make_desc<shader::Pipeline>({"metatron/render/monte-carlo/radiative.trace",
-        {arguments.get(), res.resources.get(), res.textures.get(), res.grids.get()}});
-        auto args = encoder::Argument_Encoder{ctx.render, arguments.get()};
-        args.push(*constants);
-        args.submit();
-    }
-
-    auto Radiative_Integrator::release() noexcept -> void {
-        integrate.reset();
-        arguments.reset();
-    }
 
     auto Radiative_Integrator::trace(ref<Context> ctx) const noexcept -> void {
         auto ct = *math::proxy::Transform::entity("/hierarchy/camera/render");
@@ -63,24 +37,6 @@ namespace mtt::monte_carlo {
             fixel = Li;
         };
         stl::scheduler::sync_parallel(uzv2{size}, trace);
-    }
-
-    auto Radiative_Integrator::wave(ref<Context> ctx) const noexcept -> void {
-        constants->sample_index = ctx.sample_index;
-        auto args = encoder::Argument_Encoder{ctx.render, arguments.get()};
-        args.push(*constants, &Constants::sample_index);
-        args.submit();
-
-        auto liberate = encoder::Transfer_Encoder{ctx.render};
-        liberate.liberate(*ctx.image);
-        liberate.submit();
-
-        auto threads = uv3{ctx.image->width, ctx.image->height, 1};
-        auto group = uv3{8, 8, 1};
-        auto pipeline = encoder::Pipeline_Encoder{ctx.render, integrate.get()};
-        pipeline.bind();
-        pipeline.dispatch(threads, group);
-        pipeline.submit();
     }
 
     auto Radiative_Integrator::sample(ref<Ray> r) const noexcept -> opt<spectra::Stochastic_Spectrum> {

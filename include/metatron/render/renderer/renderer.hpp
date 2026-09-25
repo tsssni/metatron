@@ -4,6 +4,5 @@
 namespace mtt::renderer {
     struct Renderer final {
         auto trace() noexcept -> void;
-        auto wave() noexcept -> void;
     };
 }

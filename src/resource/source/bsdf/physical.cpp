@@ -201,7 +201,6 @@ namespace mtt::bsdf {
                 eta, alpha_u, alpha_v
             ), {});
             R.pdf *= plastic ? Fo[0] : 1.f;
-            R.connectable = alpha_u >= reconnection_alpha && alpha_v >= reconnection_alpha;
             return R;
         } else {
             auto distr = math::Cosine_Hemisphere_Distribution{};

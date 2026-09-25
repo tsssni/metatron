@@ -149,6 +149,6 @@ namespace mtt::scene {
         auto renderer = obj<renderer::Renderer>();
         Hierarchy::populate(args.scene);
         stl::print("initialization: {:.3}s", timer.t<f64, stl::seconds>());
-        args.device == "gpu" ? renderer->wave() : renderer->trace();
+        renderer->trace();
     }
 }

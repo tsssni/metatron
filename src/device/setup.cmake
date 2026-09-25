@@ -1,4 +1,3 @@
-list(APPEND deps slang spirv-cross)
 if(${system} STREQUAL "linux")
     list(APPEND deps vulkan)
     list(APPEND features vulkan)

@@ -35,11 +35,8 @@ Metatron is a physically based renderer unbiasedly simulating radiative transfer
   * Area light for shapes with emissive material. Spherical triangle sampling via [A95](https://www.graphics.cornell.edu/pubs/1995/Arv95c.pdf).
   * Atomosphere with alien world support via [HW12](https://cgg.mff.cuni.cz/projects/SkylightModelling/HosekWilkie_SkylightModel_SIGGRAPH2012_Preprint_lowres.pdf) and [HW13](https://cgg.mff.cuni.cz/publications/adding-a-solar-radiance-function-to-the-hosek-wilkie-skylight-model/). TGMM sky sampling via [VV21](https://diglib.eg.org/items/b3f1efca-1d13-44d0-ad60-741c4abe3d21).
 * Sampler
-  * Heitz sampler for fast convergence via [HB19](https://eheitzresearch.wordpress.com/762-2/)
   * Z Sobol sampler for visual quality via [AW20](https://repository.kaust.edu.sa/items/1269ae24-2596-400b-a839-e54486033a93)
 * Integrator
-  * Unbiased ReSTIR PT with pairwise MIS via [LK22](https://graphics.cs.utah.edu/research/projects/gris/)
-  * Metal/Vulkan acceleration thanks to hardware ray tracing and [slang](https://github.com/shader-slang/slang).
   * Remote preview of rendering intermediates via [tev](https://github.com/Tom94/tev)
 
 ## Build
@@ -95,5 +92,5 @@ target_link_libraries(renderer PUBLIC metatron)
 Run `metatron-tracer -h` for option documents.
 
 ```nu
-metatron-tracer -s ~/metatron-scenes/classroom/ -o classroom.exr -a localhost:14158 -d gpu
+metatron-tracer -s ~/metatron-scenes/classroom/ -o classroom.exr -a localhost:14158
 ```
