@@ -56,4 +56,31 @@ namespace mtt::texture {
 
         return muldim::Coordinate{intr.uv, duvdx[0], duvdy[0], duvdx[1], duvdy[1]};
     }
+
+    auto propagate(
+        cref<math::Ray_Differential> diff,
+        cref<shape::Interaction> intr,
+        cref<muldim::Coordinate> coord,
+        cref<fv3> wi, cref<fv4> eta
+    ) noexcept -> math::Ray_Differential {
+        auto wo = -math::normalize(diff.r.d);
+        auto reflective = math::dot(wo, intr.n) * math::dot(wi, intr.n) > 0.f;
+        auto n = math::normalize(reflective ? wo + wi : wo + eta[0] * wi);
+        n = math::dot(n, wo) < 0.f ? -n : n;
+
+        auto p = intr.p;
+        auto dpdx = intr.dpdu * coord.dudx + intr.dpdv * coord.dvdx;
+        auto dpdy = intr.dpdu * coord.dudy + intr.dpdv * coord.dvdy;
+        auto dndx = intr.dndu * coord.dudx + intr.dndv * coord.dvdx;
+        auto dndy = intr.dndu * coord.dudy + intr.dndv * coord.dvdy;
+
+        auto derive = [&](cref<math::Ray> r, cref<fv3> dpdx, cref<fv3> dndx) -> math::Ray {
+            auto d = math::normalize(r.d);
+            auto m = math::normalize(n + dndx);
+            auto wx = reflective ? math::reflect(d, m) : math::refract(d, m, eta[0]);
+            return {p + dpdx, math::normalize(wx)};
+        };
+
+        return {{p, wi}, derive(diff.rx, dpdx, dndx), derive(diff.ry, dpdy, dndy)};
+    }
 }

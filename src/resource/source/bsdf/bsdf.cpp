@@ -123,7 +123,7 @@ namespace mtt::bsdf {
         }
 
         if (pdf < math::epsilon<f32>) return {};
-        return Interaction{f, wi, pdf};
+        return Interaction{f, eta, wi, pdf};
     }
 
 }

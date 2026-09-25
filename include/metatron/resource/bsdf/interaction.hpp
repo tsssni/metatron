@@ -4,6 +4,7 @@
 namespace mtt::bsdf {
     struct Interaction final {
         fv4 f;
+        fv4 eta;
         fv3 wi;
         f32 pdf;
         bool degraded = false;

@@ -24,11 +24,6 @@ namespace mtt::monte_carlo {
         sampler::proxy::Sampler sampler;
         fv4 lambda;
         math::Ray_Differential ray_differential;
-        math::Ray_Differential default_differential;
-        math::Transform render_to_camera;
-        uv2 pixel;
-        uv2 size;
-        u32 sample_index;
-        u32 max_depth;
+        u32 max_bounce;
     };
 }

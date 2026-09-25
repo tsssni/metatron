@@ -6,7 +6,6 @@
 namespace mtt::photo {
     struct Interaction final {
         math::Ray_Differential ray_differential;
-        math::Ray_Differential default_differential;
         f32 pdf;
     };
 

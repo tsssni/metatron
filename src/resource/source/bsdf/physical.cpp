@@ -88,12 +88,13 @@ namespace mtt::bsdf {
 
         if (lambertian) return Interaction{
             .f = lambert(reflectance),
+            .eta = eta,
             .wi = wi,
             .pdf = math::Cosine_Hemisphere_Distribution{}.pdf(math::unit_to_cos_theta(wi)),
         };
 
         auto replay = u != -1;
-        auto R = Interaction{.f = fv4{0}, .wi = wi, .pdf = 0};
+        auto R = Interaction{.f = fv4{0}, .eta = eta, .wi = wi, .pdf = 0};
         auto Fo = !plastic ? fv4{1.f} :
         fresnel(math::unit_to_cos_theta(-wo), eta, k);
 
@@ -158,7 +159,7 @@ namespace mtt::bsdf {
 
             auto pdf = (reflective ? pr : pt) / (pr + pt);
             auto f = (reflective ? Fo : (1.f - Fo) / math::pow<2>(eta[0])) / math::abs(cos_theta_i);
-            return Interaction{f, wi, pdf};
+            return Interaction{f, eta, wi, pdf};
         } else if (dieletric || conductive || (plastic && u[0] < Fo[0])) {
             if (math::abs(wo[1]) < math::epsilon<f32>) return {};
 
@@ -210,14 +211,14 @@ namespace mtt::bsdf {
 
             if (lambertian) {
                 auto f = lambert(reflectance);
-                return Interaction{f, wi, pdf, true};
+                return Interaction{f, eta, wi, pdf, true};
             } else {
                 auto Fi = fresnel(math::unit_to_cos_theta(wi), eta, k);
                 auto f = 1.f
                 * (1.f - Fi) * (1.f - Fo) / (math::pi * math::pow<2>(eta))
                 * (reflectance / (1.f - reflectance * fresnel_reflectance));
                 pdf *= (1.f - Fo[0]);
-                return Interaction{f, wi, pdf, true};
+                return Interaction{f, eta, wi, pdf, true};
             }
         }
     }

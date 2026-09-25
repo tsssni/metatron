@@ -11,6 +11,5 @@ namespace mtt::math {
         Ray r;
         Ray rx;
         Ray ry;
-        bool differentiable;
     };
 }

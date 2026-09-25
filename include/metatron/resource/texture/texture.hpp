@@ -44,4 +44,11 @@ namespace mtt::texture {
         cref<math::Ray_Differential> diff,
         cref<shape::Interaction> intr
     ) noexcept -> opt<muldim::Coordinate>;
+
+    auto propagate(
+        cref<math::Ray_Differential> diff,
+        cref<shape::Interaction> intr,
+        cref<muldim::Coordinate> coord,
+        cref<fv3> wi, cref<fv4> eta
+    ) noexcept -> math::Ray_Differential;
 }
