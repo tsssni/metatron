@@ -4,7 +4,7 @@ namespace mtt::material {
     auto Physical_Material::sample(
         cref<math::Context> ctx,
         cref<muldim::Coordinate> coord
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         auto guarded_sample = [&]<typename T>(T tex, auto const& fallback) {
             if (!tex) return fallback;
             if constexpr (std::same_as<T, texture::Spectrum_Texture>)
@@ -36,7 +36,7 @@ namespace mtt::material {
             emission = fv4{emission[0]};
         }
 
-        return Interaction{
+        return {
             .bsdf = bsdf::Bsdf{bsdf::Physical_Bsdf{
                 reflectance,
                 (ctx.inside && eta != fv4{0.f}) ? 1.f / eta : eta,

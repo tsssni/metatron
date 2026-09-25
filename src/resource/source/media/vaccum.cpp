@@ -1,8 +1,8 @@
 #include <metatron/resource/media/vaccum.hpp>
 
 namespace mtt::media {
-    auto Vaccum_Medium::Iterator::march(f32 u) noexcept -> opt<Interaction> {
-        return Interaction{
+    auto Vaccum_Medium::Iterator::march(f32 u) noexcept -> Interaction {
+        return {
             {}, r.o + t_max * r.d,
             t_max, fv4{1.f},
             {}, {}, {}, {}, {},
@@ -14,6 +14,6 @@ namespace mtt::media {
     auto Vaccum_Medium::begin(
         cref<math::Context> ctx, f32 t_max
     ) const noexcept -> Iterator {
-        return Iterator{ctx.r, t_max};
+        return {ctx.r, t_max};
     }
 }

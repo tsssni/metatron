@@ -9,7 +9,7 @@ namespace mtt::accel {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 
-        auto operator()(cref<math::Ray> r, cref<fv3> n) const noexcept -> opt<Interaction> {
+        auto operator()(cref<math::Ray> r, cref<fv3> n) const noexcept -> Interaction {
             return visit([&](auto* p) noexcept { return (*p)(r, n); });
         }
     };

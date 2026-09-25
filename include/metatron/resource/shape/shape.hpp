@@ -18,13 +18,13 @@ namespace mtt::shape {
         auto operator()(
             cref<math::Ray> r, cref<fv3> np,
             cref<fv4> pos, usize idx
-        ) const noexcept -> opt<Interaction> {
+        ) const noexcept -> Interaction {
             return visit([&, idx](auto* p) noexcept { return (*p)(r, np, pos, idx); });
         }
-        auto sample(cref<math::Context> ctx, cref<fv2> u, usize idx) const noexcept -> opt<Interaction> {
+        auto sample(cref<math::Context> ctx, cref<fv2> u, usize idx) const noexcept -> Interaction {
             return visit([&, idx](auto* p) noexcept { return p->sample(ctx, u, idx); });
         }
-        auto query(cref<math::Ray> r, usize idx) const noexcept -> opt<fv4> {
+        auto query(cref<math::Ray> r, usize idx) const noexcept -> fv4 {
             return visit([&, idx](auto* p) noexcept { return p->query(r, idx); });
         }
     };

@@ -9,8 +9,8 @@ namespace mtt::light {
             Spot_Light,
             Area_Light,
             Environment_Light,
-            Atomosphere_Light
+            Atmosphere_Light
         );
-        Atomosphere_Light::init();
+        Atmosphere_Light::init();
     }
 }

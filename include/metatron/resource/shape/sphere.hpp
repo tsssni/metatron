@@ -14,13 +14,13 @@ namespace mtt::shape {
         auto operator()(
             cref<math::Ray> r, cref<fv3> np,
             cref<fv4> pos, usize idx = 0uz
-        ) const noexcept -> opt<Interaction>;
+        ) const noexcept -> Interaction;
         auto sample(
             cref<math::Context> ctx, cref<fv2> u, usize idx = 0uz
-        ) const noexcept -> opt<Interaction>;
+        ) const noexcept -> Interaction;
         auto query(
             cref<math::Ray> r, usize idx = 0uz
-        ) const noexcept -> opt<fv4>;
+        ) const noexcept -> fv4;
 
     private:
         u32 padding = 0u;

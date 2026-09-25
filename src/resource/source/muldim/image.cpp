@@ -66,7 +66,7 @@ namespace mtt::muldim {
         auto width = (pixels.size() == 1 || pixels[0].size() == pixels[1].size())
         ? this->width : (this->width >> lod);
         auto offset = (y * width + x) * channels * stride;
-        return Pixel{this, &pixels[lod][offset]};
+        return {this, &pixels[lod][offset]};
     }
 
     auto Image::operator[](usize x, usize y, usize lod) const noexcept -> Pixel const {

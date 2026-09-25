@@ -25,14 +25,15 @@ namespace mtt::media {
         t_transmitted = 0.f;
 
         if (!medium->majorant.inside(cell)) {
-            auto [t_enter, t_exit] = math::hit(r, 1.f / r.d, medium->majorant.bounding_box()).value_or(fv2{0.f});
+            auto [t_enter, t_exit] = math::hit(r, 1.f / r.d, medium->majorant.bounding_box());
+            if (t_exit < -math::epsilon<f32> || t_enter > t_exit + math::epsilon<f32>) t_enter = 0.f;
             r.o = r.o + t_enter * r.d;
             cell = math::clamp<i32, 3>(medium->majorant.to_index(r.o), iv3{0}, medium->majorant.dimensions() - 1);
         }
         update_majorant(t_max);
     }
 
-    auto Heterogeneous_Medium::Iterator::march(f32 uu) noexcept -> opt<Interaction> {
+    auto Heterogeneous_Medium::Iterator::march(f32 uu) noexcept -> Interaction {
         transmittance = {1.f};
         t_transmitted = 0.f;
         u = uu;
@@ -43,7 +44,7 @@ namespace mtt::media {
             auto thin = sigma_maj[0] < math::epsilon<f32>;
             if (t_boundary <= t_cell && (thin || t_u >= t_boundary)) {
                 update_transmittance(t_boundary);
-                return Interaction{
+                return {
                     medium->phase.to_phase(),
                     r.o,
                     t_max,
@@ -56,7 +57,7 @@ namespace mtt::media {
             } else {
                 update_transmittance(t_u);
                 auto density = std::as_const(medium->density)(r.o);
-                return Interaction{
+                return {
                     medium->phase.to_phase(),
                     r.o,
                     t_transmitted,
@@ -80,8 +81,11 @@ namespace mtt::media {
         }
 
         auto bbox = medium->majorant.bounding_box(cell + offset);
-        auto [t_enter, t_next, i_enter, i_next] = math::hitvi(r, bbox)
-        .value_or(std::make_tuple(t_boundary, t_boundary, 0uz, 0uz));
+        auto [t_enter, t_next, i_enter, i_next] = math::hitvi(r, bbox);
+        if (t_next < -math::epsilon<f32> || t_enter > t_next + math::epsilon<f32>) {
+            t_next = t_boundary;
+            i_next = 0uz;
+        }
 
         t_cell = t_next;
         cell += offset;
@@ -133,6 +137,6 @@ namespace mtt::media {
     }
 
     auto Heterogeneous_Medium::begin(cref<math::Context> ctx, f32 t_max) const noexcept -> Iterator {
-        return Iterator{*this, ctx, t_max};
+        return {*this, ctx, t_max};
     }
 }

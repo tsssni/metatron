@@ -3,16 +3,16 @@
 namespace mtt::light {
     auto Point_Light::operator()(
         cref<math::Ray> r, cref<fv4> lambda
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         return {};
     }
 
     auto Point_Light::sample(
         cref<math::Context> ctx, cref<fv2> u
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         auto wi = math::normalize(-ctx.r.o);
         auto r = math::length(ctx.r.o);
-        return Interaction{
+        return {
             .L = (ctx.lambda & L) / (r * r),
             .wi = wi,
             .p = {0.f},

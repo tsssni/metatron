@@ -18,7 +18,7 @@ namespace mtt::media {
     auto Phase::to_phase() const noexcept -> phase::Phase_Function {
         switch (function) {
         case Phase::Function::henyey_greenstein:
-            return phase::Phase_Function{phase::Henyey_Greenstein_Phase_Function{g}};
+            return {phase::Henyey_Greenstein_Phase_Function{g}};
         default: return {};
         };
     }

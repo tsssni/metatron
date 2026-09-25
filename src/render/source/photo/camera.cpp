@@ -6,7 +6,7 @@ namespace mtt::photo {
         cref<fv2> pos,
         cref<fv2> dxdy,
         cref<fv2> u
-    ) noexcept -> opt<Interaction> {
+    ) noexcept -> Interaction {
         auto intr = Interaction{};
 
         {
@@ -15,9 +15,9 @@ namespace mtt::photo {
             auto rx_pos = r_pos + fv2{dxdy[0], 0.f};
             auto ry_pos = r_pos + fv2{0.f, dxdy[1]};
 
-            MTT_OPT_OR_RETURN(r_intr, lens.sample(r_pos, u), {});
-            MTT_OPT_OR_RETURN(rx_intr, lens.sample(rx_pos, u), {});
-            MTT_OPT_OR_RETURN(ry_intr, lens.sample(ry_pos, u), {});
+            auto r_intr = lens.sample(r_pos, u);
+            auto rx_intr = lens.sample(rx_pos, u);
+            auto ry_intr = lens.sample(ry_pos, u);
 
             ray.r = r_intr.r;
             ray.rx = rx_intr.r;

@@ -14,10 +14,10 @@ namespace mtt::emitter {
 
         auto sample(
             cref<math::Context> ctx, f32 u
-        ) const noexcept -> opt<Interaction>;
+        ) const noexcept -> Interaction;
         auto sample_infinite(
             cref<math::Context> ctx, f32 u
-        ) const noexcept -> opt<Interaction>;
+        ) const noexcept -> Interaction;
 
     private:
         buf<Primitive> prims;

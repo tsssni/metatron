@@ -13,7 +13,7 @@ namespace mtt::math {
             auto half_angle = angle * T(0.5);
             auto sin_half = std::sin(half_angle);
             auto cos_half = std::cos(half_angle);
-            return Quaternion{
+            return {
                 axis[0] * sin_half,
                 axis[1] * sin_half,
                 axis[2] * sin_half,
@@ -45,7 +45,7 @@ namespace mtt::math {
             // Hamilton
             auto [x, y, z, w] = data;
             auto [rx, ry, rz, rw] = rhs.data;
-            return Quaternion{
+            return {
                 w * rx + x * rw + y * rz - z * ry,
                 w * ry + y * rw + z * rx - x * rz,
                 w * rz + z * rw + x * ry - y * rx,

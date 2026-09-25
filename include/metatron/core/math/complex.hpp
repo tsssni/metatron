@@ -164,7 +164,7 @@ namespace mtt::math {
             if constexpr (d == 1) return x;
             else if constexpr (d == 2) return sqrt(x);
         }();
-        if constexpr (n == 0) return Complex<T>{T(1), T(0)};
+        if constexpr (n == 0) return {T(1), T(0)};
         else if constexpr (n == 1) return y;
         else if constexpr (n % 2 == 0) { auto z = pow<n/2>(y); return z * z; }
         else { auto z = pow<n/2>(y); return z * z * y; }

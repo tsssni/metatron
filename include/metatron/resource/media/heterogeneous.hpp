@@ -23,7 +23,7 @@ namespace mtt::media {
                 cref<math::Context> ctx,
                 f32 t
             ) noexcept;
-            auto march(f32 uu) noexcept -> opt<Interaction>;
+            auto march(f32 uu) noexcept -> Interaction;
 
         private:
             auto update_majorant(f32 t) noexcept -> void;

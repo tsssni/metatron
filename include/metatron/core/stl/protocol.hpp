@@ -17,7 +17,7 @@ namespace mtt::stl {
         polynomial(tag<Ts...> idx) noexcept: idx(idx) {}
 
         auto static entity(std::string_view path) noexcept -> Self {
-            return Self{vs::entity(path)};
+            return {vs::entity(path)};
         }
 
         auto path() const noexcept -> std::string_view {
@@ -31,20 +31,20 @@ namespace mtt::stl {
 
         template<typename T>
         auto static push(std::string_view path, rref<T> x) noexcept -> Self {
-            return Self{vs::template push<T>(path, std::move(x))};
+            return {vs::template push<T>(path, std::move(x))};
         }
         template<typename T>
         auto static push(std::string_view path, cref<T> x) noexcept -> Self {
-            return Self{vs::template push<T>(path, x)};
+            return {vs::template push<T>(path, x)};
         }
 
         template<typename T>
         auto static push_back(rref<T> x) noexcept -> Self {
-            return Self{vs::template push_back<T>(std::move(x))};
+            return {vs::template push_back<T>(std::move(x))};
         }
         template<typename T>
         auto static push_back(cref<T> x) noexcept -> Self {
-            return Self{vs::template push_back<T>(x)};
+            return {vs::template push_back<T>(x)};
         }
 
         template<typename T>
@@ -185,7 +185,7 @@ namespace mtt::stl {
         }
 
         auto static entity(std::string_view path) noexcept -> P {
-            return P{vs::entity(path)};
+            return {vs::entity(path)};
         }
     };
 }

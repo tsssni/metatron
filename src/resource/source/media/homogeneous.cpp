@@ -2,7 +2,7 @@
 #include <metatron/core/math/distribution/exponential.hpp>
 
 namespace mtt::media {
-    auto Homogeneous_Medium::Iterator::march(f32 u) noexcept -> opt<Interaction> {
+    auto Homogeneous_Medium::Iterator::march(f32 u) noexcept -> Interaction {
         auto sigma_a = (lambda & medium->sigma_a);
         auto sigma_s = (lambda & medium->sigma_s);
         auto sigma_t = sigma_a + sigma_s;
@@ -16,7 +16,7 @@ namespace mtt::media {
         auto sigma_e = (lambda & medium->sigma_e);
         auto transmittance = math::exp(-sigma_maj * t);
 
-        return Interaction{
+        return {
             medium->phase.to_phase(),
             r.o + r.d * t,
             t,
@@ -30,6 +30,6 @@ namespace mtt::media {
     }
 
     auto Homogeneous_Medium::begin(cref<math::Context> ctx, f32 t_max) const noexcept -> Iterator {
-        return Iterator{this, ctx.r, ctx.lambda, t_max};
+        return {this, ctx.r, ctx.lambda, t_max};
     }
 }

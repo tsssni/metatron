@@ -6,8 +6,8 @@ namespace mtt::material {
     auto Interface_Material::sample(
         cref<math::Context> ctx,
         cref<muldim::Coordinate> coord
-    ) const noexcept -> opt<Interaction> {
-        return Interaction{
+    ) const noexcept -> Interaction {
+        return {
             .bsdf = bsdf::Bsdf{bsdf::Interface_Bsdf{}},
             .emission = fv4{0.f},
             .normal = {0.f, 0.f, 1.f},

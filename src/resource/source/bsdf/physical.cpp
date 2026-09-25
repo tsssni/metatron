@@ -67,7 +67,7 @@ namespace mtt::bsdf {
 
     auto Physical_Bsdf::operator()(
         cref<fv3> wo, cref<fv3> wi, f32 u
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         auto flags = this->flags();
         auto specular = flags & Flags::specular;
         if (false
@@ -86,7 +86,7 @@ namespace mtt::bsdf {
         || math::dot(-wo, wm) < 0.f
         || math::dot((reflective ? 1.f : -1.f) * wi, wm) < 0.f) return {};
 
-        if (lambertian) return Interaction{
+        if (lambertian) return {
             .f = lambert(reflectance),
             .eta = eta,
             .wi = wi,
@@ -121,12 +121,12 @@ namespace mtt::bsdf {
             pt *= bool(flags & Flags::transmissive);
             if (pr == 0.f && pt == 0.f) return {};
 
-            MTT_OPT_OR_RETURN(T, torrance_sparrow(
+            auto T = torrance_sparrow(
                 reflective, pr, pt,
                 F, D, G,
                 wo, wi, wm,
                 eta, alpha_u, alpha_v
-            ), {});
+            );
             R.f += T.f;
             R.pdf += Fo[0] * T.pdf;
         }
@@ -136,7 +136,7 @@ namespace mtt::bsdf {
 
     auto Physical_Bsdf::sample(
         cref<math::Context> ctx, cref<fv3> u
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         auto wo = ctx.r.d;
         auto flags = this->flags();
         auto specular = bool(flags & Flags::specular);
@@ -159,7 +159,7 @@ namespace mtt::bsdf {
 
             auto pdf = (reflective ? pr : pt) / (pr + pt);
             auto f = (reflective ? Fo : (1.f - Fo) / math::pow<2>(eta[0])) / math::abs(cos_theta_i);
-            return Interaction{f, eta, wi, pdf};
+            return {f, eta, wi, pdf};
         } else if (dieletric || conductive || (plastic && u[0] < Fo[0])) {
             if (math::abs(wo[1]) < math::epsilon<f32>) return {};
 
@@ -195,12 +195,12 @@ namespace mtt::bsdf {
             auto G = smith_shadow(wo, wi, alpha_u, alpha_v);
             if (math::abs(wi[1]) < math::epsilon<f32>) return {};
 
-            MTT_OPT_OR_RETURN(R, torrance_sparrow(
+            auto R = torrance_sparrow(
                 reflective, pr, pt,
                 F, D, G,
                 wo, wi, wm,
                 eta, alpha_u, alpha_v
-            ), {});
+            );
             R.pdf *= plastic ? Fo[0] : 1.f;
             return R;
         } else {
@@ -211,14 +211,14 @@ namespace mtt::bsdf {
 
             if (lambertian) {
                 auto f = lambert(reflectance);
-                return Interaction{f, eta, wi, pdf, true};
+                return {f, eta, wi, pdf, true};
             } else {
                 auto Fi = fresnel(math::unit_to_cos_theta(wi), eta, k);
                 auto f = 1.f
                 * (1.f - Fi) * (1.f - Fo) / (math::pi * math::pow<2>(eta))
                 * (reflectance / (1.f - reflectance * fresnel_reflectance));
                 pdf *= (1.f - Fo[0]);
-                return Interaction{f, eta, wi, pdf, true};
+                return {f, eta, wi, pdf, true};
             }
         }
     }

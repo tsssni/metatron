@@ -12,7 +12,7 @@ namespace mtt::material {
         auto sample(
             cref<math::Context> ctx,
             cref<muldim::Coordinate> coord
-        ) const noexcept -> opt<Interaction> {
+        ) const noexcept -> Interaction {
             return visit([&](auto* p) noexcept { return p->sample(ctx, coord); });
         }
         auto flags() const noexcept -> Flags {

@@ -19,7 +19,7 @@ namespace mtt::shape {
     auto Sphere::operator()(
         cref<math::Ray> r, cref<fv3> np,
         cref<fv4> pos, usize idx
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         auto t = pos[3];
         auto p = r.o + t * r.d;
         auto n = p;
@@ -45,12 +45,12 @@ namespace mtt::shape {
         ? math::Sphere_Distribution{}.pdf()
         : math::Cone_Distribution{math::pow<1,2>(1.f - 1.f / math::dot(r.o, r.o))}.pdf();
 
-        return Interaction{p, n, tn, bn, uv, t, pdf, dpdu, dpdv, dndu, dndv};
+        return {p, n, tn, bn, uv, t, pdf, dpdu, dpdv, dndu, dndv};
     }
 
     auto Sphere::sample(
         cref<math::Context> ctx, cref<fv2> u, usize idx
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         auto d = math::length(ctx.r.o);
         auto r = math::Ray{};
         if (d < 1.f) {
@@ -67,23 +67,22 @@ namespace mtt::shape {
             sdir = math::rotate(math::expand(sdir, 0.f), rot);
             r = math::Ray{ctx.r.o, sdir};
         }
-        MTT_OPT_OR_RETURN(pos, query(r), {});
-        return (*this)(r, ctx.n, pos);
+        return (*this)(r, ctx.n, query(r));
     }
 
     auto Sphere::query(
         cref<math::Ray> r, usize idx
-    ) const noexcept -> opt<fv4> {
+    ) const noexcept -> fv4 {
         auto a = math::dot(r.d, r.d);
         auto b = math::dot(r.o, r.d) * 2.f;
         auto c = math::dot(r.o, r.o) - 1.f;
 
         auto delta = b * b - 4.f * a * c;
-        if (delta < 0.f) return {};
+        if (delta < 0.f) return fv4{math::inf<f32>};
 
         auto x0 = (-b - math::pow<1,2>(delta)) / (2.f * a);
         auto x1 = (-b + math::pow<1,2>(delta)) / (2.f * a);
-        if (x1 < 0.f) return {};
+        if (x1 < 0.f) return fv4{math::inf<f32>};
         return fv4{0, 0, 0, x0 < 0.f ? x1 : x0};
     }
 }
