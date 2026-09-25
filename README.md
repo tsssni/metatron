@@ -18,30 +18,28 @@ Metatron is a physically based renderer unbiasedly simulating radiative transfer
 * Spectrum
   * Sampled spectra are used for rendering.
   * RGB compatibility via [J19](https://jo.dreggn.org/home/2019_sigmoid.pdf).
-  * [Real world spectra](https://github.com/tsssni/metatron/tree/master/share/spectra) are used for conductor, dispersion and color space definition.
+  * [Real world spectra](https://github.com/tsssni/metatron/tree/master/share/spectra) are used for conductors, dispersion and color space definitions.
 * Medium
-  * Null-scattering integral for heterogenous medium via [MG19](https://cs.dartmouth.edu/~wjarosz/publications/miller19null.html).
+  * Null-scattering integral for heterogenous media via [MG19](https://cs.dartmouth.edu/~wjarosz/publications/miller19null.html).
   * Phase function evaluation and sampling via [HG41](https://adsabs.harvard.edu/full/1941ApJ....93...70H).
   * [NanoVDB](https://www.openvdb.org/documentation/doxygen/NanoVDB_MainPage.html) is supported for volume data.
 * BSDF
-  * Unified physical BSDF for diffuse, dielectric, conductor and plastic surface via [TS67](https://www.graphics.cornell.edu/~westin/pubs/TorranceSparrowJOSA1967.pdf).
+  * Unified physical BSDF for diffuse, dielectric, conductor and plastic surfaces via [TS67](https://www.graphics.cornell.edu/~westin/pubs/TorranceSparrowJOSA1967.pdf).
   * Microfacet model and importance sampling via [TR75](https://pharr.org/matt/blog/images/average-irregularity-representation-of-a-rough-surface-for-ray-reflection.pdf) and [H18](https://jcgt.org/published/0007/04/01/paper.pdf).
 * Shape
-  * Sphere as convenient bounding volume.
   * Mesh in various formats supported by [assimp](https://github.com/assimp/assimp).
 * Light
-  * Delta light including parallel, point and spot light.
-  * Environment light with image importance sampling.
-  * Area light for shapes with emissive material. Spherical triangle sampling via [A95](https://www.graphics.cornell.edu/pubs/1995/Arv95c.pdf).
-  * Atomosphere with alien world support via [HW12](https://cgg.mff.cuni.cz/projects/SkylightModelling/HosekWilkie_SkylightModel_SIGGRAPH2012_Preprint_lowres.pdf) and [HW13](https://cgg.mff.cuni.cz/publications/adding-a-solar-radiance-function-to-the-hosek-wilkie-skylight-model/). TGMM sky sampling via [VV21](https://diglib.eg.org/items/b3f1efca-1d13-44d0-ad60-741c4abe3d21).
+  * Environment lights with image importance sampling.
+  * Area lights for shapes with emissive material. Spherical triangle sampling via [A95](https://www.graphics.cornell.edu/pubs/1995/Arv95c.pdf).
+  * Atmosphere with alien world support via [HW12](https://cgg.mff.cuni.cz/projects/SkylightModelling/HosekWilkie_SkylightModel_SIGGRAPH2012_Preprint_lowres.pdf) and [HW13](https://cgg.mff.cuni.cz/publications/adding-a-solar-radiance-function-to-the-hosek-wilkie-skylight-model/). TGMM sky sampling via [VV21](https://diglib.eg.org/items/b3f1efca-1d13-44d0-ad60-741c4abe3d21).
 * Sampler
-  * Z Sobol sampler for visual quality via [AW20](https://repository.kaust.edu.sa/items/1269ae24-2596-400b-a839-e54486033a93)
+  * Z Sobol sampler for visual quality via [AW20](https://repository.kaust.edu.sa/items/1269ae24-2596-400b-a839-e54486033a93).
 * Integrator
-  * Remote preview of rendering intermediates via [tev](https://github.com/Tom94/tev)
+  * Remote preview of rendering intermediates via [tev](https://github.com/Tom94/tev).
 
 ## Build
 
-Metatron use [nix](https://nixos.org) with [flakes](https://nix.dev/concepts/flakes.html) for package management on Linux and Darwin.
+Metatron uses [nix](https://nixos.org) with [flakes](https://nix.dev/concepts/flakes.html) for package management on Linux and Darwin.
 
 ```nu
 nix build
@@ -89,8 +87,16 @@ target_link_libraries(renderer PUBLIC metatron)
 
 ## Run
 
-Run `metatron-tracer -h` for option documents.
+Run `metatron-tracer -h` for option documentation.
 
 ```nu
 metatron-tracer -s ~/metatron-scenes/classroom/ -o classroom.exr -a localhost:14158
 ```
+
+## Future
+
+* Metal-friendly RT pipeline with ray generation and callable stages
+* Customized SPIRV-Cross for the Metal RT pipeline
+* LLVM IR to SPIR-V compiler for writing shaders in C++
+* Software implementation of hardware acceleration structures for CPU-GPU consistency
+* Static polymorphism for lower register pressure

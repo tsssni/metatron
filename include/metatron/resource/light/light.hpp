@@ -4,7 +4,7 @@
 #include <metatron/resource/light/spot.hpp>
 #include <metatron/resource/light/area.hpp>
 #include <metatron/resource/light/environment.hpp>
-#include <metatron/resource/light/atomosphere.hpp>
+#include <metatron/resource/light/atmosphere.hpp>
 
 namespace mtt::light {
     struct Light final: stl::polynomial<Light
@@ -13,7 +13,7 @@ namespace mtt::light {
     , Spot_Light
     , Area_Light
     , Environment_Light
-    , Atomosphere_Light> {
+    , Atmosphere_Light> {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 

@@ -245,12 +245,7 @@ namespace mtt::accel {
         return Interaction{
             .divider = prim->instance,
             .primitive = prim->primitive,
-            .intr = prim->instance->shape(
-                prim->instance->local_to_render ^ r,
-                prim->instance->local_to_render ^ n,
-                q,
-                prim->primitive
-            ),
+            .pos = q,
         };
     }
 }
