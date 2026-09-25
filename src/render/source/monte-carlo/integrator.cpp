@@ -9,6 +9,7 @@ namespace mtt::monte_carlo {
         filter = filter::Filter::entity("/filter");
         lens = photo::Lens::entity("/lens");
         film = photo::proxy::Film::entity("/film");
+        camera = math::proxy::Transform::entity("/hierarchy/camera/render");
     }
 
     auto Integrator::init() noexcept -> void {

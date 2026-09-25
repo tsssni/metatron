@@ -11,19 +11,11 @@ namespace mtt::monte_carlo {
         filter::Filter filter;
         photo::Lens lens;
         photo::proxy::Film film;
+        math::proxy::Transform camera;
 
         u32 seed;
         u32 sample_index;
 
         Context() noexcept;
-    };
-
-    struct Ray final {
-        accel::Acceleration accel;
-        emitter::Emitter emitter;
-        sampler::proxy::Sampler sampler;
-        fv4 lambda;
-        math::Ray_Differential ray_differential;
-        u32 max_bounce;
     };
 }

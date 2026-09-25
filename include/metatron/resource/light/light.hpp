@@ -1,16 +1,10 @@
 #pragma once
-#include <metatron/resource/light/parallel.hpp>
-#include <metatron/resource/light/point.hpp>
-#include <metatron/resource/light/spot.hpp>
 #include <metatron/resource/light/area.hpp>
 #include <metatron/resource/light/environment.hpp>
 #include <metatron/resource/light/atmosphere.hpp>
 
 namespace mtt::light {
     struct Light final: stl::polynomial<Light
-    , Parallel_Light
-    , Point_Light
-    , Spot_Light
     , Area_Light
     , Environment_Light
     , Atmosphere_Light> {

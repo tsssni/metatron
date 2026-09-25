@@ -4,9 +4,6 @@
 namespace mtt::light {
     auto Light::init() noexcept -> void {
         MTT_DESERIALIZE(
-            Parallel_Light,
-            Point_Light,
-            Spot_Light,
             Area_Light,
             Environment_Light,
             Atmosphere_Light

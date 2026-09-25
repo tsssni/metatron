@@ -2,381 +2,323 @@
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::monte_carlo {
-    Radiative_Integrator::Radiative_Integrator(cref<Descriptor>) noexcept {}
+    struct Radiative_Integrator::Payload final {
+        accel::Interaction acc;
+        sampler::proxy::Sampler sampler;
+        emitter::Emitter emitter;
 
-    auto Radiative_Integrator::trace(ref<Context> ctx) const noexcept -> void {
-        auto ct = *math::proxy::Transform::entity("/hierarchy/camera/render");
-        auto spp = ctx.film->spp;
-        auto bounce = ctx.film->depth;
-        auto size = uzv2{ctx.film->image.size};
+        math::Context ctx;
+        math::Ray_Differential diff;
 
-        auto trace = [&](auto&& px) {
-            auto sp = sampler::proxy::Sampler{ctx.sampler, {{}, px, size, ctx.sample_index, spp, 0, ctx.seed}};
-            sp.start();
-            auto fixel = ctx.film(ctx.filter, px, sp.generate_pixel_2d());
-            auto s = photo::Camera{}.sample(
-                ctx.lens, fixel.position, fixel.dxdy, sp.generate_2d()
-            );
-            s.ray_differential = ct ^ s.ray_differential;
-            auto spec = spectra::Stochastic_Spectrum{sp.generate_1d()};
+        math::Ray shadow;
+        f32 t{0.f};
+        fv4 gamma{0.f};
+        fv4 mis_d{0.f};
 
-            auto r = Ray{
-                ctx.accel, ctx.emitter,
-                sp, spec.lambda,
-                s.ray_differential,
-                bounce,
-            };
-            auto Li = sample(r);
-            Li.value /= s.pdf;
-            if (!math::isfinite(Li.value))
-                stl::abort("invalid value appears in pixel {} sample {}", px, ctx.sample_index);
-            fixel = Li;
-        };
-        stl::scheduler::sync_parallel(uzv2{size}, trace);
-    }
+        fv4 emission{0.f};
+        fv4 beta{1.f};
+        fv4 mis_s{1.f};
+        fv4 mis_e{0.f};
+        bool scattered{false};
+        bool degraded{false};
+    };
 
-    auto Radiative_Integrator::sample(ref<Ray> r) const noexcept -> spectra::Stochastic_Spectrum {
-        auto emission = fv4{0.f};
-        auto beta = fv4{1.f};
-        auto mis_s = fv4{1.f};
-        auto mis_e = fv4{0.f};
+    auto Radiative_Integrator::hit(ref<Payload> payload) const noexcept -> void {
+        auto& ctx = payload.ctx;
+        auto& div = payload.acc.divider;
+        auto& sp = payload.sampler;
+        payload.gamma = fv4{0.f};
+        payload.scattered = false;
+        payload.degraded = false;
 
-        auto bounce = 0u;
-        auto scattered = false;
-        auto crossed = true;
-        auto specular = false;
+        if (math::isinf(payload.acc.pos[3])) {
+            auto e_intr = payload.emitter.sample_infinite(ctx, sp.generate_1d());
+            if (e_intr.pdf > 0.f) {
+                auto l_ctx = e_intr.local_to_render ^ ctx;
+                auto l_intr = e_intr.light(l_ctx.r, l_ctx.lambda);
+                payload.mis_e *= e_intr.pdf * l_intr.pdf;
+                auto mis_w = math::guarded_div(1.f, math::avg(payload.mis_s + payload.mis_e));
+                payload.emission += payload.beta * mis_w * l_intr.L;
+            }
+            payload.beta = fv4{0.f};
+            return;
+        }
 
-        auto p = 0.f;
-        auto bsdf = bsdf::Bsdf{};
-        auto phase = phase::Phase_Function{};
+        auto lt = div->local_to_render;
+        auto intr = div->shape(lt ^ ctx.r, lt ^ ctx.n, payload.acc.pos, payload.acc.primitive);
+        intr.p = lt | math::expand(intr.p, 1.f);
+        intr.n = math::normalize(lt | intr.n);
+        ctx.inside = math::dot(-ctx.r.d, intr.n) < 0.f;
 
-        auto trace_ctx = math::Context{};
-        trace_ctx.r = r.ray_differential.r;
-        trace_ctx.lambda = r.lambda;
-
-        auto acc = accel::Interaction{};
-        auto medium = media::Medium{};
-        auto medium_to_render = math::proxy::Transform{};
-        auto iter = media::Iterator{};
-        auto& rdiff = r.ray_differential;
-
-        auto direct_lighting = [&](cref<math::Context> ctx, auto&& propagate) {
-            auto direct_ctx = ctx;
-            auto e_intr = r.emitter.sample(direct_ctx, r.sampler.generate_1d());
+        auto nee = [&](cref<math::Context> l_ctx, auto&& eval) {
+            auto e_intr = payload.emitter.sample(l_ctx, sp.generate_1d());
             if (e_intr.pdf == 0.f) return;
+
             auto et = e_intr.local_to_render;
-            auto light = e_intr.light;
-            auto l_ctx = et ^ direct_ctx;
-            auto l_intr = light.sample(l_ctx, r.sampler.generate_2d());
-
-            auto e_pdf = e_intr.pdf;
-            auto l_pdf = l_intr.pdf;
-            auto p_e = e_pdf * l_pdf;
+            auto l_intr = e_intr.light.sample(et ^ l_ctx, sp.generate_2d());
+            auto p_e = e_intr.pdf * l_intr.pdf;
             if (math::abs(p_e) < math::epsilon<f32>) return;
-
             l_intr.p = et | math::expand(l_intr.p, 1.f);
             l_intr.wi = math::normalize(et | math::expand(l_intr.wi, 0.f));
-            direct_ctx.r.d = l_intr.wi;
+            l_intr.pdf = p_e;
 
-            auto q = 0.f;
-            auto g = fv4{0.f};
-            auto eta = fv4{1.f};
-
-            if (ctx.n != fv3{0.f}) {
-                auto flip_n = math::dot(-ctx.r.d, ctx.n) < 0.f ? -1.f : 1.f;
-                auto m = fm44{fq::from_rotation_between(flip_n * ctx.n, {0.f, 1.f, 0.f})};
-                auto wo = math::normalize(m | math::expand(ctx.r.d, 0.f));
-                auto wi = math::normalize(m | math::expand(l_intr.wi, 0.f));
-                auto b_intr = bsdf(wo, wi);
-                g = b_intr.f * math::abs(math::dot(l_intr.wi, ctx.n));
-                q = b_intr.pdf;
-                eta = b_intr.eta;
-                direct_ctx.n = (math::dot(l_intr.wi, ctx.n) < 0.f ? -1.f : 1.f) * ctx.n;
-                direct_ctx.r.o = ctx.r.o + 0.001f * direct_ctx.n;
-            } else {
-                auto p_intr = phase(ctx.r.d, l_intr.wi);
-                g = p_intr.f;
-                q = p_intr.pdf;
-            }
-            auto diff = propagate(l_intr.wi, eta);
-
-            auto acc = accel::Interaction{};
-            auto crossed = true;
-
-            auto volume = medium;
-            auto direct_to_render = medium_to_render;
-            auto iter = media::Iterator{};
-            auto gamma = beta * g / p_e;
+            auto s_intr = eval(l_intr.wi);
             auto delta = e_intr.light.flags() & light::Flags::delta;
-            auto mis_d = mis_s * q / p_e * f32(!delta);
-            auto mis_l = mis_s;
-
-            while (true) {
-                if (l_intr.t < 0.001f) break;
-
-                if (math::max(gamma * math::guarded_div(1.f, math::avg(mis_d + mis_l))) < 0.05f) {
-                    auto q = 0.25f;
-                    if (r.sampler.generate_1d() > q) {
-                        gamma = fv4{0.f}; break;
-                    } else gamma /= q;
-                }
-
-                if (crossed) {
-                    acc = r.accel(direct_ctx.r, direct_ctx.n);
-                    if (math::isinf(acc.intr.t)) break;
-                    auto& intr = acc.intr;
-                    auto& div = *acc.divider;
-                    auto lt = div.local_to_render;
-
-                    intr.p = lt | math::expand(intr.p, 1.f);
-                    intr.n = math::normalize(lt | intr.n);
-                    direct_ctx.inside = math::dot(-direct_ctx.r.d, intr.n) < 0.f;
-                    volume = direct_ctx.inside ? div.int_medium : div.ext_medium;
-                    direct_to_render = direct_ctx.inside ? div.int_to_render : div.ext_to_render;
-                    iter = volume.begin(direct_to_render ^ direct_ctx, math::min(intr.t, l_intr.t));
-                    intr.n *= direct_ctx.inside ? -1.f : 1.f;
-
-                    auto light_in_medium = l_intr.t < intr.t - 0.001f;
-                    auto close_to_light = math::length(intr.p - l_intr.p) < 0.001f;
-                    auto is_interface = div.material.flags() & material::Flags::interface;
-                    auto is_emissive = div.material.flags() & material::Flags::emissive;
-                    if (!light_in_medium && !is_interface && (!is_emissive || !close_to_light)) return;
-                    else if (close_to_light) {
-                        auto ldiff = lt ^ diff;
-                        auto d_intr = intr;
-                        d_intr.p = math::shrink(lt ^ math::expand(d_intr.p, 1.f));
-                        d_intr.n = lt ^ d_intr.n;
-                        auto tcoord = texture::grad(ldiff, d_intr);
-                        auto mat_intr = div.material.sample(direct_ctx, tcoord);
-                        l_intr.L = mat_intr.emission;
-                    }
-                }
-
-                auto& intr = acc.intr;
-                auto& div = acc.divider;
-
-                auto m_intr = iter.march(r.sampler.generate_1d());
-
-                auto hit = m_intr.t >= math::min(intr.t, l_intr.t);
-                l_intr.t -= m_intr.t;
-                auto spectra_pdf = hit
-                ? m_intr.transmittance
-                : m_intr.sigma_maj * m_intr.transmittance;
-                auto flight_pdf = spectra_pdf[0];
-
-                gamma *= m_intr.transmittance / flight_pdf;
-                mis_d *= spectra_pdf / flight_pdf;
-                mis_l *= spectra_pdf / flight_pdf;
-
-                if (!hit) {
-                    gamma *= m_intr.sigma_n;
-                    mis_d *= m_intr.sigma_n / m_intr.sigma_maj;
-                    intr.t -= m_intr.t;
-                    direct_ctx.r.o = m_intr.p;
-                    crossed = false;
-                } else {
-                    auto mt = direct_to_render;
-                    m_intr.p = mt | math::expand(m_intr.p, 1.f);
-                    direct_ctx.r.o = intr.p - 0.001f * intr.n;
-                    crossed = true;
-                }
-                continue;
-            }
-
-            auto mis_u = math::guarded_div(1.f, math::avg(mis_d + mis_l));
-            emission += gamma * mis_u * l_intr.L;
+            auto side = math::dot(l_intr.wi, l_ctx.n) < 0.f ? -1.f : 1.f;
+            payload.shadow = {l_ctx.r.o + 0.001f * side * l_ctx.n, l_intr.wi};
+            payload.t = math::isinf(l_intr.t) ? l_intr.t : math::length(l_intr.p - payload.shadow.o);
+            payload.gamma = payload.beta * s_intr.f * l_intr.L / p_e;
+            payload.mis_d = payload.mis_s * s_intr.pdf / p_e * f32(!delta);
         };
 
-        while (true) {
-            bounce += usize(scattered);
+        auto medium = ctx.inside ? div->int_medium : div->ext_medium;
+        auto medium_to_render = ctx.inside ? div->int_to_render : div->ext_to_render;
+        auto iter = medium.begin(medium_to_render ^ ctx, intr.t);
+        auto surface = false;
 
-            auto q = math::max(beta * math::guarded_div(1.f, math::avg(mis_s)));
-            if (q < 1.f) {
-                auto rru = r.sampler.generate_1d();
-                if (rru > q) break;
-                else beta /= q;
-            }
-
-            if (scattered || crossed) acc = r.accel(trace_ctx.r, trace_ctx.n);
-            if (math::isinf(acc.intr.t)) {
-                auto e_intr = r.emitter.sample_infinite(trace_ctx, r.sampler.generate_1d());
-                if (e_intr.pdf == 0.f) break;
-                auto light = e_intr.light;
-                auto lt = e_intr.local_to_render;
-
-                auto l_ctx = lt ^ trace_ctx;
-                auto l_intr = light(l_ctx.r, l_ctx.lambda);
-
-                mis_e *= specular ? 0.f : math::guarded_div(e_intr.pdf * l_intr.pdf, p);
-                auto mis_w = math::guarded_div(1.f, math::avg(mis_s + mis_e));
-                emission += beta * mis_w * l_intr.L;
-                break;
-            }
-
-            auto& intr = acc.intr;
-            auto& div = acc.divider;
-            auto lt = div->local_to_render;
-
-            if (scattered || crossed) {
-                intr.p = lt | math::expand(intr.p, 1.f);
-                intr.n = math::normalize(lt | intr.n);
-                trace_ctx.inside = math::dot(-trace_ctx.r.d, intr.n) < 0.f;
-                medium = trace_ctx.inside ? div->int_medium : div->ext_medium;
-                medium_to_render = trace_ctx.inside ? div->int_to_render : div->ext_to_render;
-                iter = medium.begin(medium_to_render ^ trace_ctx, intr.t);
-
-                auto flip_n = trace_ctx.inside ? -1.f : 1.f;
-                intr.n *= flip_n; intr.dndu *= flip_n; intr.dndv *= flip_n;
-                intr.tn = math::normalize(lt | math::expand(intr.tn * flip_n, 0.f));
-                intr.bn = math::normalize(lt | math::expand(intr.bn * flip_n, 0.f));
-            }
-
-            auto m_intr = iter.march(r.sampler.generate_1d());
-
-            auto hit = m_intr.t >= intr.t;
-            auto spectra_pdf = hit
+        auto march = [&] -> bool {
+            auto m_intr = iter.march(sp.generate_1d());
+            surface = m_intr.t >= intr.t;
+            auto spectra_pdf = surface
             ? m_intr.transmittance
             : m_intr.sigma_maj * m_intr.transmittance;
             auto flight_pdf = spectra_pdf[0];
 
-            beta *= m_intr.transmittance / flight_pdf;
-            mis_s *= spectra_pdf / flight_pdf;
-            mis_e *= spectra_pdf / flight_pdf;
+            payload.beta *= m_intr.transmittance / flight_pdf;
+            payload.mis_s *= spectra_pdf / flight_pdf;
+            payload.mis_e *= spectra_pdf / flight_pdf;
+            if (surface) return false;
 
-            if (!hit) {
-                auto mis_a = math::guarded_div(1.f, math::avg(mis_s));
-                emission += mis_a * beta * m_intr.sigma_a * m_intr.sigma_e;
+            auto mis_a = math::guarded_div(1.f, math::avg(payload.mis_s));
+            payload.emission += mis_a * payload.beta * m_intr.sigma_a * m_intr.sigma_e;
 
-                auto p_a = math::guarded_div(m_intr.sigma_a[0], m_intr.sigma_maj[0]);
-                auto p_s = math::guarded_div(m_intr.sigma_s[0], m_intr.sigma_maj[0]);
-                auto p_n = math::guarded_div(m_intr.sigma_n[0], m_intr.sigma_maj[0]);
+            auto p_a = math::guarded_div(m_intr.sigma_a[0], m_intr.sigma_maj[0]);
+            auto p_s = math::guarded_div(m_intr.sigma_s[0], m_intr.sigma_maj[0]);
+            auto p_n = math::guarded_div(m_intr.sigma_n[0], m_intr.sigma_maj[0]);
+            auto mode = math::Discrete_Distribution<3>{{p_a, p_s, p_n}}.sample(sp.generate_1d());
+            if (mode == 0uz) {
+                payload.beta = fv4{0.f};
+                return true;
+            } else if (mode == 1uz) {
+                payload.beta *= m_intr.sigma_s / p_s;
+                payload.mis_s *= m_intr.sigma_s / m_intr.sigma_maj / p_s;
+                auto point = fv3{medium_to_render | math::expand(m_intr.p, 1.f)};
+                auto l_ctx = ctx;
+                l_ctx.r.o = point;
+                l_ctx.n = {};
+                nee(l_ctx, [&](cref<fv3> wi) {
+                    auto p_intr = m_intr.phase(ctx.r.d, wi);
+                    return bsdf::Interaction{p_intr.f, fv4{1.f}, wi, p_intr.pdf};
+                });
 
-                auto u = r.sampler.generate_1d();
-                auto mode = math::Discrete_Distribution<3>{{p_a, p_s, p_n}}.sample(u);
-                if (mode == 0uz) break;
-                else if (mode == 1uz) {
-                    if (bounce >= r.max_bounce) break;
-                    auto mt = medium_to_render;
-                    m_intr.p = mt | math::expand(m_intr.p, 1.f);
-
-                    auto redirect = [&](cref<fv3> d) {
-                        auto translate = [](cref<fv3> t) { auto m = fm44{1.f}; for (auto i = 0; i < 3; i++) m[i][3] = t[i]; return m; };
-                        auto rot = fm44{fq::from_rotation_between(math::normalize(rdiff.r.d), d)};
-                        auto st = math::Transform{translate(m_intr.p) | rot | translate(-rdiff.r.o)};
-                        return st | rdiff;
-                    };
-
-                    phase = std::move(m_intr.phase);
-                    beta *= m_intr.sigma_s / p_s;
-                    mis_s *= m_intr.sigma_s / m_intr.sigma_maj / p_s;
-
-                    auto d_ctx = trace_ctx;
-                    d_ctx.r.o = m_intr.p;
-                    d_ctx.n = {};
-                    direct_lighting(d_ctx, [&](cref<fv3> wi, cref<fv4>) { return redirect(wi); });
-
-                    auto pt = math::Transform{};
-                    pt.transform = fm44{fq::from_rotation_between(-trace_ctx.r.d, {0.f, 1.f, 0.f})};
-                    pt.inv_transform = math::transpose(pt.transform);
-                    auto p_ctx = pt | trace_ctx;
-                    auto p_intr = phase.sample(p_ctx, r.sampler.generate_2d());
-                    if (p_intr.pdf == 0.f) break;
-                    p_intr.wi = math::normalize(pt ^ math::expand(p_intr.wi, 0.f));
-
-                    beta *= p_intr.f / p_intr.pdf;
-                    mis_e = mis_s;
-
-                    scattered = true;
-                    specular = false;
-                    crossed = false;
-                    p = p_intr.pdf;
-                    trace_ctx.r = {m_intr.p, p_intr.wi};
-                    trace_ctx.n = {};
-                    rdiff = redirect(p_intr.wi);
-                } else {
-                    beta *= m_intr.sigma_n / p_n;
-                    mis_s *= (m_intr.sigma_n / m_intr.sigma_maj) / p_n;
-                    mis_e /= p_n;
-                    scattered = false;
-                    crossed = false;
+                auto pt = math::Transform{};
+                pt.transform = fm44{fq::from_rotation_between(-ctx.r.d, {0.f, 1.f, 0.f})};
+                pt.inv_transform = math::transpose(pt.transform);
+                auto p_intr = m_intr.phase.sample(pt | ctx, sp.generate_2d());
+                p_intr.wi = math::normalize(pt ^ math::expand(p_intr.wi, 0.f));
+                if (p_intr.pdf == 0.f) {
+                    payload.beta = fv4{0.f};
+                    return true;
                 }
-                continue;
+                payload.beta *= p_intr.f / p_intr.pdf;
+                payload.mis_e = payload.mis_s / p_intr.pdf;
+
+                auto translate = [](cref<fv3> t) { auto m = fm44{1.f}; for (auto i = 0; i < 3; i++) m[i][3] = t[i]; return m; };
+                auto rot = fm44{fq::from_rotation_between(math::normalize(payload.diff.r.d), p_intr.wi)};
+                payload.diff = math::Transform{translate(point) | rot | translate(-payload.diff.r.o)} | payload.diff;
+                ctx.r = {point, p_intr.wi};
+                ctx.n = {};
+                payload.scattered = true;
+                return true;
             }
 
-            auto ldiff = lt ^ rdiff;
-            auto l_intr = intr;
-            l_intr.p = math::shrink(lt ^ math::expand(l_intr.p, 1.f));
-            l_intr.n = lt ^ l_intr.n;
-            auto tcoord = texture::grad(ldiff, l_intr);
-            auto mat_intr = div->material.sample(trace_ctx, tcoord);
+            payload.beta *= m_intr.sigma_n / p_n;
+            payload.mis_s *= (m_intr.sigma_n / m_intr.sigma_maj) / p_n;
+            payload.mis_e /= p_n;
 
-            if (math::max(mat_intr.emission) > math::epsilon<f32>) {
-                // TODO: need correct way to fetch area light pdf on GPU, use 1.f now
-                mis_e *= specular ? 0.f : math::guarded_div(intr.pdf * 1.f, p);
-                auto mis_w = math::guarded_div(1.f, math::avg(mis_s + mis_e));
-                emission += mis_w * beta * mat_intr.emission;
+            auto q = math::max(payload.beta * math::guarded_div(1.f, math::avg(payload.mis_s)));
+            if (q < 1.f) {
+                if (sp.generate_1d() > q) { payload.beta = fv4{0.f}; return true; }
+                payload.beta /= q;
             }
+            return false;
+        };
+        while (!surface) if (march()) return;
 
+        auto flip_n = ctx.inside ? -1.f : 1.f;
+        intr.n *= flip_n; intr.dndu *= flip_n; intr.dndv *= flip_n;
+        intr.tn = math::normalize(lt | math::expand(intr.tn * flip_n, 0.f));
+        intr.bn = math::normalize(lt | math::expand(intr.bn * flip_n, 0.f));
+
+        auto ldiff = lt ^ payload.diff;
+        auto l_intr = intr;
+        l_intr.p = math::shrink(lt ^ math::expand(l_intr.p, 1.f));
+        l_intr.n = lt ^ l_intr.n;
+        auto tcoord = texture::grad(ldiff, l_intr);
+        auto mat_intr = div->material.sample(ctx, tcoord);
+
+        if (math::max(mat_intr.emission) > math::epsilon<f32>) {
+            payload.mis_e *= intr.pdf;
+            auto mis_w = math::guarded_div(1.f, math::avg(payload.mis_s + payload.mis_e));
+            payload.emission += mis_w * payload.beta * mat_intr.emission;
+        }
+
+        auto scatter = [&] {
+            auto flags = mat_intr.bsdf.flags();
             auto tbn = math::transpose(fm33{intr.tn, intr.bn, intr.n});
             intr.n = tbn | mat_intr.normal;
-
-            bsdf = std::move(mat_intr.bsdf);
-            auto flags = bsdf.flags();
-            auto interface = bool(flags & bsdf::Flags::interface);
-            if (!interface && bounce >= r.max_bounce) break;
-            if (!interface && !(flags & bsdf::Flags::specular)) {
-                auto d_ctx = trace_ctx;
-                d_ctx.r.o = intr.p;
-                d_ctx.n = intr.n;
-                direct_lighting(d_ctx, [&](cref<fv3> wi, cref<fv4> eta) {
-                    auto l_wi = math::normalize(math::shrink(lt ^ math::expand(wi, 0.f)));
-                    return lt | texture::propagate(ldiff, l_intr, tcoord, l_wi, eta);
-                });
-            }
+            if (flags & bsdf::Flags::interface) { ctx.r.o = intr.p - 0.001f * intr.n; return; }
 
             auto bt = math::Transform{};
             bt.transform = fm44{fq::from_rotation_between(intr.n, {0.f, 1.f, 0.f})};
             bt.inv_transform = math::transpose(bt.transform);
-            auto cu = r.sampler.generate_1d();
-            auto du = r.sampler.generate_2d();
 
-            auto b_ctx = bt | trace_ctx;
+            auto specular = flags & bsdf::Flags::specular;
+            auto l_ctx = ctx; l_ctx.r.o = intr.p; l_ctx.n = intr.n;
+            if (!specular) nee(l_ctx, [&](cref<fv3> wi) {
+                auto wo = math::normalize(bt | math::expand(ctx.r.d, 0.f));
+                auto wl = math::normalize(bt | math::expand(wi, 0.f));
+                auto b_intr = mat_intr.bsdf(wo, wl);
+                b_intr.f *= math::abs(math::dot(wi, intr.n));
+                return b_intr;
+            });
+
+            auto cu = sp.generate_1d();
+            auto du = sp.generate_2d();
+            auto b_ctx = bt | ctx;
             b_ctx.r.d = math::normalize(b_ctx.r.d);
-            auto b_intr = bsdf.sample(b_ctx, {cu, du[0], du[1]});
-            if (b_intr.pdf == 0.f) break;
+            auto b_intr = mat_intr.bsdf.sample(b_ctx, {cu, du[0], du[1]});
+            if (b_intr.pdf == 0.f) { payload.beta = fv4{0.f}; return; }
 
-            if (b_ctx.r.d == b_intr.wi) {
-                scattered = false;
-                crossed = true;
-                trace_ctx.r.o = intr.p - 0.001f * intr.n;
-                continue;
-            }
-
-            scattered = true;
-            specular = flags & bsdf::Flags::specular;
-            crossed = b_intr.wi[1] < 0.f;
-
+            auto crossed = b_intr.wi[1] < 0.f;
             auto trace_n = (crossed ? -1.f : 1.f) * intr.n;
-            auto trace_p = intr.p + 0.001f * trace_n;
             b_intr.f *= math::abs(math::unit_to_cos_theta(b_intr.wi));
             b_intr.wi = math::normalize(bt ^ math::expand(b_intr.wi, 0.f));
 
             auto l_wi = math::normalize(math::shrink(lt ^ math::expand(b_intr.wi, 0.f)));
-            rdiff = lt | texture::propagate(ldiff, l_intr, tcoord, l_wi, b_intr.eta);
+            payload.diff = lt | texture::propagate(ldiff, l_intr, tcoord, l_wi, b_intr.eta);
+            ctx.r = {intr.p + 0.001f * trace_n, b_intr.wi};
+            ctx.n = trace_n;
+            payload.beta *= b_intr.f / b_intr.pdf;
+            payload.mis_e = specular ? fv4{0.f} : payload.mis_s / b_intr.pdf;
+            payload.scattered = true;
+            payload.degraded = mat_intr.degraded && crossed && !math::constant(ctx.lambda);
+        };
+        scatter();
+    }
 
-            trace_ctx.r = {trace_p, b_intr.wi};
-            trace_ctx.n = trace_n;
-            beta *= b_intr.f / b_intr.pdf;
-            mis_e = mis_s;
-            p = b_intr.pdf;
+    auto Radiative_Integrator::track(ref<Payload> payload, cref<accel::Acceleration> accel) const noexcept -> void {
+        if (payload.gamma == fv4{0.f}) return;
+        auto& sp = payload.sampler;
+        auto r = payload.shadow;
+        auto n = fv3{0.f};
+        auto t = payload.t;
+        auto mis_l = payload.mis_s;
+        auto boundary = false;
 
-            if (mat_intr.degraded && crossed && !math::constant(trace_ctx.lambda)) {
-                emission = fv4{emission[0]}; beta = fv4{beta[0]};
-                mis_s = fv4{mis_s[0]}; mis_e = fv4{mis_e[0]};
-                trace_ctx.lambda = fv4{trace_ctx.lambda[0]};
+        auto march = [&](ref<media::Iterator> iter, f32 seg) -> bool {
+            auto m_intr = iter.march(sp.generate_1d());
+            boundary = m_intr.t >= seg;
+            auto spectra_pdf = boundary
+            ? m_intr.transmittance
+            : m_intr.sigma_maj * m_intr.transmittance;
+            auto flight_pdf = spectra_pdf[0];
+
+            payload.gamma *= m_intr.transmittance / flight_pdf;
+            payload.mis_d *= spectra_pdf / flight_pdf;
+            mis_l *= spectra_pdf / flight_pdf;
+            if (boundary) return false;
+
+            auto p_n = math::guarded_div(m_intr.sigma_n[0], m_intr.sigma_maj[0]);
+            if (sp.generate_1d() >= p_n) { payload.gamma = fv4{0.f}; return true; }
+            payload.gamma *= m_intr.sigma_n / p_n;
+            payload.mis_d *= m_intr.sigma_n / m_intr.sigma_maj / p_n;
+            mis_l *= m_intr.sigma_n / m_intr.sigma_maj / p_n;
+            return false;
+        };
+
+        while (t > 0.001f) {
+            auto acc = accel(r, n);
+            if (math::isinf(acc.pos[3])) break;
+
+            auto div = acc.divider;
+            auto lt = div->local_to_render;
+            auto intr = div->shape(lt ^ r, lt ^ n, acc.pos, acc.primitive);
+            intr.p = lt | math::expand(intr.p, 1.f);
+            intr.n = math::normalize(lt | intr.n);
+
+            auto l_ctx = math::Context{r, n, payload.ctx.lambda, math::dot(-r.d, intr.n) < 0.f};
+            auto medium = l_ctx.inside ? div->int_medium : div->ext_medium;
+            auto medium_to_render = l_ctx.inside ? div->int_to_render : div->ext_to_render;
+            auto seg = math::min(intr.t, t);
+            auto iter = medium.begin(medium_to_render ^ l_ctx, seg);
+            boundary = false;
+            while (!boundary) if (march(iter, seg)) return;
+
+            if (intr.t >= t - 0.001f) break;
+            if (!(div->material.flags() & material::Flags::interface)) {
+                payload.gamma = fv4{0.f};
+                return;
             }
+
+            auto face_n = l_ctx.inside ? -intr.n : intr.n;
+            r.o = intr.p - 0.001f * face_n;
+            t -= intr.t;
         }
 
-        return spectra::Stochastic_Spectrum{trace_ctx.lambda, emission};
+        auto mis_u = math::guarded_div(1.f, math::avg(payload.mis_d + mis_l));
+        payload.emission += payload.gamma * mis_u;
+    }
+
+    auto Radiative_Integrator::sample(ref<Context> ctx, cref<uzv2> px) const noexcept -> void {
+        auto size = uzv2{ctx.film->image.size};
+        auto sp = sampler::proxy::Sampler{ctx.sampler, {{}, px, size, ctx.sample_index, ctx.film->spp, 0, ctx.seed}};
+        sp.start();
+        auto fixel = ctx.film(ctx.filter, px, sp.generate_pixel_2d());
+        auto s = photo::Camera{}.sample(ctx.lens, fixel.position, fixel.dxdy, sp.generate_2d());
+        s.ray_differential = ctx.camera ^ s.ray_differential;
+        auto spec = spectra::Stochastic_Spectrum{sp.generate_1d()};
+
+        auto payload = Payload{};
+        payload.sampler = sp;
+        payload.emitter = ctx.emitter;
+        payload.ctx.r = s.ray_differential.r;
+        payload.ctx.lambda = spec.lambda;
+        payload.diff = s.ray_differential;
+
+        for (auto bounce = 0u; bounce < ctx.film->depth; bounce += payload.scattered) {
+            auto q = math::max(payload.beta * math::guarded_div(1.f, math::avg(payload.mis_s)));
+            if (q < 1.f) {
+                if (payload.sampler.generate_1d() > q) break;
+                payload.beta /= q;
+            }
+
+            payload.acc = ctx.accel(payload.ctx.r, payload.ctx.n);
+            // reorder
+            hit(payload);
+            track(payload, ctx.accel);
+
+            if (payload.degraded) {
+                payload.emission = fv4{payload.emission[0]};
+                payload.beta = fv4{payload.beta[0]};
+                payload.mis_s = fv4{payload.mis_s[0]};
+                payload.mis_e = fv4{payload.mis_e[0]};
+                payload.ctx.lambda = fv4{payload.ctx.lambda[0]};
+            }
+            if (payload.beta == fv4{0.f}) break;
+        }
+
+        auto Li = spectra::Stochastic_Spectrum{payload.ctx.lambda, payload.emission};
+        Li.value /= s.pdf;
+        if (!math::isfinite(Li.value))
+            stl::abort("invalid value appears in pixel {} sample {}", px, ctx.sample_index);
+        fixel = Li;
+    }
+
+    Radiative_Integrator::Radiative_Integrator(cref<Descriptor>) noexcept {}
+
+    auto Radiative_Integrator::trace(ref<Context> ctx) const noexcept -> void {
+        auto size = uzv2{ctx.film->image.size};
+        stl::scheduler::sync_parallel(size, [&](auto&& px) { sample(ctx, px); });
     }
 }
