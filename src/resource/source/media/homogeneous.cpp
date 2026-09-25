@@ -2,7 +2,7 @@
 #include <metatron/core/math/distribution/exponential.hpp>
 
 namespace mtt::media {
-    auto Homogeneous_Medium::Iterator::march(f32 u) noexcept -> opt<Interaction> {
+    auto Homogeneous_Medium::Iterator::march(f32 u) noexcept -> Interaction {
         auto sigma_a = (lambda & medium->sigma_a);
         auto sigma_s = (lambda & medium->sigma_s);
         auto sigma_t = sigma_a + sigma_s;

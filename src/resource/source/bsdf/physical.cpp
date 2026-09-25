@@ -67,7 +67,7 @@ namespace mtt::bsdf {
 
     auto Physical_Bsdf::operator()(
         cref<fv3> wo, cref<fv3> wi, f32 u
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         auto flags = this->flags();
         auto specular = flags & Flags::specular;
         if (false
@@ -121,12 +121,12 @@ namespace mtt::bsdf {
             pt *= bool(flags & Flags::transmissive);
             if (pr == 0.f && pt == 0.f) return {};
 
-            MTT_OPT_OR_RETURN(T, torrance_sparrow(
+            auto T = torrance_sparrow(
                 reflective, pr, pt,
                 F, D, G,
                 wo, wi, wm,
                 eta, alpha_u, alpha_v
-            ), {});
+            );
             R.f += T.f;
             R.pdf += Fo[0] * T.pdf;
         }
@@ -136,7 +136,7 @@ namespace mtt::bsdf {
 
     auto Physical_Bsdf::sample(
         cref<math::Context> ctx, cref<fv3> u
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         auto wo = ctx.r.d;
         auto flags = this->flags();
         auto specular = bool(flags & Flags::specular);
@@ -195,12 +195,12 @@ namespace mtt::bsdf {
             auto G = smith_shadow(wo, wi, alpha_u, alpha_v);
             if (math::abs(wi[1]) < math::epsilon<f32>) return {};
 
-            MTT_OPT_OR_RETURN(R, torrance_sparrow(
+            auto R = torrance_sparrow(
                 reflective, pr, pt,
                 F, D, G,
                 wo, wi, wm,
                 eta, alpha_u, alpha_v
-            ), {});
+            );
             R.pdf *= plastic ? Fo[0] : 1.f;
             return R;
         } else {

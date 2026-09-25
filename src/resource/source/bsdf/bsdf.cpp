@@ -104,7 +104,7 @@ namespace mtt::bsdf {
         cref<fv4> F, f32 D, f32 G,
         cref<fv3> wo, cref<fv3> wi, cref<fv3> wm,
         cref<fv4> eta, f32 alpha_u, f32 alpha_v
-    ) noexcept -> opt<Interaction> {
+    ) noexcept -> Interaction {
         auto cos_theta_o = math::unit_to_cos_theta(-wo);
         auto cos_theta_i = math::unit_to_cos_theta(wi);
         auto cos_theta_om = math::dot(-wo, wm);

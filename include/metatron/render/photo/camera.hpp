@@ -15,6 +15,6 @@ namespace mtt::photo {
             cref<fv2> pos,
             cref<fv2> dxdy,
             cref<fv2> u
-        ) noexcept -> opt<Interaction>;
+        ) noexcept -> Interaction;
     };
 }

@@ -41,11 +41,11 @@ namespace mtt::texture {
     auto grad(
         cref<math::Ray_Differential> diff,
         cref<shape::Interaction> intr
-    ) noexcept -> opt<muldim::Coordinate> {
+    ) noexcept -> muldim::Coordinate {
         auto tangent = math::Plane{intr.p, intr.n};
-        MTT_OPT_OR_RETURN(dt, math::hit(diff.r, tangent), {});
-        MTT_OPT_OR_RETURN(dxt, math::hit(diff.rx, tangent), {});
-        MTT_OPT_OR_RETURN(dyt, math::hit(diff.ry, tangent), {});
+        auto dt = math::hit(diff.r, tangent);
+        auto dxt = math::hit(diff.rx, tangent);
+        auto dyt = math::hit(diff.ry, tangent);
 
         auto p = diff.r.o + dt * diff.r.d;
         auto dpdx = diff.rx.o + dxt * diff.rx.d - p;

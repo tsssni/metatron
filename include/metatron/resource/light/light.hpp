@@ -17,10 +17,10 @@ namespace mtt::light {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 
-        auto operator()(cref<math::Ray> r, cref<fv4> lambda) const noexcept -> opt<Interaction> {
+        auto operator()(cref<math::Ray> r, cref<fv4> lambda) const noexcept -> Interaction {
             return visit([&](auto* p) noexcept { return (*p)(r, lambda); });
         }
-        auto sample(cref<math::Context> ctx, cref<fv2> u) const noexcept -> opt<Interaction> {
+        auto sample(cref<math::Context> ctx, cref<fv2> u) const noexcept -> Interaction {
             return visit([&](auto* p) noexcept { return p->sample(ctx, u); });
         }
         auto flags() const noexcept -> Flags {

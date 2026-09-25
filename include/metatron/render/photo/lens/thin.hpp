@@ -10,7 +10,7 @@ namespace mtt::photo {
         };
         Thin_Lens(cref<Descriptor> desc) noexcept;
         Thin_Lens() noexcept = default;
-        auto sample(cref<fv2> o, cref<fv2> u) const noexcept -> opt<lens::Interaction>;
+        auto sample(cref<fv2> o, cref<fv2> u) const noexcept -> lens::Interaction;
 
     private:
         f32 aperture;

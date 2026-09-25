@@ -10,7 +10,7 @@ namespace mtt::photo {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 
-        auto sample(cref<fv2> o, cref<fv2> u) const noexcept -> opt<lens::Interaction> {
+        auto sample(cref<fv2> o, cref<fv2> u) const noexcept -> lens::Interaction {
             return visit([&](auto* p) noexcept { return p->sample(o, u); });
         }
     };

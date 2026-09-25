@@ -48,11 +48,11 @@ namespace mtt::light {
         // binary data: https://github.com/mitsuba-renderer/mitsuba-data/tree/master/sunsky/output
         auto operator()(
             cref<math::Ray> r, cref<fv4> lambda
-        ) const noexcept -> opt<Interaction>;
+        ) const noexcept -> Interaction;
         // TGMM sky sampling: https://diglib.eg.org/items/b3f1efca-1d13-44d0-ad60-741c4abe3d21
         auto sample(
             cref<math::Context> ctx, cref<fv2> u
-        ) const noexcept -> opt<Interaction>;
+        ) const noexcept -> Interaction;
         auto flags() const noexcept -> Flags;
 
     private:

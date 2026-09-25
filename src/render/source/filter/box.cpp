@@ -7,7 +7,7 @@ namespace mtt::filter {
         return math::abs(p) <= radius ? 1.f : 0.f;
     }
 
-    auto Box_Filter::sample(cref<fv2> u) const noexcept -> opt<filter::Interaction> {
+    auto Box_Filter::sample(cref<fv2> u) const noexcept -> filter::Interaction {
         auto p = math::lerp(-radius, radius, u);
         auto w = (*this)(p);
         return Interaction{p, w, 1.f / (4.f * radius[0] * radius[1])};

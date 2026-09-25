@@ -28,14 +28,14 @@ namespace mtt::shape {
         auto operator()(
             cref<math::Ray> r, cref<fv3> np,
             cref<fv4> pos, usize idx
-        ) const noexcept -> opt<Interaction>;
+        ) const noexcept -> Interaction;
         // sphere triangle sampling: https://pbr-book.org/4ed/Shapes/Triangle_Meshes
         auto sample(
             cref<math::Context> ctx, cref<fv2> u, usize idx
-        ) const noexcept -> opt<Interaction>;
+        ) const noexcept -> Interaction;
         auto query(
             cref<math::Ray> r, usize idx
-        ) const noexcept -> opt<fv4>;
+        ) const noexcept -> fv4;
 
     private:
         template<typename T>

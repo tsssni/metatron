@@ -43,7 +43,7 @@ namespace mtt::texture {
     auto grad(
         cref<math::Ray_Differential> diff,
         cref<shape::Interaction> intr
-    ) noexcept -> opt<muldim::Coordinate>;
+    ) noexcept -> muldim::Coordinate;
 
     auto propagate(
         cref<math::Ray_Differential> diff,

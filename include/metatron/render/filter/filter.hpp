@@ -14,7 +14,7 @@ namespace mtt::filter {
         auto operator()(cref<fv2> p) const noexcept -> f32 {
             return visit([&](auto* x) noexcept { return (*x)(p); });
         }
-        auto sample(cref<fv2> u) const noexcept -> opt<Interaction> {
+        auto sample(cref<fv2> u) const noexcept -> Interaction {
             return visit([&](auto* x) noexcept { return x->sample(u); });
         }
     };

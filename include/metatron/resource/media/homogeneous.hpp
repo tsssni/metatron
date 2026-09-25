@@ -13,7 +13,7 @@ namespace mtt::media {
             math::Ray r;
             fv4 lambda;
             f32 t_max;
-            auto march(f32 u) noexcept -> opt<Interaction>;
+            auto march(f32 u) noexcept -> Interaction;
         };
 
         auto begin(

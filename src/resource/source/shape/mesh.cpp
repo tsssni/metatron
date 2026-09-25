@@ -78,32 +78,29 @@ namespace mtt::shape {
             };
 
             auto A = fm22{uv[0] - uv[2], uv[1] - uv[2]};
-            auto dpduv_opt = math::cramer(A,
+            auto dpduv = math::cramer(A,
                 fm23{v[0] - v[2], v[1] - v[2]}
             );
             // remove parallel dpduv
-            if (dpduv_opt) {
-                auto dpduv = dpduv_opt.value();
-                auto perp = math::cross(dpduv[0], dpduv[1]);
-                if (math::length(perp) < math::epsilon<f32>) dpduv_opt.reset();
-            }
             // fallback to make sure normal is correct
-            if (!dpduv_opt) {
-                dpduv_opt = math::orthogonalize(normals[prim[0]]);
-                if ((*dpduv_opt)[0] == fv3{0}) stl::print("idx: {} {}", i, n);
+            if (false
+            || !math::isfinite(dpduv[0])
+            || !math::isfinite(dpduv[1])
+            || math::length(math::cross(dpduv[0], dpduv[1])) < math::epsilon<f32>
+            ) {
+                dpduv = math::orthogonalize(normals[prim[0]]);
+                if (dpduv[0] == fv3{0}) stl::print("idx: {} {}", i, n);
             }
 
-            auto dnduv_opt = math::cramer(A,
+            auto dnduv = math::cramer(A,
                 fm23{n[0] - n[2], n[1] - n[2]}
             );
-            if (!dnduv_opt) {
+            if (!math::isfinite(dnduv[0]) || !math::isfinite(dnduv[1])) {
                 auto dn = math::normalize(math::cross(n[2] - n[0], n[1] - n[0]));
-                dnduv_opt = math::length(dn) == 0
+                dnduv = math::length(dn) == 0
                 ? fm23{0.f} : math::orthogonalize(dn);
             }
 
-            auto dpduv = dpduv_opt.value();
-            auto dnduv = dnduv_opt.value();
             dpdu[i] = dpduv[0];
             dpdv[i] = dpduv[1];
             dndu[i] = dnduv[0];
@@ -132,7 +129,7 @@ namespace mtt::shape {
     auto Mesh::operator()(
         cref<math::Ray> r, cref<fv3> np,
         cref<fv4> pos, usize idx
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         auto bary = math::shrink(pos);
         auto t = pos[3];
         auto pdf = this->pdf(r, np, idx);
@@ -151,7 +148,7 @@ namespace mtt::shape {
 
     auto Mesh::sample(
         cref<math::Context> ctx, cref<fv2> u, usize idx
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         auto prim = indices[idx];
         auto validate_vector = [](cref<fv3> v) -> bool {
             return math::dot(v, v) >= math::epsilon<f32>;
@@ -205,11 +202,10 @@ namespace mtt::shape {
             vertices[prim[1]],
             vertices[prim[2]],
         };
-        MTT_OPT_OR_RETURN(cramer, math::cramer(
+        auto [t, b_1, b_2] = math::cramer(
             math::transpose(fm33{-d, v[1] - v[0], v[2] - v[0]}),
             ctx.r.o - v[0]
-        ), {});
-        auto [t, b_1, b_2] = cramer;
+        );
         b_1 = math::clamp(b_1, 0.f, 1.f);
         b_2 = math::clamp(b_2, 0.f, 1.f);
         if (b_1 + b_2 > 1.f) {
@@ -234,7 +230,7 @@ namespace mtt::shape {
 
     auto Mesh::query(
         cref<math::Ray> r, usize idx
-    ) const noexcept -> opt<fv4> {
+    ) const noexcept -> fv4 {
         auto rs = r.d;
         auto ri = math::maxi(math::abs(rs));
         std::swap(rs[2], rs[ri]);
@@ -275,11 +271,11 @@ namespace mtt::shape {
         || math::abs(det) < math::epsilon<f32>
         || std::signbit(e[0]) != std::signbit(e[1])
         || std::signbit(e[1]) != std::signbit(e[2])
-        ) return {};
+        ) return fv4{math::inf<f32>};
 
         auto bary = e / det;
         auto t = math::blerp(v, bary)[2];
-        if (t < math::epsilon<f32>) return {};
+        if (t < math::epsilon<f32>) return fv4{math::inf<f32>};
         return fv4{bary, t};
     }
 

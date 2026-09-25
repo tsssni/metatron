@@ -17,19 +17,18 @@ namespace mtt::math {
         cref<Ray> r,
         cref<fv3> inv_d,
         cref<Bounding_Box> bbox
-    ) noexcept -> opt<fv2> {
+    ) noexcept -> fv2 {
         auto t1 = (bbox.p_min - r.o) * inv_d;
         auto t2 = (bbox.p_max - r.o) * inv_d;
         auto t_enter = max(math::min(t1, t2));
         auto t_exit  = min(math::max(t1, t2));
-        if (t_exit < -epsilon<f32> || t_enter > t_exit + epsilon<f32>) return {};
         return fv2{t_enter, t_exit};
     }
 
     auto constexpr hitvi(
         cref<Ray> r,
         cref<Bounding_Box> bbox
-    ) noexcept -> opt<std::tuple<f32, f32, usize, usize>> {
+    ) noexcept -> std::tuple<f32, f32, usize, usize> {
         auto hit_min = (bbox.p_min - r.o) / r.d;
         auto hit_max = (bbox.p_max - r.o) / r.d;
         for (auto i = 0uz; i < 3uz; ++i)
@@ -42,7 +41,6 @@ namespace mtt::math {
 
         auto [t_enter, i_enter] = maxvi(hit_min);
         auto [t_exit, i_exit] = minvi(hit_max);
-        if (t_exit < -epsilon<f32> || t_enter > t_exit + epsilon<f32>) return {};
         return std::make_tuple(t_enter, t_exit, i_enter, i_exit);
     }
 

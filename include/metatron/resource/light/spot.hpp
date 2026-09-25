@@ -13,10 +13,10 @@ namespace mtt::light {
 
         auto operator()(
             cref<math::Ray> r, cref<fv4> lambda
-        ) const noexcept -> opt<Interaction>;
+        ) const noexcept -> Interaction;
         auto sample(
             cref<math::Context> ctx, cref<fv2> u
-        ) const noexcept -> opt<Interaction>;
+        ) const noexcept -> Interaction;
         auto flags() const noexcept -> Flags;
 
     private:

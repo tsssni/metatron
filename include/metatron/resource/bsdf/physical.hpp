@@ -27,10 +27,10 @@ namespace mtt::bsdf {
         //    https://tsssni.github.io/render/1733816209202-pbrt-v4-episode-9/#%E5%A1%91%E6%96%99bsdf
         auto operator()(
             cref<fv3> wo, cref<fv3> wi, f32 u
-        ) const noexcept -> opt<Interaction>;
+        ) const noexcept -> Interaction;
         auto sample(
             cref<math::Context> ctx, cref<fv3> u
-        ) const noexcept -> opt<Interaction>;
+        ) const noexcept -> Interaction;
         auto flags() const noexcept -> Flags;
         auto degrade() noexcept -> bool;
 

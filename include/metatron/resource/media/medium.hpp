@@ -10,7 +10,7 @@ namespace mtt::media {
     , Vaccum_Medium::Iterator> {
         using variant::variant;
 
-        auto march(f32 u) noexcept -> opt<Interaction> {
+        auto march(f32 u) noexcept -> Interaction {
             return visit([u](auto* p) noexcept { return p->march(u); });
         }
     };

@@ -3,14 +3,14 @@
 namespace mtt::light {
     auto Area_Light::operator()(
         cref<math::Ray> r, cref<fv4> lambda
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         return {};
     }
 
     auto Area_Light::sample(
         cref<math::Context> ctx, cref<fv2> u
-    ) const noexcept -> opt<Interaction> {
-        MTT_OPT_OR_RETURN(s_intr, shape.sample(ctx, u, primitive), {});
+    ) const noexcept -> Interaction {
+        auto s_intr = shape.sample(ctx, u, primitive);
         return Interaction{
             .L = fv4{0.f}, // delay fetching L in integrator material interaction
             .wi = math::normalize(s_intr.p - ctx.r.o),

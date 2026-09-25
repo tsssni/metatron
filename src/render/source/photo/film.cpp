@@ -55,7 +55,7 @@ namespace mtt::photo {
         cref<uzv2> pixel,
         cref<fv2> u
     ) noexcept -> Fixel {
-        auto f_intr = *filter.sample(u);
+        auto f_intr = filter.sample(u);
         auto pixel_position = fv2{pixel} + 0.5f + f_intr.p;
         auto uv = pixel_position / image.size;
         auto film_position = (uv - 0.5f) * fv2{-1.f, 1.f} * film_size;

@@ -28,7 +28,7 @@ namespace mtt::filter {
         return prod(v);
     }
 
-    auto Lanczos_Filter::sample(cref<fv2> u) const noexcept -> opt<Interaction> {
+    auto Lanczos_Filter::sample(cref<fv2> u) const noexcept -> Interaction {
         auto p = distr.sample(u);
         auto w = (*this)(math::reverse(p));
         auto pdf = distr.pdf(p);

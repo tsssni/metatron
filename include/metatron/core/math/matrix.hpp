@@ -580,9 +580,8 @@ namespace mtt::math {
     auto constexpr cramer(
         cref<Matrix<T, n, n>> a,
         cref<Matrix<T, n>> b
-    ) noexcept -> opt<Matrix<T, n>> {
+    ) noexcept -> Matrix<T, n> {
         T det_a = determinant(a);
-        if (math::abs(det_a) < epsilon<T>) return {};
 
         auto result = Matrix<T, n>{};
         for (auto i = 0uz; i < n; ++i) {
@@ -600,9 +599,8 @@ namespace mtt::math {
     auto constexpr cramer(
         cref<Matrix<T, n, n>> a,
         cref<Matrix<T, n, m>> b
-    ) noexcept -> opt<Matrix<T, n, m>> {
+    ) noexcept -> Matrix<T, n, m> {
         T det_a = determinant(a);
-        if (math::abs(det_a) < 1e-9) return {};
 
         auto result = Matrix<T, n, m>{};
         if constexpr (n == 2) {

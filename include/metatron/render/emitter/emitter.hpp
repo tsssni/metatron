@@ -7,10 +7,10 @@ namespace mtt::emitter {
         using polynomial::polynomial;
         auto static init() noexcept -> void;
 
-        auto sample(cref<math::Context> ctx, f32 u) const noexcept -> opt<Interaction> {
+        auto sample(cref<math::Context> ctx, f32 u) const noexcept -> Interaction {
             return visit([&](auto* p) noexcept { return p->sample(ctx, u); });
         }
-        auto sample_infinite(cref<math::Context> ctx, f32 u) const noexcept -> opt<Interaction> {
+        auto sample_infinite(cref<math::Context> ctx, f32 u) const noexcept -> Interaction {
             return visit([&](auto* p) noexcept { return p->sample_infinite(ctx, u); });
         }
     };

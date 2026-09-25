@@ -203,7 +203,7 @@ namespace mtt::light {
 
     auto Atomosphere_Light::operator()(
         cref<math::Ray> r, cref<fv4> lambda
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         auto wi = math::normalize(r.d);
         auto cos_theta = math::unit_to_cos_theta(wi);
         auto sin_theta = math::unit_to_sin_theta(wi);
@@ -242,7 +242,7 @@ namespace mtt::light {
 
     auto Atomosphere_Light::sample(
         cref<math::Context> ctx, cref<fv2> u
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         auto wi = fv3{};
         if (u[0] < w_sky) {
             auto idx = tgmm_distr.sample(u[0] / w_sky);

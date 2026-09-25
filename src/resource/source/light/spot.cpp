@@ -8,13 +8,13 @@ namespace mtt::light {
 
     auto Spot_Light::operator()(
         cref<math::Ray> r, cref<fv4> lambda
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         return {};
     }
 
     auto Spot_Light::sample(
         cref<math::Context> ctx, cref<fv2> u
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         auto smoothstep = [](f32 start, f32 end, f32 x) -> f32 {
             if (x < start) return 0.f;
             else if (x > end) return 1.f;

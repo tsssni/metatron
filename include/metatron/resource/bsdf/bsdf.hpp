@@ -9,10 +9,10 @@ namespace mtt::bsdf {
         auto static init() noexcept -> void;
 
         // u for lobe selection replay
-        auto operator()(cref<fv3> wo, cref<fv3> wi, f32 u = -1) const noexcept -> opt<Interaction> {
+        auto operator()(cref<fv3> wo, cref<fv3> wi, f32 u = -1) const noexcept -> Interaction {
             return visit([&](auto* p) noexcept { return (*p)(wo, wi, u); });
         }
-        auto sample(cref<math::Context> ctx, cref<fv3> u) const noexcept -> opt<Interaction> {
+        auto sample(cref<math::Context> ctx, cref<fv3> u) const noexcept -> Interaction {
             return visit([&](auto* p) noexcept { return p->sample(ctx, u); });
         }
         auto flags() const noexcept -> Flags {
@@ -37,5 +37,5 @@ namespace mtt::bsdf {
         cref<fv4> F, f32 D, f32 G,
         cref<fv3> wo, cref<fv3> wi, cref<fv3> wm,
         cref<fv4> eta, f32 alpha_u, f32 alpha_v
-    ) noexcept -> opt<Interaction>;
+    ) noexcept -> Interaction;
 }

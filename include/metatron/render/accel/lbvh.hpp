@@ -22,7 +22,7 @@ namespace mtt::accel {
 
         auto operator()(
             cref<math::Ray> r, cref<fv3> n
-        ) const noexcept -> opt<Interaction>;
+        ) const noexcept -> Interaction;
 
     private:
         buf<Primitive> prims;

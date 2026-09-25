@@ -11,7 +11,7 @@ namespace mtt::filter {
         Lanczos_Filter(cref<Descriptor> desc) noexcept;
         Lanczos_Filter() noexcept = default;
         auto operator()(cref<fv2> p) const noexcept -> f32;
-        auto sample(cref<fv2> u) const noexcept -> opt<Interaction>;
+        auto sample(cref<fv2> u) const noexcept -> Interaction;
 
     private:
         math::proxy::Planar_Distribution distr;

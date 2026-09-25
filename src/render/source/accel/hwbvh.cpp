@@ -7,7 +7,7 @@ namespace mtt::accel {
 
     auto HWBVH::operator()(
         cref<math::Ray> r, cref<fv3> n
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         // GPU only
         return {};
     }

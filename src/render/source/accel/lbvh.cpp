@@ -199,10 +199,10 @@ namespace mtt::accel {
 
     auto LBVH::operator()(
         cref<math::Ray> r, cref<fv3> n
-    ) const noexcept -> opt<Interaction> {
+    ) const noexcept -> Interaction {
         auto prim = view<Primitive>{};
         auto inv_d = 1.f / r.d;
-        auto q_opt = opt<fv4>{};
+        auto q = fv4{math::inf<f32>};
         auto stack = std::array<u32, 64>{};
         auto top = 0uz;
         stack[top++] = 0u;
@@ -210,8 +210,12 @@ namespace mtt::accel {
         while (top > 0) {
             auto idx = stack[--top];
             auto node = &bvh[idx];
-            auto b_opt = math::hit(r, inv_d, node->bbox);
-            if (!b_opt || (q_opt && (*q_opt)[3] < b_opt.value()[0])) continue;
+            auto b = math::hit(r, inv_d, node->bbox);
+            if (false
+            || b[1] < -math::epsilon<f32>
+            || b[0] > b[1] + math::epsilon<f32>
+            || q[3] < b[0]
+            ) continue;
 
             if (node->num_prims < 0) {
                 for (auto i = 0u; i < -node->num_prims; ++i) {
@@ -220,9 +224,9 @@ namespace mtt::accel {
                     auto div = p.instance;
                     auto lr = p.instance->local_to_render ^ r;
 
-                    MTT_OPT_OR_CONTINUE(t, div->shape.query(lr, p.primitive));
-                    if (!q_opt || t[3] < (*q_opt)[3]) {
-                        q_opt = t_opt;
+                    auto t = div->shape.query(lr, p.primitive);
+                    if (t[3] < q[3]) {
+                        q = t;
                         prim = &p;
                     }
                 }
@@ -237,13 +241,14 @@ namespace mtt::accel {
             }
         }
 
-        return !prim ? opt<Interaction>{} : Interaction{
+        if (!prim) return {};
+        return Interaction{
             .divider = prim->instance,
             .primitive = prim->primitive,
-            .intr_opt = prim->instance->shape(
+            .intr = prim->instance->shape(
                 prim->instance->local_to_render ^ r,
                 prim->instance->local_to_render ^ n,
-                *q_opt,
+                q,
                 prim->primitive
             ),
         };

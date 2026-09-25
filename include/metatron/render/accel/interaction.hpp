@@ -27,6 +27,6 @@ namespace mtt::accel {
     struct Interaction final {
         proxy::Divider divider = {};
         u32 primitive = 0;
-        opt<shape::Interaction> intr_opt = {};
+        shape::Interaction intr = {.t = math::inf<f32>};
     };
 }
