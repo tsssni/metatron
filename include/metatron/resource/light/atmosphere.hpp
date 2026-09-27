@@ -30,6 +30,10 @@ namespace mtt::light {
     auto constexpr tgmm_num_bilinear = 4;
     auto constexpr tgmm_num_gaussian = tgmm_num_bilinear * tgmm_num_mixture;
 
+    namespace atmosphere {
+        auto init() noexcept -> void;
+    }
+
     struct Atmosphere_Light final {
         struct Descriptor final {
             fv2 direction;
@@ -41,8 +45,6 @@ namespace mtt::light {
         };
         Atmosphere_Light(cref<Descriptor> desc) noexcept;
         Atmosphere_Light() noexcept = default;
-
-        auto static init() noexcept -> void;
 
         // Hosek atmosphere model: https://cgg.mff.cuni.cz/projects/SkylightModelling/
         // binary data: https://github.com/mitsuba-renderer/mitsuba-data/tree/master/sunsky/output
@@ -56,6 +58,7 @@ namespace mtt::light {
         auto flags() const noexcept -> Flags;
 
     private:
+        friend auto atmosphere::init() noexcept -> void;
         struct State {
             f32 cos_theta;
             f32 cos_gamma;

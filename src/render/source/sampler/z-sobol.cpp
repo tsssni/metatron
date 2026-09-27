@@ -9,7 +9,7 @@ namespace mtt::sampler {
     // avoid extra parameters uploaded to gpu
     Z_Sobol_Sampler::Z_Sobol_Sampler(cref<Descriptor>) noexcept: matrices(std::span<u32>(sobol_matrices)) {}
 
-    auto Z_Sobol_Sampler::init() noexcept -> void {
+    auto z_sobol::init() noexcept -> void {
         auto path = "sampler/sobol.bin";
         auto data = stl::filesystem::find(path);
 
@@ -18,8 +18,8 @@ namespace mtt::sampler {
 
         auto size = 0ull;
         f.read(mut<char>(&size), sizeof(size));
-        sobol_matrices = size;
-        f.read(mut<char>(sobol_matrices.ptr), sobol_matrices.bytelen);
+        Z_Sobol_Sampler::sobol_matrices = size;
+        f.read(mut<char>(Z_Sobol_Sampler::sobol_matrices.ptr), Z_Sobol_Sampler::sobol_matrices.bytelen);
     }
 
     auto Z_Sobol_Sampler::start(ref<Context> ctx) const noexcept -> void {

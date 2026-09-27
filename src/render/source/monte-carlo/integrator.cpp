@@ -12,7 +12,7 @@ namespace mtt::monte_carlo {
         camera = math::proxy::Transform::entity("/hierarchy/camera/render");
     }
 
-    auto Integrator::init() noexcept -> void {
+    auto init() noexcept -> void {
         MTT_DESERIALIZE(Radiative_Integrator);
     }
 }

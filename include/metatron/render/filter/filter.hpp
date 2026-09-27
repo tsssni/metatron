@@ -4,12 +4,13 @@
 #include <metatron/render/filter/lanczos.hpp>
 
 namespace mtt::filter {
+    auto init() noexcept -> void;
+
     struct Filter final: stl::polynomial<Filter
     , Box_Filter
     , Gaussian_Filter
     , Lanczos_Filter> {
         using polynomial::polynomial;
-        auto static init() noexcept -> void;
 
         auto operator()(cref<fv2> p) const noexcept -> f32 {
             return visit([&](auto* x) noexcept { return (*x)(p); });

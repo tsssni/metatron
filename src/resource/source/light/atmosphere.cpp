@@ -151,7 +151,7 @@ namespace mtt::light {
         w_sky = hosek_integral();
     }
 
-    auto Atmosphere_Light::init() noexcept -> void {
+    auto atmosphere::init() noexcept -> void {
         auto read = []
         <typename T, typename U>
         (ref<buf<T>> storage, rref<std::vector<U>> intermediate, cref<std::string> file) -> void {
@@ -194,11 +194,11 @@ namespace mtt::light {
             }
         };
 
-        read(sky_params_table, std::vector<f64>{}, "sky-params");
-        read(sky_radiance_table, std::vector<f64>{}, "sky-radiance");
-        read(sun_radiance_table, std::vector<f64>{}, "sun-radiance");
-        read(sun_limb_table, std::vector<f64>{}, "sun-limb");
-        read(tgmm_table, std::vector<f32>{}, "tgmm");
+        read(Atmosphere_Light::sky_params_table, std::vector<f64>{}, "sky-params");
+        read(Atmosphere_Light::sky_radiance_table, std::vector<f64>{}, "sky-radiance");
+        read(Atmosphere_Light::sun_radiance_table, std::vector<f64>{}, "sun-radiance");
+        read(Atmosphere_Light::sun_limb_table, std::vector<f64>{}, "sun-limb");
+        read(Atmosphere_Light::tgmm_table, std::vector<f32>{}, "tgmm");
     }
 
     auto Atmosphere_Light::operator()(

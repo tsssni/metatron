@@ -3,11 +3,12 @@
 #include <metatron/resource/shape/sphere.hpp>
 
 namespace mtt::shape {
+    auto init() noexcept -> void;
+
     struct Shape final: stl::polynomial<Shape
     , Mesh
     , Sphere> {
         using polynomial::polynomial;
-        auto static init() noexcept -> void;
 
         auto size() const noexcept -> usize {
             return visit([&](auto* p) noexcept { return p->size(); });

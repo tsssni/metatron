@@ -2,8 +2,8 @@
 #include <metatron/resource/serde/serde.hpp>
 
 namespace mtt::color {
-    auto proxy::Color_Space::init() noexcept -> void {
-        Transfer_Function::init();
+    auto init() noexcept -> void {
+        transfer_function::init();
 
         using cvec = stl::vector<color::Color_Space>; cvec::init();
         auto cs_name = std::to_array<std::string>({"sRGB"});

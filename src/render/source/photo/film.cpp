@@ -3,7 +3,7 @@
 
 namespace mtt::photo {
     muldim::Image Film::image;
-    auto proxy::Film::init() noexcept -> void {
+    auto init() noexcept -> void {
         MTT_DESERIALIZE(photo::Film);
     }
 

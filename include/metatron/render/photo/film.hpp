@@ -4,6 +4,8 @@
 #include <metatron/resource/muldim/image.hpp>
 
 namespace mtt::photo {
+    auto init() noexcept -> void;
+
     struct Film;
 
     struct Fixel final {
@@ -69,7 +71,6 @@ namespace mtt::photo {
 namespace mtt::photo::proxy {
     struct Film: stl::proxy<Film, photo::Film> {
         using proxy::proxy;
-        auto static init() noexcept -> void;
 
         auto operator()(filter::Filter filter, cref<uzv2> pixel, cref<fv2> u) noexcept -> Fixel {
             return (*idx)(filter, pixel, u);

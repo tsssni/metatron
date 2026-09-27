@@ -2,7 +2,7 @@
 #include <metatron/resource/serde/serde.hpp>
 
 namespace mtt::spectra {
-    auto Spectrum::init() noexcept -> void {
+    auto init() noexcept -> void {
         MTT_DESERIALIZE(
             Constant_Spectrum,
             Rgb_Spectrum,

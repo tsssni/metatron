@@ -48,8 +48,8 @@ namespace mtt::bsdf {
         }, eta);
     }
 
-    auto Physical_Bsdf::init() noexcept -> void {
-        fresnel_reflectance_table = fresnel_length + 1;
+    auto physical::init() noexcept -> void {
+        Physical_Bsdf::fresnel_reflectance_table = fresnel_length + 1;
         stl::scheduler::sync_parallel(uzv1{fresnel_length + 1}, [&](auto idx) {
             auto i = idx[0];
             auto integral = 0.0;
@@ -61,7 +61,7 @@ namespace mtt::bsdf {
                 auto f1 = fresnel(cos_theta, eta, 0.f);
                 integral += (f0 + f1) * 0.5f / fresnel_num_samples;
             }
-            fresnel_reflectance_table[i] = integral;
+            Physical_Bsdf::fresnel_reflectance_table[i] = integral;
         });
     }
 

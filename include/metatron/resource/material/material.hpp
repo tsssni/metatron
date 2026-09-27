@@ -3,11 +3,12 @@
 #include <metatron/resource/material/interface.hpp>
 
 namespace mtt::material {
+    auto init() noexcept -> void;
+
     struct Material final: stl::polynomial<Material
     , Physical_Material
     , Interface_Material> {
         using polynomial::polynomial;
-        auto static init() noexcept -> void;
 
         auto sample(
             cref<math::Context> ctx,

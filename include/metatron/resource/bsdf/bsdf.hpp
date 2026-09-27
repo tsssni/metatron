@@ -3,10 +3,10 @@
 #include <metatron/resource/bsdf/interface.hpp>
 
 namespace mtt::bsdf {
+    auto init() noexcept -> void;
+
     struct Bsdf final: stl::variant<Bsdf, Physical_Bsdf, Interface_Bsdf> {
         using variant::variant;
-
-        auto static init() noexcept -> void;
 
         // u for lobe selection replay
         auto operator()(cref<fv3> wo, cref<fv3> wi, f32 u = -1) const noexcept -> Interaction {

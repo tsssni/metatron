@@ -10,7 +10,7 @@ namespace glz {
 }
 
 namespace mtt::media {
-    auto Medium::init() noexcept -> void {
+    auto init() noexcept -> void {
         MTT_DESERIALIZE(Homogeneous_Medium, Heterogeneous_Medium, Vaccum_Medium);
         Medium::push<Vaccum_Medium>("/medium/vaccum", {});
     }

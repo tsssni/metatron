@@ -4,6 +4,8 @@
 #include <metatron/core/stl/stack.hpp>
 
 namespace mtt::color {
+    auto init() noexcept -> void;
+
     struct Color_Space final {
         enum struct Spectrum_Type {
             albedo,
@@ -42,6 +44,5 @@ namespace mtt::color {
 namespace mtt::color::proxy {
     struct Color_Space: stl::proxy<Color_Space, color::Color_Space> {
         using proxy::proxy;
-        auto static init() noexcept -> void;
     };
 }

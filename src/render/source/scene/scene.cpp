@@ -126,24 +126,23 @@ namespace mtt::scene {
         }, Local_Transform, Look_At_Transform);
         stl::vector<math::Transform>::init();
 
-        spectra::Spectrum::init();
-        color::proxy::Color_Space::init();
-        shape::Shape::init();
-        volume::Volume::init();
-        media::Medium::init();
-        texture::Vector_Texture::init();
-        texture::Spectrum_Texture::init();
-        material::Material::init();
-        bsdf::Bsdf::init();
-        light::Light::init();
+        spectra::init();
+        color::init();
+        shape::init();
+        volume::init();
+        media::init();
+        texture::init();
+        material::init();
+        bsdf::init();
+        light::init();
 
-        accel::Acceleration::init();
-        monte_carlo::Integrator::init();
-        emitter::Emitter::init();
-        sampler::Sampler::init();
-        filter::Filter::init();
-        photo::Lens::init();
-        photo::proxy::Film::init();
+        accel::init();
+        monte_carlo::init();
+        emitter::init();
+        sampler::init();
+        filter::init();
+        photo::lens::init();
+        photo::init();
 
         auto& args = scene::Args::instance();
         auto renderer = obj<renderer::Renderer>();

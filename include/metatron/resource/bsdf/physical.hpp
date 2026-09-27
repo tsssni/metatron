@@ -3,6 +3,10 @@
 #include <metatron/core/stl/stack.hpp>
 
 namespace mtt::bsdf {
+    namespace physical {
+        auto init() noexcept -> void;
+    }
+
     struct Physical_Bsdf final {
         Physical_Bsdf(
             cref<fv4> reflectance,
@@ -13,7 +17,6 @@ namespace mtt::bsdf {
         ) noexcept;
 
         buf<f32> static fresnel_reflectance_table;
-        auto static init() noexcept -> void;
 
         // microfacet:
         //    https://pbr-book.org/4ed/Reflection_Models/Roughness_Using_Microfacet_Theory

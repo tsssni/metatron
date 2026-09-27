@@ -5,12 +5,13 @@
 #include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::sampler {
+    auto init() noexcept -> void;
+
     struct Sampler final: stl::polynomial<Sampler
     , Independent_Sampler
     , Halton_Sampler
     , Z_Sobol_Sampler> {
         using polynomial::polynomial;
-        auto static init() noexcept -> void;
 
         auto start(ref<Context> ctx) const noexcept -> void {
             visit([&](auto* p) noexcept { p->start(ctx); });

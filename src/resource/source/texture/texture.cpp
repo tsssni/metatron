@@ -11,16 +11,14 @@ namespace glz {
 }
 
 namespace mtt::texture {
-    auto Vector_Texture::init() noexcept -> void {
+    auto init() noexcept -> void {
         MTT_DESERIALIZE(
             Constant_Vector_Texture,
             Image_Vector_Texture
         );
         stl::vector<muldim::Image>::init();
         stl::vector<math::Planar_Distribution>::init();
-    }
 
-    auto Spectrum_Texture::init() noexcept -> void {
         MTT_DESERIALIZE(
             Constant_Spectrum_Texture,
             Image_Spectrum_Texture,

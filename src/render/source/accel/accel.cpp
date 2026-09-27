@@ -2,7 +2,7 @@
 #include <metatron/resource/serde/serde.hpp>
 
 namespace mtt::accel {
-    auto Acceleration::init() noexcept -> void {
+    auto init() noexcept -> void {
         MTT_DESERIALIZE(Divider);
         MTT_DESERIALIZE_CALLBACK(
         [](ref<scene::Hierarchy::binmap> bins) noexcept {

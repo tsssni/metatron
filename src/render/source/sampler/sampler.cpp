@@ -2,8 +2,8 @@
 #include <metatron/resource/serde/serde.hpp>
 
 namespace mtt::sampler {
-    auto Sampler::init() noexcept -> void {
-        Z_Sobol_Sampler::init();
+    auto init() noexcept -> void {
+        z_sobol::init();
         MTT_DESERIALIZE(
             Independent_Sampler,
             Halton_Sampler,

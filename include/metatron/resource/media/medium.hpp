@@ -4,6 +4,8 @@
 #include <metatron/resource/media/vaccum.hpp>
 
 namespace mtt::media {
+    auto init() noexcept -> void;
+
     struct Iterator final: stl::variant<Iterator
     , Homogeneous_Medium::Iterator
     , Heterogeneous_Medium::Iterator
@@ -20,7 +22,6 @@ namespace mtt::media {
     , Heterogeneous_Medium
     , Vaccum_Medium> {
         using polynomial::polynomial;
-        auto static init() noexcept -> void;
 
         auto begin(cref<math::Context> ctx, f32 t_max) const noexcept -> Iterator {
             return visit([&, t_max](auto* p) noexcept { return Iterator{p->begin(ctx, t_max)}; });

@@ -7,6 +7,8 @@
 #include <metatron/core/math/eval.hpp>
 
 namespace mtt::spectra {
+    auto init() noexcept -> void;
+
     struct Spectrum final: stl::polynomial<Spectrum
     , Constant_Spectrum
     , Rgb_Spectrum
@@ -14,7 +16,6 @@ namespace mtt::spectra {
     , Visible_Spectrum
     , Discrete_Spectrum> {
         using polynomial::polynomial;
-        auto static init() noexcept -> void;
 
         auto operator()(f32 lambda) const noexcept -> f32 {
             return visit([&](auto* p) noexcept { return (*p)(lambda); });

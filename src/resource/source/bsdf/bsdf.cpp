@@ -4,8 +4,8 @@
 #include <metatron/core/math/sphere.hpp>
 
 namespace mtt::bsdf {
-    auto Bsdf::init() noexcept -> void {
-        Physical_Bsdf::init();
+    auto init() noexcept -> void {
+        physical::init();
     }
 
     auto lambert(f32 reflectance) noexcept -> f32 {

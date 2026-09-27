@@ -3,11 +3,12 @@
 #include <metatron/resource/volume/nanovdb.hpp>
 
 namespace mtt::volume {
+    auto init() noexcept -> void;
+
     struct Volume final: stl::polynomial<Volume
     , Uniform_Volume
     , Nanovdb_Volume> {
         using polynomial::polynomial;
-        auto static init() noexcept -> void;
 
         auto to_local(cref<iv3> ijk) const noexcept -> fv3 {
             return visit([&](auto* p) noexcept { return p->to_local(ijk); });
