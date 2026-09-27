@@ -10,7 +10,7 @@ namespace mtt::material {
         auto sample(
             math::Context const& ctx,
             muldim::Coordinate const& coord
-        ) const noexcept -> Interaction;
+        ) const noexcept -> Interaction<bsdf::Interface_Bsdf>;
         auto flags() const noexcept -> Flags;
 
     private:

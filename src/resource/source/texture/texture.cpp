@@ -25,7 +25,7 @@ namespace mtt::texture {
             Checkerboard_Texture
         );
 
-        [&]<typename... Ss>(stl::array<Ss...>*) {
+        [&]<typename... Ss>(std::type_identity<stl::array<Ss...>>) {
             using svec = spectra::Spectrum::vs;
             auto add = [&]<typename S>() { for (auto const& path: svec::keys<S>())
             Spectrum_Texture::push<Constant_Spectrum_Texture>(
@@ -33,7 +33,7 @@ namespace mtt::texture {
                 {spectra::Spectrum{svec::entity<S>(path)}}
             ); };
             (add.template operator()<Ss>(), ...);
-        }((spectra::Spectrum::ts*)nullptr);
+        }(std::type_identity<spectra::Spectrum::ts>{});
     }
 
     auto grad(

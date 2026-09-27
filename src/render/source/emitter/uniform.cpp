@@ -4,7 +4,7 @@ namespace mtt::emitter {
     Uniform_Emitter::Uniform_Emitter(Descriptor const&) noexcept {
         auto prims = std::vector<Primitive>{};
         auto inf_prims = std::vector<Primitive>{};
-        [&]<typename... Ls>(stl::array<Ls...>*) {
+        [&]<typename... Ls>(std::type_identity<stl::array<Ls...>>) {
             using lvec = light::Light::vs;
             auto add = [&]<typename L>() {
                 for (auto const& et: lvec::keys<L>()) {
@@ -16,7 +16,7 @@ namespace mtt::emitter {
                 }
             };
             (add.template operator()<Ls>(), ...);
-        }((light::Light::ts*)nullptr);
+        }(std::type_identity<light::Light::ts>{});
 
         this->prims = std::span{prims};
         this->inf_prims = std::span{inf_prims};

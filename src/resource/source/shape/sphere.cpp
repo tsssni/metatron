@@ -83,6 +83,6 @@ namespace mtt::shape {
         auto x0 = (-b - math::pow<1,2>(delta)) / (2.f * a);
         auto x1 = (-b + math::pow<1,2>(delta)) / (2.f * a);
         if (x1 < 0.f) return fv4{math::inf<f32>};
-        return fv4{0, 0, 0, x0 < 0.f ? x1 : x0};
+        return x0 < 0.f ? fv4{0.f, 0.f, -1.f, x1} : fv4{0.f, 0.f, 1.f, x0};
     }
 }

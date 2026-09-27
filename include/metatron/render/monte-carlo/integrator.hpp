@@ -4,9 +4,9 @@
 namespace mtt::monte_carlo {
     auto init() noexcept -> void;
 
-    struct Integrator final: stl::polynomial<Integrator
+    struct Integrator final: stl::polymorph<Integrator
     , Radiative_Integrator> {
-        using polynomial::polynomial;
+        using polymorph::polymorph;
         auto trace(Context& ctx) noexcept -> void {
             return visit([&](auto* p) noexcept { return p->trace(ctx); });
         }

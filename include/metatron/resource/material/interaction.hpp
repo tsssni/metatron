@@ -3,8 +3,9 @@
 #include <metatron/resource/bsdf/bsdf.hpp>
 
 namespace mtt::material {
+    template<bsdf::Scattering Bsdf>
     struct Interaction final {
-        bsdf::Bsdf bsdf;
+        Bsdf bsdf;
         fv4 emission;
         fv3 normal = {0.f};
         bool degraded = false;

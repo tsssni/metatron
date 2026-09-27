@@ -4,9 +4,9 @@
 namespace mtt::emitter {
     auto init() noexcept -> void;
 
-    struct Emitter final: stl::polynomial<Emitter
+    struct Emitter final: stl::polymorph<Emitter
     , Uniform_Emitter> {
-        using polynomial::polynomial;
+        using polymorph::polymorph;
 
         auto sample(math::Context const& ctx, f32 u) const noexcept -> Interaction {
             return visit([&](auto* p) noexcept { return p->sample(ctx, u); });

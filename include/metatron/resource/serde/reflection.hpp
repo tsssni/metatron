@@ -11,20 +11,21 @@ namespace glz {
     };
 
     template<typename T>
-    requires mtt::stl::is_polynomial<T> || mtt::stl::is_proxy<T>
+    requires mtt::stl::polymorphic<T> || mtt::stl::proxied<T> || mtt::stl::sealed<T>
     struct meta<T> {
         auto static constexpr custom_read = true;
         auto static constexpr custom_write = true;
     };
 
     template<typename T>
-    requires mtt::stl::is_polynomial<T> || mtt::stl::is_proxy<T>
+    requires mtt::stl::polymorphic<T> || mtt::stl::proxied<T> || mtt::stl::sealed<T>
     struct from<JSON, T> {
         template<auto Opts>
         auto static op(T& v, auto&&... args) noexcept -> void {
             auto path = std::string{};
             parse<JSON>::op<Opts>(path, args...);
-            v = T::entity(path);
+            if constexpr (mtt::stl::sealed<T>) v = T::vs::entity(path);
+            else v = T::entity(path);
         }
     };
 

@@ -16,7 +16,7 @@ namespace mtt::material {
         auto sample(
             math::Context const& ctx,
             muldim::Coordinate const& coord
-        ) const noexcept -> Interaction;
+        ) const noexcept -> Interaction<bsdf::Physical_Bsdf>;
         auto flags() const noexcept -> Flags;
     };
 }

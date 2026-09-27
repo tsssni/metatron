@@ -4,6 +4,10 @@
 #include <metatron/core/math/distribution/gaussian.hpp>
 #include <metatron/core/math/distribution/cone.hpp>
 
+namespace mtt::light::atmosphere {
+    auto init() noexcept -> void;
+}
+
 namespace mtt::light {
     auto constexpr atmo_num_lambda = 11;
     auto constexpr atmo_num_turbility = 10;
@@ -29,10 +33,6 @@ namespace mtt::light {
     auto constexpr tgmm_num_gaussian_params = 4;
     auto constexpr tgmm_num_bilinear = 4;
     auto constexpr tgmm_num_gaussian = tgmm_num_bilinear * tgmm_num_mixture;
-
-    namespace atmosphere {
-        auto init() noexcept -> void;
-    }
 
     struct Atmosphere_Light final {
         struct Descriptor final {

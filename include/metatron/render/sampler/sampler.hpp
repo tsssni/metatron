@@ -7,11 +7,11 @@
 namespace mtt::sampler {
     auto init() noexcept -> void;
 
-    struct Sampler final: stl::polynomial<Sampler
+    struct Sampler final: stl::polymorph<Sampler
     , Independent_Sampler
     , Halton_Sampler
     , Z_Sobol_Sampler> {
-        using polynomial::polynomial;
+        using polymorph::polymorph;
 
         auto start(Context& ctx) const noexcept -> void {
             visit([&](auto* p) noexcept { p->start(ctx); });

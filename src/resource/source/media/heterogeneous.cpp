@@ -33,7 +33,7 @@ namespace mtt::media {
         update_majorant(t_max);
     }
 
-    auto Heterogeneous_Medium::Iterator::march(f32 uu) noexcept -> Interaction {
+    auto Heterogeneous_Medium::Iterator::march(f32 uu) noexcept -> Interaction<phase::Henyey_Greenstein_Phase_Function> {
         transmittance = {1.f};
         t_transmitted = 0.f;
         u = uu;
@@ -45,7 +45,7 @@ namespace mtt::media {
             if (t_boundary <= t_cell && (thin || t_u >= t_boundary)) {
                 update_transmittance(t_boundary);
                 return {
-                    medium->phase.to_phase(),
+                    medium->phase,
                     r.o,
                     t_max,
                     transmittance,
@@ -58,7 +58,7 @@ namespace mtt::media {
                 update_transmittance(t_u);
                 auto density = std::as_const(medium->density)(r.o);
                 return {
-                    medium->phase.to_phase(),
+                    medium->phase,
                     r.o,
                     t_transmitted,
                     transmittance,

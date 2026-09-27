@@ -273,6 +273,7 @@ namespace mtt::stl {
 namespace mtt {
     template<typename... Ts>
     struct tag final {
+        using tag_marker = u32;
         using ts = stl::array<Ts...>;
         using vs = stl::vector<Ts...>;
         using F = ts::template type<0>;

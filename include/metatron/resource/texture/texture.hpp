@@ -7,11 +7,11 @@
 namespace mtt::texture {
     auto init() noexcept -> void;
 
-    struct Spectrum_Texture final: stl::polynomial<Spectrum_Texture
+    struct Spectrum_Texture final: stl::polymorph<Spectrum_Texture
     , Constant_Spectrum_Texture
     , Image_Spectrum_Texture
     , Checkerboard_Texture> {
-        using polynomial::polynomial;
+        using polymorph::polymorph;
 
         auto operator()(muldim::Coordinate const& coord, fv4 const& lambda) const noexcept -> fv4 {
             return visit([&](auto* p) noexcept { return (*p)(coord, lambda); });
@@ -24,10 +24,10 @@ namespace mtt::texture {
         }
     };
 
-    struct Vector_Texture final: stl::polynomial<Vector_Texture
+    struct Vector_Texture final: stl::polymorph<Vector_Texture
     , Constant_Vector_Texture
     , Image_Vector_Texture> {
-        using polynomial::polynomial;
+        using polymorph::polymorph;
 
         auto operator()(muldim::Coordinate const& coord) const noexcept -> fv4 {
             return visit([&](auto* p) noexcept { return (*p)(coord); });

@@ -3,8 +3,9 @@
 #include <metatron/resource/spectra/spectrum.hpp>
 
 namespace mtt::media {
+    template<phase::Phase_Function Phase_Function>
     struct Interaction final {
-        phase::Phase_Function phase;
+        Phase_Function phase;
         fv3 p;
         f32 t;
         fv4 transmittance;
@@ -13,14 +14,5 @@ namespace mtt::media {
         fv4 sigma_n;
         fv4 sigma_maj;
         fv4 sigma_e;
-    };
-
-    struct Phase final {
-        enum struct Function {
-            henyey_greenstein,
-        } function = Function::henyey_greenstein;
-        f32 g = 0.f;
-
-        auto to_phase() const noexcept -> phase::Phase_Function;
     };
 }

@@ -5,19 +5,16 @@
 namespace mtt::bsdf {
     auto init() noexcept -> void;
 
-    struct Bsdf final: stl::variant<Bsdf, Physical_Bsdf, Interface_Bsdf> {
-        using variant::variant;
-
+    template<typename T>
+    concept Scattering = requires(
+        T const& t,
+        fv3 const& wo, fv3 const& wi, f32 u0,
+        math::Context const& ctx, fv3 const& u1
+    ) {
         // u for lobe selection replay
-        auto operator()(fv3 const& wo, fv3 const& wi, f32 u = -1) const noexcept -> Interaction {
-            return visit([&](auto* p) noexcept { return (*p)(wo, wi, u); });
-        }
-        auto sample(math::Context const& ctx, fv3 const& u) const noexcept -> Interaction {
-            return visit([&](auto* p) noexcept { return p->sample(ctx, u); });
-        }
-        auto flags() const noexcept -> Flags {
-            return visit([](auto* p) noexcept { return p->flags(); });
-        }
+        { t(wo, wi, u0) } noexcept -> std::same_as<Interaction>;
+        { t.sample(ctx, u1) } noexcept -> std::same_as<Interaction>;
+        { t.flags() } noexcept -> std::same_as<Flags>;
     };
 
     auto lambert(f32 reflectance) noexcept -> f32;

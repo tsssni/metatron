@@ -5,10 +5,10 @@
 namespace mtt::accel {
     auto init() noexcept -> void;
 
-    struct Acceleration final: stl::polynomial<Acceleration
+    struct Acceleration final: stl::polymorph<Acceleration
     , LBVH
     , HWBVH> {
-        using polynomial::polynomial;
+        using polymorph::polymorph;
 
         auto operator()(math::Ray const& r, fv3 const& n) const noexcept -> Interaction {
             return visit([&](auto* p) noexcept { return (*p)(r, n); });

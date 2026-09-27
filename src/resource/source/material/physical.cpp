@@ -4,7 +4,7 @@ namespace mtt::material {
     auto Physical_Material::sample(
         math::Context const& ctx,
         muldim::Coordinate const& coord
-    ) const noexcept -> Interaction {
+    ) const noexcept -> Interaction<bsdf::Physical_Bsdf> {
         auto guarded_sample = [&]<typename T>(T tex, auto const& fallback) {
             if (!tex) return fallback;
             if constexpr (std::same_as<T, texture::Spectrum_Texture>)
@@ -37,11 +37,11 @@ namespace mtt::material {
         }
 
         return {
-            .bsdf = bsdf::Bsdf{bsdf::Physical_Bsdf{
+            .bsdf = bsdf::Physical_Bsdf{
                 reflectance,
                 (ctx.inside && eta != fv4{0.f}) ? 1.f / eta : eta,
                 k, alpha_u, alpha_v
-            }},
+            },
             .emission = emission,
             .normal = math::shrink(normal) * 2.f - 1.f,
             .degraded = degraded,

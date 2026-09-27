@@ -3,7 +3,7 @@
 
 namespace mtt::media {
     struct Homogeneous_Medium final {
-        Phase phase;
+        phase::Henyey_Greenstein_Phase_Function phase;
         spectra::Spectrum sigma_a = spectra::Spectrum::entity("/spectrum/zero");
         spectra::Spectrum sigma_s = spectra::Spectrum::entity("/spectrum/zero");
         spectra::Spectrum sigma_e = spectra::Spectrum::entity("/spectrum/zero");
@@ -13,7 +13,7 @@ namespace mtt::media {
             math::Ray r;
             fv4 lambda;
             f32 t_max;
-            auto march(f32 u) noexcept -> Interaction;
+            auto march(f32 u) noexcept -> Interaction<phase::Henyey_Greenstein_Phase_Function>;
         };
 
         auto begin(

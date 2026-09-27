@@ -6,7 +6,7 @@
 namespace mtt::media {
     struct Heterogeneous_Medium final {
         struct Descriptor final {
-            Phase phase;
+            phase::Henyey_Greenstein_Phase_Function phase;
             spectra::Spectrum sigma_a = spectra::Spectrum::entity("/spectrum/zero");
             spectra::Spectrum sigma_s = spectra::Spectrum::entity("/spectrum/zero");
             spectra::Spectrum sigma_e = spectra::Spectrum::entity("/spectrum/zero");
@@ -23,7 +23,7 @@ namespace mtt::media {
                 math::Context const& ctx,
                 f32 t
             ) noexcept;
-            auto march(f32 uu) noexcept -> Interaction;
+            auto march(f32 uu) noexcept -> Interaction<phase::Henyey_Greenstein_Phase_Function>;
 
         private:
             auto update_majorant(f32 t) noexcept -> void;
@@ -54,7 +54,7 @@ namespace mtt::media {
     private:
         friend Iterator;
 
-        Phase phase;
+        phase::Henyey_Greenstein_Phase_Function phase;
         spectra::Spectrum sigma_a;
         spectra::Spectrum sigma_s;
         spectra::Spectrum sigma_e;

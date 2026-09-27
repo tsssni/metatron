@@ -6,11 +6,11 @@
 namespace mtt::filter {
     auto init() noexcept -> void;
 
-    struct Filter final: stl::polynomial<Filter
+    struct Filter final: stl::polymorph<Filter
     , Box_Filter
     , Gaussian_Filter
     , Lanczos_Filter> {
-        using polynomial::polynomial;
+        using polymorph::polymorph;
 
         auto operator()(fv2 const& p) const noexcept -> f32 {
             return visit([&](auto* x) noexcept { return (*x)(p); });

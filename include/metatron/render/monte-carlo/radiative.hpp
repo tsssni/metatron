@@ -13,8 +13,10 @@ namespace mtt::monte_carlo {
 
     private:
         struct Payload;
+        template<shape::Intersectable Shape, material::Surfaced Material, media::Participating Medium>
         auto hit(Payload& payload) const noexcept -> void;
-        auto track(Payload& payload, accel::Acceleration const& accel) const noexcept -> void;
+        template<shape::Intersectable Shape, material::Surfaced Material, media::Participating Medium>
+        auto track(Payload& payload) const noexcept -> void;
         auto sample(Context& ctx, uzv2 const& px) const noexcept -> void;
     };
 }

@@ -6,25 +6,22 @@
 namespace mtt::media {
     auto init() noexcept -> void;
 
-    struct Iterator final: stl::variant<Iterator
-    , Homogeneous_Medium::Iterator
-    , Heterogeneous_Medium::Iterator
-    , Vaccum_Medium::Iterator> {
-        using variant::variant;
-
-        auto march(f32 u) noexcept -> Interaction {
-            return visit([u](auto* p) noexcept { return p->march(u); });
-        }
+    template<typename T>
+    concept Marching = requires(T& t, f32 u) {
+        { t.march(u) } noexcept;
+        requires phase::Phase_Function<decltype(t.march(u).phase)>;
     };
 
-    struct Medium final: stl::polynomial<Medium
-    , Homogeneous_Medium
-    , Heterogeneous_Medium
-    , Vaccum_Medium> {
-        using polynomial::polynomial;
-
-        auto begin(math::Context const& ctx, f32 t_max) const noexcept -> Iterator {
-            return visit([&, t_max](auto* p) noexcept { return Iterator{p->begin(ctx, t_max)}; });
-        }
+    template<typename T>
+    concept Participating = requires(
+        T const& t,
+        math::Context const& ctx,
+        f32 t_max
+    ) {
+        { t.begin(ctx, t_max) } noexcept -> Marching;
     };
+
+    template<typename T>
+    struct Trait final: std::bool_constant<media::Participating<T>> {};
+    using Medium = stl::seal<Trait, Homogeneous_Medium, Heterogeneous_Medium, Vaccum_Medium>;
 }

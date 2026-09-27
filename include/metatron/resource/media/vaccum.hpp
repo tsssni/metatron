@@ -10,7 +10,7 @@ namespace mtt::media {
         struct Iterator final {
             math::Ray r;
             f32 t_max;
-            auto march(f32 u) noexcept -> Interaction;
+            auto march(f32 u) noexcept -> Interaction<phase::Vaccum_Phase_Function>;
         };
 
         auto begin(

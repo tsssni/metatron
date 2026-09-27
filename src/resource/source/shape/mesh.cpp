@@ -130,7 +130,7 @@ namespace mtt::shape {
         math::Ray const& r, fv3 const& np,
         fv4 const& pos, usize idx
     ) const noexcept -> Interaction {
-        auto bary = math::shrink(pos);
+        auto bary = fv3{1.f - pos[0] - pos[1], pos[0], pos[1]};
         auto t = pos[3];
         auto pdf = this->pdf(r, np, idx);
         auto p = blerp(vertices, bary, idx);
@@ -276,7 +276,10 @@ namespace mtt::shape {
         auto bary = e / det;
         auto t = math::blerp(v, bary)[2];
         if (t < math::epsilon<f32>) return fv4{math::inf<f32>};
-        return fv4{bary, t};
+
+        auto ng = math::cross(vertices[prim[1]] - vertices[prim[0]], vertices[prim[2]] - vertices[prim[0]]);
+        auto face = math::dot(ng, r.d) < 0.f ? 1.f : -1.f;
+        return fv4{bary[1], bary[2], face, t};
     }
 
     auto Mesh::pdf(

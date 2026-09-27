@@ -5,10 +5,10 @@
 namespace mtt::shape {
     auto init() noexcept -> void;
 
-    struct Shape final: stl::polynomial<Shape
+    struct Shape final: stl::polymorph<Shape
     , Mesh
     , Sphere> {
-        using polynomial::polynomial;
+        using polymorph::polymorph;
 
         auto size() const noexcept -> usize {
             return visit([&](auto* p) noexcept { return p->size(); });
@@ -29,4 +29,7 @@ namespace mtt::shape {
             return visit([&, idx](auto* p) noexcept { return p->query(r, idx); });
         }
     };
+
+    template<typename T>
+    concept Intersectable = Shape::ts::template contains<T>;
 }

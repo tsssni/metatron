@@ -10,8 +10,8 @@ namespace mtt::accel {
 
     struct Divider final {
         shape::Shape shape{};
-        media::Medium int_medium{media::Medium::entity(default_medium)};
-        media::Medium ext_medium{media::Medium::entity(default_medium)};
+        media::Medium int_medium{media::Medium::vs::entity(default_medium)};
+        media::Medium ext_medium{media::Medium::vs::entity(default_medium)};
         material::Material material{};
         math::proxy::Transform local_to_render{};
         math::proxy::Transform int_to_render{math::proxy::Transform::entity(default_transform)};

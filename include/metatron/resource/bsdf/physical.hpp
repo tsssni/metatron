@@ -2,11 +2,11 @@
 #include <metatron/resource/bsdf/interaction.hpp>
 #include <metatron/core/stl/stack.hpp>
 
-namespace mtt::bsdf {
-    namespace physical {
-        auto init() noexcept -> void;
-    }
+namespace mtt::bsdf::physical {
+    auto init() noexcept -> void;
+}
 
+namespace mtt::bsdf {
     struct Physical_Bsdf final {
         Physical_Bsdf(
             fv4 const& reflectance,

@@ -9,13 +9,13 @@
 namespace mtt::spectra {
     auto init() noexcept -> void;
 
-    struct Spectrum final: stl::polynomial<Spectrum
+    struct Spectrum final: stl::polymorph<Spectrum
     , Constant_Spectrum
     , Rgb_Spectrum
     , Blackbody_Spectrum
     , Visible_Spectrum
     , Discrete_Spectrum> {
-        using polynomial::polynomial;
+        using polymorph::polymorph;
 
         auto operator()(f32 lambda) const noexcept -> f32 {
             return visit([&](auto* p) noexcept { return (*p)(lambda); });

@@ -3,18 +3,18 @@
 
 namespace mtt::stl {
     template<typename T>
-    concept is_polynomial = requires { typename T::polynomial_marker; };
+    concept polymorphic = requires { typename T::polymorphic_marker; };
 
     template<typename Self, typename... Ts>
-    struct polynomial {
-        using polynomial_marker = u32;
+    struct polymorph {
+        using polymorphic_marker = u32;
         using ts = stl::array<Ts...>;
         using vs = stl::vector<Ts...>;
         tag<Ts...> idx;
 
-        polynomial() noexcept = default;
-        polynomial(u32 raw) noexcept: idx(raw) {}
-        polynomial(tag<Ts...> idx) noexcept: idx(idx) {}
+        polymorph() noexcept = default;
+        polymorph(u32 raw) noexcept: idx(raw) {}
+        polymorph(tag<Ts...> idx) noexcept: idx(idx) {}
 
         auto static entity(std::string_view path) noexcept -> Self {
             return {vs::entity(path)};
@@ -73,93 +73,7 @@ namespace mtt::stl {
     };
 
     template<typename T>
-    concept is_variant = requires(T t) { typename T::variant_marker; };
-
-    template<typename Self, typename... Ts>
-    requires (sizeof...(Ts) > 0)
-    struct alignas(stl::array<Ts...>::alignment) variant {
-        using variant_marker = u32;
-        using ts = stl::array<Ts...>;
-
-        std::array<byte, ts::storage> storage;
-        byte idx = math::maxv<byte>;
-
-        variant() noexcept = default;
-
-        template<typename T>
-        requires ts::template contains<std::decay_t<T>>
-        variant(T&& x) noexcept { emplace<std::decay_t<T>>(std::forward<T>(x)); }
-
-        variant(variant const&) noexcept = delete;
-        variant(variant&& rhs) noexcept {
-            idx = rhs.idx;
-            if (idx != math::maxv<byte>) auto _ = ((idx == ts::template index<Ts> ? (
-                std::construct_at(get<Ts>(), std::move(*rhs.template get<Ts>()))
-            , true) : false) || ...);
-            rhs.idx = math::maxv<byte>;
-        }
-        ~variant() noexcept { destroy(); }
-
-        auto operator=(variant const&) noexcept -> variant& = delete;
-        auto operator=(variant&& rhs) noexcept -> variant& {
-            destroy();
-            std::construct_at(this, std::move(rhs));
-            return *this;
-        }
-
-        template<typename T, typename... Args>
-        requires std::constructible_from<T, Args...> && ts::template contains<T>
-        auto emplace(Args&&... args) noexcept -> void {
-            destroy();
-            idx = ts::template index<T>;
-            std::construct_at(get<T>(), std::forward<Args>(args)...);
-        }
-
-        template<typename T>
-        requires ts::template contains<std::decay_t<T>>
-        auto push(T&& x) noexcept -> void {
-            emplace<std::decay_t<T>>(std::forward<T>(x));
-        }
-
-        template<typename T>
-        auto is() const noexcept -> bool { return ts::template index<T> == idx; }
-        auto path() const noexcept -> std::string_view { return {}; }
-        template<typename T>
-        auto get() noexcept -> T* { return (T*)storage.data(); }
-        template<typename T>
-        auto get() const noexcept -> T const* { return (T const*)storage.data(); }
-        auto index() const noexcept -> u32 { return idx; }
-        auto size() const noexcept -> usize { return storage.size(); }
-
-        operator u32() const noexcept { return idx; }
-        operator bool() const noexcept { return idx != math::maxv<byte>; }
-
-        template<typename S, typename F>
-        auto constexpr visit(this S&& self, F&& f) -> decltype(auto) {
-            using R = decltype(f(self.template get<typename ts::template type<0>>()));
-            using RS = std::remove_reference_t<S>&;
-            using thunk_t = R(*)(RS, F&);
-            return [&]<usize... Is>(std::index_sequence<Is...>) -> R {
-                auto constexpr table = std::to_array({
-                    +[](RS s, F& f) -> R {
-                        return f(s.template get<typename ts::template type<Is>>());
-                    }...
-                });
-                return table[self.idx](self, f);
-            }(std::make_index_sequence<sizeof...(Ts)>{});
-        }
-
-    private:
-        auto destroy() noexcept -> void {
-            if (idx != math::maxv<byte>) auto _ = ((
-                idx == ts::template index<Ts>
-                ? (std::destroy_at(get<Ts>()), true) : false
-            ) || ...);
-        }
-    };
-
-    template<typename T>
-    concept is_proxy = requires(T t) { typename T::proxy_marker; };
+    concept proxied = requires(T t) { typename T::proxy_marker; };
 
     template<typename P, typename T>
     struct proxy {
@@ -186,6 +100,31 @@ namespace mtt::stl {
 
         auto static entity(std::string_view path) noexcept -> P {
             return {vs::entity(path)};
+        }
+    };
+
+    template<typename T>
+    concept sealed = requires { typename T::tag_marker; };
+
+    template<template<typename> typename S, typename... Ts>
+    requires (S<Ts>::value && ...)
+    using seal = mtt::tag<Ts...>;
+
+    struct cartesian final {
+        template<typename F, typename... Ts>
+        requires (sealed<Ts> && ...)
+        auto operator()(F&& f, Ts... tags) const noexcept -> void { visit(f, tags...); }
+
+    private:
+        template<typename... Us, typename F>
+        auto visit(F& f) const noexcept -> void { f.template operator()<Us...>(); }
+
+        template<typename... Us, typename F, typename T, typename... Ts>
+        auto visit(F& f, T tag, Ts... tags) const noexcept -> void {
+            [&]<typename... Vs>(std::type_identity<stl::array<Vs...>>) { auto _ =
+            ((tag.type() == T::ts::template index<Vs> ? (
+                this->template visit<Us..., Vs>(f, tags...)
+            , true) : false) || ...); }(std::type_identity<typename T::ts>{});
         }
     };
 }

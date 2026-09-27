@@ -5,10 +5,10 @@
 namespace mtt::volume {
     auto init() noexcept -> void;
 
-    struct Volume final: stl::polynomial<Volume
+    struct Volume final: stl::polymorph<Volume
     , Uniform_Volume
     , Nanovdb_Volume> {
-        using polynomial::polynomial;
+        using polymorph::polymorph;
 
         auto to_local(iv3 const& ijk) const noexcept -> fv3 {
             return visit([&](auto* p) noexcept { return p->to_local(ijk); });
