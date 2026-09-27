@@ -6,12 +6,12 @@ namespace mtt::command {
 
     struct Buffer;
     struct Blocks final {
-        mut<Buffer> cmd;
+        Buffer* cmd;
         auto allocate(usize size) noexcept -> opaque::Buffer::View;
         auto clear() noexcept -> void;
 
     private:
         uptr next = 0;
-        std::vector<obj<opaque::Buffer>> blocks;
+        std::vector<std::unique_ptr<opaque::Buffer>> blocks;
     };
 }

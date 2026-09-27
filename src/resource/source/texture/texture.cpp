@@ -37,8 +37,8 @@ namespace mtt::texture {
     }
 
     auto grad(
-        cref<math::Ray_Differential> diff,
-        cref<shape::Interaction> intr
+        math::Ray_Differential const& diff,
+        shape::Interaction const& intr
     ) noexcept -> muldim::Coordinate {
         auto tangent = math::Plane{intr.p, intr.n};
         auto dt = math::hit(diff.r, tangent);
@@ -56,10 +56,10 @@ namespace mtt::texture {
     }
 
     auto propagate(
-        cref<math::Ray_Differential> diff,
-        cref<shape::Interaction> intr,
-        cref<muldim::Coordinate> coord,
-        cref<fv3> wi, cref<fv4> eta
+        math::Ray_Differential const& diff,
+        shape::Interaction const& intr,
+        muldim::Coordinate const& coord,
+        fv3 const& wi, fv4 const& eta
     ) noexcept -> math::Ray_Differential {
         auto wo = -math::normalize(diff.r.d);
         auto reflective = math::dot(wo, intr.n) * math::dot(wi, intr.n) > 0.f;
@@ -72,7 +72,7 @@ namespace mtt::texture {
         auto dndx = intr.dndu * coord.dudx + intr.dndv * coord.dvdx;
         auto dndy = intr.dndu * coord.dudy + intr.dndv * coord.dvdy;
 
-        auto derive = [&](cref<math::Ray> r, cref<fv3> dpdx, cref<fv3> dndx) -> math::Ray {
+        auto derive = [&](math::Ray const& r, fv3 const& dpdx, fv3 const& dndx) -> math::Ray {
             auto d = math::normalize(r.d);
             auto m = math::normalize(n + dndx);
             auto wx = reflective ? math::reflect(d, m) : math::refract(d, m, eta[0]);

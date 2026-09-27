@@ -9,16 +9,16 @@ namespace mtt::texture {
             spectra::Spectrum y;
             uv2 uv_scale = uv2{1};
         };
-        Checkerboard_Texture(cref<Descriptor> desc) noexcept;
+        Checkerboard_Texture(Descriptor const& desc) noexcept;
         Checkerboard_Texture() noexcept = default;
 
         auto operator()(
-            cref<muldim::Coordinate> coord, cref<fv4> lambda
+            muldim::Coordinate const& coord, fv4 const& lambda
         ) const noexcept -> fv4;
         auto sample(
-            cref<math::Context> ctx, cref<fv2> u
+            math::Context const& ctx, fv2 const& u
         ) const noexcept -> fv2;
-        auto pdf(cref<fv2> uv) const noexcept -> f32;
+        auto pdf(fv2 const& uv) const noexcept -> f32;
 
     private:
         spectra::Spectrum x;

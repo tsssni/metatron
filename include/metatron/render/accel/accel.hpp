@@ -10,7 +10,7 @@ namespace mtt::accel {
     , HWBVH> {
         using polynomial::polynomial;
 
-        auto operator()(cref<math::Ray> r, cref<fv3> n) const noexcept -> Interaction {
+        auto operator()(math::Ray const& r, fv3 const& n) const noexcept -> Interaction {
             return visit([&](auto* p) noexcept { return (*p)(r, n); });
         }
     };

@@ -3,8 +3,8 @@
 
 namespace mtt::media {
     Heterogeneous_Medium::Iterator::Iterator(
-        cref<Heterogeneous_Medium> m,
-        cref<math::Context> ctx,
+        Heterogeneous_Medium const& m,
+        math::Context const& ctx,
         f32 t
     ) noexcept {
         medium = &m;
@@ -105,7 +105,7 @@ namespace mtt::media {
         transmittance *= exp;
     }
 
-    Heterogeneous_Medium::Heterogeneous_Medium(cref<Descriptor> desc) noexcept:
+    Heterogeneous_Medium::Heterogeneous_Medium(Descriptor const& desc) noexcept:
     phase(desc.phase),
     sigma_a(desc.sigma_a),
     sigma_s(desc.sigma_s),
@@ -115,7 +115,7 @@ namespace mtt::media {
         auto sigmaj = volume::Uniform_Volume{{density.bounding_box(), desc.dimensions}};
         stl::scheduler::sync_parallel(
             sigmaj.dimensions(),
-            [&](cref<uzv3> xyz) mutable {
+            [&](uzv3 const& xyz) mutable {
                 auto ijk = iv3{xyz};
                 auto voxel_bbox = sigmaj.bounding_box(ijk);
                 auto maj = math::low<f32>;
@@ -136,7 +136,7 @@ namespace mtt::media {
         majorant = volume::Volume::push_back<volume::Uniform_Volume>(std::move(sigmaj));
     }
 
-    auto Heterogeneous_Medium::begin(cref<math::Context> ctx, f32 t_max) const noexcept -> Iterator {
+    auto Heterogeneous_Medium::begin(math::Context const& ctx, f32 t_max) const noexcept -> Iterator {
         return {*this, ctx, t_max};
     }
 }

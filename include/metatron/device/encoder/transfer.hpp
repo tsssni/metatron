@@ -6,8 +6,8 @@
 namespace mtt::encoder {
     struct Transfer_Encoder final: stl::capsule<Transfer_Encoder> {
         struct Impl;
-        mut<command::Buffer> cmd;
-        Transfer_Encoder(mut<command::Buffer> cmd) noexcept;
+        command::Buffer* cmd;
+        Transfer_Encoder(command::Buffer* cmd) noexcept;
 
         auto submit() noexcept -> void;
         auto upload(opaque::Buffer::View buffer) noexcept -> void;
@@ -22,9 +22,9 @@ namespace mtt::encoder {
         auto liberate(opaque::Image::View buffer) noexcept -> void;
         auto liberate(opaque::Grid::View buffer) noexcept -> void;
 
-        auto transfer(opaque::Buffer::View buffer, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void;
-        auto transfer(opaque::Image::View image, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void;
-        auto transfer(opaque::Grid::View grid, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void;
+        auto transfer(opaque::Buffer::View buffer, command::Queue* dst, command::Queue* src) noexcept -> void;
+        auto transfer(opaque::Image::View image, command::Queue* dst, command::Queue* src) noexcept -> void;
+        auto transfer(opaque::Grid::View grid, command::Queue* dst, command::Queue* src) noexcept -> void;
 
         auto copy(opaque::Buffer::View dst, opaque::Buffer::View src) noexcept -> void;
         auto copy(opaque::Image::View dst, opaque::Buffer::View src) noexcept -> void;

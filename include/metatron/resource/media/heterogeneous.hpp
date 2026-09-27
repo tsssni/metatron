@@ -14,13 +14,13 @@ namespace mtt::media {
             volume::Volume density;
             f32 density_scale;
         };
-        Heterogeneous_Medium(cref<Descriptor> desc) noexcept;
+        Heterogeneous_Medium(Descriptor const& desc) noexcept;
         Heterogeneous_Medium() noexcept = default;
 
         struct Iterator final {
             Iterator(
-                cref<Heterogeneous_Medium> m,
-                cref<math::Context> ctx,
+                Heterogeneous_Medium const& m,
+                math::Context const& ctx,
                 f32 t
             ) noexcept;
             auto march(f32 uu) noexcept -> Interaction;
@@ -49,7 +49,7 @@ namespace mtt::media {
             f32 u;
         };
 
-        auto begin(cref<math::Context> ctx, f32 t_max) const noexcept -> Iterator;
+        auto begin(math::Context const& ctx, f32 t_max) const noexcept -> Iterator;
 
     private:
         friend Iterator;

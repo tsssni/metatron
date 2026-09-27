@@ -7,7 +7,7 @@
 #include <assimp/postprocess.h>
 
 namespace mtt::shape {
-    Mesh::Mesh(cref<Descriptor> desc) noexcept {
+    Mesh::Mesh(Descriptor const& desc) noexcept {
         auto path = stl::filesystem::find(desc.path);
         auto importer = Assimp::Importer{};
         auto* scene = importer.ReadFile(path.c_str(), 0
@@ -113,7 +113,7 @@ namespace mtt::shape {
     }
 
     auto Mesh::bounding_box(
-        cref<math::Transform> t, usize idx
+        math::Transform const& t, usize idx
     ) const noexcept -> math::Bounding_Box {
         auto prim = indices[idx];
         auto v = math::Vector<fv4, 3>{
@@ -127,8 +127,8 @@ namespace mtt::shape {
     }
 
     auto Mesh::operator()(
-        cref<math::Ray> r, cref<fv3> np,
-        cref<fv4> pos, usize idx
+        math::Ray const& r, fv3 const& np,
+        fv4 const& pos, usize idx
     ) const noexcept -> Interaction {
         auto bary = math::shrink(pos);
         auto t = pos[3];
@@ -147,10 +147,10 @@ namespace mtt::shape {
     }
 
     auto Mesh::sample(
-        cref<math::Context> ctx, cref<fv2> u, usize idx
+        math::Context const& ctx, fv2 const& u, usize idx
     ) const noexcept -> Interaction {
         auto prim = indices[idx];
-        auto validate_vector = [](cref<fv3> v) -> bool {
+        auto validate_vector = [](fv3 const& v) -> bool {
             return math::dot(v, v) >= math::epsilon<f32>;
         };
 
@@ -229,7 +229,7 @@ namespace mtt::shape {
     }
 
     auto Mesh::query(
-        cref<math::Ray> r, usize idx
+        math::Ray const& r, usize idx
     ) const noexcept -> fv4 {
         auto rs = r.d;
         auto ri = math::maxi(math::abs(rs));
@@ -280,7 +280,7 @@ namespace mtt::shape {
     }
 
     auto Mesh::pdf(
-        cref<math::Ray> r, cref<fv3> np, usize idx
+        math::Ray const& r, fv3 const& np, usize idx
     ) const noexcept -> f32 {
         auto prim = indices[idx];
         auto a = math::normalize(vertices[prim[0]] - r.o);

@@ -34,15 +34,15 @@ namespace mtt::command {
         guard(impl->queue.waitIdle());
     }
 
-    auto Queue::allocate(rref<Pairs> pairs) noexcept -> obj<Buffer> {
+    auto Queue::allocate(Pairs&& pairs) noexcept -> std::unique_ptr<Buffer> {
         auto& ctx = Context::internal();
         auto device = ctx->device.get();
         auto idx = stl::scheduler::index();
         auto& cmds = impl->cmds[idx];
         auto& pool = impl->pools[idx].get();
 
-        auto temp = std::deque<obj<Buffer>>();
-        auto picked = obj<Buffer>{};
+        auto temp = std::deque<std::unique_ptr<Buffer>>();
+        auto picked = std::unique_ptr<Buffer>{};
         auto timeout = impl->cmds.size() < 8 ? 0 : math::maxv<u64>;
         while (!cmds.empty()) {
             auto finished = true;
@@ -70,7 +70,7 @@ namespace mtt::command {
             picked->signals.clear();
             return picked;
         } else {
-            auto cmd = make_obj<Buffer>();
+            auto cmd = std::make_unique<Buffer>();
             cmd->type = type;
             cmd->waits = std::move(pairs);
             cmd->blocks.cmd = cmd.get();
@@ -85,10 +85,10 @@ namespace mtt::command {
         }
     }
 
-    auto Queue::submit(rref<obj<Buffer>> cmd, rref<Pairs> pairs) noexcept -> void {
+    auto Queue::submit(std::unique_ptr<Buffer>&& cmd, Pairs&& pairs) noexcept -> void {
         cmd->signals = pairs;
         guard(cmd->impl->cmd->end());
-        auto collect = [](cref<Pairs> semaphores, vk::PipelineStageFlags2 flags) {
+        auto collect = [](Pairs const& semaphores, vk::PipelineStageFlags2 flags) {
             auto& ctx = Context::internal();
             auto collected = std::vector<vk::SemaphoreSubmitInfo>(semaphores.size());
             for (auto i = 0; i < collected.size(); ++i) {

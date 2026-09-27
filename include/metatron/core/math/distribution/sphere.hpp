@@ -6,7 +6,7 @@ namespace mtt::math {
     struct Sphere_Distribution final {
         Sphere_Distribution() noexcept = default;
 
-        auto sample(cref<fv2> u) const noexcept -> fv3 {
+        auto sample(fv2 const& u) const noexcept -> fv3 {
             auto cos_theta = 1.f - 2.f * u[0];
             auto sin_theta = math::pow<1,2>(1 - cos_theta * cos_theta);
             auto phi = 2.f * pi * u[1];
@@ -21,7 +21,7 @@ namespace mtt::math {
     struct Hemisphere_Distribution final {
         Hemisphere_Distribution() noexcept = default;
 
-        auto sample(cref<fv2> u) const noexcept -> fv3 {
+        auto sample(fv2 const& u) const noexcept -> fv3 {
             auto z = u[0];
             auto r = math::pow<1,2>(1 - z * z);
             auto phi = 2.f * pi * u[1];
@@ -36,7 +36,7 @@ namespace mtt::math {
     struct Cosine_Hemisphere_Distribution final {
         Cosine_Hemisphere_Distribution() noexcept = default;
 
-        auto sample(cref<fv2> u) const noexcept -> fv3 {
+        auto sample(fv2 const& u) const noexcept -> fv3 {
             auto distr = Unifrom_Disk_Distribution{};
             auto d = distr.sample(u);
             return {d[0], math::pow<1,2>(1.f - math::pow<2>(d[0]) - math::pow<2>(d[1])), d[1]};

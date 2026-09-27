@@ -8,10 +8,10 @@ namespace mtt::filter {
             fv2 radius = {0.5f};
             f32 tau = 3.f;
         };
-        Lanczos_Filter(cref<Descriptor> desc) noexcept;
+        Lanczos_Filter(Descriptor const& desc) noexcept;
         Lanczos_Filter() noexcept = default;
-        auto operator()(cref<fv2> p) const noexcept -> f32;
-        auto sample(cref<fv2> u) const noexcept -> Interaction;
+        auto operator()(fv2 const& p) const noexcept -> f32;
+        auto sample(fv2 const& u) const noexcept -> Interaction;
 
     private:
         math::proxy::Planar_Distribution distr;

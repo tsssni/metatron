@@ -9,14 +9,14 @@ namespace mtt::emitter {
         };
 
         struct Descriptor final {};
-        Uniform_Emitter(cref<Descriptor>) noexcept;
+        Uniform_Emitter(Descriptor const&) noexcept;
         Uniform_Emitter() noexcept = default;
 
         auto sample(
-            cref<math::Context> ctx, f32 u
+            math::Context const& ctx, f32 u
         ) const noexcept -> Interaction;
         auto sample_infinite(
-            cref<math::Context> ctx, f32 u
+            math::Context const& ctx, f32 u
         ) const noexcept -> Interaction;
 
     private:

@@ -11,14 +11,14 @@ namespace mtt::encoder {
         opaque::Barrier lib_barrier;
 
         template<typename T>
-        auto persist(mut<Transfer_Encoder> encoder, T view) noexcept -> void;
+        auto persist(Transfer_Encoder* encoder, T view) noexcept -> void;
         template<typename T>
-        auto liberate(mut<Transfer_Encoder> encoder, T view) noexcept -> void;
+        auto liberate(Transfer_Encoder* encoder, T view) noexcept -> void;
         template<typename T>
-        auto transfer(mut<Transfer_Encoder> encoder, T view, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void;
+        auto transfer(Transfer_Encoder* encoder, T view, command::Queue* dst, command::Queue* src) noexcept -> void;
         template<typename T, typename U>
-        auto copy(mut<Transfer_Encoder> encoder, T to, U from) noexcept -> void;
+        auto copy(Transfer_Encoder* encoder, T to, U from) noexcept -> void;
         template<typename T>
-        auto copy(mut<Transfer_Encoder> encoder, T to, T from) noexcept -> void;
+        auto copy(Transfer_Encoder* encoder, T to, T from) noexcept -> void;
     };
 }

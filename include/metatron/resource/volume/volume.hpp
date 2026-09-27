@@ -10,37 +10,37 @@ namespace mtt::volume {
     , Nanovdb_Volume> {
         using polynomial::polynomial;
 
-        auto to_local(cref<iv3> ijk) const noexcept -> fv3 {
+        auto to_local(iv3 const& ijk) const noexcept -> fv3 {
             return visit([&](auto* p) noexcept { return p->to_local(ijk); });
         }
-        auto to_index(cref<fv3> pos) const noexcept -> iv3 {
+        auto to_index(fv3 const& pos) const noexcept -> iv3 {
             return visit([&](auto* p) noexcept { return p->to_index(pos); });
         }
         auto dimensions() const noexcept -> uzv3 {
             return visit([&](auto* p) noexcept { return p->dimensions(); });
         }
-        auto inside(cref<iv3> pos) const noexcept -> bool {
+        auto inside(iv3 const& pos) const noexcept -> bool {
             return visit([&](auto* p) noexcept { return p->inside(pos); });
         }
-        auto inside(cref<fv3> pos) const noexcept -> bool {
+        auto inside(fv3 const& pos) const noexcept -> bool {
             return visit([&](auto* p) noexcept { return p->inside(pos); });
         }
         auto bounding_box() const noexcept -> math::Bounding_Box {
             return visit([&](auto* p) noexcept { return p->bounding_box(); });
         }
-        auto bounding_box(cref<fv3> pos) const noexcept -> math::Bounding_Box {
+        auto bounding_box(fv3 const& pos) const noexcept -> math::Bounding_Box {
             return visit([&](auto* p) noexcept { return p->bounding_box(pos); });
         }
-        auto bounding_box(cref<iv3> ijk) const noexcept -> math::Bounding_Box {
+        auto bounding_box(iv3 const& ijk) const noexcept -> math::Bounding_Box {
             return visit([&](auto* p) noexcept { return p->bounding_box(ijk); });
         }
-        auto operator()(cref<fv3> pos) const noexcept -> f32 {
+        auto operator()(fv3 const& pos) const noexcept -> f32 {
             return visit([&](auto* p) noexcept { return (*p)(pos); });
         }
-        auto operator[](cref<iv3> ijk) noexcept -> ref<f32> {
-            return visit([&](auto* p) noexcept -> ref<f32> { return (*p)[ijk]; });
+        auto operator[](iv3 const& ijk) noexcept -> f32& {
+            return visit([&](auto* p) noexcept -> f32& { return (*p)[ijk]; });
         }
-        auto operator[](cref<iv3> ijk) const noexcept -> f32 {
+        auto operator[](iv3 const& ijk) const noexcept -> f32 {
             return visit([&](auto* p) noexcept { return (*p)[ijk]; });
         }
     };

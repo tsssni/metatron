@@ -5,7 +5,7 @@ namespace mtt::command {
     struct Buffer final: stl::capsule<Buffer> {
         Type type;
         Blocks blocks;
-        std::vector<obj<opaque::Buffer>> stages;
+        std::vector<std::unique_ptr<opaque::Buffer>> stages;
 
         struct Impl;
         Buffer() noexcept;

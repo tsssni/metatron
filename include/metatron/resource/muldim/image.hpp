@@ -12,14 +12,14 @@ namespace mtt::muldim {
 
     struct Image final {
         struct Pixel final {
-            Pixel(view<Image> image, mut<byte> start) noexcept;
+            Pixel(Image const* image, byte* start) noexcept;
             explicit operator fv4() const noexcept;
-            auto operator=(cref<fv4> v) noexcept -> void;
-            auto operator+=(cref<fv4> v) noexcept -> void;
-            auto data() noexcept -> mut<byte>;
+            auto operator=(fv4 const& v) noexcept -> void;
+            auto operator+=(fv4 const& v) noexcept -> void;
+            auto data() noexcept -> byte*;
         private:
-            view<Image> image;
-            mut<byte> start;
+            Image const* image;
+            byte* start;
         };
         friend Pixel;
 
@@ -40,7 +40,7 @@ namespace mtt::muldim {
 
         auto operator[](usize x, usize y, usize lod = 0) noexcept -> Pixel;
         auto operator[](usize x, usize y, usize lod = 0) const noexcept -> Pixel const;
-        auto operator()(cref<Coordinate> coord) const -> fv4;
+        auto operator()(Coordinate const& coord) const -> fv4;
 
         auto static from_path(
             std::string_view path,
@@ -57,7 +57,7 @@ namespace mtt::muldim {
 namespace mtt::muldim::proxy {
     struct Image: stl::proxy<Image, muldim::Image> {
         using proxy::proxy;
-        auto operator()(cref<Coordinate> coord) const noexcept -> fv4 { return (*idx)(coord); }
+        auto operator()(Coordinate const& coord) const noexcept -> fv4 { return (*idx)(coord); }
         auto operator[](usize x, usize y, usize lod = 0) noexcept -> muldim::Image::Pixel { return (*idx)[x, y, lod]; }
         auto operator[](usize x, usize y, usize lod = 0) const noexcept -> muldim::Image::Pixel const { return (*idx)[x, y, lod]; }
     };

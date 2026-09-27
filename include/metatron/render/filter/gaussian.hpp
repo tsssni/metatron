@@ -8,10 +8,10 @@ namespace mtt::filter {
             fv2 radius = {1.5f};
             f32 sigma = 0.5f;
         };
-        Gaussian_Filter(cref<Descriptor> desc) noexcept;
+        Gaussian_Filter(Descriptor const& desc) noexcept;
         Gaussian_Filter() noexcept = default;
-        auto operator()(cref<fv2> p) const noexcept -> f32;
-        auto sample(cref<fv2> u) const noexcept -> Interaction;
+        auto operator()(fv2 const& p) const noexcept -> f32;
+        auto sample(fv2 const& u) const noexcept -> Interaction;
 
     private:
         math::proxy::Planar_Distribution distr;

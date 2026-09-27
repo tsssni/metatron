@@ -10,9 +10,9 @@ namespace mtt::bsdf {
     buf<f32> Physical_Bsdf::fresnel_reflectance_table;
 
     Physical_Bsdf::Physical_Bsdf(
-        cref<fv4> reflectance,
-        cref<fv4> eta,
-        cref<fv4> k,
+        fv4 const& reflectance,
+        fv4 const& eta,
+        fv4 const& k,
         f32 alpha_u,
         f32 alpha_v
     ) noexcept:
@@ -66,7 +66,7 @@ namespace mtt::bsdf {
     }
 
     auto Physical_Bsdf::operator()(
-        cref<fv3> wo, cref<fv3> wi, f32 u
+        fv3 const& wo, fv3 const& wi, f32 u
     ) const noexcept -> Interaction {
         auto flags = this->flags();
         auto specular = flags & Flags::specular;
@@ -135,7 +135,7 @@ namespace mtt::bsdf {
     }
 
     auto Physical_Bsdf::sample(
-        cref<math::Context> ctx, cref<fv3> u
+        math::Context const& ctx, fv3 const& u
     ) const noexcept -> Interaction {
         auto wo = ctx.r.d;
         auto flags = this->flags();

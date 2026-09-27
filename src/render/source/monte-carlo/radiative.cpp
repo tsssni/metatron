@@ -23,7 +23,7 @@ namespace mtt::monte_carlo {
         bool degraded{false};
     };
 
-    auto Radiative_Integrator::hit(ref<Payload> payload) const noexcept -> void {
+    auto Radiative_Integrator::hit(Payload& payload) const noexcept -> void {
         auto& ctx = payload.ctx;
         auto& div = payload.acc.divider;
         auto& sp = payload.sampler;
@@ -50,7 +50,7 @@ namespace mtt::monte_carlo {
         intr.n = math::normalize(lt | intr.n);
         ctx.inside = math::dot(-ctx.r.d, intr.n) < 0.f;
 
-        auto nee = [&](cref<math::Context> l_ctx, auto&& eval) {
+        auto nee = [&](math::Context const& l_ctx, auto&& eval) {
             auto e_intr = payload.emitter.sample(l_ctx, sp.generate_1d());
             if (e_intr.pdf == 0.f) return;
 
@@ -106,7 +106,7 @@ namespace mtt::monte_carlo {
                 auto l_ctx = ctx;
                 l_ctx.r.o = point;
                 l_ctx.n = {};
-                nee(l_ctx, [&](cref<fv3> wi) {
+                nee(l_ctx, [&](fv3 const& wi) {
                     auto p_intr = m_intr.phase(ctx.r.d, wi);
                     return bsdf::Interaction{p_intr.f, fv4{1.f}, wi, p_intr.pdf};
                 });
@@ -123,7 +123,7 @@ namespace mtt::monte_carlo {
                 payload.beta *= p_intr.f / p_intr.pdf;
                 payload.mis_e = payload.mis_s / p_intr.pdf;
 
-                auto translate = [](cref<fv3> t) { auto m = fm44{1.f}; for (auto i = 0; i < 3; i++) m[i][3] = t[i]; return m; };
+                auto translate = [](fv3 const& t) { auto m = fm44{1.f}; for (auto i = 0; i < 3; i++) m[i][3] = t[i]; return m; };
                 auto rot = fm44{fq::from_rotation_between(math::normalize(payload.diff.r.d), p_intr.wi)};
                 payload.diff = math::Transform{translate(point) | rot | translate(-payload.diff.r.o)} | payload.diff;
                 ctx.r = {point, p_intr.wi};
@@ -175,7 +175,7 @@ namespace mtt::monte_carlo {
 
             auto specular = flags & bsdf::Flags::specular;
             auto l_ctx = ctx; l_ctx.r.o = intr.p; l_ctx.n = intr.n;
-            if (!specular) nee(l_ctx, [&](cref<fv3> wi) {
+            if (!specular) nee(l_ctx, [&](fv3 const& wi) {
                 auto wo = math::normalize(bt | math::expand(ctx.r.d, 0.f));
                 auto wl = math::normalize(bt | math::expand(wi, 0.f));
                 auto b_intr = mat_intr.bsdf(wo, wl);
@@ -207,7 +207,7 @@ namespace mtt::monte_carlo {
         scatter();
     }
 
-    auto Radiative_Integrator::track(ref<Payload> payload, cref<accel::Acceleration> accel) const noexcept -> void {
+    auto Radiative_Integrator::track(Payload& payload, accel::Acceleration const& accel) const noexcept -> void {
         if (payload.gamma == fv4{0.f}) return;
         auto& sp = payload.sampler;
         auto r = payload.shadow;
@@ -216,7 +216,7 @@ namespace mtt::monte_carlo {
         auto mis_l = payload.mis_s;
         auto boundary = false;
 
-        auto march = [&](ref<media::Iterator> iter, f32 seg) -> bool {
+        auto march = [&](media::Iterator& iter, f32 seg) -> bool {
             auto m_intr = iter.march(sp.generate_1d());
             boundary = m_intr.t >= seg;
             auto spectra_pdf = boundary
@@ -270,7 +270,7 @@ namespace mtt::monte_carlo {
         payload.emission += payload.gamma * mis_u;
     }
 
-    auto Radiative_Integrator::sample(ref<Context> ctx, cref<uzv2> px) const noexcept -> void {
+    auto Radiative_Integrator::sample(Context& ctx, uzv2 const& px) const noexcept -> void {
         auto size = uzv2{ctx.film->image.size};
         auto sp = sampler::proxy::Sampler{ctx.sampler, {{}, px, size, ctx.sample_index, ctx.film->spp, 0, ctx.seed}};
         sp.start();
@@ -315,9 +315,9 @@ namespace mtt::monte_carlo {
         fixel = Li;
     }
 
-    Radiative_Integrator::Radiative_Integrator(cref<Descriptor>) noexcept {}
+    Radiative_Integrator::Radiative_Integrator(Descriptor const&) noexcept {}
 
-    auto Radiative_Integrator::trace(ref<Context> ctx) const noexcept -> void {
+    auto Radiative_Integrator::trace(Context& ctx) const noexcept -> void {
         auto size = uzv2{ctx.film->image.size};
         stl::scheduler::sync_parallel(size, [&](auto&& px) { sample(ctx, px); });
     }

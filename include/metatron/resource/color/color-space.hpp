@@ -25,17 +25,17 @@ namespace mtt::color {
 
         Color_Space(
             std::string_view name,
-            cref<fv2> r, cref<fv2> g, cref<fv2> b, u32 i,
+            fv2 const& r, fv2 const& g, fv2 const& b, u32 i,
             Transfer_Function transfer_function
         ) noexcept;
     };
 
-    auto constexpr xyY_to_XYZ(cref<fv3> xyY) -> fv3 {
+    auto constexpr xyY_to_XYZ(fv3 const& xyY) -> fv3 {
         auto [x, y, Y] = xyY;
         return {x * Y / y, Y, (1.f - x - y) * Y / y};
     };
 
-    auto constexpr XYZ_to_xyY(cref<fv3> XYZ) -> fv3 {
+    auto constexpr XYZ_to_xyY(fv3 const& XYZ) -> fv3 {
         auto s = math::sum(XYZ);
         return {XYZ[0] / s, XYZ[1] / s, XYZ[1]};
     }

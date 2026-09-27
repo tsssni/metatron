@@ -13,7 +13,7 @@ namespace mtt::wired {
             auto constexpr size = (sizeof(args) + ...);
             auto offset = payload.size();
             payload.resize(payload.size() + size);
-            ((*mut<Args>(&payload[offset]) = args, offset += sizeof(Args)), ...);
+            ((*(Args*)&payload[offset] = args, offset += sizeof(Args)), ...);
         }
 
         template<typename T>

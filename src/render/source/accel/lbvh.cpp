@@ -3,11 +3,11 @@
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::accel {
-    LBVH::LBVH(cref<Descriptor> desc) noexcept {
+    LBVH::LBVH(Descriptor const& desc) noexcept {
         struct Node final {
             math::Bounding_Box bbox;
-            obj<Node> left;
-            obj<Node> right;
+            std::unique_ptr<Node> left;
+            std::unique_ptr<Node> right;
             u32 morton_code;
             u32 split_axis;
             u32 div_idx;
@@ -54,11 +54,11 @@ namespace mtt::accel {
             }
         }
 
-        auto morton_split = [&](this auto self, uv2 interval, i32 bit) -> obj<Node> {
+        auto morton_split = [&](this auto self, uv2 interval, i32 bit) -> std::unique_ptr<Node> {
             auto [start, end] = interval;
             auto n = end - start;
             if (bit < 0 || n <= desc.num_guide_leaf_prims) {
-                auto node = make_obj<Node>();
+                auto node = std::make_unique<Node>();
                 node->div_idx = start;
                 node->num_prims = n;
                 node->bbox = math::Bounding_Box{};
@@ -75,7 +75,7 @@ namespace mtt::accel {
                 }
                 if (split == end) return self(interval, bit - 1);
 
-                auto node = make_obj<Node>();
+                auto node = std::make_unique<Node>();
                 node->left = self({start, split}, bit - 1);
                 node->right = self({split, end}, bit - 1);
                 node->bbox = math::merge(node->left->bbox, node->right->bbox);
@@ -83,7 +83,7 @@ namespace mtt::accel {
                 return node;
             }
         };
-        auto lbvh_nodes = std::vector<obj<Node>>(intervals.size());
+        auto lbvh_nodes = std::vector<std::unique_ptr<Node>>(intervals.size());
         stl::scheduler::sync_parallel(
             uzv1{intervals.size()},
             [&](auto idx) {
@@ -93,11 +93,11 @@ namespace mtt::accel {
             }
         );
 
-        auto area_split = [&](this auto self, rref<std::vector<obj<Node>>> nodes) -> obj<Node> {
+        auto area_split = [&](this auto self, std::vector<std::unique_ptr<Node>>&& nodes) -> std::unique_ptr<Node> {
             if (nodes.size() == 0) return nullptr;
             else if (nodes.size() == 1) return std::move(nodes.front());
 
-            auto root = make_obj<Node>();
+            auto root = std::make_unique<Node>();
             root->bbox = math::Bounding_Box{};
             for (auto& node: nodes)
                 root->bbox = math::merge(root->bbox, node->bbox);
@@ -164,7 +164,7 @@ namespace mtt::accel {
             auto range_split = [](auto&& begin, auto&& end){
                 return std::ranges::subrange(begin, end)
                 | std::views::transform([](auto& n) { return std::move(n); })
-                | std::ranges::to<std::vector<obj<Node>>>();
+                | std::ranges::to<std::vector<std::unique_ptr<Node>>>();
             };
             auto left = range_split(std::ranges::begin(nodes), std::ranges::begin(splitted_iter));
             auto right = range_split(std::ranges::begin(splitted_iter), std::ranges::end(nodes));
@@ -175,7 +175,7 @@ namespace mtt::accel {
         auto root = area_split(std::move(lbvh_nodes));
 
         // pre-order binary tree traversal
-        auto traverse = [&bvh](this auto self, view<Node> node) -> void {
+        auto traverse = [&bvh](this auto self, Node const* node) -> void {
             if (node->num_prims > 0) {
                 bvh.push_back({
                     .bbox = node->bbox,
@@ -198,9 +198,9 @@ namespace mtt::accel {
     }
 
     auto LBVH::operator()(
-        cref<math::Ray> r, cref<fv3> n
+        math::Ray const& r, fv3 const& n
     ) const noexcept -> Interaction {
-        auto prim = view<Primitive>{};
+        auto prim = (Primitive const*)nullptr;
         auto inv_d = 1.f / r.d;
         auto q = fv4{math::inf<f32>};
         auto stack = std::array<u32, 64>{};

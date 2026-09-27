@@ -2,7 +2,7 @@
 #include "../command/allocator.hpp"
 
 namespace mtt::opaque {
-    auto Image::Impl::format(cref<muldim::Image> image) noexcept -> MTL::PixelFormat {
+    auto Image::Impl::format(muldim::Image const& image) noexcept -> MTL::PixelFormat {
         auto channels = image.channels;
         auto stride = image.stride;
         auto linear = image.linear;
@@ -31,7 +31,7 @@ namespace mtt::opaque {
         return MTL::PixelFormatRG8Unorm;
     }
 
-    Image::Image(cref<Descriptor> desc) noexcept {
+    Image::Image(Descriptor const& desc) noexcept {
         width = desc.image->width;
         height = desc.image->height;
         mips = math::max(1uz, desc.image->pixels.size());

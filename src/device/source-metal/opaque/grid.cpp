@@ -2,13 +2,13 @@
 #include "../command/allocator.hpp"
 
 namespace mtt::opaque {
-    Grid::Grid(cref<Descriptor> desc) noexcept {
+    Grid::Grid(Descriptor const& desc) noexcept {
         width = desc.grid->width;
         height = desc.grid->height;
         depth = desc.grid->depth;
         if (desc.state == State::readonly && !desc.grid->cells.empty()) {
             host = make_desc<Buffer>({
-                .ptr = mut<byte>(desc.grid->cells.data()),
+                .ptr = (byte*)desc.grid->cells.data(),
                 .state = Buffer::State::visible,
                 .type = desc.type,
                 .size = desc.grid->cells.size() * sizeof(f32),

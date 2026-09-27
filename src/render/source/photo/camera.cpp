@@ -3,9 +3,9 @@
 namespace mtt::photo {
     auto Camera::sample(
         Lens lens,
-        cref<fv2> pos,
-        cref<fv2> dxdy,
-        cref<fv2> u
+        fv2 const& pos,
+        fv2 const& dxdy,
+        fv2 const& u
     ) noexcept -> Interaction {
         auto intr = Interaction{};
 

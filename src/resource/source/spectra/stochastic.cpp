@@ -2,7 +2,7 @@
 #include <metatron/core/math/distribution/spectrum.hpp>
 
 namespace mtt::spectra {
-    Stochastic_Spectrum::Stochastic_Spectrum(cref<fv4> lambda, cref<fv4> value) noexcept:
+    Stochastic_Spectrum::Stochastic_Spectrum(fv4 const& lambda, fv4 const& value) noexcept:
     lambda(lambda), value(value) {}
 
     Stochastic_Spectrum::Stochastic_Spectrum(f32 u, f32 v) noexcept {

@@ -13,13 +13,13 @@ namespace mtt::texture {
     , Checkerboard_Texture> {
         using polynomial::polynomial;
 
-        auto operator()(cref<muldim::Coordinate> coord, cref<fv4> lambda) const noexcept -> fv4 {
+        auto operator()(muldim::Coordinate const& coord, fv4 const& lambda) const noexcept -> fv4 {
             return visit([&](auto* p) noexcept { return (*p)(coord, lambda); });
         }
-        auto sample(cref<math::Context> ctx, cref<fv2> u) const noexcept -> fv2 {
+        auto sample(math::Context const& ctx, fv2 const& u) const noexcept -> fv2 {
             return visit([&](auto* p) noexcept { return p->sample(ctx, u); });
         }
-        auto pdf(cref<fv2> uv) const noexcept -> f32 {
+        auto pdf(fv2 const& uv) const noexcept -> f32 {
             return visit([&](auto* p) noexcept { return p->pdf(uv); });
         }
     };
@@ -29,10 +29,10 @@ namespace mtt::texture {
     , Image_Vector_Texture> {
         using polynomial::polynomial;
 
-        auto operator()(cref<muldim::Coordinate> coord) const noexcept -> fv4 {
+        auto operator()(muldim::Coordinate const& coord) const noexcept -> fv4 {
             return visit([&](auto* p) noexcept { return (*p)(coord); });
         }
-        auto sample(cref<math::Context> ctx, fv2 u) const noexcept -> fv2 {
+        auto sample(math::Context const& ctx, fv2 u) const noexcept -> fv2 {
             return visit([&, u](auto* p) noexcept { return p->sample(ctx, u); });
         }
         auto pdf(fv2 uv) const noexcept -> f32 {
@@ -41,14 +41,14 @@ namespace mtt::texture {
     };
 
     auto grad(
-        cref<math::Ray_Differential> diff,
-        cref<shape::Interaction> intr
+        math::Ray_Differential const& diff,
+        shape::Interaction const& intr
     ) noexcept -> muldim::Coordinate;
 
     auto propagate(
-        cref<math::Ray_Differential> diff,
-        cref<shape::Interaction> intr,
-        cref<muldim::Coordinate> coord,
-        cref<fv3> wi, cref<fv4> eta
+        math::Ray_Differential const& diff,
+        shape::Interaction const& intr,
+        muldim::Coordinate const& coord,
+        fv3 const& wi, fv4 const& eta
     ) noexcept -> math::Ray_Differential;
 }

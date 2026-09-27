@@ -3,7 +3,7 @@
 
 namespace mtt::light {
     auto Environment_Light::operator()(
-        cref<math::Ray> r, cref<fv4> lambda
+        math::Ray const& r, fv4 const& lambda
     ) const noexcept -> Interaction {
         auto [radius, theta, phi] = math::cartesian_to_spherical(r.d);
         auto u = 1.f - phi / (2.f * math::pi);
@@ -20,8 +20,8 @@ namespace mtt::light {
     }
 
     auto Environment_Light::sample(
-        cref<math::Context> ctx,
-        cref<fv2> u
+        math::Context const& ctx,
+        fv2 const& u
     ) const noexcept -> Interaction {
         auto uv = env_map.sample(ctx, u);
         auto phi = (1.f - uv[0]) * 2.f * math::pi;

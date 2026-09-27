@@ -2,7 +2,7 @@
 #include <metatron/core/math/gaussian.hpp>
 
 namespace mtt::filter {
-    Gaussian_Filter::Gaussian_Filter(cref<Descriptor> desc) noexcept:
+    Gaussian_Filter::Gaussian_Filter(Descriptor const& desc) noexcept:
     radius(desc.radius), sigma(desc.sigma) {
         auto matrix = fm<64, 64>{};
         for (auto j = 0uz; j < 64; ++j) {
@@ -21,13 +21,13 @@ namespace mtt::filter {
         );
     }
 
-    auto Gaussian_Filter::operator()(cref<fv2> p) const noexcept -> f32 {
+    auto Gaussian_Filter::operator()(fv2 const& p) const noexcept -> f32 {
         auto vx = math::gaussian(p[0], 0.f, sigma) - math::gaussian(radius[0], 0.f, sigma);
         auto vy = math::gaussian(p[1], 0.f, sigma) - math::gaussian(radius[1], 0.f, sigma);
         return vx * vy;
     }
 
-    auto Gaussian_Filter::sample(cref<fv2> u) const noexcept -> filter::Interaction {
+    auto Gaussian_Filter::sample(fv2 const& u) const noexcept -> filter::Interaction {
         auto p = distr.sample(u);
         auto w = (*this)(math::reverse(p));
         auto pdf = distr.pdf(p);

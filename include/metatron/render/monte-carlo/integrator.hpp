@@ -7,7 +7,7 @@ namespace mtt::monte_carlo {
     struct Integrator final: stl::polynomial<Integrator
     , Radiative_Integrator> {
         using polynomial::polynomial;
-        auto trace(ref<Context> ctx) noexcept -> void {
+        auto trace(Context& ctx) noexcept -> void {
             return visit([&](auto* p) noexcept { return p->trace(ctx); });
         }
     };

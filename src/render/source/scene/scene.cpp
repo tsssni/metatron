@@ -62,8 +62,8 @@ namespace mtt::scene {
 
     auto trace(
         math::proxy::Transform et,
-        cref<std::unordered_map<u32, u32>> parents,
-        cref<std::unordered_map<u32, std::vector<u32>>> children
+        std::unordered_map<u32, u32> const& parents,
+        std::unordered_map<u32, std::vector<u32>> const& children
     ) noexcept -> void {
         if (!children.contains(et)) return;
         using tvec = stl::vector<math::Transform>;
@@ -121,7 +121,7 @@ namespace mtt::scene {
 
         MTT_DESERIALIZE_CALLBACK(
         Hierarchy::default_filter,
-        [](ref<Hierarchy::binmap>) noexcept {
+        [](Hierarchy::binmap&) noexcept {
             merge(); trace();
         }, Local_Transform, Look_At_Transform);
         stl::vector<math::Transform>::init();
@@ -145,7 +145,7 @@ namespace mtt::scene {
         photo::init();
 
         auto& args = scene::Args::instance();
-        auto renderer = obj<renderer::Renderer>();
+        auto renderer = std::unique_ptr<renderer::Renderer>();
         Hierarchy::populate(args.scene);
         stl::print("initialization: {:.3}s", timer.t<f64, stl::seconds>());
         renderer->trace();

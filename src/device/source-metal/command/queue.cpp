@@ -13,14 +13,14 @@ namespace mtt::command {
     }
     Queue::~Queue() noexcept {}
 
-    auto Queue::allocate(rref<Pairs> waits) noexcept -> obj<Buffer> {
+    auto Queue::allocate(Pairs&& waits) noexcept -> std::unique_ptr<Buffer> {
         auto& ctx = Context::internal();
         auto device = ctx->device.get();
         auto idx = stl::scheduler::index();
         auto& cmds = impl->cmds[idx];
 
-        auto temp = std::deque<obj<Buffer>>();
-        auto picked = obj<Buffer>{};
+        auto temp = std::deque<std::unique_ptr<Buffer>>();
+        auto picked = std::unique_ptr<Buffer>{};
         while (!cmds.empty()) {
             auto finished = cmds.front()->impl->cmd->status() == MTL::CommandBufferStatusCompleted;
             auto front = std::move(cmds.front());
@@ -47,7 +47,7 @@ namespace mtt::command {
             picked->impl->cmd = allocated;
             return picked;
         } else {
-            auto cmd = make_obj<Buffer>();
+            auto cmd = std::make_unique<Buffer>();
             cmd->type = type;
             cmd->blocks.cmd = cmd.get();
             cmd->impl->cmd = allocated;
@@ -56,7 +56,7 @@ namespace mtt::command {
         }
     }
 
-    auto Queue::submit(rref<obj<Buffer>> cmd, rref<Pairs> signals) noexcept -> void {
+    auto Queue::submit(std::unique_ptr<Buffer>&& cmd, Pairs&& signals) noexcept -> void {
         for (auto [timeline, count]: signals)
             cmd->impl->cmd->encodeSignalEvent(timeline->impl->event.get(), count);
         cmd->impl->cmd->commit();

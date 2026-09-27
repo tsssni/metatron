@@ -12,10 +12,10 @@ namespace mtt::filter {
     , Lanczos_Filter> {
         using polynomial::polynomial;
 
-        auto operator()(cref<fv2> p) const noexcept -> f32 {
+        auto operator()(fv2 const& p) const noexcept -> f32 {
             return visit([&](auto* x) noexcept { return (*x)(p); });
         }
-        auto sample(cref<fv2> u) const noexcept -> Interaction {
+        auto sample(fv2 const& u) const noexcept -> Interaction {
             return visit([&](auto* x) noexcept { return x->sample(u); });
         }
     };

@@ -6,7 +6,7 @@
 
 namespace mtt::encoder {
     Acceleration_Encoder::Acceleration_Encoder(
-        mut<command::Buffer> cmd, mut<opaque::Acceleration> accel
+        command::Buffer* cmd, opaque::Acceleration* accel
     ) noexcept: cmd(cmd), accel(accel) {
         impl->encoder = cmd->impl->cmd->accelerationStructureCommandEncoder();
         impl->encoder->waitForFence(cmd->impl->fence.get());

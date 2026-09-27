@@ -8,11 +8,11 @@ namespace mtt::math {
         Plane(f32 a, f32 b, f32 c, f32 d) noexcept:
         a(a), b(b), c(c), d(d) {}
 
-        Plane(cref<fv3> p, cref<fv3> n):
+        Plane(fv3 const& p, fv3 const& n):
         a(n[0]), b(n[1]), c(n[2]), d(-math::dot(n, p)) {}
     };
 
-    auto inline constexpr hit(cref<Ray> r, cref<Plane> p) -> f32 {
+    auto inline constexpr hit(Ray const& r, Plane const& p) -> f32 {
         auto n = fv3{p.a, p.b, p.c};
         auto no = math::dot(n, r.o) + p.d;
         auto nd = math::dot(n, r.d);

@@ -30,20 +30,20 @@ namespace mtt::stl {
         }
 
         template<typename T>
-        auto static push(std::string_view path, rref<T> x) noexcept -> Self {
+        auto static push(std::string_view path, T&& x) noexcept -> Self {
             return {vs::template push<T>(path, std::move(x))};
         }
         template<typename T>
-        auto static push(std::string_view path, cref<T> x) noexcept -> Self {
+        auto static push(std::string_view path, T const& x) noexcept -> Self {
             return {vs::template push<T>(path, x)};
         }
 
         template<typename T>
-        auto static push_back(rref<T> x) noexcept -> Self {
+        auto static push_back(T&& x) noexcept -> Self {
             return {vs::template push_back<T>(std::move(x))};
         }
         template<typename T>
-        auto static push_back(cref<T> x) noexcept -> Self {
+        auto static push_back(T const& x) noexcept -> Self {
             return {vs::template push_back<T>(x)};
         }
 
@@ -90,8 +90,8 @@ namespace mtt::stl {
         requires ts::template contains<std::decay_t<T>>
         variant(T&& x) noexcept { emplace<std::decay_t<T>>(std::forward<T>(x)); }
 
-        variant(cref<variant>) noexcept = delete;
-        variant(rref<variant> rhs) noexcept {
+        variant(variant const&) noexcept = delete;
+        variant(variant&& rhs) noexcept {
             idx = rhs.idx;
             if (idx != math::maxv<byte>) auto _ = ((idx == ts::template index<Ts> ? (
                 std::construct_at(get<Ts>(), std::move(*rhs.template get<Ts>()))
@@ -100,8 +100,8 @@ namespace mtt::stl {
         }
         ~variant() noexcept { destroy(); }
 
-        auto operator=(cref<variant>) noexcept -> variant& = delete;
-        auto operator=(rref<variant> rhs) noexcept -> variant& {
+        auto operator=(variant const&) noexcept -> variant& = delete;
+        auto operator=(variant&& rhs) noexcept -> variant& {
             destroy();
             std::construct_at(this, std::move(rhs));
             return *this;
@@ -125,9 +125,9 @@ namespace mtt::stl {
         auto is() const noexcept -> bool { return ts::template index<T> == idx; }
         auto path() const noexcept -> std::string_view { return {}; }
         template<typename T>
-        auto get() noexcept -> mut<T> { return mut<T>(storage.data()); }
+        auto get() noexcept -> T* { return (T*)storage.data(); }
         template<typename T>
-        auto get() const noexcept -> view<T> { return view<T>(storage.data()); }
+        auto get() const noexcept -> T const* { return (T const*)storage.data(); }
         auto index() const noexcept -> u32 { return idx; }
         auto size() const noexcept -> usize { return storage.size(); }
 
@@ -137,7 +137,7 @@ namespace mtt::stl {
         template<typename S, typename F>
         auto constexpr visit(this S&& self, F&& f) -> decltype(auto) {
             using R = decltype(f(self.template get<typename ts::template type<0>>()));
-            using RS = ref<std::remove_reference_t<S>>;
+            using RS = std::remove_reference_t<S>&;
             using thunk_t = R(*)(RS, F&);
             return [&]<usize... Is>(std::index_sequence<Is...>) -> R {
                 auto constexpr table = std::to_array({
@@ -173,10 +173,10 @@ namespace mtt::stl {
 
         auto operator->() noexcept { return idx.operator->(); }
         auto operator->() const noexcept { return idx.operator->(); }
-        auto operator*() noexcept -> ref<T> { return *idx; }
-        auto operator*() const noexcept -> cref<T> { return *idx; }
+        auto operator*() noexcept -> T& { return *idx; }
+        auto operator*() const noexcept -> T const& { return *idx; }
 
-        operator cref<T>() const noexcept { return *idx; }
+        operator T const&() const noexcept { return *idx; }
         operator u32() const noexcept { return idx; }
         operator bool() const noexcept { return (bool)idx; }
 

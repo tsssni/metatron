@@ -11,11 +11,11 @@ namespace mtt::command {
         struct Impl;
         Memory(u32 type, u32 flags) noexcept;
         ~Memory() noexcept;
-        mut<byte> mapped = nullptr;
+        byte* mapped = nullptr;
     };
 
     struct Allocation final {
-        mut<Memory> memory;
+        Memory* memory;
         usize offset;
     };
 
@@ -27,7 +27,7 @@ namespace mtt::command {
         ) noexcept -> Allocation;
 
     private:
-        std::vector<std::vector<obj<Memory>>> heaps;
+        std::vector<std::vector<std::unique_ptr<Memory>>> heaps;
         std::vector<std::vector<usize>> offsets;
         std::atomic_flag lock;
     };

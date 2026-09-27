@@ -12,19 +12,19 @@ namespace mtt::opaque {
         };
 
         struct View final {
-            mut<Buffer> ptr;
+            Buffer* ptr;
             uptr offset;
             usize size;
         };
 
         State state;
-        mut<byte> ptr = nullptr;
+        byte* ptr = nullptr;
         uptr addr = 0;
         u32 size = 0;
         std::vector<uv2> dirty = {};
 
         struct Descriptor final {
-            view<byte> ptr = nullptr;
+            byte const* ptr = nullptr;
             State state = State::local;
             command::Type type = command::Type::render;
             usize alignment = 0;
@@ -34,9 +34,9 @@ namespace mtt::opaque {
 
         struct Impl;
         Buffer() noexcept = default;
-        Buffer(cref<Descriptor> desc) noexcept;
-        Buffer(rref<Buffer> rhs) noexcept;
-        auto operator=(rref<Buffer> rhs) noexcept -> ref<Buffer>;
+        Buffer(Descriptor const& desc) noexcept;
+        Buffer(Buffer&& rhs) noexcept;
+        auto operator=(Buffer&& rhs) noexcept -> Buffer&;
         operator View() noexcept;
     };
 }

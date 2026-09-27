@@ -7,23 +7,23 @@ namespace mtt::texture {
         spectra::Spectrum x;
 
         auto operator()(
-            cref<muldim::Coordinate> coord, cref<fv4> spec
+            muldim::Coordinate const& coord, fv4 const& spec
         ) const noexcept -> fv4;
         auto sample(
-            cref<math::Context> ctx, cref<fv2> u
+            math::Context const& ctx, fv2 const& u
         ) const noexcept -> fv2;
-        auto pdf(cref<fv2> uv) const noexcept -> f32;
+        auto pdf(fv2 const& uv) const noexcept -> f32;
     };
 
     struct Constant_Vector_Texture final {
         fv4 x;
 
         auto operator()(
-            cref<muldim::Coordinate> coord
+            muldim::Coordinate const& coord
         ) const noexcept -> fv4;
         auto sample(
-            cref<math::Context> ctx, cref<fv2> u
+            math::Context const& ctx, fv2 const& u
         ) const noexcept -> fv2;
-        auto pdf(cref<fv2> uv) const noexcept -> f32;
+        auto pdf(fv2 const& uv) const noexcept -> f32;
     };
 }

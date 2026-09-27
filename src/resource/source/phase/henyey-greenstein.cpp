@@ -3,7 +3,7 @@
 
 namespace mtt::phase {
     auto Henyey_Greenstein_Phase_Function::operator()(
-        cref<fv3> wo, cref<fv3> wi
+        fv3 const& wo, fv3 const& wi
     ) const noexcept -> Interaction {
         auto f = math::guarded_div(
             (1.f - g * g) / (4.f * math::pi),
@@ -13,7 +13,7 @@ namespace mtt::phase {
     }
 
     auto Henyey_Greenstein_Phase_Function::sample(
-        cref<math::Context> ctx, cref<fv2> u
+        math::Context const& ctx, fv2 const& u
     ) const noexcept -> Interaction {
         auto cos_theta = math::abs(g) < math::epsilon<f32> ? 1.f - 2.f * u[0]
         : -1.f / (2.f * g) * (1.f + g * g - math::pow<2>(math::guarded_div(1.f - g * g, 1.f + g - 2.f * g * u[0])));

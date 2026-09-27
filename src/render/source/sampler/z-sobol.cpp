@@ -7,7 +7,7 @@ namespace mtt::sampler {
     buf<u32> Z_Sobol_Sampler::sobol_matrices;
 
     // avoid extra parameters uploaded to gpu
-    Z_Sobol_Sampler::Z_Sobol_Sampler(cref<Descriptor>) noexcept: matrices(std::span<u32>(sobol_matrices)) {}
+    Z_Sobol_Sampler::Z_Sobol_Sampler(Descriptor const&) noexcept: matrices(std::span<u32>(sobol_matrices)) {}
 
     auto z_sobol::init() noexcept -> void {
         auto path = "sampler/sobol.bin";
@@ -17,12 +17,12 @@ namespace mtt::sampler {
         if (!f.is_open()) stl::abort("{} not open", path);
 
         auto size = 0ull;
-        f.read(mut<char>(&size), sizeof(size));
+        f.read((char*)&size, sizeof(size));
         Z_Sobol_Sampler::sobol_matrices = size;
-        f.read(mut<char>(Z_Sobol_Sampler::sobol_matrices.ptr), Z_Sobol_Sampler::sobol_matrices.bytelen);
+        f.read((char*)Z_Sobol_Sampler::sobol_matrices.ptr, Z_Sobol_Sampler::sobol_matrices.bytelen);
     }
 
-    auto Z_Sobol_Sampler::start(ref<Context> ctx) const noexcept -> void {
+    auto Z_Sobol_Sampler::start(Context& ctx) const noexcept -> void {
         auto log2_spp = u32(math::log2i(ctx.spp));
         auto res = std::bit_ceil(u32(math::max(ctx.size)));
         auto log4_spp = (log2_spp + 1) / 2;
@@ -34,13 +34,13 @@ namespace mtt::sampler {
         ctx.data[2] = morton_idx;
     }
 
-    auto Z_Sobol_Sampler::generate_1d(ref<Context> ctx) const noexcept -> f32 {
+    auto Z_Sobol_Sampler::generate_1d(Context& ctx) const noexcept -> f32 {
         auto idx = permute_idx(ctx);
         ++ctx.dim;
         return sobol(idx, 0, u32(math::murmur_hash(ctx.dim, ctx.seed)));
     }
 
-    auto Z_Sobol_Sampler::generate_2d(ref<Context> ctx) const noexcept -> fv2 {
+    auto Z_Sobol_Sampler::generate_2d(Context& ctx) const noexcept -> fv2 {
         auto idx = permute_idx(ctx);
         ctx.dim += 2;
         auto bits = math::murmur_hash(ctx.dim, ctx.seed);
@@ -50,11 +50,11 @@ namespace mtt::sampler {
         };
     }
 
-    auto Z_Sobol_Sampler::generate_pixel_2d(ref<Context> ctx) const noexcept -> fv2 {
+    auto Z_Sobol_Sampler::generate_pixel_2d(Context& ctx) const noexcept -> fv2 {
         return generate_2d(ctx);
     }
 
-    auto Z_Sobol_Sampler::permute_idx(cref<Context> ctx) const noexcept -> u64 {
+    auto Z_Sobol_Sampler::permute_idx(Context const& ctx) const noexcept -> u64 {
         auto constexpr permutations = [] {
             // precompute 256 permutations to avoid mod 24
             auto p = std::array<std::array<u8, 4>, 256>{{

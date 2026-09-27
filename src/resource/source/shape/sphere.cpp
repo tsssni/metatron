@@ -3,22 +3,22 @@
 #include <metatron/core/math/distribution/cone.hpp>
 
 namespace mtt::shape {
-    Sphere::Sphere(cref<Descriptor>) noexcept {}
+    Sphere::Sphere(Descriptor const&) noexcept {}
 
     auto Sphere::size() const noexcept -> usize {
         return 1uz;
     }
 
     auto Sphere::bounding_box(
-        cref<math::Transform> t, usize idx
+        math::Transform const& t, usize idx
     ) const noexcept -> math::Bounding_Box {
         auto bbox = math::Bounding_Box{{-1.f}, {1.f}};
         return t | bbox;
     }
 
     auto Sphere::operator()(
-        cref<math::Ray> r, cref<fv3> np,
-        cref<fv4> pos, usize idx
+        math::Ray const& r, fv3 const& np,
+        fv4 const& pos, usize idx
     ) const noexcept -> Interaction {
         auto t = pos[3];
         auto p = r.o + t * r.d;
@@ -49,7 +49,7 @@ namespace mtt::shape {
     }
 
     auto Sphere::sample(
-        cref<math::Context> ctx, cref<fv2> u, usize idx
+        math::Context const& ctx, fv2 const& u, usize idx
     ) const noexcept -> Interaction {
         auto d = math::length(ctx.r.o);
         auto r = math::Ray{};
@@ -71,7 +71,7 @@ namespace mtt::shape {
     }
 
     auto Sphere::query(
-        cref<math::Ray> r, usize idx
+        math::Ray const& r, usize idx
     ) const noexcept -> fv4 {
         auto a = math::dot(r.d, r.d);
         auto b = math::dot(r.o, r.d) * 2.f;

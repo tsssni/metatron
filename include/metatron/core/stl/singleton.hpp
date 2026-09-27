@@ -4,12 +4,12 @@ namespace mtt::stl {
     template<typename T, bool local = false>
     struct singleton {
         singleton() noexcept = default;
-        singleton(cref<singleton>) = delete;
-        singleton(rref<singleton>) = delete;
-        auto operator=(cref<singleton>) -> ref<singleton> = delete;
-        auto operator=(rref<singleton>) -> ref<singleton> = delete;
+        singleton(singleton const&) = delete;
+        singleton(singleton&&) = delete;
+        auto operator=(singleton const&) -> singleton& = delete;
+        auto operator=(singleton&&) -> singleton& = delete;
 
-        auto static instance() noexcept -> ref<T> {
+        auto static instance() noexcept -> T& {
             if constexpr (local) {
                 T thread_local instance;
                 return instance;
@@ -24,13 +24,13 @@ namespace mtt::stl {
     template<typename T>
     struct inline_singleton {
         inline_singleton() noexcept = default;
-        inline_singleton(cref<inline_singleton>) = delete;
-        inline_singleton(rref<inline_singleton>) = delete;
-        auto operator=(cref<inline_singleton>) -> ref<inline_singleton> = delete;
-        auto operator=(rref<inline_singleton>) -> ref<inline_singleton> = delete;
+        inline_singleton(inline_singleton const&) = delete;
+        inline_singleton(inline_singleton&&) = delete;
+        auto operator=(inline_singleton const&) -> inline_singleton& = delete;
+        auto operator=(inline_singleton&&) -> inline_singleton& = delete;
 
         inline static T inst{};
-        auto static instance() noexcept -> ref<T> { return inst; }
+        auto static instance() noexcept -> T& { return inst; }
     };
 
 }

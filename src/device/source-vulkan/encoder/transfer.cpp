@@ -9,7 +9,7 @@ namespace mtt::encoder {
     using Grid = opaque::Grid;
     using Barrier = opaque::Barrier;
 
-    Transfer_Encoder::Transfer_Encoder(mut<command::Buffer> cmd) noexcept {
+    Transfer_Encoder::Transfer_Encoder(command::Buffer* cmd) noexcept {
         this->cmd = cmd;
         impl->src_barrier = {
             .stage = vk::PipelineStageFlagBits2::eCopy,
@@ -55,7 +55,7 @@ namespace mtt::encoder {
         using State = Buffer::State;
         auto buffer = view.ptr;
         if (buffer->state == State::local && buffer->ptr) {
-            auto uploaded = make_obj<Buffer>();
+            auto uploaded = std::make_unique<Buffer>();
             auto buffer = view.ptr;
             uploaded->impl->barrier = buffer->impl->barrier;
             uploaded->impl->device_buffer = std::move(buffer->impl->host_buffer);
@@ -131,7 +131,7 @@ namespace mtt::encoder {
     }
 
     template<typename T>
-    auto Transfer_Encoder::Impl::persist(mut<Transfer_Encoder> encoder, T view) noexcept -> void {
+    auto Transfer_Encoder::Impl::persist(Transfer_Encoder* encoder, T view) noexcept -> void {
         auto cmd = encoder->cmd->impl->cmd.get();
         auto image = view.ptr;
         auto barrier = image->impl->update(tex_barrier);
@@ -155,7 +155,7 @@ namespace mtt::encoder {
     auto Transfer_Encoder::persist(opaque::Grid::View view) noexcept -> void { impl->persist(this, view); }
 
     template<typename T>
-    auto Transfer_Encoder::Impl::liberate(mut<Transfer_Encoder> encoder, T view) noexcept -> void {
+    auto Transfer_Encoder::Impl::liberate(Transfer_Encoder* encoder, T view) noexcept -> void {
         auto cmd = encoder->cmd->impl->cmd.get();
         auto image = view.ptr;
         auto barrier = image->impl->update(lib_barrier);
@@ -180,7 +180,7 @@ namespace mtt::encoder {
 
 
     template<typename T>
-    auto Transfer_Encoder::Impl::transfer(mut<Transfer_Encoder> encoder, T view, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void {
+    auto Transfer_Encoder::Impl::transfer(Transfer_Encoder* encoder, T view, command::Queue* dst, command::Queue* src) noexcept -> void {
         auto cmd = encoder->cmd->impl->cmd.get();
         auto barrier = view.ptr->impl->update(dst, src);
         if constexpr (std::same_as<T, Buffer::View>)
@@ -195,9 +195,9 @@ namespace mtt::encoder {
             });
     }
 
-    auto Transfer_Encoder::transfer(opaque::Buffer::View buffer, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void { impl->transfer(this, buffer, dst, src); }
-    auto Transfer_Encoder::transfer(opaque::Image::View image, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void { impl->transfer(this, image, dst, src); }
-    auto Transfer_Encoder::transfer(opaque::Grid::View grid, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void { impl->transfer(this, grid, dst, src); }
+    auto Transfer_Encoder::transfer(opaque::Buffer::View buffer, command::Queue* dst, command::Queue* src) noexcept -> void { impl->transfer(this, buffer, dst, src); }
+    auto Transfer_Encoder::transfer(opaque::Image::View image, command::Queue* dst, command::Queue* src) noexcept -> void { impl->transfer(this, image, dst, src); }
+    auto Transfer_Encoder::transfer(opaque::Grid::View grid, command::Queue* dst, command::Queue* src) noexcept -> void { impl->transfer(this, grid, dst, src); }
 
     auto Transfer_Encoder::copy(Buffer::View dst, Buffer::View src) noexcept -> void {
         auto cmd = this->cmd->impl->cmd.get();
@@ -226,7 +226,7 @@ namespace mtt::encoder {
     }
 
     template<typename T, typename U>
-    auto Transfer_Encoder::Impl::copy(mut<Transfer_Encoder> encoder, T to, U from) noexcept -> void {
+    auto Transfer_Encoder::Impl::copy(Transfer_Encoder* encoder, T to, U from) noexcept -> void {
         auto cmd = encoder->cmd->impl->cmd.get();
         auto& src = from.ptr->impl;
         auto& dst = to.ptr->impl;
@@ -275,7 +275,7 @@ namespace mtt::encoder {
     auto Transfer_Encoder::copy(Buffer::View dst, Grid::View src) noexcept -> void { impl->copy(this, dst, src); }
 
     template<typename T>
-    auto Transfer_Encoder::Impl::copy(mut<Transfer_Encoder> encoder, T to, T from) noexcept -> void {
+    auto Transfer_Encoder::Impl::copy(Transfer_Encoder* encoder, T to, T from) noexcept -> void {
         auto cmd = encoder->cmd->impl->cmd.get();
         auto& src = from.ptr->impl;
         auto& dst = to.ptr->impl;

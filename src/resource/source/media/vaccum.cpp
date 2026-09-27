@@ -9,10 +9,10 @@ namespace mtt::media {
         };
     }
 
-    Vaccum_Medium::Vaccum_Medium(cref<Descriptor>) noexcept {}
+    Vaccum_Medium::Vaccum_Medium(Descriptor const&) noexcept {}
 
     auto Vaccum_Medium::begin(
-        cref<math::Context> ctx, f32 t_max
+        math::Context const& ctx, f32 t_max
     ) const noexcept -> Iterator {
         return {ctx.r, t_max};
     }

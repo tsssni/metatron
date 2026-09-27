@@ -11,6 +11,6 @@ namespace mtt::command {
         auto signal(u64 count) noexcept -> void;
     };
 
-    using Pair = std::tuple<mut<Timeline>, u64>;
+    using Pair = std::tuple<Timeline*, u64>;
     using Pairs = std::vector<Pair>;
 }

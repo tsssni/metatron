@@ -5,7 +5,7 @@
 #include <metatron/core/stl/filesystem.hpp>
 
 namespace mtt {
-    auto to_mtl(std::string_view str) noexcept -> mut<NS::String> {
+    auto to_mtl(std::string_view str) noexcept -> NS::String* {
         return NS::String::string(str.data(), NS::UTF8StringEncoding);
     }
 }
@@ -33,11 +33,11 @@ namespace mtt::command {
         Context::instance();
     }
 
-    auto Context::internal() noexcept -> ref<stl::capsule<Context>::Impl> {
+    auto Context::internal() noexcept -> stl::capsule<Context>::Impl& {
         return instance().impl;
     }
 
-    auto guard(mut<NS::Error> err) noexcept -> void {
+    auto guard(NS::Error* err) noexcept -> void {
         if (err->code() != NS::Integer{0}) stl::abort("metal error: {}"
         , err->localizedDescription()->cString(NS::UTF8StringEncoding));
     }

@@ -4,11 +4,11 @@
 namespace mtt::accel {
     struct HWBVH final {
         struct Descriptor final {};
-        HWBVH(cref<Descriptor>) noexcept;
+        HWBVH(Descriptor const&) noexcept;
         HWBVH() noexcept = default;
 
         auto operator()(
-            cref<math::Ray> r, cref<fv3> n
+            math::Ray const& r, fv3 const& n
         ) const noexcept -> Interaction;
 
     private:

@@ -11,7 +11,7 @@ namespace mtt::scene {
         instance().impl->filters.push_back(std::move(f));
     }
 
-    auto Hierarchy::populate(cref<stl::path> path) noexcept -> void {
+    auto Hierarchy::populate(stl::path const& path) noexcept -> void {
         stl::filesystem::push(path);
         auto jsons = std::vector<scene::json>{};
         stl::json::load(path / "scene.json", jsons);

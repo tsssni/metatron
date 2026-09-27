@@ -13,16 +13,16 @@ namespace mtt::sampler {
     , Z_Sobol_Sampler> {
         using polynomial::polynomial;
 
-        auto start(ref<Context> ctx) const noexcept -> void {
+        auto start(Context& ctx) const noexcept -> void {
             visit([&](auto* p) noexcept { p->start(ctx); });
         }
-        auto generate_1d(ref<Context> ctx) const noexcept -> f32 {
+        auto generate_1d(Context& ctx) const noexcept -> f32 {
             return visit([&](auto* p) noexcept { return p->generate_1d(ctx); });
         }
-        auto generate_2d(ref<Context> ctx) const noexcept -> fv2 {
+        auto generate_2d(Context& ctx) const noexcept -> fv2 {
             return visit([&](auto* p) noexcept { return p->generate_2d(ctx); });
         }
-        auto generate_pixel_2d(ref<Context> ctx) const noexcept -> fv2 {
+        auto generate_pixel_2d(Context& ctx) const noexcept -> fv2 {
             return visit([&](auto* p) noexcept { return p->generate_pixel_2d(ctx); });
         }
     };

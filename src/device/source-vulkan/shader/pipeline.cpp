@@ -2,7 +2,7 @@
 #include "argument.hpp"
 
 namespace mtt::shader {
-    Pipeline::Pipeline(cref<Descriptor> desc) noexcept: args(std::move(desc.args)) {
+    Pipeline::Pipeline(Descriptor const& desc) noexcept: args(std::move(desc.args)) {
         auto ir_path = (stl::path{"shader"} / desc.name).concat(".spirv");
         auto spirv = stl::filesystem::load(stl::filesystem::find(ir_path), std::ios::binary);
 
@@ -20,7 +20,7 @@ namespace mtt::shader {
 
         impl->module = command::guard(device.createShaderModuleUnique({
             .codeSize = spirv.size(),
-            .pCode = view<u32>(spirv.data()),
+            .pCode = (u32 const*)spirv.data(),
         }));
         impl->layout = command::guard(device.createPipelineLayoutUnique({
             .setLayoutCount = u32(layouts.size()),

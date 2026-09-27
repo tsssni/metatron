@@ -13,7 +13,7 @@ namespace mtt::photo {
     , Thin_Lens> {
         using polynomial::polynomial;
 
-        auto sample(cref<fv2> o, cref<fv2> u) const noexcept -> lens::Interaction {
+        auto sample(fv2 const& o, fv2 const& u) const noexcept -> lens::Interaction {
             return visit([&](auto* p) noexcept { return p->sample(o, u); });
         }
     };

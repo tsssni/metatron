@@ -16,16 +16,16 @@ namespace mtt::texture {
             Image_Distribution distr = Image_Distribution::none;
             bool linear = true;
         };
-        Image_Vector_Texture(cref<Descriptor> desc) noexcept;
+        Image_Vector_Texture(Descriptor const& desc) noexcept;
         Image_Vector_Texture() noexcept = default;
 
         auto operator()(
-            cref<muldim::Coordinate> coord
+            muldim::Coordinate const& coord
         ) const noexcept -> fv4;
         auto sample(
-            cref<math::Context> ctx, cref<fv2> u
+            math::Context const& ctx, fv2 const& u
         ) const noexcept -> fv2;
-        auto pdf(cref<fv2> uv) const noexcept -> f32;
+        auto pdf(fv2 const& uv) const noexcept -> f32;
 
     private:
         muldim::proxy::Image texture;
@@ -39,16 +39,16 @@ namespace mtt::texture {
             Image_Distribution distr = Image_Distribution::none;
             color::proxy::Color_Space color_space = color::proxy::Color_Space::entity("/color-space/sRGB");
         };
-        Image_Spectrum_Texture(cref<Descriptor> desc) noexcept;
+        Image_Spectrum_Texture(Descriptor const& desc) noexcept;
         Image_Spectrum_Texture() noexcept = default;
 
         auto operator()(
-            cref<muldim::Coordinate> coord, cref<fv4> spec
+            muldim::Coordinate const& coord, fv4 const& spec
         ) const noexcept -> fv4;
         auto sample(
-            cref<math::Context> ctx, cref<fv2> u
+            math::Context const& ctx, fv2 const& u
         ) const noexcept -> fv2;
-        auto pdf(cref<fv2> uv) const noexcept -> f32;
+        auto pdf(fv2 const& uv) const noexcept -> f32;
 
     private:
         color::proxy::Color_Space color_space;

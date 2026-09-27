@@ -3,7 +3,7 @@
 
 namespace mtt::math {
     template <typename T, size_t n>
-    auto estrin(cref<T> x, cref<Vector<T, n>> c) -> T {
+    auto estrin(T const& x, Vector<T, n> const& c) -> T {
         auto constexpr n_rec = (n - 1) / 2, n_fma = n / 2;
 
         auto c_rec = Vector<T, n_rec + 1>{};
@@ -17,7 +17,7 @@ namespace mtt::math {
 
     template<typename T, usize n>
     requires std::floating_point<T>
-    auto constexpr polynomial(T x, cref<Vector<T, n>> c) noexcept -> T {
+    auto constexpr polynomial(T x, Vector<T, n> const& c) noexcept -> T {
         return estrin(x, c);
     }
 }

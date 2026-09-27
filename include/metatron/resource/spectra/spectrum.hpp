@@ -37,7 +37,7 @@ namespace mtt::spectra {
         };
     }
 
-    auto constexpr operator&(cref<fv4> lambda, auto&& s) noexcept -> fv4 {
+    auto constexpr operator&(fv4 const& lambda, auto&& s) noexcept -> fv4 {
         if (math::constant(lambda)) return fv4{s(lambda[0])};
         return math::foreach([&](f32 lambda, auto) {
             return s(lambda);

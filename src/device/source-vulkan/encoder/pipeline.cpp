@@ -4,7 +4,7 @@
 
 namespace mtt::encoder {
     Pipeline_Encoder::Pipeline_Encoder(
-        mut<command::Buffer> cmd, mut<shader::Pipeline> ppl
+        command::Buffer* cmd, shader::Pipeline* ppl
     ) noexcept: cmd(cmd), ppl(ppl) {
         impl->barrier = opaque::Barrier{
             .stage = vk::PipelineStageFlagBits2::eComputeShader,

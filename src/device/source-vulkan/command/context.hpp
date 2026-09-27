@@ -38,7 +38,7 @@ namespace mtt::command {
     }
 
     template<typename T>
-    auto guard(rref<vk::ResultValue<T>> result) {
+    auto guard(vk::ResultValue<T>&& result) {
         guard(result.result);
         return std::move(result.value);
     }

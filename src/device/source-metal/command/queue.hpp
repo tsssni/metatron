@@ -5,6 +5,6 @@
 namespace mtt::command {
     struct Queue::Impl final {
         mtl<MTL::CommandQueue> queue;
-        std::vector<std::deque<obj<Buffer>>> cmds;
+        std::vector<std::deque<std::unique_ptr<Buffer>>> cmds;
     };
 }

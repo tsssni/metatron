@@ -65,9 +65,9 @@ namespace mtt::math {
 
         Planar_Distribution(
             std::span<f32> data,
-            cref<iv2> dimensions,
-            cref<fv2> low,
-            cref<fv2> high
+            iv2 const& dimensions,
+            fv2 const& low,
+            fv2 const& high
         ) noexcept: low(low), high(high), dim(dimensions) {
             integral = 0;
             delta = (high - low) / fv2(dim);
@@ -100,7 +100,7 @@ namespace mtt::math {
                 col_cdf[i] = integral == 0.f ? f32(i) / f32(dim[0]) : col_cdf[i] / integral;
         }
 
-        auto sample(cref<fv2> u) const noexcept -> fv2 {
+        auto sample(fv2 const& u) const noexcept -> fv2 {
             auto ci = 1;
             for (; ci < dim[0] && col_cdf[ci] <= u[0]; ++ci);
             ci--;
@@ -117,7 +117,7 @@ namespace mtt::math {
             return {cp, rp};
         }
 
-        auto pdf(cref<fv2> p) const noexcept -> f32 {
+        auto pdf(fv2 const& p) const noexcept -> f32 {
             auto ci = math::clamp(
                 i32((p[0] - low[0]) / delta[0]),
                 0, dim[0] - 1
@@ -157,7 +157,7 @@ namespace mtt::math::proxy {
     };
     struct Planar_Distribution: stl::proxy<Planar_Distribution, math::Planar_Distribution> {
         using proxy::proxy;
-        auto sample(cref<fv2> u) const noexcept { return (*idx).sample(u); }
-        auto pdf(cref<fv2> p) const noexcept { return (*idx).pdf(p); }
+        auto sample(fv2 const& u) const noexcept { return (*idx).sample(u); }
+        auto pdf(fv2 const& p) const noexcept { return (*idx).pdf(p); }
     };
 }

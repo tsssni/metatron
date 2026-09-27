@@ -23,7 +23,7 @@ namespace mtt::media {
     , Vaccum_Medium> {
         using polynomial::polynomial;
 
-        auto begin(cref<math::Context> ctx, f32 t_max) const noexcept -> Iterator {
+        auto begin(math::Context const& ctx, f32 t_max) const noexcept -> Iterator {
             return visit([&, t_max](auto* p) noexcept { return Iterator{p->begin(ctx, t_max)}; });
         }
     };

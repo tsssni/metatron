@@ -39,7 +39,7 @@ namespace mtt::renderer {
                 ++progress;
             }
 
-            stl::scheduler::sync_parallel(uzv2{size}, [&film, &image](cref<uzv2> px) {
+            stl::scheduler::sync_parallel(uzv2{size}, [&film, &image](uzv2 const& px) {
                 auto [i, j] = px;
                 auto pixel = fv4{film[i, j]};
                 pixel /= pixel[3];

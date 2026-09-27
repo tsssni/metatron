@@ -35,11 +35,11 @@ namespace mtt::stl {
             data.push_back(share);
         }
 
-        auto static push(cref<path> path) noexcept -> void {
+        auto static push(path const& path) noexcept -> void {
             instance().data.push_back(path);
         }
 
-        auto static find(cref<path> path) noexcept -> stl::path {
+        auto static find(path const& path) noexcept -> stl::path {
             for (auto const& base : instance().data | std::views::reverse) {
                 auto full = base / path;
                 if (std::filesystem::exists(full)) return full;
@@ -48,30 +48,30 @@ namespace mtt::stl {
             return {};
         }
 
-        auto static hit(cref<path> path) noexcept -> opt<stl::path> {
+        auto static hit(path const& path) noexcept -> opt<stl::path> {
             auto cache = instance().cache / path;
             if (std::filesystem::exists(cache)) return cache;
             return {};
         }
 
         auto static load(
-            cref<path> path, std::ios::openmode mode = {}, bool cstr = false
+            path const& path, std::ios::openmode mode = {}, bool cstr = false
         ) noexcept -> std::vector<byte> {
             auto size = std::filesystem::file_size(path);
             auto stream = std::ifstream{path, mode};
             auto buffer = std::vector<byte>(size + cstr);
-            stream.read(mut<char>(buffer.data()), buffer.size());
+            stream.read((char*)buffer.data(), buffer.size());
             if (cstr) buffer.back() = '\0';
             return buffer;
         }
 
         template<buffer T>
         auto static store(
-            cref<path> path, T buffer, std::ios::openmode mode = {}
+            path const& path, T buffer, std::ios::openmode mode = {}
         ) noexcept -> void {
             std::filesystem::create_directory(path.parent_path());
             auto stream = std::ofstream{path, mode};
-            stream.write(view<char>(buffer.data()), buffer.size());
+            stream.write((char const*)buffer.data(), buffer.size());
         }
 
     private:

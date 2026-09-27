@@ -9,28 +9,28 @@ namespace mtt::math {
         bool inside;
     };
 
-    auto constexpr operator|(cref<Transform> t, cref<Context> ctx) -> Context {
+    auto constexpr operator|(Transform const& t, Context const& ctx) -> Context {
         auto result = ctx;
         result.r = t | result.r;
         result.n = t | result.n;
         return result;
     }
 
-    auto constexpr operator^(cref<Transform> t, cref<Context> ctx) -> Context {
+    auto constexpr operator^(Transform const& t, Context const& ctx) -> Context {
         auto result = ctx;
         result.r = t ^ result.r;
         result.n = t ^ result.n;
         return result;
     }
 
-    auto constexpr operator|(rref<Transform::Chain> chain, cref<Context> ctx) -> Context {
+    auto constexpr operator|(Transform::Chain&& chain, Context const& ctx) -> Context {
         auto result = ctx;
         result.r = chain | result.r;
         result.n = chain | result.n;
         return result;
     }
 
-    auto constexpr operator^(rref<Transform::Chain> chain, cref<Context> ctx) -> Context {
+    auto constexpr operator^(Transform::Chain&& chain, Context const& ctx) -> Context {
         auto result = ctx;
         result.r = chain ^ result.r;
         result.n = chain ^ result.n;

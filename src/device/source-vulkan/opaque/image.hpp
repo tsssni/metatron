@@ -14,8 +14,8 @@ namespace mtt::opaque {
         auto static offset(Image::View view) noexcept -> vk::Offset3D;
         auto static extent(Image::View view) noexcept -> vk::Extent3D;
 
-        auto format(cref<muldim::Image> image) noexcept -> vk::Format;
-        auto update(cref<Barrier> desc) noexcept -> vk::ImageMemoryBarrier2;
-        auto update(mut<command::Queue> dst, mut<command::Queue> src) noexcept -> vk::ImageMemoryBarrier2;
+        auto format(muldim::Image const& image) noexcept -> vk::Format;
+        auto update(Barrier const& desc) noexcept -> vk::ImageMemoryBarrier2;
+        auto update(command::Queue* dst, command::Queue* src) noexcept -> vk::ImageMemoryBarrier2;
     };
 }

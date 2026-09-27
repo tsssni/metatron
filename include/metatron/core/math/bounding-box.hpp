@@ -7,16 +7,16 @@ namespace mtt::math {
         fv3 p_max = {low<f32>};
     };
 
-    auto constexpr inside(cref<fv3> p, cref<Bounding_Box> bbox) noexcept -> bool {
+    auto constexpr inside(fv3 const& p, Bounding_Box const& bbox) noexcept -> bool {
         return math::all([](f32 x, f32 y, f32 z, auto) {
             return x >= y && x < z;
         }, p, bbox.p_min, bbox.p_max);
     }
 
     auto constexpr hit(
-        cref<Ray> r,
-        cref<fv3> inv_d,
-        cref<Bounding_Box> bbox
+        Ray const& r,
+        fv3 const& inv_d,
+        Bounding_Box const& bbox
     ) noexcept -> fv2 {
         auto t1 = (bbox.p_min - r.o) * inv_d;
         auto t2 = (bbox.p_max - r.o) * inv_d;
@@ -26,8 +26,8 @@ namespace mtt::math {
     }
 
     auto constexpr hitvi(
-        cref<Ray> r,
-        cref<Bounding_Box> bbox
+        Ray const& r,
+        Bounding_Box const& bbox
     ) noexcept -> std::tuple<f32, f32, usize, usize> {
         auto hit_min = (bbox.p_min - r.o) / r.d;
         auto hit_max = (bbox.p_max - r.o) / r.d;
@@ -45,8 +45,8 @@ namespace mtt::math {
     }
 
     auto constexpr merge(
-        cref<Bounding_Box> a,
-        cref<Bounding_Box> b
+        Bounding_Box const& a,
+        Bounding_Box const& b
     ) noexcept -> Bounding_Box {
         return {
             .p_min = math::min(a.p_min, b.p_min),
@@ -54,7 +54,7 @@ namespace mtt::math {
         };
     }
 
-    auto constexpr area(cref<Bounding_Box> bbox) noexcept -> f32 {
+    auto constexpr area(Bounding_Box const& bbox) noexcept -> f32 {
         if(math::any([](f32 x, f32 y, usize) {
             return x >= y;
         }, bbox.p_min, bbox.p_max)) return 0.f;
@@ -62,7 +62,7 @@ namespace mtt::math {
         return 2.f * (extent[0] * extent[1] + extent[1] * extent[2] + extent[2] * extent[0]);
     }
 
-    auto constexpr operator|(cref<Transform> t, cref<Bounding_Box> bbox) -> Bounding_Box {
+    auto constexpr operator|(Transform const& t, Bounding_Box const& bbox) -> Bounding_Box {
         auto tbox = Bounding_Box{};
         for (auto i = 0; i < 8; ++i) {
             auto p = fv3{};
@@ -77,7 +77,7 @@ namespace mtt::math {
         return tbox;
     }
 
-    auto constexpr operator^(cref<Transform> t, cref<Bounding_Box> bbox) -> Bounding_Box {
+    auto constexpr operator^(Transform const& t, Bounding_Box const& bbox) -> Bounding_Box {
         auto tbox = Bounding_Box{};
         for (auto i = 0; i < 8; ++i) {
             auto p = fv3{};

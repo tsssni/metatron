@@ -13,7 +13,7 @@ namespace mtt::command {
         impl->memory = guard(device.allocateMemoryUnique(alloc));
 
         auto heap = ctx->memory_props.memoryProperties.memoryTypes[type].heapIndex;
-        if (heap == ctx->host_heap) mapped = mut<byte>(guard(device.mapMemory2({
+        if (heap == ctx->host_heap) mapped = (byte*)(guard(device.mapMemory2({
             .memory = impl->memory.get(),
             .offset = 0, .size = memory_size,
         })));

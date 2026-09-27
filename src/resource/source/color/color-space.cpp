@@ -28,7 +28,7 @@ namespace mtt::color {
 
     Color_Space::Color_Space(
         std::string_view name,
-        cref<fv2> r, cref<fv2> g, cref<fv2> b, u32 i,
+        fv2 const& r, fv2 const& g, fv2 const& b, u32 i,
         Transfer_Function transfer_function
     ) noexcept:
     illuminant(i),
@@ -60,14 +60,14 @@ namespace mtt::color {
         || header != "SPEC")
             stl::abort("{} coefficient has wrong header", name);
 
-        if (!file.read(mut<char>(&table_res), sizeof(i32)))
+        if (!file.read((char*)&table_res, sizeof(i32)))
             stl::abort("{} coefficient could not read table resolution", name);
         scale = table_res;
         table = table_res * table_res * table_res * 3 * 3;
 
         if (false
-        || !file.read(mut<char>(scale.ptr), scale.bytelen)
-        || !file.read(mut<char>(table.ptr), table.bytelen))
+        || !file.read((char*)scale.ptr, scale.bytelen)
+        || !file.read((char*)table.ptr, table.bytelen))
             stl::abort("{} coefficient could not read table", name);
         file.close();
     }

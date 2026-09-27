@@ -7,10 +7,10 @@ namespace mtt::phase {
         f32 g;
 
         auto operator()(
-            cref<fv3> wo, cref<fv3> wi
+            fv3 const& wo, fv3 const& wi
         ) const noexcept -> Interaction;
         auto sample(
-            cref<math::Context> ctx, cref<fv2> u
+            math::Context const& ctx, fv2 const& u
         ) const noexcept -> Interaction;
     };
 }

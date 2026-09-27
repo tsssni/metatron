@@ -2,8 +2,8 @@
 
 namespace mtt::material {
     auto Physical_Material::sample(
-        cref<math::Context> ctx,
-        cref<muldim::Coordinate> coord
+        math::Context const& ctx,
+        muldim::Coordinate const& coord
     ) const noexcept -> Interaction {
         auto guarded_sample = [&]<typename T>(T tex, auto const& fallback) {
             if (!tex) return fallback;

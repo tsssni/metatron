@@ -5,7 +5,7 @@ namespace mtt::accel {
     auto init() noexcept -> void {
         MTT_DESERIALIZE(Divider);
         MTT_DESERIALIZE_CALLBACK(
-        [](ref<scene::Hierarchy::binmap> bins) noexcept {
+        [](scene::Hierarchy::binmap& bins) noexcept {
             if (!bins.contains("hwbvh")) return;
             bins.erase("hwbvh");
             bins["lbvh"].clear();

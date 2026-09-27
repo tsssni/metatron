@@ -14,7 +14,7 @@ namespace mtt::opaque {
         auto static offset(Grid::View view) noexcept -> vk::Offset3D;
         auto static extent(Grid::View view) noexcept -> vk::Extent3D;
 
-        auto update(cref<Barrier> desc) noexcept -> vk::ImageMemoryBarrier2;
-        auto update(mut<command::Queue> dst, mut<command::Queue> src) noexcept -> vk::ImageMemoryBarrier2;
+        auto update(Barrier const& desc) noexcept -> vk::ImageMemoryBarrier2;
+        auto update(command::Queue* dst, command::Queue* src) noexcept -> vk::ImageMemoryBarrier2;
     };
 }

@@ -2,37 +2,37 @@
 
 namespace mtt::texture {
     auto Constant_Spectrum_Texture::operator()(
-        cref<muldim::Coordinate> coord, cref<fv4> spec
+        muldim::Coordinate const& coord, fv4 const& spec
     ) const noexcept -> fv4 {
         return spec & x;
     }
 
     auto Constant_Spectrum_Texture::sample(
-        cref<math::Context> ctx, cref<fv2> u
+        math::Context const& ctx, fv2 const& u
     ) const noexcept -> fv2 {
         return u;
     }
 
     auto Constant_Spectrum_Texture::pdf(
-        cref<fv2> uv
+        fv2 const& uv
     ) const noexcept -> f32 {
         return 1.f;
     }
 
     auto Constant_Vector_Texture::operator()(
-        cref<muldim::Coordinate> coord
+        muldim::Coordinate const& coord
     ) const noexcept -> fv4 {
         return x;
     }
 
     auto Constant_Vector_Texture::sample(
-        cref<math::Context> ctx, cref<fv2> u
+        math::Context const& ctx, fv2 const& u
     ) const noexcept -> fv2 {
         return u;
     }
 
     auto Constant_Vector_Texture::pdf(
-        cref<fv2> uv
+        fv2 const& uv
     ) const noexcept -> f32 {
         return 1.f;
     }

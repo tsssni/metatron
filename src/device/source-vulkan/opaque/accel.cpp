@@ -3,7 +3,7 @@
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::opaque {
-    Acceleration::Acceleration(cref<Descriptor> desc) noexcept {
+    Acceleration::Acceleration(Descriptor const& desc) noexcept {
         auto& ctx = command::Context::internal();
         auto props = ctx->accel_props;
         auto device = ctx->device.get();
@@ -36,7 +36,7 @@ namespace mtt::opaque {
             );
         });
         bboxes = num_bboxes > 0 ? make_desc<opaque::Buffer>({
-            .ptr = mut<byte>(bboxes_data.data()),
+            .ptr = (byte*)bboxes_data.data(),
             .state = opaque::Buffer::State::local,
             .size = bbox_size * num_bboxes,
             .flags = u64(vk::BufferUsageFlagBits2::eAccelerationStructureBuildInputReadOnlyKHR),
@@ -126,7 +126,7 @@ namespace mtt::opaque {
             std::memcpy(info.transform.matrix.data(), instance.transform.data(), sizeof(vk::TransformMatrixKHR));
         });
         instances = make_desc<opaque::Buffer>({
-            .ptr = mut<byte>(instances_data.data()),
+            .ptr = (byte*)instances_data.data(),
             .state = opaque::Buffer::State::local,
             .size = sizeof(vk::AccelerationStructureInstanceKHR) * desc.instances.size(),
             .flags = u64(vk::BufferUsageFlagBits2::eAccelerationStructureBuildInputReadOnlyKHR),

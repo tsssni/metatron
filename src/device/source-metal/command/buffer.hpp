@@ -4,7 +4,7 @@
 
 namespace mtt::command {
     struct Buffer::Impl final {
-        mut<MTL::CommandBuffer> cmd;
+        MTL::CommandBuffer* cmd;
         mtl<MTL::Fence> fence;
     };
 }

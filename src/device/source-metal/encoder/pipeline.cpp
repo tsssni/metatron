@@ -5,7 +5,7 @@
 
 namespace mtt::encoder {
     Pipeline_Encoder::Pipeline_Encoder(
-        mut<command::Buffer> cmd, mut<shader::Pipeline> ppl
+        command::Buffer* cmd, shader::Pipeline* ppl
     ) noexcept: cmd(cmd), ppl(ppl) {
         impl->encoder = cmd->impl->cmd->computeCommandEncoder();
         impl->encoder->waitForFence(cmd->impl->fence.get());
@@ -20,7 +20,7 @@ namespace mtt::encoder {
         impl->encoder->setComputePipelineState(ppl->impl->pipeline.get());
         auto buffers = ppl->args
         | std::views::transform([](auto x) { return x->set->impl->device_buffer.get(); })
-        | std::ranges::to<std::vector<mut<MTL::Buffer>>>();
+        | std::ranges::to<std::vector<MTL::Buffer*>>();
         auto offsets = std::vector<usize>(ppl->args.size(), 0uz);
         impl->encoder->setBuffers(buffers.data(), offsets.data(), {0, u32(buffers.size())});
     }

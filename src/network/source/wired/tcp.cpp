@@ -12,7 +12,7 @@ namespace mtt::wired {
         Address address;
         Socket socket{invalid_socket};
 
-        Impl(cref<Address> address) noexcept: address(address) {
+        Impl(Address const& address) noexcept: address(address) {
             ::signal(SIGPIPE, SIG_IGN);
         }
 
@@ -59,7 +59,7 @@ namespace mtt::wired {
                 if (socket == invalid_socket) return false;
             }
 
-            auto sent_size = ::send(socket, view<char>(data.data()), data.size(), 0);
+            auto sent_size = ::send(socket, (char const*)data.data(), data.size(), 0);
             if (sent_size == data.size()) return true;
 
             stl::print("send failed: {}", ::strerror(errno));
@@ -75,9 +75,9 @@ namespace mtt::wired {
             }
 
             auto iov = std::array<iovec, 2>{};
-            iov[0].iov_base = mut<void>(header.data());
+            iov[0].iov_base = (void*)header.data();
             iov[0].iov_len = header.size();
-            iov[1].iov_base = mut<void>(data.data());
+            iov[1].iov_base = (void*)data.data();
             iov[1].iov_len = data.size();
 
             auto total = header.size() + data.size();
@@ -91,7 +91,7 @@ namespace mtt::wired {
         }
     };
 
-    Tcp_Socket::Tcp_Socket(cref<Address> address) noexcept:
+    Tcp_Socket::Tcp_Socket(Address const& address) noexcept:
     stl::capsule<Tcp_Socket>(address) {}
 
     auto Tcp_Socket::send(std::span<byte const> data) noexcept -> bool {

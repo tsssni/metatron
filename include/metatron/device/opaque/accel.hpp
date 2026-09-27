@@ -9,7 +9,7 @@ namespace mtt::opaque {
                 mesh,
                 aabb,
             } type;
-            view<shape::Mesh> mesh;
+            shape::Mesh const* mesh;
             std::vector<math::Bounding_Box> aabbs;
         };
         struct Instance final {
@@ -17,10 +17,10 @@ namespace mtt::opaque {
             fm4 transform;
         };
 
-        std::vector<obj<Buffer>> buffers;
-        std::vector<obj<Buffer>> scratches;
-        obj<Buffer> bboxes;
-        obj<Buffer> instances;
+        std::vector<std::unique_ptr<Buffer>> buffers;
+        std::vector<std::unique_ptr<Buffer>> scratches;
+        std::unique_ptr<Buffer> bboxes;
+        std::unique_ptr<Buffer> instances;
 
         struct Descriptor final {
             std::vector<Primitive> primitives;
@@ -29,6 +29,6 @@ namespace mtt::opaque {
         };
 
         struct Impl;
-        Acceleration(cref<Descriptor> desc) noexcept;
+        Acceleration(Descriptor const& desc) noexcept;
     };
 }

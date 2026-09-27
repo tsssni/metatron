@@ -11,8 +11,8 @@ namespace mtt::material {
         using polynomial::polynomial;
 
         auto sample(
-            cref<math::Context> ctx,
-            cref<muldim::Coordinate> coord
+            math::Context const& ctx,
+            muldim::Coordinate const& coord
         ) const noexcept -> Interaction {
             return visit([&](auto* p) noexcept { return p->sample(ctx, coord); });
         }

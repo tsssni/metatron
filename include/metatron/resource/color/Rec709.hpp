@@ -4,7 +4,7 @@
 namespace mtt::color {
     struct Rec709_Transfer_Function final {
         struct Descriptor final {};
-        Rec709_Transfer_Function(cref<Descriptor>) noexcept {}
+        Rec709_Transfer_Function(Descriptor const&) noexcept {}
         Rec709_Transfer_Function() noexcept = default;
 
         auto transfer(f32 x) const noexcept -> f32 {

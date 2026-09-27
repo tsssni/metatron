@@ -9,7 +9,7 @@ namespace mtt::opaque {
         vk::ImageLayout layout = vk::ImageLayout::eUndefined;
         u32 family = math::maxv<u32>;
 
-        auto operator==(cref<Barrier> barrier) const noexcept -> bool {
+        auto operator==(Barrier const& barrier) const noexcept -> bool {
             return true
             && stage == barrier.stage
             && access == barrier.access
@@ -18,7 +18,7 @@ namespace mtt::opaque {
         }
 
         template<typename T>
-        auto update(cref<Barrier> desc) noexcept -> T {
+        auto update(Barrier const& desc) noexcept -> T {
             auto barrier = T{
                 .srcStageMask = stage,
                 .srcAccessMask = access,
@@ -38,7 +38,7 @@ namespace mtt::opaque {
         }
 
         template<typename T>
-        auto update(mut<command::Queue> dst, mut<command::Queue> src) noexcept -> T {
+        auto update(command::Queue* dst, command::Queue* src) noexcept -> T {
             auto barrier = T{
                 .srcStageMask = stage,
                 .srcAccessMask = access,
@@ -67,7 +67,7 @@ namespace mtt::opaque {
         vk::UniqueBuffer host_buffer;
 
         auto static search(vk::MemoryPropertyFlags flags, u32 heap, u32 type) -> u32;
-        auto update(cref<Barrier> desc) noexcept -> vk::BufferMemoryBarrier2;
-        auto update(mut<command::Queue> dst, mut<command::Queue> src) noexcept -> vk::BufferMemoryBarrier2;
+        auto update(Barrier const& desc) noexcept -> vk::BufferMemoryBarrier2;
+        auto update(command::Queue* dst, command::Queue* src) noexcept -> vk::BufferMemoryBarrier2;
     };
 }

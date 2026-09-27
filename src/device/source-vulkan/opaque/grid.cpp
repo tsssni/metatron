@@ -37,7 +37,7 @@ namespace mtt::opaque {
         return {view.size[0], view.size[1], view.size[2]};
     }
 
-    auto Grid::Impl::update(cref<Barrier> desc) noexcept -> vk::ImageMemoryBarrier2 {
+    auto Grid::Impl::update(Barrier const& desc) noexcept -> vk::ImageMemoryBarrier2 {
         auto barrier = this->barrier.update<vk::ImageMemoryBarrier2>(desc);
         barrier.image = image.get();
         barrier.subresourceRange = vk::ImageSubresourceRange{
@@ -50,7 +50,7 @@ namespace mtt::opaque {
         return barrier;
     }
 
-    auto Grid::Impl::update(mut<command::Queue> dst, mut<command::Queue> src) noexcept -> vk::ImageMemoryBarrier2 {
+    auto Grid::Impl::update(command::Queue* dst, command::Queue* src) noexcept -> vk::ImageMemoryBarrier2 {
         auto barrier = this->barrier.update<vk::ImageMemoryBarrier2>(dst, src);
         barrier.image = image.get();
         barrier.subresourceRange = vk::ImageSubresourceRange{
@@ -63,7 +63,7 @@ namespace mtt::opaque {
         return barrier;
     }
 
-    Grid::Grid(cref<Descriptor> desc) noexcept:
+    Grid::Grid(Descriptor const& desc) noexcept:
     state(desc.state) {
         impl->barrier.family = command::Queue::Impl::families[u32(desc.type)].idx;
         width = desc.grid->width;
@@ -71,7 +71,7 @@ namespace mtt::opaque {
         depth = desc.grid->depth;
         if (desc.state == State::readonly && !desc.grid->cells.empty()) {
             host = make_desc<Buffer>({
-                .ptr = mut<byte>(desc.grid->cells.data()),
+                .ptr = (byte*)desc.grid->cells.data(),
                 .state = Buffer::State::visible,
                 .type = desc.type,
                 .size = desc.grid->cells.size() * sizeof(f32),

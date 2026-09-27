@@ -4,6 +4,6 @@
 
 namespace mtt::encoder {
     struct Acceleration_Encoder::Impl final {
-        mut<MTL::AccelerationStructureCommandEncoder> encoder;
+        MTL::AccelerationStructureCommandEncoder* encoder;
     };
 }

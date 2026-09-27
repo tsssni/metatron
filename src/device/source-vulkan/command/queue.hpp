@@ -16,6 +16,6 @@ namespace mtt::command {
         std::atomic_flag flag = false;
         vk::Queue queue;
         std::vector<vk::UniqueCommandPool> pools;
-        std::vector<std::deque<obj<Buffer>>> cmds;
+        std::vector<std::deque<std::unique_ptr<Buffer>>> cmds;
     };
 }

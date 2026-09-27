@@ -4,6 +4,6 @@
 
 namespace mtt::encoder {
     struct Pipeline_Encoder::Impl final {
-        mut<MTL::ComputeCommandEncoder> encoder;
+        MTL::ComputeCommandEncoder* encoder;
     };
 }

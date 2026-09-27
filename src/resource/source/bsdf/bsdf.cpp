@@ -12,7 +12,7 @@ namespace mtt::bsdf {
         return reflectance / math::pi;
     }
 
-    auto lambert(cref<fv4> reflectance) noexcept -> fv4 {
+    auto lambert(fv4 const& reflectance) noexcept -> fv4 {
         return reflectance / math::pi;
     }
 
@@ -51,13 +51,13 @@ namespace mtt::bsdf {
         }
     }
 
-    auto fresnel(f32 cos_theta_i, cref<fv4> eta, cref<fv4> k) noexcept -> fv4 {
+    auto fresnel(f32 cos_theta_i, fv4 const& eta, fv4 const& k) noexcept -> fv4 {
         return spectra::visit([&](f32 eta, f32 k, auto) {
             return fresnel(cos_theta_i, eta, k);
         }, eta, k);
     }
 
-    auto lambda(cref<fv3> wo, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
+    auto lambda(fv3 const& wo, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
         auto tan2_theta = math::unit_to_tan2_theta(wo);
         if (math::isinf(tan2_theta)) return 0.f;
         auto alpha2 = 0.f
@@ -66,15 +66,15 @@ namespace mtt::bsdf {
         return (math::pow<1,2>(1.f + alpha2 * tan2_theta) - 1.f) / 2.f;
     }
 
-    auto smith_mask(cref<fv3> wo, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
+    auto smith_mask(fv3 const& wo, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
         return 1.f / (1.f + lambda(-wo, alpha_u, alpha_v));
     }
 
-    auto smith_shadow(cref<fv3> wo, cref<fv3> wi, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
+    auto smith_shadow(fv3 const& wo, fv3 const& wi, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
         return 1.f / (1.f + lambda(-wo, alpha_u, alpha_v) + lambda(wi, alpha_u, alpha_v));
     }
 
-    auto trowbridge_reitz(cref<fv3> wm, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
+    auto trowbridge_reitz(fv3 const& wm, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
         auto tan2_theta = math::unit_to_tan2_theta(wm);
         if (math::isinf(tan2_theta)) return 0.f;
 
@@ -91,7 +91,7 @@ namespace mtt::bsdf {
         return 1.f / (math::pi * alpha_u * alpha_v * cos4_theta * math::pow<2>(1.f + e));
     }
 
-    auto visible_trowbridge_reitz(cref<fv3> wo, cref<fv3> wm, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
+    auto visible_trowbridge_reitz(fv3 const& wo, fv3 const& wm, f32 alpha_u, f32 alpha_v) noexcept -> f32 {
         return 1.f
         * trowbridge_reitz(wm, alpha_u, alpha_v)
         * smith_mask(-wo, alpha_u, alpha_v)
@@ -101,9 +101,9 @@ namespace mtt::bsdf {
 
     auto torrance_sparrow(
         bool reflective, f32 pr, f32 pt,
-        cref<fv4> F, f32 D, f32 G,
-        cref<fv3> wo, cref<fv3> wi, cref<fv3> wm,
-        cref<fv4> eta, f32 alpha_u, f32 alpha_v
+        fv4 const& F, f32 D, f32 G,
+        fv3 const& wo, fv3 const& wi, fv3 const& wm,
+        fv4 const& eta, f32 alpha_u, f32 alpha_v
     ) noexcept -> Interaction {
         auto cos_theta_o = math::unit_to_cos_theta(-wo);
         auto cos_theta_i = math::unit_to_cos_theta(wi);

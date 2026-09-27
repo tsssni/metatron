@@ -6,7 +6,7 @@ namespace mtt::math {
         Cone_Distribution() noexcept = default;
         Cone_Distribution(f32 cos_theta_max) noexcept: cos_theta_max(cos_theta_max) {}
 
-        auto sample(cref<fv2> u) const noexcept -> fv3 {
+        auto sample(fv2 const& u) const noexcept -> fv3 {
             auto cos_theta = 1.f - u[0] * (1.f - cos_theta_max);
             auto phi = u[1] * 2.f * pi;
             return unit_spherical_to_cartesian(cos_theta, phi);

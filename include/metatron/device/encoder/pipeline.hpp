@@ -3,10 +3,10 @@
 
 namespace mtt::encoder {
     struct Pipeline_Encoder final: stl::capsule<Pipeline_Encoder> {
-        mut<command::Buffer> cmd;
-        mut<shader::Pipeline> ppl;
+        command::Buffer* cmd;
+        shader::Pipeline* ppl;
         struct Impl;
-        Pipeline_Encoder(mut<command::Buffer> cmd, mut<shader::Pipeline> ppl) noexcept;
+        Pipeline_Encoder(command::Buffer* cmd, shader::Pipeline* ppl) noexcept;
 
         auto submit() noexcept -> void;
         auto bind() noexcept -> void;

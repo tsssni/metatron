@@ -3,7 +3,7 @@
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::texture {
-    Image_Vector_Texture::Image_Vector_Texture(cref<Descriptor> desc) noexcept {
+    Image_Vector_Texture::Image_Vector_Texture(Descriptor const& desc) noexcept {
         auto tex = muldim::Image::from_path(desc.path, desc.linear);
 
         if (desc.distr != Image_Distribution::none) {
@@ -27,23 +27,23 @@ namespace mtt::texture {
     }
 
     auto Image_Vector_Texture::operator()(
-        cref<muldim::Coordinate> coord
+        muldim::Coordinate const& coord
     ) const noexcept -> fv4 {
         return texture(coord);
     }
 
     auto Image_Vector_Texture::sample(
-        cref<math::Context> ctx, cref<fv2> u
+        math::Context const& ctx, fv2 const& u
     ) const noexcept -> fv2 {
         return math::reverse(distr.sample(u));
     }
 
-    auto Image_Vector_Texture::pdf(cref<fv2> uv) const noexcept -> f32 {
+    auto Image_Vector_Texture::pdf(fv2 const& uv) const noexcept -> f32 {
         return distr.pdf(math::reverse(uv));
     }
 
     Image_Spectrum_Texture::Image_Spectrum_Texture(
-        cref<Descriptor> desc
+        Descriptor const& desc
     ) noexcept:
     image_tex({desc.path, desc.distr, false}),
     type(desc.type),
@@ -51,7 +51,7 @@ namespace mtt::texture {
 
 
     auto Image_Spectrum_Texture::operator()(
-        cref<muldim::Coordinate> coord, cref<fv4> spec
+        muldim::Coordinate const& coord, fv4 const& spec
     ) const noexcept -> fv4 {
         auto rgba = image_tex(coord);
         auto rgb_spec = spectra::Rgb_Spectrum{{
@@ -63,12 +63,12 @@ namespace mtt::texture {
     }
 
     auto Image_Spectrum_Texture::sample(
-        cref<math::Context> ctx, cref<fv2> u
+        math::Context const& ctx, fv2 const& u
     ) const noexcept -> fv2 {
         return image_tex.sample(ctx, u);
     }
 
-    auto Image_Spectrum_Texture::pdf(cref<fv2> uv) const noexcept -> f32 {
+    auto Image_Spectrum_Texture::pdf(fv2 const& uv) const noexcept -> f32 {
         return image_tex.pdf(uv);
     }
 }

@@ -3,7 +3,7 @@
 #include <sstream>
 
 namespace mtt::spectra {
-    Discrete_Spectrum::Discrete_Spectrum(cref<Descriptor> desc) noexcept {
+    Discrete_Spectrum::Discrete_Spectrum(Descriptor const& desc) noexcept {
         auto file = std::ifstream{desc.path};
         if (!file.is_open())
             stl::abort("failed to open discrete spectrum {}", desc.path);

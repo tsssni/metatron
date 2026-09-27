@@ -5,6 +5,6 @@
 namespace mtt::opaque {
     struct Image::Impl final {
         mtl<MTL::Texture> texture;
-        auto format(cref<muldim::Image> image) noexcept -> MTL::PixelFormat;
+        auto format(muldim::Image const& image) noexcept -> MTL::PixelFormat;
     };
 }

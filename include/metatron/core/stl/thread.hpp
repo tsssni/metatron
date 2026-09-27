@@ -36,13 +36,13 @@ namespace mtt::stl {
 
         template<typename F, usize size>
         requires (std::invocable<F, uzv<size>> && size >= 1 && size <= 3)
-        auto static sync_parallel(cref<uzv<size>> grid, F&& f) noexcept {
+        auto static sync_parallel(uzv<size> const& grid, F&& f) noexcept {
             instance().parallel(grid, std::forward<F>(f), true).wait();
         }
 
         template<typename F, usize size>
         requires (std::invocable<F, uzv<size>> && size >= 1 && size <= 3)
-        auto static async_parallel(cref<uzv<size>> grid, F&& f) noexcept {
+        auto static async_parallel(uzv<size> const& grid, F&& f) noexcept {
             return instance().parallel(grid, std::forward<F>(f), false);
         }
 
@@ -67,7 +67,7 @@ namespace mtt::stl {
         && std::invocable<F, uzv<size>>
         && std::same_as<std::invoke_result_t<F, uzv<size>>, void>
         && size >= 1 && size <= 3)
-        auto parallel(cref<uzv<size>> grid, F&& f, bool sync) noexcept {
+        auto parallel(uzv<size> const& grid, F&& f, bool sync) noexcept {
             using S = std::tuple<std::atomic<u32>, std::atomic<u32>, std::promise<void>>;
             auto state = std::make_unique<S>(0, 0, std::promise<void>{});
             auto& promise = std::get<2>(*state);

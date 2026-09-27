@@ -7,10 +7,10 @@ namespace mtt::muldim {
     }
 
     auto Grid::operator[](usize x, usize y, usize z) const noexcept -> f32 {
-        return const_cast<ref<Grid>>(*this)[x, y, z];
+        return const_cast<Grid&>(*this)[x, y, z];
     }
 
-    auto Grid::operator()(cref<fv3> uvw) const -> fv4 {
+    auto Grid::operator()(fv3 const& uvw) const -> fv4 {
         auto pixel = uvw * fv3{size};
         auto base = math::clamp(math::floor(pixel - 0.5f), fv3{0.f}, fv3{size} - 2);
         auto frac = math::clamp(pixel - 0.5f - base, fv3{0.f}, fv3{1.f});

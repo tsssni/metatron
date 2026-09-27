@@ -4,22 +4,22 @@
 namespace mtt::shape {
     struct Sphere final {
         struct Descriptor final {};
-        Sphere(cref<Descriptor>) noexcept;
+        Sphere(Descriptor const&) noexcept;
         Sphere() noexcept = default;
 
         auto size() const noexcept -> usize;
         auto bounding_box(
-            cref<math::Transform> t, usize idx
+            math::Transform const& t, usize idx
         ) const noexcept -> math::Bounding_Box;
         auto operator()(
-            cref<math::Ray> r, cref<fv3> np,
-            cref<fv4> pos, usize idx = 0uz
+            math::Ray const& r, fv3 const& np,
+            fv4 const& pos, usize idx = 0uz
         ) const noexcept -> Interaction;
         auto sample(
-            cref<math::Context> ctx, cref<fv2> u, usize idx = 0uz
+            math::Context const& ctx, fv2 const& u, usize idx = 0uz
         ) const noexcept -> Interaction;
         auto query(
-            cref<math::Ray> r, usize idx = 0uz
+            math::Ray const& r, usize idx = 0uz
         ) const noexcept -> fv4;
 
     private:

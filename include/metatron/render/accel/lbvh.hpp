@@ -17,11 +17,11 @@ namespace mtt::accel {
         };
 
         struct Descriptor final {u32 num_guide_leaf_prims = 4;};
-        LBVH(cref<Descriptor> desc) noexcept;
+        LBVH(Descriptor const& desc) noexcept;
         LBVH() noexcept = default;
 
         auto operator()(
-            cref<math::Ray> r, cref<fv3> n
+            math::Ray const& r, fv3 const& n
         ) const noexcept -> Interaction;
 
     private:

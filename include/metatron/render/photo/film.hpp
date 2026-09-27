@@ -15,16 +15,16 @@ namespace mtt::photo {
         f32 weight;
 
         Fixel(
-            mut<Film> film,
-            cref<uzv2> pixel,
-            cref<fv2> position,
+            Film* film,
+            uzv2 const& pixel,
+            fv2 const& position,
             f32 weight
         ) noexcept;
 
-        auto operator=(cref<spectra::Stochastic_Spectrum> spectrum) noexcept -> void;
+        auto operator=(spectra::Stochastic_Spectrum const& spectrum) noexcept -> void;
 
     private:
-        mut<Film> film;
+        Film* film;
     };
 
     struct Film final {
@@ -51,13 +51,13 @@ namespace mtt::photo {
             spectra::Spectrum b = spectra::Spectrum::entity("/spectrum/CIE-Z");
             color::proxy::Color_Space color_space = color::proxy::Color_Space::entity("/color-space/sRGB");
         };
-        Film(cref<Descriptor> desc) noexcept;
+        Film(Descriptor const& desc) noexcept;
         Film() noexcept = default;
 
         auto operator()(
             filter::Filter filter,
-            cref<uzv2> pixel,
-            cref<fv2> u
+            uzv2 const& pixel,
+            fv2 const& u
         ) noexcept -> Fixel;
 
     private:
@@ -72,7 +72,7 @@ namespace mtt::photo::proxy {
     struct Film: stl::proxy<Film, photo::Film> {
         using proxy::proxy;
 
-        auto operator()(filter::Filter filter, cref<uzv2> pixel, cref<fv2> u) noexcept -> Fixel {
+        auto operator()(filter::Filter filter, uzv2 const& pixel, fv2 const& u) noexcept -> Fixel {
             return (*idx)(filter, pixel, u);
         }
     };

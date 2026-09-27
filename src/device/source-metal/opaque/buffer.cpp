@@ -2,7 +2,7 @@
 #include "../command/allocator.hpp"
 
 namespace mtt::opaque {
-    Buffer::Buffer(cref<Descriptor> desc) noexcept:
+    Buffer::Buffer(Descriptor const& desc) noexcept:
     size(desc.size),
     state(desc.state) {
         auto& ctx = command::Context::internal();
@@ -23,13 +23,13 @@ namespace mtt::opaque {
 
         addr = impl->device_buffer->gpuAddress();
         if (impl->host_buffer) {
-            ptr = mut<byte>(impl->host_buffer->contents());
+            ptr = (byte*)impl->host_buffer->contents();
             if (desc.ptr) std::memcpy(ptr, desc.ptr, desc.size);
         }
     }
 
-    Buffer::Buffer(rref<Buffer> rhs) noexcept { *this = std::move(rhs); }
-    auto Buffer::operator=(rref<Buffer> rhs) noexcept -> ref<Buffer> {
+    Buffer::Buffer(Buffer&& rhs) noexcept { *this = std::move(rhs); }
+    auto Buffer::operator=(Buffer&& rhs) noexcept -> Buffer& {
         auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
         state = rhs.state; ptr = rhs.ptr;

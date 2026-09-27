@@ -10,7 +10,7 @@ namespace mtt::opaque {
         };
 
         struct View final {
-            mut<Image> ptr;
+            Image* ptr;
             uv2 mip;
             uv2 offset;
             uv2 size;
@@ -20,16 +20,16 @@ namespace mtt::opaque {
         u32 width;
         u32 height;
         u32 mips;
-        std::vector<obj<Buffer>> host;
+        std::vector<std::unique_ptr<Buffer>> host;
 
         struct Descriptor final {
-            mut<muldim::Image> image;
+            muldim::Image* image;
             State state = State::samplable;
             command::Type type = command::Type::render;
         };
 
         struct Impl;
-        Image(cref<Descriptor> desc) noexcept;
+        Image(Descriptor const& desc) noexcept;
         operator View() noexcept;
     };
 }

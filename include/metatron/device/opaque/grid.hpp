@@ -10,7 +10,7 @@ namespace mtt::opaque {
         };
 
         struct View final {
-            mut<Grid> ptr;
+            Grid* ptr;
             uv3 offset;
             uv3 size;
         };
@@ -19,16 +19,16 @@ namespace mtt::opaque {
         u32 width;
         u32 height;
         u32 depth;
-        obj<Buffer> host;
+        std::unique_ptr<Buffer> host;
 
         struct Descriptor final {
-            mut<muldim::Grid> grid;
+            muldim::Grid* grid;
             State state = State::readonly;
             command::Type type = command::Type::render;
         };
 
         struct Impl;
-        Grid(cref<Descriptor> desc) noexcept;
+        Grid(Descriptor const& desc) noexcept;
         operator View() noexcept;
     };
 }

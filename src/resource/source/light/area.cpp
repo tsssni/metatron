@@ -2,13 +2,13 @@
 
 namespace mtt::light {
     auto Area_Light::operator()(
-        cref<math::Ray> r, cref<fv4> lambda
+        math::Ray const& r, fv4 const& lambda
     ) const noexcept -> Interaction {
         return {};
     }
 
     auto Area_Light::sample(
-        cref<math::Context> ctx, cref<fv2> u
+        math::Context const& ctx, fv2 const& u
     ) const noexcept -> Interaction {
         auto s_intr = shape.sample(ctx, u, primitive);
         return {

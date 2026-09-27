@@ -4,7 +4,7 @@
 namespace mtt::media {
     struct Vaccum_Medium final {
         struct Descriptor final {};
-        Vaccum_Medium(cref<Descriptor>) noexcept;
+        Vaccum_Medium(Descriptor const&) noexcept;
         Vaccum_Medium() noexcept = default;
 
         struct Iterator final {
@@ -14,7 +14,7 @@ namespace mtt::media {
         };
 
         auto begin(
-            cref<math::Context> ctx, f32 t_max
+            math::Context const& ctx, f32 t_max
         ) const noexcept -> Iterator;
 
     private:

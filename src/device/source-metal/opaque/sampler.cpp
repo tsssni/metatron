@@ -18,7 +18,7 @@ namespace mtt::opaque {
         }
     }
 
-    Sampler::Sampler(cref<Descriptor> desc) noexcept {
+    Sampler::Sampler(Descriptor const& desc) noexcept {
         auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
         auto mode = impl->mode(desc.mode);

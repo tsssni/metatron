@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/core/prelude/life.hpp>
+#include <memory>
 
 namespace mtt::inline prelude {
     template<typename T>
@@ -23,7 +23,7 @@ namespace mtt::inline prelude {
 
     template<typename T>
     requires has_descriptor<T>
-    auto make_desc(cref<descriptor_t<T>> desc) noexcept -> obj<T> {
-        return make_obj<T>(desc);
+    auto make_desc(descriptor_t<T> const& desc) noexcept -> std::unique_ptr<T> {
+        return std::make_unique<T>(desc);
     }
 }

@@ -37,7 +37,7 @@ namespace mtt::opaque {
         return {view.size[0], view.size[1], 1};
     }
 
-    auto Image::Impl::format(cref<muldim::Image> image) noexcept -> vk::Format {
+    auto Image::Impl::format(muldim::Image const& image) noexcept -> vk::Format {
         auto channels = image.channels;
         auto stride = image.stride;
         auto linear = image.linear;
@@ -66,7 +66,7 @@ namespace mtt::opaque {
         return vk::Format::eB8G8R8A8Unorm;
     }
 
-    auto Image::Impl::update(cref<Barrier> desc) noexcept -> vk::ImageMemoryBarrier2 {
+    auto Image::Impl::update(Barrier const& desc) noexcept -> vk::ImageMemoryBarrier2 {
         auto barrier = this->barrier.update<vk::ImageMemoryBarrier2>(desc);
         barrier.image = image.get();
         barrier.subresourceRange = vk::ImageSubresourceRange{
@@ -79,7 +79,7 @@ namespace mtt::opaque {
         return barrier;
     }
 
-    auto Image::Impl::update(mut<command::Queue> dst, mut<command::Queue> src) noexcept -> vk::ImageMemoryBarrier2 {
+    auto Image::Impl::update(command::Queue* dst, command::Queue* src) noexcept -> vk::ImageMemoryBarrier2 {
         auto barrier = this->barrier.update<vk::ImageMemoryBarrier2>(dst, src);
         barrier.image = image.get();
         barrier.subresourceRange = vk::ImageSubresourceRange{
@@ -92,7 +92,7 @@ namespace mtt::opaque {
         return barrier;
     }
 
-    Image::Image(cref<Descriptor> desc) noexcept:
+    Image::Image(Descriptor const& desc) noexcept:
     state(desc.state) {
         impl->barrier.family = command::Queue::Impl::families[u32(desc.type)].idx;
         width = desc.image->width;

@@ -4,12 +4,12 @@
 namespace mtt::material {
     struct Interface_Material final {
         struct Descriptor final {};
-        Interface_Material(cref<Descriptor>) noexcept;
+        Interface_Material(Descriptor const&) noexcept;
         Interface_Material() noexcept = default;
 
         auto sample(
-            cref<math::Context> ctx,
-            cref<muldim::Coordinate> coord
+            math::Context const& ctx,
+            muldim::Coordinate const& coord
         ) const noexcept -> Interaction;
         auto flags() const noexcept -> Flags;
 

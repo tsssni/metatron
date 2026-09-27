@@ -5,7 +5,7 @@
 
 namespace mtt::shader {
     struct Argument::Impl final {
-        obj<opaque::Buffer> parameters;
+        std::unique_ptr<opaque::Buffer> parameters;
         std::vector<usize> offsets;
     };
 }

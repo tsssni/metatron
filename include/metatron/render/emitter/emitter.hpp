@@ -8,10 +8,10 @@ namespace mtt::emitter {
     , Uniform_Emitter> {
         using polynomial::polynomial;
 
-        auto sample(cref<math::Context> ctx, f32 u) const noexcept -> Interaction {
+        auto sample(math::Context const& ctx, f32 u) const noexcept -> Interaction {
             return visit([&](auto* p) noexcept { return p->sample(ctx, u); });
         }
-        auto sample_infinite(cref<math::Context> ctx, f32 u) const noexcept -> Interaction {
+        auto sample_infinite(math::Context const& ctx, f32 u) const noexcept -> Interaction {
             return visit([&](auto* p) noexcept { return p->sample_infinite(ctx, u); });
         }
     };

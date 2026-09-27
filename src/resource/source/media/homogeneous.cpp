@@ -29,7 +29,7 @@ namespace mtt::media {
         };
     }
 
-    auto Homogeneous_Medium::begin(cref<math::Context> ctx, f32 t_max) const noexcept -> Iterator {
+    auto Homogeneous_Medium::begin(math::Context const& ctx, f32 t_max) const noexcept -> Iterator {
         return {this, ctx.r, ctx.lambda, t_max};
     }
 }

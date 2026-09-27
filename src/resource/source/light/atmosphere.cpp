@@ -10,7 +10,7 @@ namespace mtt::light {
     buf<f32> Atmosphere_Light::sun_limb_table;
     buf<f32> Atmosphere_Light::tgmm_table;
 
-    Atmosphere_Light::Atmosphere_Light(cref<Descriptor> desc) noexcept:
+    Atmosphere_Light::Atmosphere_Light(Descriptor const& desc) noexcept:
     d(math::unit_spherical_to_cartesian(desc.direction)),
     t(fq::from_rotation_between({0.f, 1.f, 0.f}, d)),
     turbidity(desc.turbidity),
@@ -28,7 +28,7 @@ namespace mtt::light {
             return interpolated;
         };
 
-        auto lerp = [](cref<std::vector<f32>> x, cref<std::vector<f32>> y, f32 alpha) -> std::vector<f32> {
+        auto lerp = [](std::vector<f32> const& x, std::vector<f32> const& y, f32 alpha) -> std::vector<f32> {
             auto z = std::vector<f32>(x.size());
             std::ranges::transform(x, y, z.begin(), [alpha](f32 x, f32 y){return math::lerp(x, y, alpha);});
             return z;
@@ -44,7 +44,7 @@ namespace mtt::light {
         auto a_high = a_low + 1;
         auto a_alpha = albedo - a_low;
 
-        auto load_sky = [&](ref<buf<f32>> storage, buf<f32> data, usize length) -> void {
+        auto load_sky = [&](buf<f32>& storage, buf<f32> data, usize length) -> void {
             auto size = data.size();
             auto turbidity_size = size / atmo_num_turbility;
             auto albedo_size = turbidity_size / atmo_num_albedo;
@@ -68,13 +68,13 @@ namespace mtt::light {
             >;
             using Radiance = fm<sun_num_segments, atmo_num_lambda, sun_num_ctls>;
             using Limb = fm<atmo_num_lambda, sun_num_limb_params>;
-            auto& sun_table = *mut<Radiance_Table>(sun_radiance_table.data());
+            auto& sun_table = *(Radiance_Table*)sun_radiance_table.data();
             auto t0 = sun_table[t_low];
             auto t1 = sun_table[t_high];
             sun_radiance = sun_num_segments * atmo_num_lambda * sun_num_ctls;
             sun_limb = atmo_num_lambda * sun_num_limb_params;
-            *mut<Radiance>(sun_radiance.data()) = t0 * (1.f - t_alpha) + t1 * t_alpha;
-            *mut<Limb>(sun_limb.data()) = *mut<Limb>(sun_limb_table.data());
+            *(Radiance*)sun_radiance.data() = t0 * (1.f - t_alpha) + t1 * t_alpha;
+            *(Limb*)sun_limb.data() = *(Limb*)sun_limb_table.data();
 
             auto bspec = spectra::Blackbody_Spectrum{desc.temperature};
             auto sun_scale = fv<atmo_num_lambda>{};
@@ -95,7 +95,7 @@ namespace mtt::light {
                 sky_radiance[i] *= desc.intensity / ratio * sun_scale[i];
             for (auto i = 0; i < sun_num_segments; ++i)
                 for (auto j = 0; j < atmo_num_lambda; ++j)
-                    (*mut<Radiance>(sun_radiance.data()))[i][j] *= desc.intensity / ratio * sun_scale[j];
+                    (*(Radiance*)sun_radiance.data())[i][j] *= desc.intensity / ratio * sun_scale[j];
         };
 
         // https://github.com/mitsuba-renderer/mitsuba3/blob/master/include/mitsuba/render/sunsky.h
@@ -154,7 +154,7 @@ namespace mtt::light {
     auto atmosphere::init() noexcept -> void {
         auto read = []
         <typename T, typename U>
-        (ref<buf<T>> storage, rref<std::vector<U>> intermediate, cref<std::string> file) -> void {
+        (buf<T>& storage, std::vector<U>&& intermediate, std::string const& file) -> void {
             auto prefix = std::string{"atmosphere/"};
             auto postfix = std::string{".bin"};
             auto path = prefix + file + postfix;
@@ -169,20 +169,20 @@ namespace mtt::light {
             || !f.read(header.data(), 3)
             || (header != "SKY" && header != "SUN"))
                 stl::abort("{} has wrong header {}", path, header);
-            f.read(mut<char>(&version), sizeof(version));
+            f.read((char*)&version, sizeof(version));
 
             auto dims = 0uz;
-            f.read(mut<char>(&dims), sizeof(dims));
+            f.read((char*)&dims, sizeof(dims));
             auto elems = 1uz;
             auto shape = std::vector<usize>(dims);
             for (auto& s: shape) {
-                f.read(mut<char>(&s), sizeof(s));
+                f.read((char*)&s, sizeof(s));
                 if (s == 0uz) stl::abort("{} has zero dimension", path);
                 elems *= s;
             }
 
             intermediate.resize(elems);
-            f.read(mut<char>(intermediate.data()), intermediate.size() * sizeof(U));
+            f.read((char*)intermediate.data(), intermediate.size() * sizeof(U));
             f.close();
 
             if constexpr (std::same_as<T, U>) {
@@ -202,7 +202,7 @@ namespace mtt::light {
     }
 
     auto Atmosphere_Light::operator()(
-        cref<math::Ray> r, cref<fv4> lambda
+        math::Ray const& r, fv4 const& lambda
     ) const noexcept -> Interaction {
         auto wi = math::normalize(r.d);
         auto cos_theta = math::unit_to_cos_theta(wi);
@@ -241,7 +241,7 @@ namespace mtt::light {
     }
 
     auto Atmosphere_Light::sample(
-        cref<math::Context> ctx, cref<fv2> u
+        math::Context const& ctx, fv2 const& u
     ) const noexcept -> Interaction {
         auto wi = fv3{};
         if (u[0] < w_sky) {
@@ -284,7 +284,7 @@ namespace mtt::light {
         cos_psi = math::pow<1,2>(1.f - sin_gamma_sqr / (1.f - math::pow<2>(cos_sun)));
     }
 
-    auto Atmosphere_Light::hosek(f32 lambda, cref<State> s) const noexcept -> f32 {
+    auto Atmosphere_Light::hosek(f32 lambda, State const& s) const noexcept -> f32 {
         if (lambda > atmo_lambda.back()) return 0.f;
         auto [low, high, alpha] = split(lambda);
 
@@ -303,8 +303,8 @@ namespace mtt::light {
         return L;
     }
 
-    auto Atmosphere_Light::hosek_sky(i32 idx, cref<State> s) const noexcept -> f32 {
-        auto [A, B, C, D, E, F, G, I, H] = *view<fv<9>>(&sky_params[idx * sky_num_params]);
+    auto Atmosphere_Light::hosek_sky(i32 idx, State const& s) const noexcept -> f32 {
+        auto [A, B, C, D, E, F, G, I, H] = *(fv<9> const*)&sky_params[idx * sky_num_params];
         auto chi = [](f32 g, f32 cos_alpha) -> f32 {
             return math::guarded_div(
                 1.f + math::pow<2>(cos_alpha),
@@ -321,7 +321,7 @@ namespace mtt::light {
         return c0 * c1 * sky_radiance[idx] / spectra::CIE_Y_integral;
     }
 
-    auto Atmosphere_Light::hosek_sun(i32 idx, cref<State> s) const noexcept -> f32 {
+    auto Atmosphere_Light::hosek_sun(i32 idx, State const& s) const noexcept -> f32 {
         auto L = 0.f;
         auto x_pow = 1.f;
         for (auto i = 0; i < sun_num_ctls; ++i) {
@@ -333,7 +333,7 @@ namespace mtt::light {
         return L / spectra::CIE_Y_integral;
     }
 
-    auto Atmosphere_Light::hosek_limb(i32 idx, cref<State> s) const noexcept -> f32 {
+    auto Atmosphere_Light::hosek_limb(i32 idx, State const& s) const noexcept -> f32 {
         auto l = 0.f;
         auto psi_pow = 1.f;
         for (auto i = 0; i < sun_num_limb_params; ++i) {

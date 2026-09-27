@@ -1,7 +1,7 @@
 #include <metatron/resource/texture/checkerboard.hpp>
 
 namespace mtt::texture {
-    Checkerboard_Texture::Checkerboard_Texture(cref<Descriptor> desc) noexcept:
+    Checkerboard_Texture::Checkerboard_Texture(Descriptor const& desc) noexcept:
     x(desc.x), y(desc.y), uv_scale(desc.uv_scale) {
         auto CIE_Y = spectra::Spectrum::entity("/spectrum/CIE-Y");
         auto Y_x = CIE_Y | x;
@@ -11,7 +11,7 @@ namespace mtt::texture {
     }
 
     auto Checkerboard_Texture::operator()(
-        cref<muldim::Coordinate> coord, cref<fv4> spec
+        muldim::Coordinate const& coord, fv4 const& spec
     ) const noexcept -> fv4 {
         auto [u, v] = uzv2{coord.uv * uv_scale};
         auto z = ((u + v) % 2 == 0) ? x : y;
@@ -19,7 +19,7 @@ namespace mtt::texture {
     }
 
     auto Checkerboard_Texture::sample(
-        cref<math::Context> ctx, cref<fv2> u
+        math::Context const& ctx, fv2 const& u
     ) const noexcept -> fv2 {
         auto uv = fv2{};
         auto i = 0;
@@ -37,7 +37,7 @@ namespace mtt::texture {
         return uv;
     }
 
-    auto Checkerboard_Texture::pdf(cref<fv2> uv) const noexcept -> f32 {
+    auto Checkerboard_Texture::pdf(fv2 const& uv) const noexcept -> f32 {
         auto [u, v] = uzv2{uv * uv_scale};
         return (u + v) % 2 == 0
         ? w_x / math::prod(uv_scale)

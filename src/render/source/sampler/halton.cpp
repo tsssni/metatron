@@ -3,7 +3,7 @@
 #include <metatron/core/math/number-theory.hpp>
 
 namespace mtt::sampler {
-    Halton_Sampler::Halton_Sampler(cref<Descriptor> desc) noexcept:
+    Halton_Sampler::Halton_Sampler(Descriptor const& desc) noexcept:
     exponential(desc.scale_exponential),
     scale({1u << desc.scale_exponential[0], math::pow(3u, desc.scale_exponential[1])}) {
         stride = scale[0] * scale[1];
@@ -13,7 +13,7 @@ namespace mtt::sampler {
         };
     }
 
-    auto Halton_Sampler::start(ref<Context> ctx) const noexcept -> void {
+    auto Halton_Sampler::start(Context& ctx) const noexcept -> void {
         ctx.dim = math::clamp(ctx.dim, 2u, u32(math::primes.size()) - 1);
 
         // high num_exponetial bits of radical_inverse(halton_index) equals pixel % (base ^ num_exoinential),
@@ -32,7 +32,7 @@ namespace mtt::sampler {
         ctx.data[0] = halton_idx;
     }
 
-    auto Halton_Sampler::generate_1d(ref<Context> ctx) const noexcept -> f32 {
+    auto Halton_Sampler::generate_1d(Context& ctx) const noexcept -> f32 {
         if (ctx.dim >= math::primes.size()) ctx.dim = 2;
         auto halton_idx = ctx.data[0];
         auto scrambled = math::owen_scrambled_radical_inverse(
@@ -42,11 +42,11 @@ namespace mtt::sampler {
         return scrambled;
     }
 
-    auto Halton_Sampler::generate_2d(ref<Context> ctx) const noexcept -> fv2 {
+    auto Halton_Sampler::generate_2d(Context& ctx) const noexcept -> fv2 {
         return {generate_1d(ctx), generate_1d(ctx)};
     }
 
-    auto Halton_Sampler::generate_pixel_2d(ref<Context> ctx) const noexcept -> fv2 {
+    auto Halton_Sampler::generate_pixel_2d(Context& ctx) const noexcept -> fv2 {
         // remove integer part by dividing scale
         auto halton_idx = ctx.data[0];
         return {

@@ -34,8 +34,8 @@ namespace mtt::command {
             vk::ValidationFeaturesEXT
         >{};
 
-        auto layers = std::vector<view<char>>{};
-        auto extensions = std::vector<view<char>>{};
+        auto layers = std::vector<char const*>{};
+        auto extensions = std::vector<char const*>{};
         for (auto props: guard(vk::enumerateInstanceLayerProperties())) {
             auto constexpr validation_layer = "VK_LAYER_KHRONOS_validation";
             if (std::string_view{props.layerName} == validation_layer) {
@@ -119,20 +119,20 @@ namespace mtt::command {
             vk::makeApiVersion(0, 1, 4, 0),
         });
         auto required_extensions = std::to_array({
-            std::vector<view<char>>{},
-            std::vector<view<char>>{
+            std::vector<char const*>{},
+            std::vector<char const*>{
                 "VK_KHR_timeline_semaphore",
                 "VK_EXT_descriptor_indexing",
             },
-            std::vector<view<char>>{
+            std::vector<char const*>{
                 "VK_KHR_buffer_device_address",
                 "VK_KHR_uniform_buffer_standard_layout",
                 "VK_KHR_synchronization2",
             },
-            std::vector<view<char>>{
+            std::vector<char const*>{
                 "VK_KHR_maintenance5",
             },
-            std::vector<view<char>>{
+            std::vector<char const*>{
                 "VK_EXT_descriptor_buffer",
                 "VK_KHR_deferred_host_operations",
                 "VK_KHR_acceleration_structure",
@@ -157,7 +157,7 @@ namespace mtt::command {
                 auto& props = family.queueFamilyProperties;
                 auto flags = props.queueFlags;
 
-                auto check = [&](ref<Family> f, Flags acc, Flags exc) {
+                auto check = [&](Family& f, Flags acc, Flags exc) {
                     if (f.idx == math::maxv<u32> && (flags & acc) && !(flags & exc))
                         f = {u32(i), u32(flags), 0, props.queueCount};
                 };
@@ -198,7 +198,7 @@ namespace mtt::command {
 
             auto version = physical_device.getProperties2().properties.apiVersion;
             auto minor = vk::apiVersionMinor(version);
-            auto extensions = std::vector<view<char>>{};
+            auto extensions = std::vector<char const*>{};
             for (auto i = 0; i < versions.size(); ++i)
                 if (minor <= vk::apiVersionMinor(versions[i]))
                     std::ranges::copy(
@@ -265,7 +265,7 @@ namespace mtt::command {
         Context::instance();
     }
 
-    auto Context::internal() noexcept -> ref<stl::capsule<Context>::Impl> {
+    auto Context::internal() noexcept -> stl::capsule<Context>::Impl& {
         return instance().impl;
     }
 }

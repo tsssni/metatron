@@ -9,11 +9,11 @@ namespace mtt::stl {
 
 template<>
 struct std::formatter<mtt::stl::memory> {
-    auto constexpr parse(mtt::ref<std::format_parse_context> ctx) { return ctx.begin(); }
+    auto constexpr parse(std::format_parse_context& ctx) { return ctx.begin(); }
 
     auto format(
-        mtt::cref<mtt::stl::memory> mem,
-        mtt::ref<std::format_context> ctx
+        mtt::stl::memory const& mem,
+        std::format_context& ctx
     ) const {
         if (mem.bytes < (1uz << 10))
             return std::format_to(ctx.out(), "{} B", mem.bytes);

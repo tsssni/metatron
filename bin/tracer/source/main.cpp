@@ -5,7 +5,7 @@
 
 using namespace mtt;
 
-auto main(i32 argc, mut<char> argv[]) -> i32 {
+auto main(i32 argc, char* argv[]) -> i32 {
     auto argparser = argparse::ArgumentParser{"metatron-tracer", "0.2.0"};
 
     argparser.add_argument("-s", "--scene")
@@ -25,7 +25,7 @@ auto main(i32 argc, mut<char> argv[]) -> i32 {
 
     try {
         argparser.parse_args(argc, argv);
-    } catch (cref<std::exception> err) {
+    } catch (std::exception const& err) {
         std::cout << argparser;
         stl::abort("argparser error: {}", err.what());
     }

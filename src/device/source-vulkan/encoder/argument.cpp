@@ -11,7 +11,7 @@ namespace mtt::encoder {
 
     template<typename T>
     auto Argument_Encoder::Impl::identify(
-        auto transform, T src, mut<shader::Argument> args, u32 base, u32 size
+        auto transform, T src, shader::Argument* args, u32 base, u32 size
     ) noexcept -> void {
         auto device = command::Context::internal()->device.get();
         args->set->dirty.push_back({base, (u32)(src.size() * size)});
@@ -23,7 +23,7 @@ namespace mtt::encoder {
     }
 
     Argument_Encoder::Argument_Encoder(
-        mut<command::Buffer> cmd, mut<shader::Argument> args
+        command::Buffer* cmd, shader::Argument* args
     ) noexcept: cmd(cmd), args(args) {}
 
     auto Argument_Encoder::submit() noexcept -> void {
@@ -62,24 +62,24 @@ namespace mtt::encoder {
                 break;
             }
             case Type::sampler:
-                impl->identify(+[](mut<opaque::Sampler> ptr, ref<vk::DescriptorImageInfo>) {
+                impl->identify(+[](opaque::Sampler* ptr, vk::DescriptorImageInfo&) {
                     return vk::DescriptorGetInfoEXT{
                         .type = vk::DescriptorType::eSampler,
                         .data = vk::DescriptorDataEXT{.pSampler = &ptr->impl->sampler.get()},
                     };
-                }, std::span{mut<mut<opaque::Sampler>>(src), desc.count}, args, base,
+                }, std::span{(opaque::Sampler**)src, desc.count}, args, base,
                 (u32)props.samplerDescriptorSize); break;
             case Type::accel:
-                impl->identify(+[](mut<opaque::Acceleration> ptr, ref<vk::DescriptorImageInfo>) {
+                impl->identify(+[](opaque::Acceleration* ptr, vk::DescriptorImageInfo&) {
                     return vk::DescriptorGetInfoEXT{
                         .type = vk::DescriptorType::eAccelerationStructureKHR,
                         .data = vk::DescriptorDataEXT{.accelerationStructure = ptr->impl->instances_addr},
                     };
-                }, std::span{mut<mut<opaque::Acceleration>>(src), desc.count}, args, base,
+                }, std::span{(opaque::Acceleration**)src, desc.count}, args, base,
                 (u32)props.accelerationStructureDescriptorSize); break;
             case Type::image:
             case Type::grid: {
-                auto transform = [access](auto view, ref<vk::DescriptorImageInfo> image) {
+                auto transform = [access](auto view, vk::DescriptorImageInfo& image) {
                     image = vk::DescriptorImageInfo{
                         .imageView = view.ptr->impl->view.get(),
                         .imageLayout = view.ptr->impl->barrier.layout,
@@ -91,9 +91,9 @@ namespace mtt::encoder {
                 };
                 auto size = (u32)(access == Access::readonly ? props.sampledImageDescriptorSize : props.storageImageDescriptorSize);
                 if (desc.type == Type::image) impl->identify(transform,
-                    std::span{mut<opaque::Image::View>(src), desc.count}, args, base, size);
+                    std::span{(opaque::Image::View*)src, desc.count}, args, base, size);
                 else impl->identify(transform,
-                    std::span{mut<opaque::Grid::View>(src), desc.count}, args, base, size);
+                    std::span{(opaque::Grid::View*)src, desc.count}, args, base, size);
                 break;
             }
             }
@@ -112,7 +112,7 @@ namespace mtt::encoder {
         auto size = (u32)(access == Access::readonly ? props.sampledImageDescriptorSize : props.storageImageDescriptorSize);
         auto base = (u32)args->impl->offsets[last] + offset * size;
 
-        auto transform = [access](auto view, ref<vk::DescriptorImageInfo> image) {
+        auto transform = [access](auto view, vk::DescriptorImageInfo& image) {
             image = vk::DescriptorImageInfo{
                 .imageView = view.ptr->impl->view.get(),
                 .imageLayout = view.ptr->impl->barrier.layout,
@@ -123,8 +123,8 @@ namespace mtt::encoder {
             };
         };
         if (desc.type == Type::image) impl->identify(transform,
-            std::span{mut<opaque::Image::View>(span.data()), span.size() / sizeof(opaque::Image::View)}, args, base, size);
+            std::span{(opaque::Image::View*)span.data(), span.size() / sizeof(opaque::Image::View)}, args, base, size);
         else impl->identify(transform,
-            std::span{mut<opaque::Grid::View>(span.data()), span.size() / sizeof(opaque::Grid::View)}, args, base, size);
+            std::span{(opaque::Grid::View*)span.data(), span.size() / sizeof(opaque::Grid::View)}, args, base, size);
     }
 }

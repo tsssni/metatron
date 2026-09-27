@@ -6,7 +6,7 @@ namespace mtt::math {
     using Vector = Matrix<T, size>;
 
     template<typename Func, typename... Ts, usize size>
-    auto constexpr foreach(Func f, cref<Vector<Ts, size>>... vectors) noexcept
+    auto constexpr foreach(Func f, Vector<Ts, size> const&... vectors) noexcept
     -> Vector<decltype(f(vectors[0]..., 0uz)), size> {
         using Return_Type = decltype(f(vectors[0]..., 0uz));
         auto r = Vector<Return_Type, size>{};
@@ -16,7 +16,7 @@ namespace mtt::math {
     }
 
     template<typename Func, typename... Ts, usize size>
-    auto constexpr any(Func f, cref<Vector<Ts, size>>... vectors) noexcept -> bool {
+    auto constexpr any(Func f, Vector<Ts, size> const&... vectors) noexcept -> bool {
         using Return_Type = decltype(f(vectors[0]..., 0uz));
         static_assert(std::same_as<Return_Type, bool>, "f must return bool");
 
@@ -27,7 +27,7 @@ namespace mtt::math {
     }
 
     template<typename Func, typename... Ts, usize size>
-    auto constexpr all(Func f, cref<Vector<Ts, size>>... vectors) noexcept -> bool {
+    auto constexpr all(Func f, Vector<Ts, size> const&... vectors) noexcept -> bool {
         using Return_Type = decltype(f(vectors[0]..., 0uz));
         static_assert(std::same_as<Return_Type, bool>, "f must return bool");
 
@@ -39,7 +39,7 @@ namespace mtt::math {
 
     template<typename T, usize size>
     requires std::totally_ordered<T>
-    auto constexpr constant(cref<Vector<T, size>> x) noexcept -> bool {
+    auto constexpr constant(Vector<T, size> const& x) noexcept -> bool {
         return all([y = x[0]](T x, auto) {
             return x == y;
         }, x);
@@ -47,7 +47,7 @@ namespace mtt::math {
 
     template<typename T, usize size>
     requires std::floating_point<T>
-    auto constexpr isnan(cref<Vector<T, size>> x) noexcept -> bool {
+    auto constexpr isnan(Vector<T, size> const& x) noexcept -> bool {
         return any([](T x, auto){
             return isnan(x);
         }, x);
@@ -55,7 +55,7 @@ namespace mtt::math {
 
     template<typename T, usize size>
     requires std::floating_point<T>
-    auto constexpr isinf(cref<Vector<T, size>> x) noexcept -> bool {
+    auto constexpr isinf(Vector<T, size> const& x) noexcept -> bool {
         return any([](T x, auto){
             return isinf(x);
         }, x);
@@ -63,14 +63,14 @@ namespace mtt::math {
 
     template<typename T, usize size>
     requires std::floating_point<T>
-    auto constexpr isfinite(cref<Vector<T, size>> x) noexcept -> bool {
+    auto constexpr isfinite(Vector<T, size> const& x) noexcept -> bool {
         return all([](T x, auto){
             return isfinite(x);
         }, x);
     }
 
     template<typename T, usize size>
-    auto constexpr dot(cref<Vector<T, size>> x, cref<Vector<T, size>> y) noexcept -> T {
+    auto constexpr dot(Vector<T, size> const& x, Vector<T, size> const& y) noexcept -> T {
         auto result = T{};
         for (auto i = 0; i < size; ++i)
             result += x[i] * y[i];
@@ -78,7 +78,7 @@ namespace mtt::math {
     }
 
     template<typename T>
-    auto constexpr cross(cref<Vector<T, 3>> x, cref<Vector<T, 3>> y) noexcept -> Vector<T, 3> {
+    auto constexpr cross(Vector<T, 3> const& x, Vector<T, 3> const& y) noexcept -> Vector<T, 3> {
         return {
             x[1] * y[2] - x[2] * y[1],
             x[2] * y[0] - x[0] * y[2],
@@ -87,21 +87,21 @@ namespace mtt::math {
     }
 
     template<typename T, typename U, typename V = decltype(T{} * U{}), usize size>
-    auto constexpr mul(cref<Vector<T, size>> x, cref<Vector<U, size>> y) noexcept -> Vector<V, size> {
-        return foreach([&](cref<T> v1, cref<U> v2, usize) noexcept -> V {
+    auto constexpr mul(Vector<T, size> const& x, Vector<U, size> const& y) noexcept -> Vector<V, size> {
+        return foreach([&](T const& v1, U const& v2, usize) noexcept -> V {
             return v1 * v2;
         }, x, y);
     }
 
     template<typename T, usize size>
     requires std::floating_point<T>
-    auto constexpr length(cref<Vector<T, size>> x) noexcept -> T {
+    auto constexpr length(Vector<T, size> const& x) noexcept -> T {
         return sqrt(dot(x, x));
     }
 
     template<typename T, usize size>
     requires std::floating_point<T>
-    auto constexpr angle(cref<Vector<T, size>> x, cref<Vector<T, size>> y) noexcept -> T {
+    auto constexpr angle(Vector<T, size> const& x, Vector<T, size> const& y) noexcept -> T {
         // compute theta / 2 to avoid round-off error
         if (dot(x, y) < 0.f) return pi - 2.f * std::asin(length(-y - x)/2);
         else return 2.f * std::asin(length(y - x) / 2);
@@ -109,19 +109,19 @@ namespace mtt::math {
 
     template<typename T, usize size>
     requires std::floating_point<T>
-    auto constexpr normalize(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
+    auto constexpr normalize(Vector<T, size> const& x) noexcept -> Vector<T, size> {
         return x / length(x);
     }
 
     template<typename T>
     requires std::floating_point<T>
-    auto constexpr reflect(cref<Vector<T, 3>> in, cref<Vector<T, 3>> n) noexcept -> Vector<T, 3> {
+    auto constexpr reflect(Vector<T, 3> const& in, Vector<T, 3> const& n) noexcept -> Vector<T, 3> {
         return T(2.0) * n * dot(-in, n) + in;
     }
 
     template<typename T>
     requires std::floating_point<T>
-    auto constexpr refract(cref<Vector<T, 3>> in, cref<Vector<T, 3>> n, cref<T> eta) noexcept -> Vector<T, 3> {
+    auto constexpr refract(Vector<T, 3> const& in, Vector<T, 3> const& n, T const& eta) noexcept -> Vector<T, 3> {
         auto cos_theta_i = dot(-in, n);
         auto cos_2_theta_t = T(1.0) - (T(1.0) - sqr(cos_theta_i)) / sqr(eta);
         if (cos_2_theta_t < 0.0) return Vector<T, 3>{T(0.0)};
@@ -130,58 +130,58 @@ namespace mtt::math {
 
     template<typename T, typename... Ts, usize n, usize tail = sizeof...(Ts)>
     requires (std::convertible_to<T, Ts> && ...)
-    auto constexpr expand(cref<Vector<T, n>> x, Ts... v) noexcept -> Vector<T, n + tail> {
+    auto constexpr expand(Vector<T, n> const& x, Ts... v) noexcept -> Vector<T, n + tail> {
         return Vector<T, n + sizeof...(v)>{x, v...};
     }
 
     template<typename T, typename... Ts, usize n, usize head = sizeof...(Ts)>
     requires (std::convertible_to<T, Ts> && ...)
-    auto constexpr consume(cref<Vector<T, n>> x, Ts... v) noexcept -> Vector<T, n + head> {
+    auto constexpr consume(Vector<T, n> const& x, Ts... v) noexcept -> Vector<T, n + head> {
         return Vector<T, n + head>{reverse(Vector<T, head>{v...}), x};
     }
 
     template<typename T, usize n, usize tail = 1uz>
     requires (n > tail)
-    auto constexpr shrink(cref<Vector<T, n>> x) noexcept -> Vector<T, n - tail> {
+    auto constexpr shrink(Vector<T, n> const& x) noexcept -> Vector<T, n - tail> {
         return Vector<T, n - tail>{x};
     }
 
     template<typename T, usize n, usize head = 1uz>
     requires (n > head)
-    auto constexpr cut(cref<Vector<T, n>> x) noexcept -> Vector<T, n - head> {
-        return *(view<Vector<T, n - head>>)(x.data() + head);
+    auto constexpr cut(Vector<T, n> const& x) noexcept -> Vector<T, n - head> {
+        return *(Vector<T, n - head> const*)(x.data() + head);
     }
 
     template<typename T, usize n>
-    auto constexpr reverse(cref<Vector<T, n>> x) noexcept -> Vector<T, n> {
-        return foreach([&](cref<T> v, usize i) noexcept -> T {
+    auto constexpr reverse(Vector<T, n> const& x) noexcept -> Vector<T, n> {
+        return foreach([&](T const& v, usize i) noexcept -> T {
             return x[n - 1 - i];
         }, x);
     }
 
     template<typename T, usize size>
     requires std::totally_ordered<T>
-    auto constexpr min(cref<Vector<T, size>> x) noexcept -> T {
+    auto constexpr min(Vector<T, size> const& x) noexcept -> T {
         return [&x]<usize... idxs>(std::index_sequence<idxs...>) -> T {
             return min(x[idxs]...);
         }(std::make_index_sequence<size>{});
     }
 
     template<typename... Ts, usize size>
-    auto constexpr min(cref<Vector<Ts, size>>... xs) requires(sizeof...(xs) > 1) {
-        return foreach([](cref<Ts>... xs, usize i) {
+    auto constexpr min(Vector<Ts, size> const&... xs) requires(sizeof...(xs) > 1) {
+        return foreach([](Ts const&... xs, usize i) {
             return min(xs...);
         }, xs...);
     }
 
     template<typename T, usize size>
-    auto constexpr mini(cref<Vector<T, size>> x) noexcept -> usize {
+    auto constexpr mini(Vector<T, size> const& x) noexcept -> usize {
         auto const& x_arr = std::array<T, size>(x);
         return std::ranges::distance(x_arr.begin(), std::ranges::min_element(x_arr));
     }
 
     template<typename T, usize size>
-    auto constexpr minvi(cref<Vector<T, size>> x) noexcept -> std::tuple<T, usize> {
+    auto constexpr minvi(Vector<T, size> const& x) noexcept -> std::tuple<T, usize> {
         auto y = x[0];
         auto z = 0uz;
         for (auto i = 1uz; i < size; ++i)
@@ -194,27 +194,27 @@ namespace mtt::math {
 
     template<typename T, usize size>
     requires std::totally_ordered<T>
-    auto constexpr max(cref<Vector<T, size>> x) noexcept -> T {
+    auto constexpr max(Vector<T, size> const& x) noexcept -> T {
         return [&x]<usize... idxs>(std::index_sequence<idxs...>) -> T {
             return max(x[idxs]...);
         }(std::make_index_sequence<size>{});
     }
 
     template<typename... Ts, usize size>
-    auto constexpr max(cref<Vector<Ts, size>>... xs) requires(sizeof...(xs) > 1) {
-        return foreach([](cref<Ts>... xs, usize i) {
+    auto constexpr max(Vector<Ts, size> const&... xs) requires(sizeof...(xs) > 1) {
+        return foreach([](Ts const&... xs, usize i) {
             return math::max(xs...);
         }, xs...);
     }
 
     template<typename T, usize size>
-    auto constexpr maxi(cref<Vector<T, size>> x) noexcept -> usize {
+    auto constexpr maxi(Vector<T, size> const& x) noexcept -> usize {
         auto y = std::span<T const, size>(x);
         return std::ranges::distance(y.begin(), std::ranges::max_element(y));
     }
 
     template<typename T, usize size>
-    auto constexpr maxvi(cref<Vector<T, size>> x) noexcept -> std::tuple<T, usize> {
+    auto constexpr maxvi(Vector<T, size> const& x) noexcept -> std::tuple<T, usize> {
         auto y = x[0];
         auto z = 0uz;
         for (auto i = 1uz; i < size; ++i)
@@ -227,41 +227,41 @@ namespace mtt::math {
 
     template<typename T, usize size>
     requires std::floating_point<T> || std::integral<T>
-    auto constexpr abs(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
-        return foreach([](cref<T> v, usize) noexcept -> T {
+    auto constexpr abs(Vector<T, size> const& x) noexcept -> Vector<T, size> {
+        return foreach([](T const& v, usize) noexcept -> T {
             return abs(v);
         }, x);
     }
 
     template<typename T, usize size>
     requires std::floating_point<T>
-    auto constexpr floor(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
-        return foreach([](cref<T> v, usize) noexcept -> T {
+    auto constexpr floor(Vector<T, size> const& x) noexcept -> Vector<T, size> {
+        return foreach([](T const& v, usize) noexcept -> T {
             return std::floor(v);
         }, x);
     }
 
     template<typename T, usize size>
     requires std::floating_point<T>
-    auto constexpr ceil(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
-        return foreach([](cref<T> v, usize) noexcept -> T {
+    auto constexpr ceil(Vector<T, size> const& x) noexcept -> Vector<T, size> {
+        return foreach([](T const& v, usize) noexcept -> T {
             return std::ceil(v);
         }, x);
     }
 
     template<typename T, usize size>
     requires std::floating_point<T>
-    auto constexpr round(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
-        return foreach([](cref<T> v, usize) noexcept -> T {
+    auto constexpr round(Vector<T, size> const& x) noexcept -> Vector<T, size> {
+        return foreach([](T const& v, usize) noexcept -> T {
             return std::round(v);
         }, x);
     }
 
     template<typename T, usize size>
     requires requires(T a, T b) { a + b; }
-    auto constexpr sum(cref<Vector<T, size>> x) noexcept -> T {
+    auto constexpr sum(Vector<T, size> const& x) noexcept -> T {
         auto y = T{};
-        foreach([&y](cref<T> v, usize) noexcept -> T {
+        foreach([&y](T const& v, usize) noexcept -> T {
             y += v;
             return y;
         }, x);
@@ -270,9 +270,9 @@ namespace mtt::math {
 
     template<typename T, usize size>
     requires requires(T a, T b) { a * b; }
-    auto constexpr prod(cref<Vector<T, size>> x) noexcept -> T {
+    auto constexpr prod(Vector<T, size> const& x) noexcept -> T {
         auto y = T(1);
-        foreach([&y](cref<T> v, usize) noexcept -> T {
+        foreach([&y](T const& v, usize) noexcept -> T {
             y *= v;
             return y;
         }, x);
@@ -284,92 +284,92 @@ namespace mtt::math {
     && requires(T a, T b) { a + b; }
     && requires(T a) { a / 1uz; }
     )
-    auto constexpr avg(cref<Vector<T, size>> x) noexcept -> T {
+    auto constexpr avg(Vector<T, size> const& x) noexcept -> T {
         return sum(x) / size;
     }
 
     template<typename T, usize size>
     requires std::floating_point<T>
-    auto constexpr cbrt(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
-        return math::foreach([](cref<T> v, auto) {
+    auto constexpr cbrt(Vector<T, size> const& x) noexcept -> Vector<T, size> {
+        return math::foreach([](T const& v, auto) {
             return cbrt(v);
         }, x);
     }
 
     template<usize n, usize d = 1, typename T, usize size>
     requires (d == 1 || std::floating_point<T>)
-    auto constexpr pow(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
-        return math::foreach([](cref<T> v, auto) {
+    auto constexpr pow(Vector<T, size> const& x) noexcept -> Vector<T, size> {
+        return math::foreach([](T const& v, auto) {
             return pow<n, d>(v);
         }, x);
     }
 
     template<typename T, usize size>
-    auto constexpr exp(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
-        return math::foreach([](cref<T> v, auto) {
+    auto constexpr exp(Vector<T, size> const& x) noexcept -> Vector<T, size> {
+        return math::foreach([](T const& v, auto) {
             return exp(v);
         }, x);
     }
 
     template<typename T, usize size>
     requires std::floating_point<T> || std::integral<T>
-    auto constexpr mod(cref<Vector<T, size>> x, cref<T> m) noexcept -> Vector<T, size> {
-        return foreach([&](cref<T> v, usize i) noexcept -> T {
+    auto constexpr mod(Vector<T, size> const& x, T const& m) noexcept -> Vector<T, size> {
+        return foreach([&](T const& v, usize i) noexcept -> T {
             return mod(v, m);
         }, x);
     }
 
     template<typename T, usize size>
     requires std::floating_point<T> || std::integral<T>
-    auto constexpr mod(cref<Vector<T, size>> x, cref<Vector<T, size>> m) noexcept -> Vector<T, size> {
-        return foreach([&](cref<T> v, usize i) noexcept -> T {
+    auto constexpr mod(Vector<T, size> const& x, Vector<T, size> const& m) noexcept -> Vector<T, size> {
+        return foreach([&](T const& v, usize i) noexcept -> T {
             return mod(v, m[i]);
         }, x);
     }
 
     template<typename T, usize size>
     requires std::totally_ordered<T>
-    auto constexpr clamp(cref<Vector<T, size>> x, cref<Vector<T, size>> l, cref<Vector<T, size>> r) noexcept -> Vector<T, size> {
-        return foreach([&](cref<T> v, usize i) noexcept -> T {
+    auto constexpr clamp(Vector<T, size> const& x, Vector<T, size> const& l, Vector<T, size> const& r) noexcept -> Vector<T, size> {
+        return foreach([&](T const& v, usize i) noexcept -> T {
             return clamp(v, l[i], r[i]);
         }, x);
     }
 
     template<typename T, usize size>
     requires std::totally_ordered<T>
-    auto constexpr saturate(cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
-        return foreach([&](cref<T> v, usize i) noexcept -> T {
+    auto constexpr saturate(Vector<T, size> const& x) noexcept -> Vector<T, size> {
+        return foreach([&](T const& v, usize i) noexcept -> T {
             return saturate(v);
         }, x);
     }
 
     template<typename T, usize size>
     requires std::floating_point<T>
-    auto constexpr lerp(cref<Vector<T, size>> x, cref<Vector<T, size>> y, cref<T> alpha) noexcept -> Vector<T, size> {
+    auto constexpr lerp(Vector<T, size> const& x, Vector<T, size> const& y, T const& alpha) noexcept -> Vector<T, size> {
         return (T{1.0} - alpha) * x + alpha * y;
     }
 
     template<typename T, usize size>
     requires std::floating_point<T>
-    auto constexpr lerp(cref<Vector<T, size>> x, cref<Vector<T, size>> y, cref<Vector<T, size>> alpha) noexcept -> Vector<T, size> {
+    auto constexpr lerp(Vector<T, size> const& x, Vector<T, size> const& y, Vector<T, size> const& alpha) noexcept -> Vector<T, size> {
         return (T{1.0} - alpha) * x + alpha * y;
     }
 
     template<typename T, typename U, usize size>
     requires std::floating_point<U>
-    auto constexpr blerp(cref<Vector<T, size>> x, cref<Vector<U, size>> b) noexcept -> T {
+    auto constexpr blerp(Vector<T, size> const& x, Vector<U, size> const& b) noexcept -> T {
         return sum(mul(x, b));
     }
 
     template<typename T, usize size>
     requires std::floating_point<T>
-    auto constexpr gram_schmidt(cref<Vector<T, size>> y, cref<Vector<T, size>> x) noexcept -> Vector<T, size> {
+    auto constexpr gram_schmidt(Vector<T, size> const& y, Vector<T, size> const& x) noexcept -> Vector<T, size> {
         return y - x * dot(x, y);
     }
 
     template<typename T, usize size>
     requires std::floating_point<T>
-    auto constexpr orthogonalize(cref<Vector<T, size>> n) noexcept -> Matrix<T, 2, size> {
+    auto constexpr orthogonalize(Vector<T, size> const& n) noexcept -> Matrix<T, 2, size> {
         auto t = abs(n[1]) > 1.f - epsilon<f32>
         ? Vector<f32, 3>{1.f, 0.f, 0.f}
         : Vector<f32, 3>{0.f, 1.f, 0.f};

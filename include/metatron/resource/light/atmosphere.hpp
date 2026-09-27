@@ -43,17 +43,17 @@ namespace mtt::light {
             f32 temperature = 6504.f;
             f32 intensity = 1.f;
         };
-        Atmosphere_Light(cref<Descriptor> desc) noexcept;
+        Atmosphere_Light(Descriptor const& desc) noexcept;
         Atmosphere_Light() noexcept = default;
 
         // Hosek atmosphere model: https://cgg.mff.cuni.cz/projects/SkylightModelling/
         // binary data: https://github.com/mitsuba-renderer/mitsuba-data/tree/master/sunsky/output
         auto operator()(
-            cref<math::Ray> r, cref<fv4> lambda
+            math::Ray const& r, fv4 const& lambda
         ) const noexcept -> Interaction;
         // TGMM sky sampling: https://diglib.eg.org/items/b3f1efca-1d13-44d0-ad60-741c4abe3d21
         auto sample(
-            cref<math::Context> ctx, cref<fv2> u
+            math::Context const& ctx, fv2 const& u
         ) const noexcept -> Interaction;
         auto flags() const noexcept -> Flags;
 
@@ -69,10 +69,10 @@ namespace mtt::light {
             f32 cos_psi;
             State(f32 cos_theta, f32 cos_gamma, f32 cos_sun) noexcept;
         };
-        auto hosek(f32 lambda, cref<State> s) const noexcept -> f32;
-        auto hosek_sky(i32 idx, cref<State> s) const noexcept -> f32;
-        auto hosek_sun(i32 idx, cref<State> s) const noexcept -> f32;
-        auto hosek_limb(i32 idx, cref<State> s) const noexcept -> f32;
+        auto hosek(f32 lambda, State const& s) const noexcept -> f32;
+        auto hosek_sky(i32 idx, State const& s) const noexcept -> f32;
+        auto hosek_sun(i32 idx, State const& s) const noexcept -> f32;
+        auto hosek_limb(i32 idx, State const& s) const noexcept -> f32;
         auto hosek_integral() const noexcept -> f32;
         auto split(f32 lambda) const noexcept -> std::tuple<i32, i32, f32>;
 

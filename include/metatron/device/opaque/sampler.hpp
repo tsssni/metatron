@@ -26,6 +26,6 @@ namespace mtt::opaque {
         };
 
         struct Impl;
-        Sampler(cref<Descriptor> desc) noexcept;
+        Sampler(Descriptor const& desc) noexcept;
     };
 }

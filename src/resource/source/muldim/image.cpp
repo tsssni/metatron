@@ -14,7 +14,7 @@ namespace mtt::muldim {
         else return 1.055f * math::pow(x, 1.f / 2.4f) - 0.055f;
     }
 
-    Image::Pixel::Pixel(view<Image> image, mut<byte> start) noexcept:
+    Image::Pixel::Pixel(Image const* image, byte* start) noexcept:
     image(image), start(start) {}
 
     Image::Pixel::operator fv4() const noexcept {
@@ -27,7 +27,7 @@ namespace mtt::muldim {
                 : sRGB_linearize(*(start + i) / 255.f);
                 break;
             case 4:
-                pixel[i] = *(mut<f32>(start) + i);
+                pixel[i] = *((f32*)start + i);
                 break;
             default:
                 break;
@@ -36,7 +36,7 @@ namespace mtt::muldim {
         return pixel;
     }
 
-    auto Image::Pixel::operator=(cref<fv4> v) noexcept -> void {
+    auto Image::Pixel::operator=(fv4 const& v) noexcept -> void {
         for (auto i = 0; i < image->size[2]; ++i) {
             auto* pixel = start + image->size[3] * i;
             switch (image->size[3]) {
@@ -46,7 +46,7 @@ namespace mtt::muldim {
                     : byte(sRGB_transfer(v[i]) * 255.f);
                 break;
             case 4:
-                *mut<f32>(pixel) = v[i];
+                *(f32*)pixel = v[i];
                 break;
             default:
                 break;
@@ -54,11 +54,11 @@ namespace mtt::muldim {
         }
     }
 
-    auto Image::Pixel::operator+=(cref<fv4> v) noexcept -> void {
+    auto Image::Pixel::operator+=(fv4 const& v) noexcept -> void {
         *this = fv4(*this) + v;
     }
 
-    auto Image::Pixel::data() noexcept -> mut<byte> {
+    auto Image::Pixel::data() noexcept -> byte* {
         return start;
     }
 
@@ -70,10 +70,10 @@ namespace mtt::muldim {
     }
 
     auto Image::operator[](usize x, usize y, usize lod) const noexcept -> Pixel const {
-        return (*const_cast<mut<Image>>(this))[x, y, lod];
+        return (*const_cast<Image*>(this))[x, y, lod];
     }
 
-    auto Image::operator()(cref<Coordinate> coord) const -> fv4 {
+    auto Image::operator()(Coordinate const& coord) const -> fv4 {
         auto du = fv2{coord.dudx, coord.dudy};
         auto dv = fv2{coord.dvdx, coord.dvdy};
         auto ul = math::length(du);
@@ -233,7 +233,7 @@ namespace mtt::muldim {
             });
 
         for (auto mip = 1uz; mip < img.pixels.size(); ++mip) {
-            auto fetch = [mip, size, &img](cref<uzv2> src) {
+            auto fetch = [mip, size, &img](uzv2 const& src) {
                 auto px = math::clamp(src, {0}, size - 1);
                 return fv4{img[px[0], px[1], mip - 1]};
             };
@@ -241,7 +241,7 @@ namespace mtt::muldim {
             size[1] = math::max(1uz, size[1] >> 1uz);
             img.pixels[mip].resize(math::prod(size) * channels * stride);
 
-            auto down = [fetch, mip, &img](cref<uzv2> px) mutable {
+            auto down = [fetch, mip, &img](uzv2 const& px) mutable {
                 auto [i, j] = px;
                 img[i, j, mip] = 0.25f * (0.f
                 + fetch({i * 2uz + 0, j * 2uz + 0})

@@ -23,8 +23,8 @@ namespace mtt::math {
 
     template<usize n>
     auto inline constexpr chinese_remainder_theorem(
-        cref<Vector<usize, n>> a,
-        cref<Vector<usize, n>> b
+        Vector<usize, n> const& a,
+        Vector<usize, n> const& b
     ) noexcept -> usize {
         // M = sum(b)
         // m_i = M / b_i

@@ -15,26 +15,26 @@ namespace mtt::math {
 
     struct Transform final {
         struct Chain final {
-            auto operator|(cref<Transform> t) noexcept -> ref<Chain> {
+            auto operator|(Transform const& t) noexcept -> Chain& {
                 set(0);
                 store(t);
                 return *this;
             }
 
-            auto operator^(cref<Transform> t) noexcept -> ref<Chain> {
+            auto operator^(Transform const& t) noexcept -> Chain& {
                 set(1);
                 store(t);
                 return *this;
             }
 
             template<Transformable T>
-            auto operator|(cref<T> t) {
+            auto operator|(T const& t) {
                 set(0);
                 return dechain(t);
             }
 
             template<Transformable T>
-            auto operator^(cref<T> t) {
+            auto operator^(T const& t) {
                 set(1);
                 return dechain(t);
             }
@@ -50,11 +50,11 @@ namespace mtt::math {
             }
 
         private:
-            Chain(cref<Transform> t) {
+            Chain(Transform const& t) {
                 store(t);
             }
 
-            auto store(cref<Transform> t) noexcept -> void {
+            auto store(Transform const& t) noexcept -> void {
                 if (size >= max_transforms) [[unlikely]]
                     stl::abort("transform chain overflow");
                 (*transforms)[size++] = &t;
@@ -65,7 +65,7 @@ namespace mtt::math {
             }
 
             template<Transformable T, typename Type = std::remove_cvref_t<T>>
-            auto dechain(cref<T> rhs) noexcept -> Type {
+            auto dechain(T const& rhs) noexcept -> Type {
                 auto& ts = *transforms;
                 auto ret = rhs;
                 for (auto i = i32(size) - 1; i >= 0; i--)
@@ -76,7 +76,7 @@ namespace mtt::math {
             }
 
             auto constexpr static max_transforms = 4;
-            using Array = std::array<view<Transform>, max_transforms>;
+            using Array = std::array<Transform const*, max_transforms>;
             std::unique_ptr<Array> transforms = std::make_unique<Array>();
             byte ops{};
             byte size{};
@@ -95,7 +95,7 @@ namespace mtt::math {
                 inv_transform = inv_transform | t.inv_transform;
         }
 
-        explicit Transform(cref<fm44> m):
+        explicit Transform(fm44 const& m):
         transform(m), inv_transform(math::inverse(m)) {}
 
         explicit operator fm44() const {
@@ -122,7 +122,7 @@ namespace mtt::math {
             }
         }
 
-        auto operator|(cref<Transform> rhs) const noexcept -> Chain {
+        auto operator|(Transform const& rhs) const noexcept -> Chain {
             return std::move(Chain{*this} | rhs);
         }
 
@@ -153,7 +153,7 @@ namespace mtt::math {
         }
     };
 
-    auto inline inverse(cref<math::Transform> t) -> math::Transform {
+    auto inline inverse(math::Transform const& t) -> math::Transform {
         auto inv_t = math::Transform{};
         inv_t.transform = t.inv_transform;
         inv_t.inv_transform = t.transform;
@@ -170,9 +170,9 @@ namespace mtt::math::proxy {
         auto operator|(T&& rhs) const { return (*idx) | std::forward<T>(rhs); }
         template<math::Transformable T>
         auto operator^(T&& rhs) const { return (*idx) ^ std::forward<T>(rhs); }
-        auto operator|(cref<math::Transform> rhs) const noexcept { return (*idx) | rhs; }
-        auto operator^(cref<math::Transform> rhs) const noexcept { return (*idx) ^ rhs; }
-        auto operator|(Transform rhs) const noexcept { return (*idx) | (cref<math::Transform>)rhs; }
-        auto operator^(Transform rhs) const noexcept { return (*idx) ^ (cref<math::Transform>)rhs; }
+        auto operator|(math::Transform const& rhs) const noexcept { return (*idx) | rhs; }
+        auto operator^(math::Transform const& rhs) const noexcept { return (*idx) ^ rhs; }
+        auto operator|(Transform rhs) const noexcept { return (*idx) | (math::Transform const&)rhs; }
+        auto operator^(Transform rhs) const noexcept { return (*idx) ^ (math::Transform const&)rhs; }
     };
 }

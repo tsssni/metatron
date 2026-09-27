@@ -6,10 +6,10 @@ namespace mtt::filter {
         struct Descriptor final {
             fv2 radius = {0.5f};
         };
-        Box_Filter(cref<Descriptor> desc) noexcept;
+        Box_Filter(Descriptor const& desc) noexcept;
         Box_Filter() noexcept = default;
-        auto operator()(cref<fv2> p) const noexcept -> f32;
-        auto sample(cref<fv2> u) const noexcept -> Interaction;
+        auto operator()(fv2 const& p) const noexcept -> f32;
+        auto sample(fv2 const& u) const noexcept -> Interaction;
 
     private:
         fv2 radius;

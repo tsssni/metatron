@@ -7,7 +7,7 @@
 namespace mtt::shader {
     struct Argument final: stl::capsule<Argument> {
         Set reflection;
-        obj<opaque::Buffer> set;
+        std::unique_ptr<opaque::Buffer> set;
 
         struct Descriptor final {
             std::string_view name;
@@ -15,6 +15,6 @@ namespace mtt::shader {
         };
 
         struct Impl;
-        Argument(cref<Descriptor> desc) noexcept;
+        Argument(Descriptor const& desc) noexcept;
     };
 }

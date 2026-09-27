@@ -14,8 +14,8 @@ namespace mtt::material {
         texture::Vector_Texture normal;
 
         auto sample(
-            cref<math::Context> ctx,
-            cref<muldim::Coordinate> coord
+            math::Context const& ctx,
+            muldim::Coordinate const& coord
         ) const noexcept -> Interaction;
         auto flags() const noexcept -> Flags;
     };

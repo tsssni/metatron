@@ -17,7 +17,7 @@ namespace mtt::media {
         };
 
         auto begin(
-            cref<math::Context> ctx, f32 t_max
+            math::Context const& ctx, f32 t_max
         ) const noexcept -> Iterator;
     };
 }

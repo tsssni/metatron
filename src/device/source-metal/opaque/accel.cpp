@@ -4,7 +4,7 @@
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::opaque {
-    Acceleration::Acceleration(cref<Descriptor> desc) noexcept {
+    Acceleration::Acceleration(Descriptor const& desc) noexcept {
         auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
 
@@ -34,17 +34,17 @@ namespace mtt::opaque {
             );
         });
         bboxes = num_bboxes > 0 ? make_desc<opaque::Buffer>({
-            .ptr = mut<byte>(bboxes_data.data()),
+            .ptr = (byte*)bboxes_data.data(),
             .state = opaque::Buffer::State::local,
             .size = bbox_size * num_bboxes,
         }) : nullptr;
 
-        auto primitives = std::vector<mut<NS::Object>>(desc.primitives.size());
+        auto primitives = std::vector<NS::Object*>(desc.primitives.size());
         stl::scheduler::sync_parallel(uzv1{desc.primitives.size()}, [&](auto idx) {
             auto [i] = idx;
             auto& prim = desc.primitives[i];
             auto procedural = prim.type == Primitive::Type::aabb;
-            auto aesc = mut<MTL::AccelerationStructureGeometryDescriptor>{};
+            auto aesc = (MTL::AccelerationStructureGeometryDescriptor*)nullptr;
 
             if (procedural) {
                 auto besc = MTL::AccelerationStructureBoundingBoxGeometryDescriptor::alloc()->init();
@@ -57,10 +57,10 @@ namespace mtt::opaque {
             } else {
                 auto tesc = MTL::AccelerationStructureTriangleGeometryDescriptor::alloc()->init();
                 tesc->setTriangleCount(prim.mesh->indices.size());
-                tesc->setVertexBuffer(mut<Buffer>(prim.mesh->vertices.handle)->impl->device_buffer.get());
+                tesc->setVertexBuffer(((Buffer*)prim.mesh->vertices.handle)->impl->device_buffer.get());
                 tesc->setVertexBufferOffset(0);
                 tesc->setVertexFormat(MTL::AttributeFormatFloat3);
-                tesc->setIndexBuffer(mut<Buffer>(prim.mesh->indices.handle)->impl->device_buffer.get());
+                tesc->setIndexBuffer(((Buffer*)prim.mesh->indices.handle)->impl->device_buffer.get());
                 tesc->setIndexBufferOffset(0);
                 tesc->setIndexType(MTL::IndexTypeUInt32);
                 tesc->setOpaque(true);
@@ -104,7 +104,7 @@ namespace mtt::opaque {
             std::memcpy(&info.transformationMatrix, matrix.data(), sizeof(info.transformationMatrix));
         });
         instances = make_desc<opaque::Buffer>({
-            .ptr = mut<byte>(instances_data.data()),
+            .ptr = (byte*)instances_data.data(),
             .state = opaque::Buffer::State::local,
             .size = sizeof(MTL::AccelerationStructureInstanceDescriptor) * desc.instances.size(),
         });

@@ -8,17 +8,17 @@ namespace mtt::encoder {
     concept Set = std::is_aggregate_v<std::decay_t<T>> || std::is_scalar_v<std::decay_t<T>>;
 
     struct Argument_Encoder final: stl::capsule<Argument_Encoder> {
-        mut<command::Buffer> cmd;
-        mut<shader::Argument> args;
+        command::Buffer* cmd;
+        shader::Argument* args;
         struct Impl;
-        Argument_Encoder(mut<command::Buffer> cmd, mut<shader::Argument> args) noexcept;
+        Argument_Encoder(command::Buffer* cmd, shader::Argument* args) noexcept;
 
         auto submit() noexcept -> void;
 
         template<Set S, typename C, typename M>
         auto push(S&& set, M C::* field) noexcept -> void {
             push(std::forward<S>(set), uv2{
-                (u32)(view<byte>(&(set.*field)) - view<byte>(&set)),
+                (u32)((byte const*)(&(set.*field)) - (byte const*)&set),
                 (u32)sizeof(M),
             });
         }
@@ -28,7 +28,7 @@ namespace mtt::encoder {
         }
         template<Set S>
         auto push(S&& set, uv2 range) noexcept -> void {
-            push({view<byte>(&set), sizeof(set)}, range);
+            push({(byte const*)&set, sizeof(set)}, range);
         }
         auto push(std::span<byte const> set, uv2 range) noexcept -> void;
 
@@ -41,7 +41,7 @@ namespace mtt::encoder {
             if constexpr (std::is_same_v<T, opaque::Image>) type = Type::image;
             else if constexpr (std::is_same_v<T, opaque::Grid>) type = Type::grid;
             if (desc.type != type || desc.count != 0) stl::abort("set does not have bindless resources");
-            push({view<byte>(&set), sizeof(set)}, {offset, {view<byte>(span.data()), span.size() * sizeof(V)}});
+            push({(byte const*)&set, sizeof(set)}, {offset, {(byte const*)span.data(), span.size() * sizeof(V)}});
         }
         auto push(std::span<byte const> set, std::tuple<u32, std::span<byte const>> bindless) noexcept -> void;
     };

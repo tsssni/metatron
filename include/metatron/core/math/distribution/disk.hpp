@@ -5,7 +5,7 @@ namespace mtt::math {
     struct Polar_Disk_Distribution final {
         Polar_Disk_Distribution() noexcept = default;
 
-        auto sample(cref<fv2> u) const noexcept -> fv2 {
+        auto sample(fv2 const& u) const noexcept -> fv2 {
             auto r = math::pow<1,2>(u[0]);
             auto theta = 2.f * pi * u[1];
             return r * fv2{std::cos(theta), std::sin(theta)};
@@ -19,7 +19,7 @@ namespace mtt::math {
     struct Unifrom_Disk_Distribution final {
         Unifrom_Disk_Distribution() = default;
 
-        auto sample(cref<fv2> u) const noexcept -> fv2 {
+        auto sample(fv2 const& u) const noexcept -> fv2 {
             auto disk_u = u * 2.f - 1.f;
             auto r = 0.f;
             auto theta = 0.f;

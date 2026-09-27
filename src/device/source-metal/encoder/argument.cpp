@@ -12,7 +12,7 @@
 namespace mtt::encoder {
 
     template<typename T>
-    auto Argument_Encoder::Impl::identify(auto transform, T src, mut<shader::Argument> args, u32 base) noexcept -> void {
+    auto Argument_Encoder::Impl::identify(auto transform, T src, shader::Argument* args, u32 base) noexcept -> void {
         auto ids = src
         | std::views::transform(transform)
         | std::ranges::to<std::vector<MTL::ResourceID>>();
@@ -21,7 +21,7 @@ namespace mtt::encoder {
         args->set->dirty.push_back({base, size});
     }
 
-    Argument_Encoder::Argument_Encoder(mut<command::Buffer> cmd, mut<shader::Argument> args) noexcept:
+    Argument_Encoder::Argument_Encoder(command::Buffer* cmd, shader::Argument* args) noexcept:
     cmd(cmd), args(args) {}
 
     auto Argument_Encoder::submit() noexcept -> void {
@@ -59,21 +59,21 @@ namespace mtt::encoder {
                 break;
             }
             case Type::sampler:
-                impl->identify(+[](mut<opaque::Sampler> ptr) {
+                impl->identify(+[](opaque::Sampler* ptr) {
                     return ptr->impl->sampler->gpuResourceID();
-                }, std::span{mut<mut<opaque::Sampler>>(src), desc.count}, args, base); break;
+                }, std::span{(opaque::Sampler**)src, desc.count}, args, base); break;
             case Type::accel:
-                impl->identify(+[](mut<opaque::Acceleration> ptr) {
+                impl->identify(+[](opaque::Acceleration* ptr) {
                     return ptr->impl->instances->gpuResourceID();
-                }, std::span{mut<mut<opaque::Acceleration>>(src), desc.count}, args, base); break;
+                }, std::span{(opaque::Acceleration**)src, desc.count}, args, base); break;
             case Type::image:
-                impl->identify(+[](cref<opaque::Image::View> view) {
+                impl->identify(+[](opaque::Image::View const& view) {
                     return view.ptr->impl->texture->gpuResourceID();
-                }, std::span{mut<opaque::Image::View>(src), desc.count}, args, base); break;
+                }, std::span{(opaque::Image::View*)src, desc.count}, args, base); break;
             case Type::grid:
-                impl->identify(+[](cref<opaque::Grid::View> view) {
+                impl->identify(+[](opaque::Grid::View const& view) {
                     return view.ptr->impl->texture->gpuResourceID();
-                }, std::span{mut<opaque::Grid::View>(src), desc.count}, args, base); break;
+                }, std::span{(opaque::Grid::View*)src, desc.count}, args, base); break;
             }
         }
     }
@@ -85,11 +85,11 @@ namespace mtt::encoder {
         auto& desc = args->reflection[last];
         auto base = (u32)(args->impl->offsets[last] + offset * sizeof(MTL::ResourceID));
 
-        if (desc.type == Type::image) impl->identify(+[](cref<opaque::Image::View> view) {
+        if (desc.type == Type::image) impl->identify(+[](opaque::Image::View const& view) {
             return view.ptr->impl->texture->gpuResourceID();
-        }, std::span{mut<opaque::Image::View>(span.data()), span.size() / sizeof(opaque::Image::View)}, args, base);
-        else impl->identify(+[](cref<opaque::Grid::View> view) {
+        }, std::span{(opaque::Image::View*)span.data(), span.size() / sizeof(opaque::Image::View)}, args, base);
+        else impl->identify(+[](opaque::Grid::View const& view) {
             return view.ptr->impl->texture->gpuResourceID();
-        }, std::span{mut<opaque::Grid::View>(span.data()), span.size() / sizeof(opaque::Grid::View)}, args, base);
+        }, std::span{(opaque::Grid::View*)span.data(), span.size() / sizeof(opaque::Grid::View)}, args, base);
     }
 }

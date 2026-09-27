@@ -4,14 +4,14 @@
 namespace mtt::bsdf {
     struct Interface_Bsdf final {
         struct Descriptor final {};
-        Interface_Bsdf(cref<Descriptor>) noexcept;
+        Interface_Bsdf(Descriptor const&) noexcept;
         Interface_Bsdf() noexcept = default;
 
         auto operator()(
-            cref<fv3> wo, cref<fv3> wi, f32 u
+            fv3 const& wo, fv3 const& wi, f32 u
         ) const noexcept -> Interaction;
         auto sample(
-            cref<math::Context> ctx, cref<fv3> u
+            math::Context const& ctx, fv3 const& u
         ) const noexcept -> Interaction;
         auto flags() const noexcept -> Flags;
 

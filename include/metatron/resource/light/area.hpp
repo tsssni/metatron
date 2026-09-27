@@ -8,10 +8,10 @@ namespace mtt::light {
         u32 primitive;
 
         auto operator()(
-            cref<math::Ray> r, cref<fv4> lambda
+            math::Ray const& r, fv4 const& lambda
         ) const noexcept -> Interaction;
         auto sample(
-            cref<math::Context> ctx, cref<fv2> u
+            math::Context const& ctx, fv2 const& u
         ) const noexcept -> Interaction;
         auto flags() const noexcept -> Flags;
     };

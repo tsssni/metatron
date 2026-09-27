@@ -8,9 +8,9 @@ namespace mtt::photo {
     }
 
     Fixel::Fixel(
-        mut<Film> film,
-        cref<uzv2> pixel,
-        cref<fv2> position,
+        Film* film,
+        uzv2 const& pixel,
+        fv2 const& position,
         f32 weight
     ) noexcept:
     film(film),
@@ -22,7 +22,7 @@ namespace mtt::photo {
     ) * film->dxdy),
     weight(weight) {}
 
-    auto Fixel::operator=(cref<spectra::Stochastic_Spectrum> spectrum) noexcept -> void {
+    auto Fixel::operator=(spectra::Stochastic_Spectrum const& spectrum) noexcept -> void {
         auto xyz = fv3{
             spectrum(film->r),
             spectrum(film->g),
@@ -32,7 +32,7 @@ namespace mtt::photo {
         film->image[pixel[0], pixel[1]] += {rgb * weight, weight};
     }
 
-    Film::Film(cref<Descriptor> desc) noexcept:
+    Film::Film(Descriptor const& desc) noexcept:
     spp(desc.spp), depth(desc.depth), stride(desc.stride),
     film_size(desc.film_size),
     dxdy(desc.film_size / desc.image_size),
@@ -52,8 +52,8 @@ namespace mtt::photo {
 
     auto Film::operator()(
         filter::Filter filter,
-        cref<uzv2> pixel,
-        cref<fv2> u
+        uzv2 const& pixel,
+        fv2 const& u
     ) noexcept -> Fixel {
         auto f_intr = filter.sample(u);
         auto pixel_position = fv2{pixel} + 0.5f + f_intr.p;

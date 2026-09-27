@@ -9,27 +9,27 @@ namespace mtt {
     template<typename T>
     struct mtl final {
         mtl() noexcept: ptr(nullptr) {}
-        mtl(mut<T> ptr) noexcept: ptr(ptr) {}
-        mtl(rref<mtl> x) noexcept: ptr(x.ptr) { x.ptr = nullptr; }
-        mtl(cref<mtl>) noexcept = delete;
+        mtl(T* ptr) noexcept: ptr(ptr) {}
+        mtl(mtl&& x) noexcept: ptr(x.ptr) { x.ptr = nullptr; }
+        mtl(mtl const&) noexcept = delete;
         ~mtl() noexcept { if (ptr) ptr->release(); }
-        auto operator=(rref<mtl> x) noexcept -> ref<mtl> {
+        auto operator=(mtl&& x) noexcept -> mtl& {
             if (ptr) ptr->release();
             ptr = x.ptr;
             x.ptr = nullptr;
             return *this;
         }
-        auto operator=(cref<mtl>) noexcept -> ref<mtl> = delete;
-        auto operator->() noexcept -> mut<T> { return ptr; }
-        auto operator->() const noexcept -> view<T> { return ptr; }
+        auto operator=(mtl const&) noexcept -> mtl& = delete;
+        auto operator->() noexcept -> T* { return ptr; }
+        auto operator->() const noexcept -> T const* { return ptr; }
         operator bool() const noexcept { return ptr != nullptr; }
-        auto get() noexcept -> mut<T> { return ptr; };
-        auto get() const noexcept -> view<T> { return ptr; };
+        auto get() noexcept -> T* { return ptr; };
+        auto get() const noexcept -> T const* { return ptr; };
     private:
-        mut<T> ptr;
+        T* ptr;
     };
 
-    auto to_mtl(std::string_view str) noexcept -> mut<NS::String>;
+    auto to_mtl(std::string_view str) noexcept -> NS::String*;
 }
 
 namespace mtt::command {
@@ -41,6 +41,6 @@ namespace mtt::command {
         ~Impl() noexcept;
     };
 
-    auto guard(mut<NS::Error> err) noexcept -> void;
-    #define MTT_MTL_GUARD(x) {auto err = mut<NS::Error>{}; x; command::guard(err);}
+    auto guard(NS::Error* err) noexcept -> void;
+    #define MTT_MTL_GUARD(x) {auto err = (NS::Error*)nullptr; x; command::guard(err);}
 }

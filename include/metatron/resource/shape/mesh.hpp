@@ -18,30 +18,30 @@ namespace mtt::shape {
         struct Descriptor final {
             std::string path;
         };
-        Mesh(cref<Descriptor> desc) noexcept;
+        Mesh(Descriptor const& desc) noexcept;
         Mesh() noexcept = default;
 
         auto size() const noexcept -> usize;
         auto bounding_box(
-            cref<math::Transform> t, usize idx
+            math::Transform const& t, usize idx
         ) const noexcept -> math::Bounding_Box;
         auto operator()(
-            cref<math::Ray> r, cref<fv3> np,
-            cref<fv4> pos, usize idx
+            math::Ray const& r, fv3 const& np,
+            fv4 const& pos, usize idx
         ) const noexcept -> Interaction;
         // sphere triangle sampling: https://pbr-book.org/4ed/Shapes/Triangle_Meshes
         auto sample(
-            cref<math::Context> ctx, cref<fv2> u, usize idx
+            math::Context const& ctx, fv2 const& u, usize idx
         ) const noexcept -> Interaction;
         auto query(
-            cref<math::Ray> r, usize idx
+            math::Ray const& r, usize idx
         ) const noexcept -> fv4;
 
     private:
         template<typename T>
         auto blerp(
             buf<T> traits,
-            cref<fv3> b,
+            fv3 const& b,
             usize idx
         ) const noexcept -> T {
             if (traits.empty()) return {};
@@ -56,7 +56,7 @@ namespace mtt::shape {
         }
 
         auto pdf(
-            cref<math::Ray> r, cref<fv3> np, usize idx
+            math::Ray const& r, fv3 const& np, usize idx
         ) const noexcept -> f32;
     };
 }

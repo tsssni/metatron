@@ -2,7 +2,7 @@
 #include "../opaque/buffer.hpp"
 
 namespace mtt::shader {
-    Argument::Argument(cref<Descriptor> desc) noexcept {
+    Argument::Argument(Descriptor const& desc) noexcept {
         using Type = shader::Descriptor::Type;
         auto path = (stl::path{"shader"} / desc.name).concat(".json");
         stl::json::load(stl::filesystem::find(path), reflection);
@@ -29,7 +29,7 @@ namespace mtt::shader {
             .type = command::Type::render,
             .size = reflection.front().size,
         });
-        *mut<uptr>(set->ptr) = impl->parameters->impl->device_buffer->gpuAddress();
+        *(uptr*)set->ptr = impl->parameters->impl->device_buffer->gpuAddress();
         set->dirty.push_back({0, size});
     }
 }

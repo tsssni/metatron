@@ -19,7 +19,7 @@ namespace mtt::command {
         }
 
         if (idx == self.heaps[type].size()) {
-            self.heaps[type].push_back(make_obj<Memory>(type, flags));
+            self.heaps[type].push_back(std::make_unique<Memory>(type, flags));
             self.offsets[type].push_back(0);
         }
 

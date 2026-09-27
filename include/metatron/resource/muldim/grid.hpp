@@ -16,14 +16,14 @@ namespace mtt::muldim {
 
         auto operator[](usize x, usize y, usize z) noexcept -> f32&;
         auto operator[](usize x, usize y, usize z) const noexcept -> f32;
-        auto operator()(cref<fv3> uvw) const -> fv4;
+        auto operator()(fv3 const& uvw) const -> fv4;
     };
 }
 
 namespace mtt::muldim::proxy {
     struct Grid: stl::proxy<Grid, muldim::Grid> {
         using proxy::proxy;
-        auto operator()(cref<fv3> uvw) const noexcept -> fv4 { return (*idx)(uvw); }
+        auto operator()(fv3 const& uvw) const noexcept -> fv4 { return (*idx)(uvw); }
         auto operator[](usize x, usize y, usize z) noexcept -> f32& { return (*idx)[x, y, z]; }
         auto operator[](usize x, usize y, usize z) const noexcept -> f32 { return (*idx)[x, y, z]; }
     };

@@ -1,12 +1,12 @@
 #include "pipeline.hpp"
 
 namespace mtt::shader {
-    Pipeline::Pipeline(cref<Descriptor> desc) noexcept: args(std::move(desc.args)) {
+    Pipeline::Pipeline(Descriptor const& desc) noexcept: args(std::move(desc.args)) {
         // TODO: building from source as apple sdk in nixpkgs does not provide metal compiler
         auto base_path = stl::path{"shader"} / desc.name;
         auto shader_path = stl::path{base_path}.concat(".metal");
         auto metal = stl::filesystem::load(stl::filesystem::find(shader_path), {}, true);
-        auto src = to_mtl(std::string_view{view<char>(metal.data()), metal.size()});
+        auto src = to_mtl(std::string_view{(char const*)metal.data(), metal.size()});
 
         auto& ctx = command::Context::internal();
         auto device = ctx->device.get();

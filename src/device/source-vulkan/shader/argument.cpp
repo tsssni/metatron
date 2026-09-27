@@ -2,7 +2,7 @@
 #include <metatron/core/math/bit.hpp>
 
 namespace mtt::shader {
-    Argument::Argument(cref<Descriptor> desc) noexcept {
+    Argument::Argument(Descriptor const& desc) noexcept {
         using Type = shader::Descriptor::Type;
         using Access = shader::Descriptor::Access;
         using Binding = vk::DescriptorType;

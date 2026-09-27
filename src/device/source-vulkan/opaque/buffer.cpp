@@ -26,7 +26,7 @@ namespace mtt::opaque {
         return math::maxv<u32>;
     }
 
-    auto Buffer::Impl::update(cref<Barrier> desc) noexcept -> vk::BufferMemoryBarrier2 {
+    auto Buffer::Impl::update(Barrier const& desc) noexcept -> vk::BufferMemoryBarrier2 {
         auto barrier = this->barrier.update<vk::BufferMemoryBarrier2>(desc);
         barrier.buffer = device_buffer.get();
         barrier.offset = 0;
@@ -34,7 +34,7 @@ namespace mtt::opaque {
         return barrier;
     }
 
-    auto Buffer::Impl::update(mut<command::Queue> dst, mut<command::Queue> src) noexcept -> vk::BufferMemoryBarrier2 {
+    auto Buffer::Impl::update(command::Queue* dst, command::Queue* src) noexcept -> vk::BufferMemoryBarrier2 {
         auto barrier = this->barrier.update<vk::BufferMemoryBarrier2>(dst, src);
         barrier.buffer = device_buffer.get();
         barrier.offset = 0;
@@ -42,7 +42,7 @@ namespace mtt::opaque {
         return barrier;
     }
 
-    Buffer::Buffer(cref<Descriptor> desc) noexcept:
+    Buffer::Buffer(Descriptor const& desc) noexcept:
     size(desc.size),
     state(desc.state) {
         impl->barrier.family = command::Queue::Impl::families[u32(desc.type)].idx;
@@ -120,8 +120,8 @@ namespace mtt::opaque {
         }
     }
 
-    Buffer::Buffer(rref<Buffer> rhs) noexcept { *this = std::move(rhs); }
-    auto Buffer::operator=(rref<Buffer> rhs) noexcept -> ref<Buffer> {
+    Buffer::Buffer(Buffer&& rhs) noexcept { *this = std::move(rhs); }
+    auto Buffer::operator=(Buffer&& rhs) noexcept -> Buffer& {
         auto& ctx = command::Context::internal();
         auto device = ctx->device.get();
         state = rhs.state; ptr = rhs.ptr;

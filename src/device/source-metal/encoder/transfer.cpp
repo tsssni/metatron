@@ -9,7 +9,7 @@ namespace mtt::encoder {
     using Image = opaque::Image;
     using Grid = opaque::Grid;
 
-    Transfer_Encoder::Transfer_Encoder(mut<command::Buffer> cmd) noexcept: cmd(cmd) {
+    Transfer_Encoder::Transfer_Encoder(command::Buffer* cmd) noexcept: cmd(cmd) {
         impl->encoder = cmd->impl->cmd->blitCommandEncoder();
         impl->encoder->waitForFence(cmd->impl->fence.get());
     }
@@ -23,7 +23,7 @@ namespace mtt::encoder {
         using State = Buffer::State;
         auto buffer = view.ptr;
         if (buffer->state == State::local && buffer->ptr) {
-            auto uploaded = make_obj<Buffer>();
+            auto uploaded = std::make_unique<Buffer>();
             auto buffer = view.ptr;
             uploaded->impl->device_buffer = std::move(buffer->impl->host_buffer);
             uploaded->state = Buffer::State::visible;
@@ -161,8 +161,8 @@ namespace mtt::encoder {
     auto Transfer_Encoder::liberate(opaque::Image::View image) noexcept -> void {}
     auto Transfer_Encoder::liberate(opaque::Grid::View grid) noexcept -> void {}
 
-    auto Transfer_Encoder::transfer(opaque::Buffer::View buffer, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void {}
-    auto Transfer_Encoder::transfer(opaque::Image::View image, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void {}
-    auto Transfer_Encoder::transfer(opaque::Grid::View grid, mut<command::Queue> dst, mut<command::Queue> src) noexcept -> void {}
+    auto Transfer_Encoder::transfer(opaque::Buffer::View buffer, command::Queue* dst, command::Queue* src) noexcept -> void {}
+    auto Transfer_Encoder::transfer(opaque::Image::View image, command::Queue* dst, command::Queue* src) noexcept -> void {}
+    auto Transfer_Encoder::transfer(opaque::Grid::View grid, command::Queue* dst, command::Queue* src) noexcept -> void {}
 
 }

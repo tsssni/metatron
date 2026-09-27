@@ -3,7 +3,7 @@
 
 namespace mtt::scene {
     template<typename V, typename T>
-    auto attach(cref<json> j, std::string_view type) noexcept -> bool {
+    auto attach(json const& j, std::string_view type) noexcept -> bool {
         if (j.type != type) return false;
         auto d = T{};
         stl::json::load(j.serialized.str, d);

@@ -8,7 +8,7 @@
 
 namespace mtt::stl {
     struct buf {
-        mut<byte> ptr = nullptr;
+        byte* ptr = nullptr;
 
         union {
             uptr handle = 0;
@@ -29,26 +29,26 @@ namespace mtt::stl {
     };
 
     struct stack final: singleton<stack> {
-        using deleter = void(*)(mut<buf>);
+        using deleter = void(*)(buf*);
         auto static constexpr max_idx = 1 << 20;
 
-        auto static push(mut<buf> buf, deleter f) noexcept -> void {
+        auto static push(buf* buf, deleter f) noexcept -> void {
             buf->idx = instance().length.fetch_add(1, std::memory_order::relaxed);
             if (buf->idx >= max_idx) stl::abort("stack overflow");
             instance().deleters[buf->idx].store(f, std::memory_order::release);
             instance().bufs[buf->idx].store(buf, std::memory_order::release);
         }
 
-        auto static swap(mut<buf> buf) noexcept -> void {
+        auto static swap(buf* buf) noexcept -> void {
             if (buf->idx == math::maxv<u32>) return;
             instance().bufs[buf->idx].store(buf, std::memory_order::release);
         }
 
-        auto static raw(u32 idx) noexcept -> mut<buf> {
+        auto static raw(u32 idx) noexcept -> buf* {
             return instance().bufs[idx].load(std::memory_order::acquire);
         }
 
-        auto static release(mut<buf> buf) noexcept -> void {
+        auto static release(buf* buf) noexcept -> void {
             if (buf->idx != math::maxv<u32> && instance().bufs[buf->idx].load(std::memory_order::acquire) == buf)
                 instance().deleters[buf->idx].load(std::memory_order::acquire)(buf);
         }
@@ -56,7 +56,7 @@ namespace mtt::stl {
         auto static size() noexcept -> usize { return instance().length.load(std::memory_order::relaxed); }
 
     private:
-        std::array<std::atomic<mut<buf>>, max_idx> bufs;
+        std::array<std::atomic<buf*>, max_idx> bufs;
         std::array<std::atomic<deleter>, max_idx> deleters;
         std::atomic<u32> length = 0;
     };
@@ -67,12 +67,12 @@ namespace mtt {
     struct buf final: stl::buf {
         buf() noexcept: stl::buf() {}
         ~buf() noexcept { release(); reset(); }
-        buf(cref<buf> rhs) noexcept {
+        buf(buf const& rhs) noexcept {
             ptr = rhs.ptr;
             bytelen = rhs.bytelen;
             idx = math::maxv<u32>;
         }
-        buf(rref<buf> rhs) noexcept {
+        buf(buf&& rhs) noexcept {
             std::construct_at(this, rhs);
             idx = rhs.idx;
             stl::stack::swap(this);
@@ -81,12 +81,12 @@ namespace mtt {
 
         operator std::span<T>() noexcept { return {data(), size()}; }
         operator std::span<T const>() const noexcept { return {data(), size()}; }
-        auto operator=(cref<buf> rhs) noexcept -> ref<buf> {
+        auto operator=(buf const& rhs) noexcept -> buf& {
             release();
             std::construct_at(this, rhs);
             return *this;
         }
-        auto operator=(rref<buf> rhs) noexcept -> ref<buf> {
+        auto operator=(buf&& rhs) noexcept -> buf& {
             release();
             std::construct_at(this, std::move(rhs));
             return *this;
@@ -94,12 +94,12 @@ namespace mtt {
 
         buf(usize size) noexcept {
             bytelen = size * sizeof(T);
-            ptr = mut<byte>(std::malloc(bytelen));
+            ptr = (byte*)std::malloc(bytelen);
             if (!ptr) stl::abort("allocate {} bytes failed", bytelen);
             if constexpr (!std::is_trivially_constructible_v<T>)
                 std::uninitialized_default_construct_n(data(), size);
             stl::stack::push(this, [](auto* ptr) {
-                mut<buf>(ptr)->release();
+                ((buf*)ptr)->release();
             });
         }
 
@@ -109,12 +109,12 @@ namespace mtt {
             std::memcpy(data(), range.data(), bytelen);
         }
 
-        auto data() noexcept -> mut<T> { return mut<T>(ptr); }
-        auto data() const noexcept -> view<T> { return view<T>(ptr); }
+        auto data() noexcept -> T* { return (T*)ptr; }
+        auto data() const noexcept -> T const* { return (T const*)ptr; }
         auto size() const noexcept -> usize { return bytelen / sizeof(T); }
         auto empty() const noexcept -> bool { return bytelen == 0; }
-        auto operator[](usize i) noexcept -> ref<T> { return data()[i]; }
-        auto operator[](usize i) const noexcept -> cref<T> { return data()[i]; }
+        auto operator[](usize i) noexcept -> T& { return data()[i]; }
+        auto operator[](usize i) const noexcept -> T const& { return data()[i]; }
 
         auto subbuf(usize i, usize size) const noexcept -> buf<T> {
             auto b = buf<T>{};

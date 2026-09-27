@@ -4,7 +4,7 @@
 namespace mtt::spectra {
     using Spectrum_Type = color::Color_Space::Spectrum_Type;
 
-    Rgb_Spectrum::Rgb_Spectrum(cref<Descriptor> desc) noexcept {
+    Rgb_Spectrum::Rgb_Spectrum(Descriptor const& desc) noexcept {
         auto rgb = desc.c;
         auto cs = desc.color_space;
         illuminant = desc.type == Spectrum_Type::illuminant
