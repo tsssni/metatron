@@ -3,9 +3,7 @@
 
 namespace mtt::monte_carlo {
     struct Radiative_Integrator final {
-        struct Descriptor final {};
-        Radiative_Integrator(Descriptor const&) noexcept;
-        Radiative_Integrator() noexcept = default;
+        bool volumetric = true;
 
         // null scattering: https://cs.dartmouth.edu/~wjarosz/publications/miller19null.html
         // mis method: https://pbr-book.org/4ed/Light_Transport_II_Volume_Rendering/Volume_Scattering_Integrators

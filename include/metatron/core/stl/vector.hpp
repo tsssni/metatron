@@ -286,7 +286,7 @@ namespace mtt {
         auto index() const noexcept -> u32 { return idx & 0xfffff; }
         template<typename T = F> auto data() noexcept -> T* { return vs::template get<T>(idx); }
         template<typename T = F> auto data() const noexcept -> T const* { return vs::template get<T>(idx); }
-        template<typename T> auto is() const noexcept -> bool { return vs::template is<T>(idx); }
+        template<typename T> auto is() const noexcept -> bool { return type() == ts::template index<T>; }
 
         template<typename T = F> auto operator->() noexcept -> T* { return data(); }
         template<typename T = F> auto operator->() const noexcept -> T const* { return data(); }

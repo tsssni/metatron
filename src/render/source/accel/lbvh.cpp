@@ -3,7 +3,10 @@
 #include <metatron/core/stl/thread.hpp>
 
 namespace mtt::accel {
-    LBVH::LBVH(Descriptor const& desc) noexcept {
+    auto LBVH::build(
+        std::vector<math::Bounding_Box> const& boxes,
+        u32 num_guide_leaf_prims
+    ) noexcept -> std::tuple<std::vector<u32>, std::vector<Index>> {
         struct Node final {
             math::Bounding_Box bbox;
             std::unique_ptr<Node> left;
@@ -14,29 +17,25 @@ namespace mtt::accel {
             u32 num_prims{0u};
         };
 
-        using divs = stl::vector<Divider>;
-        auto prims = std::vector<Primitive>{};
+        struct Primitive final {
+            math::Bounding_Box bbox;
+            u32 idx;
+            u32 morton_code;
+        };
+
+        if (boxes.empty()) return {};
+        auto prims = std::vector<Primitive>(boxes.size());
         auto bvh = std::vector<Index>{};
-        for (auto i = 0u; i < divs::size(); ++i) {
-            auto& div = *divs::get(i);
-            auto s = div.shape;
-            for (auto j = 0u; j < s.size(); ++j) {
-                auto lt = div.local_to_render;
-                prims.push_back(Primitive{
-                    .bbox = s.bounding_box(lt, j),
-                    .instance = {i},
-                    .primitive = j,
-                });
-            }
-        }
+        for (auto i = 0u; i < boxes.size(); ++i)
+            prims[i] = {.bbox = boxes[i], .idx = i};
 
         auto render_bbox = math::Bounding_Box{};
         for (auto& p: prims)
             render_bbox = math::merge(render_bbox, p.bbox);
         for (auto& p: prims) {
-            auto extent = render_bbox.p_max - render_bbox.p_min;
+            auto extent = math::max(render_bbox.p_max - render_bbox.p_min, fv3{math::epsilon<f32>});
             auto pos = math::lerp(p.bbox.p_min, p.bbox.p_max, 0.5f) - render_bbox.p_min;
-            auto voxel = uv3{pos / extent * 1024};
+            auto voxel = uv3{math::min(pos / extent * 1024.f, fv3{1023.f})};
             p.morton_code = math::morton_encode(voxel);
         }
         std::ranges::sort(prims, [](auto& a, auto& b) {
@@ -57,7 +56,7 @@ namespace mtt::accel {
         auto morton_split = [&](this auto self, uv2 interval, i32 bit) -> std::unique_ptr<Node> {
             auto [start, end] = interval;
             auto n = end - start;
-            if (bit < 0 || n <= desc.num_guide_leaf_prims) {
+            if (bit < 0 || n <= num_guide_leaf_prims) {
                 auto node = std::make_unique<Node>();
                 node->div_idx = start;
                 node->num_prims = n;
@@ -101,7 +100,7 @@ namespace mtt::accel {
             root->bbox = math::Bounding_Box{};
             for (auto& node: nodes)
                 root->bbox = math::merge(root->bbox, node->bbox);
-            
+
             auto cbox = math::Bounding_Box{};
             for (auto& node: nodes) {
                 auto c = math::lerp(node->bbox.p_min, node->bbox.p_max, 0.5f);
@@ -193,16 +192,71 @@ namespace mtt::accel {
         };
         traverse(root.get());
 
-        this->prims = std::span{prims};
-        this->bvh = std::span{bvh};
+        auto order = prims
+        | std::views::transform([](auto& p) { return p.idx; })
+        | std::ranges::to<std::vector<u32>>();
+        return {std::move(order), std::move(bvh)};
     }
 
-    auto LBVH::operator()(
-        math::Ray const& r, fv3 const& n
-    ) const noexcept -> Interaction {
-        auto prim = (Primitive const*)nullptr;
+    LBVH::LBVH(Descriptor const& desc) noexcept {
+        using shapes = shape::Shape::vs;
+        auto num_meshes = shapes::size<shape::Mesh>();
+        blas = buf<buf<Index>>(num_meshes);
+        prims = buf<buf<u32>>(num_meshes);
+        for (auto i = 0u; i < num_meshes; ++i) {
+            auto& mesh = *shapes::get<shape::Mesh>(i);
+            auto boxes = std::vector<math::Bounding_Box>(mesh.size());
+            for (auto j = 0u; j < mesh.size(); ++j)
+                boxes[j] = mesh.bounding_box(math::Transform{}, j);
+            auto [order, nodes] = build(boxes, desc.num_guide_leaf_prims);
+            blas[i] = buf<Index>{std::span{nodes}};
+            prims[i] = buf<u32>{std::span{order}};
+        }
+
+        using divs = stl::vector<Divider>;
+        auto candidates = std::vector<u32>{};
+        auto boxes = std::vector<math::Bounding_Box>{};
+        for (auto i = 0u; i < divs::size(); ++i) {
+            auto& div = *divs::get(i);
+            auto s = div.shape;
+            auto bbox = math::Bounding_Box{};
+            if (s.is<shape::Mesh>()) {
+                auto& nodes = blas[s.idx.index()];
+                if (nodes.empty()) continue;
+                bbox = *div.local_to_render | nodes[0].bbox;
+            } else {
+                if (s.size() == 0) continue;
+                for (auto j = 0u; j < s.size(); ++j)
+                    bbox = math::merge(bbox, s.bounding_box(div.local_to_render, j));
+            }
+            candidates.push_back(i);
+            boxes.push_back(bbox);
+        }
+
+        auto [order, nodes] = build(boxes, desc.num_guide_leaf_prims);
+        auto instances = order
+        | std::views::transform([&](auto i) { return candidates[i]; })
+        | std::ranges::to<std::vector<u32>>();
+
+        this->instances = std::span{instances};
+        this->tlas = std::span{nodes};
+    }
+
+    auto LBVH::traverse(
+        proxy::Divider div, Interaction& intr,
+        math::Ray const& r, Flags flags, fv2 const& range
+    ) const noexcept -> bool {
+        auto k = div ? div->shape.idx.index() : 0u;
+        auto& bvh = div ? blas[k] : tlas;
+
+        auto query = [&](math::Ray const& r, proxy::Divider d, u32 j) -> bool {
+            auto t = d->shape.query(r, j);
+            if (t[3] < range[0] || t[3] >= intr.pos[3]) return false;
+            intr = {.divider = d, .primitive = j, .pos = t};
+            return flags & Flags::hit_first;
+        };
+
         auto inv_d = 1.f / r.d;
-        auto q = fv4{math::inf<f32>};
         auto stack = std::array<u32, 64>{};
         auto top = 0uz;
         stack[top++] = 0u;
@@ -212,25 +266,12 @@ namespace mtt::accel {
             auto node = &bvh[idx];
             auto b = math::hit(r, inv_d, node->bbox);
             if (false
-            || b[1] < -math::epsilon<f32>
+            || b[1] < range[0] - math::epsilon<f32>
             || b[0] > b[1] + math::epsilon<f32>
-            || q[3] < b[0]
+            || intr.pos[3] < b[0]
             ) continue;
 
-            if (node->num_prims < 0) {
-                for (auto i = 0u; i < -node->num_prims; ++i) {
-                    auto idx = node->prim + i;
-                    auto& p = prims[idx];
-                    auto div = p.instance;
-                    auto lr = p.instance->local_to_render ^ r;
-
-                    auto t = div->shape.query(lr, p.primitive);
-                    if (t[3] < q[3]) {
-                        q = t;
-                        prim = &p;
-                    }
-                }
-            } else {
+            if (node->num_prims >= 0) {
                 if (r.d[node->axis] < 0.f) {
                     stack[top++] = idx + 1;
                     stack[top++] = node->right;
@@ -238,14 +279,42 @@ namespace mtt::accel {
                     stack[top++] = node->right;
                     stack[top++] = idx + 1;
                 }
+                continue;
+            }
+
+            for (auto i = node->prim; i < node->prim + u32(-node->num_prims); ++i) {
+                if (div) {
+                    if (query(r, div, prims[k][i])) return true;
+                    continue;
+                }
+
+                auto d = proxy::Divider{instances[i]};
+                auto is_interface = d->material && d->material.is<material::Interface_Material>();
+                if ((flags & Flags::skip_interface) && is_interface) continue;
+                if ((flags & Flags::only_interface) && !is_interface) continue;
+
+                auto lr = d->local_to_render ^ r;
+                if (d->shape.is<shape::Mesh>()) {
+                    if (traverse(d, intr, lr, flags, range)) return true;
+                } else {
+                    for (auto j = 0u; j < d->shape.size(); ++j)
+                        if (query(lr, d, j)) return true;
+                }
             }
         }
+        return false;
+    }
 
-        if (!prim) return {};
-        return {
-            .divider = prim->instance,
-            .primitive = prim->primitive,
-            .pos = q,
-        };
+    auto LBVH::operator()(
+        math::Ray const& r, fv3 const& n,
+        Flags flags, fv2 const& range
+    ) const noexcept -> Interaction {
+        if (tlas.empty()) return {};
+
+        auto intr = Interaction{};
+        intr.pos[3] = range[1];
+        traverse({}, intr, r, flags, range);
+        if (!intr.divider) return {};
+        return intr;
     }
 }

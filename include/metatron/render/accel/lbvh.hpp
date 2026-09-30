@@ -3,13 +3,6 @@
 
 namespace mtt::accel {
     struct LBVH final {
-        struct Primitive final {
-            math::Bounding_Box bbox;
-            proxy::Divider instance;
-            u32 primitive;
-            u32 morton_code;
-        };
-
         struct Index final {
             math::Bounding_Box bbox;
             union { u32 prim; u32 right; };
@@ -21,11 +14,24 @@ namespace mtt::accel {
         LBVH() noexcept = default;
 
         auto operator()(
-            math::Ray const& r, fv3 const& n
+            math::Ray const& r, fv3 const& n,
+            Flags flags, fv2 const& range
         ) const noexcept -> Interaction;
 
     private:
-        buf<Primitive> prims;
-        buf<Index> bvh;
+        auto build(
+            std::vector<math::Bounding_Box> const& boxes,
+            u32 num_guide_leaf_prims
+        ) noexcept -> std::tuple<std::vector<u32>, std::vector<Index>>;
+
+        auto traverse(
+            proxy::Divider div, Interaction& intr,
+            math::Ray const& r, Flags flags, fv2 const& range
+        ) const noexcept -> bool;
+
+        buf<Index> tlas;
+        buf<buf<Index>> blas;
+        buf<u32> instances;
+        buf<buf<u32>> prims;
     };
 }

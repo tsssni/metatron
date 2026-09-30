@@ -11,6 +11,9 @@ namespace mtt::monte_carlo {
         math::Ray_Differential diff;
 
         math::Ray shadow;
+        media::Medium medium;
+        math::proxy::Transform medium_to_render;
+
         f32 t{0.f};
         fv4 gamma{0.f};
         fv4 mis_d{0.f};
@@ -68,6 +71,9 @@ namespace mtt::monte_carlo {
             auto s_intr = eval(l_intr.wi);
             auto delta = e_intr.light.flags() & light::Flags::delta;
             auto side = math::dot(l_intr.wi, l_ctx.n) < 0.f ? -1.f : 1.f;
+            auto inside = (side > 0.f) == ctx.inside;
+            payload.medium = inside ? div->int_medium : div->ext_medium;
+            payload.medium_to_render = inside ? div->int_to_render : div->ext_to_render;
             payload.shadow = {l_ctx.r.o + 0.001f * side * l_ctx.n, l_intr.wi};
             payload.t = math::isinf(l_intr.t) ? l_intr.t : math::length(l_intr.p - payload.shadow.o);
             payload.gamma = payload.beta * s_intr.f * l_intr.L / p_e;
@@ -147,7 +153,7 @@ namespace mtt::monte_carlo {
             }
             return false;
         };
-        while (!surface) if (march()) return;
+        if (volumetric) while (!surface) if (march()) return;
 
         auto flip_n = ctx.inside ? -1.f : 1.f;
         intr.n *= flip_n; intr.dndu *= flip_n; intr.dndv *= flip_n;
@@ -218,25 +224,21 @@ namespace mtt::monte_carlo {
         auto& r = payload.shadow;
         auto n = fv3{0.f};
 
-        if (math::isinf(payload.acc.pos[3])) {
-            auto mis_u = math::guarded_div(1.f, math::avg(payload.mis_d + payload.mis_l));
-            payload.emission += payload.gamma * mis_u;
-            payload.gamma = fv4{0.f};
-            return;
+        auto div = payload.acc.divider;
+        auto intersected = !math::isinf(payload.acc.pos[3]);
+        auto intr = shape::Interaction{};
+        if (intersected) {
+            auto lt = div->local_to_render;
+            auto& shape = *div->shape.idx.template data<Shape>();
+            intr = shape(lt ^ r, lt ^ n, payload.acc.pos, payload.acc.primitive);
+            intr.p = lt | math::expand(intr.p, 1.f);
+            intr.n = math::normalize(lt | intr.n);
         }
 
-        auto div = payload.acc.divider;
-        auto lt = div->local_to_render;
-        auto& shape = *div->shape.idx.template data<Shape>();
-        auto intr = shape(lt ^ r, lt ^ n, payload.acc.pos, payload.acc.primitive);
-        intr.p = lt | math::expand(intr.p, 1.f);
-        intr.n = math::normalize(lt | intr.n);
-
         auto l_ctx = math::Context{r, n, payload.ctx.lambda, payload.acc.pos[2] < 0.f};
-        auto& medium = *(l_ctx.inside ? div->int_medium : div->ext_medium).template data<Medium>();
-        auto medium_to_render = l_ctx.inside ? div->int_to_render : div->ext_to_render;
-        auto seg = math::min(intr.t, payload.t);
-        auto iter = medium.begin(medium_to_render ^ l_ctx, seg);
+        auto& medium = *payload.medium.template data<Medium>();
+        auto seg = intersected ? math::min(intr.t, payload.t) : payload.t;
+        auto iter = medium.begin(payload.medium_to_render ^ l_ctx, seg);
         auto boundary = false;
 
         auto march = [&] -> bool {
@@ -261,8 +263,9 @@ namespace mtt::monte_carlo {
         };
         while (!boundary) if (march()) return;
 
-        if (intr.t >= payload.t - 0.001f) { payload.t = 0.f; return; }
-        if (!(div->material.template data<Material>()->flags() & material::Flags::interface)) {
+        if (!intersected || intr.t >= payload.t - 0.001f) {
+            auto mis_u = math::guarded_div(1.f, math::avg(payload.mis_d + payload.mis_l));
+            payload.emission += payload.gamma * mis_u;
             payload.gamma = fv4{0.f};
             return;
         }
@@ -270,6 +273,8 @@ namespace mtt::monte_carlo {
         auto face_n = l_ctx.inside ? -intr.n : intr.n;
         r.o = intr.p - 0.001f * face_n;
         payload.t -= intr.t;
+        payload.medium = l_ctx.inside ? div->ext_medium : div->int_medium;
+        payload.medium_to_render = l_ctx.inside ? div->ext_to_render : div->int_to_render;
     }
 
     auto Radiative_Integrator::sample(Context& ctx, uzv2 const& px) const noexcept -> void {
@@ -288,10 +293,13 @@ namespace mtt::monte_carlo {
         payload.ctx.lambda = spec.lambda;
         payload.diff = s.ray_differential;
 
+        auto vaccum = media::Medium{media::Medium::vs::entity(accel::default_medium)};
+        auto medium = vaccum;
         auto dispatch = [&](auto&& f) {
             auto div = payload.acc.divider;
-            if (!div) return f.template operator()<shape::Mesh, material::Physical_Material, media::Vaccum_Medium>();
-            auto medium = payload.acc.pos[2] < 0.f ? div->int_medium : div->ext_medium;
+            if (!div) return stl::cartesian{}([&]<typename M>() {
+                f.template operator()<shape::Mesh, material::Physical_Material, M>();
+            }, medium);
             stl::cartesian{}(f, div->shape.idx, div->material, medium);
         };
 
@@ -302,11 +310,25 @@ namespace mtt::monte_carlo {
                 payload.beta /= q;
             }
 
-            payload.acc = ctx.accel(payload.ctx.r, payload.ctx.n);
+            payload.acc = ctx.accel(payload.ctx.r, payload.ctx.n, accel::Flags(0), {0.f, math::inf<f32>});
             // reorder
+            auto div = payload.acc.divider;
+            medium = !div ? vaccum : payload.acc.pos[2] < 0.f ? div->int_medium : div->ext_medium;
             dispatch([&]<typename... Ts>() { hit<Ts...>(payload); });
+
+            if (payload.gamma != fv4{0.f}) {
+                auto occlusion = accel::Flags(accel::Flags::hit_first | accel::Flags::skip_interface);
+                auto blocker = ctx.accel(payload.shadow, fv3{0.f}, occlusion, {0.f, payload.t - 0.001f});
+                if (blocker.divider) payload.gamma = fv4{0.f};
+            }
+            if (!volumetric && payload.gamma != fv4{0.f}) {
+                auto mis_u = math::guarded_div(1.f, math::avg(payload.mis_d + payload.mis_l));
+                payload.emission += payload.gamma * mis_u;
+                payload.gamma = fv4{0.f};
+            }
             while (payload.gamma != fv4{0.f}) {
-                payload.acc = payload.t > 0.001f ? ctx.accel(payload.shadow, fv3{0.f}) : accel::Interaction{};
+                payload.acc = payload.t > 0.001f ? ctx.accel(payload.shadow, fv3{0.f}, accel::Flags::only_interface, {0.f, math::inf<f32>}) : accel::Interaction{};
+                medium = payload.medium;
                 dispatch([&]<typename... Ts>() { track<Ts...>(payload); });
             }
 
@@ -326,8 +348,6 @@ namespace mtt::monte_carlo {
             stl::abort("invalid value appears in pixel {} sample {}", px, ctx.sample_index);
         fixel = Li;
     }
-
-    Radiative_Integrator::Radiative_Integrator(Descriptor const&) noexcept {}
 
     auto Radiative_Integrator::trace(Context& ctx) const noexcept -> void {
         auto size = uzv2{ctx.film->image.size};

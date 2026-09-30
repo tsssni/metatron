@@ -17,6 +17,12 @@ namespace mtt::accel {
         math::proxy::Transform int_to_render{math::proxy::Transform::entity(default_transform)};
         math::proxy::Transform ext_to_render{math::proxy::Transform::entity(default_transform)};
     };
+
+    enum Flags {
+        hit_first = 1 << 0,
+        skip_interface = 1 << 1,
+        only_interface = 1 << 2,
+    };
 }
 
 namespace mtt::accel::proxy {
