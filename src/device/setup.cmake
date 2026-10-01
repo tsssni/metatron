@@ -1,7 +1,0 @@
-if(${system} STREQUAL "linux")
-    list(APPEND deps vulkan)
-    list(APPEND features vulkan)
-elseif(${system} STREQUAL "darwin")
-    list(APPEND deps metal)
-    list(APPEND features metal)
-endif()

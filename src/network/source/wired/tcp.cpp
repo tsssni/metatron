@@ -8,15 +8,15 @@
 #include <unistd.h>
 
 namespace mtt::wired {
-    struct Tcp_Socket::Impl final {
+    struct Tcp_Socket::contents final {
         Address address;
         Socket socket{invalid_socket};
 
-        Impl(Address const& address) noexcept: address(address) {
+        contents(Address const& address) noexcept: address(address) {
             ::signal(SIGPIPE, SIG_IGN);
         }
 
-        ~Impl() {
+        ~contents() {
             if (socket != invalid_socket) disconnect();
         }
 
@@ -92,7 +92,7 @@ namespace mtt::wired {
     };
 
     Tcp_Socket::Tcp_Socket(Address const& address) noexcept:
-    stl::capsule<Tcp_Socket>(address) {}
+    stl::shell<Tcp_Socket>(address) {}
 
     auto Tcp_Socket::send(std::span<byte const> data) noexcept -> bool {
         return impl->send(data);

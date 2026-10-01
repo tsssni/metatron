@@ -1,7 +1,7 @@
 #include <metatron/resource/serde/reflection.hpp>
 
 namespace mtt::scene {
-    struct Hierarchy::Impl final {
+    struct Hierarchy::contents final {
         std::vector<Hierarchy::filter_function> filters;
     };
 

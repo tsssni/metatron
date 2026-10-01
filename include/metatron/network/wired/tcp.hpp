@@ -1,10 +1,10 @@
 #pragma once
 #include <metatron/network/wired/address.hpp>
-#include <metatron/core/stl/capsule.hpp>
+#include <metatron/core/stl/shell.hpp>
 
 namespace mtt::wired {
-    struct Tcp_Socket final: stl::capsule<Tcp_Socket> {
-        struct Impl;
+    struct Tcp_Socket final: stl::shell<Tcp_Socket> {
+        struct contents;
         Tcp_Socket() noexcept = default;
         Tcp_Socket(Address const& address) noexcept;
 

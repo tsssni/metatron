@@ -3,13 +3,13 @@
 #include <metatron/network/wired/tcp.hpp>
 
 namespace mtt::remote {
-    struct Previewer::Impl final {
+    struct Previewer::contents final {
         wired::Tcp_Socket socket;
         std::string name;
         std::array<std::string_view, 4> channels{"R", "G", "B", "A"};
         bool created{false};
 
-        Impl(wired::Address const& address, std::string_view name) noexcept:
+        contents(wired::Address const& address, std::string_view name) noexcept:
         socket(address), name(name) {}
 
         auto create(muldim::Image const& image) noexcept -> void {
@@ -47,7 +47,7 @@ namespace mtt::remote {
     };
 
     Previewer::Previewer(wired::Address const& address, std::string_view name) noexcept:
-    stl::capsule<Previewer>(address, name) {}
+    stl::shell<Previewer>(address, name) {}
 
     auto Previewer::update(muldim::Image const& image, std::span<byte const> data) noexcept -> void {
         impl->update(image, data.size() == 0 ? image.pixels.front() : data);

@@ -1,11 +1,11 @@
 #pragma once
 #include <metatron/resource/serde/json.hpp>
-#include <metatron/core/stl/capsule.hpp>
+#include <metatron/core/stl/shell.hpp>
 #include <metatron/core/stl/function.hpp>
 
 namespace mtt::scene {
-    struct Hierarchy final: stl::singleton<Hierarchy>, stl::capsule<Hierarchy> {
-        struct Impl;
+    struct Hierarchy final: stl::singleton<Hierarchy>, stl::shell<Hierarchy> {
+        struct contents;
         Hierarchy() noexcept;
 
         using binmap = std::unordered_map<std::string, std::vector<json>>;
