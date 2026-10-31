@@ -30,4 +30,13 @@ auto cartesian::visit(F& f, T tag, Ts... tags) const noexcept -> void {
     , true) : false) || ...); }(std::type_identity<typename T::ts>{});
 }
 
+template<typename F, typename C>
+struct pipenc final {
+    pipenc(recorder& r, F& f, C& c) noexcept;
+    ~pipenc() noexcept;
+
+    auto dispatch(uv3 groups, uv3 invocs) noexcept -> void;
+    auto dispatch(uv3 size) noexcept -> void;
+};
+
 }

@@ -1,8 +1,9 @@
-#include <metatron/render/monte-carlo/integrator.hpp>
+#include <metatron/render/monte-carlo/context.hpp>
 #include <metatron/resource/serde/serde.hpp>
 
 namespace mtt::monte_carlo {
     Context::Context() noexcept {
+        integrator = Integrator::entity("/integrator");
         accel = accel::Acceleration::entity("/accel");
         emitter = emitter::Emitter::entity("/emitter");
         sampler = sampler::Sampler::entity("/sampler");

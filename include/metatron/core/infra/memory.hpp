@@ -47,9 +47,9 @@ auto obj<T>::operator->() noexcept -> T* { return &handle; }
 template<destroyable T>
 auto obj<T>::operator->() const noexcept -> T const* { return &handle; }
 
-struct memoenc final {
-    memoenc(recorder& r) noexcept;
-    ~memoenc() noexcept;
+struct memonc final {
+    memonc(recorder& r) noexcept;
+    ~memonc() noexcept;
 
     auto copy(contiguous auto src, contiguous auto target) noexcept -> void;
     auto copy(contiguous auto src, tiled auto target, u32 mip = 0) noexcept -> void;

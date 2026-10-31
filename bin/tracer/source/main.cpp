@@ -18,11 +18,6 @@ auto main(i32 argc, char* argv[]) -> i32 {
     .default_value(std::string{"./result.exr"})
     .nargs(1).metavar("PATH");
 
-    argparser.add_argument("-a", "--address")
-    .help("address to tev server")
-    .default_value(std::string{""})
-    .nargs(1).metavar("ADDR");
-
     try {
         argparser.parse_args(argc, argv);
     } catch (std::exception const& err) {
@@ -33,7 +28,6 @@ auto main(i32 argc, char* argv[]) -> i32 {
     auto& args = scene::Args::instance();
     args.scene = argparser.get<std::string>("-s");
     args.output = argparser.get<std::string>("-o");
-    args.address = argparser.get<std::string>("-a");
     scene::run();
 
     return 0;

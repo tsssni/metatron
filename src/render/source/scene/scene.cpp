@@ -1,4 +1,5 @@
 #include <metatron/render/renderer/renderer.hpp>
+#include <metatron/render/monte-carlo/context.hpp>
 #include <metatron/resource/serde/serde.hpp>
 #include <metatron/resource/serde/args.hpp>
 #include <metatron/core/stl/chrono.hpp>
@@ -145,7 +146,7 @@ namespace mtt::scene {
         photo::init();
 
         auto& args = scene::Args::instance();
-        auto renderer = std::unique_ptr<renderer::Renderer>();
+        auto renderer = std::make_unique<renderer::Renderer>();
         Hierarchy::populate(args.scene);
         stl::print("initialization: {:.3}s", timer.t<f64, stl::seconds>());
         renderer->trace();

@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/core/stl/protocol.hpp>
 #include <metatron/render/monte-carlo/radiative.hpp>
 
 namespace mtt::monte_carlo {
@@ -7,8 +8,8 @@ namespace mtt::monte_carlo {
     struct Integrator final: stl::polymorph<Integrator
     , Radiative_Integrator> {
         using polymorph::polymorph;
-        auto trace(Context& ctx) noexcept -> void {
-            return visit([&](auto* p) noexcept { return p->trace(ctx); });
+        auto trace(infra::recorder& r, Context& ctx) noexcept -> void {
+            return visit([&](auto* p) noexcept { return p->trace(r, ctx); });
         }
     };
 }
