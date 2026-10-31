@@ -110,21 +110,4 @@ namespace mtt::stl {
     requires (S<Ts>::value && ...)
     using seal = mtt::tag<Ts...>;
 
-    struct cartesian final {
-        template<typename F, typename... Ts>
-        requires (sealed<Ts> && ...)
-        auto operator()(F&& f, Ts... tags) const noexcept -> void { visit(f, tags...); }
-
-    private:
-        template<typename... Us, typename F>
-        auto visit(F& f) const noexcept -> void { f.template operator()<Us...>(); }
-
-        template<typename... Us, typename F, typename T, typename... Ts>
-        auto visit(F& f, T tag, Ts... tags) const noexcept -> void {
-            [&]<typename... Vs>(std::type_identity<stl::array<Vs...>>) { auto _ =
-            ((tag.type() == T::ts::template index<Vs> ? (
-                this->template visit<Us..., Vs>(f, tags...)
-            , true) : false) || ...); }(std::type_identity<typename T::ts>{});
-        }
-    };
 }

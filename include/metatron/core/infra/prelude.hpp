@@ -10,3 +10,4 @@
 #include <metatron/core/infra/command.hpp>
 #include <metatron/core/infra/memory.hpp>
 #include <metatron/core/infra/accel.hpp>
+#include <metatron/core/infra/pipeline.hpp>

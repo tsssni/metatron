@@ -11,10 +11,11 @@ namespace mtt::monte_carlo {
 
     private:
         struct Payload;
+        [[mtt::visible]] auto miss(Payload& payload) const noexcept -> void;
         template<shape::Intersectable Shape, material::Surfaced Material, media::Participating Medium>
-        auto hit(Payload& payload) const noexcept -> void;
-        template<shape::Intersectable Shape, material::Surfaced Material, media::Participating Medium>
-        auto track(Payload& payload) const noexcept -> void;
-        auto sample(Context& ctx, uzv2 const& px) const noexcept -> void;
+        [[mtt::visible]] auto hit(Payload& payload) const noexcept -> void;
+        template<shape::Intersectable Shape, media::Participating Medium>
+        [[mtt::visible]] auto track(Payload& payload) const noexcept -> void;
+        [[mtt::kernel]] auto sample(Context& ctx, uzv2 const& px) const noexcept -> void;
     };
 }

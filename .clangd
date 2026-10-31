@@ -1,3 +1,7 @@
+CompileFlags:
+  CompilationDatabase: build/dev
+  Add: [-Wno-unknown-attributes]
+
 InlayHints:
   Enabled: false
 
