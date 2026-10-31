@@ -2,7 +2,7 @@
 #include <memory>
 #include <functional>
 #include <type_traits>
-#include <concepts>
+#include <metatron/core/stl/concept.hpp>
 #include <string>
 
 namespace mtt::stl {
@@ -16,8 +16,8 @@ namespace mtt::stl {
 
         template<typename E, typename F = std::decay_t<E>>
         requires (true
-        && std::same_as<F, std::decay_t<E>>
-        && !std::same_as<F, function>
+        && stl::same_as<F, std::decay_t<E>>
+        && !stl::same_as<F, function>
         && std::is_nothrow_invocable_r_v<R, F&, Args...>)
         function(E&& f) noexcept {
             storage.resize(sizeof(F));

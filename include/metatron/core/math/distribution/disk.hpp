@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
+#include <metatron/core/stl/cmath.hpp>
 
 namespace mtt::math {
     struct Polar_Disk_Distribution final {
@@ -8,7 +8,7 @@ namespace mtt::math {
         auto sample(fv2 const& u) const noexcept -> fv2 {
             auto r = math::pow<1,2>(u[0]);
             auto theta = 2.f * pi * u[1];
-            return r * fv2{std::cos(theta), std::sin(theta)};
+            return r * fv2{stl::cos(theta), stl::sin(theta)};
         }
 
         auto pdf() const noexcept -> f32 {
@@ -34,7 +34,7 @@ namespace mtt::math {
                 theta = pi / 2.f - pi / 4.f * guarded_div(disk_u[0], disk_u[1]);
             }
 
-            return r * fv2{std::cos(theta), std::sin(theta)};
+            return r * fv2{stl::cos(theta), stl::sin(theta)};
         }
 
         auto pdf() const noexcept -> f32 {

@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/resource/spectra/constant.hpp>
 #include <metatron/resource/spectra/rgb.hpp>
 #include <metatron/resource/spectra/blackbody.hpp>
@@ -45,7 +46,7 @@ namespace mtt::spectra {
     }
 
     template<typename Func, typename... Args>
-    requires (std::same_as<std::decay_t<Args>, fv4> && ...)
+    requires (stl::same_as<std::decay_t<Args>, fv4> && ...)
     auto constexpr visit(Func f, Args&&... lambda) noexcept -> fv4 {
         if ((math::constant(lambda) && ...)) return fv4{f(lambda[0]..., 0)};
         else return math::foreach(f, lambda...);

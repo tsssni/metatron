@@ -1,20 +1,21 @@
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/resource/volume/nanovdb.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <nanovdb/math/SampleFromVoxels.h>
 
 namespace mtt::volume {
     template<typename T, usize n>
-    auto to_nanovdb(math::Vector<T, n> x) {
+    auto to_nanovdb(math::vector<T, n> x) {
         if constexpr (n == 3) {
-            if constexpr (std::floating_point<T>)
+            if constexpr (stl::floating_point<T>)
                 return nanovdb::math::Vec3<T>{x[0], x[1], -x[2]};
-            else if constexpr (std::integral<T>)
+            else if constexpr (stl::integral<T>)
                 return nanovdb::math::Coord{x[0], x[1], -x[2]};
         }
     }
 
     template<typename T>
-    auto from_nanovdb(nanovdb::math::Vec3<T> const& x) -> math::Vector<T, 3> { return {x[0], x[1], -x[2]}; }
+    auto from_nanovdb(nanovdb::math::Vec3<T> const& x) -> math::vector<T, 3> { return {x[0], x[1], -x[2]}; }
     auto from_nanovdb(nanovdb::math::Coord const& x) -> iv3 { return {x.x(), x.y(), -x.z()}; }
 
     auto from_nanovdb(nanovdb::Vec3dBBox const& bbox) {

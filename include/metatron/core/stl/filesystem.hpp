@@ -1,5 +1,7 @@
 #pragma once
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/core/stl/singleton.hpp>
+#include <metatron/core/stl/optional.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <filesystem>
 #include <fstream>
@@ -13,10 +15,8 @@ namespace mtt::stl {
     #endif
 
     template<typename T>
-    concept buffer = requires {false
-    || std::convertible_to<T, std::span<byte const>>
-    || std::convertible_to<T, std::string_view>;
-    };
+    concept buffer = stl::convertible_to<T, std::span<byte const>>
+    || stl::convertible_to<T, std::string_view>;
 
     using path = std::filesystem::path;
 

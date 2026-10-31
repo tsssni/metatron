@@ -1,8 +1,9 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
+#include <metatron/core/stl/concept.hpp>
+#include <metatron/core/infra/vector.hpp>
 #include <metatron/core/stl/array.hpp>
 
-namespace mtt:: inline infra {
+namespace mtt::infra {
 
 namespace fmt {
 
@@ -14,12 +15,12 @@ template<u8... bits>
 requires (true
 && ((sizeof...(bits) == 1 || sizeof...(bits) == 2 || sizeof...(bits) == 4)
 && (((bits == 8) && ...) || ((bits == 16) && ...) || ((bits == 32) && ...)))
-|| std::same_as<detail::seq<bits...>, detail::seq<5, 6, 5>>
-|| std::same_as<detail::seq<bits...>, detail::seq<4, 4, 4, 4>>
-|| std::same_as<detail::seq<bits...>, detail::seq<5, 5, 5, 1>>
-|| std::same_as<detail::seq<bits...>, detail::seq<10, 10, 10, 2>>
-|| std::same_as<detail::seq<bits...>, detail::seq<11, 11, 10>>
-|| std::same_as<detail::seq<bits...>, detail::seq<9, 9, 9, 5>>)
+|| stl::same_as<detail::seq<bits...>, detail::seq<5, 6, 5>>
+|| stl::same_as<detail::seq<bits...>, detail::seq<4, 4, 4, 4>>
+|| stl::same_as<detail::seq<bits...>, detail::seq<5, 5, 5, 1>>
+|| stl::same_as<detail::seq<bits...>, detail::seq<10, 10, 10, 2>>
+|| stl::same_as<detail::seq<bits...>, detail::seq<11, 11, 10>>
+|| stl::same_as<detail::seq<bits...>, detail::seq<9, 9, 9, 5>>)
 struct ordinary final {
     template<encoding e>
     auto static constexpr encodable = e <= encoding::srgb
@@ -27,9 +28,9 @@ struct ordinary final {
     && (e != encoding::sn || ((bits % 8 == 0 && bits <= 16) && ...))
     && (e != encoding::sf || ((bits % 8 == 0 && bits >= 16) && ...))
     && (e != encoding::si || ((bits % 8 == 0) && ...))
-    && (e != encoding::ui || ((bits % 8 == 0) && ...) || std::same_as<detail::seq<bits...>, detail::seq<10, 10, 10, 2>>)
-    && (e != encoding::uf || std::same_as<detail::seq<bits...>, detail::seq<11, 11, 10>> || std::same_as<detail::seq<bits...>, detail::seq<9, 9, 9, 5>>)
-    && (e != encoding::un || (((bits < 32) && ...) && !std::same_as<detail::seq<bits...>, detail::seq<11, 11, 10>> && !std::same_as<detail::seq<bits...>, detail::seq<9, 9, 9, 5>>));
+    && (e != encoding::ui || ((bits % 8 == 0) && ...) || stl::same_as<detail::seq<bits...>, detail::seq<10, 10, 10, 2>>)
+    && (e != encoding::uf || stl::same_as<detail::seq<bits...>, detail::seq<11, 11, 10>> || stl::same_as<detail::seq<bits...>, detail::seq<9, 9, 9, 5>>)
+    && (e != encoding::un || (((bits < 32) && ...) && !stl::same_as<detail::seq<bits...>, detail::seq<11, 11, 10>> && !stl::same_as<detail::seq<bits...>, detail::seq<9, 9, 9, 5>>));
     auto static constexpr channels = bv<sizeof...(bits)>{bits...};
     auto static constexpr block = bv2{1, 1};
     auto static constexpr bytes = (usize{bits} + ...) / 8;
@@ -75,20 +76,27 @@ struct image final {
     struct descriptor final { uzv3 size; };
 
     template<typename S, fmt::encoding E>
+    auto update(descriptor const& desc) noexcept -> void
     requires (true
     && S::template encodable<E>
-    && (E == fmt::encoding::ui ? std::same_as<R, uv4> : E == fmt::encoding::si ? std::same_as<R, iv4> : std::same_as<R, fv4>)
+    && (E == fmt::encoding::ui ? stl::same_as<R, uv4> : E == fmt::encoding::si ? stl::same_as<R, iv4> : stl::same_as<R, fv4>)
     && ((usage & storage) == 0 || (requires { S::channels; } && E != fmt::encoding::srgb && S::channels[0] % 8 == 0))
-    && (dims != 3 || requires { S::channels; }))
-    auto update(descriptor const& desc) noexcept -> void;
+    && (dims != 3 || requires { S::channels; }));
 
-    auto operator[](fv2 uv, fv4 duvdxy) const noexcept -> R requires (std::same_as<R, fv4> && (usage & sampled) != 0 && dims == 2);
-    auto operator[](fv3 uvw) const noexcept -> R requires (std::same_as<R, fv4> && (usage & sampled) != 0);
+    auto operator[](fv2 uv, fv4 duvdxy) const noexcept -> R requires (stl::same_as<R, fv4> && (usage & sampled) != 0 && dims == 2);
+    auto operator[](fv3 uvw) const noexcept -> R requires (stl::same_as<R, fv4> && (usage & sampled) != 0);
     auto operator[](uzv3 xyz) noexcept -> R& requires ((usage & storage) != 0);
     auto operator[](uzv3 xyz) const noexcept -> R;
-    operator u32() const noexcept { return idx; }
-    operator bool() const noexcept { return idx != math::maxv<u32>; }
+    operator u32() const noexcept;
+    operator bool() const noexcept;
 };
+
+template<typename R, usize dims, usize usage>
+requires (stl::array<fv4, iv4, uv4>::contains<R> && (dims == 2 || dims == 3) && usage > 0 && usage < 4)
+image<R, dims, usage>::operator u32() const noexcept { return idx; }
+template<typename R, usize dims, usize usage>
+requires (stl::array<fv4, iv4, uv4>::contains<R> && (dims == 2 || dims == 3) && usage > 0 && usage < 4)
+image<R, dims, usage>::operator bool() const noexcept { return idx != math::maxv<u32>; }
 
 template<usize dims> using ft = image<fv4, dims, 1>;
 template<usize dims> using ftw = image<fv4, dims, 3>;

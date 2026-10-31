@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/core/stl/singleton.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <cstring>
@@ -104,7 +105,7 @@ namespace mtt {
         }
 
         template<typename U>
-        requires std::same_as<T, std::remove_const_t<U>>
+        requires stl::same_as<T, std::remove_const_t<U>>
         buf(std::span<U> range) noexcept: buf(range.size()) {
             std::memcpy(data(), range.data(), bytelen);
         }

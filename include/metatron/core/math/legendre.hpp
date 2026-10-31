@@ -1,9 +1,10 @@
 #pragma once
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/core/math/arithmetic.hpp>
 
 namespace mtt::math {
     template<typename T>
-    requires std::floating_point<T>
+    requires stl::floating_point<T>
     auto legendre(i32 l, T x) -> T {
         if (l > 1) {
             auto l0 = T(0), l1 = x, l2 = T(1);
@@ -20,7 +21,7 @@ namespace mtt::math {
     }
 
     template<typename T>
-    requires std::floating_point<T>
+    requires stl::floating_point<T>
     auto legendre(i32 l, i32 m, T x) -> T {
         auto mm = T(1);
         if (m > 0) {
@@ -52,7 +53,7 @@ namespace mtt::math {
     }
 
     template<typename T>
-    requires std::floating_point<T>
+    requires stl::floating_point<T>
     auto legendre_derivative(i32 l, T x) -> std::tuple<T, T> {
         if (l > 1) {
             auto l0 = T(0), l1 = x, l2 = T(1);

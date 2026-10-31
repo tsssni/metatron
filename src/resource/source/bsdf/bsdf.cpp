@@ -1,6 +1,6 @@
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/resource/bsdf/bsdf.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
-#include <metatron/core/math/complex.hpp>
 #include <metatron/core/math/sphere.hpp>
 
 namespace mtt::bsdf {
@@ -20,7 +20,7 @@ namespace mtt::bsdf {
         cos_theta_i = math::clamp(cos_theta_i, -1.f, 1.f);
         auto F = [cos_theta_i](auto eta) {
             using T = decltype(eta);
-            auto constexpr is_complex = std::same_as<T, fc>;
+            auto constexpr is_complex = stl::same_as<T, fc>;
 
             auto sin2_theta_i = math::max(0.f, 1.f - cos_theta_i * cos_theta_i);
             auto sin2_theta_t = sin2_theta_i / (eta * eta);

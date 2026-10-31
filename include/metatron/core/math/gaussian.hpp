@@ -1,17 +1,19 @@
 #pragma once
+#include <metatron/core/stl/cmath.hpp>
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/core/math/polynomial.hpp>
 
 namespace mtt::math {
     // inverse real error function approximation based on "Approximating the erfinv function" by Mark Giles
     template<typename T>
-    requires std::floating_point<T>
+    requires stl::floating_point<T>
     auto erfinv(T x) noexcept -> T {
-        auto w = -std::log((T(1) - x) * (T(1) + x));
+        auto w = -stl::log((T(1) - x) * (T(1) + x));
 
         auto w1 = w - T(2.5);
         auto w2 = math::pow<1,2>(w) - T(3);
 
-        auto p1 = T(polynomial(w1, Vector<T, 9>{
+        auto p1 = T(polynomial(w1, vector<T, 9>{
             1.50140941,     0.246640727,
             -0.00417768164, -0.00125372503,
             0.00021858087, -4.39150654e-06,
@@ -19,7 +21,7 @@ namespace mtt::math {
             2.81022636e-08
         }));
 
-        auto p2 = T(polynomial(w2, Vector<T, 9>{
+        auto p2 = T(polynomial(w2, vector<T, 9>{
             2.83297682,     1.00167406,
             0.00943887047, -0.0076224613,
             0.00573950773, -0.00367342844,
@@ -31,14 +33,14 @@ namespace mtt::math {
     }
 
     template<typename T>
-    requires std::floating_point<T>
+    requires stl::floating_point<T>
     auto gaussian(T x, T mu, T sigma) noexcept -> T {
         return exp(-sqr(x - mu) / (T(2) * sqr(sigma))) / (sqrt(T(2) * pi) * sigma);
     }
 
     template<typename T>
-    requires std::floating_point<T>
+    requires stl::floating_point<T>
     auto gaussian_cdf(T x, T mu, T sigma) noexcept -> T {
-        return T(0.5) * (T(1) + std::erf((x - mu) / sigma / sqrt(T(2))));
+        return T(0.5) * (T(1) + stl::erf((x - mu) / sigma / sqrt(T(2))));
     }
 }

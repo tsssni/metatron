@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/core/math/quaternion.hpp>
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/core/math/ray.hpp>
 #include <metatron/core/stl/protocol.hpp>
 #include <metatron/core/stl/print.hpp>
@@ -8,10 +8,10 @@
 namespace mtt::math {
     template<typename T>
     concept Transformable = false
-    || std::same_as<std::remove_cvref_t<T>, fv4>
-    || std::same_as<std::remove_cvref_t<T>, fv3> // for normal
-    || std::same_as<std::remove_cvref_t<T>, Ray>
-    || std::same_as<std::remove_cvref_t<T>, Ray_Differential>;
+    || stl::same_as<std::remove_cvref_t<T>, fv4>
+    || stl::same_as<std::remove_cvref_t<T>, fv3> // for normal
+    || stl::same_as<std::remove_cvref_t<T>, Ray>
+    || stl::same_as<std::remove_cvref_t<T>, Ray_Differential>;
 
     struct Transform final {
         struct Chain final {
@@ -104,16 +104,16 @@ namespace mtt::math {
 
         template<Transformable T, typename Type = std::remove_cvref_t<T>>
         auto operator|(T&& rhs) const {
-            if constexpr (std::same_as<Type, fv4>) {
+            if constexpr (stl::same_as<Type, fv4>) {
                 return transform | rhs;
-            } else if constexpr (std::same_as<Type, fv3>) {
+            } else if constexpr (stl::same_as<Type, fv3>) {
                 return math::normalize(shrink(expand(rhs, 0.f) | inv_transform));
-            } else if constexpr (std::same_as<Type, Ray>) {
+            } else if constexpr (stl::same_as<Type, Ray>) {
                 auto r = rhs;
                 r.o = *this | expand(r.o, 1.f);
                 r.d = *this | expand(r.d, 0.f);
                 return r;
-            } else if constexpr (std::same_as<Type, Ray_Differential>) {
+            } else if constexpr (stl::same_as<Type, Ray_Differential>) {
                 auto ray = rhs;
                 ray.r = *this | rhs.r;
                 ray.rx = *this | rhs.rx;
@@ -128,16 +128,16 @@ namespace mtt::math {
 
         template<Transformable T, typename Type = std::remove_cvref_t<T>>
         auto operator^(T&& rhs) const {
-            if constexpr (std::same_as<Type, fv4>) {
+            if constexpr (stl::same_as<Type, fv4>) {
                 return inv_transform | rhs;
-            } else if constexpr (std::same_as<Type, fv3>) {
+            } else if constexpr (stl::same_as<Type, fv3>) {
                 return math::normalize(shrink(expand(rhs, 0.f) | transform));
-            } else if constexpr (std::same_as<Type, Ray>) {
+            } else if constexpr (stl::same_as<Type, Ray>) {
                 auto r = rhs;
                 r.o = *this ^ expand(r.o, 1.f);
                 r.d = *this ^ expand(r.d, 0.f);
                 return r;
-            } else if constexpr (std::same_as<Type, Ray_Differential>) {
+            } else if constexpr (stl::same_as<Type, Ray_Differential>) {
                 auto ray = rhs;
                 ray.r = *this ^ rhs.r;
                 ray.rx = *this ^ rhs.rx;
@@ -147,7 +147,7 @@ namespace mtt::math {
         }
 
         template<typename T>
-        requires std::same_as<std::remove_cvref_t<T>, Transform>
+        requires stl::same_as<std::remove_cvref_t<T>, Transform>
         auto operator^(T&& rhs) const noexcept -> Chain {
             return std::move(Chain{*this} ^ rhs);
         }

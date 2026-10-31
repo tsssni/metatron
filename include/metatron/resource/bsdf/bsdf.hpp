@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/resource/bsdf/physical.hpp>
 #include <metatron/resource/bsdf/interface.hpp>
 
@@ -12,9 +13,9 @@ namespace mtt::bsdf {
         math::Context const& ctx, fv3 const& u1
     ) {
         // u for lobe selection replay
-        { t(wo, wi, u0) } noexcept -> std::same_as<Interaction>;
-        { t.sample(ctx, u1) } noexcept -> std::same_as<Interaction>;
-        { t.flags() } noexcept -> std::same_as<Flags>;
+        { t(wo, wi, u0) } noexcept -> stl::same_as<Interaction>;
+        { t.sample(ctx, u1) } noexcept -> stl::same_as<Interaction>;
+        { t.flags() } noexcept -> stl::same_as<Flags>;
     };
 
     auto lambert(f32 reflectance) noexcept -> f32;

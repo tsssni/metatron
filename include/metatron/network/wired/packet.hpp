@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/core/stl/concept.hpp>
 #include <string>
 #include <cstring>
 #include <span>
@@ -18,7 +19,7 @@ namespace mtt::wired {
 
         template<typename T>
         auto emplace(std::span<T> span) noexcept -> void {
-            if constexpr (std::same_as<T, std::string_view>) {
+            if constexpr (stl::same_as<T, std::string_view>) {
                 for (auto str: span) emplace(str);
             } else {
                 auto size = span.size() * sizeof(T);

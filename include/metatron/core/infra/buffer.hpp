@@ -1,7 +1,7 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
+#include <metatron/core/infra/vector.hpp>
 
-namespace mtt:: inline infra {
+namespace mtt::infra {
 
 enum struct heap: u8 { device, host, coherent, readback, twin };
 
@@ -13,8 +13,9 @@ struct buffer final {
     buffer(buffer const&) noexcept requires(!unique) = default;
     auto operator=(buffer const&) noexcept -> buffer& requires(!unique) = default;
     ~buffer() noexcept requires(!unique) = default;
-    buffer(buffer<T, h, alignment, true> const& rhs) noexcept requires(!unique): ptr(rhs.ptr) {}
-    buffer(T* p) noexcept requires(!unique): ptr(p) {}
+    template<bool rhs_unique>
+    buffer(buffer<T, h, alignment, rhs_unique> const& rhs) noexcept requires(!unique && rhs_unique);
+    buffer(T* p) noexcept requires(!unique);
 
     buffer(usize size) noexcept requires(unique);
     buffer(buffer const&) requires(unique) = delete;
@@ -25,19 +26,39 @@ struct buffer final {
 
     auto operator[](usize idx) const noexcept -> T const&;
     auto operator[](usize idx) noexcept -> T&;
-    auto operator+(i64 offset) const noexcept -> buffer<T, h, alignment, false> {
-        return buffer<T, h, alignment, false>{(T*)((i64)ptr + offset * (i64)sizeof(T))};
-    }
-    auto operator-(i64 offset) const noexcept -> buffer<T, h, alignment, false> {
-        return *this + (-offset);
-    }
+    auto operator+(i64 offset) const noexcept -> buffer<T, h, alignment, false>;
+    auto operator-(i64 offset) const noexcept -> buffer<T, h, alignment, false>;
 
-    explicit operator u64() const noexcept { return (u64)ptr; }
-    operator bool() const noexcept { return ptr != nullptr; }
+    explicit operator u64() const noexcept;
+    operator bool() const noexcept;
 
     auto map() noexcept -> void requires(h != heap::device && h != heap::host);
     auto unmap() noexcept -> void requires(h != heap::device && h != heap::host);
 };
+
+template<typename T, heap h, usize alignment, bool unique>
+template<bool rhs_unique>
+buffer<T, h, alignment, unique>::buffer(buffer<T, h, alignment, rhs_unique> const& rhs) noexcept
+requires(!unique && rhs_unique): ptr(rhs.ptr) {}
+
+template<typename T, heap h, usize alignment, bool unique>
+buffer<T, h, alignment, unique>::buffer(T* p) noexcept
+requires(!unique): ptr(p) {}
+
+template<typename T, heap h, usize alignment, bool unique>
+auto buffer<T, h, alignment, unique>::operator+(i64 offset) const noexcept -> buffer<T, h, alignment, false> {
+    return buffer<T, h, alignment, false>{(T*)((i64)ptr + offset * (i64)sizeof(T))};
+}
+
+template<typename T, heap h, usize alignment, bool unique>
+auto buffer<T, h, alignment, unique>::operator-(i64 offset) const noexcept -> buffer<T, h, alignment, false> {
+    return *this + (-offset);
+}
+
+template<typename T, heap h, usize alignment, bool unique>
+buffer<T, h, alignment, unique>::operator u64() const noexcept { return (u64)ptr; }
+template<typename T, heap h, usize alignment, bool unique>
+buffer<T, h, alignment, unique>::operator bool() const noexcept { return ptr != nullptr; }
 
 template<typename T, heap h, usize alignment = sizeof(fv4)>
 using buf = buffer<T, h, alignment, true>;

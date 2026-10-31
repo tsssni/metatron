@@ -1,3 +1,5 @@
+#include <metatron/core/stl/cmath.hpp>
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/resource/light/atmosphere.hpp>
 #include <metatron/core/math/trigonometric.hpp>
 #include <metatron/core/math/integral.hpp>
@@ -20,7 +22,7 @@ namespace mtt::light {
             auto c = std::array<f32, 6>{1, 5, 10, 10, 5, 1};
             for (auto i = 0; i < 6; ++i) {
                 auto start = offset + i * block_size;
-                auto coeff = c[i] * std::pow(x, i) * std::pow(1.f - x, 5 - i);
+                auto coeff = c[i] * stl::pow(x, i) * stl::pow(1.f - x, 5 - i);
                 auto source = data.subbuf(start, block_size);
                 for (auto j = 0; j < block_size; ++j)
                     interpolated[j] += source[j] * coeff;
@@ -87,9 +89,9 @@ namespace mtt::light {
 
             // only use visible spectra
             auto ratio = (math::sum(sun_scale) - sun_scale[0] - sun_scale[1]) / 9.f;
-            cos_sun = std::cos(desc.aperture * 0.5f);
+            cos_sun = stl::cos(desc.aperture * 0.5f);
             phi_sun = desc.direction[1];
-            area = (1.f - std::cos(sun_aperture * 0.5f)) / (1.f - cos_sun);
+            area = (1.f - stl::cos(sun_aperture * 0.5f)) / (1.f - cos_sun);
             sun_distr = math::Cone_Distribution{cos_sun};
             for (auto i = 0; i < atmo_num_lambda; ++i)
                 sky_radiance[i] *= desc.intensity / ratio * sun_scale[i];
@@ -185,7 +187,7 @@ namespace mtt::light {
             f.read((char*)intermediate.data(), intermediate.size() * sizeof(U));
             f.close();
 
-            if constexpr (std::same_as<T, U>) {
+            if constexpr (stl::same_as<T, U>) {
                 storage = std::span{intermediate};
             } else {
                 auto target = std::vector<T>(elems);
@@ -227,7 +229,7 @@ namespace mtt::light {
         auto sky_pdf = 0.f;
         for (auto i = 0; cos_theta >= 0.f && i < tgmm_num_gaussian; ++i)
             sky_pdf += tgmm_phi_distr[i].pdf(tgmm_phi) * tgmm_theta_distr[i].pdf(theta) * tgmm_distr.pdf[i];
-        sky_pdf = math::guarded_div(sky_pdf, std::sin(theta));
+        sky_pdf = math::guarded_div(sky_pdf, stl::sin(theta));
         sun_pdf = cos_gamma >= cos_sun ? sun_distr.pdf() : 0.f;
         auto pdf = math::lerp(sun_pdf, sky_pdf, w_sky);
 
@@ -358,8 +360,8 @@ namespace mtt::light {
             auto cos_gamma = cos_theta_phi | std::views::transform([d = this->d](auto&& cos_theta_phi) {
                 auto [cos_theta, phi] = cos_theta_phi;
                 auto sin_theta = math::pow<1,2>(1.f - math::pow<2>(cos_theta));
-                auto cos_phi = std::cos(phi);
-                auto sin_phi = std::sin(phi);
+                auto cos_phi = stl::cos(phi);
+                auto sin_phi = stl::sin(phi);
                 auto wi = fv3{sin_theta * cos_phi, cos_theta, sin_theta * sin_phi};
                 return math::dot(wi, d);
             });
@@ -396,8 +398,8 @@ namespace mtt::light {
             ](auto&& cos_gamma_phi) {
                 auto [cos_gamma, phi] = cos_gamma_phi;
                 auto sin_gamma = math::pow<1,2>(1.f - math::pow<2>(cos_gamma));
-                auto cos_phi = std::cos(phi);
-                auto sin_phi = std::sin(phi);
+                auto cos_phi = stl::cos(phi);
+                auto sin_phi = stl::sin(phi);
                 auto wi_sun = fv3{sin_gamma * cos_phi, cos_gamma, sin_gamma * sin_phi};
                 auto wi = math::normalize(fv3{t | math::expand(wi_sun, 0.f)});
                 return math::unit_to_cos_theta(wi);

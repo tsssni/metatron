@@ -1,5 +1,5 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
+#include <metatron/core/stl/cmath.hpp>
 
 namespace mtt::math {
     auto inline constexpr cartesian_to_unit_spherical(fv3 const& d) noexcept -> fv2 {
@@ -11,15 +11,15 @@ namespace mtt::math {
     auto inline constexpr unit_spherical_to_cartesian(f32 cos_theta, f32 phi) noexcept -> fv3 {
         auto sin_theta_2 = 1.f - cos_theta * cos_theta;
         auto sin_theta = math::pow<1,2>(sin_theta_2);
-        auto x = sin_theta * std::cos(phi);
-        auto z = sin_theta * std::sin(phi);
+        auto x = sin_theta * stl::cos(phi);
+        auto z = sin_theta * stl::sin(phi);
         auto y = cos_theta;
         return {x, y, z};
     }
 
     auto inline constexpr unit_spherical_to_cartesian(fv2 const& s) noexcept -> fv3 {
         auto [theta, phi] = s;
-        return unit_spherical_to_cartesian(std::cos(theta), phi);
+        return unit_spherical_to_cartesian(stl::cos(theta), phi);
     }
 
     auto inline constexpr cartesian_to_spherical(fv3 const& d) noexcept -> fv3 {
@@ -38,7 +38,7 @@ namespace mtt::math {
         auto r = s[0];
         auto theta = s[1];
         auto phi = s[2];
-        return spherical_to_cartesian(r, std::cos(theta), phi);
+        return spherical_to_cartesian(r, stl::cos(theta), phi);
     }
 
     auto inline constexpr unit_to_cos_theta(fv3 const& d) noexcept -> f32 {

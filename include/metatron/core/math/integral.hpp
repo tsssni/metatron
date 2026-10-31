@@ -1,11 +1,13 @@
 #pragma once
+#include <metatron/core/stl/cmath.hpp>
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/core/math/legendre.hpp>
 #include <metatron/core/stl/print.hpp>
 #include <vector>
 
 namespace mtt::math {
     template<typename T>
-    requires std::floating_point<T>
+    requires stl::floating_point<T>
     auto gauss_legendre(i32 n) {
         using A = std::vector<T>;
         auto p = A(n), w = A(n);
@@ -20,7 +22,7 @@ namespace mtt::math {
         }
 
         for (auto i = 0; i <= (n + 1) / 2; ++i) {
-            auto x = -std::cos(f64(2 * i + 1) / f64(2 * n + 2) * math::piv<f64>);
+            auto x = -stl::cos(f64(2 * i + 1) / f64(2 * n + 2) * math::piv<f64>);
             auto it = 0;
 
             while (true) {
@@ -28,7 +30,7 @@ namespace mtt::math {
                 auto [y, d] = legendre_derivative(n + 1, x);
                 auto step = y / d;
                 x -= step;
-                if (math::abs(step) <= 4.0 * std::abs(x) * math::epsilon<f64>) break;
+                if (math::abs(step) <= 4.0 * stl::abs(x) * math::epsilon<f64>) break;
                 ++it;
             }
 

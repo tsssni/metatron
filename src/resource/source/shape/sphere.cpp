@@ -1,3 +1,4 @@
+#include <metatron/core/stl/cmath.hpp>
 #include <metatron/resource/shape/sphere.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>
 #include <metatron/core/math/distribution/cone.hpp>
@@ -27,14 +28,14 @@ namespace mtt::shape {
         auto uv = fv2{theta / math::pi, phi / (2.f * math::pi)};
 
         auto dpdu = fv3{
-            std::cos(theta) * std::cos(phi),
-            -std::sin(theta),
-            std::cos(theta) * std::sin(phi),
+            stl::cos(theta) * stl::cos(phi),
+            -stl::sin(theta),
+            stl::cos(theta) * stl::sin(phi),
         } / math::pi;
         auto dpdv = fv3{
-            -std::sin(theta) * std::sin(phi),
+            -stl::sin(theta) * stl::sin(phi),
             0.f,
-            std::sin(theta) * std::cos(phi),
+            stl::sin(theta) * stl::cos(phi),
         } / (2.f * math::pi);
         auto dndu = dpdu;
         auto dndv = dpdv;

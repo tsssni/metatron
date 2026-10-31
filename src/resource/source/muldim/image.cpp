@@ -1,3 +1,4 @@
+#include <metatron/core/stl/cmath.hpp>
 #include <metatron/resource/muldim/image.hpp>
 #include <metatron/core/stl/filesystem.hpp>
 #include <metatron/core/stl/thread.hpp>
@@ -96,7 +97,7 @@ namespace mtt::muldim {
         }
 
         auto lodm = pixels.size() - 1.f;
-        auto lod = math::clamp(lodm + std::log2(sl), 0.f, lodm);
+        auto lod = math::clamp(lodm + stl::log2(sl), 0.f, lodm);
 
         auto filter = [&](i32 lod) -> fv4 {
             auto width = math::max(1uz, this->width >> lod);
@@ -120,12 +121,12 @@ namespace mtt::muldim {
             auto u_tan = 2.f * math::guarded_div(math::pow<1,2>(det * C), det);
             auto v_tan = 2.f * math::guarded_div(math::pow<1,2>(det * A), det);
             auto u_range = iv2{
-                i32(std::ceil(uv[0] - u_tan)),
-                i32(std::ceil(uv[0] + u_tan)),
+                i32(stl::ceil(uv[0] - u_tan)),
+                i32(stl::ceil(uv[0] + u_tan)),
             };
             auto v_range = iv2{
-                i32(std::ceil(uv[1] - v_tan)),
-                i32(std::ceil(uv[1] + v_tan)),
+                i32(stl::ceil(uv[1] - v_tan)),
+                i32(stl::ceil(uv[1] + v_tan)),
             };
 
             auto sum_t = fv4{0.f};
@@ -182,8 +183,8 @@ namespace mtt::muldim {
                 }
             }
             if (sum_w == 0.f) {
-                auto wi = math::pmod(i32(std::round(uv[0])), i32(width));
-                auto wj = math::pmod(i32(std::round(uv[1])), i32(height));
+                auto wi = math::pmod(i32(stl::round(uv[0])), i32(width));
+                auto wj = math::pmod(i32(stl::round(uv[1])), i32(height));
                 return fv4{(*this)[wi, wj, lod]};
             }
             return sum_t / sum_w;

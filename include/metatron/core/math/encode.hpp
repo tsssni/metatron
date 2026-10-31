@@ -1,5 +1,4 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
 
 namespace mtt::math {
     template<usize n>

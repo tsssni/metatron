@@ -1,5 +1,4 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
 
 namespace mtt::spectra {
     auto constexpr visible_lambda = fv2{360.f, 830.f};

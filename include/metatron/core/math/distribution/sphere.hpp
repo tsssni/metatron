@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/core/stl/cmath.hpp>
 #include <metatron/core/math/distribution/disk.hpp>
 #include <metatron/core/math/sphere.hpp>
 
@@ -10,7 +11,7 @@ namespace mtt::math {
             auto cos_theta = 1.f - 2.f * u[0];
             auto sin_theta = math::pow<1,2>(1 - cos_theta * cos_theta);
             auto phi = 2.f * pi * u[1];
-            return {sin_theta * std::cos(phi), cos_theta, sin_theta * std::sin(phi)};
+            return {sin_theta * stl::cos(phi), cos_theta, sin_theta * stl::sin(phi)};
         }
 
         auto pdf() const noexcept -> f32 {
@@ -25,7 +26,7 @@ namespace mtt::math {
             auto z = u[0];
             auto r = math::pow<1,2>(1 - z * z);
             auto phi = 2.f * pi * u[1];
-            return {r * std::cos(phi), r * std::sin(phi), z};
+            return {r * stl::cos(phi), r * stl::sin(phi), z};
         }
 
         auto pdf() const noexcept -> f32 {

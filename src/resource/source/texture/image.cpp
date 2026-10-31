@@ -1,3 +1,4 @@
+#include <metatron/core/stl/cmath.hpp>
 #include <metatron/resource/texture/image.hpp>
 #include <metatron/resource/spectra/spectrum.hpp>
 #include <metatron/core/stl/thread.hpp>
@@ -15,7 +16,7 @@ namespace mtt::texture {
                 if (desc.distr == Image_Distribution::spherical) {
                     auto v = (px[1] + 0.5f) / size[1];
                     auto theta = v * math::pi;
-                    w = std::sin(theta);
+                    w = stl::sin(theta);
                 }
                 pdf[px[0] + px[1] * size[0]] = math::avg(math::shrink(c)) * w;
             });

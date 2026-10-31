@@ -1,7 +1,7 @@
 #pragma once
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/core/stl/singleton.hpp>
 #include <metatron/core/stl/function.hpp>
-#include <metatron/core/math/vector.hpp>
 #include <thread>
 #include <atomic>
 #include <future>
@@ -35,19 +35,19 @@ namespace mtt::stl {
         }
 
         template<typename F, usize size>
-        requires (std::invocable<F, uzv<size>> && size >= 1 && size <= 3)
+        requires (stl::invocable<F, uzv<size>> && size >= 1 && size <= 3)
         auto static sync_parallel(uzv<size> const& grid, F&& f) noexcept {
             instance().parallel(grid, std::forward<F>(f), true).wait();
         }
 
         template<typename F, usize size>
-        requires (std::invocable<F, uzv<size>> && size >= 1 && size <= 3)
+        requires (stl::invocable<F, uzv<size>> && size >= 1 && size <= 3)
         auto static async_parallel(uzv<size> const& grid, F&& f) noexcept {
             return instance().parallel(grid, std::forward<F>(f), false);
         }
 
         template<typename F>
-        requires (std::invocable<F>)
+        requires (stl::invocable<F>)
         auto static async_dispatch(F&& f) noexcept {
             return instance().dispatch(std::forward<F>(f));
         }
@@ -64,8 +64,8 @@ namespace mtt::stl {
     private:
         template<typename F, usize size>
         requires (true
-        && std::invocable<F, uzv<size>>
-        && std::same_as<std::invoke_result_t<F, uzv<size>>, void>
+        && stl::invocable<F, uzv<size>>
+        && stl::same_as<std::invoke_result_t<F, uzv<size>>, void>
         && size >= 1 && size <= 3)
         auto parallel(uzv<size> const& grid, F&& f, bool sync) noexcept {
             using S = std::tuple<std::atomic<u32>, std::atomic<u32>, std::promise<void>>;
@@ -106,7 +106,7 @@ namespace mtt::stl {
         }
 
         template<typename F>
-        requires (std::invocable<F>)
+        requires (stl::invocable<F>)
         auto dispatch(F&& f) noexcept {
             using R = std::invoke_result_t<F>;
             auto promise = std::make_unique<std::promise<R>>();
@@ -116,7 +116,7 @@ namespace mtt::stl {
                 promise = std::move(promise),
                 f = std::forward<F>(f)
             ]() mutable noexcept {
-                if constexpr (!std::same_as<R, void>) promise->set_value(f());
+                if constexpr (!stl::same_as<R, void>) promise->set_value(f());
                 else { f(); promise->set_value(); }
             });
 

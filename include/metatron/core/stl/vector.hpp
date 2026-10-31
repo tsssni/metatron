@@ -1,10 +1,10 @@
 #pragma once
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/core/stl/singleton.hpp>
 #include <metatron/core/stl/array.hpp>
 #include <metatron/core/stl/string.hpp>
 #include <metatron/core/stl/ranges.hpp>
 #include <metatron/core/stl/print.hpp>
-#include <metatron/core/math/vector.hpp>
 #include <vector>
 #include <cstring>
 #include <atomic>
@@ -58,7 +58,7 @@ namespace mtt::stl {
         }
 
         template<typename T, typename... Args>
-        requires std::constructible_from<T, Args...>
+        requires stl::constructible_from<T, Args...>
         auto emplace_back(Args&&... args) noexcept -> u32 {
             auto [ptr, idx] = alloc();
             std::construct_at((T*)ptr, std::forward<Args>(args)...);
@@ -66,7 +66,7 @@ namespace mtt::stl {
         }
 
         template<typename T, typename... Args>
-        requires std::constructible_from<T, Args...>
+        requires stl::constructible_from<T, Args...>
         auto emplace(std::string_view path, Args&&... args) noexcept -> u32 {
             auto [ptr, idx] = alloc();
             std::construct_at((T*)ptr, std::forward<Args>(args)...);
@@ -82,13 +82,13 @@ namespace mtt::stl {
         }
 
         template<typename T>
-        requires std::constructible_from<std::decay_t<T>, T>
+        requires stl::constructible_from<std::decay_t<T>, T>
         auto push_back(T&& x) noexcept -> u32 {
             return emplace_back<std::decay_t<T>>(std::forward<T>(x));
         }
 
         template<typename T>
-        requires std::constructible_from<std::decay_t<T>, T>
+        requires stl::constructible_from<std::decay_t<T>, T>
         auto push(std::string_view path, T&& x) noexcept -> u32 {
             return emplace<std::decay_t<T>>(path, std::forward<T>(x));
         }
@@ -230,14 +230,14 @@ namespace mtt::stl {
         }
 
         template<typename T = F, typename... Args>
-        requires ts::template contains<T> && std::constructible_from<T, Args...>
+        requires ts::template contains<T> && stl::constructible_from<T, Args...>
         auto static emplace_back(Args&&... args) noexcept -> u32 {
             auto idx = raw<T>().template emplace_back<T>(std::forward<Args>(args)...);
             return (storage<T>() << 24) | (ts::template index<T> << 20) | idx;
         }
 
         template<typename T = F, typename... Args>
-        requires std::constructible_from<T, Args...>
+        requires stl::constructible_from<T, Args...>
         auto static emplace(std::string_view path, Args&&... args) noexcept -> u32 {
             auto idx = raw<T>().template emplace<T>(path, std::forward<Args>(args)...);
             return (storage<T>() << 24) | (ts::template index<T> << 20) | idx;

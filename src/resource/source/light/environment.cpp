@@ -1,3 +1,4 @@
+#include <metatron/core/stl/cmath.hpp>
 #include <metatron/resource/light/environment.hpp>
 #include <metatron/core/math/distribution/sphere.hpp>
 
@@ -9,7 +10,7 @@ namespace mtt::light {
         auto u = 1.f - phi / (2.f * math::pi);
         auto v = theta / math::pi;
         auto t = env_map({{u, v}}, lambda);
-        auto J = 2.f * math::pow<2>(math::pi) * std::sin(theta);
+        auto J = 2.f * math::pow<2>(math::pi) * stl::sin(theta);
         return {
             .L = t,
             .wi = r.d,

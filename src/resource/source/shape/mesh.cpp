@@ -1,3 +1,4 @@
+#include <metatron/core/stl/cmath.hpp>
 #include <metatron/resource/shape/mesh.hpp>
 #include <metatron/core/math/sphere.hpp>
 #include <metatron/core/math/distribution/linear.hpp>
@@ -116,7 +117,7 @@ namespace mtt::shape {
         math::Transform const& t, usize idx
     ) const noexcept -> math::Bounding_Box {
         auto prim = indices[idx];
-        auto v = math::Vector<fv4, 3>{
+        auto v = math::vector<fv4, 3>{
             t | math::expand(vertices[prim[0]], 1.f),
             t | math::expand(vertices[prim[1]], 1.f),
             t | math::expand(vertices[prim[2]], 1.f)
@@ -178,10 +179,10 @@ namespace mtt::shape {
         auto A_1_pi = math::lerp(math::pi, A_pi, u[0]);
 
         auto phi = A_1_pi - alpha;
-        auto cos_a = std::cos(alpha);
-        auto sin_a = std::sin(alpha);
-        auto cos_p = std::cos(phi);
-        auto sin_p = std::sin(phi);
+        auto cos_a = stl::cos(alpha);
+        auto sin_a = stl::sin(alpha);
+        auto cos_p = stl::cos(phi);
+        auto sin_p = stl::sin(phi);
 
         auto k_1 = cos_p + cos_a;
         auto k_2 = sin_p - sin_a * dot(a, b);
@@ -197,7 +198,7 @@ namespace mtt::shape {
         auto sin_bc2 = math::pow<1,2>(1.f - cos_bc2 * cos_bc2);
         auto d = cos_bc2 * b + sin_bc2 * math::normalize(math::gram_schmidt(c_1, b));
 
-        auto v = math::Vector<fv3, 3>{
+        auto v = math::vector<fv3, 3>{
             vertices[prim[0]],
             vertices[prim[1]],
             vertices[prim[2]],
@@ -247,7 +248,7 @@ namespace mtt::shape {
         };
 
         auto prim = indices[idx];
-        auto v = math::Vector<fv3, 3>{
+        auto v = math::vector<fv3, 3>{
             local_to_shear(vertices[prim[0]]),
             local_to_shear(vertices[prim[1]]),
             local_to_shear(vertices[prim[2]]),
@@ -269,8 +270,8 @@ namespace mtt::shape {
 
         if (false
         || math::abs(det) < math::epsilon<f32>
-        || std::signbit(e[0]) != std::signbit(e[1])
-        || std::signbit(e[1]) != std::signbit(e[2])
+        || stl::signbit(e[0]) != stl::signbit(e[1])
+        || stl::signbit(e[1]) != stl::signbit(e[2])
         ) return fv4{math::inf<f32>};
 
         auto bary = e / det;

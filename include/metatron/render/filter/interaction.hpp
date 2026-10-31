@@ -1,5 +1,4 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
 
 namespace mtt::filter {
     struct Interaction final {

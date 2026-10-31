@@ -1,5 +1,4 @@
 #pragma once
-#include <metatron/core/math/vector.hpp>
 
 namespace mtt::math {
     auto inline constexpr gcd(usize a, usize b) noexcept -> usize {
@@ -23,8 +22,8 @@ namespace mtt::math {
 
     template<usize n>
     auto inline constexpr chinese_remainder_theorem(
-        Vector<usize, n> const& a,
-        Vector<usize, n> const& b
+        vector<usize, n> const& a,
+        vector<usize, n> const& b
     ) noexcept -> usize {
         // M = sum(b)
         // m_i = M / b_i

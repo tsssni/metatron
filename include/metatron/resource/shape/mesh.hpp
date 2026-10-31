@@ -47,7 +47,7 @@ namespace mtt::shape {
             if (traits.empty()) return {};
             auto prim = indices[idx];
             return math::blerp(
-                math::Vector<T, 3>{
+                math::vector<T, 3>{
                     traits[prim[0]],
                     traits[prim[1]],
                     traits[prim[2]],

@@ -1,7 +1,7 @@
 #pragma once
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/resource/serde/hierarchy.hpp>
 #include <metatron/resource/color/color-space.hpp>
-#include <metatron/core/math/quaternion.hpp>
 
 namespace glz {
     template<>
@@ -30,7 +30,7 @@ namespace glz {
     };
 
     template<typename T>
-    requires mtt::has_descriptor<T>
+    requires mtt::described<T>
     struct from<JSON, T> {
         template<auto Opts>
         auto static op(T& v, auto&&... args) noexcept -> void {
@@ -40,26 +40,26 @@ namespace glz {
         }
     };
 
-    template<typename T, mtt::usize first_dim, mtt::usize... rest_dims>
-    struct from<JSON, mtt::math::Matrix<T, first_dim, rest_dims...>> {
+    template<typename T, mtt::usize dim0, mtt::usize... rest>
+    struct from<JSON, mtt::math::matrix<T, dim0, rest...>> {
         template<auto Opts>
-        auto static op(mtt::math::Matrix<T, first_dim, rest_dims...>& v, auto&&... args) noexcept -> void {
-            using M = mtt::math::Matrix<T, first_dim, rest_dims...>;
+        auto static op(mtt::math::matrix<T, dim0, rest...>& v, auto&&... args) noexcept -> void {
+            using M = mtt::math::matrix<T, dim0, rest...>;
             using E = M::Element;
-            auto data = std::array<E, first_dim>{};
+            auto data = std::array<E, dim0>{};
             parse<JSON>::op<Opts>(data, args...);
             v = M{std::span<E const>{data}};
         }
     };
 
     template<typename T>
-    requires std::floating_point<T>
-    struct from<JSON, mtt::math::Quaternion<T>> {
+    requires mtt::stl::floating_point<T>
+    struct from<JSON, mtt::math::quaternion<T>> {
         template<auto Opts>
-        auto static op(mtt::math::Quaternion<T>& v, auto&&... args) noexcept -> void {
-            auto data = mtt::math::Vector<T, 4>{};
+        auto static op(mtt::math::quaternion<T>& v, auto&&... args) noexcept -> void {
+            auto data = mtt::math::vector<T, 4>{};
             parse<JSON>::op<Opts>(data, args...);
-            v = mtt::math::Quaternion<T>{data};
+            v = mtt::math::quaternion<T>{data};
         }
     };
 }

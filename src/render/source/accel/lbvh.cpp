@@ -124,7 +124,7 @@ namespace mtt::accel {
 
             auto sah = std::vector<f32>(num_buckets - 1);
             for (auto i = 0; i < num_buckets - 1; ++i) {
-                auto b = math::Vector<math::Bounding_Box, 2>{};
+                auto b = math::vector<math::Bounding_Box, 2>{};
                 auto c = iv2{};
                 for (auto j = 0; j <= i; ++j) {
                     auto& [bbox, count] = buckets[j];

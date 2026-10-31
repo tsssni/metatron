@@ -3,7 +3,7 @@
 #include <metatron/core/stl/shell.hpp>
 #include <vector>
 
-namespace mtt:: inline infra {
+namespace mtt::infra {
     struct context final {
         auto static init() noexcept -> void;
     };

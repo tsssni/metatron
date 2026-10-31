@@ -1,3 +1,4 @@
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/resource/material/physical.hpp>
 
 namespace mtt::material {
@@ -7,7 +8,7 @@ namespace mtt::material {
     ) const noexcept -> Interaction<bsdf::Physical_Bsdf> {
         auto guarded_sample = [&]<typename T>(T tex, auto const& fallback) {
             if (!tex) return fallback;
-            if constexpr (std::same_as<T, texture::Spectrum_Texture>)
+            if constexpr (stl::same_as<T, texture::Spectrum_Texture>)
                 return tex(coord, ctx.lambda);
             else return tex(coord);
         };

@@ -18,4 +18,17 @@ namespace mtt::math {
     auto constexpr low = std::numeric_limits<T>::lowest();
     template<typename T>
     auto constexpr inf = std::numeric_limits<T>::infinity();
+
+    template<>
+    auto constexpr epsilon<f16> = (f16)0x1p-10f;
+    template<>
+    auto constexpr minv<f16> = (f16)0x1p-14f;
+    template<>
+    auto constexpr maxv<f16> = (f16)65504.f;
+    template<>
+    auto constexpr high<f16> = maxv<f16>;
+    template<>
+    auto constexpr low<f16> = -maxv<f16>;
+    template<>
+    auto constexpr inf<f16> = (f16)__builtin_inff();
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include <metatron/core/stl/concept.hpp>
 #include <metatron/resource/material/physical.hpp>
 #include <metatron/resource/material/interface.hpp>
 
@@ -13,7 +14,7 @@ namespace mtt::material {
     ) {
         { t.sample(ctx, coord) } noexcept;
         requires bsdf::Scattering<decltype(t.sample(ctx, coord).bsdf)>;
-        { t.flags() } noexcept -> std::same_as<Flags>;
+        { t.flags() } noexcept -> stl::same_as<Flags>;
     };
 
     template<typename T>

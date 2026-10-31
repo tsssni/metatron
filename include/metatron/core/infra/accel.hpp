@@ -1,14 +1,14 @@
 #pragma once
 #include <metatron/core/infra/memory.hpp>
 #include <metatron/core/infra/command.hpp>
-#include <metatron/core/math/vector.hpp>
+#include <metatron/core/infra/vector.hpp>
 
-namespace mtt:: inline infra {
+namespace mtt::infra {
 
 struct blas final {
     u32 idx = math::maxv<u32>;
     auto destroy() noexcept -> void;
-    operator bool() const noexcept { return idx != math::maxv<u32>; }
+    operator bool() const noexcept;
 
     struct descriptor final {
         span<fv3, heap::coherent> vertices;
@@ -17,10 +17,12 @@ struct blas final {
     auto update(descriptor const& desc) noexcept -> void;
 };
 
+inline blas::operator bool() const noexcept { return idx != math::maxv<u32>; }
+
 struct tlas final {
     u32 idx = math::maxv<u32>;
     auto destroy() noexcept -> void;
-    operator bool() const noexcept { return idx != math::maxv<u32>; }
+    operator bool() const noexcept;
 
     struct descriptor final {
         struct instance final {
@@ -32,6 +34,8 @@ struct tlas final {
     };
     auto update(descriptor const& desc) noexcept -> void;
 };
+
+inline tlas::operator bool() const noexcept { return idx != math::maxv<u32>; }
 
 struct accelenc final {
     accelenc(recorder& r) noexcept;
