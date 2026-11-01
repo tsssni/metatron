@@ -1,0 +1,15 @@
+BasedOnStyle: InheritParentConfig
+SortIncludes:
+  Enabled: true
+  IgnoreCase: false
+IncludeBlocks: Merge
+IncludeIsMainRegex: '$'
+MainIncludeChar: AngleBracket
+IncludeCategories:
+  - Regex: '^[<"]metatron/core/'
+    Priority: 1
+  - Regex: '^<[a-z_]+>$'
+    Priority: 3
+    CaseSensitive: true
+  - Regex: '.*'
+    Priority: 2

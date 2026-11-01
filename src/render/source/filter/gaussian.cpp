@@ -1,36 +1,47 @@
-#include <metatron/render/filter/gaussian.hpp>
 #include <metatron/core/math/gaussian.hpp>
+#include <metatron/render/filter/gaussian.hpp>
 
-namespace mtt::filter {
-    Gaussian_Filter::Gaussian_Filter(Descriptor const& desc) noexcept:
-    radius(desc.radius), sigma(desc.sigma) {
-        auto matrix = fm<64, 64>{};
-        for (auto j = 0uz; j < 64; ++j) {
-            auto y = math::lerp(-radius[1], radius[1], (f32(j) + 0.5f) / 64.f);
-            for (auto i = 0uz; i < 64; ++i) {
-                auto x = math::lerp(-radius[0], radius[0], (f32(i) + 0.5f) / 64.f);
-                matrix[j][i] = math::abs((*this)({x, y}));
-            }
-        }
+namespace mtt::render {
 
-        distr = stl::vector<math::Planar_Distribution>::emplace_back(
-            std::span{matrix.data(), matrix.size()},
-            iv2{64, 64},
-            fv2{-radius[1], -radius[0]},
-            fv2{radius[1], radius[0]}
-        );
-    }
+namespace {
 
-    auto Gaussian_Filter::operator()(fv2 const& p) const noexcept -> f32 {
-        auto vx = math::gaussian(p[0], 0.f, sigma) - math::gaussian(radius[0], 0.f, sigma);
-        auto vy = math::gaussian(p[1], 0.f, sigma) - math::gaussian(radius[1], 0.f, sigma);
-        return vx * vy;
-    }
+struct Context final {
+    fv2 radius;
+    f32 sigma;
+    ftw2v weights;
+};
 
-    auto Gaussian_Filter::sample(fv2 const& u) const noexcept -> filter::Interaction {
-        auto p = distr.sample(u);
-        auto w = (*this)(math::reverse(p));
-        auto pdf = distr.pdf(p);
-        return {p, w, pdf};
-    }
+[[mtt::kernel]] auto weight(Context& ctx, uv3 px) noexcept -> void {
+    auto p = (fv2{px} + 0.5f) / fv2{ctx.weights.size()} * (2.f * ctx.radius) - ctx.radius;
+    auto vx = core::gaussian(p[0], 0.f, ctx.sigma) - core::gaussian(ctx.radius[0], 0.f, ctx.sigma);
+    auto vy = core::gaussian(p[1], 0.f, ctx.sigma) - core::gaussian(ctx.radius[1], 0.f, ctx.sigma);
+    ctx.weights[uzv3{px}] = fv4{core::abs(vx * vy), 0.f, 0.f, 0.f};
+}
+
+}
+
+Gaussian_Filter::Gaussian_Filter(fv2 radius, f32 sigma, core::recorder& recorder) noexcept
+: radius(radius), sigma(sigma) {
+    auto weights = ftw2{};
+    weights.update<core::ordinary<32>, core::encoding::sf>({64, 64, 1, 1});
+    auto ctx = Context{radius, sigma, weights};
+    // core::pipenc{recorder, weight, ctx}.dispatch({64, 64, 1});
+    distr.update(recorder, weights);
+    recorder.retain(std::move(weights));
+}
+
+auto Gaussian_Filter::operator()(fv2 const& p) const noexcept -> f32 {
+    auto vx = core::gaussian(p[0], 0.f, sigma) - core::gaussian(radius[0], 0.f, sigma);
+    auto vy = core::gaussian(p[1], 0.f, sigma) - core::gaussian(radius[1], 0.f, sigma);
+    return vx * vy;
+}
+
+auto Gaussian_Filter::sample(fv2 const& u) const noexcept -> render::Filter_Interaction {
+    auto uv = distr.sample(u);
+    auto p = uv * (2.f * radius) - radius;
+    auto w = (*this)(p);
+    auto pdf = distr.pdf(uv) / core::prod(2.f * radius);
+    return {p, w, pdf};
+}
+
 }

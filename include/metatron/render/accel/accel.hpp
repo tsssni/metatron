@@ -1,18 +1,22 @@
 #pragma once
 #include <metatron/render/accel/lbvh.hpp>
 
-namespace mtt::accel {
-    auto init() noexcept -> void;
+namespace mtt::render {
 
-    struct Acceleration final: stl::polymorph<Acceleration
-    , LBVH> {
-        using polymorph::polymorph;
+struct Acceleration final : core::protocol<LBVH> {
+    using protocol::protocol;
 
-        auto operator()(
-            math::Ray const& r, fv3 const& n,
-            Flags flags, fv2 const& range
-        ) const noexcept -> Interaction {
-            return visit([&](auto* p) noexcept { return (*p)(r, n, flags, range); });
-        }
-    };
+    auto operator()(
+        core::Ray const& r, fv3 const& n,
+        Accel_Flags flags, fv2 const& range
+    ) const noexcept -> Accel_Interaction;
+};
+
+auto inline Acceleration::operator()(
+    core::Ray const& r, fv3 const& n,
+    Accel_Flags flags, fv2 const& range
+) const noexcept -> Accel_Interaction {
+    return visit([&](auto* p) noexcept { return (*p)(r, n, flags, range); });
+}
+
 }

@@ -4,18 +4,23 @@
 #include <string_view>
 #include <unordered_map>
 
-namespace mtt::stl {
-    template<>
-    struct hash<std::string> final {
-        using hasher = std::hash<std::string_view>;
-        using is_transparent = void;
-        auto operator()(char const* str) const { return hasher{}(str); }
-        auto operator()(std::string const& str) const { return hasher{}(str); }
-        auto operator()(std::string_view str) const { return hasher{}(str); }
-    };
+namespace mtt::core {
 
-    template<typename T>
-    using table =
-    std::unordered_map<std::string, T,
-    stl::hash<std::string>, std::equal_to<>>;
+template<>
+struct hash<std::string> final {
+    using hasher = std::hash<std::string_view>;
+    using is_transparent = void;
+    auto operator()(char const* str) const;
+    auto operator()(std::string const& str) const;
+    auto operator()(std::string_view str) const;
+};
+
+auto inline hash<std::string>::operator()(char const* str) const { return hasher{}(str); }
+auto inline hash<std::string>::operator()(std::string const& str) const { return hasher{}(str); }
+auto inline hash<std::string>::operator()(std::string_view str) const { return hasher{}(str); }
+
+template<typename T>
+using table =
+    std::unordered_map<std::string, T, hash<std::string>, std::equal_to<>>;
+
 }

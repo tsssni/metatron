@@ -1,37 +1,44 @@
 #include <metatron/render/filter/lanczos.hpp>
 #include <metatron/core/math/trigonometric.hpp>
 
-namespace mtt::filter {
-    Lanczos_Filter::Lanczos_Filter(Descriptor const& desc) noexcept:
-    radius(desc.radius), tau(desc.tau) {
-        auto matrix = fm<64, 64>{};
-        for (auto j = 0uz; j < 64; ++j) {
-            auto y = math::lerp(-radius[1], radius[1], (f32(j) + 0.5f) / 64.f);
-            for (auto i = 0uz; i < 64; ++i) {
-                auto x = math::lerp(-radius[0], radius[0], (f32(i) + 0.5f) / 64.f);
-                matrix[j][i] = (*this)({x, y});
-            }
-        }
+namespace mtt::render {
 
-        distr = stl::vector<math::Planar_Distribution>::emplace_back(
-            std::span{matrix.data(), matrix.size()},
-            iv2{64, 64},
-            fv2{-radius[1], -radius[0]},
-            fv2{radius[1], radius[0]}
-        );
-    }
+namespace {
 
-    auto Lanczos_Filter::operator()(fv2 const& p) const noexcept -> f32 {
-        auto v = foreach([&](f32 x, usize i) -> f32 {
-            return math::abs(x) > radius[i] ? 0.f : math::windowed_sinc(x, tau);
-        }, p);
-        return prod(v);
-    }
+struct Context final {
+    fv2 radius;
+    f32 tau;
+    ftw2v weights;
+};
 
-    auto Lanczos_Filter::sample(fv2 const& u) const noexcept -> Interaction {
-        auto p = distr.sample(u);
-        auto w = (*this)(math::reverse(p));
-        auto pdf = distr.pdf(p);
-        return {p, w, pdf};
-    }
+[[mtt::kernel]] auto weight(Context& ctx, uv3 px) noexcept -> void {
+    auto p = (fv2{px} + 0.5f) / fv2{ctx.weights.size()} * (2.f * ctx.radius) - ctx.radius;
+    auto w = core::windowed_sinc(p[0], ctx.tau) * core::windowed_sinc(p[1], ctx.tau);
+    ctx.weights[uzv3{px}] = fv4{core::abs(w), 0.f, 0.f, 0.f};
+}
+
+}
+
+Lanczos_Filter::Lanczos_Filter(fv2 radius, f32 tau, core::recorder& recorder) noexcept
+: radius(radius), tau(tau) {
+    auto weights = ftw2{};
+    weights.update<core::ordinary<32>, core::encoding::sf>({64, 64, 1, 1});
+    auto ctx = Context{radius, tau, weights};
+    // core::pipenc{recorder, weight, ctx}.dispatch({64, 64, 1});
+    distr.update(recorder, weights);
+    recorder.retain(std::move(weights));
+}
+
+auto Lanczos_Filter::operator()(fv2 const& p) const noexcept -> f32 {
+    return prod(foreach([&](f32 x, usize i) -> f32 { return core::abs(x) > radius[i] ? 0.f : core::windowed_sinc(x, tau); }, p));
+}
+
+auto Lanczos_Filter::sample(fv2 const& u) const noexcept -> Filter_Interaction {
+    auto uv = distr.sample(u);
+    auto p = uv * (2.f * radius) - radius;
+    auto w = (*this)(p);
+    auto pdf = distr.pdf(uv) / core::prod(2.f * radius);
+    return {p, w, pdf};
+}
+
 }

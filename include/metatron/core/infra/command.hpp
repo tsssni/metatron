@@ -3,7 +3,7 @@
 #include <metatron/core/stl/shell.hpp>
 #include <vector>
 
-namespace mtt::infra {
+namespace mtt::core {
 
 struct context final {
     auto static init() noexcept -> void;
@@ -11,7 +11,7 @@ struct context final {
 
 struct timeline final {
     timeline() noexcept;
-    auto wait(u64 count, u64 timeout = math::maxv<u64>) noexcept -> bool;
+    auto wait(u64 count, u64 timeout = maxv<u64>) noexcept -> bool;
     auto signal(u64 count) noexcept -> void;
 };
 
@@ -24,6 +24,8 @@ struct queue final {
 struct recorder final {
     struct contents;
     recorder(queue* q, std::vector<std::tuple<timeline*, u64>>&& ts) noexcept;
+    template<typename... Ts>
+    auto retain(Ts&&... resources) noexcept -> void;
     auto submit(std::vector<std::tuple<timeline*, u64>>&& ts) noexcept -> void;
 };
 

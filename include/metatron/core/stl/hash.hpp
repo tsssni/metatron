@@ -1,6 +1,8 @@
 #pragma once
 
-namespace mtt::stl {
-    template<typename T>
-    struct hash;
+namespace mtt::core {
+
+template<typename T>
+struct hash;
+
 }

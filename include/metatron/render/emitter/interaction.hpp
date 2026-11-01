@@ -1,10 +1,12 @@
 #pragma once
-#include <metatron/resource/light/light.hpp>
+#include <metatron/render/light/light.hpp>
 
-namespace mtt::emitter {
-    struct Interaction final {
-        light::Light light;
-        math::proxy::Transform local_to_render;
-        f32 pdf;
-    };
+namespace mtt::render {
+
+struct Emitter_Interaction final {
+    render::Light light;
+    core::Transform const* local_to_render;
+    f32 pdf;
+};
+
 }

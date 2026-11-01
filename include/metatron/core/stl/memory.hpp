@@ -1,27 +1,29 @@
 #pragma once
 #include <metatron/core/stl/print.hpp>
 
-namespace mtt::stl {
-    struct memory final {
-        uptr bytes;
-    };
+namespace mtt::core {
+
+struct memory final {
+    uptr bytes;
+};
+
 }
 
 template<>
-struct std::formatter<mtt::stl::memory> {
-    auto constexpr parse(std::format_parse_context& ctx) { return ctx.begin(); }
-
-    auto format(
-        mtt::stl::memory const& mem,
-        std::format_context& ctx
-    ) const {
-        if (mem.bytes < (1uz << 10))
-            return std::format_to(ctx.out(), "{} B", mem.bytes);
-        else if (mem.bytes < (1uz << 20))
-            return std::format_to(ctx.out(), "{:.2f} KB", mtt::f64(mem.bytes) / mtt::f64(1uz << 10));
-        else if (mem.bytes < (1uz << 30))
-            return std::format_to(ctx.out(), "{:.2f} MB", mtt::f64(mem.bytes) / mtt::f64(1uz << 20));
-        else
-            return std::format_to(ctx.out(), "{:.2f} GB", mtt::f64(mem.bytes) / mtt::f64(1uz << 30));
-    }
+struct std::formatter<mtt::core::memory> {
+    auto constexpr parse(std::format_parse_context& ctx);
+    auto format(mtt::core::memory const& mem, std::format_context& ctx) const;
 };
+
+auto constexpr std::formatter<mtt::core::memory>::parse(std::format_parse_context& ctx) { return ctx.begin(); }
+
+auto inline std::formatter<mtt::core::memory>::format(mtt::core::memory const& mem, std::format_context& ctx) const {
+    if (mem.bytes < (1uz << 10))
+        return std::format_to(ctx.out(), "{} B", mem.bytes);
+    else if (mem.bytes < (1uz << 20))
+        return std::format_to(ctx.out(), "{:.2f} KB", mtt::f64(mem.bytes) / mtt::f64(1uz << 10));
+    else if (mem.bytes < (1uz << 30))
+        return std::format_to(ctx.out(), "{:.2f} MB", mtt::f64(mem.bytes) / mtt::f64(1uz << 20));
+    else
+        return std::format_to(ctx.out(), "{:.2f} GB", mtt::f64(mem.bytes) / mtt::f64(1uz << 30));
+}

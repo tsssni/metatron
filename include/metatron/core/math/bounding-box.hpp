@@ -1,94 +1,92 @@
 #pragma once
 #include <metatron/core/math/transform.hpp>
 
-namespace mtt::math {
-    struct Bounding_Box final {
-        fv3 p_min = {high<f32>};
-        fv3 p_max = {low<f32>};
+namespace mtt::core {
+
+struct Bounding_Box final {
+    fv3 p_min = {high<f32>};
+    fv3 p_max = {low<f32>};
+};
+
+auto constexpr inside(fv3 const& p, Bounding_Box const& bbox) noexcept -> bool {
+    return all([](f32 x, f32 y, f32 z, auto) { return x >= y && x < z; }, p, bbox.p_min, bbox.p_max);
+}
+
+auto constexpr hit(
+    Ray const& r,
+    fv3 const& inv_d,
+    Bounding_Box const& bbox
+) noexcept -> fv2 {
+    auto t1 = (bbox.p_min - r.o) * inv_d;
+    auto t2 = (bbox.p_max - r.o) * inv_d;
+    auto t_enter = max(min(t1, t2));
+    auto t_exit = min(max(t1, t2));
+    return fv2{t_enter, t_exit};
+}
+
+auto constexpr hitvi(
+    Ray const& r,
+    Bounding_Box const& bbox
+) noexcept -> std::tuple<f32, f32, usize, usize> {
+    auto hit_min = (bbox.p_min - r.o) / r.d;
+    auto hit_max = (bbox.p_max - r.o) / r.d;
+    for (auto i = 0uz; i < 3uz; ++i)
+        if (abs(r.d[i]) < epsilon<f32>) {
+            hit_min[i] = -inf<f32>;
+            hit_max[i] = +inf<f32>;
+        } else if (hit_min[i] > hit_max[i]) {
+            std::swap(hit_min[i], hit_max[i]);
+        }
+
+    auto [t_enter, i_enter] = maxvi(hit_min);
+    auto [t_exit, i_exit] = minvi(hit_max);
+    return std::make_tuple(t_enter, t_exit, i_enter, i_exit);
+}
+
+auto constexpr merge(
+    Bounding_Box const& a,
+    Bounding_Box const& b
+) noexcept -> Bounding_Box {
+    return {
+        .p_min = min(a.p_min, b.p_min),
+        .p_max = max(a.p_max, b.p_max)
     };
+}
 
-    auto constexpr inside(fv3 const& p, Bounding_Box const& bbox) noexcept -> bool {
-        return math::all([](f32 x, f32 y, f32 z, auto) {
-            return x >= y && x < z;
-        }, p, bbox.p_min, bbox.p_max);
-    }
+auto constexpr area(Bounding_Box const& bbox) noexcept -> f32 {
+    if (any([](f32 x, f32 y, usize) { return x >= y; }, bbox.p_min, bbox.p_max)) return 0.f;
+    auto extent = bbox.p_max - bbox.p_min;
+    return 2.f * (extent[0] * extent[1] + extent[1] * extent[2] + extent[2] * extent[0]);
+}
 
-    auto constexpr hit(
-        Ray const& r,
-        fv3 const& inv_d,
-        Bounding_Box const& bbox
-    ) noexcept -> fv2 {
-        auto t1 = (bbox.p_min - r.o) * inv_d;
-        auto t2 = (bbox.p_max - r.o) * inv_d;
-        auto t_enter = max(math::min(t1, t2));
-        auto t_exit  = min(math::max(t1, t2));
-        return fv2{t_enter, t_exit};
-    }
-
-    auto constexpr hitvi(
-        Ray const& r,
-        Bounding_Box const& bbox
-    ) noexcept -> std::tuple<f32, f32, usize, usize> {
-        auto hit_min = (bbox.p_min - r.o) / r.d;
-        auto hit_max = (bbox.p_max - r.o) / r.d;
-        for (auto i = 0uz; i < 3uz; ++i)
-            if (math::abs(r.d[i]) < epsilon<f32>) {
-                hit_min[i] = -inf<f32>;
-                hit_max[i] = +inf<f32>;
-            } else if (hit_min[i] > hit_max[i]) {
-                std::swap(hit_min[i], hit_max[i]);
-            }
-
-        auto [t_enter, i_enter] = maxvi(hit_min);
-        auto [t_exit, i_exit] = minvi(hit_max);
-        return std::make_tuple(t_enter, t_exit, i_enter, i_exit);
-    }
-
-    auto constexpr merge(
-        Bounding_Box const& a,
-        Bounding_Box const& b
-    ) noexcept -> Bounding_Box {
-        return {
-            .p_min = math::min(a.p_min, b.p_min),
-            .p_max = math::max(a.p_max, b.p_max)
-        };
-    }
-
-    auto constexpr area(Bounding_Box const& bbox) noexcept -> f32 {
-        if(math::any([](f32 x, f32 y, usize) {
-            return x >= y;
-        }, bbox.p_min, bbox.p_max)) return 0.f;
-        auto extent = bbox.p_max - bbox.p_min;
-        return 2.f * (extent[0] * extent[1] + extent[1] * extent[2] + extent[2] * extent[0]);
-    }
-
-    auto constexpr operator|(Transform const& t, Bounding_Box const& bbox) -> Bounding_Box {
-        auto tbox = Bounding_Box{};
-        for (auto i = 0; i < 8; ++i) {
-            auto p = fv3{};
-            for (auto j = 0; j < 3; ++j) {
-                auto k = (i >> j) & 0x1;
-                p[j] = k == 0 ? bbox.p_min[j] : bbox.p_max[j];
-            }
-            p = t | expand(p, 1.f);
-            tbox.p_min = min(tbox.p_min, p);
-            tbox.p_max = max(tbox.p_max, p);
+auto constexpr operator|(Transform const& t, Bounding_Box const& bbox) -> Bounding_Box {
+    auto tbox = Bounding_Box{};
+    for (auto i = 0; i < 8; ++i) {
+        auto p = fv3{};
+        for (auto j = 0; j < 3; ++j) {
+            auto k = (i >> j) & 0x1;
+            p[j] = k == 0 ? bbox.p_min[j] : bbox.p_max[j];
         }
-        return tbox;
+        p = t | expand(p, 1.f);
+        tbox.p_min = min(tbox.p_min, p);
+        tbox.p_max = max(tbox.p_max, p);
     }
+    return tbox;
+}
 
-    auto constexpr operator^(Transform const& t, Bounding_Box const& bbox) -> Bounding_Box {
-        auto tbox = Bounding_Box{};
-        for (auto i = 0; i < 8; ++i) {
-            auto p = fv3{};
-            for (auto j = 0; j < 3; ++j) {
-                auto k = (i >> j) & 0x1;
-                p[j] = k == 0 ? bbox.p_min[j] : bbox.p_max[j];
-            }
-            p = t ^ p;
-            tbox.p_min = min(tbox.p_min, p);
-            tbox.p_max = max(tbox.p_max, p);
+auto constexpr operator^(Transform const& t, Bounding_Box const& bbox) -> Bounding_Box {
+    auto tbox = Bounding_Box{};
+    for (auto i = 0; i < 8; ++i) {
+        auto p = fv3{};
+        for (auto j = 0; j < 3; ++j) {
+            auto k = (i >> j) & 0x1;
+            p[j] = k == 0 ? bbox.p_min[j] : bbox.p_max[j];
         }
-        return tbox;
+        p = t ^ p;
+        tbox.p_min = min(tbox.p_min, p);
+        tbox.p_max = max(tbox.p_max, p);
     }
+    return tbox;
+}
+
 }

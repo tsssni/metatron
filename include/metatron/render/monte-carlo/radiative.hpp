@@ -1,13 +1,15 @@
 #pragma once
 
-namespace mtt::monte_carlo {
-    struct Context;
+namespace mtt::render {
 
-    struct Radiative_Integrator final {
-        bool volumetric = true;
+struct Monte_Carlo_Context;
 
-        // null scattering: https://cs.dartmouth.edu/~wjarosz/publications/miller19null.html
-        // mis method: https://pbr-book.org/4ed/Light_Transport_II_Volume_Rendering/Volume_Scattering_Integrators
-        auto trace(infra::recorder& r, Context& ctx) const noexcept -> void;
-    };
+struct Radiative_Integrator final {
+    bool volumetric = true;
+
+    // null scattering: https://cs.dartmouth.edu/~wjarosz/publications/miller19null.html
+    // mis method: https://pbr-book.org/4ed/Light_Transport_II_Volume_Rendering/Volume_Scattering_Integrators
+    auto trace(core::recorder& r, Monte_Carlo_Context& ctx) const noexcept -> void;
+};
+
 }

@@ -1,113 +1,81 @@
 #pragma once
-#include <metatron/core/stl/vector.hpp>
+#include <metatron/core/stl/array.hpp>
 
-namespace mtt::stl {
+namespace mtt::core {
+
+template<typename T>
+concept polymorphic = requires { typename T::polymorphic_marker; };
+
+template<typename... Ts>
+struct protocol {
+    using polymorphic_marker = u64;
+    using ts = array<Ts...>;
+
+    protocol() noexcept = default;
+    explicit protocol(u64 value) noexcept;
     template<typename T>
-    concept polymorphic = requires { typename T::polymorphic_marker; };
+    protocol(T* pointer) noexcept requires ts::template contains<T>;
 
-    template<typename Self, typename... Ts>
-    struct polymorph {
-        using polymorphic_marker = u32;
-        using ts = stl::array<Ts...>;
-        using vs = stl::vector<Ts...>;
-        tag<Ts...> idx;
-
-        polymorph() noexcept = default;
-        polymorph(u32 raw) noexcept: idx(raw) {}
-        polymorph(tag<Ts...> idx) noexcept: idx(idx) {}
-
-        auto static entity(std::string_view path) noexcept -> Self {
-            return {vs::entity(path)};
-        }
-
-        auto path() const noexcept -> std::string_view {
-            auto sv = std::string_view{};
-            auto t = idx.type();
-            auto _ = ((t == ts::template index<Ts> ? (
-                sv = vs::template path<Ts>(idx)
-            , true) : false) || ...);
-            return sv;
-        }
-
-        template<typename T>
-        auto static push(std::string_view path, T&& x) noexcept -> Self {
-            return {vs::template push<T>(path, std::move(x))};
-        }
-        template<typename T>
-        auto static push(std::string_view path, T const& x) noexcept -> Self {
-            return {vs::template push<T>(path, x)};
-        }
-
-        template<typename T>
-        auto static push_back(T&& x) noexcept -> Self {
-            return {vs::template push_back<T>(std::move(x))};
-        }
-        template<typename T>
-        auto static push_back(T const& x) noexcept -> Self {
-            return {vs::template push_back<T>(x)};
-        }
-
-        template<typename T>
-        auto is() const noexcept -> bool {
-            return idx.type() == ts::template index<T>;
-        }
-
-        operator u32() const noexcept { return idx; }
-        operator bool() const noexcept { return (bool)idx; }
-
-        template<typename S, typename F>
-        auto constexpr visit(this S&& self, F&& f) -> decltype(auto) {
-            using First = typename ts::template type<0>;
-            using R = decltype(f(self.idx.template data<First>()));
-            using SS = std::remove_reference_t<S>;
-            using thunk_t = R(*)(SS&, F&);
-            return [&]<usize... Is>(std::index_sequence<Is...>) -> R {
-                auto constexpr table = std::to_array({
-                    +[](SS& s, F& f) -> R {
-                        return f(s.idx.template data<typename ts::template type<Is>>());
-                    }...
-                });
-                return table[self.idx.type()](self, f);
-            }(std::make_index_sequence<sizeof...(Ts)>{});
-        }
-    };
-
+    auto type() const noexcept -> u32;
     template<typename T>
-    concept proxied = requires(T t) { typename T::proxy_marker; };
-
-    template<typename P, typename T>
-    struct proxy {
-        using proxy_marker = u32;
-        using vs = mtt::stl::vector<T>;
-        mtt::tag<T> idx;
-
-        proxy() noexcept = default;
-        proxy(u32 raw) noexcept: idx(raw) {}
-        proxy(mtt::tag<T> idx) noexcept: idx(idx) {}
-
-        auto operator->() noexcept { return idx.operator->(); }
-        auto operator->() const noexcept { return idx.operator->(); }
-        auto operator*() noexcept -> T& { return *idx; }
-        auto operator*() const noexcept -> T const& { return *idx; }
-
-        operator T const&() const noexcept { return *idx; }
-        operator u32() const noexcept { return idx; }
-        operator bool() const noexcept { return (bool)idx; }
-
-        auto path() const noexcept -> std::string_view {
-            return mtt::stl::vector<T>::path(idx);
-        }
-
-        auto static entity(std::string_view path) noexcept -> P {
-            return {vs::entity(path)};
-        }
-    };
-
+    auto data() noexcept -> T*;
     template<typename T>
-    concept sealed = requires { typename T::tag_marker; };
+    auto data() const noexcept -> T const*;
+    template<typename T>
+    auto is() const noexcept -> bool;
 
-    template<template<typename> typename S, typename... Ts>
-    requires (S<Ts>::value && ...)
-    using seal = mtt::tag<Ts...>;
+    explicit operator u64() const noexcept;
+    operator bool() const noexcept;
+
+    template<typename S, typename Func>
+    auto constexpr visit(this S&& self, Func&& f) -> decltype(auto);
+
+private:
+    auto static constexpr address = (u64{1} << 60) - 1;
+    u64 value = 0;
+};
+
+template<typename... Ts>
+protocol<Ts...>::protocol(u64 value) noexcept
+: value(value) {}
+
+template<typename... Ts>
+template<typename T>
+protocol<Ts...>::protocol(T* pointer) noexcept requires ts::template contains<T>
+: value(((u64)ts::template index<T> << 60) | (u64)pointer) {}
+
+template<typename... Ts>
+auto protocol<Ts...>::type() const noexcept -> u32 { return (u32)(value >> 60); }
+
+template<typename... Ts>
+template<typename T>
+auto protocol<Ts...>::data() noexcept -> T* { return (T*)(value & address); }
+
+template<typename... Ts>
+template<typename T>
+auto protocol<Ts...>::data() const noexcept -> T const* { return (T const*)(value & address); }
+
+template<typename... Ts>
+template<typename T>
+auto protocol<Ts...>::is() const noexcept -> bool { return type() == ts::template index<T>; }
+
+template<typename... Ts>
+protocol<Ts...>::operator u64() const noexcept { return value; }
+
+template<typename... Ts>
+protocol<Ts...>::operator bool() const noexcept { return (value & address) != 0; }
+
+template<typename... Ts>
+template<typename S, typename Func>
+auto constexpr protocol<Ts...>::visit(this S&& self, Func&& f) -> decltype(auto) {
+    using R = decltype(f(self.template data<typename ts::template type<0>>()));
+    using SS = std::remove_reference_t<S>;
+    return [&]<usize... Is>(std::index_sequence<Is...>) -> R {
+        auto constexpr table = std::to_array({+[](SS& s, Func& f) -> R {
+            return f(s.template data<typename ts::template type<Is>>());
+        }...});
+        return table[self.type()](self, f);
+    }(std::make_index_sequence<sizeof...(Ts)>{});
+}
 
 }

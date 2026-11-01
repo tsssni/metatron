@@ -1,48 +1,47 @@
 #pragma once
-#include <metatron/core/stl/concept.hpp>
 #include <metatron/core/math/arithmetic.hpp>
+#include <metatron/core/stl/concept.hpp>
 #include <tuple>
 
-namespace mtt::stl {
-    template<typename... Ts>
-    struct array final {
-        template<usize idx>
-        using type = std::tuple_element_t<idx, std::tuple<Ts...>>;
+namespace mtt::core {
 
-        template<typename T>
-        auto constexpr static contains = (stl::same_as<T, Ts> || ...);
+template<typename... Ts>
+struct array final {
+    template<usize idx>
+    using type = std::tuple_element_t<idx, std::tuple<Ts...>>;
 
-        template<typename T>
-        auto constexpr static index = [] -> usize {
-            auto idx = 0;
-            auto _ = ((stl::same_as<T, Ts> ? false : (++idx, true)) && ...);
-            return idx;
-        }();
+    template<typename T>
+    auto constexpr static contains = (std::same_as<T, Ts> || ...);
 
-        // assure aggregate layout
-        template<typename T>
-        auto constexpr static offset = [] -> usize {
-            auto size = 0uz;
-            auto offset = 0uz;
-            auto idx = 0uz;
-            auto _ = ((index<Ts> > index<T> ? false : ((
-                offset = math::align(size, alignof(Ts)),
-                size = offset + sizeof(Ts),
-            true))) && ...);
-            return offset;
-        }();
+    template<typename T>
+    auto constexpr static index = [] -> usize {
+        auto idx = 0;
+        auto _ = ((std::same_as<T, Ts> ? false : (++idx, true)) && ...);
+        return idx;
+    }();
 
-        auto constexpr static alignment = [] -> usize {
-            return math::max(math::max(alignof(Ts)...), 4uz);
-        }();
+    // assure aggregate layout
+    template<typename T>
+    auto constexpr static offset = [] -> usize {
+        auto size = 0uz;
+        auto offset = 0uz;
+        auto idx = 0uz;
+        auto _ = ((index<Ts> > index<T> ? false : ((offset = align(size, alignof(Ts)), size = offset + sizeof(Ts), true))) && ...);
+        return offset;
+    }();
 
-        // assure aggregate layout
-        auto constexpr static size = [] -> usize {
-            using U = type<sizeof...(Ts) - 1>;
-            return offset<U> + sizeof(U);
-        }();
+    auto constexpr static alignment = [] -> usize {
+        return max(max(alignof(Ts)...), 4uz);
+    }();
 
-        // union layout storage
-        auto constexpr static storage = math::max(sizeof(Ts)...);
-    };
+    // assure aggregate layout
+    auto constexpr static size = [] -> usize {
+        using U = type<sizeof...(Ts) - 1>;
+        return offset<U> + sizeof(U);
+    }();
+
+    // union layout storage
+    auto constexpr static storage = max(sizeof(Ts)...);
+};
+
 }

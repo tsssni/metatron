@@ -1,0 +1,66 @@
+BasedOnStyle: LLVM
+Language: Cpp
+Standard: Latest
+
+IndentWidth: 4
+ContinuationIndentWidth: 4
+AccessModifierOffset: -4
+UseTab: Never
+ColumnLimit: 0
+
+NamespaceIndentation: None
+WrapNamespaceBodyWithEmptyLines: Always
+FixNamespaceComments: false
+BreakBeforeBraces: Attach
+BreakTemplateDeclarations: Yes
+BreakBeforeTemplateCloser: true
+SpaceAfterTemplateKeyword: false
+
+PointerAlignment: Left
+ReferenceAlignment: Left
+DerivePointerAlignment: false
+QualifierAlignment: Right
+SpaceBeforeInheritanceColon: true
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceAfterCStyleCast: false
+
+AlignAfterOpenBracket: BlockIndent
+AlignEscapedNewlines: DontAlign
+AlignOperands: DontAlign
+AlignTrailingComments:
+  Kind: Never
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeColon
+ConstructorInitializerIndentWidth: 0
+PackConstructorInitializers: BinPack
+BinPackArguments: true
+BinPackParameters: BinPack
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+
+AllowShortFunctionsOnASingleLine: All
+AllowShortLambdasOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLoopsOnASingleLine: true
+AllowShortBlocksOnASingleLine: Always
+AllowShortEnumsOnASingleLine: true
+AllowShortCompoundRequirementOnASingleLine: true
+
+RequiresClausePosition: SingleLine
+IndentRequiresClause: false
+SeparateDefinitionBlocks: Leave
+MaxEmptyLinesToKeep: 1
+KeepEmptyLines:
+  AtEndOfFile: false
+  AtStartOfBlock: false
+  AtStartOfFile: false
+EmptyLineBeforeAccessModifier: Always
+EmptyLineAfterAccessModifier: Never
+
+SortUsingDeclarations: LexicographicNumeric
+ReflowComments: Never
+BreakStringLiterals: false
+InsertNewlineAtEOF: true
+ForEachMacros: [FOREACH]

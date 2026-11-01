@@ -2,6 +2,8 @@
 #include <optional>
 
 namespace mtt {
-    template<typename T>
-    using opt = std::optional<T>;
+
+template<typename T>
+using opt = std::optional<T>;
+
 }

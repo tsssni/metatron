@@ -1,1 +1,1 @@
-list(APPEND deps metatron argparse)
+list(APPEND deps metatron)

@@ -1,79 +1,41 @@
 #pragma once
 #include <metatron/render/filter/filter.hpp>
-#include <metatron/resource/spectra/stochastic.hpp>
-#include <metatron/resource/muldim/image.hpp>
+#include <metatron/render/spectra/stochastic.hpp>
 
-namespace mtt::photo {
-    auto init() noexcept -> void;
+namespace mtt::render {
 
-    struct Film;
+struct Film;
 
-    struct Fixel final {
-        uzv2 pixel;
-        fv2 position;
-        fv2 dxdy;
-        f32 weight;
+struct Fixel final {
+    Film* film;
+    uzv2 pixel;
+    fv2 position;
+    fv2 dxdy;
+    f32 weight;
 
-        Fixel(
-            Film* film,
-            uzv2 const& pixel,
-            fv2 const& position,
-            f32 weight
-        ) noexcept;
+    auto operator=(render::Stochastic_Spectrum const& spectrum) noexcept -> void;
+};
 
-        auto operator=(spectra::Stochastic_Spectrum const& spectrum) noexcept -> void;
+struct Film final {
+    u32 spp;
+    u32 depth;
+    u32 stride;
+    fv2 film_size;
 
-    private:
-        Film* film;
-    };
+    render::Spectrum r;
+    render::Spectrum g;
+    render::Spectrum b;
+    render::Color_Space const* color_space;
 
-    struct Film final {
-        // opaque type are not allowed in shader struct,
-        // and film image is not included in bindless sampled images,
-        // so use static to make it external to film struct.
-        muldim::Image static image;
+    frw2 image;
+    fv2 dxdy;
+    auto update(uv2 image_size) noexcept -> void;
 
-        u32 spp;
-        u32 depth;
-        u32 stride;
-        fv2 film_size;
-        fv2 dxdy;
-        color::proxy::Color_Space color_space;
+    auto operator()(
+        render::Filter filter,
+        uzv2 const& pixel,
+        fv2 const& u
+    ) noexcept -> Fixel;
+};
 
-        struct Descriptor final {
-            u32 spp = 16;
-            u32 depth = 16;
-            u32 stride = 1;
-            fv2 film_size = {0.036f, 0.024f};
-            uv2 image_size = {1920, 1080};
-            spectra::Spectrum r = spectra::Spectrum::entity("/spectrum/CIE-X");
-            spectra::Spectrum g = spectra::Spectrum::entity("/spectrum/CIE-Y");
-            spectra::Spectrum b = spectra::Spectrum::entity("/spectrum/CIE-Z");
-            color::proxy::Color_Space color_space = color::proxy::Color_Space::entity("/color-space/sRGB");
-        };
-        Film(Descriptor const& desc) noexcept;
-        Film() noexcept = default;
-
-        auto operator()(
-            filter::Filter filter,
-            uzv2 const& pixel,
-            fv2 const& u
-        ) noexcept -> Fixel;
-
-    private:
-        spectra::Spectrum r;
-        spectra::Spectrum g;
-        spectra::Spectrum b;
-        friend Fixel;
-    };
-}
-
-namespace mtt::photo::proxy {
-    struct Film: stl::proxy<Film, photo::Film> {
-        using proxy::proxy;
-
-        auto operator()(filter::Filter filter, uzv2 const& pixel, fv2 const& u) noexcept -> Fixel {
-            return (*idx)(filter, pixel, u);
-        }
-    };
 }

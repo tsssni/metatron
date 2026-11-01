@@ -1,38 +1,30 @@
 #pragma once
-#include <metatron/resource/serde/hierarchy.hpp>
-#include <metatron/resource/shape/shape.hpp>
-#include <metatron/resource/material/material.hpp>
-#include <metatron/resource/media/medium.hpp>
+#include <metatron/render/material/material.hpp>
+#include <metatron/render/media/medium.hpp>
+#include <metatron/render/shape/shape.hpp>
 
-namespace mtt::accel {
-    auto constexpr default_medium = "/medium/vaccum";
-    auto constexpr default_transform = "/hierarchy/medium/vaccum";
+namespace mtt::render {
 
-    struct Divider final {
-        shape::Shape shape{};
-        media::Medium int_medium{media::Medium::vs::entity(default_medium)};
-        media::Medium ext_medium{media::Medium::vs::entity(default_medium)};
-        material::Material material{};
-        math::proxy::Transform local_to_render{};
-        math::proxy::Transform int_to_render{math::proxy::Transform::entity(default_transform)};
-        math::proxy::Transform ext_to_render{math::proxy::Transform::entity(default_transform)};
-    };
+struct Divider final {
+    render::Shape shape{};
+    render::Medium int_medium{};
+    render::Medium ext_medium{};
+    render::Material material{};
+    core::Transform const* local_to_render{};
+    core::Transform const* int_to_render{};
+    core::Transform const* ext_to_render{};
+};
 
-    enum Flags {
-        hit_first = 1 << 0,
-        skip_interface = 1 << 1,
-        only_interface = 1 << 2,
-    };
-}
+enum Accel_Flags {
+    hit_first = 1 << 0,
+    skip_interface = 1 << 1,
+    only_interface = 1 << 2,
+};
 
-namespace mtt::accel::proxy {
-    struct Divider: stl::proxy<Divider, accel::Divider> { using proxy::proxy; };
-}
+struct Accel_Interaction final {
+    Divider const* divider = {};
+    u32 primitive = 0;
+    fv4 pos = fv4{core::inf<f32>};
+};
 
-namespace mtt::accel {
-    struct Interaction final {
-        proxy::Divider divider = {};
-        u32 primitive = 0;
-        fv4 pos = fv4{math::inf<f32>};
-    };
 }

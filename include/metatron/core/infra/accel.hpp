@@ -1,41 +1,34 @@
 #pragma once
-#include <metatron/core/infra/memory.hpp>
 #include <metatron/core/infra/command.hpp>
+#include <metatron/core/infra/memory.hpp>
 #include <metatron/core/infra/vector.hpp>
 
-namespace mtt::infra {
+namespace mtt::core {
 
 struct blas final {
-    u32 idx = math::maxv<u32>;
+    u32 idx = maxv<u32>;
     auto destroy() noexcept -> void;
     operator bool() const noexcept;
 
-    struct descriptor final {
-        span<fv3, heap::coherent> vertices;
-        span<u32, heap::coherent> indices;
-    };
-    auto update(descriptor const& desc) noexcept -> void;
+    auto update(span<fv3> vertices, span<u32> indices) noexcept -> void;
 };
 
-inline blas::operator bool() const noexcept { return idx != math::maxv<u32>; }
+inline blas::operator bool() const noexcept { return idx != maxv<u32>; }
 
 struct tlas final {
-    u32 idx = math::maxv<u32>;
+    u32 idx = maxv<u32>;
     auto destroy() noexcept -> void;
     operator bool() const noexcept;
 
-    struct descriptor final {
-        struct instance final {
-            blas geometry;
-            fm44 transform;
-            u8 mask;
-        };
-        span<instance, heap::coherent> instances;
+    struct instance final {
+        blas geometry;
+        fm44 transform;
+        u8 mask;
     };
-    auto update(descriptor const& desc) noexcept -> void;
+    auto update(span<instance> instances) noexcept -> void;
 };
 
-inline tlas::operator bool() const noexcept { return idx != math::maxv<u32>; }
+inline tlas::operator bool() const noexcept { return idx != maxv<u32>; }
 
 struct accelenc final {
     accelenc(recorder& r) noexcept;
