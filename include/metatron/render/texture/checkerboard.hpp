@@ -3,17 +3,17 @@
 
 namespace mtt::render {
 
-struct Checkerboard_Texture final {
-    render::Spectrum x;
-    render::Spectrum y;
+struct [[mtt::reflection(CIE_Y = "/spectra/CIE-Y")]] Checkerboard_Texture final {
+    Spectrum x;
+    Spectrum y;
     uv2 uv_scale;
     f32 w_x;
     f32 w_y;
 
     Checkerboard_Texture(
-        render::Spectrum x,
-        render::Spectrum y,
-        render::Spectrum CIE_Y,
+        Spectrum x,
+        Spectrum y,
+        Spectrum CIE_Y,
         uv2 uv_scale = {1}
     ) noexcept;
 

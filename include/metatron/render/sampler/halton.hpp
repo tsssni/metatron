@@ -4,7 +4,7 @@
 namespace mtt::render {
 
 // halton with owen scrambling: https://pbr-book.org/4ed/Sampling_and_Reconstruction/Halton_Sampler
-struct Halton_Sampler final {
+struct [[mtt::reflection]] Halton_Sampler final {
     uv2 exponential;
     uv2 scale;
     uv2 scale_mulinv;

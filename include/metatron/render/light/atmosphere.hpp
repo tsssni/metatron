@@ -32,7 +32,7 @@ auto constexpr tgmm_num_gaussian_params = 4;
 auto constexpr tgmm_num_bilinear = 4;
 auto constexpr tgmm_num_gaussian = tgmm_num_bilinear * tgmm_num_mixture;
 
-struct Atmosphere_Light final {
+struct [[mtt::reflection(CIE_Y = "/spectra/CIE-Y")]] Atmosphere_Light final {
     buf<f32> static sky_params_table;
     buf<f32> static sky_radiance_table;
     buf<f32> static sun_radiance_table;
@@ -63,7 +63,7 @@ struct Atmosphere_Light final {
         f32 aperture,
         f32 temperature,
         f32 intensity,
-        render::Spectrum CIE_Y,
+        Spectrum CIE_Y,
         core::recorder& recorder
     ) noexcept;
 

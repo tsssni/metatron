@@ -4,7 +4,7 @@
 
 namespace mtt::render {
 
-struct Lanczos_Filter final {
+struct [[mtt::reflection]] Lanczos_Filter final {
     core::Piecewise_Distribution distr;
     fv2 radius;
     f32 tau;

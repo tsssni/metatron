@@ -3,8 +3,8 @@
 
 namespace mtt::render {
 
-struct Constant_Spectrum_Texture final {
-    render::Spectrum x;
+struct [[mtt::reflection]] Constant_Spectrum_Texture final {
+    Spectrum x;
 
     auto operator()(
         fv2 const& uv, fv4 const& duvdxy, fv4 const& spec
@@ -15,7 +15,7 @@ struct Constant_Spectrum_Texture final {
     auto pdf(fv2 const& uv) const noexcept -> f32;
 };
 
-struct Constant_Vector_Texture final {
+struct [[mtt::reflection]] Constant_Vector_Texture final {
     fv4 x;
 
     auto operator()(

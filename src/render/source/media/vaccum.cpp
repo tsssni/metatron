@@ -10,7 +10,7 @@ auto Vaccum_Phase_Function::sample(
     core::Ray_Context const& ctx, fv2 const& u
 ) const noexcept -> Phase_Interaction { return {}; }
 
-auto Vaccum_Medium::Iterator::march(f32 u) noexcept -> Medium_Interaction<render::Vaccum_Phase_Function> {
+auto Vaccum_Medium::Iterator::march(f32 u) noexcept -> Medium_Interaction<Vaccum_Phase_Function> {
     return {
         {},
         r.o + t_max * r.d,

@@ -3,7 +3,7 @@
 
 namespace mtt::render {
 
-struct Z_Sobol_Sampler final {
+struct [[mtt::reflection]] Z_Sobol_Sampler final {
     buf<u32> matrices;
     Z_Sobol_Sampler() noexcept;
 

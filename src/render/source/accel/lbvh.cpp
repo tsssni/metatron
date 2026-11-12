@@ -205,8 +205,8 @@ LBVH::LBVH(std::span<Divider const* const> dividers, u32 num_guide_leaf_prims) n
     blas.resize(dividers.size());
     prims.resize(dividers.size());
     for (auto i = 0u; i < dividers.size(); ++i) {
-        if (!dividers[i]->shape.is<render::Mesh>()) continue;
-        auto mesh = dividers[i]->shape.data<render::Mesh>();
+        if (!dividers[i]->shape.is<Mesh>()) continue;
+        auto mesh = dividers[i]->shape.data<Mesh>();
         auto boxes = std::vector<core::Bounding_Box>(mesh->size());
         for (auto j = 0u; j < mesh->size(); ++j)
             boxes[j] = mesh->bounding_box(core::Transform{}, j);
@@ -222,7 +222,7 @@ LBVH::LBVH(std::span<Divider const* const> dividers, u32 num_guide_leaf_prims) n
         auto const& div = *dividers[i];
         auto s = div.shape;
         auto bbox = core::Bounding_Box{};
-        if (s.is<render::Mesh>()) {
+        if (s.is<Mesh>()) {
             auto& nodes = blas[i];
             if (!nodes) continue;
             bbox = *div.local_to_render | nodes[0].bbox;
@@ -286,12 +286,12 @@ auto LBVH::traverse(
             }
 
             auto d = dividers[instances[i]];
-            auto is_interface = d->material && d->material.is<render::Interface_Material>();
+            auto is_interface = d->material && d->material.is<Interface_Material>();
             if ((flags & Accel_Flags::skip_interface) && is_interface) continue;
             if ((flags & Accel_Flags::only_interface) && !is_interface) continue;
 
             auto lr = *d->local_to_render ^ r;
-            if (d->shape.is<render::Mesh>()) {
+            if (d->shape.is<Mesh>()) {
                 if (traverse(d, intr, lr, flags, range, instances[i])) return true;
             } else {
                 for (auto j = 0u; j < d->shape.size(); ++j)

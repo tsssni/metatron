@@ -4,7 +4,7 @@
 namespace mtt::render {
 
 struct Emitter_Interaction final {
-    render::Light light;
+    Light light;
     core::Transform const* local_to_render;
     f32 pdf;
 };

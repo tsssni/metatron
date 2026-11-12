@@ -13,11 +13,11 @@ struct Interface_Bsdf final {
     auto flags() const noexcept -> Bsdf_Flags;
 };
 
-struct Interface_Material final {
+struct [[mtt::reflection]] Interface_Material final {
     auto sample(
         core::Ray_Context const& ctx,
         fv2 const& uv, fv4 const& duvdxy
-    ) const noexcept -> Material_Interaction<render::Interface_Bsdf>;
+    ) const noexcept -> Material_Interaction<Interface_Bsdf>;
     auto flags() const noexcept -> Material_Flags;
 };
 

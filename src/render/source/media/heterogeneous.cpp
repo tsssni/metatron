@@ -5,7 +5,7 @@ namespace mtt::render {
 namespace {
 
 struct Context final {
-    render::Volume density;
+    Volume density;
     core::Bounding_Box bbox;
     frw3v storage;
 };
@@ -70,7 +70,7 @@ Heterogeneous_Medium::Iterator::Iterator(
     update_majorant(t_max);
 }
 
-auto Heterogeneous_Medium::Iterator::march(f32 uu) noexcept -> Medium_Interaction<render::Henyey_Greenstein_Phase_Function> {
+auto Heterogeneous_Medium::Iterator::march(f32 uu) noexcept -> Medium_Interaction<Henyey_Greenstein_Phase_Function> {
     transmittance = {1.f};
     t_transmitted = 0.f;
     u = uu;
@@ -146,9 +146,9 @@ auto Heterogeneous_Medium::Iterator::update_transmittance(f32 t) noexcept -> voi
 }
 
 Heterogeneous_Medium::Heterogeneous_Medium(
-    render::Henyey_Greenstein_Phase_Function phase,
-    render::Spectrum sigma_a, render::Spectrum sigma_s, render::Spectrum sigma_e,
-    uzv3 dimensions, render::Volume density, f32 density_scale, core::recorder& recorder
+    Henyey_Greenstein_Phase_Function phase,
+    Spectrum sigma_a, Spectrum sigma_s, Spectrum sigma_e,
+    uzv3 dimensions, Volume density, f32 density_scale, core::recorder& recorder
 ) noexcept
 : phase(phase), sigma_a(sigma_a), sigma_s(sigma_s), sigma_e(sigma_e), majorant(density.bounding_box(), dimensions), density(density), density_scale(density_scale) {
     auto storage = frw3{};

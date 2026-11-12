@@ -113,7 +113,7 @@ struct Sun_Context final {
 };
 
 [[mtt::kernel]] auto load_sun(Sun_Context& ctx, uv3 px) noexcept -> void {
-    auto bspec = render::Blackbody_Spectrum{ctx.temperature};
+    auto bspec = Blackbody_Spectrum{ctx.temperature};
     auto sun_scale = fv<atmo_num_lambda>{};
     for (auto i = 0; i < atmo_num_lambda; ++i)
         sun_scale[i] = bspec(atmo_lambda[i]) * sun_blackbody_scale / sun_perp_radiance[i];
@@ -202,7 +202,7 @@ auto constexpr integral_num_samples = 200u;
 
 struct Integral_Context final {
     Atmosphere_Light* light;
-    render::Spectrum CIE_Y;
+    Spectrum CIE_Y;
     fv2 const* nodes;
     fv2* partials;
 };
@@ -261,7 +261,7 @@ Atmosphere_Light::Atmosphere_Light(
     f32 aperture,
     f32 temperature,
     f32 intensity,
-    render::Spectrum CIE_Y,
+    Spectrum CIE_Y,
     core::recorder& recorder
 ) noexcept
 : d(core::unit_spherical_to_cartesian(direction)), t(fq::from_rotation_between({0.f, 1.f, 0.f}, d)), turbidity(turbidity), albedo(albedo) {
@@ -342,7 +342,7 @@ auto Atmosphere_Light::operator()(
     wi = core::unit_spherical_to_cartesian({theta, phi});
 
     auto s = State{core::unit_to_cos_theta(wi), core::dot(d, wi), cos_sun};
-    auto L = render::visit([&](f32 lambda, usize i) { return hosek(lambda, s); }, lambda);
+    auto L = visit([&](f32 lambda, usize i) { return hosek(lambda, s); }, lambda);
 
     auto tgmm_phi = phi + core::pi * 0.5f - phi_sun;
     auto sun_pdf = 0.f;
@@ -433,7 +433,7 @@ auto Atmosphere_Light::hosek_sky(i32 idx, State const& s) const noexcept -> f32 
         + F * core::pow<2>(s.cos_gamma)
         + G * chi(H, s.cos_gamma)
         + I * s.sqrt_cos_theta;
-    return c0 * c1 * sky_radiance[idx] / render::CIE_Y_integral;
+    return c0 * c1 * sky_radiance[idx] / CIE_Y_integral;
 }
 
 auto Atmosphere_Light::hosek_sun(i32 idx, State const& s) const noexcept -> f32 {
@@ -443,7 +443,7 @@ auto Atmosphere_Light::hosek_sun(i32 idx, State const& s) const noexcept -> f32 
         L += sun_radiance[s.segment * atmo_num_lambda * sun_num_ctls + idx * sun_num_ctls + i] * x_pow;
         x_pow *= s.x;
     }
-    return L / render::CIE_Y_integral;
+    return L / CIE_Y_integral;
 }
 
 auto Atmosphere_Light::hosek_limb(i32 idx, State const& s) const noexcept -> f32 {

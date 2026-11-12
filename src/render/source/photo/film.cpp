@@ -2,7 +2,7 @@
 
 namespace mtt::render {
 
-auto Fixel::operator=(render::Stochastic_Spectrum const& spectrum) noexcept -> void {
+auto Fixel::operator=(Stochastic_Spectrum const& spectrum) noexcept -> void {
     auto xyz = fv3{
         spectrum(film->r),
         spectrum(film->g),
@@ -21,7 +21,7 @@ auto Film::update(uv2 image_size) noexcept -> void {
 }
 
 auto Film::operator()(
-    render::Filter filter,
+    Filter filter,
     uzv2 const& pixel,
     fv2 const& u
 ) noexcept -> Fixel {

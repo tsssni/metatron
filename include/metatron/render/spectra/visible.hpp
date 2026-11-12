@@ -4,7 +4,7 @@
 
 namespace mtt::render {
 
-struct Visible_Spectrum final {
+struct [[mtt::reflection]] Visible_Spectrum final {
     buf<f32> storage;
     Visible_Spectrum(std::string const& path) noexcept;
     auto operator()(f32 lambda) const noexcept -> f32;

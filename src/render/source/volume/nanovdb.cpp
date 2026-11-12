@@ -33,7 +33,7 @@ auto from_nanovdb(nanovdb::CoordBBox const& bbox) {
     return core::Bounding_Box{p_min, p_max};
 }
 
-Nanovdb_Volume::Nanovdb_Volume(std::string_view path) noexcept {
+Nanovdb_Volume::Nanovdb_Volume(std::string_view path, core::recorder& recorder) noexcept {
     handle = nanovdb::io::readGrid(core::filesystem::find(path));
     bbox = from_nanovdb(grid()->worldBBox());
 }

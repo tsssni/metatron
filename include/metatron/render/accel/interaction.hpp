@@ -5,11 +5,11 @@
 
 namespace mtt::render {
 
-struct Divider final {
-    render::Shape shape{};
-    render::Medium int_medium{};
-    render::Medium ext_medium{};
-    render::Material material{};
+struct [[mtt::reflection]] Divider final {
+    Shape shape{};
+    Medium int_medium{};
+    Medium ext_medium{};
+    Material material{};
     core::Transform const* local_to_render{};
     core::Transform const* int_to_render{};
     core::Transform const* ext_to_render{};

@@ -5,12 +5,12 @@
 namespace mtt::render {
 
 Color_Space::Color_Space(
-    std::string_view name,
-    fm32 const& rgb, render::Discrete_Spectrum* i,
-    std::array<render::Spectrum, 3> const& CIE_XYZ
+    std::string_view path,
+    fm32 const& rgb, Discrete_Spectrum* i,
+    std::array<Visible_Spectrum*, 3> const& CIE_XYZ
 ) noexcept
-: illuminant(i), illuminant_Y_integral(CIE_XYZ[1] | i) {
-    auto to_XYZ = [&CIE_XYZ](render::Spectrum s) noexcept -> fv3 {
+: illuminant(i), illuminant_Y_integral(Spectrum{CIE_XYZ[1]} | i) {
+    auto to_XYZ = [&CIE_XYZ](Spectrum s) noexcept -> fv3 {
         return {CIE_XYZ[0] | s, CIE_XYZ[1] | s, CIE_XYZ[2] | s};
     };
     auto xyY_to_XYZ = [](fv3 const& xyY) noexcept -> fv3 {
@@ -36,13 +36,12 @@ Color_Space::Color_Space(
     this->to_XYZ = prims | fm33{c[0], c[1], c[2]};
     from_XYZ = core::inverse(this->to_XYZ);
 
-    auto path = "color-space/" + std::string{name} + ".coeff";
     auto coeff = core::filesystem::find(path);
     auto file = std::ifstream{coeff, std::ios::binary};
 
     auto header = std::string(4, '\0');
     if (!file.read(header.data(), 4) || header != "SPEC")
-        core::abort("{} coefficient has wrong header", name);
+        core::abort("{} coefficient has wrong header", path);
     file.read((char*)&table_res, sizeof(i32));
     scale = table_res;
     table = table_res * table_res * table_res * 3 * 3;

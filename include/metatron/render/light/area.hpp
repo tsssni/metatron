@@ -4,8 +4,8 @@
 
 namespace mtt::render {
 
-struct Area_Light final {
-    render::Shape shape;
+struct [[mtt::reflection]] Area_Light final {
+    Shape shape;
     u32 primitive;
 
     auto operator()(

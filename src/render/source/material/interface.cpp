@@ -21,9 +21,9 @@ auto Interface_Bsdf::flags() const noexcept -> Bsdf_Flags {
 auto Interface_Material::sample(
     core::Ray_Context const& ctx,
     fv2 const& uv, fv4 const& duvdxy
-) const noexcept -> Material_Interaction<render::Interface_Bsdf> {
+) const noexcept -> Material_Interaction<Interface_Bsdf> {
     return {
-        .bsdf = render::Interface_Bsdf{},
+        .bsdf = Interface_Bsdf{},
         .emission = fv4{0.f},
         .normal = {0.f, 0.f, 1.f},
         .degraded = false,

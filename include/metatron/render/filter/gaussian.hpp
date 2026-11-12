@@ -4,7 +4,7 @@
 
 namespace mtt::render {
 
-struct Gaussian_Filter final {
+struct [[mtt::reflection]] Gaussian_Filter final {
     core::Piecewise_Distribution distr;
     fv2 radius;
     f32 sigma;

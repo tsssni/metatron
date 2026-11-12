@@ -3,18 +3,22 @@
 
 namespace mtt::render {
 
-struct Homogeneous_Medium final {
-    render::Henyey_Greenstein_Phase_Function phase;
-    render::Spectrum sigma_a;
-    render::Spectrum sigma_s;
-    render::Spectrum sigma_e;
+struct [[mtt::reflection(
+    sigma_a = "/spectra/zero",
+    sigma_s = "/spectra/zero",
+    sigma_e = "/spectra/zero"
+)]] Homogeneous_Medium final {
+    Henyey_Greenstein_Phase_Function phase;
+    Spectrum sigma_a;
+    Spectrum sigma_s;
+    Spectrum sigma_e;
 
     struct Iterator final {
         Homogeneous_Medium const* medium;
         core::Ray r;
         fv4 lambda;
         f32 t_max;
-        auto march(f32 u) noexcept -> Medium_Interaction<render::Henyey_Greenstein_Phase_Function>;
+        auto march(f32 u) noexcept -> Medium_Interaction<Henyey_Greenstein_Phase_Function>;
     };
 
     auto begin(

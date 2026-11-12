@@ -2,7 +2,7 @@
 
 namespace mtt::render {
 
-Checkerboard_Texture::Checkerboard_Texture(render::Spectrum x, render::Spectrum y, render::Spectrum CIE_Y, uv2 uv_scale) noexcept
+Checkerboard_Texture::Checkerboard_Texture(Spectrum x, Spectrum y, Spectrum CIE_Y, uv2 uv_scale) noexcept
 : x(x), y(y), uv_scale(uv_scale) {
     auto Y_x = CIE_Y | x;
     auto Y_y = CIE_Y | y;

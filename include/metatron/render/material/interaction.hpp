@@ -33,7 +33,7 @@ concept Scattering = requires(
     { t.flags() } noexcept -> std::same_as<Bsdf_Flags>;
 };
 
-template<render::Scattering Bsdf>
+template<Scattering Bsdf>
 struct Material_Interaction final {
     Bsdf bsdf;
     fv4 emission;

@@ -3,7 +3,7 @@
 
 namespace mtt::render {
 
-struct Sphere final {
+struct [[mtt::reflection]] Sphere final {
     auto size() const noexcept -> usize;
     auto bounding_box(
         core::Transform const& t, usize idx

@@ -4,7 +4,7 @@ namespace mtt::render {
 
 struct Monte_Carlo_Context;
 
-struct Radiative_Integrator final {
+struct [[mtt::reflection]] Radiative_Integrator final {
     bool volumetric = true;
 
     // null scattering: https://cs.dartmouth.edu/~wjarosz/publications/miller19null.html

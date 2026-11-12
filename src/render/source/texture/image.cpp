@@ -25,12 +25,8 @@ struct Context final {
 
 Image_Vector_Texture::Image_Vector_Texture(
     std::string_view path, Image_Distribution distribution, bool linear, core::recorder& recorder
-) noexcept {}
-
-Image_Vector_Texture::Image_Vector_Texture(
-    ft2 texture, Image_Distribution distribution, core::recorder& recorder
-) noexcept
-: texture(std::move(texture)) {
+) noexcept {
+    texture = ft2{};
     if (distribution == Image_Distribution::none) return;
     auto extent = this->texture.size();
     auto size = uzv2{std::bit_ceil(extent[0]), std::bit_ceil(extent[1])};
@@ -60,16 +56,16 @@ auto Image_Vector_Texture::pdf(fv2 const& uv) const noexcept -> f32 {
 
 Image_Spectrum_Texture::Image_Spectrum_Texture(
     std::string_view path,
-    render::Color_Space::Spectrum_Type type,
+    Color_Space::Spectrum_Type type,
     Image_Distribution distribution,
-    render::Color_Space const* color_space,
+    Color_Space const* color_space,
     core::recorder& recorder
 ) noexcept
 : color_space(color_space), type(type), image_tex(path, distribution, false, recorder) {}
 
 auto Image_Spectrum_Texture::operator()(fv2 const& uv, fv4 const& duvdxy, fv4 const& spec) const noexcept -> fv4 {
     auto rgba = image_tex(uv, duvdxy);
-    auto rgb_spec = render::Rgb_Spectrum{
+    auto rgb_spec = Rgb_Spectrum{
         rgba,
         type,
         color_space,

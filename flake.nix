@@ -2,63 +2,37 @@
   description = "metatron devenv";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    tsssni = {
-      url = "github:tsssni/tsssni.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    nixgl = {
-      url = "github:tsssni/nixGL";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    tsssni.url = "github:tsssni/tsssni.nix";
+    nixpkgs.follows = "tsssni/nixpkgs";
+    systems.follows = "tsssni/systems";
+    flake-parts.follows = "tsssni/flake-parts";
   };
 
   outputs =
     {
-      nixpkgs,
-      tsssni,
-      nixgl,
+      flake-parts,
       ...
-    }:
-    let
-      lib = nixpkgs.lib;
+    }@inputs:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = import inputs.systems;
 
-      systems = [
-        "aarch64-darwin"
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
-
-      systemAttrs = f: system: { ${system} = f system; };
-
-      mapSystems = f: systems |> lib.map (systemAttrs f) |> lib.mergeAttrsList;
-
-      packages = mapSystems (
-        system:
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ tsssni.overlays.default ];
-          };
-        in
+      perSystem =
         {
-          default = pkgs.callPackage ./nix { };
-        }
-      );
-
-      devShells = mapSystems (
-        system:
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ tsssni.overlays.default ];
-            config.allowUnfree = true;
-          };
-          glpkgs = import nixgl { inherit pkgs; };
-        in
+          pkgs,
+          lib,
+          system,
+          ...
+        }:
         rec {
-          default = pkgs.mkShell.override { stdenv = pkgs.clangStdenv; } {
-            inputsFrom = [ packages.${system}.default ];
+          _module.args.pkgs = import inputs.nixpkgs {
+            inherit system;
+            overlays = with inputs; [ tsssni.overlays.default ];
+          };
+
+          packages.default = pkgs.callPackage ./nix { };
+
+          devShells.default = pkgs.mkShell.override { stdenv = pkgs.clangStdenv; } {
+            inputsFrom = [ packages.default ];
             packages =
               with pkgs;
               [
@@ -79,19 +53,6 @@
               export MTL_DEBUG_LAYER=1
             '';
           };
-
-          impure = default.overrideAttrs (oldAttrs: {
-            nativeBuildInputs =
-              oldAttrs.nativeBuildInputs
-              ++ (with glpkgs; [
-                nixVulkanIntel
-                auto.nixVulkanNvidia
-              ]);
-          });
-        }
-      );
-    in
-    {
-      inherit packages devShells;
+        };
     };
 }

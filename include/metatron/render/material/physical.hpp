@@ -39,20 +39,20 @@ struct Physical_Bsdf final {
 
 auto init_physical_material() noexcept -> void;
 
-struct Physical_Material final {
-    render::Spectrum_Texture reflectance;
-    render::Spectrum_Texture eta;
-    render::Spectrum_Texture k;
-    render::Spectrum_Texture emission;
+struct [[mtt::reflection]] Physical_Material final {
+    Spectrum_Texture reflectance;
+    Spectrum_Texture eta;
+    Spectrum_Texture k;
+    Spectrum_Texture emission;
 
-    render::Vector_Texture alpha;
-    render::Vector_Texture normal;
+    Vector_Texture alpha;
+    Vector_Texture normal;
     buf<f32> static fresnel_reflectance_table;
 
     auto sample(
         core::Ray_Context const& ctx,
         fv2 const& uv, fv4 const& duvdxy
-    ) const noexcept -> Material_Interaction<render::Physical_Bsdf>;
+    ) const noexcept -> Material_Interaction<Physical_Bsdf>;
     auto flags() const noexcept -> Material_Flags;
 };
 

@@ -13,11 +13,16 @@ enum struct Image_Distribution {
     spherical,
 };
 
-struct Image_Vector_Texture final {
+struct [[mtt::reflection(recorder)]] Image_Vector_Texture final {
     ft2 texture;
     core::Piecewise_Distribution distr;
-    Image_Vector_Texture(std::string_view path, Image_Distribution distribution, bool linear, core::recorder& recorder) noexcept;
-    Image_Vector_Texture(ft2 texture, Image_Distribution distribution, core::recorder& recorder) noexcept;
+
+    Image_Vector_Texture(
+        std::string_view path,
+        Image_Distribution distribution,
+        bool linear,
+        core::recorder& recorder
+    ) noexcept;
 
     auto operator()(
         fv2 const& uv, fv4 const& duvdxy
@@ -28,16 +33,19 @@ struct Image_Vector_Texture final {
     auto pdf(fv2 const& uv) const noexcept -> f32;
 };
 
-struct Image_Spectrum_Texture final {
-    render::Color_Space const* color_space;
-    render::Color_Space::Spectrum_Type type;
+struct [[mtt::reflection(
+    recorder,
+    color_space = "/color-space/sRGB"
+)]] Image_Spectrum_Texture final {
+    Color_Space const* color_space;
+    Color_Space::Spectrum_Type type;
     Image_Vector_Texture image_tex;
 
     Image_Spectrum_Texture(
         std::string_view path,
-        render::Color_Space::Spectrum_Type type,
+        Color_Space::Spectrum_Type type,
         Image_Distribution distribution,
-        render::Color_Space const* color_space,
+        Color_Space const* color_space,
         core::recorder& recorder
     ) noexcept;
 

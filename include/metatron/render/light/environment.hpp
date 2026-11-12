@@ -4,8 +4,8 @@
 
 namespace mtt::render {
 
-struct Environment_Light final {
-    render::Spectrum_Texture env_map;
+struct [[mtt::reflection]] Environment_Light final {
+    Spectrum_Texture env_map;
 
     auto operator()(
         core::Ray const& r, fv4 const& lambda

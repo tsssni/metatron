@@ -15,7 +15,7 @@ namespace mtt::render {
     image[uzv3{px}] = pixel;
 }
 
-auto Renderer::trace(render::Monte_Carlo_Context& ctx) noexcept -> void {
+auto Renderer::trace(Monte_Carlo_Context& ctx) noexcept -> void {
     auto rd = std::random_device{};
     auto seed = rd();
     core::print("seed: 0x{:x}", seed);

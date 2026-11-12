@@ -22,7 +22,7 @@ concept Phase_Function = requires(
     { t.sample(ctx, u) } noexcept -> std::same_as<Phase_Interaction>;
 };
 
-template<render::Phase_Function Phase_Function>
+template<Phase_Function Phase_Function>
 struct Medium_Interaction final {
     Phase_Function phase;
     fv3 p;

@@ -48,12 +48,12 @@ auto inline Vector_Texture::pdf(fv2 uv) const noexcept -> f32 {
 
 auto grad(
     core::Ray_Differential const& diff,
-    render::Shape_Interaction const& intr
+    Shape_Interaction const& intr
 ) noexcept -> fv4;
 
 auto propagate(
     core::Ray_Differential const& diff,
-    render::Shape_Interaction const& intr,
+    Shape_Interaction const& intr,
     fv4 const& duvdxy,
     fv3 const& wi, fv4 const& eta
 ) noexcept -> core::Ray_Differential;

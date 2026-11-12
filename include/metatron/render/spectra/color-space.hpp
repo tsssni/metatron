@@ -1,11 +1,18 @@
 #pragma once
 #include <metatron/render/spectra/discrete.hpp>
 #include <metatron/render/spectra/interaction.hpp>
+#include <metatron/render/spectra/visible.hpp>
 #include <metatron/core/stl/protocol.hpp>
 
 namespace mtt::render {
 
-struct Color_Space final {
+struct [[mtt::reflection(
+    CIE_XYZ = {
+        "/spectra/CIE-X",
+        "/spectra/CIE-Y",
+        "/spectra/CIE-Z"
+    }
+)]] Color_Space final {
     enum struct Spectrum_Type {
         albedo,
         unbounded,
@@ -14,7 +21,7 @@ struct Color_Space final {
 
     fm33 from_XYZ;
     fm33 to_XYZ;
-    render::Discrete_Spectrum* illuminant;
+    Discrete_Spectrum* illuminant;
 
     i32 table_res;
     f32 illuminant_Y_integral;
@@ -22,10 +29,10 @@ struct Color_Space final {
     buf<f32> table;
 
     Color_Space(
-        std::string_view name,
+        std::string_view path,
         fm32 const& rgb,
-        render::Discrete_Spectrum* i,
-        std::array<render::Spectrum, 3> const& CIE_XYZ
+        Discrete_Spectrum* i,
+        std::array<Visible_Spectrum*, 3> const& CIE_XYZ
     ) noexcept;
 };
 

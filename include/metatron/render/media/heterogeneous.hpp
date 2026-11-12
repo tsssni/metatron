@@ -5,22 +5,26 @@
 
 namespace mtt::render {
 
-struct Heterogeneous_Medium final {
-    render::Henyey_Greenstein_Phase_Function phase;
-    render::Spectrum sigma_a;
-    render::Spectrum sigma_s;
-    render::Spectrum sigma_e;
-    render::Uniform_Volume majorant;
-    render::Volume density;
+struct [[mtt::reflection(
+    sigma_a = "/spectra/zero",
+    sigma_s = "/spectra/zero",
+    sigma_e = "/spectra/zero"
+)]] Heterogeneous_Medium final {
+    Henyey_Greenstein_Phase_Function phase;
+    Spectrum sigma_a;
+    Spectrum sigma_s;
+    Spectrum sigma_e;
+    Uniform_Volume majorant;
+    Volume density;
     f32 density_scale;
 
     Heterogeneous_Medium(
-        render::Henyey_Greenstein_Phase_Function phase,
-        render::Spectrum sigma_a,
-        render::Spectrum sigma_s,
-        render::Spectrum sigma_e,
+        Henyey_Greenstein_Phase_Function phase,
+        Spectrum sigma_a,
+        Spectrum sigma_s,
+        Spectrum sigma_e,
         uzv3 dimensions,
-        render::Volume density,
+        Volume density,
         f32 density_scale,
         core::recorder& recorder
     ) noexcept;
@@ -51,7 +55,7 @@ struct Heterogeneous_Medium final {
             f32 t
         ) noexcept;
 
-        auto march(f32 uu) noexcept -> Medium_Interaction<render::Henyey_Greenstein_Phase_Function>;
+        auto march(f32 uu) noexcept -> Medium_Interaction<Henyey_Greenstein_Phase_Function>;
 
     private:
         auto update_majorant(f32 t) noexcept -> void;

@@ -1,15 +1,16 @@
 #pragma once
+#include <metatron/core/infra/command.hpp>
 #include <metatron/core/math/bounding-box.hpp>
 #include <nanovdb/io/IO.h>
 #include <string_view>
 
 namespace mtt::render {
 
-struct Nanovdb_Volume final {
+struct [[mtt::reflection(recorder)]] Nanovdb_Volume final {
     using Grid = nanovdb::GridHandle<>;
     Grid handle;
     core::Bounding_Box bbox;
-    Nanovdb_Volume(std::string_view path) noexcept;
+    Nanovdb_Volume(std::string_view path, core::recorder& recorder) noexcept;
 
     auto to_local(iv3 const& ijk) const noexcept -> fv3;
     auto to_index(fv3 const& pos) const noexcept -> iv3;

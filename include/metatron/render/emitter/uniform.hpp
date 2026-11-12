@@ -3,9 +3,9 @@
 
 namespace mtt::render {
 
-struct Uniform_Emitter final {
+struct [[mtt::reflection]] Uniform_Emitter final {
     struct Primitive final {
-        render::Light light;
+        Light light;
         core::Transform const* local_to_render;
     };
 

@@ -7,7 +7,7 @@ Uniform_Emitter::Uniform_Emitter(std::span<Primitive const> primitives) noexcept
     auto inf_prims = std::vector<Primitive>{};
     for (auto const& primitive : primitives) {
         prims.push_back(primitive);
-        if (primitive.light.flags() & render::Light_Flags::inf) inf_prims.push_back(primitive);
+        if (primitive.light.flags() & Light_Flags::inf) inf_prims.push_back(primitive);
     }
 
     num_prims = prims.size();

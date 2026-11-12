@@ -49,7 +49,7 @@ auto fresnel(f32 cos_theta_i, f32 eta, f32 k) noexcept -> f32 {
 }
 
 auto fresnel(f32 cos_theta_i, fv4 const& eta, fv4 const& k) noexcept -> fv4 {
-    return render::visit([&](f32 eta, f32 k, auto) { return fresnel(cos_theta_i, eta, k); }, eta, k);
+    return visit([&](f32 eta, f32 k, auto) { return fresnel(cos_theta_i, eta, k); }, eta, k);
 }
 
 auto lambda(fv3 const& wo, f32 alpha_u, f32 alpha_v) noexcept -> f32 {

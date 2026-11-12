@@ -4,9 +4,9 @@
 
 namespace mtt::render {
 
-using Spectrum_Type = render::Color_Space::Spectrum_Type;
+using Spectrum_Type = Color_Space::Spectrum_Type;
 
-Rgb_Spectrum::Rgb_Spectrum(fv3 rgb, Spectrum_Type type, render::Color_Space const* color_space) noexcept {
+Rgb_Spectrum::Rgb_Spectrum(fv3 rgb, Spectrum_Type type, Color_Space const* color_space) noexcept {
     auto cs = color_space;
     illuminant = type == Spectrum_Type::illuminant ? color_space->illuminant : nullptr;
 

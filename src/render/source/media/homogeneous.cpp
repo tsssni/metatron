@@ -3,7 +3,7 @@
 
 namespace mtt::render {
 
-auto Homogeneous_Medium::Iterator::march(f32 u) noexcept -> Medium_Interaction<render::Henyey_Greenstein_Phase_Function> {
+auto Homogeneous_Medium::Iterator::march(f32 u) noexcept -> Medium_Interaction<Henyey_Greenstein_Phase_Function> {
     auto sigma_a = (lambda & medium->sigma_a);
     auto sigma_s = (lambda & medium->sigma_s);
     auto sigma_t = sigma_a + sigma_s;

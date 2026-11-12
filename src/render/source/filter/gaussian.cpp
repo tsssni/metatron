@@ -36,7 +36,7 @@ auto Gaussian_Filter::operator()(fv2 const& p) const noexcept -> f32 {
     return vx * vy;
 }
 
-auto Gaussian_Filter::sample(fv2 const& u) const noexcept -> render::Filter_Interaction {
+auto Gaussian_Filter::sample(fv2 const& u) const noexcept -> Filter_Interaction {
     auto uv = distr.sample(u);
     auto p = uv * (2.f * radius) - radius;
     auto w = (*this)(p);

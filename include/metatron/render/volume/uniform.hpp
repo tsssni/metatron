@@ -3,7 +3,7 @@
 
 namespace mtt::render {
 
-struct Uniform_Volume final {
+struct [[mtt::reflection]] Uniform_Volume final {
     core::Bounding_Box bbox;
     iv3 dims;
     fv3 voxel_size;

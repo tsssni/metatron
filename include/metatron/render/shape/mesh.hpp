@@ -4,7 +4,7 @@
 
 namespace mtt::render {
 
-struct Mesh final {
+struct [[mtt::reflection]] Mesh final {
     buf<uv3> indices;
 
     buf<fv3> vertices;

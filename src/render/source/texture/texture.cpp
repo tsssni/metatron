@@ -5,7 +5,7 @@ namespace mtt::render {
 
 auto grad(
     core::Ray_Differential const& diff,
-    render::Shape_Interaction const& intr
+    Shape_Interaction const& intr
 ) noexcept -> fv4 {
     auto tangent = core::Plane{intr.p, intr.n};
     auto dt = core::hit(diff.r, tangent);
@@ -24,7 +24,7 @@ auto grad(
 
 auto propagate(
     core::Ray_Differential const& diff,
-    render::Shape_Interaction const& intr,
+    Shape_Interaction const& intr,
     fv4 const& duvdxy,
     fv3 const& wi, fv4 const& eta
 ) noexcept -> core::Ray_Differential {

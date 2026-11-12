@@ -4,7 +4,7 @@
 
 namespace mtt::render {
 
-struct LBVH final {
+struct [[mtt::reflection]] LBVH final {
     struct Index final {
         core::Bounding_Box bbox;
         union {

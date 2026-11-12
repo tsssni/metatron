@@ -181,11 +181,11 @@ auto init_physical_material() noexcept -> void {
         auto i = idx[0];
         auto integral = 0.0;
         auto eta = i * 3.f / fresnel_length;
-        auto f0 = render::fresnel(0.f, eta, 0.f);
+        auto f0 = fresnel(0.f, eta, 0.f);
         for (auto i = 1; i <= fresnel_num_samples; ++i) {
             auto cos_theta_2 = f32(i) / f32(fresnel_num_samples);
             auto cos_theta = core::pow<1, 2>(cos_theta_2);
-            auto f1 = render::fresnel(cos_theta, eta, 0.f);
+            auto f1 = fresnel(cos_theta, eta, 0.f);
             integral += (f0 + f1) * 0.5f / fresnel_num_samples;
         }
         Physical_Material::fresnel_reflectance_table[i] = integral;
@@ -196,10 +196,10 @@ auto init_physical_material() noexcept -> void {
 auto Physical_Material::sample(
     core::Ray_Context const& ctx,
     fv2 const& uv, fv4 const& duvdxy
-) const noexcept -> Material_Interaction<render::Physical_Bsdf> {
+) const noexcept -> Material_Interaction<Physical_Bsdf> {
     auto guarded_sample = [&]<typename T>(T tex, auto const& fallback) {
         if (!tex) return fallback;
-        if constexpr (std::same_as<T, render::Spectrum_Texture>)
+        if constexpr (std::same_as<T, Spectrum_Texture>)
             return tex(uv, duvdxy, ctx.lambda);
         else return tex(uv, duvdxy);
     };
@@ -226,7 +226,7 @@ auto Physical_Material::sample(
     }
 
     if (ctx.inside && eta != fv4{0.f}) eta = 1.f / eta;
-    using Type = render::Physical_Bsdf::Type;
+    using Type = Physical_Bsdf::Type;
     auto type = Type{};
     auto based = reflectance == core::saturate(reflectance);
     auto surface = eta != fv4{0.f};
@@ -253,8 +253,8 @@ auto Physical_Material::sample(
     };
     auto fresnel_reflectance = type == Type::plastic ? fv4{0.f} : core::foreach(reflect, eta);
 
-    return Material_Interaction<render::Physical_Bsdf>{
-        .bsdf = render::Physical_Bsdf{
+    return Material_Interaction<Physical_Bsdf>{
+        .bsdf = Physical_Bsdf{
             .reflectance = reflectance,
             .fresnel_reflectance = fresnel_reflectance,
             .eta = eta,

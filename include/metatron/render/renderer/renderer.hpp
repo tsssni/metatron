@@ -4,7 +4,7 @@
 namespace mtt::render {
 
 struct Renderer final {
-    auto trace(render::Monte_Carlo_Context& ctx) noexcept -> void;
+    auto trace(Monte_Carlo_Context& ctx) noexcept -> void;
 };
 
 }

@@ -5,15 +5,15 @@
 namespace mtt::render {
 
 struct Payload final {
-    render::Accel_Interaction acc;
-    render::Generator sampler;
-    render::Emitter emitter;
+    Accel_Interaction acc;
+    Generator sampler;
+    Emitter emitter;
 
     core::Ray_Context ctx;
     core::Ray_Differential diff;
 
     core::Ray shadow;
-    render::Medium medium;
+    Medium medium;
     core::Transform const* medium_to_render;
 
     f32 t{0.f};
@@ -44,7 +44,7 @@ struct Payload final {
     pay.beta = fv4{0.f};
 }
 
-template<render::Intersectable Shape, render::Surfaced Material, render::Participating Medium>
+template<Intersectable Shape, Surfaced Material, Participating Medium>
 [[mtt::visible]] auto hit(Monte_Carlo_Context& ctx, Payload& pay) noexcept -> void {
     auto& div = pay.acc.divider;
     auto& sp = pay.sampler;
@@ -72,7 +72,7 @@ template<render::Intersectable Shape, render::Surfaced Material, render::Partici
         l_intr.pdf = p_e;
 
         auto s_intr = eval(l_intr.wi);
-        auto delta = e_intr.light.flags() & render::Light_Flags::delta;
+        auto delta = e_intr.light.flags() & Light_Flags::delta;
         auto side = core::dot(l_intr.wi, l_ctx.n) < 0.f ? -1.f : 1.f;
         auto inside = (side > 0.f) == pay.ctx.inside;
         pay.medium = inside ? div->int_medium : div->ext_medium;
@@ -121,7 +121,7 @@ template<render::Intersectable Shape, render::Surfaced Material, render::Partici
             l_ctx.n = {};
             nee(l_ctx, [&](fv3 const& wi) {
                 auto p_intr = m_intr.phase(pay.ctx.r.d, wi);
-                return render::Bsdf_Interaction{p_intr.f, fv4{1.f}, wi, p_intr.pdf};
+                return Bsdf_Interaction{p_intr.f, fv4{1.f}, wi, p_intr.pdf};
             });
 
             auto pt = core::Transform{};
@@ -175,7 +175,7 @@ template<render::Intersectable Shape, render::Surfaced Material, render::Partici
     auto l_intr = intr;
     l_intr.p = core::shrink(*lt ^ core::expand(l_intr.p, 1.f));
     l_intr.n = *lt ^ l_intr.n;
-    auto duvdxy = render::grad(ldiff, l_intr);
+    auto duvdxy = grad(ldiff, l_intr);
     auto& material = *div->material.template data<Material>();
     auto mat_intr = material.sample(pay.ctx, l_intr.uv, duvdxy);
 
@@ -189,7 +189,7 @@ template<render::Intersectable Shape, render::Surfaced Material, render::Partici
         auto flags = mat_intr.bsdf.flags();
         auto tbn = core::transpose(fm33{intr.tn, intr.bn, intr.n});
         intr.n = tbn | mat_intr.normal;
-        if (flags & render::Bsdf_Flags::bsdf_interface) {
+        if (flags & Bsdf_Flags::bsdf_interface) {
             pay.ctx.r.o = intr.p - 0.001f * intr.n;
             return;
         }
@@ -198,7 +198,7 @@ template<render::Intersectable Shape, render::Surfaced Material, render::Partici
         bt.transform = fm44{fq::from_rotation_between(intr.n, {0.f, 1.f, 0.f})};
         bt.inv_transform = core::transpose(bt.transform);
 
-        auto specular = flags & render::Bsdf_Flags::specular;
+        auto specular = flags & Bsdf_Flags::specular;
         auto l_ctx = pay.ctx;
         l_ctx.r.o = intr.p;
         l_ctx.n = intr.n;
@@ -226,7 +226,7 @@ template<render::Intersectable Shape, render::Surfaced Material, render::Partici
         b_intr.wi = core::normalize(bt ^ core::expand(b_intr.wi, 0.f));
 
         auto l_wi = core::normalize(core::shrink(*lt ^ core::expand(b_intr.wi, 0.f)));
-        pay.diff = *lt | render::propagate(ldiff, l_intr, duvdxy, l_wi, b_intr.eta);
+        pay.diff = *lt | propagate(ldiff, l_intr, duvdxy, l_wi, b_intr.eta);
         pay.ctx.r = {intr.p + 0.001f * trace_n, b_intr.wi};
         pay.ctx.n = trace_n;
         pay.beta *= b_intr.f / b_intr.pdf;
@@ -237,7 +237,7 @@ template<render::Intersectable Shape, render::Surfaced Material, render::Partici
     scatter();
 }
 
-template<render::Intersectable Shape, render::Participating Medium>
+template<Intersectable Shape, Participating Medium>
 [[mtt::visible]] auto track(Monte_Carlo_Context& ctx, Payload& pay) noexcept -> void {
     auto& sp = pay.sampler;
     auto& r = pay.shadow;
@@ -299,12 +299,12 @@ template<render::Intersectable Shape, render::Participating Medium>
     auto size = uv2{ctx.film->image.size()};
     if (px[0] >= size[0] || px[1] >= size[1]) return;
 
-    auto sp = render::Generator{ctx.sampler, {{}, uv2{px}, size, ctx.sample_index, ctx.film->spp, 0, ctx.seed}};
+    auto sp = Generator{ctx.sampler, {{}, uv2{px}, size, ctx.sample_index, ctx.film->spp, 0, ctx.seed}};
     sp.start();
     auto fixel = (*ctx.film)(ctx.filter, uzv2{px}, sp.generate_pixel_2d());
-    auto s = render::Camera{}.sample(ctx.lens, fixel.position, fixel.dxdy, sp.generate_2d());
+    auto s = Camera{}.sample(ctx.lens, fixel.position, fixel.dxdy, sp.generate_2d());
     s.ray_differential = *ctx.camera ^ s.ray_differential;
-    auto spec = render::Stochastic_Spectrum{sp.generate_1d()};
+    auto spec = Stochastic_Spectrum{sp.generate_1d()};
 
     auto pay = Payload{};
     pay.sampler = sp;
@@ -320,7 +320,7 @@ template<render::Intersectable Shape, render::Participating Medium>
             pay.beta /= q;
         }
 
-        pay.acc = ctx.accel(pay.ctx.r, pay.ctx.n, render::Accel_Flags(0), {0.f, core::inf<f32>});
+        pay.acc = ctx.accel(pay.ctx.r, pay.ctx.n, Accel_Flags(0), {0.f, core::inf<f32>});
         // reorder
         auto div = pay.acc.divider;
         if (!div) {
@@ -331,7 +331,7 @@ template<render::Intersectable Shape, render::Participating Medium>
         core::cartesian{}([&]<typename... Ts>() { hit<Ts...>(ctx, pay); }, div->shape, div->material, medium);
 
         if (pay.gamma != fv4{0.f}) {
-            auto occlusion = render::Accel_Flags(render::Accel_Flags::hit_first | render::Accel_Flags::skip_interface);
+            auto occlusion = Accel_Flags(Accel_Flags::hit_first | Accel_Flags::skip_interface);
             auto blocker = ctx.accel(pay.shadow, fv3{0.f}, occlusion, {0.f, pay.t - 0.001f});
             if (blocker.divider) pay.gamma = fv4{0.f};
         }
@@ -341,7 +341,7 @@ template<render::Intersectable Shape, render::Participating Medium>
             pay.gamma = fv4{0.f};
         }
         while (pay.gamma != fv4{0.f}) {
-            pay.acc = pay.t > 0.001f ? ctx.accel(pay.shadow, fv3{0.f}, render::Accel_Flags::only_interface, {0.f, core::inf<f32>}) : render::Accel_Interaction{};
+            pay.acc = pay.t > 0.001f ? ctx.accel(pay.shadow, fv3{0.f}, Accel_Flags::only_interface, {0.f, core::inf<f32>}) : Accel_Interaction{};
             auto div = pay.acc.divider;
             if (div) core::cartesian{}([&]<typename Shape, typename Medium>() { track<Shape, Medium>(ctx, pay); }, div->shape, pay.medium);
             else {
@@ -361,7 +361,7 @@ template<render::Intersectable Shape, render::Participating Medium>
         if (pay.beta == fv4{0.f}) break;
     }
 
-    auto Li = render::Stochastic_Spectrum{pay.ctx.lambda, pay.emission};
+    auto Li = Stochastic_Spectrum{pay.ctx.lambda, pay.emission};
     Li.value /= s.pdf;
     if (!core::isfinite(Li.value))
         core::abort("invalid value appears in pixel {} sample {}", px, ctx.sample_index);

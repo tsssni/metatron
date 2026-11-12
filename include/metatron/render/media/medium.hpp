@@ -8,7 +8,7 @@ namespace mtt::render {
 template<typename T>
 concept Marching = requires(T& t, f32 u) {
     { t.march(u) } noexcept;
-    requires render::Phase_Function<decltype(t.march(u).phase)>;
+    requires Phase_Function<decltype(t.march(u).phase)>;
 };
 
 template<typename T>

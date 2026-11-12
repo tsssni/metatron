@@ -3,7 +3,7 @@
 
 namespace mtt::render {
 
-struct Discrete_Spectrum final {
+struct [[mtt::reflection]] Discrete_Spectrum final {
     usize count = 0;
     buf<f32> lambda;
     buf<f32> storage;
