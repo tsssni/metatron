@@ -1,0 +1,10 @@
+[[rules]]
+compile_commands = ["build/dev"]
+
+[inlay_hints]
+enabled = true
+
+[code_completion]
+arguments = "delimiters"
+insert_includes = false
+insert_imports = false

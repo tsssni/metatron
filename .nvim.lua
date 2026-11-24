@@ -1,3 +1,2 @@
-vim.lsp.enable('clangd')
+vim.lsp.enable('clice')
 vim.lsp.enable('cmake')
-vim.lsp.enable('nushell')

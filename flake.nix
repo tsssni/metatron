@@ -37,6 +37,7 @@
               with pkgs;
               [
                 clang-tools
+                clice
                 cmake-language-server
               ]
               ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [

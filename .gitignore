@@ -11,6 +11,7 @@
 !/.clang*
 !/.git*
 !/.nvim.lua
+!/clice*
 !/flake*
 !/garnix*
 !/CMake*
